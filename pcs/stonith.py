@@ -14,16 +14,17 @@ from pcs import (
     utils,
 )
 from pcs.cli.common import parse_args
-from pcs.cli.common.console_report import indent
+from pcs.cli.common.console_report import indent, error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
+from pcs.cli.stonith.parse_args import parse_create as parse_create_args
 from pcs.common import report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
 def stonith_cmd(argv):
@@ -43,7 +44,7 @@ def stonith_cmd(argv):
         elif sub_cmd == "describe":
             stonith_list_options(lib, argv_next, modifiers)
         elif sub_cmd == "create":
-            stonith_create(argv_next)
+            stonith_create(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             if len(argv_next) > 1:
                 stn_id = argv_next.pop(0)
@@ -75,6 +76,10 @@ def stonith_cmd(argv):
             get_fence_agent_info(argv_next)
         elif sub_cmd == "sbd":
             sbd_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "enable":
+            resource.resource_enable(argv_next)
+        elif sub_cmd == "disable":
+            resource.resource_disable(argv_next)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -146,46 +151,61 @@ def stonith_list_options(lib, argv, modifiers):
         True
     ))
 
+def stonith_create(lib, argv, modifiers):
+    if modifiers["before"] and modifiers["after"]:
+        raise error("you cannot specify both --before and --after{0}".format(
+            "" if modifiers["group"] else " and you have to specify --group"
+        ))
 
-def stonith_create(argv):
+    if not modifiers["group"]:
+        if modifiers["before"]:
+            raise error("you cannot use --before without --group")
+        elif modifiers["after"]:
+            raise error("you cannot use --after without --group")
+
     if len(argv) < 2:
         usage.stonith(["create"])
         sys.exit(1)
 
-    stonith_id = argv.pop(0)
-    stonith_type = argv.pop(0)
-    st_values, op_values, meta_values = resource.parse_resource_options(
-        argv, with_clone=False
+    stonith_id = argv[0]
+    stonith_type = argv[1]
+
+    parts = parse_create_args(argv[2:])
+
+    settings = dict(
+        allow_absent_agent=modifiers["force"],
+        allow_invalid_operation=modifiers["force"],
+        allow_invalid_instance_attributes=modifiers["force"],
+        ensure_disabled=modifiers["disabled"],
+        use_default_operations=not modifiers["no-default-ops"],
+        wait=modifiers["wait"],
     )
 
-    try:
-        metadata = lib_ra.StonithAgent(
-            utils.cmd_runner(),
-            stonith_type
+    if not modifiers["group"]:
+        lib.stonith.create(
+            stonith_id, stonith_type, parts["op"],
+            parts["meta"],
+            parts["options"],
+            **settings
         )
-        if metadata.get_provides_unfencing():
-            meta_values = [
-                meta for meta in meta_values if not meta.startswith("provides=")
-            ]
-            meta_values.append("provides=unfencing")
-    except lib_ra.ResourceAgentError as e:
-        forced = utils.get_modificators().get("force", False)
-        if forced:
-            severity = ReportItemSeverity.WARNING
-        else:
-            severity = ReportItemSeverity.ERROR
-        utils.process_library_reports([
-            lib_ra.resource_agent_error_to_report_item(
-                e, severity, not forced
-            )
-        ])
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
+    else:
+        adjacent_resource_id = None
+        put_after_adjacent = False
+        if modifiers["after"]:
+            adjacent_resource_id = modifiers["after"]
+            put_after_adjacent = True
+        if modifiers["before"]:
+            adjacent_resource_id = modifiers["before"]
+            put_after_adjacent = False
 
-    resource.resource_create(
-        stonith_id, "stonith:" + stonith_type, st_values, op_values, meta_values,
-        group=utils.pcs_options.get("--group", None)
-    )
+        lib.stonith.create_in_group(
+            stonith_id, stonith_type, modifiers["group"], parts["op"],
+            parts["meta"],
+            parts["options"],
+            adjacent_resource_id=adjacent_resource_id,
+            put_after_adjacent=put_after_adjacent,
+            **settings
+        )
 
 def stonith_level_parse_node(arg):
     target_type_candidate, target_value_candidate = parse_args.parse_typed_arg(

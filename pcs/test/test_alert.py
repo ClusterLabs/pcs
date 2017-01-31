@@ -192,7 +192,7 @@ Alerts:
 
     def test_not_existing_alert(self):
         self.assert_pcs_fail(
-            "alert update alert1", "Error: Alert 'alert1' not found.\n"
+            "alert update alert1", "Error: alert 'alert1' does not exist\n"
         )
 
 
@@ -200,7 +200,7 @@ Alerts:
 class RemoveAlertTest(PcsAlertTest):
     def test_not_existing_alert(self):
         self.assert_pcs_fail(
-            "alert remove alert1", "Error: Alert 'alert1' not found.\n"
+            "alert remove alert1", "Error: alert 'alert1' does not exist\n"
         )
 
     def test_one(self):
@@ -470,7 +470,7 @@ Alerts:
     def test_no_recipient(self):
         self.assert_pcs_fail(
             "alert recipient update rec description=desc",
-            "Error: Recipient 'rec' does not exist\n"
+            "Error: recipient 'rec' does not exist\n"
         )
 
     def test_empty_value(self):
@@ -557,8 +557,8 @@ class RemoveRecipientTest(PcsAlertTest):
         )
         self.assert_pcs_fail(
             "alert recipient remove rec1 rec2 rec3", outdent("""\
-                Error: Recipient 'rec2' does not exist
-                Error: Recipient 'rec3' does not exist
+                Error: recipient 'rec2' does not exist
+                Error: recipient 'rec3' does not exist
                 """
             )
         )

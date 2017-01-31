@@ -7,7 +7,6 @@ from __future__ import (
 
 from pcs.lib import resource_agent
 from pcs.lib.commands.resource_agent import _complete_agent_list
-from pcs.lib.errors import LibraryError
 
 
 def list_agents(lib_env, describe=True, search=None):
@@ -32,14 +31,10 @@ def describe_agent(lib_env, agent_name):
     Get agent's description (metadata) in a structure
     string agent_name name of the agent (not containing "stonith:" prefix)
     """
-    try:
-        metadata = resource_agent.StonithAgent(
-            lib_env.cmd_runner(),
-            agent_name
-        )
-        return metadata.get_full_info()
-    except resource_agent.ResourceAgentError as e:
-        raise LibraryError(
-            resource_agent.resource_agent_error_to_report_item(e)
-        )
-
+    agent = resource_agent.find_valid_stonith_agent_by_name(
+        lib_env.report_processor,
+        lib_env.cmd_runner(),
+        agent_name,
+        absent_agent_supported=False
+    )
+    return agent.get_full_info()

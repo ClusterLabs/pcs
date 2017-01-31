@@ -5,6 +5,9 @@
 #
 #can be used for example with
 #find ./ -name '*.py' -exec pylint --reports=n \{\} --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}' \;
+#or
+#pylint --reports=n ./**/*.py --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}'
+#(which gives duplicate-code problems)
 #
 #project adapted to pylint 1.5.4, astroid 1.4.4
 #
@@ -72,7 +75,9 @@ max-statements=160
 max-branches=63
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=115
-
+# Maximum number of boolean expressions in a if statement (default 5)
+# currently in pcs/utils.py and in pcs/resource.py
+max-bool-expr=6
 
 [LOGGING]
 # Ignore imports when computing similarities.
@@ -90,6 +95,12 @@ dummy-variables-rgx=_$|dummy
 
 [FORMAT]
 # Maximum number of lines in a module
-max-module-lines=4929
+max-module-lines=4873
 # Maximum number of characters on a single line.
 max-line-length=637
+
+[ELIF]
+
+# Maximum number of nested blocks for function / method body
+# currently in pcs/utils.py, pcs/resource.py, pcs/cluster.py, pcs/constraint.py
+max-nested-blocks=6

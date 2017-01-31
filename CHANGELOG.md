@@ -7,6 +7,9 @@
   attribute in addition to a node name ([rhbz#1261116])
 - `pcs cluster cib-push` allows to push a diff obtained internally by comparing
   CIBs in specified files ([rhbz#1404233])
+- Added flags `--wait`, `--disabled`, `--group`, `--after`, `--before` into
+  the command `pcs stonith create`
+- Added commands `pcs stonith enable` and `pcs stonith disable`
 
 ### Changed
 - `pcs node [un]standby` and `pcs node [un]maintenance` is now atomic even if
@@ -14,6 +17,8 @@
 - Restarting pcsd initiated from pcs is now a synchronous operation
   ([rhbz#1284404])
 - Stopped bundling fonts used in pcsd GUI ([ghissue#125])
+- In `pcs resource create` flags `--master` and `--clone` changed to keywords
+  `master` and `clone`
 
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
@@ -35,6 +40,22 @@
 - Pcs now exits with an error when both `--all` and a list of nodes is specified
   in the `pcs cluster start | stop | enable | disable` commands ([rhbz#1339355])
 - built-in help and man page fixes and improvements ([rhbz#1347335])
+- In `pcs resource create` the flag `--clone` no longer steals arguments from
+  the keywords `meta` and `op` ([rhbz#1395226])
+- `pcs resource create` does not produce invalid cib when group id is already
+  occupied with non-resource element ([rhbz#1382004])
+- Fixed misbehavior of the flag `--master` in `pcs resource create` command
+  ([rhbz#1378107])
+- Fixed tacit acceptance of invalid resource operation in `pcs resource create`
+  ([rhbz#1398562])
+- Fixed misplacing metadata for disabling when running `pcs resource create`
+  with flags `--clone` and `--disabled` ([rhbz#1402475])
+- Fixed incorrect acceptance of the invalid attribute of resource operation in
+  `pcs resource create` ([rhbz#1382597])
+- Fixed validation of options of resource operations in `pcs resource create`
+  ([rhbz#1390071])
+- Fixed silent omission of duplicate options ([rhbz#1390066])
+- Added more validation for resource agent names ([rhbz#1387670])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -45,11 +66,20 @@
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1339355]: https://bugzilla.redhat.com/show_bug.cgi?id=1339355
 [rhbz#1347335]: https://bugzilla.redhat.com/show_bug.cgi?id=1347335
+[rhbz#1378107]: https://bugzilla.redhat.com/show_bug.cgi?id=1378107
+[rhbz#1382004]: https://bugzilla.redhat.com/show_bug.cgi?id=1382004
+[rhbz#1382597]: https://bugzilla.redhat.com/show_bug.cgi?id=1382597
+[rhbz#1387670]: https://bugzilla.redhat.com/show_bug.cgi?id=1387670
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
+[rhbz#1390066]: https://bugzilla.redhat.com/show_bug.cgi?id=1390066
+[rhbz#1390071]: https://bugzilla.redhat.com/show_bug.cgi?id=1390071
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
+[rhbz#1395226]: https://bugzilla.redhat.com/show_bug.cgi?id=1395226
+[rhbz#1398562]: https://bugzilla.redhat.com/show_bug.cgi?id=1398562
+[rhbz#1402475]: https://bugzilla.redhat.com/show_bug.cgi?id=1402475
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
 [rhbz#1404233]: https://bugzilla.redhat.com/show_bug.cgi?id=1404233
 

@@ -6,12 +6,17 @@ from __future__ import (
 )
 
 import re
+
 from lxml import etree
 
+from pcs.common.tools import is_string
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 
+def get_root(tree):
+    # ElementTree has getroot, Elemet has getroottree
+    return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
 
 def does_id_exist(tree, check_id):
     """
@@ -19,13 +24,12 @@ def does_id_exist(tree, check_id):
     tree cib etree node
     check_id id to check
     """
-    # ElementTree has getroot, Elemet has getroottree
-    root = tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
+
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
-    existing = root.xpath(
+    existing = get_root(tree).xpath(
         (
-            '(/cib/*[name()!="status"]|/*[name()!="cib"])' +
+            '(/cib/*[name()!="status"]|/*[name()!="cib"])'
             '//*[name()!="acl_target" and name()!="role" and @id="{0}"]'
         ).format(check_id)
     )
@@ -51,6 +55,63 @@ def find_unique_id(tree, check_id):
         temp_id = "{0}-{1}".format(check_id, counter)
         counter += 1
     return temp_id
+
+def find_element_by_tag_and_id(
+    tag, context_element, element_id, none_if_id_unused=False, id_description=""
+):
+    """
+    Return element with given tag and element_id under context_element. When
+    element does not exists raises LibraryError or return None if specified in
+    none_if_id_unused.
+
+    etree.Element(Tree) context_element is part of tree for element scan
+    string|list tag is expected tag (or list of tags) of search element
+    string element_id is id of search element
+    bool none_if_id_unused is flag, when is True and element with element_id
+        does not exists function returns None
+    string id_description optional description for id
+    """
+    tag_list = [tag] if is_string(tag) else tag
+    element_list = context_element.xpath(
+        './/*[({0}) and @id="{1}"]'.format(
+            " or ".join(["self::{0}".format(one_tag) for one_tag in tag_list]),
+            element_id
+        )
+    )
+
+    if element_list:
+        return element_list[0]
+
+    element = get_root(context_element).find(
+        './/*[@id="{0}"]'.format(element_id)
+    )
+
+    if element is not None:
+        raise LibraryError(
+            reports.id_belongs_to_unexpected_type(
+                element_id,
+                expected_types=tag_list,
+                current_type=element.tag
+            ) if element.tag not in tag_list
+            else reports.object_with_id_in_unexpected_context(
+                element.tag,
+                element_id,
+                context_element.tag,
+                context_element.attrib.get("id", "")
+            )
+        )
+
+    if none_if_id_unused:
+        return None
+
+    raise LibraryError(
+       reports.id_not_found(
+           element_id,
+           id_description if id_description else "/".join(tag_list),
+           context_element.tag,
+           context_element.attrib.get("id", "")
+       )
+    )
 
 def create_subelement_id(context_element, suffix):
     return find_unique_id(
@@ -189,4 +250,3 @@ def etree_element_attibutes_to_dict(etree_el, required_key_list):
         extracted
     """
     return dict([(key, etree_el.get(key)) for key in required_key_list])
-

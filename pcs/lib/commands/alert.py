@@ -86,6 +86,7 @@ def remove_alert(lib_env, alert_id_list):
             alert.remove_alert(cib, alert_id)
         except LibraryError as e:
             report_list += e.args
+
     lib_env.report_processor.process_list(report_list)
     lib_env.push_cib(cib)
 

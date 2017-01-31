@@ -36,136 +36,6 @@ class UpdateOptionalAttributeTest(TestCase):
         alert._update_optional_attribute(element, "attr", "")
         self.assertTrue(element.get("attr") is None)
 
-
-class GetAlertByIdTest(TestCase):
-    def test_found(self):
-        xml = """
-            <cib>
-                <configuration>
-                    <alerts>
-                        <alert id="alert-1"/>
-                        <alert id="alert-2"/>
-                    </alerts>
-                </configuration>
-            </cib>
-        """
-        assert_xml_equal(
-            '<alert id="alert-2"/>',
-            etree.tostring(
-                alert.get_alert_by_id(etree.XML(xml), "alert-2")
-            ).decode()
-        )
-
-    def test_different_place(self):
-        xml = """
-            <cib>
-                <configuration>
-                    <alerts>
-                        <alert id="alert-1"/>
-                    </alerts>
-                    <alert id="alert-2"/>
-                </configuration>
-            </cib>
-        """
-        assert_raise_library_error(
-            lambda: alert.get_alert_by_id(etree.XML(xml), "alert-2"),
-            (
-                severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert-2"}
-            )
-        )
-
-    def test_not_exist(self):
-        xml = """
-            <cib>
-                <configuration>
-                    <alerts>
-                        <alert id="alert-1"/>
-                    </alerts>
-                </configuration>
-            </cib>
-        """
-        assert_raise_library_error(
-            lambda: alert.get_alert_by_id(etree.XML(xml), "alert-2"),
-            (
-                severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert-2"}
-            )
-        )
-
-
-class GetRecipientByIdTest(TestCase):
-    def setUp(self):
-        self.xml = etree.XML(
-            """
-                <cib>
-                    <configuration>
-                        <alerts>
-                            <alert id="alert-1">
-                                <recipient id="rec-1" value="value1"/>
-                                <not_recipient id="rec-3" value="value3"/>
-                                <recipients>
-                                    <recipient id="rec-4" value="value4"/>
-                                </recipients>
-                            </alert>
-                            <recipient id="rec-2" value="value2"/>
-                        </alerts>
-                        <alert id="alert-2"/>
-                    </configuration>
-                </cib>
-            """
-        )
-
-    def test_exist(self):
-        assert_xml_equal(
-            '<recipient id="rec-1" value="value1"/>',
-            etree.tostring(
-                alert.get_recipient_by_id(self.xml, "rec-1")
-            ).decode()
-        )
-
-    def test_different_place(self):
-        assert_raise_library_error(
-            lambda: alert.get_recipient_by_id(self.xml, "rec-4"),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "rec-4",
-                    "id_description": "Recipient"
-                }
-            )
-        )
-
-    def test_not_in_alert(self):
-        assert_raise_library_error(
-            lambda: alert.get_recipient_by_id(self.xml, "rec-2"),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "rec-2",
-                    "id_description": "Recipient"
-                }
-            )
-        )
-
-    def test_not_recipient(self):
-        assert_raise_library_error(
-            lambda: alert.get_recipient_by_id(self.xml, "rec-3"),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "rec-3",
-                    "id_description": "Recipient"
-                }
-            )
-        )
-
-
 class EnsureRecipientValueIsUniqueTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
@@ -472,8 +342,13 @@ class UpdateAlertTest(TestCase):
             lambda: alert.update_alert(self.tree, "alert0", "/test"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert0"}
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "alert0",
+                    "context_type": "alerts",
+                    "context_id": "",
+                    "id_description": "alert"
+                }
             )
         )
 
@@ -513,8 +388,13 @@ class RemoveAlertTest(TestCase):
             lambda: alert.remove_alert(self.tree, "not-existing-id"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "not-existing-id"}
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "not-existing-id",
+                    "context_type": "alerts",
+                    "context_id": "",
+                    "id_description": "alert"
+                }
             )
         )
 
@@ -668,8 +548,13 @@ class AddRecipientTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert1"}
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "alert1",
+                    "context_type": "alerts",
+                    "context_id": "",
+                    "id_description": "alert"
+                }
             )
         )
 
@@ -990,7 +875,7 @@ class UpdateRecipientTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "recipient",
-                    "id_description": "Recipient"
+                    "id_description": "recipient"
                 }
             )
         )
@@ -1038,7 +923,9 @@ class RemoveRecipientTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "recipient",
-                    "id_description": "Recipient"
+                    "context_type": "alerts",
+                    "context_id": "",
+                    "id_description": "recipient",
                 }
             )
         )

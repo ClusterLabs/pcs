@@ -29,6 +29,18 @@ def console_report(*lines):
 class AssertPcsMixin(object):
     """Run pcs command and assert its result"""
 
+    def assert_pcs_success_all(self, command_list):
+        for command in command_list:
+            stdout, pcs_returncode = self.pcs_runner.run(command)
+            if pcs_returncode != 0:
+                raise AssertionError(
+                    (
+                        "Command '{0}' does not succeed.\n"
+                        "return_code: {1}\n"
+                        "stdout:\n{2}"
+                    ).format(command, pcs_returncode, stdout)
+                )
+
     def assert_pcs_success(self, command, stdout_full=None, stdout_start=None):
         full = stdout_full
         if stdout_start is None and stdout_full is None:
@@ -46,6 +58,12 @@ class AssertPcsMixin(object):
             stdout_start=stdout_start,
             returncode=1
         )
+
+    def assert_pcs_fail_regardless_of_force(
+        self, command, stdout_full=None, stdout_start=None
+    ):
+        self.assert_pcs_fail(command, stdout_full, stdout_start)
+        self.assert_pcs_fail(command+" --force", stdout_full, stdout_start)
 
     def assert_pcs_result(
         self, command, stdout_full=None, stdout_start=None, returncode=0
@@ -131,14 +149,22 @@ class ExtendedAssertionsMixin(object):
                     )
 
 
-def assert_xml_equal(expected_xml, got_xml):
+def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
     checker = LXMLOutputChecker()
     if not checker.check_output(expected_xml, got_xml, 0):
-        raise AssertionError(checker.output_difference(
-            doctest.Example("", expected_xml),
-            got_xml,
-            0
-        ))
+        raise AssertionError(
+            "{context_explanation}{xml_diff}".format(
+                context_explanation=(
+                    "" if not context_explanation
+                    else "\n{0}\n".format(context_explanation)
+                ),
+                xml_diff=checker.output_difference(
+                    doctest.Example("", expected_xml),
+                    got_xml,
+                    0
+                )
+            )
+        )
 
 def assert_report_item_equal(real_report_item, report_item_info):
     if not __report_item_equal(real_report_item, report_item_info):
@@ -200,7 +226,8 @@ def __find_report_info(report_info_list, report_item):
                 report_item.info,
                 report_item.forceable
             )),
-            "\n".join(map(repr, report_info_list))
+            "\n".join(map(repr, report_info_list)) if report_info_list
+                else "  No report is expected!"
         )
     )
 

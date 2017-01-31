@@ -18,6 +18,7 @@ from pcs.cli.common.parse_args import(
     is_short_option_expecting_value,
     is_long_option_expecting_value,
     is_option_expecting_value,
+    upgrade_args,
 )
 from pcs.cli.common.errors import CmdLineInputError
 
@@ -38,6 +39,15 @@ class PrepareOptionsTest(TestCase):
         self.assertRaises(
             CmdLineInputError, lambda: prepare_options(['=a'])
         )
+
+    def test_refuse_options_with_same_key_and_differend_value(self):
+        self.assertRaises(
+            CmdLineInputError, lambda: prepare_options(['a=a', "a=b"])
+        )
+
+    def test_accept_options_with_ssame_key_and_same_value(self):
+        self.assertEqual({'a': '1'}, prepare_options(["a=1", "a=1"]))
+
 
 class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):
@@ -61,7 +71,7 @@ class SplitByKeywords(TestCase):
             group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
                 set(["first", "second"]),
-                implicit_first_keyword="zero"
+                implicit_first_group_key="zero"
             ),
             {
                 "zero": [0],
@@ -105,7 +115,7 @@ class SplitByKeywords(TestCase):
             group_by_keywords(
                 [],
                 set(["first", "second"]),
-                implicit_first_keyword="zero",
+                implicit_first_group_key="zero",
             ),
             {
                 "zero": [],
@@ -133,6 +143,51 @@ class SplitByKeywords(TestCase):
             keyword_repeat_allowed=False,
         ))
 
+    def test_group_repeating_keyword_occurences(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", 1, 2, "second", 3, "first", 4],
+                set(["first", "second"]),
+                group_repeated_keywords=["first"]
+            ),
+            {
+                "first": [[1, 2], [4]],
+                "second": [3],
+            }
+        )
+
+    def test_raises_on_group_repeated_keywords_inconsistency(self):
+        self.assertRaises(AssertionError, lambda: group_by_keywords(
+            [],
+            set(["first", "second"]),
+            group_repeated_keywords=["first", "third"],
+            implicit_first_group_key="third"
+        ))
+
+    def test_implicit_first_kw_not_applyed_in_the_middle(self):
+        self.assertEqual(
+            group_by_keywords(
+                [1, 2, "first", 3, "zero", 4],
+                set(["first"]),
+                implicit_first_group_key="zero"
+            ),
+            {
+                "zero": [1, 2],
+                "first": [3, "zero", 4],
+            }
+        )
+    def test_implicit_first_kw_applyed_in_the_middle_when_is_in_kwds(self):
+        self.assertEqual(
+            group_by_keywords(
+                [1, 2, "first", 3, "zero", 4],
+                set(["first", "zero"]),
+                implicit_first_group_key="zero"
+            ),
+            {
+                "zero": [1, 2, 4],
+                "first": [3],
+            }
+        )
 
 class ParseTypedArg(TestCase):
     def assert_parse(self, arg, parsed):
@@ -364,3 +419,49 @@ class IsOptionExpectingValue(TestCase):
         self.assertFalse(is_option_expecting_value("--name=Name"))
         self.assertFalse(is_option_expecting_value("-fvalue"))
 
+class UpgradeArgs(TestCase):
+    def test_returns_the_same_args_when_no_older_versions_detected(self):
+        args = ["first", "second"]
+        self.assertEqual(args, upgrade_args(args))
+
+    def test_upgrade_2dash_cloneopt(self):
+        self.assertEqual(
+            ["first", "clone", "second"],
+            upgrade_args(["first", "--cloneopt", "second"])
+        )
+
+    def test_upgrade_2dash_clone(self):
+        self.assertEqual(
+            ["first", "clone", "second"],
+            upgrade_args(["first", "--clone", "second"])
+        )
+
+    def test_upgrade_2dash_cloneopt_with_value(self):
+        self.assertEqual(
+            ["first", "clone", "1", "second"],
+            upgrade_args(["first", "--cloneopt=1", "second"])
+        )
+
+    def test_upgrade_2dash_master_in_resource_create(self):
+        self.assertEqual(
+            ["resource", "create", "master", "second"],
+            upgrade_args(["resource", "create", "--master", "second"])
+        )
+
+    def test_dont_upgrade_2dash_master_outside_of_resource_create(self):
+        self.assertEqual(
+            ["first", "--master", "second"],
+            upgrade_args(["first", "--master", "second"])
+        )
+
+    def test_upgrade_2dash_master_in_resource_create_with_complications(self):
+        self.assertEqual(
+            [
+                "-f", "path/to/file", "resource", "-V", "create", "master",
+                "second"
+            ],
+            upgrade_args([
+                "-f", "path/to/file", "resource", "-V", "create", "--master",
+                "second"
+            ])
+        )

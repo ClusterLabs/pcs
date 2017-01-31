@@ -10,7 +10,7 @@ from functools import partial
 
 from pcs.common import report_codes
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
+from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.cib.nvpair import arrange_first_nvset, get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
@@ -18,8 +18,14 @@ from pcs.lib.cib.tools import (
     find_unique_id,
     get_alerts,
     validate_id_does_not_exist,
+    find_element_by_tag_and_id,
 )
 
+TAG_ALERT = "alert"
+TAG_RECIPIENT = "recipient"
+
+find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
+find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
 
 update_instance_attributes = partial(
     arrange_first_nvset,
@@ -42,38 +48,6 @@ def _update_optional_attribute(element, attribute, value):
         element.set(attribute, value)
     elif attribute in element.attrib:
         del element.attrib[attribute]
-
-
-def get_alert_by_id(tree, alert_id):
-    """
-    Returns alert element with specified id.
-    Raises LibraryError if alert with specified id doesn't exist.
-
-    tree -- cib etree node
-    alert_id -- id of alert
-    """
-    alert = get_alerts(tree).find("./alert[@id='{0}']".format(alert_id))
-    if alert is None:
-        raise LibraryError(reports.cib_alert_not_found(alert_id))
-    return alert
-
-
-def get_recipient_by_id(tree, recipient_id):
-    """
-    Returns recipient element with value recipient_value which belong to
-    specified alert.
-    Raises LibraryError if recipient doesn't exist.
-
-    tree -- cib etree node
-    recipient_id -- id of recipient
-    """
-    recipient = get_alerts(tree).find(
-        "./alert/recipient[@id='{0}']".format(recipient_id)
-    )
-    if recipient is None:
-        raise LibraryError(reports.id_not_found(recipient_id, "Recipient"))
-    return recipient
-
 
 def ensure_recipient_value_is_unique(
     reporter, alert, recipient_value, recipient_id="", allow_duplicity=False
@@ -138,7 +112,7 @@ def update_alert(tree, alert_id, path, description=None):
     description -- new value of description, stay unchanged if None, remove
         if empty
     """
-    alert = get_alert_by_id(tree, alert_id)
+    alert = find_alert(get_alerts(tree), alert_id)
     if path:
         alert.set("path", path)
     _update_optional_attribute(alert, "description", description)
@@ -153,7 +127,7 @@ def remove_alert(tree, alert_id):
     tree -- cib etree node
     alert_id -- id of alert which should be removed
     """
-    alert = get_alert_by_id(tree, alert_id)
+    alert = find_alert(get_alerts(tree), alert_id)
     alert.getparent().remove(alert)
 
 
@@ -184,7 +158,7 @@ def add_recipient(
     else:
         validate_id_does_not_exist(tree, recipient_id)
 
-    alert = get_alert_by_id(tree, alert_id)
+    alert = find_alert(get_alerts(tree), alert_id)
     ensure_recipient_value_is_unique(
         reporter, alert, recipient_value, allow_duplicity=allow_same_value
     )
@@ -218,7 +192,7 @@ def update_recipient(
         if None
     allow_same_value -- if True unique recipient value is not required
     """
-    recipient = get_recipient_by_id(tree, recipient_id)
+    recipient = find_recipient(get_alerts(tree), recipient_id)
     if recipient_value is not None:
         ensure_recipient_value_is_unique(
             reporter,
@@ -240,7 +214,7 @@ def remove_recipient(tree, recipient_id):
     tree -- cib etree node
     recipient_id -- id of recipient to be removed
     """
-    recipient = get_recipient_by_id(tree, recipient_id)
+    recipient = find_recipient(get_alerts(tree), recipient_id)
     recipient.getparent().remove(recipient)
 
 

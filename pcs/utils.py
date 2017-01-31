@@ -51,7 +51,6 @@ from pcs.lib.external import (
     _service,
     _systemctl,
 )
-import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
@@ -108,8 +107,6 @@ except ImportError:
 
 
 PYTHON2 = sys.version[0] == "2"
-
-DEFAULT_RESOURCE_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -1498,53 +1495,12 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         "nodes_slave": nodes_slave,
     }
 
-def filter_default_op_from_actions(resource_actions):
-    filtered = []
-    for action in resource_actions:
-        if action.get("name", "") not in DEFAULT_RESOURCE_ACTIONS:
-            continue
-        new_action = dict([
-            (name, value)
-            for name, value in action.items()
-            if name != "depth"
-        ])
-        filtered.append(new_action)
-    return filtered
-
-# Given a resource agent (ocf:heartbeat:XXX) return an list of default
-# operations or an empty list if unable to find any default operations
-def get_default_op_values(full_agent_name):
-    default_ops = []
-    try:
-        if full_agent_name.startswith("stonith:"):
-            metadata = lib_ra.StonithAgent(
-                cmd_runner(),
-                full_agent_name[len("stonith:"):]
-            )
-        else:
-            metadata = lib_ra.ResourceAgent(
-                cmd_runner(),
-                full_agent_name
-            )
-        actions = filter_default_op_from_actions(metadata.get_actions())
-
-        for action in actions:
-            op = [action["name"]]
-            for key in action.keys():
-                if key != "name" and action[key] != "0":
-                    op.append("{0}={1}".format(key, action[key]))
-            default_ops.append(op)
-    except lib_ra.UnableToGetAgentMetadata:
-        return []
-    except lib_ra.ResourceAgentError as e:
-        process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e)]
-        )
-    except LibraryError as e:
-        process_library_reports(e.args)
-
-    return default_ops
-
+def agent_action_to_cmdline_format(action):
+    op = [action["name"]]
+    for key in action.keys():
+        if key != "name" and action[key] != "0":
+            op.append("{0}={1}".format(key, action[key]))
+    return op
 
 def check_pacemaker_supports_resource_wait():
     if not has_wait_for_idle_support(cmd_runner()):
@@ -2795,14 +2751,19 @@ def get_modificators():
     #commands is not an issue
     return {
         "all": "--all" in pcs_options,
+        "after": pcs_options.get("--after", None),
         "autocorrect": "--autocorrect" in pcs_options,
         "autodelete": "--autodelete" in pcs_options,
+        "before": pcs_options.get("--before", None),
         "corosync_conf": pcs_options.get("--corosync_conf", None),
         "describe": "--nodesc" not in pcs_options,
+        "disabled": "--disabled" in pcs_options,
         "enable": "--enable" in pcs_options,
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
+        "group": pcs_options.get("--group", None),
         "name": pcs_options.get("--name", None),
+        "no-default-ops": "--no-default-ops" in pcs_options,
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "wait": pcs_options.get("--wait", False),

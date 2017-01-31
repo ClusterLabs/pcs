@@ -5,13 +5,19 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import reports
+from contextlib import contextmanager
+
 from pcs.lib.cib import acl
-from pcs.lib.errors import LibraryError
+from pcs.lib.cib.tools import get_acls
 
 
 REQUIRED_CIB_VERSION = (2, 0, 0)
 
+@contextmanager
+def cib_acl_section(env):
+    cib = env.get_cib(REQUIRED_CIB_VERSION)
+    yield get_acls(cib)
+    env.push_cib(cib)
 
 def create_role(lib_env, role_id, permission_info_list, description):
     """
@@ -24,16 +30,12 @@ def create_role(lib_env, role_id, permission_info_list, description):
         (<read|write|deny>, <xpath|id>, <any string>)
     description -- text description for role
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-
-    if permission_info_list:
-        acl.validate_permissions(cib, permission_info_list)
-    role_el = acl.create_role(cib, role_id, description)
-    if permission_info_list:
-        acl.add_permissions_to_role(role_el, permission_info_list)
-
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        if permission_info_list:
+            acl.validate_permissions(acl_section, permission_info_list)
+        role_el = acl.create_role(acl_section, role_id, description)
+        if permission_info_list:
+            acl.add_permissions_to_role(role_el, permission_info_list)
 
 def remove_role(lib_env, role_id, autodelete_users_groups=False):
     """
@@ -45,13 +47,8 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
     autodelete_users_groups -- if True targets and groups which are empty after
         removal will be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
-        acl.remove_role(cib, role_id, autodelete_users_groups)
-    except acl.AclRoleNotFound as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.remove_role(acl_section, role_id, autodelete_users_groups)
 
 def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     """
@@ -64,37 +61,12 @@ def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     role_id -- id of role which should be assigne to target/group
     target_or_group_id -- id of target/group element
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
+    with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            _get_target_or_group(cib, target_or_group_id),
-            acl.find_role(cib, role_id)
+            acl_section,
+            role_id,
+            acl.find_target_or_group(acl_section, target_or_group_id),
         )
-    except acl.AclError as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
-
-def _get_target_or_group(cib, target_or_group_id):
-    """
-    Returns acl_target or acl_group element with id target_or_group_id. Target
-    element has bigger pririty so if there are target and group with same id
-    only target element will be affected by this function.
-    Raises LibraryError if there is no target or group element with
-    specified id.
-
-    cib -- cib etree node
-    target_or_group_id -- id of target/group element which should be returned
-    """
-    try:
-        return acl.find_target(cib, target_or_group_id)
-    except acl.AclTargetNotFound:
-        try:
-            return acl.find_group(cib, target_or_group_id)
-        except acl.AclGroupNotFound:
-            raise LibraryError(
-                reports.id_not_found(target_or_group_id, "user/group")
-            )
 
 def assign_role_to_target(lib_env, role_id, target_id):
     """
@@ -105,15 +77,12 @@ def assign_role_to_target(lib_env, role_id, target_id):
     role_id -- id of acl_role element which should be assigned to target
     target_id -- id of acl_target element to which role should be assigned
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
+    with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl.find_target(cib, target_id), acl.find_role(cib, role_id)
+            acl_section,
+            role_id,
+            acl.find_target(acl_section, target_id),
         )
-    except acl.AclError as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
 
 def assign_role_to_group(lib_env, role_id, group_id):
     """
@@ -124,15 +93,12 @@ def assign_role_to_group(lib_env, role_id, group_id):
     role_id -- id of acl_role element which should be assigned to group
     group_id -- id of acl_group element to which role should be assigned
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
+    with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl.find_group(cib, group_id), acl.find_role(cib, role_id)
+            acl_section,
+            role_id,
+            acl.find_group(acl_section, group_id),
         )
-    except acl.AclError as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
 
 def unassign_role_not_specific(
     lib_env, role_id, target_or_group_id, autodelete_target_group=False
@@ -149,14 +115,12 @@ def unassign_role_not_specific(
     autodelete_target_group -- if True remove target/group element if has no
         more role assigned
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    acl.unassign_role(
-        _get_target_or_group(cib, target_or_group_id),
-        role_id,
-        autodelete_target_group
-    )
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.unassign_role(
+            acl.find_target_or_group(acl_section, target_or_group_id),
+            role_id,
+            autodelete_target_group
+        )
 
 def unassign_role_from_target(
     lib_env, role_id, target_id, autodelete_target=False
@@ -171,17 +135,12 @@ def unassign_role_from_target(
     autodelete_target -- if True remove target element if has no more role
         assigned
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
+    with cib_acl_section(lib_env) as acl_section:
         acl.unassign_role(
-            acl.find_target(cib, target_id),
+            acl.find_target(acl_section, target_id),
             role_id,
             autodelete_target
         )
-    except acl.AclError as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
 
 def unassign_role_from_group(
     lib_env, role_id, group_id, autodelete_group=False
@@ -196,36 +155,12 @@ def unassign_role_from_group(
     autodelete_target -- if True remove group element if has no more role
         assigned
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    try:
+    with cib_acl_section(lib_env) as acl_section:
         acl.unassign_role(
-            acl.find_group(cib, group_id),
+            acl.find_group(acl_section, group_id),
             role_id,
             autodelete_group
         )
-    except acl.AclError as e:
-        raise LibraryError(acl.acl_error_to_report_item(e))
-    lib_env.push_cib(cib)
-
-
-def _assign_roles_to_element(cib, element, role_id_list):
-    """
-    Assign roles from role_id_list to element.
-    Raises LibraryError on any failure.
-
-    cib -- cib etree node
-    element -- element to which specified roles should be assigned
-    role_id_list -- list of role id
-    """
-    report_list = []
-    for role_id in role_id_list:
-        try:
-            acl.assign_role(element, acl.find_role(cib, role_id))
-        except acl.AclError as e:
-            report_list.append(acl.acl_error_to_report_item(e))
-    if report_list:
-        raise LibraryError(*report_list)
-
 
 def create_target(lib_env, target_id, role_list):
     """
@@ -236,10 +171,12 @@ def create_target(lib_env, target_id, role_list):
     target_id -- id of new target
     role_list -- list of roles to assign to new target
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    _assign_roles_to_element(cib, acl.create_target(cib, target_id), role_list)
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.assign_all_roles(
+            acl_section,
+            role_list,
+            acl.create_target(acl_section, target_id)
+        )
 
 def create_group(lib_env, group_id, role_list):
     """
@@ -250,10 +187,12 @@ def create_group(lib_env, group_id, role_list):
     group_id -- id of new group
     role_list -- list of roles to assign to new group
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    _assign_roles_to_element(cib, acl.create_group(cib, group_id), role_list)
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.assign_all_roles(
+            acl_section,
+            role_list,
+            acl.create_group(acl_section, group_id)
+        )
 
 def remove_target(lib_env, target_id):
     """
@@ -263,10 +202,8 @@ def remove_target(lib_env, target_id):
     lib_env -- LibraryEnvironment
     target_id -- id of taget which should be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    acl.remove_target(cib, target_id)
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.remove_target(acl_section, target_id)
 
 def remove_group(lib_env, group_id):
     """
@@ -276,10 +213,8 @@ def remove_group(lib_env, group_id):
     lib_env -- LibraryEnvironment
     group_id -- id of group which should be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    acl.remove_group(cib, group_id)
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.remove_group(acl_section, group_id)
 
 def add_permission(lib_env, role_id, permission_info_list):
     """
@@ -292,13 +227,12 @@ def add_permission(lib_env, role_id, permission_info_list):
     permission_info_list -- list of permissons, items of list should be tuples:
         (<read|write|deny>, <xpath|id>, <any string>)
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    acl.validate_permissions(cib, permission_info_list)
-    acl.add_permissions_to_role(
-        acl.provide_role(cib, role_id), permission_info_list
-    )
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.validate_permissions(acl_section, permission_info_list)
+        acl.add_permissions_to_role(
+            acl.provide_role(acl_section, role_id),
+            permission_info_list
+        )
 
 def remove_permission(lib_env, permission_id):
     """
@@ -308,10 +242,8 @@ def remove_permission(lib_env, permission_id):
     lib_env -- LibraryEnvironment
     permission_id -- id of permission element which should be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    acl.remove_permission(cib, permission_id)
-    lib_env.push_cib(cib)
-
+    with cib_acl_section(lib_env) as acl_section:
+        acl.remove_permission(acl_section, permission_id)
 
 def get_config(lib_env):
     """
@@ -324,10 +256,9 @@ def get_config(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    acl_section = get_acls(lib_env.get_cib(REQUIRED_CIB_VERSION))
     return {
-        "target_list": acl.get_target_list(cib),
-        "group_list": acl.get_group_list(cib),
-        "role_list": acl.get_role_list(cib),
+        "target_list": acl.get_target_list(acl_section),
+        "group_list": acl.get_group_list(acl_section),
+        "role_list": acl.get_role_list(acl_section),
     }
-

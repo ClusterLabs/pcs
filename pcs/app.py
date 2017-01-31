@@ -49,32 +49,23 @@ def main(argv=None):
     global filename, usefile
     orig_argv = argv[:]
     utils.pcs_options = {}
+
+    argv = parse_args.upgrade_args(argv)
+
+    # we want to support optional arguments for --wait, so if an argument
+    # is specified with --wait (ie. --wait=30) then we use them
+    waitsecs = None
+    new_argv = []
+    for arg in argv:
+        if arg.startswith("--wait="):
+            tempsecs = arg.replace("--wait=","")
+            if len(tempsecs) > 0:
+                waitsecs = tempsecs
+                arg = "--wait"
+        new_argv.append(arg)
+    argv = new_argv
+
     try:
-        # we change --cloneopt to "clone" for backwards compatibility
-        new_argv = []
-        for arg in argv:
-            if arg == "--cloneopt" or arg == "--clone":
-                new_argv.append("clone")
-            elif arg.startswith("--cloneopt="):
-                new_argv.append("clone")
-                new_argv.append(arg.split('=',1)[1])
-            else:
-                new_argv.append(arg)
-        argv = new_argv
-
-        # we want to support optional arguments for --wait, so if an argument
-        # is specified with --wait (ie. --wait=30) then we use them
-        waitsecs = None
-        new_argv = []
-        for arg in argv:
-            if arg.startswith("--wait="):
-                tempsecs = arg.replace("--wait=","")
-                if len(tempsecs) > 0:
-                    waitsecs = tempsecs
-                    arg = "--wait"
-            new_argv.append(arg)
-        argv = new_argv
-
         pcs_options, dummy_argv = getopt.gnu_getopt(
             parse_args.filter_out_non_option_negative_numbers(argv),
             parse_args.PCS_SHORT_OPTIONS,

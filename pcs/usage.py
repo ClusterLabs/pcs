@@ -208,11 +208,11 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [--clone <clone options> | --master <master options> |
+           [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
            ] [--disabled] [--wait[=n]]
-        Create specified resource.  If --clone is used a clone resource is
-        created.  If --master is specified a master/slave resource is created.
+        Create specified resource.  If clone is used a clone resource is
+        created.  If master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.  You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.
@@ -771,13 +771,37 @@ Commands:
     create <stonith id> <stonith device type> [stonith device options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
+           [--group <group id> [--before <stonith id> | --after <stonith id>]]
+           [--disabled] [--wait[=n]]
         Create stonith device with specified type and options.
+        If --group is specified the stonith device is added to the group named.
+        You can use --before or --after to specify the position of the added
+        stonith device relatively to some stonith device already existing in the
+        group.
+        If --disabled is specified the stonith device is not used.
+        If --wait is specified, pcs will wait up to 'n' seconds for the stonith
+        device to start and then return 0 if the stonith device is started, or 1
+        if the stonith device has not yet started.  If 'n' is not specified it
+        defaults to 60 minutes.
 
     update <stonith id> [stonith device options]
         Add/Change options to specified stonith id.
 
     delete <stonith id>
         Remove stonith id from configuration.
+
+    enable <stonith id> [--wait[=n]]
+        Allow the cluster to use the stonith device. If --wait is specified, pcs
+        will wait up to 'n' seconds for the stonith device to start and then
+        return 0 if the stonith device is started, or 1 if the stonith device
+        has not yet started. If 'n' is not specified it defaults to 60 minutes.
+
+    disable <stonith id> [--wait[=n]]
+        Attempt to stop the stonith device if it is running and disallow the
+        cluster to use it. If --wait is specified, pcs will wait up to 'n'
+        seconds for the stonith device to stop and then return 0 if the stonith
+        device is stopped or 1 if the stonith device has not stopped.  If 'n' is
+        not specified it defaults to 60 minutes.
 
     cleanup [<stonith id>] [--node <node>]
         Make the cluster forget the operation history of the stonith device and

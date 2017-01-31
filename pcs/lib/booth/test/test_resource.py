@@ -11,7 +11,6 @@ from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource
 from pcs.test.tools.pcs_unittest import mock
-from pcs.test.tools.misc import get_test_resource as rc
 
 
 def fixture_resources_with_booth(booth_config_file_path):
@@ -156,42 +155,6 @@ class RemoveFromClusterTest(TestCase):
                 mock.call('booth'),
             ]
         )
-
-class CreateInClusterTest(TestCase):
-    def test_remove_ip_when_booth_resource_add_failed(self):
-        mock_resource_create = mock.Mock(side_effect=[None, SystemExit(1)])
-        mock_resource_remove = mock.Mock()
-        mock_create_id = mock.Mock(side_effect=["ip_id","booth_id","group_id"])
-        ip = "1.2.3.4"
-        booth_config_file_path = rc("/path/to/booth.conf")
-
-        booth_resource.get_creator(mock_resource_create, mock_resource_remove)(
-            ip,
-            booth_config_file_path,
-            mock_create_id
-        )
-        self.assertEqual(mock_resource_create.mock_calls, [
-            mock.call(
-                clone_opts=[],
-                group=u'group_id',
-                meta_values=[],
-                op_values=[],
-                ra_id=u'ip_id',
-                ra_type=u'ocf:heartbeat:IPaddr2',
-                ra_values=[u'ip=1.2.3.4'],
-            ),
-            mock.call(
-                clone_opts=[],
-                group='group_id',
-                meta_values=[],
-                op_values=[],
-                ra_id='booth_id',
-                ra_type='ocf:pacemaker:booth-site',
-                ra_values=['config=/path/to/booth.conf'],
-            )
-        ])
-        mock_resource_remove.assert_called_once_with("ip_id")
-
 
 class FindBoundIpTest(TestCase):
     def fixture_resource_section(self, ip_element_list):

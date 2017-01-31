@@ -7,6 +7,8 @@ from __future__ import (
 
 import os
 import re
+from collections import namedtuple
+
 from lxml import etree
 
 from pcs import settings
@@ -18,6 +20,59 @@ from pcs.common import report_codes
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
+DEFAULT_RESOURCE_CIB_ACTION_NAMES = [
+    "monitor",
+    "start",
+    "stop",
+    "promote",
+    "demote",
+]
+DEFAULT_STONITH_CIB_ACTION_NAMES = ["monitor"]
+
+# Operation monitor is required always! No matter if --no-default-ops was
+# entered or if agent does not specify it. See
+# http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html-single/Pacemaker_Explained/index.html#_resource_operations
+NECESSARY_CIB_ACTION_NAMES = ["monitor"]
+
+#These are all standards valid in cib. To get a list of standards supported by
+#pacemaker in local environment use result of "pcs resource standards".
+STANDARD_LIST = [
+    "ocf",
+    "lsb",
+    "heartbeat",
+    "stonith",
+    "upstart",
+    "service",
+    "systemd",
+    "nagios",
+]
+
+DEFAULT_INTERVALS = {
+    "monitor": "60s"
+}
+
+
+def get_default_interval(operation_name):
+    """
+    Return default interval for given operation_name.
+    string operation_name
+    """
+    return DEFAULT_INTERVALS.get(operation_name, "0s")
+
+def complete_all_intervals(raw_operation_list):
+    """
+    Return operation_list based on raw_operation_list where each item has key
+    "interval".
+
+    list of dict raw_operation_list can include items withou key "interval".
+    """
+    operation_list = []
+    for raw_operation in raw_operation_list:
+        operation = raw_operation.copy()
+        if "interval" not in operation:
+            operation["interval"] = get_default_interval(operation["name"])
+        operation_list.append(operation)
+    return operation_list
 
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
@@ -32,6 +87,30 @@ class UnableToGetAgentMetadata(ResourceAgentError):
 class InvalidResourceAgentName(ResourceAgentError):
     pass
 
+ResourceAgentName = namedtuple("ResourceAgentName", "standard provider type")
+
+def get_resource_agent_name_from_string(full_agent_name):
+    match = re.match(
+        "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
+        full_agent_name
+    )
+    if not match:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    standard = match.group("standard")
+    provider = match.group("provider") if match.group("provider") else None
+    agent_type = match.group("type")
+
+    if standard not in STANDARD_LIST:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    if standard == "ocf" and not provider:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    if standard != "ocf" and provider:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    return ResourceAgentName(standard, provider, agent_type)
 
 def list_resource_agents_standards(runner):
     """
@@ -186,8 +265,18 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     return agents[0]
 
 def find_valid_resource_agent_by_name(
-    report_processor, runner, name, allowed_absent=False
+    report_processor, runner, name,
+    allowed_absent=False, absent_agent_supported=True
 ):
+    """
+    Return instance of ResourceAgent corresponding to name
+
+    report_processor is tool for warning/info/error reporting
+    runner is tool for launching external commands
+    string name specifies a searched agent
+    bool absent_agent_supported flag decides if is possible to allow to return
+        absent agent: if is produced forceable/no-forcable error
+    """
     if ":" not in name:
         agent = guess_exactly_one_resource_agent_full_name(runner, name)
         report_processor.process(
@@ -195,26 +284,59 @@ def find_valid_resource_agent_by_name(
         )
         return agent
 
+    return _find_valid_agent_by_name(
+        report_processor,
+        runner,
+        name,
+        ResourceAgent,
+        AbsentResourceAgent if allowed_absent else None,
+        absent_agent_supported=absent_agent_supported,
+    )
+
+def find_valid_stonith_agent_by_name(
+    report_processor, runner, name,
+    allowed_absent=False, absent_agent_supported=True
+):
+    return _find_valid_agent_by_name(
+        report_processor,
+        runner,
+        name,
+        StonithAgent,
+        AbsentStonithAgent if allowed_absent else None,
+        absent_agent_supported=absent_agent_supported,
+    )
+
+def _find_valid_agent_by_name(
+    report_processor, runner, name, PresentAgentClass, AbsentAgentClass,
+    absent_agent_supported=True
+):
     try:
-        return ResourceAgent(runner, name).validate_metadata()
+        return PresentAgentClass(runner, name).validate_metadata()
     except InvalidResourceAgentName as e:
         raise LibraryError(resource_agent_error_to_report_item(e))
     except UnableToGetAgentMetadata as e:
-        if not allowed_absent:
+        if not absent_agent_supported:
             raise LibraryError(resource_agent_error_to_report_item(e))
+
+        if not AbsentAgentClass:
+            raise LibraryError(resource_agent_error_to_report_item(
+                    e,
+                    forceable=True
+            ))
 
         report_processor.process(resource_agent_error_to_report_item(
             e,
             severity=ReportItemSeverity.WARNING,
-            forceable=True
         ))
 
-        return AbsentResourceAgent(runner, name)
+        return AbsentAgentClass(runner, name)
 
 class Agent(object):
     """
     Base class for providing convinient access to an agent's metadata
     """
+    DEFAULT_CIB_ACTION_NAMES = []
+
     def __init__(self, runner):
         """
         create an instance which reads metadata by itself on demand
@@ -258,6 +380,7 @@ class Agent(object):
         agent_info = self.get_description_info()
         agent_info["parameters"] = self.get_parameters()
         agent_info["actions"] = self.get_actions()
+        agent_info["default_actions"] = self.get_cib_default_actions()
         return agent_info
 
 
@@ -326,6 +449,40 @@ class Agent(object):
             "advanced": False,
         }
 
+    def validate_parameters(
+        self, parameters,
+        parameters_type="resource agent parameter",
+        allow_invalid=False
+    ):
+        forceable = report_codes.FORCE_OPTIONS if not allow_invalid else None
+        severity = (
+            ReportItemSeverity.ERROR if not allow_invalid
+            else ReportItemSeverity.WARNING
+        )
+
+        report_list = []
+        bad_opts, missing_req_opts = self.validate_parameters_values(
+            parameters
+        )
+
+        if bad_opts:
+            report_list.append(reports.invalid_option(
+                bad_opts,
+                sorted([attr["name"] for attr in self.get_parameters()]),
+                parameters_type,
+                severity=severity,
+                forceable=forceable,
+            ))
+
+        if missing_req_opts:
+            report_list.append(reports.required_option_is_missing(
+                missing_req_opts,
+                parameters_type,
+                severity=severity,
+                forceable=forceable,
+            ))
+
+        return report_list
 
     def validate_parameters_values(self, parameters_values):
         """
@@ -350,11 +507,7 @@ class Agent(object):
             required_missing
         )
 
-
-    def get_actions(self):
-        """
-        Get list of agent's actions (operations)
-        """
+    def _get_raw_actions(self):
         actions_element = self._get_metadata().find("actions")
         if actions_element is None:
             return []
@@ -366,6 +519,41 @@ class Agent(object):
             for action in actions_element.iter("action")
         ]
 
+    def get_actions(self):
+        """
+        Get list of agent's actions (operations). Each action is represented as
+        dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
+        """
+        action_list = []
+        for raw_action in self._get_raw_actions():
+            action = {}
+            for key, value in raw_action.items():
+                if key != "depth":
+                    action[key] = value
+                elif value != "0":
+                    action["OCF_CHECK_LEVEL"] = value
+            action_list.append(action)
+        return action_list
+
+    def get_cib_default_actions(self, necessary_only=False):
+        """
+        List actions that should be put to resource on its creation.
+        Note that every action has at least attribute name.
+        """
+
+        action_list = [
+            action for action in self.get_actions()
+            if action.get("name", "") in (
+                NECESSARY_CIB_ACTION_NAMES if necessary_only
+                else self.DEFAULT_CIB_ACTION_NAMES
+            )
+        ]
+
+        for action_name in NECESSARY_CIB_ACTION_NAMES:
+            if action_name not in [action["name"] for action in action_list]:
+                action_list.append({"name": action_name})
+
+        return complete_all_intervals(action_list)
 
     def _get_metadata(self):
         """
@@ -403,12 +591,8 @@ class Agent(object):
 
 
 class FakeAgentMetadata(Agent):
-    def get_name(self):
-        raise NotImplementedError()
-
-
-    def _load_metadata(self):
-        raise NotImplementedError()
+    #pylint:disable=abstract-method
+    pass
 
 
 class StonithdMetadata(FakeAgentMetadata):
@@ -443,19 +627,33 @@ class StonithdMetadata(FakeAgentMetadata):
 
 
 class CrmAgent(Agent):
-    def __init__(self, runner, full_agent_name):
+    #pylint:disable=abstract-method
+    def __init__(self, runner, name):
         """
         init
         CommandRunner runner
-        string full_agent_name standard:provider:type or standard:type
         """
         super(CrmAgent, self).__init__(runner)
-        self._full_agent_name = full_agent_name
+        self._name_parts = self._prepare_name_parts(name)
 
+    def _prepare_name_parts(self, name):
+        raise NotImplementedError()
 
-    def get_name(self):
-        return self._full_agent_name
+    def _get_full_name(self):
+        return ":".join(filter(None, [
+            self.get_standard(),
+            self.get_provider(),
+            self.get_type(),
+        ]))
 
+    def get_standard(self):
+        return self._name_parts.standard
+
+    def get_provider(self):
+        return self._name_parts.provider
+
+    def get_type(self):
+        return self._name_parts.type
 
     def is_valid_metadata(self):
         """
@@ -486,7 +684,7 @@ class CrmAgent(Agent):
             "/usr/bin/",
         ])
         stdout, stderr, retval = self._runner.run(
-            [_crm_resource, "--show-metadata", self._full_agent_name],
+            [_crm_resource, "--show-metadata", self._get_full_name()],
             env_extend={
                 "PATH": env_path,
             }
@@ -497,40 +695,42 @@ class CrmAgent(Agent):
 
 
 class ResourceAgent(CrmAgent):
+    DEFAULT_CIB_ACTION_NAMES = DEFAULT_RESOURCE_CIB_ACTION_NAMES
     """
     Provides convinient access to a resource agent's metadata
     """
-    def __init__(self, runner, full_agent_name):
-        if not re.match("^[^:]+(:[^:]+){1,2}$", full_agent_name):
-            raise InvalidResourceAgentName(full_agent_name)
-        super(ResourceAgent, self).__init__(runner, full_agent_name)
+    def _prepare_name_parts(self, name):
+        return get_resource_agent_name_from_string(name)
 
-class AbsentResourceAgent(ResourceAgent):
+    def get_name(self):
+        return self._get_full_name()
+
+
+class AbsentAgentMixin(object):
     def _load_metadata(self):
         return "<resource-agent/>"
 
     def validate_parameters_values(self, parameters_values):
         return ([], [])
 
+
+class AbsentResourceAgent(AbsentAgentMixin, ResourceAgent):
+    pass
+
+
 class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
+    DEFAULT_CIB_ACTION_NAMES = DEFAULT_STONITH_CIB_ACTION_NAMES
 
     _stonithd_metadata = None
 
-
-    def __init__(self, runner, agent_name):
-        super(StonithAgent, self).__init__(
-            runner,
-            "stonith:{0}".format(agent_name)
-        )
-        self._agent_name = agent_name
-
+    def _prepare_name_parts(self, name):
+        return ResourceAgentName("stonith", None, name)
 
     def get_name(self):
-        return self._agent_name
-
+        return self.get_type()
 
     def get_parameters(self):
         return (
@@ -540,7 +740,6 @@ class StonithAgent(CrmAgent):
             +
             self._get_stonithd_metadata().get_parameters()
         )
-
 
     def _filter_parameters(self, parameters):
         """
@@ -579,35 +778,14 @@ class StonithAgent(CrmAgent):
             # Pacemaker marks the 'port' parameter as not required for us.
         return filtered
 
-
     def _get_stonithd_metadata(self):
         if not self.__class__._stonithd_metadata:
             self.__class__._stonithd_metadata = StonithdMetadata(self._runner)
         return self.__class__._stonithd_metadata
 
-
-    def get_actions(self):
-        # In previous versions of pcs there was no way to read actions from
-        # stonith agents, the functions always returned an empty list. It
-        # wasn't clear if that is a mistake or an intention. We keep it that
-        # way for two reasons:
-        # 1) Fence agents themselfs specify the actions without any attributes
-        # (interval, timeout)
-        # 2) Pacemaker explained shows an example stonith agent configuration
-        # in CIB with only monitor operation specified (and that pcs creates
-        # automatically in "pcs stonith create" regardless of provided actions
-        # from here).
-        # It may be better to return real actions from this class and deal ommit
-        # them in higher layers, which can decide if the actions are desired or
-        # not. For now there is not enough information to do that. Code which
-        # uses this is not clean enough. Once everything is cleaned we should
-        # decide if it is better to move this to higher level.
-        return []
-
-
     def get_provides_unfencing(self):
         # self.get_actions returns an empty list
-        for action in super(StonithAgent, self).get_actions():
+        for action in self._get_raw_actions():
             if (
                 action.get("name", "") == "on"
                 and
@@ -617,6 +795,11 @@ class StonithAgent(CrmAgent):
             ):
                 return True
         return False
+
+
+class AbsentStonithAgent(AbsentAgentMixin, StonithAgent):
+    def get_parameters(self):
+        return []
 
 
 def resource_agent_error_to_report_item(

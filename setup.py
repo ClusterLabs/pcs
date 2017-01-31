@@ -9,6 +9,7 @@ class CleanCommand(Command):
     def initialize_options(self):
         self.cwd = None
     def finalize_options(self):
+        #pylint: disable=attribute-defined-outside-init
         self.cwd = os.getcwd()
     def run(self):
         assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd

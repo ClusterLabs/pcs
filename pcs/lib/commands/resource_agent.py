@@ -111,5 +111,6 @@ def describe_agent(lib_env, agent_name):
         lib_env.report_processor,
         lib_env.cmd_runner(),
         agent_name,
+        absent_agent_supported=False
     )
     return agent.get_full_info()

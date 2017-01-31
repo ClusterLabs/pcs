@@ -37,8 +37,8 @@ def indent(line_list, indent_step=2):
         for line in line_list
     ]
 
-def format_optional(value, template):
-    return "" if not value else template.format(value)
+def format_optional(value, template, empty_case=""):
+    return empty_case if not value else template.format(value)
 
 def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
@@ -80,6 +80,60 @@ def service_operation_skipped(operation, info):
         node_prefix=format_optional(info["node"], NODE_PREFIX),
         **info
     )
+
+def id_belongs_to_unexpected_type(info):
+    translate_expected = {
+        "acl_group": "an acl group",
+        "acl_target": "an acl user",
+        "group": "a group",
+    }
+    return "'{id}' is not {expected_type}".format(
+        id=info["id"],
+        expected_type="/".join([
+            translate_expected.get(tag, "{0}".format(tag))
+            for tag in info["expected_types"]
+        ]),
+    )
+
+def id_not_found(info):
+    desc = format_optional(info["id_description"], "{0} ")
+    if not info["context_type"] or not info["context_id"]:
+        return "{desc}'{id}' does not exist".format(desc=desc, id=info["id"])
+
+    return (
+        "there is no {desc}'{id}' in the {context_type} '{context_id}'".format(
+            desc=desc,
+            id=info["id"],
+            context_type=info["context_type"],
+            context_id=info["context_id"],
+        )
+    )
+
+def resource_running_on_nodes(info):
+    role_label_map = {
+        "Started": "running",
+    }
+    state_info = {}
+    for state, node in info["roles_with_nodes"]:
+        state_info.setdefault(
+            role_label_map.get(state, state.lower()),
+            []
+        ).append(node)
+
+    return "resource '{resource_id}' is {detail_list}".format(
+        resource_id=info["resource_id"],
+        detail_list="; ".join(sorted([
+            "{run_type} on node{s} {node_list}".format(
+                run_type=run_type,
+                s="s" if len(node_list) > 1 else "",
+                node_list=", ".join(
+                    ["'{0}'".format(node) for node in node_list]
+                )
+            )
+            for run_type, node_list in state_info.items()
+        ]))
+    )
+
 
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
@@ -157,6 +211,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 ) else info["allowed_types"]
             ),
             **info
+        )
+    ,
+
+    codes.MUTUALLY_EXCLUSIVE_OPTIONS: lambda info:
+        # "{desc}options {option_names} are muttually exclusive".format(
+        "Only one of {desc}options {option_names} can be used".format(
+            desc=format_optional(info["option_type"], "{0} "),
+            option_names = ", ".join([
+                "'{0}'".format(name)
+                for name in sorted(info["option_names"])[:-1]
+            ]) + " and '{0}'".format(sorted(info["option_names"])[-1])
         )
     ,
 
@@ -454,18 +519,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.ID_NOT_FOUND: lambda info:
-        "{desc}'{id}' does not exist"
-        .format(
-            desc=format_optional(info["id_description"], "{0} "),
-            **info
-        )
-    ,
+    codes.ID_BELONGS_TO_UNEXPECTED_TYPE: id_belongs_to_unexpected_type,
 
-    codes.RESOURCE_DOES_NOT_EXIST: lambda info:
-        "Resource '{resource_id}' does not exist"
-        .format(**info)
-    ,
+    codes.ID_NOT_FOUND: id_not_found,
 
     codes.STONITH_RESOURCES_DO_NOT_EXIST: lambda info:
         "Stonith resource(s) '{stonith_id_list}' do not exist"
@@ -590,6 +646,30 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
        ).format(**info)
     ,
 
+    codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION: lambda info: (
+        "multiple specification of the same operation with the same interval:\n"
+        +"\n".join([
+            "{0} with intervals {1}".format(name, ", ".join(intervals))
+            for name, intervals_list in info["duplications"].items()
+            for intervals in intervals_list
+        ])
+    ),
+
+    codes.RESOURCE_OPERATION_INTERVAL_ADAPTED: lambda info:
+        (
+            "changing a {operation_name} operation interval"
+                " from {original_interval}"
+                " to {adapted_interval} to make the operation unique"
+        ).format(**info)
+    ,
+
+    codes.RESOURCE_RUNNING_ON_NODES:  resource_running_on_nodes,
+
+    codes.RESOURCE_DOES_NOT_RUN: lambda info:
+        "resource '{resource_id}' is not running on any node"
+        .format(**info)
+    ,
+
     codes.NODE_NOT_FOUND: lambda info:
         "Node '{node}' does not appear to exist in configuration"
         .format(**info)
@@ -673,7 +753,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.INVALID_RESOURCE_AGENT_NAME: lambda info:
         (
             "Invalid resource agent name '{name}'."
-            " Use standard:provider:type or standard:type."
+            " Use standard:provider:type when standard is 'ocf' or"
+            " standard:type otherwise."
             " List of standards and providers can be obtained by using commands"
             " 'pcs resource standards' and 'pcs resource providers'"
         )
@@ -770,11 +851,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.CIB_ALERT_RECIPIENT_VALUE_INVALID: lambda info:
         "Recipient value '{recipient}' is not valid."
-        .format(**info)
-    ,
-
-    codes.CIB_ALERT_NOT_FOUND: lambda info:
-        "Alert '{alert}' not found."
         .format(**info)
     ,
 

@@ -292,6 +292,10 @@ class FormatOptionalTest(TestCase):
     def test_info_key_is_not_falsy(self):
         self.assertEqual("A: ", format_optional("A", "{0}: "))
 
+    def test_default_value(self):
+        self.assertEqual("DEFAULT", format_optional("", "{0}: ", "DEFAULT"))
+
+
 class AgentNameGuessedTest(NameBuildTest):
     code = codes.AGENT_NAME_GUESSED
     def test_build_message_with_data(self):
@@ -308,9 +312,9 @@ class InvalidResourceAgentNameTest(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_info(
             "Invalid resource agent name ':name'."
-                " Use standard:provider:type or standard:type."
-                " List of standards and providers can be obtained by using"
-                " commands 'pcs resource standards' and"
+                " Use standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
                 " 'pcs resource providers'"
             ,
             {
@@ -444,3 +448,109 @@ class FencingLevelDoesNotExist(NameBuildTest):
             }
         )
 
+
+class ResourceOperationIntevalDuplicationTest(NameBuildTest):
+    code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "multiple specification of the same operation with the same"
+                " interval:"
+                "\nmonitor with intervals 3600s, 60m, 1h"
+                "\nmonitor with intervals 60s, 1m"
+            ,
+            {
+                "duplications":  {
+                    "monitor": [
+                        ["3600s", "60m", "1h"],
+                        ["60s", "1m"],
+                    ],
+                },
+            }
+        )
+
+class ResourceOperationIntevalAdaptedTest(NameBuildTest):
+    code = codes.RESOURCE_OPERATION_INTERVAL_ADAPTED
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "changing a monitor operation interval from 10 to 11 to make the"
+                " operation unique"
+            ,
+            {
+                "operation_name": "monitor",
+                "original_interval": "10",
+                "adapted_interval": "11",
+            }
+        )
+
+class IdBelongsToUnexpectedType(NameBuildTest):
+    code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
+    def test_build_message_with_data(self):
+        self.assert_message_from_info("'ID' is not primitive/master/clone", {
+            "id": "ID",
+            "expected_types": ["primitive", "master", "clone"],
+            "current_type": "op",
+        })
+
+    def test_build_message_with_transformation(self):
+        self.assert_message_from_info("'ID' is not a group", {
+            "id": "ID",
+            "expected_types": ["group"],
+            "current_type": "op",
+        })
+
+class ResourceRunOnNodes(NameBuildTest):
+    code = codes.RESOURCE_RUNNING_ON_NODES
+    def test_one_node(self):
+        self.assert_message_from_info(
+            "resource 'R' is running on node 'node1'",
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [("Started", "node1")],
+            }
+        )
+    def test_multiple_nodes(self):
+        self.assert_message_from_info(
+            "resource 'R' is running on nodes 'node1', 'node2'",
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [
+                    ("Started", "node1"),
+                    ("Started", "node2"),
+                ],
+            }
+        )
+    def test_multiple_role_multiple_nodes(self):
+        self.assert_message_from_info(
+            "resource 'R' is master on node 'node3'"
+            "; running on nodes 'node1', 'node2'"
+            ,
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [
+                    ("Started", "node1"),
+                    ("Started", "node2"),
+                    ("Master", "node3"),
+                ],
+            }
+        )
+
+class ResourceDoesNotRun(NameBuildTest):
+    code = codes.RESOURCE_DOES_NOT_RUN
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "resource 'R' is not running on any node",
+            {
+                "resource_id": "R",
+            }
+        )
+
+class MutuallyExclusiveOptions(NameBuildTest):
+    code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Only one of some options 'a' and 'b' can be used",
+            {
+                "option_type": "some",
+                "option_names": ["a", "b"],
+            }
+        )

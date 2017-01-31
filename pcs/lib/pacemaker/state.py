@@ -11,12 +11,13 @@ from __future__ import (
 )
 
 import os.path
+from collections import defaultdict
 
 from lxml import etree
 
 from pcs import settings
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
 from pcs.lib.pacemaker.values import is_true
 
 class _Attrs(object):
@@ -133,7 +134,7 @@ class _NodeSection(_Element):
         'nodes': ('node', _Node),
     }
 
-def _get_valid_cluster_state_dom(xml):
+def get_cluster_state_dom(xml):
     try:
         dom = etree.fromstring(xml)
         if os.path.isfile(settings.crm_mon_schema):
@@ -149,5 +150,46 @@ class ClusterState(_Element):
     }
 
     def __init__(self, xml):
-        self.dom = _get_valid_cluster_state_dom(xml)
+        self.dom = get_cluster_state_dom(xml)
         super(ClusterState, self).__init__(self.dom)
+
+def get_resource_roles_with_nodes(cluster_state, resource_id):
+    resource_element_list = cluster_state.xpath(""".//resource[
+        (@id="{0}" or starts-with(@id, "{0}:"))
+        and
+        (not(@failed) or @failed != "true")
+    ]""".format(resource_id))
+
+    roles_with_nodes = defaultdict(set)
+
+    for resource_element in resource_element_list:
+        if resource_element.attrib["role"] in ["Started", "Master", "Slave"]:
+            roles_with_nodes[resource_element.attrib["role"]].update([
+                node.attrib["name"]
+                for node in resource_element.findall(".//node")
+            ])
+
+    return dict([
+        (role, sorted(nodes))
+        for role, nodes in roles_with_nodes.items()
+    ])
+
+def ensure_resource_state(
+    expected_running, report_processor, cluster_state, resource_id
+):
+    roles_with_nodes = get_resource_roles_with_nodes(
+        cluster_state,
+        resource_id
+    )
+
+    if not roles_with_nodes:
+        report_processor.process(reports.resource_does_not_run(
+            resource_id,
+            severities.INFO if not expected_running else severities.ERROR
+        ))
+    else:
+        report_processor.process(reports.resource_running_on_nodes(
+            resource_id,
+            roles_with_nodes,
+            severities.INFO if expected_running else severities.ERROR
+        ))

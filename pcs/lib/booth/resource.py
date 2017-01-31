@@ -13,37 +13,6 @@ def create_resource_id(resources_section, name, suffix):
         resources_section.getroottree(), "booth-{0}-{1}".format(name, suffix)
     )
 
-def get_creator(resource_create, resource_remove=None):
-    #TODO resource_create  is provisional hack until resources are not moved to
-    #lib
-    def create_booth_in_cluster(ip, booth_config_file_path, create_id):
-        ip_id = create_id("ip")
-        booth_id = create_id("service")
-        group_id = create_id("group")
-
-        resource_create(
-            ra_id=ip_id,
-            ra_type="ocf:heartbeat:IPaddr2",
-            ra_values=["ip={0}".format(ip)],
-            op_values=[],
-            meta_values=[],
-            clone_opts=[],
-            group=group_id,
-        )
-        try:
-            resource_create(
-                ra_id=booth_id,
-                ra_type="ocf:pacemaker:booth-site",
-                ra_values=["config={0}".format(booth_config_file_path)],
-                op_values=[],
-                meta_values=[],
-                clone_opts=[],
-                group=group_id,
-            )
-        except SystemExit:
-            resource_remove(ip_id)
-    return create_booth_in_cluster
-
 def is_ip_resource(resource_element):
     return resource_element.attrib["type"] == "IPaddr2"
 

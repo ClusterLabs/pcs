@@ -15,6 +15,7 @@ from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
     is_minimum_pacemaker_version,
+    outdent,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -84,9 +85,16 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         o,r = pcs(temp_cib, "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400 remote-connect-timeout=50")
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "resource --full")
-        assert r==0
-        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-2 \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 \n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+        self.assert_pcs_success("resource --full", outdent(
+            """\
+             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+              Meta Attrs: remote-node=rh7-2 
+              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
+              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+            """
+        ))
 
         o,r = pcs(temp_cib, "cluster remote-node remove")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
@@ -102,16 +110,27 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         assert r==1
         ac(o,"Error: unable to remove: cannot find remote-node 'rh7-2'\n")
 
-        o,r = pcs(temp_cib, "resource --full")
-        assert r==0
-        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 \n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+        self.assert_pcs_success("resource --full", outdent(
+            """\
+             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
+              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+            """
+        ))
 
         o,r = pcs(temp_cib, "cluster remote-node remove rh7-1")
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "resource --full")
-        assert r==0
-        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+        self.assert_pcs_success("resource --full", outdent(
+            """\
+             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+            """
+        ))
 
     def test_cluster_setup_bad_args(self):
         output, returnVal = pcs(temp_cib, "cluster setup")

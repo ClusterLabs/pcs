@@ -32,3 +32,15 @@ On the key "resource_sets" is a dictionary of resource sets (see Resource set).
   "resource_sets": {"options": {"id": "id"}, "ids": ["resourceA", "resourceB"]},
 }
 ```
+
+Resource operation interval duplication
+---------------------------------------
+Dictionary. Key is operation name. Value is list of list of interval.
+```python
+{
+  "monitor": [
+    ["3600s", "60m", "1h"],
+    ["60s", "1m"],
+  ],
+},
+```

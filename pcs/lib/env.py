@@ -39,7 +39,9 @@ from pcs.lib.pacemaker.live import (
     get_cib_xml,
     replace_cib_configuration_xml,
     wait_for_idle,
+    get_cluster_status_xml,
 )
+from pcs.lib.pacemaker.state import get_cluster_state_dom
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 
 
@@ -127,6 +129,9 @@ class LibraryEnvironment(object):
                     )
                 self._cib_upgraded = True
         return cib
+
+    def get_cluster_state(self):
+        return get_cluster_state_dom(get_cluster_status_xml(self.cmd_runner()))
 
     def _push_cib_xml(self, cib_data):
         if self.is_cib_live:

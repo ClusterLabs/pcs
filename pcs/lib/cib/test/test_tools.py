@@ -5,10 +5,11 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
+from functools import partial
 
 from lxml import etree
 
+from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
@@ -48,21 +49,18 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "my Id"))
 
     def test_ignore_status_section(self):
-        self.cib.append_to_first_tag_name(
-            "status",
-            """\
-<elem1 id="status-1">
-    <elem1a id="status-1a">
-        <elem1aa id="status-1aa"/>
-        <elem1ab id="status-1ab"/>
-    </elem1a>
-    <elem1b id="status-1b">
-        <elem1ba id="status-1ba"/>
-        <elem1bb id="status-1bb"/>
-    </elem1b>
-</elem1>
-"""
-        )
+        self.cib.append_to_first_tag_name("status", """
+            <elem1 id="status-1">
+                <elem1a id="status-1a">
+                    <elem1aa id="status-1aa"/>
+                    <elem1ab id="status-1ab"/>
+                </elem1a>
+                <elem1b id="status-1b">
+                    <elem1ba id="status-1ba"/>
+                    <elem1bb id="status-1bb"/>
+                </elem1b>
+            </elem1>
+        """)
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1a"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1aa"))
@@ -97,6 +95,16 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role2"))
 
+    def test_ignore_sections_directly_under_cib(self):
+        #this is side effect of current implementation but is not problem since
+        #id attribute is not allowed for elements directly under cib
+        tree = etree.fromstring('<cib><direct id="a"/></cib>')
+        self.assertFalse(lib.does_id_exist(tree, "a"))
+
+    def test_find_id_when_cib_is_not_root_element(self):
+        #for example we have only part of xml
+        tree = etree.fromstring('<root><direct id="a"/></root>')
+        self.assertTrue(lib.does_id_exist(tree, "a"))
 
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):
@@ -428,3 +436,114 @@ class EtreeElementAttributesToDictTest(TestCase):
                 self.el, ["id", "not_existing", "attribute"]
             )
         )
+
+find_group = partial(lib.find_element_by_tag_and_id, "group")
+class FindTagWithId(TestCase):
+    def test_returns_element_when_exists(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="a"/></resources></cib>'
+        )
+        element = find_group(tree.find(".//resources"), "a")
+        self.assertEqual("group", element.tag)
+        self.assertEqual("a", element.attrib["id"])
+
+    def test_returns_element_when_exists_one_of_tags(self):
+        tree = etree.fromstring("""
+            <cib>
+                <resources>
+                    <group id="a"/>
+                    <primitive id="b"/>
+                </resources>
+            </cib>
+        """)
+        element = lib.find_element_by_tag_and_id(
+            ["group", "primitive"],
+            tree.find(".//resources"),
+            "a"
+        )
+        self.assertEqual("group", element.tag)
+        self.assertEqual("a", element.attrib["id"])
+
+    def test_raises_when_is_under_another_tag(self):
+        tree = etree.fromstring(
+            '<cib><resources><primitive id="a"/></resources></cib>'
+        )
+
+        assert_raise_library_error(
+            lambda: find_group(tree.find(".//resources"), "a"),
+            (
+                severities.ERROR,
+                report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                {
+                    "id": "a",
+                    "expected_types": ["group"],
+                    "current_type": "primitive",
+                },
+            ),
+        )
+
+    def test_raises_when_is_under_another_context(self):
+        tree = etree.fromstring("""
+            <cib>
+                <resources>
+                    <group id="g1"><primitive id="a"/></group>
+                    <group id="g2"><primitive id="b"/></group>
+                </resources>
+            </cib>
+        """)
+        assert_raise_library_error(
+            lambda: lib.find_element_by_tag_and_id(
+                "primitive",
+                tree.find('.//resources/group[@id="g2"]'),
+                "a"
+            ),
+            (
+                severities.ERROR,
+                report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
+                {
+                    "type": "primitive",
+                    "id": "a",
+                    "expected_context_type": "group",
+                    "expected_context_id": "g2",
+                },
+            ),
+        )
+
+    def test_raises_when_id_does_not_exists(self):
+        tree = etree.fromstring('<cib><resources/></cib>')
+        assert_raise_library_error(
+            lambda: find_group(tree.find('.//resources'), "a"),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "a",
+                    "id_description": "group",
+                    "context_type": "resources",
+                    "context_id": "",
+                },
+            ),
+        )
+        assert_raise_library_error(
+            lambda: find_group(
+                tree.find('.//resources'),
+                "a",
+                id_description="resource group"
+            ),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "a",
+                    "id_description": "resource group",
+                },
+            ),
+        )
+
+    def test_returns_none_if_id_do_not_exists(self):
+        tree = etree.fromstring('<cib><resources/></cib>')
+        self.assertIsNone(find_group(
+            tree.find('.//resources'),
+            "a",
+            none_if_id_unused=True
+        ))

@@ -5,9 +5,86 @@ from __future__ import (
     unicode_literals,
 )
 
+from functools import partial
+
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, ReportItemSeverity
 
+def forceable_error(force_code, report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "error" and  "warning".
+    the pair with function "warning".
+
+    string force_code is code for forcing error
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=force_code,
+        severity=ReportItemSeverity.ERROR,
+        **kwargs
+    )
+
+def warning(report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "error" and  "forceable_error".
+
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=None,
+        severity=ReportItemSeverity.WARNING,
+        **kwargs
+    )
+
+def error(report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "forceable_error" and "forceable_error".
+
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=None,
+        severity=ReportItemSeverity.ERROR,
+        **kwargs
+    )
+
+def get_problem_creator(force_code=None, is_forced=False):
+    """
+    Returns report creator wraper (forceable_error or warning).
+
+    This is experimental shortcut for decision if ReportItem will be
+    either forceable_error or warning.
+
+    string force_code is code for forcing error. It could be usefull to prepare
+        it for whole module by using functools.partial.
+    bool warn_only is flag for selecting wrapper
+    """
+    if not force_code:
+        return error
+    if is_forced:
+        return warning
+    return partial(forceable_error, force_code)
 
 def common_error(text):
     # TODO replace by more specific reports
@@ -81,14 +158,21 @@ def empty_resource_set_list():
         report_codes.EMPTY_RESOURCE_SET_LIST,
     )
 
-def required_option_is_missing(option_names, option_type=None):
+def required_option_is_missing(
+    option_names, option_type=None,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     required option has not been specified, command cannot continue
     list name is/are required but was not entered
     option_type decsribes the option
+    severity report item severity
+    forceable is this report item forceable? by what cathegory?
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.REQUIRED_OPTION_IS_MISSING,
+        severity,
+        forceable=forceable,
         info={
             "option_names": option_names,
             "option_type": option_type,
@@ -155,6 +239,21 @@ def invalid_option_value(
         },
         forceable=forceable
     )
+
+def mutually_exclusive_options(option_names, option_type):
+    """
+    entered options can not coexist
+    set option_names contain entered mutually exclusive options
+    string option_type decsribes the option
+    """
+    return ReportItem.error(
+        report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+        info={
+            "option_names": option_names,
+            "option_type": option_type,
+        },
+    )
+
 
 def invalid_id_is_empty(id, id_description):
     """
@@ -820,30 +919,66 @@ def id_already_exists(id):
         info={"id": id}
     )
 
-def id_not_found(id, id_description):
+def id_belongs_to_unexpected_type(id, expected_types, current_type):
+    """
+    Specified id exists but for another element than expected.
+    For example user wants to create resource in group that is specifies by id.
+    But id does not belong to group.
+    """
+    return ReportItem.error(
+        report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+        info={
+            "id": id,
+            "expected_types": expected_types,
+            "current_type": current_type,
+        }
+    )
+
+def object_with_id_in_unexpected_context(
+    object_type, object_id, expected_context_type, expected_context_id
+):
+    """
+    Object specified by object_type (tag) and object_id exists but not inside
+    given context (expected_context_type, expected_context_id).
+    """
+    return ReportItem.error(
+        report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
+        info={
+            "type": object_type,
+            "id": object_id,
+            "expected_context_type": expected_context_type,
+            "expected_context_id": expected_context_id,
+        }
+    )
+
+
+def id_not_found(id, id_description, context_type="", context_id=""):
     """
     specified id does not exist in CIB, user referenced a nonexisting id
-    use "resource_does_not_exist" if id is a resource id
-    id string specified id
-    id_description string decribe id's role
+    string id specified id
+    string id_description decribe id's role
+    string context_id specifies the search area
     """
     return ReportItem.error(
         report_codes.ID_NOT_FOUND,
         info={
             "id": id,
             "id_description": id_description,
+            "context_type": context_type,
+            "context_id": context_id,
         }
     )
 
-def resource_does_not_exist(resource_id):
+def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
     """
-    specified resource does not exist (e.g. when creating in constraints)
-    resource_id string specified resource id
+    Cannot put resource(id=resource_id) into group(id=group_id) next to itself:
+        resource(id=resource_id).
     """
     return ReportItem.error(
-        report_codes.RESOURCE_DOES_NOT_EXIST,
+        report_codes.RESOURCE_CANNOT_BE_NEXT_TO_ITSELF_IN_GROUP,
         info={
             "resource_id": resource_id,
+            "group_id": group_id,
         }
     )
 
@@ -861,6 +996,38 @@ def stonith_resources_do_not_exist(
             "stonith_ids": stonith_ids,
         },
         forceable=forceable
+    )
+
+def resource_running_on_nodes(
+    resource_id, roles_with_nodes, severity=ReportItemSeverity.INFO
+):
+    """
+    Resource is running on some nodes. Taken from cluster state.
+
+    string resource_id represent the resource
+    list of tuple roles_with_nodes contain pairs (role, node)
+    """
+    return ReportItem(
+        report_codes.RESOURCE_RUNNING_ON_NODES,
+        severity,
+        info={
+            "resource_id": resource_id,
+            "roles_with_nodes": roles_with_nodes,
+        }
+    )
+
+def resource_does_not_run(resource_id, severity=ReportItemSeverity.INFO):
+    """
+    Resource is not running on any node. Taken from cluster state.
+
+    string resource_id represent the resource
+    """
+    return ReportItem(
+        report_codes.RESOURCE_DOES_NOT_RUN,
+        severity,
+        info={
+            "resource_id": resource_id,
+        }
     )
 
 def cib_load_error(reason):
@@ -1020,6 +1187,40 @@ def resource_cleanup_too_time_consuming(threshold):
         report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
         info={"threshold": threshold},
         forceable=report_codes.FORCE_LOAD_THRESHOLD
+    )
+
+def resource_operation_interval_duplication(duplications):
+    """
+    More operations with same name and same interval apeared.
+    Each operation with the same name (e.g. monitoring) need to have unique
+    interval.
+    dict duplications see resource operation interval duplication
+        in pcs/lib/exchange_formats.md
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
+        info={
+            "duplications": duplications,
+        }
+    )
+
+def resource_operation_interval_adapted(
+    operation_name, original_interval, adapted_interval
+):
+    """
+    Interval of resource operation was adopted to operation (with the same name)
+        intervals were unique.
+    Each operation with the same name (e.g. monitoring) need to have unique
+    interval.
+
+    """
+    return ReportItem.warning(
+        report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
+        info={
+            "operation_name": operation_name,
+            "original_interval": original_interval,
+            "adapted_interval": adapted_interval,
+        }
     )
 
 def node_not_found(node, severity=ReportItemSeverity.ERROR, forceable=None):
@@ -1622,18 +1823,6 @@ def cib_alert_recipient_invalid_value(recipient_value):
         report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
         info={"recipient": recipient_value}
     )
-
-def cib_alert_not_found(alert_id):
-    """
-    Alert with specified id doesn't exist.
-
-    alert_id -- id of alert
-    """
-    return ReportItem.error(
-        report_codes.CIB_ALERT_NOT_FOUND,
-        info={"alert": alert_id}
-    )
-
 
 def cib_upgrade_successful():
     """
