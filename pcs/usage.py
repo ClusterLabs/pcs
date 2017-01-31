@@ -208,7 +208,7 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [clone <clone options> | master <master options> |
+           [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
            ] [--disabled] [--wait[=n]]
         Create specified resource.  If clone is used a clone resource is
