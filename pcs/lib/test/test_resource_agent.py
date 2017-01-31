@@ -1544,39 +1544,6 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
 
-@patch_agent_object("_get_metadata")
-class StonithAgentMetadataGetActionsTest(TestCase):
-    def setUp(self):
-        self.agent = lib_ra.StonithAgent(
-            mock.MagicMock(spec_set=CommandRunner),
-            "fence_dummy"
-        )
-
-
-    def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
-
-
-    def test_more_actions(self, mock_metadata):
-        xml = """
-            <resource-agent>
-                <actions>
-                    <action name="on" automatic="0"/>
-                    <action name="off" />
-                    <action name="reboot" />
-                    <action name="status" />
-                </actions>
-            </resource-agent>
-        """
-        mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(self.agent.get_actions(), [
-            {"name": "on", "automatic":"0"},
-            {"name": "off"},
-            {"name": "reboot"},
-            {"name": "status"},
-        ])
-
-
 class StonithAgentMetadataGetParametersTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
