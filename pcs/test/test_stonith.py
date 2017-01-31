@@ -107,26 +107,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test2 fence_ilo --force",
-            "Warning: required resource option 'login' is missing\n"
+            "stonith create test2 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
 
         self.assert_pcs_fail(
-            "stonith create test3 fence_ilo bad_argument=test",
-            "Error: invalid resource option 'bad_argument', allowed options"
-                " are: action, delay, inet4_only, inet6_only, ipaddr, ipport,"
-                " login, login_timeout, notls, passwd, passwd_script,"
-                " pcmk_action_limit, pcmk_delay_max, pcmk_host_argument,"
-                " pcmk_host_check, pcmk_host_list, pcmk_host_map,"
-                " pcmk_list_action, pcmk_list_retries, pcmk_list_timeout,"
-                " pcmk_monitor_action, pcmk_monitor_retries,"
-                " pcmk_monitor_timeout, pcmk_off_action, pcmk_off_retries,"
-                " pcmk_off_timeout, pcmk_reboot_action, pcmk_reboot_retries,"
-                " pcmk_reboot_timeout, pcmk_status_action, pcmk_status_retries,"
-                " pcmk_status_timeout, port, port_as_ip, power_timeout,"
-                " power_wait, priority, retry_on, ribcl, shell_timeout, ssl,"
-                " ssl_insecure, ssl_secure, tls1.0, use --force to override\n"
-            "Error: required resource option 'login' is missing, use --force to override\n"
+            "stonith create test3 fence_apc bad_argument=test",
+            stdout_start="Error: invalid resource option 'bad_argument',"
+                " allowed options are:"
         )
 
         self.assert_pcs_fail(
@@ -135,13 +123,13 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-             "stonith create test9 fence_ilo pcmk_status_action=xxx --force",
-            "Warning: required resource option 'login' is missing\n"
+             "stonith create test9 fence_apc pcmk_status_action=xxx --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
         ac(output, """\
- Resource: test9 (class=stonith type=fence_ilo)
+ Resource: test9 (class=stonith type=fence_apc)
   Attributes: pcmk_status_action=xxx
   Operations: monitor interval=60s (test9-monitor-interval-60s)
 """)
@@ -193,13 +181,13 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         output, returnVal = pcs(temp_cib, "stonith show test2")
         assert returnVal == 0
-        assert output == " Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n",[output]
+        assert output == " Resource: test2 (class=stonith type=fence_apc)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
  Resource: test1 (class=stonith type=fence_noxist)
   Operations: monitor interval=60s (test1-monitor-interval-60s)
- Resource: test2 (class=stonith type=fence_ilo)
+ Resource: test2 (class=stonith type=fence_apc)
   Operations: monitor interval=60s (test2-monitor-interval-60s)
  Resource: test3 (class=stonith type=fence_ilo)
   Attributes: ipaddr=test login=testA
@@ -224,7 +212,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             Stonith Devices:
              Resource: test1 (class=stonith type=fence_noxist)
               Operations: monitor interval=60s (test1-monitor-interval-60s)
-             Resource: test2 (class=stonith type=fence_ilo)
+             Resource: test2 (class=stonith type=fence_apc)
               Operations: monitor interval=60s (test2-monitor-interval-60s)
              Resource: test3 (class=stonith type=fence_ilo)
               Attributes: ipaddr=test login=testA
@@ -419,12 +407,12 @@ class StonithTest(TestCase, AssertPcsMixin):
         shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
 
         self.assert_pcs_success(
-            "stonith create n1-ipmi fence_ilo --force",
-            "Warning: required resource option 'login' is missing\n"
+            "stonith create n1-ipmi fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
-            "stonith create n2-ipmi fence_ilo --force",
-            "Warning: required resource option 'login' is missing\n"
+            "stonith create n2-ipmi fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force",
@@ -456,8 +444,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  n2-apc1\t(stonith:fence_apc):\tStopped
@@ -478,8 +466,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  n2-apc1\t(stonith:fence_apc):\tStopped
@@ -499,8 +487,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  n2-apc3\t(stonith:fence_apc):\tStopped
@@ -519,8 +507,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  Target: rh7-1
@@ -537,8 +525,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  Target: rh7-1
    Level 1 - n1-ipmi
@@ -554,8 +542,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped
- n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-ipmi\t(stonith:fence_apc):\tStopped
+ n2-ipmi\t(stonith:fence_apc):\tStopped
  Target: rh7-1
    Level 1 - n1-ipmi
  Target: rh7-2
