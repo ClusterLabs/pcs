@@ -457,7 +457,9 @@ def __get_cookie_list(host, tokens):
                     value = re.sub(r"[^!-~]", "", value).replace(";", "")
                 else:
                     # python3 requires the value to be bytes not str
-                    value = base64.b64encode(value.encode("utf8"))
+                    value = base64.b64encode(
+                        value.encode("utf8")
+                    ).decode("utf-8")
                 cookies.append("{0}={1}".format(name, value))
     return cookies
 

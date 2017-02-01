@@ -708,7 +708,9 @@ class NodeCommunicator(object):
         if self._groups:
             cookies.append("CIB_user_groups={0}".format(
                 # python3 requires the value to be bytes not str
-                base64.b64encode(" ".join(self._groups).encode("utf-8"))
+                base64.b64encode(
+                    " ".join(self._groups).encode("utf-8")
+                ).decode("utf-8")
             ))
         return cookies
 

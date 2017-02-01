@@ -753,9 +753,7 @@ class NodeCommunicatorTest(TestCase):
         self.assertLessEqual(
             set([(
                 pycurl.COOKIE,
-                "CIB_user_groups={0}".format(
-                    "Z3JvdXAx".encode("utf-8")
-                ).encode("utf-8")
+                "CIB_user_groups={0}".format("Z3JvdXAx").encode("utf-8")
             )]),
             set(mock_pycurl_obj.opts.items())
         )
@@ -781,7 +779,7 @@ class NodeCommunicatorTest(TestCase):
             "token={token};CIB_user={user};CIB_user_groups={groups}".format(
                 token=token,
                 user=user,
-                groups="Z3JvdXAxIGdyb3VwMg==".encode("utf-8")
+                groups="Z3JvdXAxIGdyb3VwMg=="
             ).encode("utf-8")
         )
         self.assertLessEqual(
