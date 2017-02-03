@@ -195,7 +195,7 @@ def pcsd_restart_nodes(nodes, exit_after_error=True):
             # no more nodes to check
             break
         time.sleep(2)
-        for node, signature in instance_signatures.items()[:]:
+        for node, signature in list(instance_signatures.items()):
             retval, output = utils.getPcsdInstanceSignature(node)
             if retval == 0 and signature != output:
                 del instance_signatures[node]
