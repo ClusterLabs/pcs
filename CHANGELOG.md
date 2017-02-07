@@ -6,7 +6,7 @@
 - Fencing levels now may be targeted in CLI by a node name pattern or a node
   attribute in addition to a node name ([rhbz#1261116])
 - `pcs cluster cib-push` allows to push a diff obtained internally by comparing
-  CIBs in specified files ([rhbz#1404233])
+  CIBs in specified files ([rhbz#1404233], [rhbz#1419903])
 - Added flags `--wait`, `--disabled`, `--group`, `--after`, `--before` into
   the command `pcs stonith create`
 - Added commands `pcs stonith enable` and `pcs stonith disable`
@@ -66,7 +66,7 @@
 - Fixed sending user group in cookies from Python 3
 - Fixed pcsd restart in Python 3
 - Fixed parsing XML in Python 3 (caused crashes when reading resource agents
-  metadata)
+  metadata) ([rhbz#1419639])
 
 ### Removed
 - Ruby 1.8 and 1.9 is no longer supported due to bad libcurl support
@@ -99,6 +99,8 @@
 [rhbz#1402475]: https://bugzilla.redhat.com/show_bug.cgi?id=1402475
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
 [rhbz#1404233]: https://bugzilla.redhat.com/show_bug.cgi?id=1404233
+[rhbz#1419639]: https://bugzilla.redhat.com/show_bug.cgi?id=1419639
+[rhbz#1419903]: https://bugzilla.redhat.com/show_bug.cgi?id=1419903
 
 
 ## [0.9.155] - 2016-11-03

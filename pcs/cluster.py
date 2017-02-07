@@ -1268,23 +1268,25 @@ def cluster_push(argv):
             filename = arg
         else:
             arg_name, arg_value = arg.split("=", 1)
-            if arg_name == "scope" and "--config" not in utils.pcs_options:
+            if arg_name == "scope":
+                if "--config" in utils.pcs_options:
+                    utils.err("Cannot use both scope and --config")
                 if not utils.is_valid_cib_scope(arg_value):
                     utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
                     scope = arg_value
-            if arg_name == "diff-against":
+            elif arg_name == "diff-against":
                 diff_against = arg_value
             else:
                 usage.cluster(["cib-push"])
                 sys.exit(1)
     if "--config" in utils.pcs_options:
         scope = "configuration"
+    if diff_against and scope:
+        utils.err("Cannot use both scope and diff-against")
     if not filename:
         usage.cluster(["cib-push"])
         sys.exit(1)
-    if diff_against and scope:
-        utils.err("Cannot use both scope and diff-against")
 
     try:
         new_cib_dom = xml.dom.minidom.parse(filename)
