@@ -505,7 +505,7 @@ class ResourceRunOnNodes(NameBuildTest):
             "resource 'R' is running on node 'node1'",
             {
                 "resource_id": "R",
-                "roles_with_nodes": [("Started", "node1")],
+                "roles_with_nodes": {"Started": ["node1"]},
             }
         )
     def test_multiple_nodes(self):
@@ -513,10 +513,7 @@ class ResourceRunOnNodes(NameBuildTest):
             "resource 'R' is running on nodes 'node1', 'node2'",
             {
                 "resource_id": "R",
-                "roles_with_nodes": [
-                    ("Started", "node1"),
-                    ("Started", "node2"),
-                ],
+                "roles_with_nodes": {"Started": ["node1","node2"]},
             }
         )
     def test_multiple_role_multiple_nodes(self):
@@ -526,11 +523,10 @@ class ResourceRunOnNodes(NameBuildTest):
             ,
             {
                 "resource_id": "R",
-                "roles_with_nodes": [
-                    ("Started", "node1"),
-                    ("Started", "node2"),
-                    ("Master", "node3"),
-                ],
+                "roles_with_nodes": {
+                    "Started": ["node1","node2"],
+                    "Master": ["node3"],
+                },
             }
         )
 

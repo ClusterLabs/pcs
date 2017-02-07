@@ -114,11 +114,11 @@ def resource_running_on_nodes(info):
         "Started": "running",
     }
     state_info = {}
-    for state, node in info["roles_with_nodes"]:
+    for state, node_list in info["roles_with_nodes"].items():
         state_info.setdefault(
             role_label_map.get(state, state.lower()),
             []
-        ).append(node)
+        ).extend(node_list)
 
     return "resource '{resource_id}' is {detail_list}".format(
         resource_id=info["resource_id"],
