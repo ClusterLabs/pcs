@@ -9,7 +9,10 @@ import os.path
 from lxml import etree
 
 from pcs import settings
-from pcs.common.tools import join_multilines
+from pcs.common.tools import (
+    join_multilines,
+    xml_fromstring
+)
 from pcs.lib import reports
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
@@ -59,7 +62,7 @@ def get_cib_xml(runner, scope=None):
     return stdout
 
 def parse_cib_xml(xml):
-    return etree.fromstring(xml)
+    return xml_fromstring(xml)
 
 def get_cib(xml):
     try:
@@ -265,4 +268,3 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
-

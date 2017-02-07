@@ -16,6 +16,7 @@ from collections import defaultdict
 from lxml import etree
 
 from pcs import settings
+from pcs.common.tools import xml_fromstring
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
 from pcs.lib.pacemaker.values import is_true
@@ -136,7 +137,7 @@ class _NodeSection(_Element):
 
 def get_cluster_state_dom(xml):
     try:
-        dom = etree.fromstring(xml)
+        dom = xml_fromstring(xml)
         if os.path.isfile(settings.crm_mon_schema):
             etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
         return dom

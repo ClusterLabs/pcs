@@ -63,8 +63,10 @@
   IPv6 address
 - Fixed JS error in web UI when empty cluster status is received
   ([rhbz#1396462])
-- Fixed sending user group in cookies from python 3
-- Fixed pcsd restart in python 3
+- Fixed sending user group in cookies from Python 3
+- Fixed pcsd restart in Python 3
+- Fixed parsing XML in Python 3 (caused crashes when reading resource agents
+  metadata)
 
 ### Removed
 - Ruby 1.8 and 1.9 is no longer supported due to bad libcurl support

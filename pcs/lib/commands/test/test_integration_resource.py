@@ -253,7 +253,7 @@ def fixture_wait_and_get_state_calls(state_resource_xml):
         Call("crm_resource --wait --timeout=10"),
         Call(
             "crm_mon --one-shot --as-xml --inactive",
-            etree.tostring(crm_mon),
+            etree.tostring(crm_mon).decode("utf-8"),
         ),
     ]
 

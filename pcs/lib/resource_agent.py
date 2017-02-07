@@ -12,10 +12,11 @@ from collections import namedtuple
 from lxml import etree
 
 from pcs import settings
+from pcs.common import report_codes
+from pcs.common.tools import xml_fromstring
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.pacemaker.values import is_true
-from pcs.common import report_codes
 
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
@@ -572,7 +573,7 @@ class Agent(object):
 
     def _parse_metadata(self, metadata):
         try:
-            dom = etree.fromstring(metadata)
+            dom = xml_fromstring(metadata)
             # TODO Majority of agents don't provide valid metadata, so we skip
             # the validation for now. We want to enable it once the schema
             # and/or agents are fixed.

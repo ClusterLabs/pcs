@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
 import threading
 
 
@@ -60,3 +61,12 @@ def is_string(candidate):
         pass
 
     return any([isinstance(candidate, string) for string in string_list])
+
+def xml_fromstring(xml):
+    # If the xml contains encoding declaration such as:
+    # <?xml version="1.0" encoding="UTF-8"?>
+    # we get an exception in python3:
+    # ValueError: Unicode strings with encoding declaration are not supported.
+    # Please use bytes input or XML fragments without declaration.
+    # So we encode the string to bytes.
+    return etree.fromstring(xml.encode("utf-8"))

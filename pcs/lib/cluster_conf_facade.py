@@ -7,6 +7,7 @@ from __future__ import (
 
 from lxml import etree
 
+from pcs.common.tools import xml_fromstring
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import NodeAddresses, NodeAddressesList
@@ -24,7 +25,7 @@ class ClusterConfFacade(object):
         config_string -- cluster.conf file content as string
         """
         try:
-            return cls(etree.fromstring(config_string))
+            return cls(xml_fromstring(config_string))
         except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
             raise LibraryError(reports.cluster_conf_invalid_format(str(e)))
 
@@ -56,4 +57,3 @@ class ClusterConfFacade(object):
                 id=node.get("nodeid")
             ))
         return result
-
