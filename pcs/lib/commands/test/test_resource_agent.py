@@ -284,6 +284,26 @@ class TestListAgents(TestCase):
         )
 
 
+class CompleteAgentList(TestCase):
+    def test_skip_agent_name_when_InvalidResourceAgentName_raised(self):
+        invalid_agent_name =  "systemd:lvm2-pvscan@252:2"#suppose it is invalid
+        class Agent(object):
+            def __init__(self, runner, name):
+                if name == invalid_agent_name:
+                    raise lib_ra.InvalidResourceAgentName(name)
+                self.name = name
+
+            def get_name_info(self):
+                return self.name
+
+        self.assertEqual(["ocf:heartbeat:Dummy"], lib._complete_agent_list(
+            mock.MagicMock(),
+            ["ocf:heartbeat:Dummy", invalid_agent_name],
+            describe=False,
+            search=False,
+            metadata_class=Agent,
+        ))
+
 @mock.patch.object(lib_ra.ResourceAgent, "_load_metadata", autospec=True)
 @mock.patch("pcs.lib.resource_agent.guess_exactly_one_resource_agent_full_name")
 @mock.patch.object(
