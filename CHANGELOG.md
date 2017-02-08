@@ -67,6 +67,8 @@
 - Fixed pcsd restart in Python 3
 - Fixed parsing XML in Python 3 (caused crashes when reading resource agents
   metadata) ([rhbz#1419639])
+- Fixed the recognition of the structure of a resource agent name that contains
+  a systemd instance ([rhbz#1419661])
 
 ### Removed
 - Ruby 1.8 and 1.9 is no longer supported due to bad libcurl support
@@ -100,6 +102,7 @@
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
 [rhbz#1404233]: https://bugzilla.redhat.com/show_bug.cgi?id=1404233
 [rhbz#1419639]: https://bugzilla.redhat.com/show_bug.cgi?id=1419639
+[rhbz#1419661]: https://bugzilla.redhat.com/show_bug.cgi?id=1419661
 [rhbz#1419903]: https://bugzilla.redhat.com/show_bug.cgi?id=1419903
 
 

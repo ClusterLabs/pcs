@@ -59,19 +59,12 @@
 	<tr>
 	  <td class="bold">Class/Provider</td>
 	  <td>
-	    <%
-        resources = @resource_agents.keys
-
-	      class_providers = []
-        resources.each {|k|
-		class_providers << k[0,k.rindex(':')]
-	      }
-	      class_providers.uniq!
-	      class_providers.sort!
-	    %>
 	    <select id="resource_class_provider_selector">
-	      <% class_providers.each {|cp| %>
-		<option <%= "selected" if cp == "ocf:heartbeat" %> value="<%=cp%>"><%=cp%></option>
+        <% @resource_agent_structures.map{|a| a[:class_provider]}.uniq.sort.each{|cp| %>
+          <option
+            <%= "selected" if cp == "ocf:heartbeat" %>
+            value="<%=cp%>"
+          ><%=cp%></option>
 	      <% } %>
 	    </select>
 	  </td>
@@ -80,13 +73,13 @@
 	  <td class="bold">Type</td>
 	  <td>
 	    <select id="all_ra_types" style="display:none;">
-	      <% resources.sort_by{|a|a.downcase}.each { |key| %>
-		<option width=250px  value="<%=key%>"><%=key[(key.rindex(':')+1)..-1]%></option>
+        <% @resource_agent_structures.sort_by{|a| a[:full_name].downcase}.each{|a| %>
+          <option value="<%=a[:full_name]%>"><%=a[:type]%></option>
 	      <% } %>
 	    </select>
 	    <select id="add_ra_type" onchange="load_resource_form(this.value);">
-	      <% resources.sort_by{|a|a.downcase}.each { |key| %>
-		<option width=250px <%= key == "ocf:heartbeat:IPaddr2" ? "selected" : "" %> value="<%=key%>"><%=key%></option>
+        <% @resource_agent_structures.each{|a| %>
+          <option width=250px value="<%=a[:full_name]%>"><%=a[:type]%></option>
 	      <% } %>
 	    </select>
 	  </td>

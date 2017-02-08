@@ -239,6 +239,32 @@ class Resource
 end
 
 
+def get_resource_agent_name_structure(agent_name)
+  [
+    #only ocf contains a provider
+    /^(?<standard>ocf:[^:]+):(?<type>[^:]+)$/,
+    #colon can occur in systemd instance after @ but it does not separates
+    #a provider and a type
+    /^(?<standard>systemd|service):(?<type>[^:@]+@.*)$/,
+    #others do not contain a provider
+    %r{
+      ^(?<standard>lsb|heartbeat|stonith|upstart|service|systemd|nagios)
+      :
+      (?<type>[^:]+)$
+    }x,
+  ].each{|expression|
+    match = expression.match(agent_name)
+    if match
+      return {
+        :full_name => agent_name,
+        :class_provider => match[:standard],
+        :type => match[:type],
+      }
+    end
+  }
+  return nil
+end
+
 class ResourceAgent
   attr_accessor :name, :resource_class, :required_options, :optional_options, :info
   def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
