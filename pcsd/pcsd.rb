@@ -778,7 +778,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     if @nodes == []
       redirect '/manage/'
     end
-    @resource_agent_structures = get_resource_agents_avail(auth_user, params).keys \
+    @resource_agent_structures = get_resource_agents_avail(auth_user, params) \
       .map{|agent_name| get_resource_agent_name_structure(agent_name)} \
       .select{|structure| structure != nil}
     @stonith_agents = get_stonith_agents_avail(auth_user, params)

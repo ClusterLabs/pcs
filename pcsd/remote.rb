@@ -1553,8 +1553,7 @@ def get_avail_resource_agents(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  agents = getResourceAgents(auth_user)
-  return JSON.generate(agents)
+  return JSON.generate(getResourceAgents(auth_user).map{|a| [a, {}]}.to_h)
 end
 
 def get_avail_fence_agents(params, request, auth_user)
