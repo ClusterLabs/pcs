@@ -80,6 +80,36 @@ class GetResourceAgentNameFromString(TestCase):
             lib_ra.get_resource_agent_name_from_string("lsb:provider:Dummy")
         )
 
+    def test_returns_resource_agent_containing_sytemd_instance(self):
+        self.assertEqual(
+            lib_ra.ResourceAgentName("systemd", None, "lvm2-pvscan@252:2"),
+            lib_ra.get_resource_agent_name_from_string(
+                "systemd:lvm2-pvscan@252:2"
+            )
+        )
+    def test_returns_resource_agent_containing_service_instance(self):
+        self.assertEqual(
+            lib_ra.ResourceAgentName("service", None, "lvm2-pvscan@252:2"),
+            lib_ra.get_resource_agent_name_from_string(
+                "service:lvm2-pvscan@252:2"
+            )
+        )
+
+    def test_returns_resource_agent_containing_systemd_instance_short(self):
+        self.assertEqual(
+            lib_ra.ResourceAgentName("service", None, "getty@tty1"),
+            lib_ra.get_resource_agent_name_from_string("service:getty@tty1")
+        )
+
+    def test_refuses_systemd_agent_name_with_provider(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda: lib_ra.get_resource_agent_name_from_string(
+                "sytemd:lvm2-pvscan252:@2"
+            )
+        )
+
+
 class ListResourceAgentsStandardsTest(TestCase):
     def test_success_and_filter_stonith_out(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
