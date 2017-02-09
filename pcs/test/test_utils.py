@@ -1820,18 +1820,6 @@ class RunParallelTest(unittest.TestCase):
             sorted(['first', 'second'])
         )
 
-    def test_wait_for_slower_workers(self):
-        log = []
-        utils.run_parallel(
-            [
-                self.fixture_create_worker(log, 'first', .03),
-                self.fixture_create_worker(log, 'second'),
-            ],
-            wait_seconds=.01
-        )
-
-        self.assertEqual(log, ['second', 'first'])
-
 
 class PrepareNodeNamesTest(unittest.TestCase):
     def test_return_original_when_is_in_pacemaker_nodes(self):

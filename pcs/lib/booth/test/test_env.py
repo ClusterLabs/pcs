@@ -121,38 +121,25 @@ class BoothEnvTest(TestCase):
         )
 
 class SetKeyfileAccessTest(TestCase):
-    def test_set_desired_file_access(self):
-        #setup
-        file_path = rc("temp-keyfile")
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        with open(file_path, "w") as file:
-            file.write("content")
-
-        #check assumptions
-        stat = os.stat(file_path)
-        self.assertNotEqual('600', oct(stat.st_mode)[-3:])
-        current_user = pwd.getpwuid(os.getuid())[0]
-        if current_user != settings.pacemaker_uname:
-            file_user = pwd.getpwuid(stat.st_uid)[0]
-            self.assertNotEqual(file_user, settings.pacemaker_uname)
-        current_group = grp.getgrgid(os.getgid())[0]
-        if current_group != settings.pacemaker_gname:
-            file_group = grp.getgrgid(stat.st_gid)[0]
-            self.assertNotEqual(file_group, settings.pacemaker_gname)
-
-        #run tested method
+    @patch_env("os.chmod")
+    @patch_env("os.chown")
+    @patch_env("grp.getgrnam")
+    @patch_env("pwd.getpwnam")
+    @patch_env("settings")
+    def test_do_everything_to_set_desired_file_access(
+        self, settings, getpwnam, getgrnam, chown, chmod
+    ):
+        file_path = "/tmp/some_booth_file"
         env.set_keyfile_access(file_path)
 
-        #check
-        stat = os.stat(file_path)
-        self.assertEqual('600', oct(stat.st_mode)[-3:])
+        getpwnam.assert_called_once_with(settings.pacemaker_uname)
+        getgrnam.assert_called_once_with(settings.pacemaker_gname)
 
-        file_user = pwd.getpwuid(stat.st_uid)[0]
-        self.assertEqual(file_user, settings.pacemaker_uname)
-
-        file_group = grp.getgrgid(stat.st_gid)[0]
-        self.assertEqual(file_group, settings.pacemaker_gname)
+        chown.assert_called_once_with(
+            file_path,
+            getpwnam.return_value.pw_uid,
+            getgrnam.return_value.gr_gid,
+        )
 
     @patch_env("pwd.getpwnam", mock.MagicMock(side_effect=KeyError))
     @patch_env("settings.pacemaker_uname", "some-user")
