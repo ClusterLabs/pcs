@@ -23,6 +23,20 @@ class Success(ResourceTest):
             </resources>"""
         )
 
+    def test_base_create_with_agent_name_including_systemd_instance(self):
+        self.assert_effect(
+            "resource create R systemd:lvm2-pvscan@252:2 --no-default-ops",
+            """<resources>
+                <primitive class="systemd" id="R" type="lvm2-pvscan@252:2">
+                    <operations>
+                        <op id="R-monitor-interval-60" interval="60"
+                            name="monitor" timeout="100"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+
     def test_base_create_with_default_ops(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy",

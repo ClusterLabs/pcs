@@ -722,16 +722,16 @@ def get_resource_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
     auth_user, params[:cluster], 'get_avail_resource_agents'
   )
-  return {} if 200 != code
+  return [] if 200 != code
   begin
     ra = JSON.parse(result)
     if (ra["noresponse"] == true) or (ra["notauthorized"] == "true") or (ra["notoken"] == true) or (ra["pacemaker_not_running"] == true)
-      return {}
+      return []
     else
-      return ra
+      return ra.keys
     end
   rescue JSON::ParserError
-    return {}
+    return []
   end
 end
 

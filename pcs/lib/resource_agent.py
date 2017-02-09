@@ -91,6 +91,19 @@ class InvalidResourceAgentName(ResourceAgentError):
 ResourceAgentName = namedtuple("ResourceAgentName", "standard provider type")
 
 def get_resource_agent_name_from_string(full_agent_name):
+    #full_agent_name could be for example systemd:lvm2-pvscan@252:2
+    #note that the second colon is not separator of provider and type
+    match = re.match(
+        "^(?P<standard>systemd|service):(?P<agent_type>[^:@]+@.*)$",
+        full_agent_name
+    )
+    if match:
+        return ResourceAgentName(
+            match.group("standard"),
+            None,
+            match.group("agent_type")
+        )
+
     match = re.match(
         "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
         full_agent_name

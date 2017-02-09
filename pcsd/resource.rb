@@ -168,23 +168,16 @@ def getAllConstraints(constraints_dom)
 end
 
 def getResourceAgents(auth_user)
-  resource_agent_list = {}
   stdout, stderr, retval = run_cmd(
     auth_user, PCS, "resource", "list", "--nodesc"
   )
   if retval != 0
     $logger.error("Error running 'pcs resource list --nodesc")
     $logger.error(stdout + stderr)
-    return {}
+    return []
   end
 
-  agents = stdout
-  agents.each { |a|
-    ra = ResourceAgent.new
-    ra.name = a.chomp
-    resource_agent_list[ra.name] = ra
-  }
-  return resource_agent_list
+  return stdout.map{|agent_name| agent_name.chomp}
 end
 
 class Resource
@@ -239,48 +232,30 @@ class Resource
 end
 
 
-class ResourceAgent
-  attr_accessor :name, :resource_class, :required_options, :optional_options, :info
-  def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
-    @name = name
-    @required_options = required_options
-    @optional_options = optional_options
-    @resource_class = nil
-  end
-
-  def provider
-    name.gsub(/::.*/,"")
-  end
-
-  def class
-    name.gsub(/.*::(.*):.*/,"$1")
-  end
-
-  def type
-    name.gsub(/.*:/,"")
-  end
-
-  def name
-    @name
-  end
-
-  def to_json(options = {})
-    JSON.generate({"type" => type})
-  end
-
-  def long_desc 
-    if info && info.length >= 2
-      return info[1]
+def get_resource_agent_name_structure(agent_name)
+  [
+    #only ocf contains a provider
+    /^(?<standard>ocf:[^:]+):(?<type>[^:]+)$/,
+    #colon can occur in systemd instance after @ but it does not separates
+    #a provider and a type
+    /^(?<standard>systemd|service):(?<type>[^:@]+@.*)$/,
+    #others do not contain a provider
+    %r{
+      ^(?<standard>lsb|heartbeat|stonith|upstart|service|systemd|nagios)
+      :
+      (?<type>[^:]+)$
+    }x,
+  ].each{|expression|
+    match = expression.match(agent_name)
+    if match
+      return {
+        :full_name => agent_name,
+        :class_provider => match[:standard],
+        :type => match[:type],
+      }
     end
-    return ""
-  end
-
-  def short_desc
-    if info && info.length >= 1
-      return info[0]
-    end
-    return ""
-  end
+  }
+  return nil
 end
 
 

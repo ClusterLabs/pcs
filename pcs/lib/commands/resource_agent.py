@@ -95,9 +95,20 @@ def _complete_agent_list(
                 agent_list.append(agent_metadata.get_description_info())
             else:
                 agent_list.append(agent_metadata.get_name_info())
-        except resource_agent.UnableToGetAgentMetadata:
-            # if we cannot get valid metadata, it's not a resource agent and
-            # we don't return it in the list
+        except resource_agent.ResourceAgentError:
+            #we don't return it in the list:
+            #
+            #UnableToGetAgentMetadata - if we cannot get valid metadata, it's
+            #not a resource agent
+            #
+            #InvalidResourceAgentName - invalid name cannot be used with a new
+            #resource. The list of names is gained from "crm_resource" whilst
+            #pcs is doing the validation. So there can be a name that pcs does
+            #not recognize as valid.
+            #
+            #Providing a warning is not the way (currently). Other components
+            #read this list and do not expect warnings there. Using the stderr
+            #(to separate warnings) is currently difficult.
             pass
     return agent_list
 
