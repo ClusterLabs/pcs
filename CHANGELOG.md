@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.156] - 2017-02-10
 
 ### Added
 - Fencing levels now may be targeted in CLI by a node name pattern or a node
