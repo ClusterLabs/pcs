@@ -1312,8 +1312,13 @@ def cluster_push(argv):
         # dummy_retval == -1 means one of two things:
         # a) an error has occured
         # b) --original and --new differ
+        # therefore it's of no use to see if an error occurred
         if error.strip():
             utils.err("unable to diff the CIBs:\n" + error)
+        if not patch.strip():
+            utils.err(
+                "The new CIB is the same as the original CIB, nothing to push."
+            )
 
         command = ["cibadmin", "--patch", "--xml-pipe"]
         output, error, retval = runner.run(command, patch)
