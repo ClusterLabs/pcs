@@ -707,76 +707,95 @@ def location_prefer(argv):
 
 
 def location_add(argv,rm=False):
-    if len(argv) < 4 and (rm == False or len(argv) < 1):
-        usage.constraint()
+    if rm:
+        location_remove(argv)
+        return
+
+    if len(argv) < 4:
+        usage.constraint(["location add"])
         sys.exit(1)
 
     constraint_id = argv.pop(0)
+    resource_name = argv.pop(0)
+    node = argv.pop(0)
+    score = argv.pop(0)
+    options = []
+    # For now we only allow setting resource-discovery
+    if len(argv) > 0:
+        for arg in argv:
+            if '=' in arg:
+                options.append(arg.split('=',1))
+            else:
+                print("Error: bad option '%s'" % arg)
+                usage.constraint(["location add"])
+                sys.exit(1)
+            if options[-1][0] != "resource-discovery" and "--force" not in utils.pcs_options:
+                utils.err("bad option '%s', use --force to override" % options[-1][0])
 
-    # If we're removing, we only care about the id
-    if (rm == True):
-        resource_name = ""
-        node = ""
-        score = ""
-    else:
-        id_valid, id_error = utils.validate_xml_id(constraint_id, 'constraint id')
-        if not id_valid:
-            utils.err(id_error)
-        resource_name = argv.pop(0)
-        node = argv.pop(0)
-        score = argv.pop(0)
-        options = []
-        # For now we only allow setting resource-discovery
-        if len(argv) > 0:
-            for arg in argv:
-                if '=' in arg:
-                    options.append(arg.split('=',1))
-                else:
-                    print("Error: bad option '%s'" % arg)
-                    usage.constraint(["location add"])
-                    sys.exit(1)
-                if options[-1][0] != "resource-discovery" and "--force" not in utils.pcs_options:
-                    utils.err("bad option '%s', use --force to override" % options[-1][0])
+    id_valid, id_error = utils.validate_xml_id(constraint_id, 'constraint id')
+    if not id_valid:
+        utils.err(id_error)
 
-
-        resource_valid, resource_error, correct_id \
-            = utils.validate_constraint_resource(
-                utils.get_cib_dom(), resource_name
-            )
-        if "--autocorrect" in utils.pcs_options and correct_id:
-            resource_name = correct_id
-        elif not resource_valid:
-            utils.err(resource_error)
-        if not utils.is_score(score):
-            utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(
+            utils.get_cib_dom(), resource_name
+        )
+    if "--autocorrect" in utils.pcs_options and correct_id:
+        resource_name = correct_id
+    elif not resource_valid:
+        utils.err(resource_error)
+    if not utils.is_score(score):
+        utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     (dom,constraintsElement) = getCurrentConstraints()
     elementsToRemove = []
-
     # If the id matches, or the rsc & node match, then we replace/remove
     for rsc_loc in constraintsElement.getElementsByTagName('rsc_location'):
         if (constraint_id == rsc_loc.getAttribute("id")) or \
                 (rsc_loc.getAttribute("rsc") == resource_name and \
-                rsc_loc.getAttribute("node") == node and not rm):
+                rsc_loc.getAttribute("node") == node):
             elementsToRemove.append(rsc_loc)
-
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
 
-    if (rm == True and len(elementsToRemove) == 0):
-        utils.err("resource location id: " + constraint_id + " not found.")
+    element = dom.createElement("rsc_location")
+    element.setAttribute("id",constraint_id)
+    element.setAttribute("rsc",resource_name)
+    element.setAttribute("node",node)
+    element.setAttribute("score",score)
+    for option in options:
+        element.setAttribute(option[0], option[1])
+    constraintsElement.appendChild(element)
 
-    if (not rm):
-        element = dom.createElement("rsc_location")
-        element.setAttribute("id",constraint_id)
-        element.setAttribute("rsc",resource_name)
-        element.setAttribute("node",node)
-        element.setAttribute("score",score)
-        for option in options:
-            element.setAttribute(option[0], option[1])
-        constraintsElement.appendChild(element)
+    utils.replace_cib_configuration(dom)
+
+def location_remove(argv):
+    # This code was originally merged in the location_add function and was
+    # documented to take 1 or 4 arguments:
+    # location remove <id> [<resource id> <node> <score>]
+    # However it has always ignored all arguments but constraint id. Therefore
+    # this command / function has no use as it can be fully replaced by "pcs
+    # constraint remove" which also removes constraints by id. For now I keep
+    # things as they are but we should solve this when moving these functions
+    # to pcs.lib.
+    if len(argv) != 1:
+        usage.constraint(["location remove"])
+        sys.exit(1)
+
+    constraint_id = argv.pop(0)
+    dom, constraintsElement = getCurrentConstraints()
+
+    elementsToRemove = []
+    for rsc_loc in constraintsElement.getElementsByTagName('rsc_location'):
+        if constraint_id == rsc_loc.getAttribute("id"):
+            elementsToRemove.append(rsc_loc)
+
+    if (len(elementsToRemove) == 0):
+        utils.err("resource location id: " + constraint_id + " not found.")
+    for etr in elementsToRemove:
+        constraintsElement.removeChild(etr)
 
     utils.replace_cib_configuration(dom)
 

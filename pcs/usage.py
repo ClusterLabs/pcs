@@ -982,9 +982,8 @@ Commands:
         Add a location constraint with the appropriate id, resource id,
         node name and score. (For more advanced pacemaker usage.)
 
-    location remove <id> [<resource id> <node> <score>]
-        Remove a location constraint with the appropriate id, resource id,
-        node name and score. (For more advanced pacemaker usage.)
+    location remove <id>
+        Remove a location constraint with the appropriate id.
 
     order [show] [--full]
         List all current ordering constraints (if --full is specified show
