@@ -6,7 +6,9 @@ from __future__ import (
 )
 
 from pcs.test.cib_resource.common import ResourceTest
+from pcs.test.cib_resource.stonith_common import need_load_xvm_fence_agent
 
+@need_load_xvm_fence_agent
 class Enable(ResourceTest):
     def test_enable_disabled_stonith(self):
         self.assert_effect(
@@ -54,6 +56,7 @@ class Enable(ResourceTest):
         self.assert_effect("stonith create S fence_xvm", result_xml)
         self.assert_effect("stonith enable S", result_xml)
 
+@need_load_xvm_fence_agent
 class Disable(ResourceTest):
     def test_disable_enabled_stonith(self):
         self.assert_effect(

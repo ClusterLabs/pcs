@@ -8,6 +8,7 @@ from __future__ import (
 from pcs import utils
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools import pcs_unittest as unittest
+from pcs.test.cib_resource.stonith_common import need_load_xvm_fence_agent
 
 need_fence_scsi_providing_unfencing = unittest.skipUnless(
     not utils.is_rhel6(),
@@ -15,6 +16,7 @@ need_fence_scsi_providing_unfencing = unittest.skipUnless(
 )
 
 class PlainStonith(ResourceTest):
+    @need_load_xvm_fence_agent
     def test_simplest(self):
         self.assert_effect(
             "stonith create S fence_xvm",
@@ -73,6 +75,7 @@ class PlainStonith(ResourceTest):
                 " metadata: Metadata query for stonith:absent failed: -5\n"
         )
 
+    @need_load_xvm_fence_agent
     def test_disabled_puts_target_role_stopped(self):
         self.assert_effect(
             "stonith create S fence_xvm --disabled",
@@ -94,6 +97,7 @@ class PlainStonith(ResourceTest):
 
 
 class WithMeta(ResourceTest):
+    @need_load_xvm_fence_agent
     def test_simplest_with_meta_provides(self):
         self.assert_effect(
             "stonith create S fence_xvm meta provides=something",
@@ -134,6 +138,7 @@ class WithMeta(ResourceTest):
         )
 
 class InGroup(ResourceTest):
+    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group(self):
         self.assert_effect(
             "stonith create S fence_xvm --group G",
@@ -149,6 +154,8 @@ class InGroup(ResourceTest):
                 </group>
             </resources>"""
         )
+
+    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_at_the_end(self):
         self.assert_pcs_success("stonith create S1 fence_xvm --group G")
         self.assert_effect(
@@ -173,6 +180,7 @@ class InGroup(ResourceTest):
             </resources>"""
         )
 
+    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_before_another(self):
         self.assert_pcs_success("stonith create S1 fence_xvm --group G")
         self.assert_effect(
@@ -197,6 +205,7 @@ class InGroup(ResourceTest):
             </resources>"""
         )
 
+    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_after_another(self):
         self.assert_pcs_success_all([
             "stonith create S1 fence_xvm --group G",
@@ -231,12 +240,14 @@ class InGroup(ResourceTest):
             </resources>"""
         )
 
+    @need_load_xvm_fence_agent
     def test_fail_when_inteded_before_item_does_not_exist(self):
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1",
             "Error: there is no resource 'S1' in the group 'G'\n"
         )
 
+    @need_load_xvm_fence_agent
     def test_fail_when_inteded_after_item_does_not_exist(self):
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1",
