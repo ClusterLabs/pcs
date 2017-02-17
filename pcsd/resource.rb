@@ -127,8 +127,12 @@ def getAllConstraints(constraints_dom)
       e.elements.each('rule') { |rule|
         rule_info = {
           'rule_string' => rule_export.export(rule),
-          'rsc' => e.attributes['rsc'],
         }
+        if e.attributes["rsc-pattern"]
+          rule_info["rsc-pattern"] = e.attributes["rsc-pattern"]
+        else
+          rule_info["rsc"] = e.attributes["rsc"]
+        end
         rule.attributes.each { |name, value|
           rule_info[name] = value unless name == 'boolean-op'
         }

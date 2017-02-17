@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Resources in location constraints now may be specified by resource name
+  patterns in addition to resource names ([rhbz#1362493])
+
+[rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
+
+
 ## [0.9.156] - 2017-02-10
 
 ### Added

@@ -24,15 +24,30 @@ import threading
 import logging
 
 from pcs import settings, usage
-from pcs.cli.common.reports import (
-    process_library_reports,
-    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+
+from pcs.common import (
+    pcs_pycurl as pycurl,
+    report_codes,
 )
-from pcs.common import pcs_pycurl as pycurl
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
 )
+
+from pcs.cli.common import (
+    console_report,
+    middleware,
+)
+from pcs.cli.common.env import Env
+from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.common.reports import (
+    build_report_message,
+    process_library_reports,
+    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+)
+from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
+import pcs.cli.booth.env
+
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -60,12 +75,6 @@ from pcs.lib.pacemaker.values import(
     timeout_to_seconds as get_timeout_seconds,
     validate_id,
 )
-from pcs.cli.common import middleware
-from pcs.cli.common.env import Env
-from pcs.cli.common.lib_wrapper import Library
-from pcs.cli.common.reports import build_report_message
-from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
-import pcs.cli.booth.env
 
 try:
     # python2
@@ -117,6 +126,20 @@ def cluster_upgrade():
         err("unable to upgrade cluster: %s" % output)
     print("Cluster CIB has been upgraded to latest version")
 
+def cluster_upgrade_to_version(required_version):
+    checkAndUpgradeCIB(*required_version)
+    dom = get_cib_dom()
+    current_version = getValidateWithVersion(dom)
+    if current_version < required_version:
+        err(
+            console_report.CODE_TO_MESSAGE_BUILDER_MAP[
+                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION
+            ]({
+                "required_version": ".".join([str(x) for x in required_version]),
+                "current_version": ".".join([str(x) for x in current_version]),
+            })
+        )
+    return dom
 
 # Check status of node
 def checkStatus(node):

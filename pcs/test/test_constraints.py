@@ -5,15 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
 import os
 import shutil
 from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
+from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
     is_minimum_pacemaker_version,
+    outdent,
 )
 from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
@@ -23,10 +26,30 @@ empty_cib_1_2 = rc("cib-empty-1.2.xml")
 temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
+skip_unless_location_rsc_pattern = unittest.skipUnless(
+    is_minimum_pacemaker_version(1, 1, 16),
+    (
+        "Pacemaker version is too old (must be >= 1.1.16) to test location"
+        " constraints with resource patterns"
+    )
+)
+
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
+        with open(temp_cib, "w") as temp_cib_file:
+            temp_cib_file.write(self.fixture_cib_cache())
+
+    def fixture_cib_cache(self):
+        if not hasattr(self.__class__, "cib_cache"):
+            self.__class__.cib_cache = self.fixture_cib()
+        return self.__class__.cib_cache
+
+    def fixture_cib(self):
         shutil.copy(empty_cib, temp_cib)
         self.setupClusterA(temp_cib)
+        cib_content = open(temp_cib).read()
+        shutil.copy(empty_cib, temp_cib)
+        return cib_content
 
     # Setups up a cluster with Resources, groups, master/slave resource and clones
     def setupClusterA(self,temp_cib):
@@ -2597,9 +2620,15 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
+    temp_cib = rc("temp-cib.xml")
+
+    @property
+    def empty_cib(self):
+        return rc("cib-empty.xml")
+
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
         self.assert_pcs_success('resource create A ocf:heartbeat:Dummy')
         self.assert_pcs_success('resource create B ocf:heartbeat:Dummy')
 
@@ -2752,3 +2781,406 @@ class TicketShow(ConstraintBaseTest):
                 "    set A B setoptions ticket=T",
             ]
         )
+
+
+class ConstraintEffect(
+    unittest.TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            etree.parse(cib).findall(".//constraints")[0]
+        )
+    )
+):
+    temp_cib = rc("temp-cib.xml")
+
+    @property
+    def empty_cib(self):
+        return rc("cib-empty.xml")
+
+    def setUp(self):
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+
+class LocationTypeId(ConstraintEffect):
+    # This was written while implementing rsc-pattern to location constraints.
+    # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
+    # complete test of location constraints. Instead it relies on legacy tests
+    # to test location constraints with plain resource name.
+    def fixture_resource(self, name):
+        self.assert_pcs_success(
+            "resource create {0} ocf:heartbeat:Dummy".format(name)
+        )
+
+    def test_prefers(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            [
+                "constraint location A prefers node1",
+                "constraint location %A prefers node1",
+                "constraint location resource%A prefers node1",
+            ],
+            """<constraints>
+                <rsc_location id="location-A-node1-INFINITY" node="node1"
+                    rsc="A" score="INFINITY"
+                />
+            </constraints>"""
+        )
+
+    def test_avoids(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            [
+                "constraint location A avoids node1",
+                "constraint location %A avoids node1",
+                "constraint location resource%A avoids node1",
+            ],
+            """<constraints>
+                <rsc_location id="location-A-node1--INFINITY" node="node1"
+                    rsc="A" score="-INFINITY"
+                />
+            </constraints>"""
+        )
+
+    def test_add(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            [
+                "constraint location add my-id A node1 INFINITY",
+                "constraint location add my-id %A node1 INFINITY",
+                "constraint location add my-id resource%A node1 INFINITY",
+            ],
+            """<constraints>
+                <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
+            </constraints>"""
+        )
+
+    def test_rule(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            [
+                "constraint location A rule '#uname' eq node1",
+                "constraint location %A rule '#uname' eq node1",
+                "constraint location resource%A rule '#uname' eq node1",
+            ],
+            """<constraints>
+                <rsc_location id="location-A" rsc="A">
+                    <rule id="location-A-rule" score="INFINITY">
+                        <expression id="location-A-rule-expr"
+                            operation="eq" attribute="#uname" value="node1"
+                        />
+                    </rule>
+                </rsc_location>
+            </constraints>"""
+        )
+
+
+@skip_unless_location_rsc_pattern
+class LocationTypePattern(ConstraintEffect):
+    # This was written while implementing rsc-pattern to location constraints.
+    # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
+    # complete test of location constraints. Instead it relies on legacy tests
+    # to test location constraints with plain resource name.
+    @property
+    def empty_cib(self):
+        return rc("cib-empty-2.6.xml")
+
+    def stdout(self):
+        return ""
+
+    def test_prefers(self):
+        self.assert_effect(
+            "constraint location regexp%res_[0-9] prefers node1",
+            """<constraints>
+                <rsc_location id="location-res_0-9-node1-INFINITY" node="node1"
+                    rsc-pattern="res_[0-9]" score="INFINITY"
+                />
+            </constraints>""",
+            self.stdout()
+        )
+
+    def test_avoids(self):
+        self.assert_effect(
+            "constraint location regexp%res_[0-9] avoids node1",
+            """<constraints>
+                <rsc_location id="location-res_0-9-node1--INFINITY" node="node1"
+                    rsc-pattern="res_[0-9]" score="-INFINITY"
+                />
+            </constraints>""",
+            self.stdout()
+        )
+
+    def test_add(self):
+        self.assert_effect(
+            "constraint location add my-id regexp%res_[0-9] node1 INFINITY",
+            """<constraints>
+                <rsc_location id="my-id" node="node1" rsc-pattern="res_[0-9]"
+                    score="INFINITY"
+                />
+            </constraints>""",
+            self.stdout()
+        )
+
+    def test_rule(self):
+        self.assert_effect(
+            "constraint location regexp%res_[0-9]  rule '#uname' eq node1",
+            """<constraints>
+                <rsc_location id="location-res_0-9" rsc-pattern="res_[0-9]">
+                    <rule id="location-res_0-9-rule" score="INFINITY">
+                        <expression id="location-res_0-9-rule-expr"
+                            operation="eq" attribute="#uname" value="node1"
+                        />
+                    </rule>
+                </rsc_location>
+            </constraints>""",
+            self.stdout()
+        )
+
+
+@skip_unless_location_rsc_pattern
+class LocationTypePatternWithCibUpgrade(LocationTypePattern):
+    @property
+    def empty_cib(self):
+        return rc("cib-empty.xml")
+
+    def stdout(self):
+        return "Cluster CIB has been upgraded to latest version\n"
+
+
+@skip_unless_location_rsc_pattern
+class LocationShowWithPattern(ConstraintBaseTest):
+    # This was written while implementing rsc-pattern to location constraints.
+    # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
+    # complete test of location constraints. Instead it relies on legacy tests
+    # to test location constraints with plain resource name.
+    @property
+    def empty_cib(self):
+        return rc("cib-empty-2.6.xml")
+
+    def fixture(self):
+        self.assert_pcs_success_all([
+            "resource create R1 ocf:heartbeat:Dummy",
+            "resource create R2 ocf:heartbeat:Dummy",
+            "resource create R3 ocf:heartbeat:Dummy",
+
+            "constraint location R1 prefers node1 node2=20",
+            "constraint location R1 avoids node3=30 node4",
+            "constraint location R2 prefers node3 node4=20",
+            "constraint location R2 avoids node1=30 node2",
+            "constraint location regexp%R_[0-9]+ prefers node1 node2=20",
+            "constraint location regexp%R_[0-9]+ avoids node3=30",
+            "constraint location regexp%R_[a-z]+ avoids node3=30",
+
+            "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never",
+            "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never",
+            "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never",
+
+            "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=2005",
+            "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=2007",
+            "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=2006",
+            "constraint location regexp%R_[0-9]+ rule score=20 defined pingd",
+        ])
+
+    def test_show(self):
+        self.fixture()
+        self.assert_pcs_success(
+            "constraint location show --full",
+            outdent(
+            """\
+            Location Constraints:
+              Resource pattern: R_[0-9]+
+                Enabled on: node1 (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
+                Enabled on: node2 (score:20) (id:location-R_0-9-node2-20)
+                Disabled on: node3 (score:-30) (id:location-R_0-9-node3--30)
+                Disabled on: node4 (score:-INFINITY) (resource-discovery=never) (id:my-id3)
+                Constraint: location-R_0-9
+                  Rule: score=-INFINITY  (id:location-R_0-9-rule)
+                    Expression:  (id:location-R_0-9-rule-expr)
+                      Date Spec: years=2006  (id:location-R_0-9-rule-expr-datespec)
+                Constraint: location-R_0-9-1
+                  Rule: score=20  (id:location-R_0-9-1-rule)
+                    Expression: defined pingd  (id:location-R_0-9-1-rule-expr)
+              Resource pattern: R_[a-z]+
+                Disabled on: node3 (score:-30) (id:location-R_a-z-node3--30)
+              Resource: R1
+                Enabled on: node1 (score:INFINITY) (id:location-R1-node1-INFINITY)
+                Enabled on: node2 (score:20) (id:location-R1-node2-20)
+                Disabled on: node3 (score:-30) (id:location-R1-node3--30)
+                Disabled on: node4 (score:-INFINITY) (id:location-R1-node4--INFINITY)
+                Constraint: location-R1
+                  Rule: score=-INFINITY  (id:location-R1-rule)
+                    Expression:  (id:location-R1-rule-expr)
+                      Date Spec: years=2005  (id:location-R1-rule-expr-datespec)
+                Constraint: location-R1-1
+                  Rule: score=-INFINITY  (id:location-R1-1-rule)
+                    Expression:  (id:location-R1-1-rule-expr)
+                      Date Spec: years=2007  (id:location-R1-1-rule-expr-datespec)
+              Resource: R2
+                Enabled on: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
+                Enabled on: node4 (score:20) (id:location-R2-node4-20)
+                Disabled on: node1 (score:-30) (id:location-R2-node1--30)
+                Disabled on: node2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
+              Resource: R3
+                Disabled on: node1 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
+                Disabled on: node2 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
+            """
+            )
+        )
+
+        self.assert_pcs_success(
+            "constraint location show",
+            outdent(
+            """\
+            Location Constraints:
+              Resource pattern: R_[0-9]+
+                Enabled on: node1 (score:INFINITY)
+                Enabled on: node2 (score:20)
+                Disabled on: node3 (score:-30)
+                Disabled on: node4 (score:-INFINITY) (resource-discovery=never)
+                Constraint: location-R_0-9
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2006
+                Constraint: location-R_0-9-1
+                  Rule: score=20
+                    Expression: defined pingd
+              Resource pattern: R_[a-z]+
+                Disabled on: node3 (score:-30)
+              Resource: R1
+                Enabled on: node1 (score:INFINITY)
+                Enabled on: node2 (score:20)
+                Disabled on: node3 (score:-30)
+                Disabled on: node4 (score:-INFINITY)
+                Constraint: location-R1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2005
+                Constraint: location-R1-1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2007
+              Resource: R2
+                Enabled on: node3 (score:INFINITY)
+                Enabled on: node4 (score:20)
+                Disabled on: node1 (score:-30)
+                Disabled on: node2 (score:-INFINITY)
+              Resource: R3
+                Disabled on: node1 (score:-INFINITY) (resource-discovery=never)
+                Disabled on: node2 (score:-INFINITY) (resource-discovery=never)
+            """
+            )
+        )
+
+        self.assert_pcs_success(
+            "constraint location show nodes --full",
+            outdent(
+            """\
+            Location Constraints:
+              Node: 
+                Allowed to run:
+                  Resource: R1 (location-R1) Score: 0
+                  Resource: R1 (location-R1-1) Score: 0
+                  Resource pattern: R_[0-9]+ (location-R_0-9) Score: 0
+                  Resource pattern: R_[0-9]+ (location-R_0-9-1) Score: 0
+              Node: node1
+                Allowed to run:
+                  Resource: R1 (location-R1-node1-INFINITY) Score: INFINITY
+                  Resource pattern: R_[0-9]+ (location-R_0-9-node1-INFINITY) Score: INFINITY
+                Not allowed to run:
+                  Resource: R2 (location-R2-node1--30) Score: -30
+                  Resource: R3 (my-id1) (resource-discovery=never) Score: -INFINITY
+              Node: node2
+                Allowed to run:
+                  Resource: R1 (location-R1-node2-20) Score: 20
+                  Resource pattern: R_[0-9]+ (location-R_0-9-node2-20) Score: 20
+                Not allowed to run:
+                  Resource: R2 (location-R2-node2--INFINITY) Score: -INFINITY
+                  Resource: R3 (my-id2) (resource-discovery=never) Score: -INFINITY
+              Node: node3
+                Allowed to run:
+                  Resource: R2 (location-R2-node3-INFINITY) Score: INFINITY
+                Not allowed to run:
+                  Resource: R1 (location-R1-node3--30) Score: -30
+                  Resource pattern: R_[0-9]+ (location-R_0-9-node3--30) Score: -30
+                  Resource pattern: R_[a-z]+ (location-R_a-z-node3--30) Score: -30
+              Node: node4
+                Allowed to run:
+                  Resource: R2 (location-R2-node4-20) Score: 20
+                Not allowed to run:
+                  Resource: R1 (location-R1-node4--INFINITY) Score: -INFINITY
+                  Resource pattern: R_[0-9]+ (my-id3) (resource-discovery=never) Score: -INFINITY
+              Resource pattern: R_[0-9]+
+                Constraint: location-R_0-9
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2006
+                Constraint: location-R_0-9-1
+                  Rule: score=20
+                    Expression: defined pingd
+              Resource: R1
+                Constraint: location-R1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2005
+                Constraint: location-R1-1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2007
+            """
+            )
+        )
+
+        self.assert_pcs_success(
+            "constraint location show nodes node2",
+            outdent(
+            """\
+            Location Constraints:
+              Node: node2
+                Allowed to run:
+                  Resource: R1 (location-R1-node2-20) Score: 20
+                  Resource pattern: R_[0-9]+ (location-R_0-9-node2-20) Score: 20
+                Not allowed to run:
+                  Resource: R2 (location-R2-node2--INFINITY) Score: -INFINITY
+                  Resource: R3 (my-id2) (resource-discovery=never) Score: -INFINITY
+              Resource pattern: R_[0-9]+
+                Constraint: location-R_0-9
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2006
+                Constraint: location-R_0-9-1
+                  Rule: score=20
+                    Expression: defined pingd
+              Resource: R1
+                Constraint: location-R1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2005
+                Constraint: location-R1-1
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2007
+            """
+            )
+        )
+
+        self.assert_pcs_success(
+            "constraint location show resources regexp%R_[0-9]+",
+            outdent(
+            """\
+            Location Constraints:
+              Resource pattern: R_[0-9]+
+                Enabled on: node1 (score:INFINITY)
+                Enabled on: node2 (score:20)
+                Disabled on: node3 (score:-30)
+                Disabled on: node4 (score:-INFINITY) (resource-discovery=never)
+                Constraint: location-R_0-9
+                  Rule: score=-INFINITY
+                    Expression:
+                      Date Spec: years=2006
+                Constraint: location-R_0-9-1
+                  Rule: score=20
+                    Expression: defined pingd
+            """
+            )
+        )
+

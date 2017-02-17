@@ -944,17 +944,21 @@ Commands:
         List all current constraints. If --full is specified also list the
         constraint ids.
 
-    location <resource id> prefers <node>[=<score>] [<node>[=<score>]]...
-        Create a location constraint on a resource to prefer the specified
-        node and score (default score: INFINITY).
+    location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
+        Create a location constraint on a resource to prefer the specified node
+        with score (default score: INFINITY). Resource may be either a resource
+        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
+        resource name regular expression regexp%<resource_pattern>.
 
-    location <resource id> avoids <node>[=<score>] [<node>[=<score>]]...
-        Create a location constraint on a resource to avoid the specified
-        node and score (default score: INFINITY).
+    location <resource> avoids <node>[=<score>] [<node>[=<score>]]...
+        Create a location constraint on a resource to avoid the specified node
+        with score (default score: INFINITY). Resource may be either a resource
+        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
+        resource name regular expression regexp%<resource_pattern>.
 
-    location <resource id> rule [id=<rule id>] [resource-discovery=<option>]
+    location <resource> rule [id=<rule id>] [resource-discovery=<option>]
              [role=master|slave] [constraint-id=<id>]
-             [score=<score>|score-attribute=<attribute>] <expression>
+             [score=<score> | score-attribute=<attribute>] <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           defined|not_defined <attribute>
@@ -967,20 +971,27 @@ Commands:
           ( <expression> )
         where duration options and date spec options are: hours, monthdays,
         weekdays, yeardays, months, weeks, years, weekyears, moon.
-        If score is omitted it defaults to INFINITY. If id is omitted one is
-        generated from the resource id. If resource-discovery is omitted it
-        defaults to 'always'.
+        Resource may be either a resource id <resource_id> or %<resource_id> or
+        resource%<resource_id>, or a resource name regular expression
+        regexp%<resource_pattern>. If score is omitted it defaults to INFINITY.
+        If id is omitted one is generated from the resource id. If
+        resource-discovery is omitted it defaults to 'always'.
 
-    location [show [resources|nodes [node id|resource id]...] [--full]]
-        List all the current location constraints, if 'resources' is specified
-        location constraints are displayed per resource (default), if 'nodes'
-        is specified location constraints are displayed per node.  If specific
+    location [show [resources|nodes [<node> | <resource>]...] [--full]]
+        List all the current location constraints. If 'resources' is specified,
+        location constraints are displayed per resource (default). If 'nodes'
+        is specified, location constraints are displayed per node. If specific
         nodes or resources are specified then we only show information about
-        them.  If --full is specified show the internal constraint id's as well.
+        them. Resource may be either a resource id <resource_id> or
+        %<resource_id> or resource%<resource_id>, or a resource name regular
+        expression regexp%<resource_pattern>. If --full is specified show the
+        internal constraint id's as well.
 
-    location add <id> <resource id> <node> <score> [resource-discovery=<option>]
-        Add a location constraint with the appropriate id, resource id,
-        node name and score. (For more advanced pacemaker usage.)
+    location add <id> <resource> <node> <score> [resource-discovery=<option>]
+        Add a location constraint with the appropriate id for the specified
+        resource, node name and score. Resource may be either a resource id
+        <resource_id> or %<resource_id> or resource%<resource_id>, or a
+        resource name regular expression regexp%<resource_pattern>.
 
     location remove <id>
         Remove a location constraint with the appropriate id.
