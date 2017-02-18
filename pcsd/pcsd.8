@@ -1,0 +1,60 @@
+.TH PCSD "8" "February 2017" "pcs 0.9.156" "System Administration Utilities"
+.SH NAME
+pcsd \- pacemaker/corosync configuration system daemon
+.SH DESCRIPTION
+Daemon for controlling and configuring pacakamer/corosync clusters via pcs.
+.SH ENVIRONMENT
+.TP
+.B PCSD_DEBUG=<boolean>
+ Set to true for adnvanced pcsd debugging information.
+.TP
+.B PCSD_DISABLE_GUI=<boolean>
+ Set to true to disable web UI frontend in pcsd on port 2224.
+.TP
+.B PCSD_SESSION_LIFETIME=<integer>
+ Set web UI session lifetime in seconds.
+.TP
+.B PCSD_BIND_ADDR=<string>
+ List of IP addresses pcsd should bind to delimited by ',' character.
+.TP
+.B PCSD_SSL_OPTIONS=<string>
+ Set SSL options selimited by ',' character. List of valid options can be obtained by running: ruby -e 'require "openssl"; puts OpenSSL::SSL.constants.grep /^OP_/'
+.TP
+.B PCSD_SSL_CIPHERS=<string>
+ Set SSL ciphers
+.TP
+.B https_proxy=<string>
+ Proxy server address for https connections (also it's upper case variant). Note that pcsd currently communicate only using HTTPS.
+.TP
+.B all_proxy=<string>
+ Proxy server address (also it's upper case variant).
+.TP
+.B no_proxy=<string>
+ List of hostnames for which proxy is not used.
+.TP
+.B RACK_ENV=<string>
+ Value of this variable has to be 'production', otherwise pcsd will not work properly.
+.SH FILES
+All files used by pcsd are located in
+.B /var/lib/pcsd/
+.TP
+.B pcsd_settings.conf
+ JSON file. Clusters managed from web UI are stored in this file.
+.TP
+.B pcs_users.conf
+ JSON file. Used for storing tokens which are accepted by pcsd.
+.TP
+.B tokens
+ JSON file. Authentication tokens of remote hosts.
+.TP
+.B pcsd.cookiesecret
+.TP
+.B pcsd.crt
+.TP
+.B pcsd.key
+
+.SH SEE ALSO
+http://clusterlabs.org/doc/
+
+.BR pcs (8)
+ 
