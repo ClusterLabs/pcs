@@ -10,7 +10,10 @@ import os.path
 import re
 
 from pcs import utils
-from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.pcs_unittest import (
+    mock,
+    skipUnless,
+)
 
 
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,6 +53,13 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
         (major == cmajor and minor > cminor)
         or
         (major == cmajor and minor == cminor and rev >= crev)
+    )
+
+def skip_unless_pacemaker_supports_systemd():
+    output, dummy_retval = utils.run(["pacemakerd", "--features"])
+    return skipUnless(
+        "systemd" in output,
+        "Pacemaker does not support systemd resources"
     )
 
 def create_patcher(target_prefix):

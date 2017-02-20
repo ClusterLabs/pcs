@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from pcs.test.tools.misc import skip_unless_pacemaker_supports_systemd
 from pcs.test.cib_resource.common import ResourceTest
 
 
@@ -23,11 +24,14 @@ class Success(ResourceTest):
             </resources>"""
         )
 
+    @skip_unless_pacemaker_supports_systemd()
     def test_base_create_with_agent_name_including_systemd_instance(self):
+        # crm_resource returns the same metadata for any systemd resource, no
+        # matter if it exists or not
         self.assert_effect(
-            "resource create R systemd:lvm2-pvscan@252:2 --no-default-ops",
+            "resource create R systemd:test@a:b --no-default-ops",
             """<resources>
-                <primitive class="systemd" id="R" type="lvm2-pvscan@252:2">
+                <primitive class="systemd" id="R" type="test@a:b">
                     <operations>
                         <op id="R-monitor-interval-60" interval="60"
                             name="monitor" timeout="100"
