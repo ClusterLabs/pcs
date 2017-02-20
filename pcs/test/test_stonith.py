@@ -14,16 +14,14 @@ from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
     is_minimum_pacemaker_version,
+    skip_unless_pacemaker_version,
     outdent,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
-from pcs.test.tools.pcs_unittest import (
-    skipUnless,
-    TestCase
-)
+from pcs.test.tools.pcs_unittest import TestCase
 
 
 empty_cib = rc("cib-empty.xml")
@@ -34,14 +32,17 @@ temp_cib = rc("temp-cib.xml")
 # support. In that time pacemaker 1.1.12 was quite old. To keep tests simple we
 # do not run fencing topology tests on pacemaker older that 1.1.13 even if it
 # supports targeting by node names.
-fencing_level_supported = is_minimum_pacemaker_version(1, 1, 13)
-fencing_level_not_supported_msg = ("Pacemaker version is too old "
-    "(must be >= 1.1.13) to test fencing levels")
+skip_unless_fencing_level_supported = skip_unless_pacemaker_version(
+    (1, 1, 13),
+    "fencing levels"
+)
 # target-attribute and target-value attributes were added in pacemaker 1.1.14
 # with validate-with 2.4.
 fencing_level_attribute_supported = is_minimum_pacemaker_version(1, 1, 14)
-fencing_level_attribute_not_supported_msg = ("Pacemaker version is too old "
-    "(must be >= 1.1.14) to test fencing levels with attribute targets")
+skip_unless_fencing_level_attribute_supported = skip_unless_pacemaker_version(
+    (1, 1, 14),
+    "fencing levels with attribute targets"
+)
 
 
 class StonithDescribeTest(TestCase, AssertPcsMixin):
@@ -634,7 +635,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.config_lines = self.config.splitlines()
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelBadCommand(LevelTestsBase):
     def test_success(self):
         self.assert_pcs_fail(
@@ -643,16 +644,13 @@ class LevelBadCommand(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelAddTargetUpgradesCib(LevelTestsBase):
     def setUp(self):
         shutil.copy(rc("cib-empty-withnodes.xml"), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
-    @skipUnless(
-        fencing_level_attribute_supported,
-        fencing_level_attribute_not_supported_msg
-    )
+    @skip_unless_fencing_level_attribute_supported
     def test_attribute(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
@@ -686,7 +684,7 @@ class LevelAddTargetUpgradesCib(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelAdd(LevelTestsBase):
     def test_not_enough_params(self):
         self.assert_pcs_fail(
@@ -835,10 +833,7 @@ class LevelAdd(LevelTestsBase):
             )
         )
 
-    @skipUnless(
-        fencing_level_attribute_supported,
-        fencing_level_attribute_not_supported_msg
-    )
+    @skip_unless_fencing_level_attribute_supported
     def test_add_node_attribute(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
@@ -987,7 +982,7 @@ class LevelAdd(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelConfig(LevelTestsBase):
     full_config = outdent(
         """\
@@ -1064,7 +1059,7 @@ class LevelConfig(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelClear(LevelTestsBase):
     def setUp(self):
         super(LevelClear, self).setUp()
@@ -1100,10 +1095,7 @@ class LevelClear(LevelTestsBase):
             "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n"
         )
 
-    @skipUnless(
-        fencing_level_attribute_supported,
-        fencing_level_attribute_not_supported_msg
-    )
+    @skip_unless_fencing_level_attribute_supported
     def test_clear_attribute(self):
         self.assert_pcs_success("stonith level clear attrib%fencewith=levels2")
         self.assert_pcs_success(
@@ -1132,7 +1124,7 @@ class LevelClear(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelRemove(LevelTestsBase):
     def setUp(self):
         super(LevelRemove, self).setUp()
@@ -1197,10 +1189,7 @@ class LevelRemove(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
-    @skipUnless(
-        fencing_level_attribute_supported,
-        fencing_level_attribute_not_supported_msg
-    )
+    @skip_unless_fencing_level_attribute_supported
     def test_remove_level_attrib(self):
         self.assert_pcs_success(
             "stonith level remove 6 attrib%fencewith=levels2"
@@ -1245,10 +1234,7 @@ class LevelRemove(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
-    @skipUnless(
-        fencing_level_attribute_supported,
-        fencing_level_attribute_not_supported_msg
-    )
+    @skip_unless_fencing_level_attribute_supported
     def test_remove_level_attrib_device(self):
         self.assert_pcs_success(
             "stonith level remove 6 attrib%fencewith=levels2 F3 F1"
@@ -1259,7 +1245,7 @@ class LevelRemove(LevelTestsBase):
         )
 
 
-@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+@skip_unless_fencing_level_supported
 class LevelVerify(LevelTestsBase):
     def test_success(self):
         self.fixture_full_configuration()

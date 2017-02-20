@@ -55,6 +55,16 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
         (major == cmajor and minor == cminor and rev >= crev)
     )
 
+def skip_unless_pacemaker_version(version_tuple, feature):
+    return skipUnless(
+        is_minimum_pacemaker_version(*version_tuple),
+        "Pacemaker version is too old (must be >= {version}) to test {feature}"
+            .format(
+                version=".".join([str(x) for x in version_tuple]),
+                feature=feature
+            )
+    )
+
 def skip_unless_pacemaker_supports_systemd():
     output, dummy_retval = utils.run(["pacemakerd", "--features"])
     return skipUnless(

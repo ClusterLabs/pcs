@@ -10,7 +10,7 @@ import shutil
 
 from pcs.test.tools.misc import (
     get_test_resource as rc,
-    is_minimum_pacemaker_version,
+    skip_unless_pacemaker_version,
     outdent,
 )
 from pcs.test.tools.assertions import AssertPcsMixin
@@ -22,11 +22,10 @@ old_cib = rc("cib-empty.xml")
 empty_cib = rc("cib-empty-2.5.xml")
 temp_cib = rc("temp-cib.xml")
 
-
-ALERTS_SUPPORTED = is_minimum_pacemaker_version(1, 1, 15)
-ALERTS_NOT_SUPPORTED_MSG = "Pacemaker version is too old (must be >= 1.1.15)" +\
-    " to test alerts"
-
+skip_unless_alerts_supported = skip_unless_pacemaker_version(
+    (1, 1, 15),
+    "alerts"
+)
 
 class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -34,7 +33,7 @@ class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(temp_cib)
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class AlertCibUpgradeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(old_cib, temp_cib)
@@ -63,7 +62,7 @@ Alerts:
         )
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class CreateAlertTest(PcsAlertTest):
     def test_create_multiple_without_id(self):
         self.assert_pcs_success(
@@ -151,7 +150,7 @@ Alerts:
         )
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class UpdateAlertTest(PcsAlertTest):
     def test_update_everything(self):
         self.assert_pcs_success(
@@ -196,7 +195,7 @@ Alerts:
         )
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class RemoveAlertTest(PcsAlertTest):
     def test_not_existing_alert(self):
         self.assert_pcs_fail(
@@ -260,7 +259,7 @@ class RemoveAlertTest(PcsAlertTest):
         )
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class AddRecipientTest(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test")
@@ -356,7 +355,7 @@ Alerts:
 
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class UpdateRecipientAlert(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test")
@@ -484,7 +483,7 @@ Alerts:
         )
 
 
-@unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
+@skip_unless_alerts_supported
 class RemoveRecipientTest(PcsAlertTest):
     def test_one(self):
         self.assert_pcs_success("alert create path=test")

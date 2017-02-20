@@ -15,7 +15,7 @@ from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
-    is_minimum_pacemaker_version,
+    skip_unless_pacemaker_version,
     outdent,
 )
 from pcs.test.tools.pcs_runner import pcs, PcsRunner
@@ -26,12 +26,9 @@ empty_cib_1_2 = rc("cib-empty-1.2.xml")
 temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
-skip_unless_location_rsc_pattern = unittest.skipUnless(
-    is_minimum_pacemaker_version(1, 1, 16),
-    (
-        "Pacemaker version is too old (must be >= 1.1.16) to test location"
-        " constraints with resource patterns"
-    )
+skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
+    (1, 1, 16),
+    "location constraints with resource patterns"
 )
 
 class ConstraintTest(unittest.TestCase):
@@ -256,11 +253,11 @@ Ticket Constraints:
         ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
+    @skip_unless_pacemaker_version(
+        (1, 1, 12),
+        "constraints with the require-all option"
+    )
     def testOrderConstraintRequireAll(self):
-        if not is_minimum_pacemaker_version(1, 1, 12):
-            print("WARNING: Pacemaker version is too old (must be >= 1.1.12) to test require-all")
-            return
-
         o,r = pcs("cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
@@ -528,11 +525,11 @@ Colocation Constraints:
         ac(output, "")
         self.assertEqual(0, retValue)
 
+    @skip_unless_pacemaker_version(
+        (1, 1, 12),
+        "constraints with the resource-discovery option"
+    )
     def testConstraintResourceDiscovery(self):
-        if not is_minimum_pacemaker_version(1, 1, 12):
-            print("WARNING: Pacemaker version is too old (must be >= 1.1.12) to test resource-discovery")
-            return
-
         o,r = pcs("resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0

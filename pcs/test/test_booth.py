@@ -26,7 +26,7 @@ BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
 need_booth_resource_agent = unittest.skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,
     "test requires resource agent ocf:pacemaker:booth-site"
-    " which is not istalled"
+    " which is not installed"
 )
 
 

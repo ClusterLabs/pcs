@@ -14,7 +14,7 @@ from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
-    is_minimum_pacemaker_version,
+    skip_unless_pacemaker_version,
     outdent,
 )
 from pcs.test.tools.pcs_runner import (
@@ -2610,10 +2610,8 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
 
+    @skip_unless_pacemaker_version((1, 1, 11), "CIB schema upgrade")
     def testClusterUpgrade(self):
-        if not is_minimum_pacemaker_version(1, 1, 11):
-            print("WARNING: Unable to test cluster upgrade because pacemaker is older than 1.1.11")
-            return
         with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
