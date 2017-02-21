@@ -122,7 +122,7 @@ class TestConfig < Test::Unit::TestCase
   ]
 }'
     cfg = PCSConfig.new(text)
-    if Gem.loaded_specs['json'] and Gem.loaded_specs['json'].version >= Gem::Version.create('2.0')
+    if JSON::VERSION_MAJOR >= 2
       parser_error = "Unable to parse pcs_settings file: 409: unexpected token at '\"rh71-node2\"\n      ]\n    }\n  ]\n}'"
     else
       parser_error = "Unable to parse pcs_settings file: 399: unexpected token at '\"rh71-node2\"\n      ]\n    }\n  ]\n}'"
