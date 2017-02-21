@@ -572,18 +572,17 @@ class NodeCommunicator(object):
         """
         def __debug_callback(data_type, debug_data):
             prefixes = {
-                pycurl.DEBUG_TEXT: "* ",
-                pycurl.DEBUG_HEADER_IN: "< ",
-                pycurl.DEBUG_HEADER_OUT: "> ",
-                pycurl.DEBUG_DATA_IN: "<< ",
-                pycurl.DEBUG_DATA_OUT: ">> ",
+                pycurl.DEBUG_TEXT: b"* ",
+                pycurl.DEBUG_HEADER_IN: b"< ",
+                pycurl.DEBUG_HEADER_OUT: b"> ",
+                pycurl.DEBUG_DATA_IN: b"<< ",
+                pycurl.DEBUG_DATA_OUT: b">> ",
             }
             if data_type in prefixes:
-                debug_output.write("{prefix}{data}{suffix}".format(
-                    prefix=prefixes[data_type],
-                    data=debug_data,
-                    suffix="" if debug_data.endswith("\n") else "\n"
-                ).encode("utf-8"))
+                debug_output.write(prefixes[data_type])
+                debug_output.write(debug_data)
+                if not debug_data.endswith(b"\n"):
+                    debug_output.write(b"\n")
 
         output = io.BytesIO()
         debug_output = io.BytesIO()
@@ -681,7 +680,7 @@ class NodeCommunicator(object):
             else:
                 raise NodeConnectionException(host, request, reason)
         finally:
-            debug_data = debug_output.getvalue().decode("utf-8")
+            debug_data = debug_output.getvalue().decode("utf-8", "ignore")
             self._logger.debug(
                 (
                     "Communication debug info for calling: {url}\n"

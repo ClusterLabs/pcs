@@ -506,8 +506,8 @@ class NodeCommunicatorTest(TestCase):
             },
             expected_response_data.encode("utf-8"),
             [
-                (pycurl.DEBUG_TEXT, "text"),
-                (pycurl.DEBUG_DATA_OUT, "data out")
+                (pycurl.DEBUG_TEXT, b"text"),
+                (pycurl.DEBUG_DATA_OUT, b"data out")
             ]
         )
         mock_pycurl_init.return_value = mock_pycurl_obj
@@ -1952,4 +1952,3 @@ class IsProxySetTest(TestCase):
             "no_proxy": "*",
             "all_proxy": "test.proxy",
         }))
-
