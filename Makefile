@@ -160,7 +160,7 @@ endif
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
-		$(eval font_path = $(shell fc-list '--format=%{file}' '$(font_def)')) \
+		$(eval font_path = $(shell fc-match '--format=%{file}' '$(font_def)')) \
 		$(if $(font_path),ln -s -f $(font_path) ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
 	)
 
