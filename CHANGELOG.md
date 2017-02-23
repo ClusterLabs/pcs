@@ -5,13 +5,14 @@
 ### Added
 - Resources in location constraints now may be specified by resource name
   patterns in addition to resource names ([rhbz#1362493])
-- Proxy settings to pcsd.conf ([rhbz#1315627])
+- Proxy settings description in pcsd configuration file ([rhbz#1315627])
 - Man page for pcsd ([rhbz#1378742])
 
 ### Fixed
 - Python 3: pcs no longer spams stderr with error messages when communicating
   with another node
 
+[rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
 

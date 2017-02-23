@@ -29,11 +29,14 @@ print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version+"/' pcs/settin
 print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version+"/' pcsd/bootstrap.rb"))
 print(os.system("sed -i 's/\#\# \[Unreleased\]/\#\# ["+new_version+"] - "+datetime.date.today().strftime('%Y-%m-%d')+"/' CHANGELOG.md"))
 
-manpage_head = '.TH PCS "8" "{date}" "pcs {version}" "System Administration Utilities"'.format(
-    date=datetime.date.today().strftime('%B %Y'),
-    version=new_version
-)
-print(os.system("sed -i '1c " + manpage_head + "' pcs/pcs.8"))
+def manpage_head(component):
+    return '.TH {component} "8" "{date}" "pcs {version}" "System Administration Utilities"'.format(
+        component=component.upper(),
+        date=datetime.date.today().strftime('%B %Y'),
+        version=new_version
+    )
+print(os.system("sed -i '1c " + manpage_head("pcs") + "' pcs/pcs.8"))
+print(os.system("sed -i '1c " + manpage_head("pcsd") + "' pcsd/pcsd.8"))
 
 print(os.system("git diff"))
 print("Look good? (y/n)")
