@@ -157,6 +157,7 @@ else
 endif
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
+	install -m644 -D pcsd/pcsd.8 ${DESTDIR}/${MANDIR}/man8/pcsd.8
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \

@@ -1,0 +1,100 @@
+.TH PCSD "8" "February 2017" "pcs 0.9.156" "System Administration Utilities"
+.SH NAME
+pcsd \- pacemaker/corosync configuration system daemon
+
+.SH DESCRIPTION
+Daemon for controlling and configuring pacakamer/corosync clusters via pcs.
+
+.SH ENVIRONMENT
+
+.SS Network and SSL/TLS Settings
+.TP
+.B PCSD_BIND_ADDR=<string>
+List of IP addresses pcsd should bind to delimited by ',' character.
+.TP
+.B PCSD_SSL_OPTIONS=<string>
+SSL/TLS options delimited by ',' character. This is usually used to set SSL/TLS protocols accepted by pcsd. List of valid options can be obtained by running: ruby -e 'require "openssl"; puts OpenSSL::SSL.constants.grep /^OP_/'
+.TP
+.B PCSD_SSL_CIPHERS=<string>
+SSL/TLS ciphers accepted by pcsd.
+
+.SS Web UI Settings
+.TP
+.B PCSD_DISABLE_GUI=<boolean>
+Set to \fBtrue\fR to disable web UI frontend in pcsd.
+.TP
+.B PCSD_SESSION_LIFETIME=<integer>
+Web UI session lifetime in seconds.
+
+.SS Proxy Settings
+See ENVIRONMENT section in curl(1) man page for more details.
+.TP
+.B https_proxy=<string>, HTTPS_PROXY=<string>
+Proxy server address for node to node communication.
+.TP
+.B all_proxy=<string>, ALL_PROXY=<string>
+Proxy server address for node to node communication.
+.TP
+.B no_proxy=<string>, NO_PROXY=<string>
+List of hostnames for which proxy is not used.
+
+.SS Miscellaneous Settings
+.TP
+.B PCSD_DEBUG=<boolean>
+Set to \fBtrue\fR for advanced pcsd debugging information.
+.TP
+.B RACK_ENV=<string>
+Value of this variable has to be \fBproduction\fR, otherwise pcsd will not work properly.
+
+.SH FILES
+All files described in this section are located in \fB/var/lib/pcsd/\fR. They are not meant to be edited manually unless said otherwise.
+
+.SS cfgsync_ctl
+This JSON file controls pcsd and cluster configuration files synchronization across cluster nodes which pcsd is doing automatically in the background. This file can be safely edited manually.
+.br
+Example:
+.br
+{
+.br
+  "file_backup_count": 50,
+.br
+  "thread_disabled": false,
+.br
+  "thread_interval": 60,
+.br
+  "thread_paused_until": 1487780453,
+.br
+}
+
+.TP
+.B file_backup_count
+How many backup files should be kept for each synchronized file.
+.TP
+.B thread_disabled
+Set this to \fBtrue\fR to completely disable the synchronization.
+.TP
+.B thread_interval
+How often in seconds should pcsd ask other nodes if the synchronized files have changed.
+.TP
+.B thread_paused_until
+Disable the synchronization until the set unix timestamp.
+
+.SS pcsd_settings.conf
+This JSON file contains web UI and cluster configuration such as clusters managed from web UI and cluster permissions.
+
+.SS pcs_users.conf
+This JSON file stores authentication tokens accepted by local instance of pcsd.
+
+.SS pcsd.cookiesecret
+Web UI cookie secret.
+
+.SS pcsd.crt, pcsd.key
+These files contain pcsd server certificate and private key.
+
+.SS tokens
+This JSON file stores authentication tokens which are used to login to remote instances of pcsd.
+
+.SH SEE ALSO
+.BR pcs (8)
+
+.BR curl (1)
