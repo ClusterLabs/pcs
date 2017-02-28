@@ -11,8 +11,11 @@
 ### Fixed
 - Python 3: pcs no longer spams stderr with error messages when communicating
   with another node
+- Stopping a cluster does not timeout too early and it generally works better
+  even if the cluster is running Virtual IP resources ([rhbz#1334429])
 
 [rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
+[rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
 

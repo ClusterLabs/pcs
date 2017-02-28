@@ -1067,7 +1067,11 @@ def stop_cluster_nodes(nodes):
             )
 
     was_error = False
-    node_errors = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
+    node_errors = parallel_for_nodes(
+        utils.repeat_if_timeout(utils.stopPacemaker),
+        nodes,
+        quiet=True
+    )
     accessible_nodes = [
         node for node in nodes if node not in node_errors.keys()
     ]
@@ -1133,7 +1137,11 @@ def destroy_cluster(argv, keep_going=False):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
-        node_errors = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
+        node_errors = parallel_for_nodes(
+            utils.repeat_if_timeout(utils.stopPacemaker),
+            nodes,
+            quiet=True
+        )
         # proceed with destroy regardless of errors
         # destroy will stop any remaining cluster daemons
         node_errors = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)

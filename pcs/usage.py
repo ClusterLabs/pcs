@@ -606,11 +606,13 @@ Commands:
         nodes.  If --wait is specified, wait up to 'n' seconds for nodes
         to start.
 
-    stop [--all | <node>... ]
+    stop [--all | <node>... ] [--request-timeout=<seconds>]
         Stop corosync & pacemaker on specified node(s), if a node is not
-        specified then corosync & pacemaker are stopped on the local node.
-        If --all is specified then corosync & pacemaker are stopped on all
-        nodes.
+        specified then corosync & pacemaker are stopped on the local node. If
+        --all is specified then corosync & pacemaker are stopped on all nodes.
+        If the cluster is running resources which take long time to stop, the
+        request may time out before the cluster actually stops. In that case you
+        should consider setting --request-timeout to a suitable value.
 
     kill
         Force corosync and pacemaker daemons to stop on the local node

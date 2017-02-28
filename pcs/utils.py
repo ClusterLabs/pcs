@@ -235,6 +235,23 @@ def readTokens():
         tokens = output['data']
     return tokens
 
+def repeat_if_timeout(send_http_request_function, repeat_count=15):
+    def repeater(node, *args, **kwargs):
+        repeats_left = repeat_count
+        while True:
+            retval, output = send_http_request_function(node, *args, **kwargs)
+            if (
+                retval != 2 or "Operation timed out" not in output
+                or
+                repeats_left < 1
+            ):
+                # did not timed out OR repeat limit exceeded
+                return retval, output
+            repeats_left = repeats_left - 1
+            if "--debug" in pcs_options:
+                print("{0}: {1}, trying again...". format(node, output))
+    return repeater
+
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
     return sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
@@ -271,14 +288,23 @@ def stopCorosync(node, quiet=False, force=True):
 
 def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
     data = dict()
+    timeout = None
     if pacemaker and not corosync:
         data["component"] = "pacemaker"
+        timeout = 2 * 60
     elif corosync and not pacemaker:
         data["component"] = "corosync"
     if force:
         data["force"] = 1
     data = urllib_urlencode(data)
-    return sendHTTPRequest(node, 'remote/cluster_stop', data, False, not quiet)
+    return sendHTTPRequest(
+        node,
+        'remote/cluster_stop',
+        data,
+        printResult=False,
+        printSuccess=not quiet,
+        timeout=timeout
+    )
 
 def enableCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_enable', None, False, True)
@@ -360,7 +386,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 3 = Auth Error
 # 4 = Permission denied
 def sendHTTPRequest(
-    host, request, data=None, printResult=True, printSuccess=True
+    host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
     url = "https://{host}:2224/{request}".format(host=host, request=request)
     if "--debug" in pcs_options:
@@ -384,7 +410,8 @@ def sendHTTPRequest(
     output = BytesIO()
     debug_output = BytesIO()
     cookies = __get_cookie_list(host, readTokens())
-    timeout = settings.default_request_timeout
+    if not timeout:
+        timeout = settings.default_request_timeout
     if "--request-timeout" in pcs_options:
         timeout = pcs_options["--request-timeout"]
 
