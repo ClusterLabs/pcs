@@ -286,14 +286,18 @@ class CheckCorosyncOfflineTest(TestCase):
         )
 
     def test_one_node_running(self):
-        nodes = ["node1", "node2"]
+        node_responses = {
+            "node1": '{"corosync": false}',
+            "node2": '{"corosync": true}',
+        }
         node_addrs_list = NodeAddressesList(
-            [NodeAddresses(addr) for addr in nodes]
+            [NodeAddresses(addr) for addr in node_responses.keys()]
         )
-        self.mock_communicator.call_node.side_effect = [
-            '{"corosync": false}',
-            '{"corosync": true}',
-        ]
+
+        self.mock_communicator.call_node.side_effect = (
+            lambda node, request, data: node_responses[node.label]
+        )
+
 
         assert_raise_library_error(
             lambda: lib.check_corosync_offline_on_nodes(
@@ -305,7 +309,7 @@ class CheckCorosyncOfflineTest(TestCase):
                 severity.ERROR,
                 report_codes.COROSYNC_RUNNING_ON_NODE,
                 {
-                    "node": nodes[1],
+                    "node": "node2",
                 }
             )
         )
