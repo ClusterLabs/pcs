@@ -719,6 +719,62 @@ class ResourceAgent(CrmAgent):
     def get_name(self):
         return self._get_full_name()
 
+    def get_parameters(self):
+        parameters = super(ResourceAgent, self).get_parameters()
+        if (
+            self.get_standard() == "ocf"
+            and
+            (self.get_provider() in ("heartbeat", "pacemaker"))
+        ):
+            trace_ra_found = False
+            trace_file_found = False
+            for param in parameters:
+                param_name = param["name"].lower()
+                if param_name == "trace_ra":
+                    trace_ra_found = True
+                if param_name == "trace_file":
+                    trace_file_found = True
+                if trace_file_found and trace_ra_found:
+                    break
+
+            if not trace_ra_found:
+                shortdesc = (
+                    "Set to 1 to turn on resource agent tracing"
+                    " (expect large output)"
+                )
+                parameters.append({
+                    "name": "trace_ra",
+                    "longdesc": (
+                        shortdesc
+                        +
+                        " The trace output will be saved to trace_file, if set,"
+                        " or by default to"
+                        " $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp>"
+                        " e.g. $HA_VARRUN/ra_trace/oracle/"
+                        "db.start.2012-11-27.08:37:08"
+                    ),
+                    "shortdesc": shortdesc,
+                    "type": "integer",
+                    "default": 0,
+                    "required": False,
+                    "advanced": True,
+                })
+            if not trace_file_found:
+                shortdesc = (
+                    "Path to a file to store resource agent tracing log"
+                )
+                parameters.append({
+                    "name": "trace_file",
+                    "longdesc": shortdesc,
+                    "shortdesc": shortdesc,
+                    "type": "string",
+                    "default": "",
+                    "required": False,
+                    "advanced": True,
+                })
+
+        return parameters
+
 
 class AbsentAgentMixin(object):
     def _load_metadata(self):

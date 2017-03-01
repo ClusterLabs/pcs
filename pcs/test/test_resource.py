@@ -33,7 +33,18 @@ temp_large_cib  = rc("temp-cib-large.xml")
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
-        self.description = outdent(
+
+    def fixture_description(self, advanced=False):
+        advanced_params = (
+            """\
+              trace_ra: Set to 1 to turn on resource agent tracing (expect large output) The
+                        trace output will be saved to trace_file, if set, or by default to
+                        $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g.
+                        $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
+              trace_file: Path to a file to store resource agent tracing log
+            """
+        )
+        return outdent(
             """\
             ocf:pacemaker:HealthCPU - System health CPU usage
 
@@ -47,18 +58,24 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
               red_limit: Lower (!) limit of idle percentage to switch the health attribute
                          to red. I.e. the #health-cpu will go red if the %idle of the CPU
                          falls below 10%.
-
+{0}
             Default operations:
               start: interval=0s timeout=10
               stop: interval=0s timeout=10
               monitor: interval=10 start-delay=0 timeout=10
-            """
+            """.format(advanced_params if advanced else "")
         )
 
     def test_success(self):
         self.assert_pcs_success(
             "resource describe ocf:pacemaker:HealthCPU",
-            self.description
+            self.fixture_description()
+        )
+
+    def test_full(self):
+        self.assert_pcs_success(
+            "resource describe ocf:pacemaker:HealthCPU --full",
+            self.fixture_description(True)
         )
 
     def test_success_guess_name(self):
@@ -66,7 +83,7 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
             "resource describe healthcpu",
             "Assumed agent name 'ocf:pacemaker:HealthCPU' (deduced from"
                 + " 'healthcpu')\n"
-                + self.description
+                + self.fixture_description()
         )
 
     def test_nonextisting_agent(self):
@@ -2169,7 +2186,7 @@ Deleting Resource - ClusterIP5
                 " meta test7=test7a test6="
             ,
             "Warning: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: fake, state\n"
+                " allowed options are: fake, state, trace_file, trace_ra\n"
         )
 
         output, returnVal = pcs(temp_cib, "resource update D0 test=testA test2=testB")
@@ -2197,7 +2214,7 @@ Deleting Resource - ClusterIP5
                 " test5=test5a test6=test6a"
             ,
             "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state\n"
+                " options are: fake, state, trace_file, trace_ra\n"
         )
 
         self.assert_pcs_success(
@@ -2205,7 +2222,7 @@ Deleting Resource - ClusterIP5
                 " test=testA test2=test2a op monitor interval=30"
             ,
             "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state\n"
+                " options are: fake, state, trace_file, trace_ra\n"
         )
 
         output, returnVal = pcs(temp_cib, "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")

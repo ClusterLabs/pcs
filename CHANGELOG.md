@@ -7,6 +7,10 @@
   patterns in addition to resource names ([rhbz#1362493])
 - Proxy settings description in pcsd configuration file ([rhbz#1315627])
 - Man page for pcsd ([rhbz#1378742])
+- Pcs now allows to set `trace_ra` and `trace_file` options of `ocf:heartbeat`
+  and `ocf:pacemaker` resources ([rhbz#1421702])
+- `pcs resource describe` and `pcs stonith describe` commands now show all
+  information about the specified agent if the `--full` flag is used
 
 ### Fixed
 - Python 3: pcs no longer spams stderr with error messages when communicating
@@ -18,6 +22,7 @@
 [rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
+[rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 
 
 ## [0.9.156] - 2017-02-10

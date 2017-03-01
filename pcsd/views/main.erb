@@ -978,6 +978,12 @@ Use the 'Add' button to submit the form.">
             table_name="Optional Arguments"
             parameters=agent.optional_parameters
         }}
+        {{parameters-table
+            table_id="advanced_args"
+            table_id_suffix=table_id_suffix
+            table_name="Advanced Arguments"
+            parameters=agent.advanced_parameters
+        }}
         {{#if resource}}
           <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
           .parents('form'),true); return false;" value="Apply Changes" style="margin-top: 1em;" />

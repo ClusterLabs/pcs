@@ -87,6 +87,35 @@ class Success(ResourceTest):
             </resources>"""
         )
 
+    def test_create_with_trace_options(self):
+        # trace_ra and trace_file options are not defined in metadata but they
+        # are allowed for all ocf:heartbeat and ocf:pacemaker agents. This test
+        # checks it is possible to set them without --force.
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy"
+                " trace_ra=1 trace_file=/root/trace"
+            ,
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <instance_attributes id="R-instance_attributes">
+                        <nvpair id="R-instance_attributes-trace_file"
+                            name="trace_file" value="/root/trace"
+                        />
+                        <nvpair id="R-instance_attributes-trace_ra"
+                            name="trace_ra" value="1"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+
     def test_create_with_options_and_operations(self):
         self.assert_effect(
             "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
@@ -960,8 +989,8 @@ class FailOrWarn(ResourceTest):
     def test_for_options_not_matching_resource_agent(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy a=b c=d",
-            "Error: invalid resource options: 'a', 'c',"
-            " allowed options are: fake, state, use --force to override\n"
+            "Error: invalid resource options: 'a', 'c', allowed options are: "
+                "fake, state, trace_file, trace_ra, use --force to override\n"
         )
 
     def test_for_missing_options_of_resource_agent(self):

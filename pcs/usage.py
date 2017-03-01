@@ -204,8 +204,9 @@ Commands:
         only resource agents matching the filter will be shown). If --nodesc is
         used then descriptions of resource agents are not printed.
 
-    describe [<standard>:[<provider>:]]<type>
-        Show options for the specified resource.
+    describe [<standard>:[<provider>:]]<type> [--full]
+        Show options for the specified resource. If --full is specified, all
+        options including advanced ones are shown.
 
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
@@ -769,8 +770,9 @@ Commands:
         only stonith agents matching the filter will be shown). If --nodesc is
         used then descriptions of stonith agents are not printed.
 
-    describe <stonith agent>
-        Show options for specified stonith agent.
+    describe <stonith agent> [--full]
+        Show options for specified stonith agent. If --full is specified, all
+        options including advanced ones are shown.
 
     create <stonith id> <stonith device type> [stonith device options]
            [op <operation action> <operation options> [<operation action>

@@ -1715,6 +1715,58 @@ class ResourceAgentTest(TestCase):
         lib_ra.ResourceAgent(mock.MagicMock(), "ocf:heardbeat:name")
 
 
+@patch_agent_object("_get_metadata")
+class ResourceAgentGetParameters(TestCase):
+    def fixture_metadata(self, params):
+        return etree.XML("""
+            <resource-agent>
+                <parameters>{0}</parameters>
+            </resource-agent>
+        """.format(['<parameter name="{0}" />'.format(name) for name in params])
+        )
+
+    def assert_param_names(self, expected_names, actual_params):
+        self.assertEqual(
+            expected_names,
+            [param["name"] for param in actual_params]
+        )
+
+    def test_add_trace_parameters_to_ocf(self, mock_metadata):
+        mock_metadata.return_value = self.fixture_metadata(["test_param"])
+        agent = lib_ra.ResourceAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "ocf:pacemaker:test"
+        )
+        self.assert_param_names(
+            ["test_param", "trace_ra", "trace_file"],
+            agent.get_parameters()
+        )
+
+    def test_do_not_add_trace_parameters_if_present(self, mock_metadata):
+        mock_metadata.return_value = self.fixture_metadata([
+            "trace_ra", "test_param", "trace_file"
+        ])
+        agent = lib_ra.ResourceAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "ocf:pacemaker:test"
+        )
+        self.assert_param_names(
+            ["trace_ra", "test_param", "trace_file"],
+            agent.get_parameters()
+        )
+
+    def test_do_not_add_trace_parameters_to_others(self, mock_metadata):
+        mock_metadata.return_value = self.fixture_metadata(["test_param"])
+        agent = lib_ra.ResourceAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "service:test"
+        )
+        self.assert_param_names(
+            ["test_param"],
+            agent.get_parameters()
+        )
+
+
 class FindResourceAgentByNameTest(TestCase):
     def setUp(self):
         self.report_processor = mock.MagicMock()

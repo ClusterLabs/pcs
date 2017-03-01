@@ -239,11 +239,12 @@ def resource_list_options(lib, argv, modifiers):
     agent_name = argv[0]
 
     print(_format_agent_description(
-        lib.resource_agent.describe_agent(agent_name)
+        lib.resource_agent.describe_agent(agent_name),
+        show_advanced=modifiers["full"]
     ))
 
 
-def _format_agent_description(description, stonith=False):
+def _format_agent_description(description, stonith=False, show_advanced=False):
     output = []
 
     if description.get("name") and description.get("shortdesc"):
@@ -266,7 +267,10 @@ def _format_agent_description(description, stonith=False):
     if description.get("parameters"):
         output_params = []
         for param in description["parameters"]:
-            if param.get("advanced", False):
+            # Do not show advanced options, for exmaple
+            # pcmk_(reboot|off|list|monitor|status)_(action|timeout|retries)
+            # for stonith agents
+            if not show_advanced and param.get("advanced", False):
                 continue
             param_title = " ".join(filter(None, [
                 param.get("name"),

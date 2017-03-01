@@ -49,7 +49,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
 
-
     def test_success(self):
         self.assert_pcs_success(
             "stonith describe fence_apc",
@@ -62,6 +61,12 @@ Stonith options:
 """
         )
 
+    def test_full(self):
+        stdout, pcs_returncode = self.pcs_runner.run(
+            "stonith describe fence_apc --full",
+        )
+        self.assertEqual(0, pcs_returncode)
+        self.assertTrue("pcmk_list_retries" in stdout)
 
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
@@ -73,13 +78,11 @@ Stonith options:
             )
         )
 
-
     def test_not_enough_params(self):
         self.assert_pcs_fail(
             "stonith describe",
             stdout_start="\nUsage: pcs stonith describe...\n"
         )
-
 
     def test_too_many_params(self):
         self.assert_pcs_fail(
