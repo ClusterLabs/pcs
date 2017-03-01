@@ -23,6 +23,7 @@ def get_text_test_result_class(
     slash_last_fail_in_overview=False,
     traditional_verbose=False,
     traceback_highlight=False,
+    fast_info=False,
 ):
     #TextTestResult is neede here. Direct inheriting from TestResult does not
     #work in python 2.6
@@ -40,6 +41,8 @@ def get_text_test_result_class(
             self.reportWriter = self.__chooseWriter()(
                 self.stream,
                 self.descriptions,
+                traceback_highlight,
+                fast_info,
             )
             self.skip_map = {}
 
@@ -53,11 +56,19 @@ def get_text_test_result_class(
 
         def addError(self, test, err):
             super(TextTestResult, self).addError(test, err)
-            self.reportWriter.addError(test, err)
+            self.reportWriter.addError(
+                test,
+                err,
+                traceback=self.errors[-1][1]
+            )
 
         def addFailure(self, test, err):
             super(TextTestResult, self).addFailure(test, err)
-            self.reportWriter.addFailure(test, err)
+            self.reportWriter.addFailure(
+                test,
+                err,
+                traceback=self.failures[-1][1]
+            )
 
         def addSkip(self, test, reason):
             super(TextTestResult, self).addSkip(test, reason)

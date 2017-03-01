@@ -13,21 +13,26 @@ from pcs.test.tools.color_text_runner.format import (
     get_description,
     format_module,
     format_test_method_name,
+    format_traceback,
 )
 
 
 class Writer(object):
-    def __init__(self, stream, descriptions):
+    def __init__(
+        self, stream, descriptions, traceback_highlight=False, fast_info=False,
+    ):
         self.stream = stream
         self.descriptions = descriptions
+        self.traceback_highlight = traceback_highlight
+        self.fast_info = fast_info
 
     def addSuccess(self, test):
         pass
 
-    def addError(self, test, err):
+    def addError(self, test, err, traceback):
         pass
 
-    def addFailure(self, test, err):
+    def addFailure(self, test, err, traceback):
         pass
 
     def addSkip(self, test, reason):
@@ -42,18 +47,28 @@ class Writer(object):
     def addUnexpectedSuccess(self, test):
         pass
 
+    def show_fast_info(self, traceback):
+        if self.fast_info:
+            self.stream.writeln()
+            self.stream.writeln(
+                format_traceback(traceback) if self.traceback_highlight
+                    else traceback
+            )
+
 class DotWriter(Writer):
     def addSuccess(self, test):
         self.stream.write(green("."))
         self.stream.flush()
 
-    def addError(self, test, err):
+    def addError(self, test, err, traceback):
         self.stream.write(red('E'))
         self.stream.flush()
+        self.show_fast_info(traceback)
 
-    def addFailure(self, test, err):
+    def addFailure(self, test, err, traceback):
         self.stream.write(red('F'))
         self.stream.flush()
+        self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
         self.stream.write(blue('s'))
@@ -71,11 +86,13 @@ class StandardVerboseWriter(Writer):
     def addSuccess(self, test):
         self.stream.writeln(green("OK"))
 
-    def addError(self, test, err):
+    def addError(self, test, err, traceback):
         self.stream.writeln(red("ERROR"))
+        self.show_fast_info(traceback)
 
-    def addFailure(self, test, err):
+    def addFailure(self, test, err, traceback):
         self.stream.writeln(red("FAIL"))
+        self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
         self.stream.writeln(
@@ -94,8 +111,15 @@ class StandardVerboseWriter(Writer):
         self.stream.writeln(red("unexpected success"))
 
 class ImprovedVerboseWriter(StandardVerboseWriter):
-    def __init__(self, stream, descriptions):
-        super(ImprovedVerboseWriter, self).__init__(stream, descriptions)
+    def __init__(
+        self, stream, descriptions, traceback_highlight=False, fast_info=False,
+    ):
+        super(ImprovedVerboseWriter, self).__init__(
+            stream,
+            descriptions,
+            traceback_highlight,
+            fast_info
+        )
         self.last_test = None
 
     def __is_new_module(self, test):

@@ -61,6 +61,7 @@ explicitly_enumerated_tests = [
     prepare_test_name(arg) for arg in sys.argv[1:] if arg not in (
         "-v",
         "--all-but",
+        "--fast-info", #show a traceback immediatelly after the test fails
         "--last-slash",
         "--list",
         "--no-color", #deprecated, use --vanilla instead
@@ -100,6 +101,7 @@ if use_improved_result_class:
         slash_last_fail_in_overview=("--last-slash" in sys.argv),
         traditional_verbose=("--traditional-verbose" in sys.argv),
         traceback_highlight=("--traceback-highlight" in sys.argv),
+        fast_info=("--fast-info" in sys.argv)
     )
 
 testRunner = unittest.TextTestRunner(
