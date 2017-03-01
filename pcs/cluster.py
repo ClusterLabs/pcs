@@ -1082,7 +1082,7 @@ def stop_cluster_nodes(nodes):
         )
         was_error = True
 
-    for node in node_errors.keys():
+    for node in node_errors:
         print("{0}: Not stopping cluster - node is unreachable".format(node))
 
     node_errors = parallel_for_nodes(
@@ -2110,4 +2110,3 @@ def cluster_remote_node(argv):
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)
-
