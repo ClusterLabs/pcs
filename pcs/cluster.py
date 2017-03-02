@@ -1517,251 +1517,251 @@ def cluster_node(argv):
         node_remove(lib_env, node0, modifiers)
 
 def node_add(lib_env, node0, node1, modifiers):
-        wait = False
-        wait_timeout = None
-        if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
-            wait_timeout = utils.validate_wait_get_timeout(False)
-            wait = True
-        need_ring1_address = utils.need_ring1_address(utils.getCorosyncConf())
-        if not node1 and need_ring1_address:
-            utils.err(
-                "cluster is configured for RRP, "
-                "you have to specify ring 1 address for the node"
+    wait = False
+    wait_timeout = None
+    if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout(False)
+        wait = True
+    need_ring1_address = utils.need_ring1_address(utils.getCorosyncConf())
+    if not node1 and need_ring1_address:
+        utils.err(
+            "cluster is configured for RRP, "
+            "you have to specify ring 1 address for the node"
+        )
+    elif node1 and not need_ring1_address:
+        utils.err(
+            "cluster is not configured for RRP, "
+            "you must not specify ring 1 address for the node"
+        )
+    (canAdd, error) =  utils.canAddNodeToCluster(node0)
+    if not canAdd:
+        utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
+
+    report_processor = lib_env.report_processor
+    node_communicator = lib_env.node_communicator()
+    node_addr = NodeAddresses(node0, node1)
+
+    # First set up everything else than corosync. Once the new node is
+    # present in corosync.conf / cluster.conf, it's considered part of a
+    # cluster and the node add command cannot be run again. So we need to
+    # minimize the amout of actions (and therefore possible failures) after
+    # adding the node to corosync.
+    try:
+        # qdevice setup
+        if not utils.is_rhel6():
+            conf_facade = corosync_conf_facade.from_string(
+                utils.getCorosyncConf()
             )
-        elif node1 and not need_ring1_address:
-            utils.err(
-                "cluster is not configured for RRP, "
-                "you must not specify ring 1 address for the node"
-            )
-        (canAdd, error) =  utils.canAddNodeToCluster(node0)
-        if not canAdd:
-            utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
-
-        report_processor = lib_env.report_processor
-        node_communicator = lib_env.node_communicator()
-        node_addr = NodeAddresses(node0, node1)
-
-        # First set up everything else than corosync. Once the new node is
-        # present in corosync.conf / cluster.conf, it's considered part of a
-        # cluster and the node add command cannot be run again. So we need to
-        # minimize the amout of actions (and therefore possible failures) after
-        # adding the node to corosync.
-        try:
-            # qdevice setup
-            if not utils.is_rhel6():
-                conf_facade = corosync_conf_facade.from_string(
-                    utils.getCorosyncConf()
-                )
-                qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
-                if qdevice_model == "net":
-                    _add_device_model_net(
-                        lib_env,
-                        qdevice_model_options["host"],
-                        conf_facade.get_cluster_name(),
-                        [node_addr],
-                        skip_offline_nodes=False
-                    )
-
-            # sbd setup
-            if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
-                if "--watchdog" not in utils.pcs_options:
-                    watchdog = settings.sbd_watchdog_default
-                    print("Warning: using default watchdog '{0}'".format(
-                        watchdog
-                    ))
-                else:
-                    watchdog = utils.pcs_options["--watchdog"][0]
-
-                _ensure_cluster_is_offline_if_atb_should_be_enabled(
-                    lib_env, 1, modifiers["skip_offline_nodes"]
+            qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
+            if qdevice_model == "net":
+                _add_device_model_net(
+                    lib_env,
+                    qdevice_model_options["host"],
+                    conf_facade.get_cluster_name(),
+                    [node_addr],
+                    skip_offline_nodes=False
                 )
 
-                report_processor.process(lib_reports.sbd_check_started())
-                lib_sbd.check_sbd_on_node(
-                    report_processor, node_communicator, node_addr, watchdog
-                )
-                sbd_cfg = environment_file_to_dict(
-                    lib_sbd.get_local_sbd_config()
-                )
-                report_processor.process(
-                    lib_reports.sbd_config_distribution_started()
-                )
-                lib_sbd.set_sbd_config_on_node(
-                    report_processor,
-                    node_communicator,
-                    node_addr,
-                    sbd_cfg,
+        # sbd setup
+        if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
+            if "--watchdog" not in utils.pcs_options:
+                watchdog = settings.sbd_watchdog_default
+                print("Warning: using default watchdog '{0}'".format(
                     watchdog
-                )
-                report_processor.process(lib_reports.sbd_enabling_started())
-                lib_sbd.enable_sbd_service_on_node(
-                    report_processor, node_communicator, node_addr
-                )
+                ))
             else:
-                report_processor.process(lib_reports.sbd_disabling_started())
-                lib_sbd.disable_sbd_service_on_node(
-                    report_processor, node_communicator, node_addr
-                )
+                watchdog = utils.pcs_options["--watchdog"][0]
 
-            # booth setup
-            booth_sync.send_all_config_to_node(
-                node_communicator,
+            _ensure_cluster_is_offline_if_atb_should_be_enabled(
+                lib_env, 1, modifiers["skip_offline_nodes"]
+            )
+
+            report_processor.process(lib_reports.sbd_check_started())
+            lib_sbd.check_sbd_on_node(
+                report_processor, node_communicator, node_addr, watchdog
+            )
+            sbd_cfg = environment_file_to_dict(
+                lib_sbd.get_local_sbd_config()
+            )
+            report_processor.process(
+                lib_reports.sbd_config_distribution_started()
+            )
+            lib_sbd.set_sbd_config_on_node(
                 report_processor,
+                node_communicator,
                 node_addr,
-                rewrite_existing=modifiers["force"],
-                skip_wrong_config=modifiers["force"]
+                sbd_cfg,
+                watchdog
             )
-        except LibraryError as e:
-            process_library_reports(e.args)
-        except NodeCommunicationException as e:
-            process_library_reports(
-                [node_communicator_exception_to_report_item(e)]
+            report_processor.process(lib_reports.sbd_enabling_started())
+            lib_sbd.enable_sbd_service_on_node(
+                report_processor, node_communicator, node_addr
             )
-
-        # Now add the new node to corosync.conf / cluster.conf
-        corosync_conf = None
-        for my_node in utils.getNodesFromCorosyncConf():
-            retval, output = utils.addLocalNode(my_node, node0, node1)
-            if retval != 0:
-                utils.err(
-                    "unable to add %s on %s - %s" % (node0, my_node, output.strip()),
-                    False
-                )
-            else:
-                print("%s: Corosync updated" % my_node)
-                corosync_conf = output
-        if not utils.is_cman_cluster():
-            # When corosync 2 is in use, the procedure for adding a node is:
-            # 1. add the new node to corosync.conf
-            # 2. reload  corosync.conf before the new node is started
-            # 3. start the new node
-            # If done otherwise, membership gets broken a qdevice hangs. Cluster
-            # will recover after a minute or so but still it's a wrong way.
-            # When corosync 1 is in use, the procedure for adding a node is:
-            # 1. add the new node to cluster.conf
-            # 2. start the new node
-            # Starting the node will automaticall reload cluster.conf on all
-            # nodes. If the config is reloaded before the new node is started,
-            # the new node gets fenced by the cluster,
-            output, retval = utils.reloadCorosync()
-        if corosync_conf != None:
-            # send local cluster pcsd configs to the new node
-            # may be used for sending corosync config as well in future
-            pcsd_data = {
-                'nodes': [node0],
-                'force': True,
-            }
-            output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
-            if retval != 0:
-                utils.err("Unable to set pcsd configs")
-            if output['status'] == 'notauthorized':
-                utils.err(
-                    "Unable to authenticate to " + node0
-                    + ", try running 'pcs cluster auth'"
-                )
-            if output['status'] == 'ok' and output['data']:
-                try:
-                    node_response = output['data'][node0]
-                    if node_response['status'] not in ['ok', 'not_supported']:
-                        utils.err("Unable to set pcsd configs")
-                except:
-                    utils.err('Unable to communicate with pcsd')
-
-            print("Setting up corosync...")
-            utils.setCorosyncConfig(node0, corosync_conf)
-            if "--enable" in utils.pcs_options:
-                retval, err = utils.enableCluster(node0)
-                if retval != 0:
-                    print("Warning: enable cluster - {0}".format(err))
-            if "--start" in utils.pcs_options or utils.is_rhel6():
-                # Always start the new node on cman cluster in order to reload
-                # cluster.conf (see above).
-                retval, err = utils.startCluster(node0)
-                if retval != 0:
-                    print("Warning: start cluster - {0}".format(err))
-
-            pcsd.pcsd_sync_certs([node0], exit_after_error=False)
         else:
-            utils.err("Unable to update any nodes")
-        if utils.is_cman_with_udpu_transport():
-            print("Warning: Using udpu transport on a CMAN cluster, "
-                + "cluster restart is required to apply node addition")
-        if wait:
-            print()
-            wait_for_nodes_started([node0], wait_timeout)
+            report_processor.process(lib_reports.sbd_disabling_started())
+            lib_sbd.disable_sbd_service_on_node(
+                report_processor, node_communicator, node_addr
+            )
+
+        # booth setup
+        booth_sync.send_all_config_to_node(
+            node_communicator,
+            report_processor,
+            node_addr,
+            rewrite_existing=modifiers["force"],
+            skip_wrong_config=modifiers["force"]
+        )
+    except LibraryError as e:
+        process_library_reports(e.args)
+    except NodeCommunicationException as e:
+        process_library_reports(
+            [node_communicator_exception_to_report_item(e)]
+        )
+
+    # Now add the new node to corosync.conf / cluster.conf
+    corosync_conf = None
+    for my_node in utils.getNodesFromCorosyncConf():
+        retval, output = utils.addLocalNode(my_node, node0, node1)
+        if retval != 0:
+            utils.err(
+                "unable to add %s on %s - %s" % (node0, my_node, output.strip()),
+                False
+            )
+        else:
+            print("%s: Corosync updated" % my_node)
+            corosync_conf = output
+    if not utils.is_cman_cluster():
+        # When corosync 2 is in use, the procedure for adding a node is:
+        # 1. add the new node to corosync.conf
+        # 2. reload  corosync.conf before the new node is started
+        # 3. start the new node
+        # If done otherwise, membership gets broken a qdevice hangs. Cluster
+        # will recover after a minute or so but still it's a wrong way.
+        # When corosync 1 is in use, the procedure for adding a node is:
+        # 1. add the new node to cluster.conf
+        # 2. start the new node
+        # Starting the node will automaticall reload cluster.conf on all
+        # nodes. If the config is reloaded before the new node is started,
+        # the new node gets fenced by the cluster,
+        output, retval = utils.reloadCorosync()
+    if corosync_conf != None:
+        # send local cluster pcsd configs to the new node
+        # may be used for sending corosync config as well in future
+        pcsd_data = {
+            'nodes': [node0],
+            'force': True,
+        }
+        output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
+        if retval != 0:
+            utils.err("Unable to set pcsd configs")
+        if output['status'] == 'notauthorized':
+            utils.err(
+                "Unable to authenticate to " + node0
+                + ", try running 'pcs cluster auth'"
+            )
+        if output['status'] == 'ok' and output['data']:
+            try:
+                node_response = output['data'][node0]
+                if node_response['status'] not in ['ok', 'not_supported']:
+                    utils.err("Unable to set pcsd configs")
+            except:
+                utils.err('Unable to communicate with pcsd')
+
+        print("Setting up corosync...")
+        utils.setCorosyncConfig(node0, corosync_conf)
+        if "--enable" in utils.pcs_options:
+            retval, err = utils.enableCluster(node0)
+            if retval != 0:
+                print("Warning: enable cluster - {0}".format(err))
+        if "--start" in utils.pcs_options or utils.is_rhel6():
+            # Always start the new node on cman cluster in order to reload
+            # cluster.conf (see above).
+            retval, err = utils.startCluster(node0)
+            if retval != 0:
+                print("Warning: start cluster - {0}".format(err))
+
+        pcsd.pcsd_sync_certs([node0], exit_after_error=False)
+    else:
+        utils.err("Unable to update any nodes")
+    if utils.is_cman_with_udpu_transport():
+        print("Warning: Using udpu transport on a CMAN cluster, "
+            + "cluster restart is required to apply node addition")
+    if wait:
+        print()
+        wait_for_nodes_started([node0], wait_timeout)
 
 def node_remove(lib_env, node0, modifiers):
-        if node0 not in utils.getNodesFromCorosyncConf():
+    if node0 not in utils.getNodesFromCorosyncConf():
+        utils.err(
+            "node '%s' does not appear to exist in configuration" % node0
+        )
+    if "--force" not in utils.pcs_options:
+        retval, data = utils.get_remote_quorumtool_output(node0)
+        if retval != 0:
             utils.err(
-                "node '%s' does not appear to exist in configuration" % node0
+                "Unable to determine whether removing the node will cause "
+                + "a loss of the quorum, use --force to override\n"
+                + data
             )
-        if "--force" not in utils.pcs_options:
-            retval, data = utils.get_remote_quorumtool_output(node0)
-            if retval != 0:
+        # we are sure whether we are on cman cluster or not because only
+        # nodes from a local cluster can be stopped (see nodes validation
+        # above)
+        if utils.is_rhel6():
+            quorum_info = utils.parse_cman_quorum_info(data)
+        else:
+            quorum_info = utils.parse_quorumtool_output(data)
+        if quorum_info:
+            if utils.is_node_stop_cause_quorum_loss(
+                quorum_info, local=False, node_list=[node0]
+            ):
                 utils.err(
-                    "Unable to determine whether removing the node will cause "
-                    + "a loss of the quorum, use --force to override\n"
-                    + data
+                    "Removing the node will cause a loss of the quorum"
+                    + ", use --force to override"
                 )
-            # we are sure whether we are on cman cluster or not because only
-            # nodes from a local cluster can be stopped (see nodes validation
-            # above)
-            if utils.is_rhel6():
-                quorum_info = utils.parse_cman_quorum_info(data)
+        elif not utils.is_node_offline_by_quorumtool_output(data):
+            utils.err(
+                "Unable to determine whether removing the node will cause "
+                + "a loss of the quorum, use --force to override\n"
+                + data
+            )
+        # else the node seems to be stopped already, we're ok to proceed
+
+    try:
+        _ensure_cluster_is_offline_if_atb_should_be_enabled(
+            lib_env, -1, modifiers["skip_offline_nodes"]
+        )
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+
+    nodesRemoved = False
+    c_nodes = utils.getNodesFromCorosyncConf()
+    destroy_cluster([node0], keep_going=("--force" in utils.pcs_options))
+    for my_node in c_nodes:
+        if my_node == node0:
+            continue
+        retval, output = utils.removeLocalNode(my_node, node0)
+        if retval != 0:
+            utils.err(
+                "unable to remove %s on %s - %s" % (node0,my_node,output.strip()),
+                False
+            )
+        else:
+            if output[0] == 0:
+                print("%s: Corosync updated" % my_node)
+                nodesRemoved = True
             else:
-                quorum_info = utils.parse_quorumtool_output(data)
-            if quorum_info:
-                if utils.is_node_stop_cause_quorum_loss(
-                    quorum_info, local=False, node_list=[node0]
-                ):
-                    utils.err(
-                        "Removing the node will cause a loss of the quorum"
-                        + ", use --force to override"
-                    )
-            elif not utils.is_node_offline_by_quorumtool_output(data):
                 utils.err(
-                    "Unable to determine whether removing the node will cause "
-                    + "a loss of the quorum, use --force to override\n"
-                    + data
-                )
-            # else the node seems to be stopped already, we're ok to proceed
-
-        try:
-            _ensure_cluster_is_offline_if_atb_should_be_enabled(
-                lib_env, -1, modifiers["skip_offline_nodes"]
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-
-        nodesRemoved = False
-        c_nodes = utils.getNodesFromCorosyncConf()
-        destroy_cluster([node0], keep_going=("--force" in utils.pcs_options))
-        for my_node in c_nodes:
-            if my_node == node0:
-                continue
-            retval, output = utils.removeLocalNode(my_node, node0)
-            if retval != 0:
-                utils.err(
-                    "unable to remove %s on %s - %s" % (node0,my_node,output.strip()),
+                    "%s: Error executing command occured: %s" % (my_node, "".join(output[1])),
                     False
                 )
-            else:
-                if output[0] == 0:
-                    print("%s: Corosync updated" % my_node)
-                    nodesRemoved = True
-                else:
-                    utils.err(
-                        "%s: Error executing command occured: %s" % (my_node, "".join(output[1])),
-                        False
-                    )
-        if nodesRemoved == False:
-            utils.err("Unable to update any nodes")
+    if nodesRemoved == False:
+        utils.err("Unable to update any nodes")
 
-        output, retval = utils.reloadCorosync()
-        output, retval = utils.run(["crm_node", "--force", "-R", node0])
-        if utils.is_cman_with_udpu_transport():
-            print("Warning: Using udpu transport on a CMAN cluster, "
-                + "cluster restart is required to apply node removal")
+    output, retval = utils.reloadCorosync()
+    output, retval = utils.run(["crm_node", "--force", "-R", node0])
+    if utils.is_cman_with_udpu_transport():
+        print("Warning: Using udpu transport on a CMAN cluster, "
+            + "cluster restart is required to apply node removal")
 
 def cluster_localnode(argv):
     if len(argv) != 2:
