@@ -1512,6 +1512,11 @@ def cluster_node(argv):
     modifiers = utils.get_modificators()
 
     if add_node == True:
+        node_add(lib_env, node0, node1, modifiers)
+    else:
+        node_remove(lib_env, node0, modifiers)
+
+def node_add(lib_env, node0, node1, modifiers):
         wait = False
         wait_timeout = None
         if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
@@ -1684,7 +1689,8 @@ def cluster_node(argv):
         if wait:
             print()
             wait_for_nodes_started([node0], wait_timeout)
-    else:
+
+def node_remove(lib_env, node0, modifiers):
         if node0 not in utils.getNodesFromCorosyncConf():
             utils.err(
                 "node '%s' does not appear to exist in configuration" % node0
