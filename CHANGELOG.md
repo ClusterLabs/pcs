@@ -17,11 +17,14 @@
   with another node
 - Stopping a cluster does not timeout too early and it generally works better
   even if the cluster is running Virtual IP resources ([rhbz#1334429])
+- `pcs booth remove` now works correctly even if the booth resource group is
+  disabled (another fix) ([rhbz#1389941])
 
 [rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
 [rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
+[rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 
 

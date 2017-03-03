@@ -113,7 +113,7 @@ class RemoveFromClusterTest(TestCase):
             ]
         )
 
-    def test_remove_ip_when_group_is_disabled(self):
+    def test_remove_ip_when_group_is_disabled_1(self):
         group = etree.fromstring('''
             <group>
                 <primitive id="ip" type="IPaddr2"/>
@@ -125,6 +125,29 @@ class RemoveFromClusterTest(TestCase):
                 <meta_attributes>
                     <nvpair name="target-role" value="Stopped"/>
                 </meta_attributes>
+            </group>
+        ''')
+
+        mock_resource_remove = self.call(self.find_booth_resources(group))
+        self.assertEqual(
+            mock_resource_remove.mock_calls, [
+                mock.call('ip'),
+                mock.call('booth'),
+            ]
+        )
+
+    def test_remove_ip_when_group_is_disabled_2(self):
+        group = etree.fromstring('''
+            <group>
+                <meta_attributes>
+                    <nvpair name="target-role" value="Stopped"/>
+                </meta_attributes>
+                <primitive id="ip" type="IPaddr2"/>
+                <primitive id="booth" type="booth-site">
+                    <instance_attributes>
+                        <nvpair name="config" value="/PATH/TO/CONF"/>
+                    </instance_attributes>
+                </primitive>
             </group>
         ''')
 

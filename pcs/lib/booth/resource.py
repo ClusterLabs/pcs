@@ -14,7 +14,7 @@ def create_resource_id(resources_section, name, suffix):
     )
 
 def is_ip_resource(resource_element):
-    return resource_element.attrib["type"] == "IPaddr2"
+    return resource_element.attrib.get("type", "") == "IPaddr2"
 
 def find_grouped_ip_element_to_remove(booth_element):
     group = booth_element.getparent()
@@ -22,12 +22,13 @@ def find_grouped_ip_element_to_remove(booth_element):
     if group.tag != "group":
         return None
 
-    if len(group.findall("./primitive")) != 2:
+    primitives = group.xpath("./primitive")
+    if len(primitives) != 2:
         # Don't remove the IP resource if some other resources are in the group.
         # It is most likely manually configured by the user so we cannot delete
         # it automatically.
         return None
-    for element in group:
+    for element in primitives:
         if is_ip_resource(element):
             return element
     return None
