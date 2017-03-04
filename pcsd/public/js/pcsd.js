@@ -821,7 +821,7 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
 
   dialog_obj.find('#auth_nodes_list').empty();
   unauth_nodes.forEach(function(node) {
-    dialog_obj.find('#auth_nodes_list').append("\t\t\t<tr><td>" + node + '</td><td><input type="password" name="' + node + '-pass"></td></tr>\n');
+    dialog_obj.find('#auth_nodes_list').append("\t\t\t<tr><td>" + htmlEncode(node) + '</td><td><input type="password" name="' + htmlEncode(node) + '-pass"></td></tr>\n');
   });
 
 }

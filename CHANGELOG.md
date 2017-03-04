@@ -25,7 +25,10 @@
   even if the cluster is running Virtual IP resources ([rhbz#1334429])
 - `pcs booth remove` now works correctly even if the booth resource group is
   disabled (another fix) ([rhbz#1389941])
+- Fixed Cross-site scripting (XSS) vulnerability in web UI ([CVE-2017-2661],
+  [rhbz#1434111])
 
+[CVE-2017-2661]: https://access.redhat.com/security/cve/CVE-2017-2661
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 [rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
 [rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
@@ -33,6 +36,7 @@
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
+[rhbz#1434111]: https://bugzilla.redhat.com/show_bug.cgi?id=1434111
 
 
 ## [0.9.156] - 2017-02-10

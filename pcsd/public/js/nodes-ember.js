@@ -75,7 +75,7 @@ Pcs = Ember.Application.createWithMixins({
     var banned_options = ["SBD_OPTS", "SBD_WATCHDOG_DEV", "SBD_PACEMAKER"];
     $.each(this.get("sbd_config"), function(opt, val) {
       if (banned_options.indexOf(opt) == -1) {
-        out += '<tr><td>' + opt + '</td><td>' + val + '</td></tr>\n';
+        out += '<tr><td>' + htmlEncode(opt) + '</td><td>' + htmlEncode(val) + '</td></tr>\n';
       }
     });
     return out + '</table>';
@@ -879,7 +879,7 @@ Pcs.ResourceObj = Ember.Object.extend({
   }.property("status_val"),
   show_status: function() {
     return '<span style="' + this.get('status_style') + '">'
-      + this.get('status') + (this.get("is_unmanaged") ? " (unmanaged)" : "")
+      + htmlEncode(this.get('status')) + (this.get("is_unmanaged") ? " (unmanaged)" : "")
       + '</span>';
   }.property("status_style", "disabled"),
   status_class: function() {
