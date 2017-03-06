@@ -2147,10 +2147,6 @@ def get_sbd_service_name()
   end
 end
 
-def write_booth_config(config, data)
-  write_file_lock(File.join(BOOTH_CONFIG_DIR, config), nil, data)
-end
-
 def read_booth_config(config)
   if config.include?('/')
     raise InvalidFileNameException.new(config)
@@ -2160,12 +2156,6 @@ def read_booth_config(config)
     return nil
   end
   return read_file_lock(config_path)
-end
-
-def write_booth_authfile(filename, data)
-  write_file_lock(
-    File.join(BOOTH_CONFIG_DIR, filename), 0600, Base64.decode64(data), true
-  )
 end
 
 def read_booth_authfile(filename)

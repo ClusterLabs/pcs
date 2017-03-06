@@ -9,11 +9,13 @@ require 'tempfile'
 
 require 'pcs.rb'
 require 'resource.rb'
+require 'settings.rb'
 require 'config.rb'
 require 'cfgsync.rb'
 require 'cluster_entity.rb'
 require 'permissions.rb'
 require 'auth.rb'
+require 'pcsd_file'
 
 # Commands for remote access
 def remote(params, request, auth_user)
@@ -87,6 +89,7 @@ def remote(params, request, auth_user)
       :booth_set_config => method(:booth_set_config),
       :booth_save_files => method(:booth_save_files),
       :booth_get_config => method(:booth_get_config),
+      :put_file => method(:put_file)
 
   }
   remote_cmd_with_pacemaker = {
@@ -2662,20 +2665,51 @@ def booth_set_config(params, request, auth_user)
   begin
     check_permissions(auth_user, Permissions::WRITE)
     data = check_request_data_for_json(params, auth_user)
-    config = check_input_data_file_format(data[:config], "booth 'config'")
-    authfile = check_input_data_file_format(
-      data[:authfile],
-      "booth 'authfile'"
-    ) if data[:authfile]
 
-    write_booth_config(config[:name], config[:data])
-    if authfile
-      write_booth_authfile(authfile[:name], authfile[:data])
+    PcsdFile::validate_file_map_is_Hash(data)
+    PcsdFile::validate_file_is_Hash(:config, data[:config])
+    if data[:authfile]
+      PcsdFile::validate_file_is_Hash(:config, data[:config])
     end
 
-    return pcsd_success('Booth configuration saved.')
+    action_results = {
+      :config => PcsdFile::put_file(
+        :config,
+        data[:config].merge({
+          :type => "booth_config",
+          :rewrite_existing => true
+        })
+      )
+    }
+
+    if data[:authfile]
+      action_results[:authfile] = PcsdFile::put_file(
+        :authfile,
+        data[:authfile].merge({
+          :type => "booth_authfile",
+          :rewrite_existing => true
+        })
+      )
+    end
+
+    success_codes = [:written, :rewritten]
+    failed_results = action_results.select{|key, result|
+      !success_codes.include?(result[:code])
+    }
+
+    if failed_results.empty?
+      return pcsd_success('Booth configuration saved.')
+    end
+
+    return pcsd_error("Unable to save booth configuration: #{
+      failed_results.reduce([]){|memo, (key, result)|
+        memo << "#{key}: #{result[:code]}: #{result[:message]}"
+      }.join(";")
+    }")
   rescue PcsdRequestException => e
     return e.code, e.message
+  rescue PcsdFormatError => e
+    return 400, "Invalid input data format: #{e.message}"
   rescue => e
     return pcsd_error("Unable to save booth configuration: #{e.message}")
   end
@@ -2685,53 +2719,55 @@ def booth_save_files(params, request, auth_user)
   begin
     check_permissions(auth_user, Permissions::WRITE)
     data = check_request_data_for_json(params, auth_user)
-    data.each { |file|
-      check_input_data_file_format(
-        file,
-        "booth '#{file[:is_authfile] ? 'authfile' : 'config'}'"
-      )
+    rewrite_existing = (
+      params.include?('rewrite_existing') || params.include?(:rewrite_existing)
+    )
+
+    action_results = Hash[data.each_with_index.map{|file, i|
+      PcsdFile::validate_file_is_Hash(i, file)
+      [
+        i,
+        PcsdFile::put_file(
+          i,
+          file.merge({
+            :rewrite_existing => rewrite_existing,
+            :type => file[:is_authfile] ? "booth_authfile" : "booth_config"
+          })
+        )
+      ]
+    }]
+
+    results = {:existing => [], :saved => [], :failed => {}}
+
+    code_result_map = {
+      :written => :saved,
+      :rewritten => :saved,
+      :same_content => :saved,
+      :conflict => :existing,
     }
+
+    action_results.each{|i, result|
+      name = data[i][:name]
+
+      if code_result_map.has_key?(result[:code])
+        results[code_result_map[result[:code]]] << name
+
+      elsif result[:code] == :unexpected
+        results[:failed][name] = result[:message]
+
+      else
+        results[:failed][name] = "Unknown process file result:"+
+          "code: '#{result[:code]}': message: '#{result[:message]}'"
+
+      end
+    }
+
+    return [200, JSON.generate(results)]
   rescue PcsdRequestException => e
     return e.code, e.message
+  rescue PcsdFormatError => e
+    return 400, "Invalid input data format: #{e.message}"
   end
-  rewrite_existing = (
-    params.include?('rewrite_existing') || params.include?(:rewrite_existing)
-  )
-
-  conflict_files = []
-  data.each { |file|
-    next unless File.file?(File.join(BOOTH_CONFIG_DIR, file[:name]))
-    if file[:is_authfile]
-      cur_data = read_booth_authfile(file[:name])
-    else
-      cur_data = read_booth_config(file[:name])
-    end
-    if cur_data != file[:data]
-      conflict_files << file[:name]
-    end
-  }
-
-  write_failed = {}
-  saved_files = []
-  data.each { |file|
-    next if conflict_files.include?(file[:name]) and not rewrite_existing
-    begin
-      if file[:is_authfile]
-        write_booth_authfile(file[:name], file[:data])
-      else
-        write_booth_config(file[:name], file[:data])
-      end
-      saved_files << file[:name]
-    rescue => e
-      $logger.error("Unable to save file (#{file[:name]}): #{e.message}")
-      write_failed[file[:name]] = e
-    end
-  }
-  return [200, JSON.generate({
-    :existing => conflict_files,
-    :saved => saved_files,
-    :failed => write_failed
-  })]
 end
 
 def booth_get_config(params, request, auth_user)
@@ -2776,6 +2812,26 @@ def booth_get_config(params, request, auth_user)
     })]
   rescue => e
     return [400, "Unable to read booth config/key file: #{e.message}"]
+  end
+end
+
+def put_file(params, request, auth_user)
+  begin
+    check_permissions(auth_user, Permissions::WRITE)
+
+    files = check_request_data_for_json(params, auth_user)
+    PcsdFile::validate_file_map_is_Hash(files)
+
+    return pcsd_success(
+      JSON.generate({"files" => Hash[files.map{|id, file_data|
+        PcsdFile::validate_file_is_Hash(id, file_data)
+        [id, PcsdFile::put_file(id, file_data)]
+      }]})
+    )
+  rescue PcsdRequestException => e
+    return e.code, e.message
+  rescue PcsdFormatError => e
+    return 400, "Invalid input data format: #{e.message}"
   end
 end
 
@@ -2952,49 +3008,4 @@ def check_request_data_for_json(params, auth_user)
   rescue JSON::ParserError
     raise PcsdRequestException.new('Invalid input data format')
   end
-end
-
-def invalid_data_format(explanation)
-  return PcsdRequestException.new("Invalid input data format: #{explanation}")
-end
-
-def check_input_data_file_format(file, file_type_desc)
-  unless file
-    raise invalid_data_format("#{file_type_desc}: is missing")
-  end
-
-  unless file.has_key?(:name)
-    raise invalid_data_format("#{file_type_desc}: 'name' is missing")
-  end
-
-  unless file[:name].is_a? String
-    raise invalid_data_format(
-      "#{file_type_desc}: 'name' is not String: '#{file[:name].class}'"
-    )
-  end
-
-  if file[:name].empty?
-    raise invalid_data_format("#{file_type_desc}: 'name' is empty")
-  end
-
-  if file[:name].include?('/')
-    raise invalid_data_format(
-      "#{file_type_desc}: '/' is not allowed in 'name': '#{file[:name]}'"
-    )
-  end
-
-  unless file[:data]
-    raise invalid_data_format(
-      "#{file_type_desc}: 'data' is missing ('name' is '#{file[:name]}')"
-    )
-  end
-
-  unless file[:data].is_a? String
-    raise invalid_data_format(
-      "#{file_type_desc}: 'data' is not String: '#{file[:data].class}'"+
-      " ('name' is '#{file[:name]}')"
-    )
-  end
-
-  return file
 end
