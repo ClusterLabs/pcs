@@ -2348,18 +2348,14 @@ def set_sbd_config(param, request, auth_user)
     file.flock(File::LOCK_EX)
     file.write(config)
   rescue => e
-    msg = "Unable to save SBD configuration: #{e}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to save SBD configuration: #{e}")
   ensure
     if file
       file.flock(File::LOCK_UN)
       file.close()
     end
   end
-  msg = 'SBD configuration saved.'
-  $logger.info(msg)
-  return [200, msg]
+  return pcsd_success('SBD configuration saved.')
 end
 
 def get_sbd_config(param, request, auth_user)
@@ -2373,9 +2369,7 @@ def get_sbd_config(param, request, auth_user)
     file.flock(File::LOCK_SH)
     out = file.readlines()
   rescue => e
-    msg = "Unable to get SBD configuration: #{e}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to get SBD configuration: #{e}")
   ensure
     if file
       file.flock(File::LOCK_UN)
@@ -2390,13 +2384,9 @@ def sbd_disable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if disable_service(get_sbd_service_name())
-    msg = 'SBD disabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('SBD disabled')
   else
-    msg = 'Disabling SBD failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Disabling SBD failed")
   end
 end
 
@@ -2405,13 +2395,9 @@ def sbd_enable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if enable_service(get_sbd_service_name())
-    msg = 'SBD enabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('SBD enabled')
   else
-    msg = 'Enabling SBD failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Enabling SBD failed")
   end
 end
 
@@ -2587,13 +2573,9 @@ def qdevice_client_disable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if disable_service('corosync-qdevice')
-    msg = 'corosync-qdevice disabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice disabled')
   else
-    msg = 'Disabling corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Disabling corosync-qdevice failed")
   end
 end
 
@@ -2602,17 +2584,11 @@ def qdevice_client_enable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if not is_service_enabled?('corosync')
-    msg = 'corosync is not enabled, skipping'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync is not enabled, skipping')
   elsif enable_service('corosync-qdevice')
-    msg = 'corosync-qdevice enabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice enabled')
   else
-    msg = 'Enabling corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Enabling corosync-qdevice failed")
   end
 end
 
@@ -2621,13 +2597,9 @@ def qdevice_client_stop(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if stop_service('corosync-qdevice')
-    msg = 'corosync-qdevice stopped'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice stopped')
   else
-    msg = 'Stopping corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Stopping corosync-qdevice failed")
   end
 end
 
@@ -2636,17 +2608,11 @@ def qdevice_client_start(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if not is_service_running?('corosync')
-    msg = 'corosync is not running, skipping'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync is not running, skipping')
   elsif start_service('corosync-qdevice')
-    msg = 'corosync-qdevice started'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice started')
   else
-    msg = 'Starting corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Starting corosync-qdevice failed")
   end
 end
 
@@ -2707,16 +2673,11 @@ def booth_set_config(params, request, auth_user)
       write_booth_authfile(authfile[:name], authfile[:data])
     end
 
-    msg = 'Booth configuration saved.'
-    $logger.info(msg)
-    return [200, msg]
-
+    return pcsd_success('Booth configuration saved.')
   rescue PcsdRequestException => e
     return e.code, e.message
   rescue => e
-    msg = "Unable to save booth configuration: #{e.message}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to save booth configuration: #{e.message}")
   end
 end
 
@@ -2955,6 +2916,16 @@ def update_recipient(params, request, auth_user)
     return [400, "Unable to update recipient: #{stderr.join("\n")}"]
   end
   return [200, 'Recipient updated']
+end
+
+def pcsd_success(msg)
+  $logger.info(msg)
+  return [200, msg]
+end
+
+def pcsd_error(msg)
+  $logger.error(msg)
+  return [400, msg]
 end
 
 class PcsdRequestException < StandardError
