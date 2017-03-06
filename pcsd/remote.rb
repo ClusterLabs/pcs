@@ -2348,18 +2348,14 @@ def set_sbd_config(param, request, auth_user)
     file.flock(File::LOCK_EX)
     file.write(config)
   rescue => e
-    msg = "Unable to save SBD configuration: #{e}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to save SBD configuration: #{e}")
   ensure
     if file
       file.flock(File::LOCK_UN)
       file.close()
     end
   end
-  msg = 'SBD configuration saved.'
-  $logger.info(msg)
-  return [200, msg]
+  return pcsd_success('SBD configuration saved.')
 end
 
 def get_sbd_config(param, request, auth_user)
@@ -2373,9 +2369,7 @@ def get_sbd_config(param, request, auth_user)
     file.flock(File::LOCK_SH)
     out = file.readlines()
   rescue => e
-    msg = "Unable to get SBD configuration: #{e}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to get SBD configuration: #{e}")
   ensure
     if file
       file.flock(File::LOCK_UN)
@@ -2390,13 +2384,9 @@ def sbd_disable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if disable_service(get_sbd_service_name())
-    msg = 'SBD disabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('SBD disabled')
   else
-    msg = 'Disabling SBD failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Disabling SBD failed")
   end
 end
 
@@ -2405,13 +2395,9 @@ def sbd_enable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if enable_service(get_sbd_service_name())
-    msg = 'SBD enabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('SBD enabled')
   else
-    msg = 'Enabling SBD failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Enabling SBD failed")
   end
 end
 
@@ -2587,13 +2573,9 @@ def qdevice_client_disable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if disable_service('corosync-qdevice')
-    msg = 'corosync-qdevice disabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice disabled')
   else
-    msg = 'Disabling corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Disabling corosync-qdevice failed")
   end
 end
 
@@ -2602,17 +2584,11 @@ def qdevice_client_enable(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if not is_service_enabled?('corosync')
-    msg = 'corosync is not enabled, skipping'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync is not enabled, skipping')
   elsif enable_service('corosync-qdevice')
-    msg = 'corosync-qdevice enabled'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice enabled')
   else
-    msg = 'Enabling corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Enabling corosync-qdevice failed")
   end
 end
 
@@ -2621,13 +2597,9 @@ def qdevice_client_stop(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if stop_service('corosync-qdevice')
-    msg = 'corosync-qdevice stopped'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice stopped')
   else
-    msg = 'Stopping corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Stopping corosync-qdevice failed")
   end
 end
 
@@ -2636,17 +2608,11 @@ def qdevice_client_start(param, request, auth_user)
     return 403, 'Permission denied'
   end
   if not is_service_running?('corosync')
-    msg = 'corosync is not running, skipping'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync is not running, skipping')
   elsif start_service('corosync-qdevice')
-    msg = 'corosync-qdevice started'
-    $logger.info(msg)
-    return [200, msg]
+    return pcsd_success('corosync-qdevice started')
   else
-    msg = 'Starting corosync-qdevice failed'
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Starting corosync-qdevice failed")
   end
 end
 
@@ -2693,61 +2659,43 @@ def unmanage_resource(param, request, auth_user)
 end
 
 def booth_set_config(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
   begin
-    unless params[:data_json]
-      return [400, "Missing required parameter 'data_json'"]
-    end
-    data = JSON.parse(params[:data_json], {:symbolize_names => true})
-  rescue JSON::ParserError
-    return [400, 'Invalid input data format']
-  end
-  config = data[:config]
-  authfile = data[:authfile]
-  return [400, 'Invalid input data format'] unless (
-    config and config[:name] and config[:data]
-  )
-  return [400, 'Invalid input data format'] if (
-    authfile and (not authfile[:name] or not authfile[:data])
-  )
-  begin
+    check_permissions(auth_user, Permissions::WRITE)
+    data = check_request_data_for_json(params, auth_user)
+    config = check_input_data_file_format(data[:config], "booth 'config'")
+    authfile = check_input_data_file_format(
+      data[:authfile],
+      "booth 'authfile'"
+    ) if data[:authfile]
+
     write_booth_config(config[:name], config[:data])
     if authfile
       write_booth_authfile(authfile[:name], authfile[:data])
     end
-  rescue InvalidFileNameException => e
-    return [400, "Invalid format of config/key file name '#{e.message}'"]
+
+    return pcsd_success('Booth configuration saved.')
+  rescue PcsdRequestException => e
+    return e.code, e.message
   rescue => e
-    msg = "Unable to save booth configuration: #{e.message}"
-    $logger.error(msg)
-    return [400, msg]
+    return pcsd_error("Unable to save booth configuration: #{e.message}")
   end
-  msg = 'Booth configuration saved.'
-  $logger.info(msg)
-  return [200, msg]
 end
 
 def booth_save_files(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
   begin
-    data = JSON.parse(params[:data_json], {:symbolize_names => true})
+    check_permissions(auth_user, Permissions::WRITE)
+    data = check_request_data_for_json(params, auth_user)
     data.each { |file|
-      unless file[:name] and file[:data]
-        return [400, 'Invalid input data format']
-      end
-      if file[:name].include?('/')
-        return [400, "Invalid file name format '#{file[:name]}'"]
-      end
+      check_input_data_file_format(
+        file,
+        "booth '#{file[:is_authfile] ? 'authfile' : 'config'}'"
+      )
     }
-  rescue JSON::ParserError, NoMethodError
-    return [400, 'Invalid input data format']
+  rescue PcsdRequestException => e
+    return e.code, e.message
   end
   rewrite_existing = (
-  params.include?('rewrite_existing') || params.include?(:rewrite_existing)
+    params.include?('rewrite_existing') || params.include?(:rewrite_existing)
   )
 
   conflict_files = []
@@ -2775,8 +2723,7 @@ def booth_save_files(params, request, auth_user)
       end
       saved_files << file[:name]
     rescue => e
-      msg = "Unable to save file (#{file[:name]}): #{e.message}"
-      $logger.error(msg)
+      $logger.error("Unable to save file (#{file[:name]}): #{e.message}")
       write_failed[file[:name]] = e
     end
   }
@@ -2969,4 +2916,85 @@ def update_recipient(params, request, auth_user)
     return [400, "Unable to update recipient: #{stderr.join("\n")}"]
   end
   return [200, 'Recipient updated']
+end
+
+def pcsd_success(msg)
+  $logger.info(msg)
+  return [200, msg]
+end
+
+def pcsd_error(msg)
+  $logger.error(msg)
+  return [400, msg]
+end
+
+class PcsdRequestException < StandardError
+  attr_accessor :code
+
+  def initialize(message = nil, code = 400)
+    super(message)
+    self.code = code
+  end
+end
+
+def check_permissions(auth_user, permission)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    raise PcsdRequestException.new('Permission denied', 403)
+  end
+end
+
+def check_request_data_for_json(params, auth_user)
+  unless params[:data_json]
+    raise PcsdRequestException.new("Missing required parameter 'data_json'")
+  end
+  begin
+    return JSON.parse(params[:data_json], {:symbolize_names => true})
+  rescue JSON::ParserError
+    raise PcsdRequestException.new('Invalid input data format')
+  end
+end
+
+def invalid_data_format(explanation)
+  return PcsdRequestException.new("Invalid input data format: #{explanation}")
+end
+
+def check_input_data_file_format(file, file_type_desc)
+  unless file
+    raise invalid_data_format("#{file_type_desc}: is missing")
+  end
+
+  unless file.has_key?(:name)
+    raise invalid_data_format("#{file_type_desc}: 'name' is missing")
+  end
+
+  unless file[:name].is_a? String
+    raise invalid_data_format(
+      "#{file_type_desc}: 'name' is not String: '#{file[:name].class}'"
+    )
+  end
+
+  if file[:name].empty?
+    raise invalid_data_format("#{file_type_desc}: 'name' is empty")
+  end
+
+  if file[:name].include?('/')
+    raise invalid_data_format(
+      "#{file_type_desc}: '/' is not allowed in 'name': '#{file[:name]}'"
+    )
+  end
+
+  unless file[:data]
+    raise invalid_data_format(
+      "#{file_type_desc}: 'data' is missing ('name' is '#{file[:name]}')"
+    )
+  end
+
+  unless file[:data].is_a? String
+    raise invalid_data_format(
+      "#{file_type_desc}: 'data' is not String: '#{file[:data].class}'"+
+      " ('name' is '#{file[:name]}')"
+    )
+  end
+
+  return file
 end
