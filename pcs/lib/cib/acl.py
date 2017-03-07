@@ -12,13 +12,12 @@ from lxml import etree
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.cib.tools import (
-    etree_element_attibutes_to_dict,
     check_new_id_applicable,
     does_id_exist,
     find_unique_id,
     find_element_by_tag_and_id,
 )
-
+from pcs.lib.xml_tools import etree_element_attibutes_to_dict
 
 
 TAG_GROUP = "acl_group"

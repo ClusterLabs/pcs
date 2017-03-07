@@ -8,10 +8,8 @@ from __future__ import (
 from lxml import etree
 from functools import partial
 
-from pcs.lib.cib.tools import (
-    get_sub_element,
-    create_subelement_id,
-)
+from pcs.lib.cib.tools import create_subelement_id
+from pcs.lib.xml_tools import get_sub_element
 
 def _append_new_nvpair(nvset_element, name, value):
     """

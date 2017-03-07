@@ -10,10 +10,7 @@ from functools import partial
 from lxml import etree
 
 from pcs.test.tools.pcs_unittest import TestCase
-from pcs.test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
-)
+from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
@@ -283,75 +280,6 @@ class ValidateIdDoesNotExistsTest(TestCase):
         does_id_exists.assert_called_once_with("tree", "some-id")
 
 
-class GetSubElementTest(TestCase):
-    def setUp(self):
-        self.root = etree.Element("root")
-        self.sub = etree.SubElement(self.root, "sub_element")
-
-    def test_sub_element_exists(self):
-        self.assertEqual(
-            self.sub, lib.get_sub_element(self.root, "sub_element")
-        )
-
-    def test_new_no_id(self):
-        assert_xml_equal(
-            '<new_element/>',
-            etree.tostring(
-                lib.get_sub_element(self.root, "new_element")
-            ).decode()
-        )
-        assert_xml_equal(
-            """
-            <root>
-                <sub_element/>
-                <new_element/>
-            </root>
-            """,
-            etree.tostring(self.root).decode()
-        )
-
-    def test_new_with_id(self):
-        assert_xml_equal(
-            '<new_element id="new_id"/>',
-            etree.tostring(
-                lib.get_sub_element(self.root, "new_element", "new_id")
-            ).decode()
-        )
-        assert_xml_equal(
-            """
-            <root>
-                <sub_element/>
-                <new_element id="new_id"/>
-            </root>
-            """,
-            etree.tostring(self.root).decode()
-        )
-
-    def test_new_first(self):
-        lib.get_sub_element(self.root, "new_element", "new_id", 0)
-        assert_xml_equal(
-            """
-            <root>
-                <new_element id="new_id"/>
-                <sub_element/>
-            </root>
-            """,
-            etree.tostring(self.root).decode()
-        )
-
-    def test_new_last(self):
-        lib.get_sub_element(self.root, "new_element", "new_id", None)
-        assert_xml_equal(
-            """
-            <root>
-                <sub_element/>
-                <new_element id="new_id"/>
-            </root>
-            """,
-            etree.tostring(self.root).decode()
-        )
-
-
 class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
     def test_missing_attribute(self):
         assert_raise_library_error(
@@ -393,49 +321,6 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             )
         )
 
-
-class EtreeElementAttributesToDictTest(TestCase):
-    def setUp(self):
-        self.el = etree.Element(
-            "test_element",
-            {
-                "id": "test_id",
-                "description": "some description",
-                "attribute": "value",
-            }
-        )
-
-    def test_only_existing(self):
-        self.assertEqual(
-            {
-                "id": "test_id",
-                "attribute": "value",
-            },
-            lib.etree_element_attibutes_to_dict(self.el, ["id", "attribute"])
-        )
-
-    def test_only_not_existing(self):
-        self.assertEqual(
-            {
-                "_id": None,
-                "not_existing": None,
-            },
-            lib.etree_element_attibutes_to_dict(
-                self.el, ["_id", "not_existing"]
-            )
-        )
-
-    def test_mix(self):
-        self.assertEqual(
-            {
-                "id": "test_id",
-                "attribute": "value",
-                "not_existing": None,
-            },
-            lib.etree_element_attibutes_to_dict(
-                self.el, ["id", "not_existing", "attribute"]
-            )
-        )
 
 find_group = partial(lib.find_element_by_tag_and_id, "group")
 class FindTagWithId(TestCase):

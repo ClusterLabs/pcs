@@ -13,12 +13,14 @@ from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import (
-    export_attributes,
     find_unique_id,
-    find_parent,
     find_element_by_tag_and_id,
 )
 from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.xml_tools import (
+    export_attributes,
+    find_parent,
+)
 
 
 def _validate_attrib_names(attrib_names, options):

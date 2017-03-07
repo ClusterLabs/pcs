@@ -14,12 +14,12 @@ from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.cib.nvpair import arrange_first_nvset, get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
-    get_sub_element,
     find_unique_id,
     get_alerts,
     validate_id_does_not_exist,
     find_element_by_tag_and_id,
 )
+from pcs.lib.xml_tools import get_sub_element
 
 TAG_ALERT = "alert"
 TAG_RECIPIENT = "recipient"
