@@ -35,6 +35,14 @@ def is_true(val):
     """
     return val.lower() in _BOOLEAN_TRUE
 
+def is_false(val):
+    """
+    Does pacemaker consider a value to be false?
+    See crm_is_true in pacemaker/lib/common/utils.c
+    var checked value
+    """
+    return val.lower() in _BOOLEAN_FALSE
+
 def is_score(value):
     if not value:
         return False

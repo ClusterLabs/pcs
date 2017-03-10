@@ -58,3 +58,53 @@ class AppendNewCommon(TestCase):
                 </resources>
             </cib>
         """)
+
+
+class IsAnyClone(TestCase):
+    def test_is_clone(self):
+        self.assertTrue(clone.is_clone(etree.fromstring("<clone/>")))
+        self.assertFalse(clone.is_clone(etree.fromstring("<master/>")))
+        self.assertFalse(clone.is_clone(etree.fromstring("<group/>")))
+
+    def test_is_master(self):
+        self.assertTrue(clone.is_master(etree.fromstring("<master/>")))
+        self.assertFalse(clone.is_master(etree.fromstring("<clone/>")))
+        self.assertFalse(clone.is_master(etree.fromstring("<group/>")))
+
+    def test_is_any_clone(self):
+        self.assertTrue(clone.is_any_clone(etree.fromstring("<clone/>")))
+        self.assertTrue(clone.is_any_clone(etree.fromstring("<master/>")))
+        self.assertFalse(clone.is_any_clone(etree.fromstring("<group/>")))
+
+
+class GetInnerResource(TestCase):
+    def assert_inner_resource(self, resource_id, xml):
+        self.assertEqual(
+            resource_id,
+            clone.get_inner_resource(etree.fromstring(xml)).get("id", "")
+        )
+
+    def test_primitive(self):
+        self.assert_inner_resource(
+            "A",
+            """
+                <clone id="A-clone">
+                    <meta_attributes />
+                    <primitive id="A" />
+                    <meta_attributes />
+                </clone>
+            """
+        )
+
+    def test_group(self):
+        self.assert_inner_resource(
+            "A",
+            """
+                <clone id="A-clone">
+                    <meta_attributes />
+                    <group id="A" />
+                    <meta_attributes />
+                </clone>
+            """
+        )
+

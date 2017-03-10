@@ -32,7 +32,6 @@ class Enable(ResourceTest):
             "stonith enable S",
             """<resources>
                 <primitive class="stonith" id="S" type="fence_xvm">
-                    <meta_attributes id="S-meta_attributes"/>
                     <operations>
                         <op id="S-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -75,16 +74,16 @@ class Disable(ResourceTest):
             "stonith disable S",
             """<resources>
                 <primitive class="stonith" id="S" type="fence_xvm">
-                    <operations>
-                        <op id="S-monitor-interval-60s" interval="60s"
-                            name="monitor"
-                        />
-                    </operations>
                     <meta_attributes id="S-meta_attributes">
                         <nvpair id="S-meta_attributes-target-role"
                             name="target-role" value="Stopped"
                         />
                     </meta_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
                 </primitive>
             </resources>"""
         )

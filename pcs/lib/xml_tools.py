@@ -12,6 +12,13 @@ def get_root(tree):
     return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
 
 def find_parent(element, tag_names):
+    """
+    Find parent of an element based on parent's tag name. Return the parent
+    element or None if such element does not exist.
+
+    etree element -- the element whose parent we want to find
+    strings tag_names -- allowed tag names of parent we are looking for
+    """
     candidate = element
     while True:
         if candidate is None or candidate.tag in tag_names:

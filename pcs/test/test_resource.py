@@ -3652,6 +3652,10 @@ Error: Cannot remove more than one resource from cloned group
         ))
 
     def testResourceEnable(self):
+        # These tests were moved to
+        # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
+        # However those test the pcs library. I'm leaving these tests here to
+        # test the cli part for now.
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
@@ -3685,11 +3689,11 @@ Error: Cannot remove more than one resource from cloned group
 
         # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
+        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
+        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
@@ -3718,6 +3722,10 @@ Error: Cannot remove more than one resource from cloned group
         assert retVal == 0
 
     def testResourceEnableUnmanaged(self):
+        # These tests were moved to
+        # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
+        # However those test the pcs library. I'm leaving these tests here to
+        # test the cli part for now.
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
@@ -3810,6 +3818,10 @@ Error: Cannot remove more than one resource from cloned group
         assert r == 0
 
     def testResourceEnableClone(self):
+        # These tests were moved to
+        # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
+        # However those test the pcs library. I'm leaving these tests here to
+        # test the cli part for now.
         output, retVal = pcs(
             temp_cib,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy --clone"
@@ -3948,6 +3960,10 @@ Error: Cannot remove more than one resource from cloned group
         ))
 
     def testResourceEnableMaster(self):
+        # These tests were moved to
+        # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
+        # However those test the pcs library. I'm leaving these tests here to
+        # test the cli part for now.
         self.assert_pcs_success(
             "resource create --no-default-ops dummy ocf:pacemaker:Stateful --master",
             "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"

@@ -8,18 +8,33 @@ from __future__ import (
 from contextlib import contextmanager
 from functools import partial
 
+from pcs.lib import reports
+from pcs.lib.cib import resource
+from pcs.lib.cib.resource.common import (
+    are_meta_disabled,
+    disable as disable_resource,
+    disable_meta,
+    enable as enable_resource,
+    find_resources_to_enable,
+    is_clone_deactivated_by_meta,
+)
+from pcs.lib.cib.resource.clone import ALL_TAGS as TAGS_CLONE
+from pcs.lib.cib.resource.group import TAG as TAG_GROUP
+from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
+from pcs.lib.cib.tools import (
+    find_element_by_tag_and_id,
+    get_resources,
+)
+from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.state import (
+    ensure_resource_state,
+    is_resource_managed,
+    ResourceNotFound,
+)
 from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name as get_agent
 )
-from pcs.lib.cib import resource
-from pcs.lib.cib.resource.common import (
-    disable_meta,
-    are_meta_disabled,
-    is_clone_deactivated_by_meta
-)
-from pcs.lib.cib.tools import get_resources
-from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.pacemaker.state import ensure_resource_state
 
 @contextmanager
 def resource_environment(env, resource_id, wait, disabled_after_wait):
@@ -225,3 +240,66 @@ def create_in_group(
 
 create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
 create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
+
+def disable(env, resource_id, wait):
+    """
+    Disable specified resource in CIB.
+    LibraryEnvironment env --
+    string resource_id -- id of the resource to be disabled
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    with resource_environment(
+        env, resource_id, wait, True
+    ) as resources_section:
+        resource_el = _find_any_resource(resources_section, resource_id)
+        state = env.get_cluster_state()
+        try:
+            if not is_resource_managed(state, resource_id):
+                env.report_processor.process(
+                    reports.resource_is_unmanaged(resource_id)
+                )
+        except ResourceNotFound:
+            raise LibraryError(
+                reports.id_not_found(
+                    resource_id,
+                    id_description="resource/clone/master/group"
+               )
+            )
+        disable_resource(resource_el)
+
+def enable(env, resource_id, wait):
+    """
+    Enable specified resource in CIB.
+    LibraryEnvironment env --
+    string resource_id -- id of the resource to be enabled
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    with resource_environment(
+        env, resource_id, wait, False
+    ) as resources_section:
+        resource_list = find_resources_to_enable(
+            _find_any_resource(resources_section, resource_id)
+        )
+        state = env.get_cluster_state()
+        for resource_el in resource_list:
+            element_id = resource_el.attrib["id"]
+            try:
+                if not is_resource_managed(state, element_id):
+                    env.report_processor.process(
+                        reports.resource_is_unmanaged(element_id)
+                    )
+            except ResourceNotFound:
+                raise LibraryError(
+                    reports.id_not_found(
+                        element_id,
+                        id_description="resource/clone/master/group"
+                   )
+                )
+            enable_resource(resource_el)
+
+_find_any_resource = partial(
+    find_element_by_tag_and_id,
+    TAGS_CLONE + [TAG_GROUP, TAG_PRIMITIVE],
+    id_description="resource/clone/master/group"
+)
+

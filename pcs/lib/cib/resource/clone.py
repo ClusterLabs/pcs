@@ -20,6 +20,15 @@ TAG_CLONE = "clone"
 TAG_MASTER = "master"
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 
+def is_clone(resource_el):
+    return resource_el.tag == TAG_CLONE
+
+def is_master(resource_el):
+    return resource_el.tag == TAG_MASTER
+
+def is_any_clone(resource_el):
+    return resource_el.tag in ALL_TAGS
+
 def create_id(clone_tag, primitive_element):
     """
     Create id for clone element based on contained primitive_element.
@@ -57,3 +66,6 @@ def append_new(clone_tag, resources_section, primitive_element, options):
         append_new_meta_attributes(clone_element, options)
 
     return clone_element
+
+def get_inner_resource(clone_el):
+    return clone_el.xpath("./primitive | ./group")[0]

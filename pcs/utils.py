@@ -1465,6 +1465,7 @@ def dom_attrs_to_list(dom_el, with_id=False):
         attributes.append("(id:%s)" % (dom_el.getAttribute("id")))
     return attributes
 
+# moved to pcs.lib.pacemaker.state
 def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
     for clone in cluster_state.getElementsByTagName("clone"):
         if clone.getAttribute("id") == resource_id:
@@ -1495,6 +1496,8 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
             resource_id = elem.getAttribute("id")
     return resource_id
 
+# moved to pcs.lib.pacemaker.state
+# see pcs.lib.commands.resource for usage
 def resource_running_on(resource, passed_state=None, stopped=False):
     nodes_started = []
     nodes_master = []

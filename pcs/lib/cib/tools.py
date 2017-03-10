@@ -65,8 +65,8 @@ def find_element_by_tag_and_id(
     etree.Element(Tree) context_element is part of tree for element scan
     string|list tag is expected tag (or list of tags) of search element
     string element_id is id of search element
-    bool none_if_id_unused is flag, when is True and element with element_id
-        does not exists function returns None
+    bool none_if_id_unused if the element is not found then return None if True
+        or raise a LibraryError if False
     string id_description optional description for id
     """
     tag_list = [tag] if is_string(tag) else tag
@@ -103,12 +103,12 @@ def find_element_by_tag_and_id(
         return None
 
     raise LibraryError(
-       reports.id_not_found(
-           element_id,
-           id_description if id_description else "/".join(tag_list),
-           context_element.tag,
-           context_element.attrib.get("id", "")
-       )
+        reports.id_not_found(
+            element_id,
+            id_description if id_description else "/".join(tag_list),
+            context_element.tag,
+            context_element.attrib.get("id", "")
+        )
     )
 
 def create_subelement_id(context_element, suffix):

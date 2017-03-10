@@ -46,6 +46,25 @@ class BooleanTest(TestCase):
         self.assertTrue(lib.is_boolean("Y"))
         self.assertTrue(lib.is_boolean("1"))
 
+    def test_false_is_false(self):
+        self.assertTrue(lib.is_false("false"))
+        self.assertTrue(lib.is_false("faLse"))
+        self.assertTrue(lib.is_false("off"))
+        self.assertTrue(lib.is_false("OFF"))
+        self.assertTrue(lib.is_false("no"))
+        self.assertTrue(lib.is_false("nO"))
+        self.assertTrue(lib.is_false("n"))
+        self.assertTrue(lib.is_false("N"))
+        self.assertTrue(lib.is_false("0"))
+
+    def test_nonfalse_is_not_false(self):
+        self.assertFalse(lib.is_false(""))
+        self.assertFalse(lib.is_false(" 0 "))
+        self.assertFalse(lib.is_false("x"))
+        self.assertFalse(lib.is_false("-1"))
+        self.assertFalse(lib.is_false("10"))
+        self.assertFalse(lib.is_false("heck no"))
+
     def test_false_is_boolean(self):
         self.assertTrue(lib.is_boolean("false"))
         self.assertTrue(lib.is_boolean("fAlse"))

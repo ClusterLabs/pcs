@@ -550,3 +550,13 @@ class MutuallyExclusiveOptions(NameBuildTest):
                 "option_names": ["a", "b"],
             }
         )
+
+class ResourceIsUnmanaged(NameBuildTest):
+    code = codes.RESOURCE_IS_UNMANAGED
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "'R' is unmanaged",
+            {
+                "resource_id": "R",
+            }
+        )

@@ -77,9 +77,9 @@ def stonith_cmd(argv):
         elif sub_cmd == "sbd":
             sbd_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "enable":
-            resource.resource_enable(argv_next)
+            resource.resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
-            resource.resource_disable(argv_next)
+            resource.resource_disable_cmd(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:

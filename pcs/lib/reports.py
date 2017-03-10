@@ -1072,6 +1072,19 @@ def resource_does_not_run(resource_id, severity=ReportItemSeverity.INFO):
         }
     )
 
+def resource_is_unmanaged(resource_id):
+    """
+    The resource the user works with is unmanaged (e.g. in enable/disable)
+
+    string resource_id -- id of the unmanaged resource
+    """
+    return ReportItem.warning(
+        report_codes.RESOURCE_IS_UNMANAGED,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
 def cib_load_error(reason):
     """
     cannot load cib from cibadmin, cibadmin exited with non-zero code

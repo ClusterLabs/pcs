@@ -19,7 +19,14 @@ from pcs import settings
 from pcs.common.tools import xml_fromstring
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
-from pcs.lib.pacemaker.values import is_true
+from pcs.lib.pacemaker.values import (
+    is_false,
+    is_true,
+)
+from pcs.lib.xml_tools import find_parent
+
+class ResourceNotFound(Exception):
+    pass
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):
@@ -154,22 +161,39 @@ class ClusterState(_Element):
         self.dom = get_cluster_state_dom(xml)
         super(ClusterState, self).__init__(self.dom)
 
-def get_resource_roles_with_nodes(cluster_state, resource_id):
-    resource_element_list = cluster_state.xpath(""".//resource[
-        (@id="{0}" or starts-with(@id, "{0}:"))
-        and
-        (not(@failed) or @failed != "true")
-    ]""".format(resource_id))
+def _id_xpath_predicate(resource_id):
+    return """(@id="{0}" or starts-with(@id, "{0}:"))""".format(resource_id)
 
+def _get_primitives_for_state_check(
+    cluster_state, resource_id, expected_running
+):
+    primitives = cluster_state.xpath("""
+        .//resource[{predicate_id}]
+        |
+        .//group[{predicate_id}]/resource[{predicate_position}]
+        |
+        .//clone[@id="{id}"]/resource
+        |
+        .//clone[@id="{id}"]/group/resource[{predicate_position}]
+    """.format(
+        id=resource_id,
+        predicate_id=_id_xpath_predicate(resource_id),
+        predicate_position=("last()" if expected_running else "1")
+    ))
+    return [
+        element for element in primitives
+            if not is_true(element.attrib.get("failed", ""))
+    ]
+
+def _get_primitive_roles_with_nodes(primitive_el_list):
+    # Clone resources are represented by multiple primitive elements.
     roles_with_nodes = defaultdict(set)
-
-    for resource_element in resource_element_list:
+    for resource_element in primitive_el_list:
         if resource_element.attrib["role"] in ["Started", "Master", "Slave"]:
             roles_with_nodes[resource_element.attrib["role"]].update([
                 node.attrib["name"]
                 for node in resource_element.findall(".//node")
             ])
-
     return dict([
         (role, sorted(nodes))
         for role, nodes in roles_with_nodes.items()
@@ -178,11 +202,13 @@ def get_resource_roles_with_nodes(cluster_state, resource_id):
 def ensure_resource_state(
     expected_running, report_processor, cluster_state, resource_id
 ):
-    roles_with_nodes = get_resource_roles_with_nodes(
-        cluster_state,
-        resource_id
+    roles_with_nodes = _get_primitive_roles_with_nodes(
+        _get_primitives_for_state_check(
+            cluster_state,
+            resource_id,
+            expected_running
+        )
     )
-
     if not roles_with_nodes:
         report_processor.process(reports.resource_does_not_run(
             resource_id,
@@ -194,3 +220,38 @@ def ensure_resource_state(
             roles_with_nodes,
             severities.INFO if expected_running else severities.ERROR
         ))
+
+def is_resource_managed(cluster_state, resource_id):
+    """
+    Check if the resource is managed
+
+    etree cluster_state -- status of the cluster
+    string resource_id -- id of the resource
+    """
+    primitive_list = cluster_state.xpath("""
+        .//resource[{predicate_id}]
+        |
+        .//group[{predicate_id}]/resource
+        """.format(predicate_id=_id_xpath_predicate(resource_id))
+    )
+    if primitive_list:
+        for primitive in primitive_list:
+            if is_false(primitive.attrib.get("managed", "")):
+                return False
+            clone = find_parent(primitive, ["clone"])
+            if clone is not None and is_false(clone.attrib.get("managed", "")):
+                return False
+        return True
+
+    clone_list = cluster_state.xpath(
+        """.//clone[@id="{0}"]""".format(resource_id)
+    )
+    for clone in clone_list:
+        if is_false(clone.attrib.get("managed", "")):
+            return False
+        for primitive in clone.xpath(".//resource"):
+            if is_false(primitive.attrib.get("managed", "")):
+                return False
+        return True
+
+    raise ResourceNotFound(resource_id)

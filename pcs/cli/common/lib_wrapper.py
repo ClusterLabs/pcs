@@ -308,6 +308,8 @@ def load_module(env, middleware_factory, name):
                 "create_as_master": resource.create_as_master,
                 "create_as_clone": resource.create_as_clone,
                 "create_in_group": resource.create_in_group,
+                "disable": resource.disable,
+                "enable": resource.enable,
             }
         )
     if name == "stonith":

@@ -11,14 +11,20 @@ import logging
 from lxml import etree
 
 from pcs.test.tools.pcs_unittest import TestCase, mock
+from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.commands import resource
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc, outdent
-from pcs.test.tools.integration_lib import Runner, Call
-from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.integration_lib import (
+    Call,
+    Runner,
+)
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    outdent,
+)
 
 
 runner = Runner()
@@ -176,12 +182,12 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
                 />
             </operations>
         </primitive>
-            <meta_attributes id="A-clone-meta_attributes">
-                <nvpair id="A-clone-meta_attributes-target-role"
-                    name="target-role"
-                    value="Stopped"
-                />
-            </meta_attributes>
+        <meta_attributes id="A-clone-meta_attributes">
+            <nvpair id="A-clone-meta_attributes-target-role"
+                name="target-role"
+                value="Stopped"
+            />
+        </meta_attributes>
     </clone>
 </resources>"""
 

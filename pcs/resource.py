@@ -98,9 +98,9 @@ def resource_cmd(argv):
         elif sub_cmd == "master":
             resource_master(argv_next)
         elif sub_cmd == "enable":
-            resource_enable(argv_next)
+            resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
-            resource_disable(argv_next)
+            resource_disable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "restart":
             resource_restart(argv_next)
         elif sub_cmd == "debug-start":
@@ -1814,6 +1814,19 @@ def resource_show(argv, stonith=False):
             utils.err("unable to find resource '"+arg+"'")
         resource_found = False
 
+def resource_disable_cmd(lib, argv, modifiers):
+    if len(argv) != 1:
+        utils.err("You must specify exactly one resource to disable")
+    resource = argv[0]
+    lib.resource.disable(resource, modifiers["wait"])
+
+def resource_enable_cmd(lib, argv, modifiers):
+    if len(argv) != 1:
+        utils.err("You must specify exactly one resource to enable")
+    resource = argv[0]
+    lib.resource.enable(resource, modifiers["wait"])
+
+#DEPRECATED, moved to pcs.lib.commands.resource
 def resource_disable(argv):
     if len(argv) < 1:
         utils.err("You must specify a resource to disable")
@@ -1846,76 +1859,6 @@ def resource_disable(argv):
             else:
                 msg.append(
                     "unable to stop: '%s', please check logs for failure "
-                    "information"
-                    % resource
-                )
-            msg.append(running_on["message"])
-            if retval != 0 and output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
-
-def resource_enable(argv):
-    if len(argv) < 1:
-        utils.err("You must specify a resource to enable")
-
-    resource = argv[0]
-    cib_dom = utils.get_cib_dom()
-
-    resource_clone = (
-        utils.dom_get_clone(cib_dom, resource)
-        or
-        utils.dom_get_master(cib_dom, resource)
-    )
-    if resource_clone:
-        resource_main = utils.dom_elem_get_clone_ms_resource(resource_clone)
-    else:
-        resource_main = (
-            utils.dom_get_resource(cib_dom, resource)
-            or
-            utils.dom_get_group(cib_dom, resource)
-        )
-        if not resource_main:
-            utils.err(
-                "unable to find a resource/clone/master/group: {0}".format(
-                    resource
-                )
-            )
-        resource_clone = utils.dom_elem_get_resource_clone_ms_parent(
-            resource_main
-        )
-    resources_to_enable = [resource_main.getAttribute("id")]
-    if resource_clone:
-        resources_to_enable.append(resource_clone.getAttribute("id"))
-
-    for res in resources_to_enable:
-        if not is_managed(res):
-            print("Warning: '{0}' is unmanaged".format(res))
-
-    if "--wait" in utils.pcs_options:
-        wait_timeout = utils.validate_wait_get_timeout()
-
-    for res in resources_to_enable:
-        args = ["crm_resource", "-r", res, "-m", "-d", "target-role"]
-        output, retval = utils.run(args)
-        if retval != 0:
-            utils.err (output)
-
-    if "--wait" in utils.pcs_options:
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(resource)
-        if retval == 0 and running_on["is_running"]:
-            print(running_on["message"])
-            return True
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            else:
-                msg.append(
-                    "unable to start: '%s', please check logs for failure "
                     "information"
                     % resource
                 )
@@ -2074,6 +2017,7 @@ def resource_manage(argv, set_managed):
                     xpath = "(//primitive|//group|//clone|//master)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']"
                     utils.run(["cibadmin", "-D", "--xpath", xpath])
 
+# moved to pcs.lib.pacemaker.state
 def is_managed(resource_id):
     state_dom = utils.getClusterState()
     for resource_el in state_dom.getElementsByTagName("resource"):
