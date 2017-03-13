@@ -235,22 +235,22 @@ Commands:
         Deletes the resource, group, master or clone (and all resources within
         the group/master/clone).
 
-    enable <resource id> [--wait[=n]]
-        Allow the cluster to start the resource. Depending on the rest of the
-        configuration (constraints, options, failures, etc), the resource may
-        remain stopped.  If --wait is specified, pcs will wait up to 'n' seconds
-        for the resource to start and then return 0 if the resource is started,
-        or 1 if the resource has not yet started.  If 'n' is not specified it
-        defaults to 60 minutes.
+    enable <resource id>... [--wait[=n]]
+        Allow the cluster to start the resources. Depending on the rest of the
+        configuration (constraints, options, failures, etc), the resources may
+        remain stopped. If --wait is specified, pcs will wait up to 'n' seconds
+        for the resources to start and then return 0 if the resources are
+        started, or 1 if the resources have not yet started. If 'n' is not
+        specified it defaults to 60 minutes.
 
-    disable <resource id> [--wait[=n]]
-        Attempt to stop the resource if it is running and forbid the cluster
-        from starting it again.  Depending on the rest of the configuration
-        (constraints, options, failures, etc), the resource may remain
-        started.  If --wait is specified, pcs will wait up to 'n' seconds for
-        the resource to stop and then return 0 if the resource is stopped or 1
-        if the resource has not stopped.  If 'n' is not specified it defaults
-        to 60 minutes.
+    disable <resource id>... [--wait[=n]]
+        Attempt to stop the resources if they are running and forbid the
+        cluster from starting them again. Depending on the rest of the
+        configuration (constraints, options, failures, etc), the resources may
+        remain started. If --wait is specified, pcs will wait up to 'n' seconds
+        for the resources to stop and then return 0 if the resources are
+        stopped or 1 if the resources have not stopped. If 'n' is not specified
+        it defaults to 60 minutes.
 
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the

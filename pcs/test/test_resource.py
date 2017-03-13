@@ -4107,6 +4107,124 @@ Error: Cannot remove more than one resource from cloned group
             """
         ))
 
+    def test_resource_enable_more_resources(self):
+        # These tests were moved to
+        # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
+        # However those test the pcs library. I'm leaving these tests here to
+        # test the cli part for now.
+        self.assert_pcs_success(
+            "resource create --no-default-ops dummy1 ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops dummy2 ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops dummy3 ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+        self.assert_pcs_success("resource disable dummy1 dummy2")
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+        self.assert_pcs_success("resource disable dummy2 dummy3")
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+        self.assert_pcs_success("resource enable dummy1 dummy2")
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+        self.assert_pcs_fail_regardless_of_force(
+            "resource enable dummy3 dummyX",
+            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+        )
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+        self.assert_pcs_fail_regardless_of_force(
+            "resource disable dummy1 dummyX",
+            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+        )
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                 Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                 Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attrs: target-role=Stopped 
+                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                """
+            )
+        )
+
+
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy")
         ac(o,"")

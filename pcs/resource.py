@@ -1815,16 +1815,16 @@ def resource_show(argv, stonith=False):
         resource_found = False
 
 def resource_disable_cmd(lib, argv, modifiers):
-    if len(argv) != 1:
-        utils.err("You must specify exactly one resource to disable")
-    resource = argv[0]
-    lib.resource.disable(resource, modifiers["wait"])
+    if len(argv) < 1:
+        utils.err("You must specify resource(s) to disable")
+    resources = argv
+    lib.resource.disable(resources, modifiers["wait"])
 
 def resource_enable_cmd(lib, argv, modifiers):
-    if len(argv) != 1:
-        utils.err("You must specify exactly one resource to enable")
-    resource = argv[0]
-    lib.resource.enable(resource, modifiers["wait"])
+    if len(argv) < 1:
+        utils.err("You must specify resource(s) to enable")
+    resources = argv
+    lib.resource.enable(resources, modifiers["wait"])
 
 #DEPRECATED, moved to pcs.lib.commands.resource
 def resource_disable(argv):

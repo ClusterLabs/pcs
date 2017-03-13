@@ -84,11 +84,11 @@ Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, 
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
 .TP
-enable <resource id> [\fB\-\-wait\fR[=n]]
-Allow the cluster to start the resource. Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain stopped.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.
+enable <resource id>... [\fB\-\-wait\fR[=n]]
+Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.
 .TP
-disable <resource id> [\fB\-\-wait\fR[=n]]
-Attempt to stop the resource if it is running and forbid the cluster from starting it again.  Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain started.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to stop and then return 0 if the resource is stopped or 1 if the resource has not stopped.  If 'n' is not specified it defaults to 60 minutes.
+disable <resource id>... [\fB\-\-wait\fR[=n]]
+Attempt to stop the resources if they are running and forbid the cluster from starting them again. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain started. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
 restart <resource id> [node] [\fB\-\-wait\fR=n]
 Restart the resource specified. If a node is specified and if the resource is a clone or master/slave it will be restarted only on the node specified.  If \fB\-\-wait\fR is specified, then we will wait up to 'n' seconds for the resource to be restarted and return 0 if the restart was successful or 1 if it was not.

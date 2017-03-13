@@ -8,8 +8,10 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase, mock
 from lxml import etree
 
-from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_equal,
+)
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 from pcs.lib.pacemaker import state
@@ -462,9 +464,6 @@ class GetPrimitivesForStateCheck(TestCase):
 class EnsureResourceState(TestCase):
     resource_id = "R"
     def setUp(self):
-        self.report_processor = MockLibraryReportProcessor(
-            raise_on_errors=False
-        )
         self.cluster_state = "state"
 
         patcher_primitives = mock.patch(
@@ -500,13 +499,14 @@ class EnsureResourceState(TestCase):
     def assert_running_info_transform(self, run_info, report, expected_running):
         self.get_primitives_for_state_check.return_value = ["elem1", "elem2"]
         self.get_primitive_roles_with_nodes.return_value = run_info
-        state.ensure_resource_state(
-            expected_running,
-            self.report_processor,
-            self.cluster_state,
-            self.resource_id
+        assert_report_item_equal(
+            state.ensure_resource_state(
+                expected_running,
+                self.cluster_state,
+                self.resource_id
+            ),
+            report
         )
-        self.report_processor.assert_reports([report])
         self.get_primitives_for_state_check.assert_called_once_with(
             self.cluster_state,
             self.resource_id,

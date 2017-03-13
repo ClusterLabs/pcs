@@ -540,6 +540,40 @@ def fixture_report_unmanaged(resource):
         None
     )
 
+def fixture_report_not_found(res_id, context_type=""):
+    return (
+        severities.ERROR,
+        report_codes.ID_NOT_FOUND,
+        {
+            "context_type": context_type,
+            "context_id": "",
+            "id": res_id,
+            "id_description": "resource/clone/master/group",
+        },
+        None
+    )
+
+def fixture_report_resource_not_running(resource, severity=severities.INFO):
+    return (
+        severity,
+        report_codes.RESOURCE_DOES_NOT_RUN,
+        {
+            "resource_id": resource,
+        },
+        None
+    )
+
+def fixture_report_resource_running(resource, roles, severity=severities.INFO):
+    return (
+        severity,
+        report_codes.RESOURCE_RUNNING_ON_NODES,
+        {
+            "resource_id": resource,
+            "roles_with_nodes": roles,
+        },
+        None
+    )
+
 class CommonResourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -580,18 +614,8 @@ class DisablePrimitive(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.disable(self.env, "B", False),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "resources",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.disable(self.env, ["B"], False),
+            fixture_report_not_found("B", "resources")
         )
         runner.assert_everything_launched()
 
@@ -607,18 +631,8 @@ class DisablePrimitive(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.disable(self.env, "B", False),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.disable(self.env, ["B"], False),
+            fixture_report_not_found("B")
         )
         runner.assert_everything_launched()
 
@@ -626,7 +640,7 @@ class DisablePrimitive(CommonResourceTest):
         self.assert_command_effect(
             fixture_two_primitives_cib_enabled,
             fixture_two_primitives_status_managed,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_two_primitives_cib_disabled
         )
 
@@ -637,7 +651,7 @@ class DisablePrimitive(CommonResourceTest):
         self.assert_command_effect(
             fixture_primitive_cib_enabled,
             fixture_primitive_status_unmanaged,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_primitive_cib_disabled,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -654,18 +668,8 @@ class EnablePrimitive(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.enable(self.env, "B", False),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "resources",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.enable(self.env, ["B"], False),
+            fixture_report_not_found("B", "resources")
         )
         runner.assert_everything_launched()
 
@@ -681,18 +685,8 @@ class EnablePrimitive(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.enable(self.env, "B", False),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.enable(self.env, ["B"], False),
+            fixture_report_not_found("B")
         )
         runner.assert_everything_launched()
 
@@ -700,7 +694,7 @@ class EnablePrimitive(CommonResourceTest):
         self.assert_command_effect(
             fixture_two_primitives_cib_disabled_both,
             fixture_two_primitives_status_managed,
-            lambda: resource.enable(self.env, "B", False),
+            lambda: resource.enable(self.env, ["B"], False),
             fixture_two_primitives_cib_disabled
         )
 
@@ -711,12 +705,154 @@ class EnablePrimitive(CommonResourceTest):
         self.assert_command_effect(
             fixture_primitive_cib_disabled,
             fixture_primitive_status_unmanaged,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_primitive_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A"),
             ]
         )
+
+
+class MoreResources(CommonResourceTest):
+    fixture_cib_enabled = """
+        <resources>
+            <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+            </primitive>
+            <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+            </primitive>
+            <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
+            </primitive>
+            <primitive class="ocf" id="D" provider="heartbeat" type="Dummy">
+            </primitive>
+        </resources>
+    """
+    fixture_cib_disabled = """
+        <resources>
+            <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+            <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <meta_attributes id="B-meta_attributes">
+                    <nvpair id="B-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+            <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
+                <meta_attributes id="C-meta_attributes">
+                    <nvpair id="C-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+            <primitive class="ocf" id="D" provider="heartbeat" type="Dummy">
+                <meta_attributes id="D-meta_attributes">
+                    <nvpair id="D-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+        </resources>
+    """
+    fixture_status = """
+        <resources>
+            <resource id="A" managed="true" />
+            <resource id="B" managed="false" />
+            <resource id="C" managed="true" />
+            <resource id="D" managed="false" />
+        </resources>
+    """
+    def test_success_enable(self):
+        fixture_enabled = """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                </primitive>
+                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                </primitive>
+                <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="C-meta_attributes">
+                        <nvpair id="C-meta_attributes-target-role"
+                            name="target-role" value="Stopped" />
+                    </meta_attributes>
+                </primitive>
+                <primitive class="ocf" id="D" provider="heartbeat" type="Dummy">
+                </primitive>
+            </resources>
+        """
+        self.assert_command_effect(
+            self.fixture_cib_disabled,
+            self.fixture_status,
+            lambda: resource.enable(self.env, ["A", "B", "D"], False),
+            fixture_enabled,
+            reports=[
+                fixture_report_unmanaged("B"),
+                fixture_report_unmanaged("D"),
+            ]
+        )
+
+    def test_success_disable(self):
+        fixture_disabled = """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-target-role"
+                            name="target-role" value="Stopped" />
+                    </meta_attributes>
+                </primitive>
+                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="B-meta_attributes">
+                        <nvpair id="B-meta_attributes-target-role"
+                            name="target-role" value="Stopped" />
+                    </meta_attributes>
+                </primitive>
+                <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
+                </primitive>
+                <primitive class="ocf" id="D" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="D-meta_attributes">
+                        <nvpair id="D-meta_attributes-target-role"
+                            name="target-role" value="Stopped" />
+                    </meta_attributes>
+                </primitive>
+            </resources>
+        """
+        self.assert_command_effect(
+            self.fixture_cib_enabled,
+            self.fixture_status,
+            lambda: resource.disable(self.env, ["A", "B", "D"], False),
+            fixture_disabled,
+            reports=[
+                fixture_report_unmanaged("B"),
+                fixture_report_unmanaged("D"),
+            ]
+        )
+
+    def test_bad_resource_enable(self):
+        runner.set_runs(
+            fixture_call_cib_load(
+                fixture_cib_resources(self.fixture_cib_disabled)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.enable(self.env, ["B", "X", "Y", "A"], False),
+            fixture_report_not_found("X", "resources"),
+            fixture_report_not_found("Y", "resources"),
+        )
+        runner.assert_everything_launched()
+
+    def test_bad_resource_disable(self):
+        runner.set_runs(
+            fixture_call_cib_load(
+                fixture_cib_resources(self.fixture_cib_enabled)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.disable(self.env, ["B", "X", "Y", "A"], False),
+            fixture_report_not_found("X", "resources"),
+            fixture_report_not_found("Y", "resources"),
+        )
+        runner.assert_everything_launched()
 
 
 class Wait(CommonResourceTest):
@@ -725,11 +861,24 @@ class Wait(CommonResourceTest):
             <resource id="A" managed="true" role="Started">
                 <node name="node1" id="1" cached="false"/>
             </resource>
+            <resource id="B" managed="true" role="Started">
+                <node name="node2" id="1" cached="false"/>
+            </resource>
         </resources>
     """
     fixture_status_stopped = """
         <resources>
             <resource id="A" managed="true" role="Stopped">
+            </resource>
+            <resource id="B" managed="true" role="Stopped">
+            </resource>
+        </resources>
+    """
+    fixture_status_mixed = """
+        <resources>
+            <resource id="A" managed="true" role="Stopped">
+            </resource>
+            <resource id="B" managed="true" role="Stopped">
             </resource>
         </resources>
     """
@@ -751,18 +900,8 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.enable(self.env, "B", 10),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "resources",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.enable(self.env, ["B"], 10),
+            fixture_report_not_found("B", "resources"),
         )
         runner.assert_everything_launched()
 
@@ -776,18 +915,8 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.disable(self.env, "B", 10),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "resources",
-                    "context_id": "",
-                    "id": "B",
-                    "id_description": "resource/clone/master/group",
-                },
-                None
-            )
+            lambda: resource.disable(self.env, ["B"], 10),
+            fixture_report_not_found("B", "resources"),
         )
         runner.assert_everything_launched()
 
@@ -796,9 +925,9 @@ class Wait(CommonResourceTest):
             fixture_call_wait_supported()
             +
             fixture_calls_cib_and_status(
-                fixture_primitive_cib_disabled,
+                fixture_two_primitives_cib_disabled_both,
                 self.fixture_status_stopped,
-                fixture_primitive_cib_enabled
+                fixture_two_primitives_cib_enabled
             )
             +
             fixture_call_wait(10)
@@ -809,15 +938,9 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.enable(self.env, "A", 10),
-            (
-                severities.ERROR,
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                {
-                    "resource_id": "A",
-                },
-                None
-            )
+            lambda: resource.enable(self.env, ["A", "B"], 10),
+            fixture_report_resource_not_running("A", severities.ERROR),
+            fixture_report_resource_not_running("B", severities.ERROR),
         )
         runner.assert_everything_launched()
 
@@ -826,9 +949,9 @@ class Wait(CommonResourceTest):
             fixture_call_wait_supported()
             +
             fixture_calls_cib_and_status(
-                fixture_primitive_cib_enabled,
+                fixture_two_primitives_cib_enabled,
                 self.fixture_status_running,
-                fixture_primitive_cib_disabled
+                fixture_two_primitives_cib_disabled_both
             )
             +
             fixture_call_wait(10)
@@ -838,16 +961,10 @@ class Wait(CommonResourceTest):
             )
         )
 
-        resource.disable(self.env, "A", 10)
+        resource.disable(self.env, ["A", "B"], 10)
         self.env.report_processor.assert_reports([
-            (
-                severities.INFO,
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                {
-                    "resource_id": "A",
-                },
-                None
-            )
+            fixture_report_resource_not_running("A"),
+            fixture_report_resource_not_running("B"),
         ])
         runner.assert_everything_launched()
 
@@ -856,9 +973,9 @@ class Wait(CommonResourceTest):
             fixture_call_wait_supported()
             +
             fixture_calls_cib_and_status(
-                fixture_primitive_cib_disabled,
+                fixture_two_primitives_cib_disabled_both,
                 self.fixture_status_stopped,
-                fixture_primitive_cib_enabled
+                fixture_two_primitives_cib_enabled
             )
             +
             fixture_call_wait(10)
@@ -868,18 +985,11 @@ class Wait(CommonResourceTest):
             )
         )
 
-        resource.enable(self.env, "A", 10)
+        resource.enable(self.env, ["A", "B"], 10)
 
         self.env.report_processor.assert_reports([
-            (
-                severities.INFO,
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                {
-                    "resource_id": "A",
-                    "roles_with_nodes": {"Started": ["node1"]},
-                },
-                None
-            )
+            fixture_report_resource_running("A", {"Started": ["node1"]}),
+            fixture_report_resource_running("B", {"Started": ["node2"]}),
         ])
         runner.assert_everything_launched()
 
@@ -888,9 +998,9 @@ class Wait(CommonResourceTest):
             fixture_call_wait_supported()
             +
             fixture_calls_cib_and_status(
-                fixture_primitive_cib_enabled,
+                fixture_two_primitives_cib_enabled,
                 self.fixture_status_running,
-                fixture_primitive_cib_disabled
+                fixture_two_primitives_cib_disabled_both
             )
             +
             fixture_call_wait(10)
@@ -901,16 +1011,13 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.disable(self.env, "A", 10),
-            (
-                severities.ERROR,
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                {
-                    "resource_id": "A",
-                    "roles_with_nodes": {"Started": ["node1"]},
-                },
-                None
-            )
+            lambda: resource.disable(self.env, ["A", "B"], 10),
+            fixture_report_resource_running(
+                "A", {"Started": ["node1"]}, severities.ERROR
+            ),
+            fixture_report_resource_running(
+                "B", {"Started": ["node2"]}, severities.ERROR
+            ),
         )
         runner.assert_everything_launched()
 
@@ -930,7 +1037,7 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.enable(self.env, "A", 10),
+            lambda: resource.enable(self.env, ["A"], 10),
             (
                 severities.ERROR,
                 report_codes.WAIT_FOR_IDLE_TIMED_OUT,
@@ -958,7 +1065,7 @@ class Wait(CommonResourceTest):
         )
 
         assert_raise_library_error(
-            lambda: resource.disable(self.env, "A", 10),
+            lambda: resource.disable(self.env, ["A"], 10),
             (
                 severities.ERROR,
                 report_codes.WAIT_FOR_IDLE_TIMED_OUT,
@@ -1011,7 +1118,7 @@ class WaitClone(CommonResourceTest):
             )
         )
 
-        resource.disable(self.env, "A-clone", 10)
+        resource.disable(self.env, ["A-clone"], 10)
         self.env.report_processor.assert_reports([
             (
                 severities.INFO,
@@ -1041,7 +1148,7 @@ class WaitClone(CommonResourceTest):
             )
         )
 
-        resource.enable(self.env, "A-clone", 10)
+        resource.enable(self.env, ["A-clone"], 10)
 
         self.env.report_processor.assert_reports([
             (
@@ -1062,7 +1169,7 @@ class DisableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_enabled,
             fixture_group_status_managed,
-            lambda: resource.disable(self.env, "A1", False),
+            lambda: resource.disable(self.env, ["A1"], False),
             fixture_group_cib_disabled_primitive
         )
 
@@ -1070,7 +1177,7 @@ class DisableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_enabled,
             fixture_group_status_managed,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_group_cib_disabled_group
         )
 
@@ -1078,7 +1185,7 @@ class DisableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_enabled,
             fixture_group_status_unmanaged,
-            lambda: resource.disable(self.env, "A1", False),
+            lambda: resource.disable(self.env, ["A1"], False),
             fixture_group_cib_disabled_primitive,
             reports=[
                 fixture_report_unmanaged("A1"),
@@ -1089,7 +1196,7 @@ class DisableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_enabled,
             fixture_group_status_unmanaged,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_group_cib_disabled_group,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -1102,7 +1209,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_primitive,
             fixture_group_status_managed,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_group_cib_enabled
         )
 
@@ -1110,7 +1217,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_both,
             fixture_group_status_managed,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_group_cib_disabled_group
         )
 
@@ -1118,7 +1225,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_group,
             fixture_group_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_group_cib_enabled
         )
 
@@ -1126,7 +1233,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_both,
             fixture_group_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_group_cib_disabled_primitive
         )
 
@@ -1134,7 +1241,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_primitive,
             fixture_group_status_unmanaged,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A1"),
@@ -1145,7 +1252,7 @@ class EnableGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_group_cib_disabled_group,
             fixture_group_status_unmanaged,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -1158,7 +1265,7 @@ class DisableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_enabled,
             fixture_clone_status_managed,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_clone_cib_disabled_primitive
         )
 
@@ -1166,7 +1273,7 @@ class DisableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_enabled,
             fixture_clone_status_managed,
-            lambda: resource.disable(self.env, "A-clone", False),
+            lambda: resource.disable(self.env, ["A-clone"], False),
             fixture_clone_cib_disabled_clone
         )
 
@@ -1174,7 +1281,7 @@ class DisableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_enabled,
             fixture_clone_status_unmanaged,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_clone_cib_disabled_primitive,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -1185,7 +1292,7 @@ class DisableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_enabled,
             fixture_clone_status_unmanaged,
-            lambda: resource.disable(self.env, "A-clone", False),
+            lambda: resource.disable(self.env, ["A-clone"], False),
             fixture_clone_cib_disabled_clone,
             reports=[
                 fixture_report_unmanaged("A-clone"),
@@ -1198,7 +1305,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_primitive,
             fixture_clone_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_cib_enabled
         )
 
@@ -1206,7 +1313,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_both,
             fixture_clone_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_cib_enabled
         )
 
@@ -1214,7 +1321,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_clone,
             fixture_clone_status_managed,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_cib_enabled
         )
 
@@ -1222,7 +1329,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_both,
             fixture_clone_status_managed,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_cib_enabled
         )
 
@@ -1230,7 +1337,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_primitive,
             fixture_clone_status_unmanaged,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A-clone"),
@@ -1242,7 +1349,7 @@ class EnableClone(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_cib_disabled_clone,
             fixture_clone_status_unmanaged,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A-clone"),
@@ -1257,7 +1364,7 @@ class DisableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_enabled,
             fixture_master_status_managed,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_master_cib_disabled_primitive
         )
 
@@ -1265,7 +1372,7 @@ class DisableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_enabled,
             fixture_master_status_managed,
-            lambda: resource.disable(self.env, "A-master", False),
+            lambda: resource.disable(self.env, ["A-master"], False),
             fixture_master_cib_disabled_master
         )
 
@@ -1276,7 +1383,7 @@ class EnableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_disabled_primitive,
             fixture_master_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_master_cib_enabled
         )
 
@@ -1284,7 +1391,7 @@ class EnableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_disabled_both,
             fixture_master_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_master_cib_enabled
         )
 
@@ -1292,7 +1399,7 @@ class EnableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_disabled_master,
             fixture_master_status_managed,
-            lambda: resource.enable(self.env, "A-master", False),
+            lambda: resource.enable(self.env, ["A-master"], False),
             fixture_master_cib_enabled
         )
 
@@ -1300,7 +1407,7 @@ class EnableMaster(CommonResourceTest):
         self.assert_command_effect(
             fixture_master_cib_disabled_both,
             fixture_master_status_managed,
-            lambda: resource.enable(self.env, "A-master", False),
+            lambda: resource.enable(self.env, ["A-master"], False),
             fixture_master_cib_enabled
         )
 
@@ -1309,7 +1416,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_managed,
-            lambda: resource.disable(self.env, "A-clone", False),
+            lambda: resource.disable(self.env, ["A-clone"], False),
             fixture_clone_group_cib_disabled_clone
         )
 
@@ -1317,7 +1424,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_managed,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_clone_group_cib_disabled_group
         )
 
@@ -1325,7 +1432,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_managed,
-            lambda: resource.disable(self.env, "A1", False),
+            lambda: resource.disable(self.env, ["A1"], False),
             fixture_clone_group_cib_disabled_primitive
         )
 
@@ -1333,7 +1440,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.disable(self.env, "A-clone", False),
+            lambda: resource.disable(self.env, ["A-clone"], False),
             fixture_clone_group_cib_disabled_clone,
             reports=[
                 fixture_report_unmanaged("A-clone"),
@@ -1344,7 +1451,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.disable(self.env, "A", False),
+            lambda: resource.disable(self.env, ["A"], False),
             fixture_clone_group_cib_disabled_group,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -1355,7 +1462,7 @@ class DisableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.disable(self.env, "A1", False),
+            lambda: resource.disable(self.env, ["A1"], False),
             fixture_clone_group_cib_disabled_primitive,
             reports=[
                 fixture_report_unmanaged("A1"),
@@ -1368,7 +1475,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_clone,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_group_cib_enabled,
         )
 
@@ -1376,7 +1483,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_all,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_group_cib_disabled_primitive
         )
 
@@ -1384,7 +1491,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_group,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_group_cib_enabled
         )
 
@@ -1392,7 +1499,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_all,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_group_cib_disabled_primitive
         )
 
@@ -1400,7 +1507,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_primitive,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_clone_group_cib_enabled
         )
 
@@ -1408,7 +1515,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_all,
             fixture_clone_group_status_managed,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_clone_group_cib_disabled_clone_group
         )
 
@@ -1416,7 +1523,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_clone,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.enable(self.env, "A-clone", False),
+            lambda: resource.enable(self.env, ["A-clone"], False),
             fixture_clone_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A-clone"),
@@ -1428,7 +1535,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_group,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.enable(self.env, "A", False),
+            lambda: resource.enable(self.env, ["A"], False),
             fixture_clone_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A"),
@@ -1440,7 +1547,7 @@ class EnableClonedGroup(CommonResourceTest):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_primitive,
             fixture_clone_group_status_unmanaged,
-            lambda: resource.enable(self.env, "A1", False),
+            lambda: resource.enable(self.env, ["A1"], False),
             fixture_clone_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A1"),

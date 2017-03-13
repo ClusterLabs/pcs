@@ -12,6 +12,10 @@
 - `pcs resource describe` and `pcs stonith describe` commands now show all
   information about the specified agent if the `--full` flag is used
 
+### Changed
+- It is now possible to specify more than one resource in the `pcs resource
+  enable` and `pcs resource disable` commands.
+
 ### Fixed
 - Python 3: pcs no longer spams stderr with error messages when communicating
   with another node

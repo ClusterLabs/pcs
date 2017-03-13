@@ -199,9 +199,7 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
         for role, nodes in roles_with_nodes.items()
     ])
 
-def ensure_resource_state(
-    expected_running, report_processor, cluster_state, resource_id
-):
+def ensure_resource_state(expected_running, cluster_state, resource_id):
     roles_with_nodes = _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
             cluster_state,
@@ -210,16 +208,15 @@ def ensure_resource_state(
         )
     )
     if not roles_with_nodes:
-        report_processor.process(reports.resource_does_not_run(
+        return reports.resource_does_not_run(
             resource_id,
             severities.INFO if not expected_running else severities.ERROR
-        ))
-    else:
-        report_processor.process(reports.resource_running_on_nodes(
-            resource_id,
-            roles_with_nodes,
-            severities.INFO if expected_running else severities.ERROR
-        ))
+        )
+    return reports.resource_running_on_nodes(
+        resource_id,
+        roles_with_nodes,
+        severities.INFO if expected_running else severities.ERROR
+    )
 
 def is_resource_managed(cluster_state, resource_id):
     """
