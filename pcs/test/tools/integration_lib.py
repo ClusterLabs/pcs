@@ -18,7 +18,7 @@ class Call(object):
     def create_check_stdin_xml(expected_stdin):
         def stdin_xml_check(stdin, command, order_num):
             assert_xml_equal(
-                expected_stdin.decode(),
+                expected_stdin,
                 stdin,
                 (
                     "Trying to run command no. {0}"

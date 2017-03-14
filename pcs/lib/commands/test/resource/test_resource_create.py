@@ -25,6 +25,7 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
 )
+from pcs.test.tools.xml import etree_to_str
 
 
 runner = Runner()
@@ -227,7 +228,7 @@ def fixture_cib_calls(cib_resources_xml):
         Call("cibadmin --local --query", cib_xml),
         Call(
             "cibadmin --replace --verbose --xml-pipe --scope configuration",
-            check_stdin=Call.create_check_stdin_xml(etree.tostring(cib))
+            check_stdin=Call.create_check_stdin_xml(etree_to_str(cib))
         ),
     ]
 
@@ -259,7 +260,7 @@ def fixture_wait_and_get_state_calls(state_resource_xml):
         Call("crm_resource --wait --timeout=10"),
         Call(
             "crm_mon --one-shot --as-xml --inactive",
-            etree.tostring(crm_mon).decode("utf-8"),
+            etree_to_str(crm_mon),
         ),
     ]
 

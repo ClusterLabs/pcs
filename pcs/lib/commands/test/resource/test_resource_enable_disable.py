@@ -484,7 +484,7 @@ def fixture_call_wait_supported():
 def fixture_call_wait(timeout, retval=0, stderr=""):
     return [
         Call(
-            "crm_resource --wait --timeout={}".format(timeout),
+            "crm_resource --wait --timeout={0}".format(timeout),
             stderr=stderr,
             returncode=retval
         ),
@@ -515,7 +515,6 @@ def fixture_state_complete(resource_status_xml):
             "resource_agent": "ocf::heartbeat:Dummy",
             "active": "true",
             "orphaned": "false",
-            "blocked": "false",
             "failed": "false",
             "failure_ignored": "false",
             "nodes_running_on": "1",
