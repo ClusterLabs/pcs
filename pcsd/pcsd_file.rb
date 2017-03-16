@@ -107,7 +107,6 @@ module PcsdFile
     def full_file_name()
       @full_file_name ||= File.join(self.dir, @file[:name])
     end
-
   end
 
   class PutFileBoothAuthfile < PutFileBooth
@@ -122,9 +121,21 @@ module PcsdFile
     end
   end
 
+  class PutFilePcmkRemoteAuthkey < PutFile
+    def full_file_name
+      #TODO determine the file name from the system
+      @full_file_name ||= File.join(PACEMAKER_CONFIG_DIR, "authkey")
+    end
+
+    def binary
+      return true
+    end
+  end
+
   TYPES = {
     "booth_authfile" => PutFileBoothAuthfile,
     "booth_config" => PutFileBoothConfig,
+    "pcmk_remote_authkey" => PutFilePcmkRemoteAuthkey
   }
 end
 

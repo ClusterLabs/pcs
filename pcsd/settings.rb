@@ -18,6 +18,7 @@ CIBADMIN = "/usr/sbin/cibadmin"
 SBD_CONFIG = '/etc/sysconfig/sbd'
 CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
 BOOTH_CONFIG_DIR='/etc/booth'
+PACEMAKER_CONFIG_DIR='/etc/pacemaker'
 
 COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR = "/etc/corosync/qnetd/nssdb"
 COROSYNC_QDEVICE_NET_SERVER_CA_FILE = (
