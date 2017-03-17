@@ -310,6 +310,8 @@ def load_module(env, middleware_factory, name):
                 "create_in_group": resource.create_in_group,
                 "disable": resource.disable,
                 "enable": resource.enable,
+                "manage": resource.manage,
+                "unmanage": resource.unmanage,
             }
         )
     if name == "stonith":

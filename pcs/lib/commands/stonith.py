@@ -54,7 +54,9 @@ def create(
         meta_attributes["provides"] = "unfencing"
 
     with resource_environment(
-        env, stonith_id, wait,
+        env,
+        wait,
+        stonith_id,
         ensure_disabled or are_meta_disabled(meta_attributes),
     ) as resources_section:
         resource.primitive.create(
@@ -116,7 +118,9 @@ def create_in_group(
         meta_attributes["provides"] = "unfencing"
 
     with resource_environment(
-        env, stonith_id, wait,
+        env,
+        wait,
+        stonith_id,
         ensure_disabled or are_meta_disabled(meta_attributes),
     ) as resources_section:
         primitive_element = resource.primitive.create(

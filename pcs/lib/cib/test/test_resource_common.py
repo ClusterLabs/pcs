@@ -13,6 +13,35 @@ from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.xml import etree_to_str
 
 
+fixture_cib = etree.fromstring("""
+    <resources>
+        <primitive id="A" />
+        <clone id="B-clone">
+            <primitive id="B" />
+        </clone>
+        <master id="C-master">
+            <primitive id="C" />
+        </master>
+        <group id="D">
+            <primitive id="D1" />
+            <primitive id="D2" />
+        </group>
+        <clone id="E-clone">
+            <group id="E">
+                <primitive id="E1" />
+                <primitive id="E2" />
+            </group>
+        </clone>
+        <master id="F-master">
+            <group id="F">
+                <primitive id="F1" />
+                <primitive id="F2" />
+            </group>
+        </master>
+    </resources>
+""")
+
+
 class DisableMeta(TestCase):
     def test_add_target_role(self):
         self.assertEqual(
@@ -66,34 +95,6 @@ class IsCloneDeactivatedByMeta(TestCase):
 
 
 class FindResourcesToEnable(TestCase):
-    cib = etree.fromstring("""
-        <resources>
-            <primitive id="A" />
-            <clone id="B-clone">
-                <primitive id="B" />
-            </clone>
-            <master id="C-master">
-                <primitive id="C" />
-            </master>
-            <group id="D">
-                <primitive id="D1" />
-                <primitive id="D2" />
-            </group>
-            <clone id="E-clone">
-                <group id="E">
-                    <primitive id="E1" />
-                    <primitive id="E2" />
-                </group>
-            </clone>
-            <master id="F-master">
-                <group id="F">
-                    <primitive id="F1" />
-                    <primitive id="F2" />
-                </group>
-            </master>
-        </resources>
-    """)
-
     def assert_find_resources(self, input_resource_id, output_resource_ids):
         self.assertEqual(
             output_resource_ids,
@@ -101,7 +102,9 @@ class FindResourcesToEnable(TestCase):
                 element.get("id", "")
                 for element in
                 common.find_resources_to_enable(
-                    self.cib.find('.//*[@id="{0}"]'.format(input_resource_id))
+                    fixture_cib.find(
+                        './/*[@id="{0}"]'.format(input_resource_id)
+                    )
                 )
             ]
         )
@@ -210,24 +213,15 @@ class Disable(TestCase):
         assert_xml_equal(post, etree_to_str(resource))
 
     def test_disabled(self):
-        self.assert_disabled(
-            """
-                <resource id="R">
-                    <meta_attributes id="R-meta_attributes">
-                        <nvpair id="R-meta_attributes-target-role"
-                            name="target-role" value="Stopped" />
-                    </meta_attributes>
-                </resource>
-            """,
-            """
-                <resource id="R">
-                    <meta_attributes id="R-meta_attributes">
-                        <nvpair id="R-meta_attributes-target-role"
-                            name="target-role" value="Stopped" />
-                    </meta_attributes>
-                </resource>
-            """
-        )
+        xml = """
+            <resource id="R">
+                <meta_attributes id="R-meta_attributes">
+                    <nvpair id="R-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </resource>
+        """
+        self.assert_disabled(xml, xml)
 
     def test_enabled(self):
         self.assert_disabled(
@@ -263,6 +257,231 @@ class Disable(TestCase):
                     <meta_attributes id="R-meta_attributes">
                         <nvpair id="R-meta_attributes-target-role"
                             name="target-role" value="Stopped" />
+                    </meta_attributes>
+                    <meta_attributes id="R-meta_attributes-2">
+                    </meta_attributes>
+                </resource>
+            """
+        )
+
+
+class FindResourcesToManage(TestCase):
+    def assert_find_resources(self, input_resource_id, output_resource_ids):
+        self.assertEqual(
+            output_resource_ids,
+            [
+                element.get("id", "")
+                for element in
+                common.find_resources_to_manage(
+                    fixture_cib.find(
+                        './/*[@id="{0}"]'.format(input_resource_id)
+                    )
+                )
+            ]
+        )
+
+    def test_primitive(self):
+        self.assert_find_resources("A", ["A"])
+
+    def test_primitive_in_clone(self):
+        self.assert_find_resources("B", ["B", "B-clone"])
+
+    def test_primitive_in_master(self):
+        self.assert_find_resources("C", ["C", "C-master"])
+
+    def test_primitive_in_group(self):
+        self.assert_find_resources("D1", ["D1", "D"])
+        self.assert_find_resources("D2", ["D2", "D"])
+        self.assert_find_resources("E1", ["E1", "E-clone", "E"])
+        self.assert_find_resources("E2", ["E2", "E-clone", "E"])
+        self.assert_find_resources("F1", ["F1", "F-master", "F"])
+        self.assert_find_resources("F2", ["F2", "F-master", "F"])
+
+    def test_group(self):
+        self.assert_find_resources("D", ["D", "D1", "D2"])
+
+    def test_group_in_clone(self):
+        self.assert_find_resources("E", ["E", "E-clone", "E1", "E2"])
+
+    def test_group_in_master(self):
+        self.assert_find_resources("F", ["F", "F-master", "F1", "F2"])
+
+    def test_cloned_primitive(self):
+        self.assert_find_resources("B-clone", ["B-clone", "B"])
+
+    def test_cloned_group(self):
+        self.assert_find_resources("E-clone", ["E-clone", "E", "E1", "E2"])
+
+    def test_mastered_primitive(self):
+        self.assert_find_resources("C-master", ["C-master", "C"])
+
+    def test_mastered_group(self):
+        self.assert_find_resources("F-master", ["F-master", "F", "F1", "F2"])
+
+
+class FindResourcesToUnmanage(TestCase):
+    def assert_find_resources(self, input_resource_id, output_resource_ids):
+        self.assertEqual(
+            output_resource_ids,
+            [
+                element.get("id", "")
+                for element in
+                common.find_resources_to_unmanage(
+                    fixture_cib.find(
+                        './/*[@id="{0}"]'.format(input_resource_id)
+                    )
+                )
+            ]
+        )
+
+    def test_primitive(self):
+        self.assert_find_resources("A", ["A"])
+
+    def test_primitive_in_clone(self):
+        self.assert_find_resources("B", ["B-clone"])
+
+    def test_primitive_in_master(self):
+        self.assert_find_resources("C", ["C-master"])
+
+    def test_primitive_in_group(self):
+        self.assert_find_resources("D1", ["D1"])
+        self.assert_find_resources("D2", ["D2"])
+        self.assert_find_resources("E1", ["E1"])
+        self.assert_find_resources("E2", ["E2"])
+        self.assert_find_resources("F1", ["F1"])
+        self.assert_find_resources("F2", ["F2"])
+
+    def test_group(self):
+        self.assert_find_resources("D", ["D1", "D2"])
+
+    def test_group_in_clone(self):
+        self.assert_find_resources("E", ["E1", "E2"])
+
+    def test_group_in_master(self):
+        self.assert_find_resources("F", ["F1", "F2"])
+
+    def test_cloned_primitive(self):
+        self.assert_find_resources("B-clone", ["B-clone"])
+
+    def test_cloned_group(self):
+        self.assert_find_resources("E-clone", ["E-clone"])
+
+    def test_mastered_primitive(self):
+        self.assert_find_resources("C-master", ["C-master"])
+
+    def test_mastered_group(self):
+        self.assert_find_resources("F-master", ["F-master"])
+
+
+class Manage(TestCase):
+    def assert_managed(self, pre, post):
+        resource = etree.fromstring(pre)
+        common.manage(resource)
+        assert_xml_equal(post, etree_to_str(resource))
+
+    def test_unmanaged(self):
+        self.assert_managed(
+            """
+                <resource>
+                    <meta_attributes>
+                        <nvpair name="is-managed" value="something" />
+                    </meta_attributes>
+                </resource>
+            """,
+            """
+                <resource>
+                </resource>
+            """
+        )
+
+    def test_managed(self):
+        self.assert_managed(
+            """
+                <resource>
+                </resource>
+            """,
+            """
+                <resource>
+                </resource>
+            """
+        )
+
+    def test_only_first_meta(self):
+        # this captures the current behavior
+        # once pcs supports more instance and meta attributes for each resource,
+        # this test should be reconsidered
+        self.assert_managed(
+            """
+                <resource>
+                    <meta_attributes id="meta1">
+                        <nvpair name="is-managed" value="something" />
+                    </meta_attributes>
+                    <meta_attributes id="meta2">
+                        <nvpair name="is-managed" value="something" />
+                    </meta_attributes>
+                </resource>
+            """,
+            """
+                <resource>
+                    <meta_attributes id="meta2">
+                        <nvpair name="is-managed" value="something" />
+                    </meta_attributes>
+                </resource>
+            """
+        )
+
+
+class Unmanage(TestCase):
+    def assert_unmanaged(self, pre, post):
+        resource = etree.fromstring(pre)
+        common.unmanage(resource)
+        assert_xml_equal(post, etree_to_str(resource))
+
+    def test_unmanaged(self):
+        xml = """
+            <resource id="R">
+                <meta_attributes id="R-meta_attributes">
+                    <nvpair id="R-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+            </resource>
+        """
+        self.assert_unmanaged(xml, xml)
+
+    def test_managed(self):
+        self.assert_unmanaged(
+            """
+                <resource id="R">
+                </resource>
+            """,
+            """
+                <resource id="R">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-is-managed"
+                            name="is-managed" value="false" />
+                    </meta_attributes>
+                </resource>
+            """
+        )
+
+    def test_only_first_meta(self):
+        # this captures the current behavior
+        # once pcs supports more instance and meta attributes for each resource,
+        # this test should be reconsidered
+        self.assert_unmanaged(
+            """
+                <resource id="R">
+                    <meta_attributes id="R-meta_attributes">
+                    </meta_attributes>
+                    <meta_attributes id="R-meta_attributes-2">
+                    </meta_attributes>
+                </resource>
+            """,
+            """
+                <resource id="R">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-is-managed"
+                            name="is-managed" value="false" />
                     </meta_attributes>
                     <meta_attributes id="R-meta_attributes-2">
                     </meta_attributes>

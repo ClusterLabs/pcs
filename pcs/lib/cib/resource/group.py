@@ -14,6 +14,9 @@ from pcs.lib.errors import LibraryError
 
 TAG = "group"
 
+def is_group(resource_el):
+    return resource_el.tag == TAG
+
 def provide_group(resources_section, group_id):
     """
     Provide group with id=group_id. Create new group if group with id=group_id
@@ -78,3 +81,6 @@ def place_resource(
         else adjacent_resource
     )
     group_element.insert(index, primitive_element)
+
+def get_inner_resources(group_el):
+    return group_el.xpath("./primitive")

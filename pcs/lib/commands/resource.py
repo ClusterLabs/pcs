@@ -10,14 +10,6 @@ from functools import partial
 
 from pcs.lib import reports
 from pcs.lib.cib import resource
-from pcs.lib.cib.resource.common import (
-    are_meta_disabled,
-    disable as disable_resource,
-    disable_meta,
-    enable as enable_resource,
-    find_resources_to_enable,
-    is_clone_deactivated_by_meta,
-)
 from pcs.lib.cib.resource.clone import ALL_TAGS as TAGS_CLONE
 from pcs.lib.cib.resource.group import TAG as TAG_GROUP
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
@@ -37,16 +29,18 @@ from pcs.lib.resource_agent import(
 )
 
 @contextmanager
-def resource_environment(env, resource_ids, wait, disabled_after_wait):
+def resource_environment(
+    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False
+):
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     yield get_resources(cib)
     env.push_cib(cib, wait)
-    if wait is not False:
+    if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
         env.report_processor.process_list([
-            ensure_resource_state( not disabled_after_wait, state, res_id)
-            for res_id in resource_ids
+            ensure_resource_state(not disabled_after_wait, state, res_id)
+            for res_id in wait_for_resource_ids
         ])
 
 def create(
@@ -89,8 +83,10 @@ def create(
         allow_absent_agent,
     )
     with resource_environment(
-        env, [resource_id], wait,
-        ensure_disabled or are_meta_disabled(meta_attributes),
+        env,
+        wait,
+        [resource_id],
+        ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
         resource.primitive.create(
             env.report_processor, resources_section,
@@ -147,13 +143,18 @@ def _create_as_clone_common(
         resource_agent_name,
         allow_absent_agent,
     )
-    with resource_environment(env, [resource_id], wait, (
-        ensure_disabled
-        or
-        are_meta_disabled(meta_attributes)
-        or
-        is_clone_deactivated_by_meta(clone_meta_options)
-    )) as resources_section:
+    with resource_environment(
+        env,
+        wait,
+        [resource_id],
+        (
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+            or
+            resource.common.is_clone_deactivated_by_meta(clone_meta_options)
+        )
+    ) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -164,7 +165,9 @@ def _create_as_clone_common(
         )
 
         if ensure_disabled:
-            clone_meta_options = disable_meta(clone_meta_options)
+            clone_meta_options = resource.common.disable_meta(
+                clone_meta_options
+            )
 
         resource.clone.append_new(
             tag,
@@ -217,8 +220,10 @@ def create_in_group(
         allow_absent_agent,
     )
     with resource_environment(
-        env, [resource_id], wait,
-        ensure_disabled or are_meta_disabled(meta_attributes),
+        env,
+        wait,
+        [resource_id],
+        ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
@@ -242,69 +247,48 @@ create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
 
 def disable(env, resource_ids, wait):
     """
-    Disable specified resources in the CIB.
+    Disallow specified resource to be started by the cluster
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to be disabled
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
     with resource_environment(
-        env, resource_ids, wait, True
+        env, wait, resource_ids, True
     ) as resources_section:
-        report_list = []
-        resource_el_list = []
-        for res_id in resource_ids:
-            try:
-                resource_el_list.append(
-                    _find_any_resource(resources_section, res_id)
-                )
-            except LibraryError as e:
-                report_list.extend(e.args)
-        env.report_processor.process_list(report_list)
-
+        resource_el_list = _find_resources_or_raise(
+            resources_section,
+            resource_ids
+        )
         env.report_processor.process_list(
             _resource_list_enable_disable(
                 resource_el_list,
-                disable_resource,
+                resource.common.disable,
                 env.get_cluster_state()
             )
         )
 
 def enable(env, resource_ids, wait):
     """
-    Enable specified resource in the CIB.
+    Allow specified resource to be started by the cluster
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to be enabled
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
     with resource_environment(
-        env, resource_ids, wait, False
+        env, wait, resource_ids, False
     ) as resources_section:
-        report_list = []
-        resource_el_list = []
-        for res_id in resource_ids:
-            try:
-                resource_el_list.extend(
-                    find_resources_to_enable(
-                        _find_any_resource(resources_section, res_id)
-                    )
-                )
-            except LibraryError as e:
-                report_list.extend(e.args)
-        env.report_processor.process_list(report_list)
-
+        resource_el_list = _find_resources_or_raise(
+            resources_section,
+            resource_ids,
+            resource.common.find_resources_to_enable
+        )
         env.report_processor.process_list(
             _resource_list_enable_disable(
                 resource_el_list,
-                enable_resource,
+                resource.common.enable,
                 env.get_cluster_state()
             )
         )
-
-_find_any_resource = partial(
-    find_element_by_tag_and_id,
-    TAGS_CLONE + [TAG_GROUP, TAG_PRIMITIVE],
-    id_description="resource/clone/master/group"
-)
 
 def _resource_list_enable_disable(resource_el_list, func, cluster_state):
     report_list = []
@@ -322,3 +306,58 @@ def _resource_list_enable_disable(resource_el_list, func, cluster_state):
                )
             )
     return report_list
+
+def unmanage(env, resource_ids):
+    """
+    Set specified resources not to be managed by the cluster
+    LibraryEnvironment env --
+    strings resource_ids -- ids of the resources to become unmanaged
+    """
+    with resource_environment(env) as resources_section:
+        resource_el_list = _find_resources_or_raise(
+            resources_section,
+            resource_ids,
+            resource.common.find_resources_to_unmanage
+        )
+        for resource_el in resource_el_list:
+            resource.common.unmanage(resource_el)
+
+def manage(env, resource_ids):
+    """
+    Set specified resource to be managed by the cluster
+    LibraryEnvironment env --
+    strings resource_ids -- ids of the resources to become managed
+    """
+    with resource_environment(env) as resources_section:
+        resource_el_list = _find_resources_or_raise(
+            resources_section,
+            resource_ids,
+            resource.common.find_resources_to_manage
+        )
+        for resource_el in resource_el_list:
+            resource.common.manage(resource_el)
+
+def _find_resources_or_raise(
+    resources_section, resource_ids, additional_search=None
+):
+    if not additional_search:
+        additional_search = lambda x: [x]
+    report_list = []
+    resource_el_list = []
+    for res_id in resource_ids:
+        try:
+            resource_el_list.extend(
+                additional_search(
+                    find_element_by_tag_and_id(
+                        TAGS_CLONE + [TAG_GROUP, TAG_PRIMITIVE],
+                        resources_section,
+                        res_id,
+                        id_description="resource/clone/master/group"
+                    )
+                )
+            )
+        except LibraryError as e:
+            report_list.extend(e.args)
+    if report_list:
+        raise LibraryError(*report_list)
+    return resource_el_list

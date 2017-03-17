@@ -5,11 +5,13 @@ from __future__ import (
     unicode_literals,
 )
 
-import os
+from lxml import etree
 import re
 import shutil
 
+from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin
+from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
@@ -19,7 +21,6 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
-from pcs.test.tools import pcs_unittest as unittest
 
 from pcs import utils
 from pcs import resource
@@ -1761,423 +1762,6 @@ Deleting Resource - ClusterIP5
             """
         ))
         assert returnVal == 0
-
-    def testResourceManage(self):
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
-        )
-        assert returnVal == 0
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
-        )
-        assert returnVal == 0
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
-        )
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource group add DGroup D0")
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource unmanage D1")
-        assert returnVal == 0
-        assert output == ""
-        output, returnVal = pcs(temp_cib, "resource unmanage D1")
-        assert returnVal == 0
-        assert output == "",[output]
-        output, returnVal = pcs(temp_cib, "resource manage D2")
-        assert returnVal == 0
-        assert output == "",[output]
-        output, returnVal = pcs(temp_cib, "resource manage D1")
-        assert returnVal == 0
-        assert output == "",[output]
-        output, returnVal = pcs(temp_cib, "resource unmanage D1")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops C1Master ocf:heartbeat:Dummy --master"
-        )
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops C2Master ocf:heartbeat:Dummy --master"
-        )
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops C3Master ocf:heartbeat:Dummy --clone"
-        )
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops C4Master ocf:heartbeat:Dummy clone"
-        )
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource unmanage C1Master")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource manage C1Master")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource unmanage C2Master-master")
-        ac(output,"")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "resource manage C2Master-master")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource unmanage C3Master")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource manage C3Master")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource unmanage C4Master-clone")
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource manage C4Master-clone")
-        assert returnVal == 0
-        assert output == ""
-
-        self.assert_pcs_success("resource show D1", outdent(
-            """\
-             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: is-managed=false 
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-            """
-        ))
-
-        self.assert_pcs_fail(
-            "resource manage noexist",
-            "Error: noexist doesn't exist.\n"
-        )
-        self.assert_pcs_success("resource manage DGroup")
-        self.assert_pcs_success("resource unmanage DGroup")
-
-        self.assert_pcs_success("resource show DGroup", outdent(
-            """\
-             Group: DGroup
-              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage DGroup")
-        assert returnVal == 0
-        assert output == '',[output]
-
-        self.assert_pcs_success("resource show DGroup", outdent(
-            """\
-             Group: DGroup
-              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
-            """
-        ))
-
-    def testCloneMasterManage(self):
-        # is-managed on the primitive, attempting manage on primitive
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
-        assert returnVal == 0
-        ac (output,'')
-
-        output, returnVal = pcs(temp_cib, "resource update clone-unmanage meta is-managed=false")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-        output, returnVal = pcs(temp_cib, "resource delete clone-unmanage")
-
-        # is-managed on the clone, attempting manage on primitive
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
-        ac (output,'')
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "resource update clone-unmanage-clone meta is-managed=false")
-        ac(output, '')
-        self.assertEqual(0, returnVal)
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Meta Attrs: is-managed=false 
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-        pcs(temp_cib, "resource delete clone-unmanage")
-
-        # is-managed on the primitive, attempting manage on clone
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
-        assert returnVal == 0
-        ac (output,'')
-
-        output, returnVal = pcs(temp_cib, "resource update clone-unmanage meta is-managed=false")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-        pcs(temp_cib, "resource delete clone-unmanage")
-
-        # is-managed on the clone, attempting manage on clone
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
-        assert returnVal == 0
-        ac (output,'')
-
-        output, returnVal = pcs(temp_cib, "resource update clone-unmanage-clone meta is-managed=false")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Meta Attrs: is-managed=false 
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
-            """\
-             Clone: clone-unmanage-clone
-              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
-                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
-                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
-            """
-        ))
-
-        self.assert_pcs_success(
-            "resource create master-unmanage ocf:pacemaker:Stateful --master --no-default-ops",
-            "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
-        )
-
-        output, returnVal = pcs(temp_cib, "resource update master-unmanage-master meta is-managed=false")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show master-unmanage-master", outdent(
-            """\
-             Master: master-unmanage-master
-              Meta Attrs: is-managed=false 
-              Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (master-unmanage-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (master-unmanage-monitor-interval-11)
-            """
-        ))
-
-        output, returnVal = pcs(temp_cib, "resource manage master-unmanage")
-        assert returnVal == 0
-        ac (output, '')
-
-        self.assert_pcs_success("resource show master-unmanage-master", outdent(
-            """\
-             Master: master-unmanage-master
-              Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (master-unmanage-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (master-unmanage-monitor-interval-11)
-            """
-        ))
-
-    def testGroupManage(self):
-        o, r = pcs(temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        o, r = pcs(temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource unmanage AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource manage AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource unmanage D2")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource manage AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource unmanage D2")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        o, r = pcs(temp_cib, "resource unmanage D1")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        os.system("CIB_file="+temp_cib+" crm_resource --resource AG --set-parameter is-managed --meta --parameter-value false --force > /dev/null")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Meta Attrs: is-managed=false 
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Meta Attrs: is-managed=false 
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
-
-        o, r = pcs(temp_cib, "resource manage AG")
-        self.assertEqual(r, 0)
-        ac(o,"")
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Group: AG
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
-            """
-        ))
 
     def testBadInstanceVariables(self):
         self.assert_pcs_success(
@@ -5021,4 +4605,181 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
                 "Removing Constraint - ticket-T-A-Master",
                 "Deleting Resource - A",
             ]
+        )
+
+
+class ManageUnmanage(
+    unittest.TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    temp_cib = rc("temp-cib.xml")
+
+    cib_unmanaged_b = """
+        <resources>
+            <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false"
+                    />
+                </meta_attributes>
+                <operations>
+                    <op id="A-monitor-interval-10" interval="10"
+                        name="monitor" timeout="20"
+                    />
+                </operations>
+            </primitive>
+            <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <operations>
+                    <op id="B-monitor-interval-10" interval="10"
+                        name="monitor" timeout="20"
+                    />
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    def setUp(self):
+        shutil.copy(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    def fixture_resource(self, name, managed=True):
+        self.assert_pcs_success(
+            "resource create {0} ocf:heartbeat:Dummy --no-default-ops".format(
+                name
+            )
+        )
+        if not managed:
+            self.assert_pcs_success("resource unmanage {0}".format(name))
+
+    def test_unmanage_none(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource unmanage",
+            "Error: You must specify resource(s) to unmanage\n"
+        )
+
+    def test_manage_none(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource manage",
+            "Error: You must specify resource(s) to manage\n"
+        )
+
+    def test_unmanage_one(self):
+        self.fixture_resource("A")
+        self.fixture_resource("B")
+        self.assert_effect("resource unmanage A", self.cib_unmanaged_b)
+
+    def test_manage_one(self):
+        self.fixture_resource("A", False)
+        self.fixture_resource("B", False)
+        self.assert_effect("resource manage B", self.cib_unmanaged_b)
+
+    def test_unmanage_more(self):
+        self.fixture_resource("A")
+        self.fixture_resource("B")
+        self.assert_effect(
+            "resource unmanage A B",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="B-meta_attributes">
+                        <nvpair id="B-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="B-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_manage_more(self):
+        self.fixture_resource("A", False)
+        self.fixture_resource("B", False)
+        self.assert_effect(
+            "resource manage A B",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="B-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unmanage_nonexistent(self):
+        self.fixture_resource("A")
+
+        self.assert_pcs_fail(
+            "resource unmanage A B",
+            "Error: resource/clone/master/group 'B' does not exist\n"
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_manage_nonexistent(self):
+        self.fixture_resource("A", False)
+
+        self.assert_pcs_fail(
+            "resource manage A B",
+            "Error: resource/clone/master/group 'B' does not exist\n"
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
         )

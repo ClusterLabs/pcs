@@ -114,9 +114,9 @@ def resource_cmd(argv):
         elif sub_cmd == "debug-monitor":
             resource_force_action(sub_cmd, argv_next)
         elif sub_cmd == "manage":
-            resource_manage(argv_next, True)
+            resource_manage_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "unmanage":
-            resource_manage(argv_next, False)
+            resource_unmanage_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "failcount":
             resource_failcount(argv_next)
         elif sub_cmd == "op":
@@ -1964,58 +1964,17 @@ def resource_force_action(action, argv):
     print(output, end="")
     sys.exit(retval)
 
-def resource_manage(argv, set_managed):
-    if len(argv) == 0:
-        usage.resource()
-        sys.exit(1)
+def resource_manage_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        utils.err("You must specify resource(s) to manage")
+    resources = argv
+    lib.resource.manage(resources)
 
-    for resource in argv:
-        if not utils.does_exist("(//primitive|//group|//master|//clone)[@id='"+resource+"']"):
-            utils.err("%s doesn't exist." % resource)
-
-    dom = utils.get_cib_dom()
-    for resource in argv:
-        isGroup = False
-        isResource = False
-        for el in dom.getElementsByTagName("group") + dom.getElementsByTagName("master") + dom.getElementsByTagName("clone"):
-            if el.getAttribute("id") == resource:
-                group = el
-                isGroup = True
-                break
-
-        if isGroup:
-            res_to_manage = []
-            for el in group.getElementsByTagName("primitive"):
-                res_to_manage.append(el.getAttribute("id"))
-        else:
-            for el in dom.getElementsByTagName("primitive"):
-                if el.getAttribute("id") == resource:
-                    isResource = True
-                    break
-
-        if not set_managed:
-            if isResource:
-                (output, retval) =  utils.set_unmanaged(resource)
-            elif isGroup:
-                for res in res_to_manage:
-                    (output, retval) =  utils.set_unmanaged(res)
-                    retval = 0
-            else:
-                utils.err("unable to find resource/group: %s")
-
-            if retval != 0:
-                utils.err("error attempting to unmanage resource: %s" % output)
-        else:
-            # Remove the meta attribute from the id specified (and all children)
-            xpath = "(//primitive|//group|//clone|//master)[@id='"+resource+"']//meta_attributes/nvpair[@name='is-managed']"
-            utils.run(["cibadmin", "-d", "--xpath", xpath, "--force"])
-            # Remove the meta attribute from the parent of the id specified, if the parent is a clone or master
-            xpath = "(//master|//clone)[(group|primitive)[@id='"+resource+"']]/meta_attributes/nvpair[@name='is-managed']"
-            utils.run(["cibadmin", "-D", "--xpath", xpath])
-            if isGroup:
-                for res in res_to_manage:
-                    xpath = "(//primitive|//group|//clone|//master)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']"
-                    utils.run(["cibadmin", "-D", "--xpath", xpath])
+def resource_unmanage_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        utils.err("You must specify resource(s) to unmanage")
+    resources = argv
+    lib.resource.unmanage(resources)
 
 # moved to pcs.lib.pacemaker.state
 def is_managed(resource_id):
