@@ -565,6 +565,25 @@ def node_communication_proxy_is_set():
     """
     return ReportItem.warning(report_codes.NODE_COMMUNICATION_PROXY_IS_SET)
 
+def node_is_in_cluster(node):
+    """
+    Node is in cluster. It is not possible to add it as a new cluster node
+    (for example).
+    """
+    return ReportItem.error(
+        report_codes.NODE_IS_IN_CLUSTER,
+        info={"node": node}
+    )
+
+def node_is_running_pacemaker_remote(node):
+    """
+    Node is running pacemaker remote. It is not possible to add it as a new
+    cluster node (for example).
+    """
+    return ReportItem.error(
+        report_codes.NODE_IS_RUNNING_PACEMAKER_REMOTE,
+        info={"node": node}
+    )
 
 def corosync_config_distribution_started():
     """

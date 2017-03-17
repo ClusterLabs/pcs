@@ -177,3 +177,30 @@ def node_check_auth(communicator, node):
         "remote/check_auth",
         NodeCommunicator.format_data_dict({"check_auth_only": 1})
     )
+
+def check_can_add_node_to_cluster(node_communicator, node, report_items):
+    try:
+        availability_info = json.loads(node_communicator.call_node(
+            node,
+            "remote/node_available",
+            data=None
+        ))
+        if availability_info["node_available"]:
+            return
+
+        create_report = (
+            reports.node_is_running_pacemaker_remote
+            if availability_info.get("pacemaker_remote", False) else
+            reports.node_is_in_cluster
+        )
+
+        report_items.append(create_report(node.label))
+    except NodeCommunicationException as e:
+        report_items.append(
+            node_communicator_exception_to_report_item(
+                e,
+                ReportItemSeverity.ERROR,
+            )
+        )
+    except(ValueError, TypeError, KeyError):
+        report_items.append(reports.invalid_response_format(node.label))

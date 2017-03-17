@@ -50,7 +50,7 @@ import pcs.cli.booth.env
 
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportListAnalyzer
 from pcs.lib.external import (
     CommandRunner,
     disable_service,
@@ -67,6 +67,7 @@ from pcs.lib.external import (
 )
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
+from pcs.lib.nodes_task import check_can_add_node_to_cluster
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -327,24 +328,46 @@ def resumeConfigSyncing(node):
     data = urllib_urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
-def canAddNodeToCluster(node):
-    retval, output = sendHTTPRequest(
-        node, 'remote/node_available', None, False, False
+def canAddNodeToCluster(node_communicator, node):
+    """
+    Return tuple with two parts. The first part is information if the node can
+    be added to a cluster. The second part is a relevant explanation for first
+    part.
+
+    NodeCommunicator node_communicator provide connection to the node
+    NodeAddresses node contain destination for request
+    """
+    report_list = []
+    check_can_add_node_to_cluster(node_communicator, node, report_list)
+
+    analyzer = ReportListAnalyzer(report_list)
+    if not analyzer.error_list:
+        return True, ""
+
+    first_problem = analyzer.error_list[0]
+
+    report_message_map = {
+        report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED:
+           "unable to authenticate to node"
+        ,
+        report_codes.NODE_IS_IN_CLUSTER:
+            "node is already in a cluster"
+        ,
+        report_codes.INVALID_RESPONSE_FORMAT:
+            "response parsing error"
+        ,
+        report_codes.NODE_IS_RUNNING_PACEMAKER_REMOTE:
+             "node is running pacemaker_remote"
+        ,
+    }
+
+    if first_problem.code in report_message_map:
+        return False, report_message_map[first_problem.code]
+
+    return False, "error checking node availability{0}".format(
+        ": {0}".format(first_problem.info["reason"])
+            if "reason" in first_problem.info else ""
     )
-    if retval == 0:
-        try:
-            myout = json.loads(output)
-            if "notauthorized" in myout and myout["notauthorized"] == "true":
-                return (False, "unable to authenticate to node")
-            if "node_available" in myout and myout["node_available"] == True:
-                return (True, "")
-            elif myout.get("pacemaker_remote", False):
-                return (False, "node is running pacemaker_remote")
-            else:
-                return (False, "node is already in a cluster")
-        except ValueError:
-            return (False, "response parsing error")
-    return (False, "error checking node availability: {0}".format(output))
 
 def addLocalNode(node, node_to_add, ring1_addr=None):
     options = {'new_nodename': node_to_add}

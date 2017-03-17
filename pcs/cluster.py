@@ -391,8 +391,12 @@ def cluster_setup(argv):
         # checks that nodes are authenticated as well
         if "--force" not in utils.pcs_options:
             all_nodes_available = True
+            lib_env = utils.get_lib_env()
             for node in primary_addr_list:
-                available, message = utils.canAddNodeToCluster(node)
+                available, message = utils.canAddNodeToCluster(
+                    lib_env.node_communicator(),
+                    NodeAddresses(node)
+                )
                 if not available:
                     all_nodes_available = False
                     utils.err("{0}: {1}".format(node, message), False)
@@ -1533,13 +1537,14 @@ def node_add(lib_env, node0, node1, modifiers):
             "cluster is not configured for RRP, "
             "you must not specify ring 1 address for the node"
         )
-    (canAdd, error) =  utils.canAddNodeToCluster(node0)
+    node_addr = NodeAddresses(node0, node1)
+    node_communicator = lib_env.node_communicator()
+    (canAdd, error) =  utils.canAddNodeToCluster(node_communicator, node_addr)
+
     if not canAdd:
         utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
     report_processor = lib_env.report_processor
-    node_communicator = lib_env.node_communicator()
-    node_addr = NodeAddresses(node0, node1)
 
     # First set up everything else than corosync. Once the new node is
     # present in corosync.conf / cluster.conf, it's considered part of a

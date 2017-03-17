@@ -31,7 +31,7 @@ class ReportListAnalyzerSelectSeverities(TestCase):
         self.assertEqual(
             expected_errors,
             errors.ReportListAnalyzer(all_reports)
-                .select_severities(self.severities)
+                .reports_with_severities(self.severities)
         )
 
     def test_returns_empty_on_no_reports(self):

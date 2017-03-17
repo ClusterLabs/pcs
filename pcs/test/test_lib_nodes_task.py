@@ -5,6 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
+import json
+
 from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.assertions import (
@@ -595,4 +597,97 @@ class NodeCheckAuthTest(TestCase):
         lib.node_check_auth(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
             node, "remote/check_auth", "check_auth_only=1"
+        )
+
+class EnsureCanAddNodeToCluster(TestCase):
+    def setUp(self):
+        self.node = NodeAddresses("node1")
+        self.node_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+
+    def fixture_invalid_response_format(self):
+       return (
+            severity.ERROR,
+            report_codes.INVALID_RESPONSE_FORMAT,
+            {
+                "node": self.node.label
+            }
+        )
+
+    def assert_communicator_cause_reports(self, expected_report_items):
+        report_items = []
+        lib.check_can_add_node_to_cluster(
+            self.node_communicator,
+            self.node,
+            report_items
+        )
+        assert_report_item_list_equal(report_items, expected_report_items)
+
+    def assert_result_cause_reports(self, result, expected_report_items):
+        self.node_communicator.call_node = mock.Mock(
+            return_value=json.dumps(result)
+        )
+        self.assert_communicator_cause_reports(expected_report_items)
+
+    def test_process_communication_exception(self):
+        self.node_communicator.call_node = mock.Mock(
+            side_effect=NodeAuthenticationException("node", "request", "reason")
+        )
+        self.assert_communicator_cause_reports([
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                {
+                    'node': 'node',
+                    'reason': 'reason',
+                    'command': 'request'
+                }
+            ),
+        ])
+
+    def test_report_no_json_response(self):
+        #leads to ValueError
+        self.node_communicator.call_node = mock.Mock(return_value="bad answer")
+        self.assert_communicator_cause_reports([
+            self.fixture_invalid_response_format()
+        ])
+
+    def test_report_no_dict_in_json_response(self):
+        #leads to TypeError
+        self.assert_result_cause_reports("bad answer", [
+            self.fixture_invalid_response_format()
+        ])
+
+    def test_report_dict_without_mandatory_key(self):
+        #leads to KeyError
+        self.assert_result_cause_reports({}, [
+            self.fixture_invalid_response_format()
+        ])
+
+
+    def test_no_reports_on_communication_success(self):
+        self.assert_result_cause_reports({"node_available": True}, [])
+
+    def test_report_node_is_in_cluster(self):
+        self.assert_result_cause_reports({"node_available": False}, [
+            (
+                severity.ERROR,
+                report_codes.NODE_IS_IN_CLUSTER,
+                {
+                    "node": self.node.label
+                }
+            ),
+        ])
+
+    def test_report_node_is_running_pacemaker_remote(self):
+        self.assert_result_cause_reports(
+            {"node_available": False, "pacemaker_remote": True},
+            [
+                (
+                    severity.ERROR,
+                    report_codes.NODE_IS_RUNNING_PACEMAKER_REMOTE,
+                    {
+                        "node": self.node.label
+                    }
+                ),
+            ]
         )

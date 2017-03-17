@@ -366,6 +366,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Proxy is set in environment variables, try disabling it"
     ,
 
+    codes.NODE_IS_IN_CLUSTER: lambda info:
+        "node '{node}' is in a cluster"
+        .format(**info)
+    ,
+
+    codes.NODE_IS_RUNNING_PACEMAKER_REMOTE: lambda info:
+        "the node '{node}' is running pacemaker-remote"
+        .format(**info)
+    ,
+
     codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED:
         "Sending updated corosync.conf to nodes..."
     ,

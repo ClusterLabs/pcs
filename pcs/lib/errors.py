@@ -63,18 +63,22 @@ class ReportItem(object):
 class ReportListAnalyzer(object):
     def __init__(self, report_list):
         self.__error_list = None
-        self.report_list = report_list
+        self.__report_list = report_list
 
-    def select_severities(self, severity_list):
+    def reports_with_severities(self, severity_list):
         return [
             report_item for report_item in self.report_list
             if report_item.severity in severity_list
         ]
 
     @property
+    def report_list(self):
+        return self.__report_list
+
+    @property
     def error_list(self):
         if self.__error_list is None:
-            self.__error_list = self.select_severities(
+            self.__error_list = self.reports_with_severities(
                 [ReportItemSeverity.ERROR]
             )
         return self.__error_list

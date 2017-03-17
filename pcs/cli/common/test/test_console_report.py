@@ -572,3 +572,23 @@ class ResourceManagedNoMonitorEnabled(NameBuildTest):
                 "resource_id": "R",
             }
         )
+
+class NodeIsInCluster(NameBuildTest):
+    code = codes.NODE_IS_IN_CLUSTER
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "node 'N1' is in a cluster",
+            {
+                "node": "N1",
+            }
+        )
+
+class NodeIsRunningPacemakerRemote(NameBuildTest):
+    code = codes.NODE_IS_RUNNING_PACEMAKER_REMOTE
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "the node 'N1' is running pacemaker-remote",
+            {
+                "node": "N1",
+            }
+        )
