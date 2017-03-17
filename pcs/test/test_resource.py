@@ -4646,14 +4646,19 @@ class ManageUnmanage(
         shutil.copy(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
 
-    def fixture_resource(self, name, managed=True):
+    def fixture_resource(self, name, managed=True, with_monitors=False):
         self.assert_pcs_success(
             "resource create {0} ocf:heartbeat:Dummy --no-default-ops".format(
                 name
             )
         )
         if not managed:
-            self.assert_pcs_success("resource unmanage {0}".format(name))
+            self.assert_pcs_success(
+                "resource unmanage {0} {1}".format(
+                    name,
+                    "--monitor" if with_monitors else ""
+                )
+            )
 
     def test_unmanage_none(self):
         self.assert_pcs_fail_regardless_of_force(
@@ -4673,9 +4678,89 @@ class ManageUnmanage(
         self.assert_effect("resource unmanage A", self.cib_unmanaged_b)
 
     def test_manage_one(self):
-        self.fixture_resource("A", False)
-        self.fixture_resource("B", False)
+        self.fixture_resource("A", managed=False)
+        self.fixture_resource("B", managed=False)
         self.assert_effect("resource manage B", self.cib_unmanaged_b)
+
+    def test_unmanage_monitor(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            "resource unmanage A --monitor",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20" enabled="false"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unmanage_monitor_enabled(self):
+        self.fixture_resource("A")
+        self.assert_effect(
+            "resource unmanage A",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_manage_monitor(self):
+        self.fixture_resource("A", managed=True, with_monitors=True)
+        self.assert_effect(
+            "resource manage A --monitor",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_manage_monitor_disabled(self):
+        self.fixture_resource("A", managed=False, with_monitors=True)
+        self.assert_effect(
+            "resource manage A",
+            """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20" enabled="false"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """,
+            "Warning: Resource 'A' has no enabled monitor operations."
+                " Re-run with '--monitor' to enable them.\n"
+        )
 
     def test_unmanage_more(self):
         self.fixture_resource("A")
@@ -4713,8 +4798,8 @@ class ManageUnmanage(
         )
 
     def test_manage_more(self):
-        self.fixture_resource("A", False)
-        self.fixture_resource("B", False)
+        self.fixture_resource("A", managed=False)
+        self.fixture_resource("B", managed=False)
         self.assert_effect(
             "resource manage A B",
             """
@@ -4759,7 +4844,7 @@ class ManageUnmanage(
         )
 
     def test_manage_nonexistent(self):
-        self.fixture_resource("A", False)
+        self.fixture_resource("A", managed=False)
 
         self.assert_pcs_fail(
             "resource manage A B",

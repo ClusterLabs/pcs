@@ -427,12 +427,15 @@ Commands:
         If 'n' is not specified it defaults to 60 minutes.
         Note: to remove a master you must remove the resource/group it contains.
 
-    manage <resource id>...
-        Set resources listed to managed mode (default).
+    manage <resource id>... [--monitor]
+        Set resources listed to managed mode (default). If --monitor is
+        specified, enable all monitor operations of the resources.
 
-    unmanage <resource id>...
+    unmanage <resource id>... [--monitor]
         Set resources listed to unmanaged mode. When a resource is in unmanaged
-        mode, the cluster is not allowed to start nor stop the resource.
+        mode, the cluster is not allowed to start nor stop the resource. If
+        --monitor is specified, disable all monitor operations of the
+        resources.
 
     defaults [options]
         Set default values for resources, if no options are passed, lists

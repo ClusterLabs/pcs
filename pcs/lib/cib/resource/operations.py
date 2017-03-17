@@ -14,7 +14,10 @@ from pcs.lib import reports, validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.pacemaker.values import timeout_to_seconds
+from pcs.lib.pacemaker.values import (
+    is_true,
+    timeout_to_seconds,
+)
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
@@ -311,3 +314,36 @@ def append_new_operation(operations_element, options):
         append_new_instance_attributes(op_element, nvpair_attribute_map)
 
     return op_element
+
+def get_resource_operations(resource_el, names=None):
+    """
+    Get operations of a given resource, optionally filtered by name
+    etree resource_el -- resource element
+    iterable names -- return only operations of these names if specified
+    """
+    return [
+        op_el
+        for op_el in resource_el.xpath("./operations/op")
+        if not names or op_el.attrib.get("name", "") in names
+    ]
+
+def disable(operation_element):
+    """
+    Disable the specified operation
+    etree operation_element -- the operation
+    """
+    operation_element.attrib["enabled"] = "false"
+
+def enable(operation_element):
+    """
+    Enable the specified operation
+    etree operation_element -- the operation
+    """
+    operation_element.attrib.pop("enabled", None)
+
+def is_enabled(operation_element):
+    """
+    Check if the specified operation is enabled
+    etree operation_element -- the operation
+    """
+    return is_true(operation_element.attrib.get("enabled", "true"))

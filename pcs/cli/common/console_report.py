@@ -693,6 +693,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED: lambda info:
+        (
+            "Resource '{resource_id}' has no enabled monitor operations."
+            " Re-run with '--monitor' to enable them."
+        )
+        .format(**info)
+    ,
+
     codes.NODE_NOT_FOUND: lambda info:
         "Node '{node}' does not appear to exist in configuration"
         .format(**info)

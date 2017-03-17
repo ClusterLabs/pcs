@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from functools import partial
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import operations
@@ -325,4 +326,62 @@ class GetRemainingDefaults(TestCase):
                 default_operation_list=[{"name": "monitor"}, {"name": "start"}]
             ),
             [{"name": "start"}]
+        )
+
+
+class GetResourceOperations(TestCase):
+    resource_el = etree.fromstring("""
+        <primitive class="ocf" id="dummy" provider="pacemaker" type="Stateful">
+            <operations>
+                <op id="dummy-start" interval="0s" name="start" timeout="20"/>
+                <op id="dummy-stop" interval="0s" name="stop" timeout="20"/>
+                <op id="dummy-monitor-m" interval="10" name="monitor"
+                    role="Master" timeout="20"/>
+                <op id="dummy-monitor-s" interval="11" name="monitor"
+                    role="Slave" timeout="20"/>
+            </operations>
+        </primitive>
+    """)
+    resource_noop_el = etree.fromstring("""
+        <primitive class="ocf" id="dummy" provider="pacemaker" type="Stateful">
+        </primitive>
+    """)
+
+    def assert_op_list(self, op_list, expected_ids):
+        self.assertEqual(
+            [op.attrib.get("id") for op in op_list],
+            expected_ids
+        )
+
+    def test_all_operations(self):
+        self.assert_op_list(
+            operations.get_resource_operations(self.resource_el),
+            ["dummy-start", "dummy-stop", "dummy-monitor-m", "dummy-monitor-s"]
+        )
+
+    def test_filter_operations(self):
+        self.assert_op_list(
+            operations.get_resource_operations(self.resource_el, ["start"]),
+            ["dummy-start"]
+        )
+
+    def test_filter_more_operations(self):
+        self.assert_op_list(
+            operations.get_resource_operations(
+                self.resource_el,
+                ["monitor", "stop"]
+            ),
+            ["dummy-stop", "dummy-monitor-m", "dummy-monitor-s"]
+        )
+
+    def test_filter_none(self):
+        self.assert_op_list(
+            operations.get_resource_operations(self.resource_el, ["promote"]),
+            []
+        )
+
+    def test_no_operations(self):
+        self.assert_op_list(
+            operations.get_resource_operations(self.resource_noop_el),
+            []
         )

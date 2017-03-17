@@ -1968,13 +1968,13 @@ def resource_manage_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         utils.err("You must specify resource(s) to manage")
     resources = argv
-    lib.resource.manage(resources)
+    lib.resource.manage(resources, modifiers["monitor"])
 
 def resource_unmanage_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         utils.err("You must specify resource(s) to unmanage")
     resources = argv
-    lib.resource.unmanage(resources)
+    lib.resource.unmanage(resources, modifiers["monitor"])
 
 # moved to pcs.lib.pacemaker.state
 def is_managed(resource_id):

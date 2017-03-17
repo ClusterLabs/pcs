@@ -10,9 +10,7 @@ from functools import partial
 
 from pcs.lib import reports
 from pcs.lib.cib import resource
-from pcs.lib.cib.resource.clone import ALL_TAGS as TAGS_CLONE
-from pcs.lib.cib.resource.group import TAG as TAG_GROUP
-from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
+from pcs.lib.cib.resource import operations
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
@@ -307,11 +305,12 @@ def _resource_list_enable_disable(resource_el_list, func, cluster_state):
             )
     return report_list
 
-def unmanage(env, resource_ids):
+def unmanage(env, resource_ids, with_monitor=False):
     """
     Set specified resources not to be managed by the cluster
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to become unmanaged
+    bool with_monitor -- disable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
         resource_el_list = _find_resources_or_raise(
@@ -321,14 +320,22 @@ def unmanage(env, resource_ids):
         )
         for resource_el in resource_el_list:
             resource.common.unmanage(resource_el)
+            if with_monitor:
+                for op in operations.get_resource_operations(
+                    resource_el,
+                    ["monitor"]
+                ):
+                    operations.disable(op)
 
-def manage(env, resource_ids):
+def manage(env, resource_ids, with_monitor=False):
     """
     Set specified resource to be managed by the cluster
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to become managed
+    bool with_monitor -- enable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
+        report_list = []
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
@@ -336,6 +343,27 @@ def manage(env, resource_ids):
         )
         for resource_el in resource_el_list:
             resource.common.manage(resource_el)
+            op_list = operations.get_resource_operations(
+                resource_el,
+                ["monitor"]
+            )
+            if with_monitor:
+                for op in op_list:
+                    operations.enable(op)
+            else:
+                monitor_enabled = False
+                for op in op_list:
+                    if operations.is_enabled(op):
+                        monitor_enabled = True
+                        break
+                if op_list and not monitor_enabled:
+                    # do not advise enabling monitors if there are none defined
+                    report_list.append(
+                        reports.resource_managed_no_monitor_enabled(
+                            resource_el.get("id", "")
+                        )
+                    )
+        env.report_processor.process_list(report_list)
 
 def _find_resources_or_raise(
     resources_section, resource_ids, additional_search=None
@@ -344,12 +372,17 @@ def _find_resources_or_raise(
         additional_search = lambda x: [x]
     report_list = []
     resource_el_list = []
+    resource_tags = (
+        resource.clone.ALL_TAGS
+        +
+        [resource.group.TAG, resource.primitive.TAG]
+    )
     for res_id in resource_ids:
         try:
             resource_el_list.extend(
                 additional_search(
                     find_element_by_tag_and_id(
-                        TAGS_CLONE + [TAG_GROUP, TAG_PRIMITIVE],
+                        resource_tags,
                         resources_section,
                         res_id,
                         id_description="resource/clone/master/group"

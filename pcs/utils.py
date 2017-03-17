@@ -2812,8 +2812,8 @@ def get_modificators():
     #there is possible create class extending dict, so dict like access in
     #commands is not an issue
     return {
-        "all": "--all" in pcs_options,
         "after": pcs_options.get("--after", None),
+        "all": "--all" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
         "autodelete": "--autodelete" in pcs_options,
         "before": pcs_options.get("--before", None),
@@ -2824,6 +2824,7 @@ def get_modificators():
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
         "group": pcs_options.get("--group", None),
+        "monitor": "--monitor" in pcs_options,
         "name": pcs_options.get("--name", None),
         "no-default-ops": "--no-default-ops" in pcs_options,
         "skip_offline_nodes": "--skip-offline" in pcs_options,

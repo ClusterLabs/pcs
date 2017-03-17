@@ -11,6 +11,8 @@
   and `ocf:pacemaker` resources ([rhbz#1421702])
 - `pcs resource describe` and `pcs stonith describe` commands now show all
   information about the specified agent if the `--full` flag is used
+- `pcs resource manage | unmanage` enables respectively disables monitor
+  operations when the `--monitor` flag is specified ([rhbz#1303969])
 
 ### Changed
 - It is now possible to specify more than one resource in the `pcs resource
@@ -24,6 +26,7 @@
 - `pcs booth remove` now works correctly even if the booth resource group is
   disabled (another fix) ([rhbz#1389941])
 
+[rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 [rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
 [rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493

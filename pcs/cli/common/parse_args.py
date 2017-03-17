@@ -35,6 +35,8 @@ PCS_LONG_OPTIONS = [
     "remote", "watchdog=",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
+    # pcs resource (un)manage - enable or disable monitor operations
+    "monitor",
 ]
 
 def split_list(arg_list, separator):

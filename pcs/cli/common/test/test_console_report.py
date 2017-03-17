@@ -560,3 +560,15 @@ class ResourceIsUnmanaged(NameBuildTest):
                 "resource_id": "R",
             }
         )
+
+class ResourceManagedNoMonitorEnabled(NameBuildTest):
+    code = codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Resource 'R' has no enabled monitor operations."
+                " Re-run with '--monitor' to enable them."
+            ,
+            {
+                "resource_id": "R",
+            }
+        )

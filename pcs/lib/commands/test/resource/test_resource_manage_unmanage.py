@@ -7,9 +7,11 @@ from __future__ import (
 
 import logging
 
+from pcs.common import report_codes
 from pcs.lib.commands import resource
 import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.integration_lib import Runner
 from pcs.test.tools.assertions import assert_raise_library_error
@@ -31,6 +33,67 @@ fixture_primitive_cib_unmanaged = """
                 <nvpair id="A-meta_attributes-is-managed"
                     name="is-managed" value="false" />
             </meta_attributes>
+        </primitive>
+    </resources>
+"""
+
+fixture_primitive_cib_managed_op_enabled = """
+    <resources>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Stateful">
+            <operations>
+                <op id="A-start" name="start" />
+                <op id="A-stop" name="stop" />
+                <op id="A-monitor-m" name="monitor" role="Master" />
+                <op id="A-monitor-s" name="monitor" role="Slave" />
+            </operations>
+        </primitive>
+    </resources>
+"""
+fixture_primitive_cib_managed_op_disabled = """
+    <resources>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Stateful">
+            <operations>
+                <op id="A-start" name="start" />
+                <op id="A-stop" name="stop" />
+                <op id="A-monitor-m" name="monitor" role="Master"
+                    enabled="false" />
+                <op id="A-monitor-s" name="monitor" role="Slave"
+                    enabled="false" />
+            </operations>
+        </primitive>
+    </resources>
+"""
+fixture_primitive_cib_unmanaged_op_enabled = """
+    <resources>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Stateful">
+            <meta_attributes id="A-meta_attributes">
+                <nvpair id="A-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <operations>
+                <op id="A-start" name="start" />
+                <op id="A-stop" name="stop" />
+                <op id="A-monitor-m" name="monitor" role="Master" />
+                <op id="A-monitor-s" name="monitor" role="Slave" />
+            </operations>
+        </primitive>
+    </resources>
+"""
+fixture_primitive_cib_unmanaged_op_disabled = """
+    <resources>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Stateful">
+            <meta_attributes id="A-meta_attributes">
+                <nvpair id="A-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <operations>
+                <op id="A-start" name="start" />
+                <op id="A-stop" name="stop" />
+                <op id="A-monitor-m" name="monitor" role="Master"
+                    enabled="false" />
+                <op id="A-monitor-s" name="monitor" role="Slave"
+                    enabled="false" />
+            </operations>
         </primitive>
     </resources>
 """
@@ -302,6 +365,16 @@ def fixture_calls_cib(cib_pre, cib_post):
         fixture.call_cib_push(fixture.cib_resources(cib_post))
     )
 
+def fixture_report_no_monitors(resource):
+    return (
+        severities.WARNING,
+        report_codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED,
+        {
+            "resource_id": resource,
+        },
+        None
+    )
+
 
 class CommonResourceTest(TestCase):
     @classmethod
@@ -323,11 +396,12 @@ class CommonResourceTest(TestCase):
             MockLibraryReportProcessor()
         )
 
-    def assert_command_effect(self, cib_pre, cmd, cib_post):
+    def assert_command_effect(self, cib_pre, cmd, cib_post, reports=None):
         runner.set_runs(
             fixture_calls_cib(cib_pre, cib_post)
         )
         cmd()
+        self.env.report_processor.assert_reports(reports if reports else [])
         runner.assert_everything_launched()
 
 
@@ -716,3 +790,49 @@ class MoreResources(CommonResourceTest):
         )
         runner.assert_everything_launched()
 
+
+class WithMonitor(CommonResourceTest):
+    def test_unmanage_noop(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_managed,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_primitive_cib_unmanaged
+        )
+
+    def test_manage_noop(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_unmanaged,
+            lambda: resource.manage(self.env, ["A"], True),
+            fixture_primitive_cib_managed
+        )
+
+    def test_unmanage(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_primitive_cib_unmanaged_op_disabled
+        )
+
+    def test_manage(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_unmanaged_op_disabled,
+            lambda: resource.manage(self.env, ["A"], True),
+            fixture_primitive_cib_managed_op_enabled
+        )
+
+    def test_unmanage_enabled_monitors(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], False),
+            fixture_primitive_cib_unmanaged_op_enabled
+        )
+
+    def test_manage_disabled_monitors(self):
+        self.assert_command_effect(
+            fixture_primitive_cib_unmanaged_op_disabled,
+            lambda: resource.manage(self.env, ["A"], False),
+            fixture_primitive_cib_managed_op_disabled,
+            [
+                fixture_report_no_monitors("A"),
+            ]
+        )
