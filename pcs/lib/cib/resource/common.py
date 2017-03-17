@@ -54,22 +54,13 @@ def enable(resource_el):
     Enable specified resource
     etree resource_el -- resource element
     """
-    meta_attributes_el_list = resource_el.xpath("./meta_attributes")
-    if not meta_attributes_el_list:
-        # If there are no meta_attributes, the resource is not disabled. We do
-        # not want to create an empty meta_attributes element, so we return
-        # early.
-        return
-    meta_attributes_el = meta_attributes_el_list[0]
-    nvpair.update_nvset(
-        meta_attributes_el,
+    nvpair.arrange_first_nvset(
+        "meta_attributes",
+        resource_el,
         {
             "target-role": "",
         }
     )
-    # remove empty meta_attributes
-    if not list(meta_attributes_el):
-        resource_el.remove(meta_attributes_el)
 
 def disable(resource_el):
     """

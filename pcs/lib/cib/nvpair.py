@@ -48,21 +48,18 @@ def set_nvpair_in_nvset(nvset_element, name, value):
 
 def arrange_first_nvset(tag_name, context_element, nvpair_dict):
     """
-    Arrange to context_element contains some nvset (with tag_name) with nvpairs
-    corresponing to nvpair_dict.
+    Put nvpairs to the first tag_name nvset in the context_element.
 
-    WARNING: does not solve multiple nvset (with tag_name) under
-    context_element! Consider carefully if this is your case. Probably not.
+    If the nvset does not exist, it will be created.
+
+    WARNING: does not solve multiple nvsets (with the same tag_name) in the
+    context_element! Consider carefully if this is your use case. Probably not.
     There could be more than one nvset.
     This function is DEPRECATED. Try to use update_nvset etc.
 
-    This method updates nvset specified by tag_name. If specified nvset
-    doesn't exist it will be created. Returns updated nvset element or None if
-    nvpair_dict is empty.
-
-    tag_name -- tag name of nvset element
-    context_element -- parent element of nvset
-    nvpair_dict -- dictionary of nvpairs
+    string tag_name -- tag name of nvset element
+    etree context_element -- parent element of nvset
+    dict nvpair_dict -- dictionary of nvpairs
     """
     if not nvpair_dict:
         return
@@ -103,13 +100,18 @@ append_new_meta_attributes = partial(
 
 def update_nvset(nvset_element, nvpair_dict):
     """
-    Set (create or update) nvpairs according to nvpair_dict into nvset_element
+    Add, remove or update nvpairs according to nvpair_dict into nvset_element
 
-    etree.Element nvset_element is container where nvpairs are set
-    dict nvpair_dict contains source for nvpair children
+    If the resulting nvset is empty, it will be removed.
+
+    etree nvset_element -- container where nvpairs are set
+    dict nvpair_dict -- contains source for nvpair children
     """
     for name, value in sorted(nvpair_dict.items()):
         set_nvpair_in_nvset(nvset_element, name, value)
+    # remove an empty nvset
+    if not list(nvset_element):
+        nvset_element.getparent().remove(nvset_element)
 
 def get_nvset(nvset):
     """

@@ -10,16 +10,20 @@ from lxml import etree
 from pcs.lib.cib import nvpair
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.pcs_unittest import TestCase, mock
+from pcs.test.tools.xml import etree_to_str
 
 class AppendNewNvpair(TestCase):
     def test_append_new_nvpair_to_given_element(self):
         nvset_element = etree.fromstring('<nvset id="a"/>')
         nvpair._append_new_nvpair(nvset_element, "b", "c")
-        assert_xml_equal(etree.tostring(nvset_element).decode(), """
+        assert_xml_equal(
+            etree_to_str(nvset_element),
+            """
             <nvset id="a">
                 <nvpair id="a-b" name="b" value="c"></nvpair>
             </nvset>
-        """)
+            """
+        )
 
 class UpdateNvsetTest(TestCase):
     @mock.patch(
@@ -47,7 +51,7 @@ class UpdateNvsetTest(TestCase):
                 <nvpair id="4" name="g" value="h"/>
             </instance_attributes>
             """,
-            etree.tostring(nvset_element).decode()
+            etree_to_str(nvset_element)
         )
     def test_empty_value_has_no_effect(self):
         xml = """
@@ -59,7 +63,25 @@ class UpdateNvsetTest(TestCase):
         """
         nvset_element = etree.fromstring(xml)
         nvpair.update_nvset(nvset_element, {})
-        assert_xml_equal(xml, etree.tostring(nvset_element).decode())
+        assert_xml_equal(xml, etree_to_str(nvset_element))
+
+    def test_remove_empty_nvset(self):
+        xml_pre = """
+            <resource>
+                <instance_attributes id="iattrs">
+                    <nvpair id="1" name="a" value="b"/>
+                </instance_attributes>
+            </resource>
+        """
+        xml_post = """
+            <resource>
+            </resource>
+        """
+        xml = etree.fromstring(xml_pre)
+        nvset_element = xml.find("instance_attributes")
+        nvpair.update_nvset(nvset_element, {"a": ""})
+        assert_xml_equal(xml_post, etree_to_str(xml))
+
 
 class SetNvpairInNvsetTest(TestCase):
     def setUp(self):
@@ -84,7 +106,7 @@ class SetNvpairInNvsetTest(TestCase):
                 <notnvpair id="nvset-test" name="test" value="0"/>
             </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
     def test_add(self):
@@ -98,7 +120,7 @@ class SetNvpairInNvsetTest(TestCase):
                 <nvpair id="nvset-test-1" name="test" value="0"/>
             </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
     def test_remove(self):
@@ -110,7 +132,7 @@ class SetNvpairInNvsetTest(TestCase):
                 <notnvpair id="nvset-test" name="test" value="0"/>
             </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
     def test_remove_not_existing(self):
@@ -123,7 +145,7 @@ class SetNvpairInNvsetTest(TestCase):
                 <notnvpair id="nvset-test" name="test" value="0"/>
             </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
 class AppendNewNvsetTest(TestCase):
@@ -133,14 +155,17 @@ class AppendNewNvsetTest(TestCase):
             "a": "b",
             "c": "d",
         })
-        assert_xml_equal(etree.tostring(context_element).decode(), """
-            <context id="a">
-                <instance_attributes id="a-instance_attributes">
-                    <nvpair id="a-instance_attributes-a" name="a" value="b"/>
-                    <nvpair id="a-instance_attributes-c" name="c" value="d"/>
-                </instance_attributes>
-            </context>
-        """)
+        assert_xml_equal(
+            """
+                <context id="a">
+                    <instance_attributes id="a-instance_attributes">
+                        <nvpair id="a-instance_attributes-a" name="a" value="b"/>
+                        <nvpair id="a-instance_attributes-c" name="c" value="d"/>
+                    </instance_attributes>
+                </context>
+            """,
+            etree_to_str(context_element)
+        )
 
 class ArrangeFirstNvsetTest(TestCase):
     def setUp(self):
@@ -166,7 +191,7 @@ class ArrangeFirstNvsetTest(TestCase):
                     <notnvpair id="nvset-test" name="test" value="0"/>
                 </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
     def test_update_existing_nvset(self):
@@ -185,7 +210,7 @@ class ArrangeFirstNvsetTest(TestCase):
                     <nvpair id="nvset-test-1" name="test" value="0"/>
                 </nvset>
             """,
-            etree.tostring(self.nvset).decode()
+            etree_to_str(self.nvset)
         )
 
     def test_create_new_nvset_if_does_not_exist(self):
@@ -207,7 +232,7 @@ class ArrangeFirstNvsetTest(TestCase):
                 </nvset>
             </root>
             """,
-            etree.tostring(root).decode()
+            etree_to_str(root)
         )
 
 
