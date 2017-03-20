@@ -698,14 +698,14 @@ def config_import_cman(argv):
         config_backup_add_version_to_tarball(tarball)
         utils.tar_add_file_data(
             tarball,
-            clufter_args_obj.cib["passout"].encode("utf-8"),
+            clufter_args_obj.cib["passout"],
             "cib.xml",
             **file_list["cib.xml"]["attrs"]
         )
         if output_format == "cluster.conf":
             utils.tar_add_file_data(
                 tarball,
-                clufter_args_obj.ccs_pcmk["passout"].encode("utf-8"),
+                clufter_args_obj.ccs_pcmk["passout"],
                 "cluster.conf",
                 **file_list["cluster.conf"]["attrs"]
             )
@@ -726,7 +726,7 @@ def config_import_cman(argv):
             )("bytestring")
             utils.tar_add_file_data(
                 tarball,
-                corosync_conf_data.encode("utf-8"),
+                corosync_conf_data,
                 "corosync.conf",
                 **file_list["corosync.conf"]["attrs"]
             )
@@ -744,7 +744,7 @@ def config_import_cman(argv):
                 )("bytestring")
                 utils.tar_add_file_data(
                     tarball,
-                    uidgid_data.encode("utf-8"),
+                    uidgid_data,
                     "uidgid.d/" + filename,
                     **file_list["uidgid.d"]["attrs"]
                 )
