@@ -366,14 +366,22 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Proxy is set in environment variables, try disabling it"
     ,
 
-    codes.NODE_IS_IN_CLUSTER: lambda info:
-        "node '{node}' is in a cluster"
+    codes.CANNOT_ADD_NODE_IS_IN_CLUSTER: lambda info:
+        "cannot add the node '{node}' because it is in a cluster"
         .format(**info)
     ,
 
-    codes.NODE_IS_RUNNING_PACEMAKER_REMOTE: lambda info:
-        "the node '{node}' is running pacemaker-remote"
-        .format(**info)
+    codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE: lambda info:
+        (
+            "cannot add the node '{node}' because it is running service"
+            " '{service}'{guess}"
+        ).format(
+            guess=(
+                "" if info["service"] not in ["pacemaker", "pacemaker_remote"]
+                else " (is not the node already in a cluster?)"
+            ),
+            **info
+        )
     ,
 
     codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED:

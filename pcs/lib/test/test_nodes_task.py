@@ -671,7 +671,7 @@ class EnsureCanAddNodeToCluster(TestCase):
         self.assert_result_cause_reports({"node_available": False}, [
             (
                 severity.ERROR,
-                report_codes.NODE_IS_IN_CLUSTER,
+                report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER,
                 {
                     "node": self.node.label
                 }
@@ -684,9 +684,10 @@ class EnsureCanAddNodeToCluster(TestCase):
             [
                 (
                     severity.ERROR,
-                    report_codes.NODE_IS_RUNNING_PACEMAKER_REMOTE,
+                    report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
                     {
-                        "node": self.node.label
+                        "node": self.node.label,
+                        "service": "pacemaker_remote"
                     }
                 ),
             ]

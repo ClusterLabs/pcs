@@ -2638,13 +2638,16 @@ class CanAddNodeToCluster(unittest.TestCase):
 
     def test_deals_with_running_pacemaker_remote(self):
         self.assert_report_list_cause_fail(
-            reports.node_is_running_pacemaker_remote("node1"),
+            reports.cannot_add_node_is_running_service(
+                "node1",
+                "pacemaker_remote"
+            ),
             "node is running pacemaker_remote"
         )
 
     def test_deals_with_node_is_in_cluster(self):
         self.assert_report_list_cause_fail(
-            reports.node_is_in_cluster("node1"),
+            reports.cannot_add_node_is_in_cluster("node1"),
             "node is already in a cluster"
         )
 

@@ -574,21 +574,32 @@ class ResourceManagedNoMonitorEnabled(NameBuildTest):
         )
 
 class NodeIsInCluster(NameBuildTest):
-    code = codes.NODE_IS_IN_CLUSTER
+    code = codes.CANNOT_ADD_NODE_IS_IN_CLUSTER
     def test_build_message(self):
         self.assert_message_from_info(
-            "node 'N1' is in a cluster",
+            "cannot add the node 'N1' because it is in a cluster",
             {
                 "node": "N1",
             }
         )
 
 class NodeIsRunningPacemakerRemote(NameBuildTest):
-    code = codes.NODE_IS_RUNNING_PACEMAKER_REMOTE
+    code = codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE
     def test_build_message(self):
         self.assert_message_from_info(
-            "the node 'N1' is running pacemaker-remote",
+            "cannot add the node 'N1' because it is running service"
+                " 'pacemaker_remote' (is not the node already in a cluster?)"
+            ,
             {
                 "node": "N1",
+                "service": "pacemaker_remote",
+            }
+        )
+    def test_build_message_with_unknown_service(self):
+        self.assert_message_from_info(
+            "cannot add the node 'N1' because it is running service 'unknown'",
+            {
+                "node": "N1",
+                "service": "unknown",
             }
         )

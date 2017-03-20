@@ -350,13 +350,13 @@ def canAddNodeToCluster(node_communicator, node):
         report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED:
            "unable to authenticate to node"
         ,
-        report_codes.NODE_IS_IN_CLUSTER:
+        report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER:
             "node is already in a cluster"
         ,
         report_codes.INVALID_RESPONSE_FORMAT:
             "response parsing error"
         ,
-        report_codes.NODE_IS_RUNNING_PACEMAKER_REMOTE:
+        report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE:
              "node is running pacemaker_remote"
         ,
     }
