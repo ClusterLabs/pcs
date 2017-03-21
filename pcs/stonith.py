@@ -17,7 +17,7 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent, error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.stonith.parse_args import parse_create as parse_create_args
+from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,

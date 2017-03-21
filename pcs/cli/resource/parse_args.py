@@ -7,6 +7,26 @@ from __future__ import (
 from pcs.cli.common.parse_args import group_by_keywords, prepare_options
 from pcs.cli.common.errors import CmdLineInputError
 
+
+def parse_create_simple(arg_list):
+    groups = group_by_keywords(
+        arg_list,
+        set(["op", "meta"]),
+        implicit_first_group_key="options",
+        group_repeated_keywords=["op"],
+    )
+
+    parts = {
+        "meta":  prepare_options(groups.get("meta", [])),
+        "options":  prepare_options(groups.get("options", [])),
+        "op": [
+            prepare_options(op)
+            for op in build_operations(groups.get("op", []))
+        ],
+    }
+
+    return parts
+
 def parse_create(arg_list):
     groups = group_by_keywords(
         arg_list,
