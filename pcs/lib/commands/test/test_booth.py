@@ -35,7 +35,7 @@ from pcs.lib.external import (
 
 patch_commands = create_patcher("pcs.lib.commands.booth")
 
-@mock.patch("pcs.lib.booth.config_files.generate_key", return_value="key value")
+@mock.patch("pcs.lib.tools.generate_key", return_value="key value")
 @mock.patch("pcs.lib.commands.booth.build", return_value="config content")
 @mock.patch("pcs.lib.booth.config_structure.validate_peers")
 class ConfigSetupTest(TestCase):

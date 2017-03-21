@@ -11,7 +11,7 @@ from functools import partial
 
 from pcs import settings
 from pcs.common.tools import join_multilines
-from pcs.lib import external, reports
+from pcs.lib import external, reports, tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
     config_exchange,
@@ -42,7 +42,7 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         *config_structure.take_peers(config_content)
     )
 
-    env.booth.create_key(config_files.generate_key(), overwrite_existing)
+    env.booth.create_key(tools.generate_key(), overwrite_existing)
     config_content = config_structure.set_authfile(
         config_content,
         env.booth.key_path

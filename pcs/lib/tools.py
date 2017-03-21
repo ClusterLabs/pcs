@@ -4,6 +4,12 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
+import binascii
+import os
+
+
+def generate_key():
+    return binascii.hexlify(os.urandom(32))
 
 
 def environment_file_to_dict(config):
