@@ -88,6 +88,9 @@ class UnableToGetAgentMetadata(ResourceAgentError):
 class InvalidResourceAgentName(ResourceAgentError):
     pass
 
+class InvalidStonithAgentName(ResourceAgentError):
+    pass
+
 ResourceAgentName = namedtuple("ResourceAgentName", "standard provider type")
 
 def get_resource_agent_name_from_string(full_agent_name):
@@ -326,7 +329,7 @@ def _find_valid_agent_by_name(
 ):
     try:
         return PresentAgentClass(runner, name).validate_metadata()
-    except InvalidResourceAgentName as e:
+    except (InvalidResourceAgentName, InvalidStonithAgentName) as e:
         raise LibraryError(resource_agent_error_to_report_item(e))
     except UnableToGetAgentMetadata as e:
         if not absent_agent_supported:
@@ -797,6 +800,9 @@ class StonithAgent(CrmAgent):
     _stonithd_metadata = None
 
     def _prepare_name_parts(self, name):
+        # pacemaker doesn't support stonith (nor resource) agents with : in type
+        if ":" in name:
+            raise InvalidStonithAgentName(name)
         return ResourceAgentName("stonith", None, name)
 
     def get_name(self):
@@ -887,4 +893,6 @@ def resource_agent_error_to_report_item(
         )
     if e.__class__ == InvalidResourceAgentName:
         return reports.invalid_resource_agent_name(e.agent)
+    if e.__class__ == InvalidStonithAgentName:
+        return reports.invalid_stonith_agent_name(e.agent)
     raise e

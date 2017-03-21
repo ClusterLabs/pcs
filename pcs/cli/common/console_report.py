@@ -810,6 +810,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.INVALID_STONITH_AGENT_NAME: lambda info:
+        (
+            "Invalid stonith agent name '{name}'."
+            " List of agents can be obtained by using command"
+            " 'pcs stonith list'. Do not use the 'stonith:' prefix. Agent name"
+            " cannot contain the ':' character."
+        )
+        .format(**info)
+    ,
+
     codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE: lambda info:
         (
             "Multiple agents match '{agent}'"

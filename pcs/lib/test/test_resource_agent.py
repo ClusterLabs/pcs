@@ -1870,6 +1870,51 @@ class FindResourceAgentByNameTest(TestCase):
         error_to_report_item.assert_called_once_with(e)
 
 
+class FindStonithAgentByName(TestCase):
+    # It is quite similar to find_valid_stonith_agent_by_name, so only minimum
+    # tests here:
+    # - test success
+    # - test with ":" in agent name - there was a bug
+    def setUp(self):
+        self.report_processor = mock.MagicMock()
+        self.runner = mock.MagicMock()
+        self.run = partial(
+            lib_ra.find_valid_stonith_agent_by_name,
+            self.report_processor,
+            self.runner,
+        )
+
+    @patch_agent("StonithAgent")
+    def test_returns_real_agent_when_is_there(self, StonithAgent):
+        #setup
+        name = "fence_xvm"
+
+        agent = mock.MagicMock()
+        agent.validate_metadata = mock.Mock(return_value=agent)
+        StonithAgent.return_value = agent
+
+        #test
+        self.assertEqual(agent, self.run(name))
+        StonithAgent.assert_called_once_with(self.runner, name)
+
+    @patch_agent("resource_agent_error_to_report_item")
+    @patch_agent("StonithAgent")
+    def test_raises_on_invalid_name(self, StonithAgent, error_to_report_item):
+        name = "fence_xvm:invalid"
+        report = "INVALID_STONITH_AGENT_NAME"
+        e = lib_ra.InvalidStonithAgentName(name, "invalid agent name")
+
+        StonithAgent.side_effect = e
+        error_to_report_item.return_value = report
+
+        with self.assertRaises(LibraryError) as context_manager:
+            self.run(name)
+
+        self.assertEqual(report, context_manager.exception.args[0])
+        StonithAgent.assert_called_once_with(self.runner, name)
+        error_to_report_item.assert_called_once_with(e)
+
+
 class AbsentResourceAgentTest(TestCase):
     @mock.patch.object(lib_ra.CrmAgent, "_load_metadata")
     def test_behaves_like_a_proper_agent(self, load_metadata):

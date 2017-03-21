@@ -322,6 +322,20 @@ class InvalidResourceAgentNameTest(NameBuildTest):
             }
         )
 
+class InvalidiStonithAgentNameTest(NameBuildTest):
+    code = codes.INVALID_STONITH_AGENT_NAME
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "Invalid stonith agent name 'fence:name'. List of agents can be"
+                " obtained by using command 'pcs stonith list'. Do not use the"
+                " 'stonith:' prefix. Agent name cannot contain the ':'"
+                " character."
+            ,
+            {
+                "name": "fence:name",
+            }
+        )
+
 class InvalidOptionType(NameBuildTest):
     code = codes.INVALID_OPTION_TYPE
     def test_allowed_string(self):

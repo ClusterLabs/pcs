@@ -51,6 +51,15 @@ class PlainStonith(ResourceTest):
             </resources>"""
         )
 
+    def test_error_when_not_valid_name(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "stonith create S fence_xvm:invalid",
+            "Error: Invalid stonith agent name 'fence_xvm:invalid'. List of"
+                " agents can be obtained by using command 'pcs stonith list'."
+                " Do not use the 'stonith:' prefix. Agent name cannot contain"
+                " the ':' character.\n"
+        )
+
     def test_error_when_not_valid_agent(self):
         self.assert_pcs_fail(
             "stonith create S absent",

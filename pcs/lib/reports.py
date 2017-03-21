@@ -1671,6 +1671,18 @@ def invalid_resource_agent_name(name):
         }
     )
 
+def invalid_stonith_agent_name(name):
+    """
+    The entered stonith agent name is not valid.
+    string name -- entered stonith agent name
+    """
+    return ReportItem.error(
+        report_codes.INVALID_STONITH_AGENT_NAME,
+        info={
+            "name": name,
+        }
+    )
+
 def agent_name_guessed(entered_name, guessed_name):
     """
     Resource agent name was deduced from the entered name.
