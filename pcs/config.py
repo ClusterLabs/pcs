@@ -676,7 +676,7 @@ def config_import_cman(argv):
     if output_format in ("pcs-commands", "pcs-commands-verbose"):
         ok, message = utils.write_file(
             dry_run_output,
-            clufter_args_obj.output["passout"]
+            clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
@@ -845,7 +845,7 @@ def config_export_pcs_commands(argv, verbose=False):
     if output_file:
         ok, message = utils.write_file(
             output_file,
-            clufter_args_obj.output["passout"]
+            clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
