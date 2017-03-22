@@ -627,8 +627,6 @@ def config_import_cman(argv):
         "batch": True,
         "sys": "linux",
         "dist": dist,
-        # Make it work on RHEL6 as well for sure
-        "color": "always" if sys.stdout.isatty() else "never"
     }
     if interactive:
         if "EDITOR" not in os.environ:
@@ -676,7 +674,7 @@ def config_import_cman(argv):
     if output_format in ("pcs-commands", "pcs-commands-verbose"):
         ok, message = utils.write_file(
             dry_run_output,
-            clufter_args_obj.output["passout"]
+            clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
@@ -698,14 +696,14 @@ def config_import_cman(argv):
         config_backup_add_version_to_tarball(tarball)
         utils.tar_add_file_data(
             tarball,
-            clufter_args_obj.cib["passout"].encode("utf-8"),
+            clufter_args_obj.cib["passout"],
             "cib.xml",
             **file_list["cib.xml"]["attrs"]
         )
         if output_format == "cluster.conf":
             utils.tar_add_file_data(
                 tarball,
-                clufter_args_obj.ccs_pcmk["passout"].encode("utf-8"),
+                clufter_args_obj.ccs_pcmk["passout"],
                 "cluster.conf",
                 **file_list["cluster.conf"]["attrs"]
             )
@@ -726,7 +724,7 @@ def config_import_cman(argv):
             )("bytestring")
             utils.tar_add_file_data(
                 tarball,
-                corosync_conf_data.encode("utf-8"),
+                corosync_conf_data,
                 "corosync.conf",
                 **file_list["corosync.conf"]["attrs"]
             )
@@ -744,7 +742,7 @@ def config_import_cman(argv):
                 )("bytestring")
                 utils.tar_add_file_data(
                     tarball,
-                    uidgid_data.encode("utf-8"),
+                    uidgid_data,
                     "uidgid.d/" + filename,
                     **file_list["uidgid.d"]["attrs"]
                 )
@@ -802,8 +800,6 @@ def config_export_pcs_commands(argv, verbose=False):
         "batch": True,
         "sys": "linux",
         "dist": dist,
-        # Make it work on RHEL6 as well for sure
-        "color": "always" if sys.stdout.isatty() else "never",
         "coro": settings.corosync_conf_file,
         "ccs": settings.cluster_conf_file,
         "start_wait": "60",
@@ -845,7 +841,7 @@ def config_export_pcs_commands(argv, verbose=False):
     if output_file:
         ok, message = utils.write_file(
             output_file,
-            clufter_args_obj.output["passout"]
+            clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
