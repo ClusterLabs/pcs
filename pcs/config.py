@@ -627,8 +627,6 @@ def config_import_cman(argv):
         "batch": True,
         "sys": "linux",
         "dist": dist,
-        # Make it work on RHEL6 as well for sure
-        "color": "always" if sys.stdout.isatty() else "never"
     }
     if interactive:
         if "EDITOR" not in os.environ:
@@ -802,8 +800,6 @@ def config_export_pcs_commands(argv, verbose=False):
         "batch": True,
         "sys": "linux",
         "dist": dist,
-        # Make it work on RHEL6 as well for sure
-        "color": "always" if sys.stdout.isatty() else "never",
         "coro": settings.corosync_conf_file,
         "ccs": settings.cluster_conf_file,
         "start_wait": "60",
