@@ -29,10 +29,13 @@
   [rhbz#1434111])
 - Pcs no longer allows to create a stonith resource based on an agent whose
   name contains a colon ([rhbz#1415080])
+- Pcs command now launches Python interpreter with "sane" options (python -Es)
+  ([rhbz#1328882])
 
 [CVE-2017-2661]: https://access.redhat.com/security/cve/CVE-2017-2661
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 [rhbz#1315627]: https://bugzilla.redhat.com/show_bug.cgi?id=1315627
+[rhbz#1328882]: https://bugzilla.redhat.com/show_bug.cgi?id=1328882
 [rhbz#1334429]: https://bugzilla.redhat.com/show_bug.cgi?id=1334429
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742

@@ -5,7 +5,7 @@ IS_DEBIAN=false
 DISTRO_DEBIAN_VER_8=false
 
 ifndef PYTHON
-	PYTHON=python
+	PYTHON := $(shell which python)
 endif
 
 ifeq ($(UNAME_OS_GNU),true)
@@ -99,7 +99,14 @@ pcsd_fonts = \
 
 
 install:
+	# make Python interpreter execution sane (via -Es flags)
+	echo -e "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
+	# fix excessive script interpreting "executable" quoting with old setuptools:
+	# https://github.com/pypa/setuptools/issues/188
+	# https://bugzilla.redhat.com/1353934
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DESTDIR}${PREFIX}/bin/pcs
+	rm setup.cfg
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
 	install -D -m644 pcs/bash_completion ${BASH_COMPLETION_DIR}/pcs
