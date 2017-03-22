@@ -31,6 +31,8 @@
   name contains a colon ([rhbz#1415080])
 - Pcs command now launches Python interpreter with "sane" options (python -Es)
   ([rhbz#1328882])
+- Clufter is now supported on both Python 2 and Python 3 ([rhbz#1428350])
+- Do not colorize clufter output if saved to a file
 
 [CVE-2017-2661]: https://access.redhat.com/security/cve/CVE-2017-2661
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
@@ -42,6 +44,7 @@
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1415080]: https://bugzilla.redhat.com/show_bug.cgi?id=1415080
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
+[rhbz#1428350]: https://bugzilla.redhat.com/show_bug.cgi?id=1428350
 [rhbz#1434111]: https://bugzilla.redhat.com/show_bug.cgi?id=1434111
 
 
