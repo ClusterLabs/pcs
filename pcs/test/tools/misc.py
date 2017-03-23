@@ -10,6 +10,7 @@ import os.path
 import re
 
 from pcs import utils
+from pcs.common.tools import is_string
 from pcs.test.tools.pcs_unittest import (
     mock,
     skipUnless,
@@ -72,17 +73,21 @@ def skip_unless_pacemaker_supports_systemd():
         "Pacemaker does not support systemd resources"
     )
 
-def create_patcher(target_prefix):
+def create_patcher(target_prefix_or_module):
     """
     Return function for patching tests with preconfigured target prefix
-    string target_prefix is prefix for patched names. Typicaly tested module
-    like for example "pcs.lib.commands.booth". Between target_prefix and target
-    is "." (dot)
+    string|module target_prefix_or_module could be:
+        * a prefix for patched names. Typicaly tested module:
+            "pcs.lib.commands.booth"
+        * a (imported) module: pcs.lib.cib
+        Between prefix and target is "." (dot)
     """
+    prefix = target_prefix_or_module
+    if not is_string(target_prefix_or_module):
+        prefix = target_prefix_or_module.__name__
+
     def patch(target, *args, **kwargs):
-        return mock.patch(
-            "{0}.{1}".format(target_prefix, target), *args, **kwargs
-        )
+        return mock.patch("{0}.{1}".format(prefix, target), *args, **kwargs)
     return patch
 
 def outdent(text):
@@ -92,3 +97,35 @@ def outdent(text):
         for line in line_list if line
     ])
     return "\n".join([line[smallest_indentation:] for line in line_list])
+
+def create_setup_patch_mixin(module_specification_or_patcher):
+    """
+    Configure and return SetupPatchMixin
+
+    SetupPatchMixin add method 'setup_patch' to a test case.
+
+    Method setup_patch takes name that should be patched in destination module
+    (see module_specification_or_patcher). Method provide cleanup after test.
+    It is expected to be used in 'setUp' method but should work inside test as
+    well.
+
+    string|callable module_specification_or_patcher can be
+       * callable patcher created via create_patcher:
+         create_patcher("pcs.lib.cib")
+       * name of module: "pcs.lib.cib"
+       * (imported) module: pcs.lib.cib
+         Note that this must be not a callable (can be done via
+         sys.modules[__name__] = something_callable. If is a callable use name
+         of the module instead.
+    """
+    if callable(module_specification_or_patcher):
+        patch_module = module_specification_or_patcher
+    else:
+        patch_module = create_patcher(module_specification_or_patcher)
+
+    class SetupPatchMixin(object):
+        def setup_patch(self, target_suffix, *args, **kwargs):
+            patcher = patch_module(target_suffix, *args, **kwargs)
+            self.addCleanup(patcher.stop)
+            return patcher.start()
+    return SetupPatchMixin

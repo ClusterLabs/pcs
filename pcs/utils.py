@@ -38,7 +38,7 @@ from pcs.cli.common import (
     console_report,
     middleware,
 )
-from pcs.cli.common.env import Env
+from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.reports import (
     build_report_message,
