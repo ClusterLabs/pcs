@@ -18,9 +18,10 @@ SetupPatchMixin = create_setup_patch_mixin(patch_env_file)
 
 FILE_PATH = "/path/to/local/file"
 
-class Write(TestCase):
+class Write(TestCase, SetupPatchMixin):
     def setUp(self):
         self.mock_open = mock.mock_open()
+        self.mock_error = self.setup_patch("console_report.error")
 
     def assert_params_causes_calls(self, env_file_dict, calls, path=FILE_PATH):
         with patch_env_file("open", self.mock_open, create=True):
@@ -49,6 +50,7 @@ class Write(TestCase):
 
     def test_exit_when_cannot_open_file(self):
         self.mock_open.side_effect = EnvironmentError()
+        self.mock_error.side_effect = SystemExit()
         self.assertRaises(
             SystemExit,
             lambda: env_file.write({"content": "filecontent"}, FILE_PATH)
@@ -58,6 +60,7 @@ class Read(TestCase, SetupPatchMixin):
     def setUp(self):
         self.is_file = self.setup_patch('os.path.isfile')
         self.mock_open = mock.mock_open(read_data='filecontent')
+        self.mock_error = self.setup_patch("console_report.error")
 
     def assert_returns_content(self, content, is_file):
         self.is_file.return_value = is_file
@@ -75,11 +78,13 @@ class Read(TestCase, SetupPatchMixin):
 
     def test_exit_when_cannot_open_file(self):
         self.mock_open.side_effect = EnvironmentError()
+        self.mock_error.side_effect = SystemExit()
         self.assertRaises(SystemExit, lambda: env_file.read(FILE_PATH))
 
 class ProcessNoExistingFileExpectation(TestCase, SetupPatchMixin):
     def setUp(self):
         self.exists = self.setup_patch('os.path.exists')
+        self.mock_error = self.setup_patch("console_report.error")
 
     def run_process(
         self, no_existing_file_expected, file_exists, overwrite=False
@@ -109,6 +114,7 @@ class ProcessNoExistingFileExpectation(TestCase, SetupPatchMixin):
         warn.assert_called_once_with("role /path/to/local/file already exists")
 
     def test_non_overwrittable_conflict_exits(self):
+        self.mock_error.side_effect = SystemExit()
         self.assertRaises(
             SystemExit,
             lambda:
