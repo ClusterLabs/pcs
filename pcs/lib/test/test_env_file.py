@@ -8,8 +8,9 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.common import report_codes
-from pcs.lib.env_file import RealFile, GhostFile
+from pcs.lib import env_file
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.assertions import(
     assert_raise_library_error,
     assert_report_item_list_equal
@@ -18,10 +19,16 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock
 
 
+patch_env_file = create_patcher(env_file)
+
+FILE_PATH = "/path/to.file"
+MISSING_PATH = "/no/existing/file.path"
+CONF_PATH = "/etc/booth/some-name.conf"
+
 class GhostFileReadTest(TestCase):
     def test_raises_when_trying_read_nonexistent_file(self):
         assert_raise_library_error(
-            lambda: GhostFile("some role", content=None).read(),
+            lambda: env_file.GhostFile("some role", content=None).read(),
             (
                 severities.ERROR,
                 report_codes.FILE_DOES_NOT_EXIST,
@@ -31,10 +38,10 @@ class GhostFileReadTest(TestCase):
             ),
         )
 
-@mock.patch("pcs.lib.env_file.os.path.exists", return_value=True)
+@patch_env_file("os.path.exists", return_value=True)
 class RealFileAssertNoConflictWithExistingTest(TestCase):
     def check(self, report_processor, can_overwrite_existing=False):
-        real_file = RealFile("some role", "/etc/booth/some-name.conf")
+        real_file = env_file.RealFile("some role", CONF_PATH)
         real_file.assert_no_conflict_with_existing(
             report_processor,
             can_overwrite_existing
@@ -53,7 +60,7 @@ class RealFileAssertNoConflictWithExistingTest(TestCase):
                 severities.ERROR,
                 report_codes.FILE_ALREADY_EXISTS,
                 {
-                    "file_path": "/etc/booth/some-name.conf"
+                    "file_path": CONF_PATH
                 },
                 report_codes.FORCE_FILE_OVERWRITE,
             ),
@@ -66,7 +73,7 @@ class RealFileAssertNoConflictWithExistingTest(TestCase):
             severities.WARNING,
             report_codes.FILE_ALREADY_EXISTS,
             {
-                "file_path": "/etc/booth/some-name.conf"
+                "file_path": CONF_PATH
             },
         )])
 
@@ -74,44 +81,40 @@ class RealFileWriteTest(TestCase):
     def test_success_write_content_to_path(self):
         mock_open = mock.mock_open()
         mock_file_operation = mock.Mock()
-        with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
-            RealFile("some role", "/etc/booth/some-name.conf").write(
+        with patch_env_file("open", mock_open, create=True):
+            env_file.RealFile("some role", CONF_PATH).write(
                 "config content",
                 file_operation=mock_file_operation
             )
-            mock_open.assert_called_once_with("/etc/booth/some-name.conf", "w")
+            mock_open.assert_called_once_with(CONF_PATH, "w")
             mock_open().write.assert_called_once_with("config content")
-            mock_file_operation.assert_called_once_with(
-                "/etc/booth/some-name.conf"
-            )
+            mock_file_operation.assert_called_once_with(CONF_PATH)
 
     def test_success_binary(self):
         mock_open = mock.mock_open()
         mock_file_operation = mock.Mock()
-        with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
-            RealFile("some role", "/etc/booth/some-name.conf").write(
+        with patch_env_file("open", mock_open, create=True):
+            env_file.RealFile("some role", CONF_PATH).write(
                 "config content".encode("utf-8"),
                 file_operation=mock_file_operation,
                 is_binary=True
             )
-            mock_open.assert_called_once_with("/etc/booth/some-name.conf", "wb")
+            mock_open.assert_called_once_with(CONF_PATH, "wb")
             mock_open().write.assert_called_once_with(
                 "config content".encode("utf-8")
             )
-            mock_file_operation.assert_called_once_with(
-                "/etc/booth/some-name.conf"
-            )
+            mock_file_operation.assert_called_once_with(CONF_PATH)
 
     def test_raises_when_could_not_write(self):
         assert_raise_library_error(
             lambda:
-            RealFile("some role", "/no/existing/file.path").write(["content"]),
+            env_file.RealFile("some role", MISSING_PATH).write(["content"]),
             (
                 severities.ERROR,
                 report_codes.FILE_IO_ERROR,
                 {
                     "reason":
-                        "No such file or directory: '/no/existing/file.path'"
+                        "No such file or directory: '{0}'".format(MISSING_PATH)
                     ,
                 }
             )
@@ -120,42 +123,42 @@ class RealFileWriteTest(TestCase):
 class RealFileReadTest(TestCase):
     def test_success_read_content_from_file(self):
         mock_open = mock.mock_open()
-        with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
+        with patch_env_file("open", mock_open, create=True):
             mock_open().read.return_value = "test booth\nconfig"
             self.assertEqual(
                 "test booth\nconfig",
-                RealFile("some role", "/path/to.file").read()
+                env_file.RealFile("some role", FILE_PATH).read()
             )
 
     def test_raises_when_could_not_read(self):
         assert_raise_library_error(
-            lambda: RealFile("some role", "/no/existing/file.path").read(),
+            lambda: env_file.RealFile("some role", MISSING_PATH).read(),
             (
                 severities.ERROR,
                 report_codes.FILE_IO_ERROR,
                 {
                     "reason":
-                        "No such file or directory: '/no/existing/file.path'"
+                        "No such file or directory: '{0}'".format(MISSING_PATH)
                     ,
                 }
             )
         )
 
 class RealFileRemoveTest(TestCase):
-    @mock.patch("pcs.lib.env_file.os.remove")
-    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=True)
+    @patch_env_file("os.remove")
+    @patch_env_file("os.path.exists", return_value=True)
     def test_success_remove_file(self, _, mock_remove):
-        RealFile("some role", "/path/to.file").remove()
-        mock_remove.assert_called_once_with("/path/to.file")
+        env_file.RealFile("some role", FILE_PATH).remove()
+        mock_remove.assert_called_once_with(FILE_PATH)
 
-    @mock.patch(
-        "pcs.lib.env_file.os.remove",
-        side_effect=EnvironmentError(1, "mock remove failed", "/path/to.file")
+    @patch_env_file(
+        "os.remove",
+        side_effect=EnvironmentError(1, "mock remove failed", FILE_PATH)
     )
-    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=True)
+    @patch_env_file("os.path.exists", return_value=True)
     def test_raise_library_error_when_remove_failed(self, _, dummy):
         assert_raise_library_error(
-            lambda: RealFile("some role", "/path/to.file").remove(),
+            lambda: env_file.RealFile("some role", FILE_PATH).remove(),
             (
                 severities.ERROR,
                 report_codes.FILE_IO_ERROR,
@@ -167,10 +170,10 @@ class RealFileRemoveTest(TestCase):
             )
         )
 
-    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=False)
+    @patch_env_file("os.path.exists", return_value=False)
     def test_existence_is_required(self, _):
         assert_raise_library_error(
-            lambda: RealFile("some role", "/path/to.file").remove(),
+            lambda: env_file.RealFile("some role", FILE_PATH).remove(),
             (
                 severities.ERROR,
                 report_codes.FILE_IO_ERROR,
@@ -182,6 +185,8 @@ class RealFileRemoveTest(TestCase):
             )
         )
 
-    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=False)
+    @patch_env_file("os.path.exists", return_value=False)
     def test_noexistent_can_be_silenced(self, _):
-        RealFile("some role", "/path/to.file").remove(silence_no_existence=True)
+        env_file.RealFile("some role", FILE_PATH).remove(
+            silence_no_existence=True
+        )
