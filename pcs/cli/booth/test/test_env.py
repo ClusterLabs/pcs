@@ -51,7 +51,7 @@ class BoothConfTest(TestCase, SetupPatchMixin):
 
         self.assertEqual(self.read.mock_calls, [
             mock.call('/local/file/path.conf'),
-            mock.call('/local/file/path.key'),
+            mock.call('/local/file/path.key', is_binary=True),
         ])
 
         self.assertEqual(self.process_no_existing_file_expectation.mock_calls, [

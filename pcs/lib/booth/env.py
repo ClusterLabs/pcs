@@ -78,7 +78,8 @@ class BoothEnv(object):
             self.__key_path = env_data["key_path"]
             self.__key = GhostFile(
                 file_role=env_file_role_codes.BOOTH_KEY,
-                content=env_data["key_file"]["content"]
+                content=env_data["key_file"]["content"],
+                is_binary=True
             )
         else:
             self.__config = RealFile(
@@ -92,6 +93,7 @@ class BoothEnv(object):
         self.__key = RealFile(
             file_role=env_file_role_codes.BOOTH_KEY,
             file_path=path,
+            is_binary=True
         )
 
     def command_expect_live_env(self):
@@ -131,7 +133,7 @@ class BoothEnv(object):
             self.__report_processor,
             can_overwrite_existing
         )
-        self.__key.write(key_content, set_keyfile_access, is_binary=True)
+        self.__key.write(key_content, set_keyfile_access)
 
     def push_config(self, content):
         self.__config.write(content)

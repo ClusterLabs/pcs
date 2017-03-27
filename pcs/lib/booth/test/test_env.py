@@ -5,17 +5,13 @@ from __future__ import (
     unicode_literals,
 )
 
-import grp
-import os
-import pwd
 from pcs.test.tools.pcs_unittest import TestCase
 
-from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.booth import env
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.misc import get_test_resource as rc, create_patcher
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import mock
 
 patch_env = create_patcher("pcs.lib.booth.env")
@@ -109,7 +105,7 @@ class BoothEnvTest(TestCase):
                     "content": "secure",
                     "can_overwrite_existing_file": False,
                     "no_existing_file_expected": False,
-                    "is_binary": False,
+                    "is_binary": True,
                 },
             }
         )

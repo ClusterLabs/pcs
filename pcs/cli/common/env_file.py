@@ -47,10 +47,11 @@ def write(env_file, file_path):
             "Unable to write {0}: {1}".format(file_path, e.strerror)
         )
 
-def read(path):
+def read(path, is_binary=False):
     try:
+        mode = "rb" if is_binary else "r"
         return {
-            "content": open(path).read() if os.path.isfile(path) else None
+            "content": open(path, mode).read() if os.path.isfile(path) else None
         }
     except EnvironmentError as e:
         raise console_report.error(

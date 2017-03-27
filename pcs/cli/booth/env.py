@@ -30,7 +30,7 @@ def middleware_config(name, config_path, key_path):
         return {
             "name": name,
             "config_file": env_file.read(config_path),
-            "key_file": env_file.read(key_path),
+            "key_file": env_file.read(key_path, is_binary=True),
             "key_path": key_path,
         }
 

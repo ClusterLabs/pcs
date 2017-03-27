@@ -15,12 +15,12 @@ from pcs.lib.errors import ReportItemSeverity, LibraryError, LibraryEnvError
 
 class GhostFile(object):
     is_live = False
-    def __init__(self, file_role, content=None):
+    def __init__(self, file_role, content=None, is_binary=False):
         self.__file_role = file_role
         self.__content = content
         self.__no_existing_file_expected = False
         self.__can_overwrite_existing_file = False
-        self.__is_binary = False
+        self.__is_binary = is_binary
 
     def read(self):
         if self.__content is None:
@@ -39,12 +39,11 @@ class GhostFile(object):
     def remove(self, silence_no_existence):
         raise AssertionError("Remove GhostFile is not supported.")
 
-    def write(self, content, file_operation=None, is_binary=False):
+    def write(self, content, file_operation=None):
         """
         callable file_operation is there only for RealFile compatible interface
             it has no efect
         """
-        self.__is_binary = is_binary
         self.__content = content
 
     def assert_no_conflict_with_existing(
@@ -64,13 +63,10 @@ class GhostFile(object):
 
 class RealFile(object):
     is_live = True
-    def __init__(
-        self, file_role, file_path,
-        overwrite_code=report_codes.FORCE_FILE_OVERWRITE
-    ):
+    def __init__(self, file_role, file_path, is_binary=False):
         self.__file_role = file_role
         self.__file_path = file_path
-        self.__overwrite_code = overwrite_code
+        self.__is_binary=is_binary
 
     def assert_no_conflict_with_existing(
         self, report_processor, can_overwrite_existing=False
@@ -82,18 +78,18 @@ class RealFile(object):
                 ReportItemSeverity.WARNING if can_overwrite_existing
                     else ReportItemSeverity.ERROR,
                 forceable=None if can_overwrite_existing
-                    else self.__overwrite_code,
+                    else report_codes.FORCE_FILE_OVERWRITE,
             ))
 
     @property
     def exists(self):
         return os.path.exists(self.__file_path)
 
-    def write(self, content, file_operation=None, is_binary=False):
+    def write(self, content, file_operation=None):
         """
         callable file_operation takes path and proces operation on it e.g. chmod
         """
-        mode = "wb" if is_binary else "w"
+        mode = "wb" if self.__is_binary else "w"
         try:
             with open(self.__file_path, mode) as config_file:
                 config_file.write(content)
@@ -104,7 +100,8 @@ class RealFile(object):
 
     def read(self):
         try:
-            with open(self.__file_path, "r") as file:
+            mode = "rb" if self.__is_binary else "r"
+            with open(self.__file_path, mode) as file:
                 return file.read()
         except EnvironmentError as e:
             raise self.__report_io_error(e, "read")

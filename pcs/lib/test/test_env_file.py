@@ -25,6 +25,19 @@ FILE_PATH = "/path/to.file"
 MISSING_PATH = "/no/existing/file.path"
 CONF_PATH = "/etc/booth/some-name.conf"
 
+class GhostFileInit(TestCase):
+    def test_is_not_binary_default(self):
+        ghost_file = env_file.GhostFile("some role", content=None)
+        self.assertFalse(ghost_file.export()["is_binary"])
+
+    def test_accepts_is_binary_attribute(self):
+        ghost_file = env_file.GhostFile(
+            "some role",
+            content=None,
+            is_binary=True
+        )
+        self.assertTrue(ghost_file.export()["is_binary"])
+
 class GhostFileReadTest(TestCase):
     def test_raises_when_trying_read_nonexistent_file(self):
         assert_raise_library_error(
@@ -115,10 +128,9 @@ class RealFileWriteTest(TestCase):
         mock_open = mock.mock_open()
         mock_file_operation = mock.Mock()
         with patch_env_file("open", mock_open, create=True):
-            env_file.RealFile("some role", CONF_PATH).write(
+            env_file.RealFile("some role", CONF_PATH, is_binary=True).write(
                 "config content".encode("utf-8"),
                 file_operation=mock_file_operation,
-                is_binary=True
             )
             mock_open.assert_called_once_with(CONF_PATH, "wb")
             mock_open().write.assert_called_once_with(
@@ -142,14 +154,24 @@ class RealFileWriteTest(TestCase):
         )
 
 class RealFileReadTest(TestCase):
-    def test_success_read_content_from_file(self):
+    def assert_read_in_correct_mode(self, real_file, mode):
         mock_open = mock.mock_open()
         with patch_env_file("open", mock_open, create=True):
             mock_open().read.return_value = "test booth\nconfig"
-            self.assertEqual(
-                "test booth\nconfig",
-                env_file.RealFile("some role", FILE_PATH).read()
-            )
+            self.assertEqual("test booth\nconfig", real_file.read())
+        mock_open.assert_has_calls([mock.call(FILE_PATH, mode)])
+
+    def test_success_read_content_from_file(self):
+        self.assert_read_in_correct_mode(
+            env_file.RealFile("some role", FILE_PATH, is_binary=False),
+            mode="r"
+        )
+
+    def test_success_read_content_from_binary_file(self):
+        self.assert_read_in_correct_mode(
+            env_file.RealFile("some role", FILE_PATH, is_binary=True),
+            mode="rb"
+        )
 
     def test_raises_when_could_not_read(self):
         assert_raise_library_error(
