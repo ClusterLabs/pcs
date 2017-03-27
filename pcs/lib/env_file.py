@@ -30,6 +30,12 @@ class GhostFile(object):
 
         return self.__content
 
+    @property
+    def exists(self):
+        #file will be considered to exist after writing: it is symmetrical with
+        #RealFile
+        return self.__content is not None
+
     def remove(self, silence_no_existence):
         raise AssertionError("Remove GhostFile is not supported.")
 
@@ -69,7 +75,7 @@ class RealFile(object):
     def assert_no_conflict_with_existing(
         self, report_processor, can_overwrite_existing=False
     ):
-        if os.path.exists(self.__file_path):
+        if self.exists:
             report_processor.process(reports.file_already_exists(
                 self.__file_role,
                 self.__file_path,
@@ -78,6 +84,10 @@ class RealFile(object):
                 forceable=None if can_overwrite_existing
                     else self.__overwrite_code,
             ))
+
+    @property
+    def exists(self):
+        return os.path.exists(self.__file_path)
 
     def write(self, content, file_operation=None, is_binary=False):
         """
@@ -100,7 +110,7 @@ class RealFile(object):
             raise self.__report_io_error(e, "read")
 
     def remove(self, silence_no_existence=False):
-        if os.path.exists(self.__file_path):
+        if self.exists:
             try:
                 os.remove(self.__file_path)
             except EnvironmentError as e:

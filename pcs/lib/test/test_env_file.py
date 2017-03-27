@@ -38,6 +38,27 @@ class GhostFileReadTest(TestCase):
             ),
         )
 
+class GhostFileExists(TestCase):
+    def test_return_true_if_file_exists(self):
+        self.assertTrue(env_file.GhostFile("some_role", "any content").exists)
+
+    def test_return_False_if_file_exists(self):
+        self.assertFalse(env_file.GhostFile("some_role").exists)
+
+    def test_return_True_after_write(self):
+        ghost_file = env_file.GhostFile("some_role")
+        ghost_file.write("any content")
+        self.assertTrue(ghost_file.exists)
+
+class RealFileExists(TestCase):
+    @patch_env_file("os.path.exists", return_value=True)
+    def test_return_true_if_file_exists(self, exists):
+        self.assertTrue(env_file.RealFile("some role", FILE_PATH).exists)
+
+    @patch_env_file("os.path.exists", return_value=False)
+    def test_return_false_if_file_does_not_exist(self, exists):
+        self.assertFalse(env_file.RealFile("some role", FILE_PATH).exists)
+
 @patch_env_file("os.path.exists", return_value=True)
 class RealFileAssertNoConflictWithExistingTest(TestCase):
     def check(self, report_processor, can_overwrite_existing=False):
