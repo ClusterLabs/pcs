@@ -438,10 +438,12 @@ class Agent(object):
         params_element = self._get_metadata().find("parameters")
         if params_element is None:
             return []
-        return [
-            self._get_parameter(parameter)
-            for parameter in params_element.iter("parameter")
-        ]
+        param_list = []
+        for param_el in params_element.iter("parameter"):
+            param = self._get_parameter(param_el)
+            if not param["obsoletes"]:
+                param_list.append(param)
+        return param_list
 
 
     def _get_parameter(self, parameter_element):
@@ -464,6 +466,8 @@ class Agent(object):
             "default": default_value,
             "required": is_true(parameter_element.get("required", "0")),
             "advanced": False,
+            "deprecated": is_true(parameter_element.get("deprecated", "0")),
+            "obsoletes": parameter_element.get("obsoletes", None),
         }
 
     def validate_parameters(

@@ -790,6 +790,8 @@ class AgentMetadataGetParametersTest(TestCase):
                     "required": False,
                     "default": None,
                     "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 }
             ]
         )
@@ -821,6 +823,8 @@ class AgentMetadataGetParametersTest(TestCase):
                     "required": True,
                     "default": "default_value",
                     "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
                 {
                     "name": "another parameter",
@@ -830,10 +834,38 @@ class AgentMetadataGetParametersTest(TestCase):
                     "required": False,
                     "default": None,
                     "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 }
             ]
         )
 
+    def test_remove_obsoletes_keep_deprecated(self, mock_metadata):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="obsoletes" obsoletes="deprecated"/>
+                    <parameter name="deprecated" deprecated="1"/>
+                </parameters>
+            </resource-agent>
+        """
+        mock_metadata.return_value = etree.XML(xml)
+        self.assertEqual(
+            self.agent.get_parameters(),
+            [
+                {
+                    "name": "deprecated",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": False,
+                    "deprecated": True,
+                    "obsoletes": None,
+                },
+            ]
+        )
 
 @patch_agent_object("_get_metadata")
 class AgentMetadataGetActionsTest(TestCase):
@@ -1068,6 +1100,8 @@ class AgentMetadataGetInfoTest(TestCase):
                         "required": True,
                         "default": "default_value",
                         "advanced": False,
+                        "deprecated": False,
+                        "obsoletes": None,
                     },
                     {
                         "name": "another parameter",
@@ -1077,6 +1111,8 @@ class AgentMetadataGetInfoTest(TestCase):
                         "required": False,
                         "default": None,
                         "advanced": False,
+                        "deprecated": False,
+                        "obsoletes": None,
                     }
                 ],
                 "actions": [
@@ -1165,6 +1201,43 @@ class AgentMetadataValidateParametersValuesTest(TestCase):
             (["invalid_param"], ["required_param"])
         )
 
+    def test_ignore_obsoletes_use_deprecated(self, mock_metadata):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="obsoletes" obsoletes="deprecated"
+                        required="1"
+                    />
+                    <parameter name="deprecated" deprecated="1" required="1"/>
+                </parameters>
+            </resource-agent>
+        """
+        mock_metadata.return_value = etree.XML(xml)
+        self.assertEqual(
+            self.agent.validate_parameters_values({
+            }),
+            ([], ["deprecated"])
+        )
+
+    def test_dont_allow_obsoletes_use_deprecated(self, mock_metadata):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="obsoletes" obsoletes="deprecated"
+                        required="1"
+                    />
+                    <parameter name="deprecated" deprecated="1" required="1"/>
+                </parameters>
+            </resource-agent>
+        """
+        mock_metadata.return_value = etree.XML(xml)
+        self.assertEqual(
+            self.agent.validate_parameters_values({
+                "obsoletes": "value",
+            }),
+            (["obsoletes"], ["deprecated"])
+        )
+
 
 class AgentMetadataValidateParameters(TestCase):
     def setUp(self):
@@ -1188,7 +1261,8 @@ class AgentMetadataValidateParameters(TestCase):
         """)
         patcher = patch_agent_object("_get_metadata")
         self.addCleanup(patcher.stop)
-        patcher.start().return_value = self.metadata
+        self.get_metadata = patcher.start()
+        self.get_metadata.return_value = self.metadata
 
     def test_returns_empty_report_when_all_required_there(self):
         self.assertEqual(
@@ -1267,6 +1341,76 @@ class AgentMetadataValidateParameters(TestCase):
                         ],
                         "option_type": "resource agent parameter",
                     },
+                ),
+            ]
+        )
+
+    def test_ignore_obsoletes_use_deprecated(self):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="obsoletes" obsoletes="deprecated"
+                        required="1"
+                    />
+                    <parameter name="deprecated" deprecated="1" required="1"/>
+                </parameters>
+            </resource-agent>
+        """
+        self.get_metadata.return_value = etree.XML(xml)
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({}),
+            [
+                (
+                    severity.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_names": [
+                            "deprecated",
+                        ],
+                        "option_type": "resource agent parameter",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ]
+        )
+
+    def test_dont_allow_obsoletes_use_deprecated(self):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="obsoletes" obsoletes="deprecated"
+                        required="1"
+                    />
+                    <parameter name="deprecated" deprecated="1" required="1"/>
+                </parameters>
+            </resource-agent>
+        """
+        self.get_metadata.return_value = etree.XML(xml)
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({"obsoletes": "value"}),
+            [
+                (
+                    severity.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_names": [
+                            "deprecated",
+                        ],
+                        "option_type": "resource agent parameter",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["obsoletes"],
+                        "option_type": "resource agent parameter",
+                        "allowed": [
+                            "deprecated",
+                        ]
+                    },
+                    report_codes.FORCE_OPTIONS
                 ),
             ]
         )
@@ -1364,7 +1508,9 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "type": "test_type",
                     "required": False,
                     "default": "default_value",
-                    "advanced": True
+                    "advanced": True,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
                 {
                     "name": "another parameter",
@@ -1373,7 +1519,9 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False
+                    "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 }
             ]
         )
@@ -1583,7 +1731,9 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False
+                    "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
                 {
                     "name": "action",
@@ -1596,7 +1746,9 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False
+                    "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
                 {
                     "name": "another_param",
@@ -1605,7 +1757,9 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False
+                    "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
                 {
                     "name": "stonithd_param",
@@ -1614,7 +1768,9 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False
+                    "advanced": False,
+                    "deprecated": False,
+                    "obsoletes": None,
                 },
             ]
         )
