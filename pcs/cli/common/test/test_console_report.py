@@ -258,6 +258,22 @@ class BuildRunExternalStartedTest(NameBuildTest):
             }
         )
 
+    def test_insidious_environment(self):
+        self.assert_message_from_info(
+            (
+                "Running: COMMAND\nEnvironment:\n"
+                "  test=a:{green},b:{red}\n"
+                "--Debug Input Start--\n"
+                "STDIN\n"
+                "--Debug Input End--\n"
+            ),
+            {
+                "command": "COMMAND",
+                "stdin": "STDIN",
+                "environment": {"test": "a:{green},b:{red}",},
+            }
+        )
+
 
 class BuildNodeCommunicationStartedTest(NameBuildTest):
     code = codes.NODE_COMMUNICATION_STARTED

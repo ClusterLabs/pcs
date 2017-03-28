@@ -261,9 +261,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 info["stdin"],
                 "--Debug Input Start--\n{0}\n--Debug Input End--\n"
             ),
-            env_part=format_optional(
-                info["environment"],
-                "\n" + "\n".join([
+            env_part=(
+                "" if not info["environment"] else "\n" + "\n".join([
                     "  {0}={1}".format(key, val)
                     for key, val in sorted(info["environment"].items())
                 ])
