@@ -29,6 +29,20 @@ class NodeAddresses(object):
     def __lt__(self, other):
         return self.label < other.label
 
+    def __repr__(self):
+        #the "dict" with name and id is "written" inside string because in
+        #python3 the order is not
+        return str("<{0}.{1} {2}, {{'name': {3}, 'id': {4}}}>").format(
+            self.__module__,
+            self.__class__.__name__,
+            repr(
+                [self.ring0] if self.ring1 is None
+                else [self.ring0, self.ring1]
+            ),
+            repr(self.name),
+            repr(self.id),
+        )
+
     @property
     def ring0(self):
         return self._ring0
