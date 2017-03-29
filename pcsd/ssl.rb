@@ -66,7 +66,7 @@ def run_server(server, webrick_options, secondary_addrs)
   primary_addr = webrick_options[:BindAddress]
   port = webrick_options[:Port]
 
-  ciphers = 'DEFAULT:!RC4:!3DES:@STRENGTH!'
+  ciphers = 'DEFAULT:!RC4:!3DES:@STRENGTH'
   ciphers = ENV['PCSD_SSL_CIPHERS'] if ENV['PCSD_SSL_CIPHERS']
   # no need to validate ciphers, ssl context will validate them for us
 
