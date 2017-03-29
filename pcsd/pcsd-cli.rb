@@ -27,7 +27,7 @@ end
 
 # bootstrap, emulate environment created by pcsd http server
 auth_user = {}
-PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
+PCS = get_pcs_path()
 $logger_device = StringIO.new
 $logger = configure_logger($logger_device)
 

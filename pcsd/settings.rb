@@ -1,3 +1,4 @@
+PCS_EXEC = '/usr/sbin/pcs'
 PCSD_EXEC_LOCATION = '/usr/lib/pcsd/'
 PCSD_VAR_LOCATION = '/var/lib/pcsd/'
 
