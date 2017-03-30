@@ -68,11 +68,11 @@ class LibraryReportProcessorToConsole(object):
         self.debug = debug
         self.items = []
 
-    def add(self, report_item):
+    def append(self, report_item):
         self.items.append(report_item)
         return self
 
-    def add_list(self, report_item_list):
+    def extend(self, report_item_list):
         self.items.extend(report_item_list)
         return self
 
@@ -84,11 +84,11 @@ class LibraryReportProcessorToConsole(object):
         ])
 
     def process(self, report_item):
-        self.add(report_item)
+        self.append(report_item)
         self.send()
 
     def process_list(self, report_item_list):
-        self.add_list(report_item_list)
+        self.extend(report_item_list)
         self.send()
 
     def send(self):

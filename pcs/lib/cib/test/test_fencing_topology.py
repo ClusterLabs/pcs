@@ -168,7 +168,7 @@ class AddLevel(TestCase):
         self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
         mock_append
     ):
-        mock_val_level.side_effect = lambda reporter, level: reporter.add(
+        mock_val_level.side_effect = lambda reporter, level: reporter.append(
             reports.invalid_option_value("level", level, "a positive integer")
         )
         self.assert_called_invalid(
@@ -182,7 +182,7 @@ class AddLevel(TestCase):
     ):
         mock_val_target.side_effect = (
             lambda reporter, status_nodes, target_type, target_value, force:
-                reporter.add(
+                reporter.append(
                     reports.node_not_found(target_value)
                 )
         )
@@ -197,7 +197,7 @@ class AddLevel(TestCase):
     ):
         mock_val_devices.side_effect = (
             lambda reporter, resources, devices, force:
-                reporter.add(
+                reporter.append(
                     reports.stonith_resources_do_not_exist(["device"])
                 )
         )
@@ -212,7 +212,7 @@ class AddLevel(TestCase):
     ):
         mock_val_dupl.side_effect = (
             lambda reporter, tree, level, target_type, target_value, devices:
-                reporter.add(
+                reporter.append(
                     reports.fencing_level_already_exists(
                         level, target_type, target_value, devices
                     )

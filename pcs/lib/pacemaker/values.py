@@ -103,7 +103,7 @@ def validate_id(id_candidate, description="id", reporter=None):
     if len(id_candidate) < 1:
         report = reports.invalid_id_is_empty(id_candidate, description)
         if reporter:
-            reporter.add(report)
+            reporter.append(report)
             return
         else:
             raise LibraryError(report)
@@ -112,7 +112,7 @@ def validate_id(id_candidate, description="id", reporter=None):
             id_candidate, description, id_candidate[0], True
         )
         if reporter:
-            reporter.add(report)
+            reporter.append(report)
         else:
             raise LibraryError(report)
     for char in id_candidate[1:]:
@@ -121,7 +121,7 @@ def validate_id(id_candidate, description="id", reporter=None):
                 id_candidate, description, char, False
             )
             if reporter:
-                reporter.add(report)
+                reporter.append(report)
             else:
                 raise LibraryError(report)
 

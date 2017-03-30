@@ -186,7 +186,7 @@ def _validate_level(reporter, level):
             return candidate
     except ValueError:
         pass
-    reporter.add(
+    reporter.append(
         reports.invalid_option_value("level", level, "a positive integer")
     )
 
@@ -203,7 +203,7 @@ def _validate_target_typewise(reporter, target_type):
     if target_type not in [
         TARGET_TYPE_NODE, TARGET_TYPE_ATTRIBUTE, TARGET_TYPE_REGEXP
     ]:
-        reporter.add(reports.invalid_option_type(
+        reporter.append(reports.invalid_option_type(
             "target",
             ["node", "regular expression", "attribute_name=value"]
         ))
@@ -219,7 +219,7 @@ def _validate_target_valuewise(
                 node_found = True
                 break
         if not node_found:
-            reporter.add(
+            reporter.append(
                 reports.node_not_found(
                     target_value,
                     ReportItemSeverity.WARNING if force_node and allow_force
@@ -234,7 +234,7 @@ def _validate_devices(
     reporter, resources_el, devices, force_device=False, allow_force=True
 ):
     if not devices:
-        reporter.add(
+        reporter.append(
             reports.required_option_is_missing(["stonith devices"])
         )
     invalid_devices = []
@@ -247,7 +247,7 @@ def _validate_devices(
         if not is_stonith_resource(resources_el, dev):
             invalid_devices.append(dev)
     if invalid_devices:
-        reporter.add(
+        reporter.append(
             reports.stonith_resources_do_not_exist(
                 invalid_devices,
                 ReportItemSeverity.WARNING if force_device and allow_force
@@ -262,7 +262,7 @@ def _validate_level_target_devices_does_not_exist(
     reporter, tree, level, target_type, target_value, devices
 ):
     if _find_level_elements(tree, level, target_type, target_value, devices):
-        reporter.add(
+        reporter.append(
             reports.fencing_level_already_exists(
                 level, target_type, target_value, devices
             )
