@@ -26,17 +26,13 @@ def provide_group(resources_section, group_id):
     string group_id is id of group
     """
     group_element = find_element_by_tag_and_id(
-        "group",
+        TAG,
         resources_section,
         group_id,
         none_if_id_unused=True
     )
     if group_element is None:
-        group_element = etree.SubElement(
-            resources_section,
-            "group",
-            id=group_id
-        )
+        group_element = etree.SubElement(resources_section, TAG, id=group_id)
     return group_element
 
 def place_resource(

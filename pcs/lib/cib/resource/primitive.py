@@ -119,11 +119,7 @@ def append_new(
     }
     if provider:
         attributes["provider"] = provider
-    primitive_element = etree.SubElement(
-        resources_section,
-        "primitive",
-        attributes
-    )
+    primitive_element = etree.SubElement(resources_section, TAG, attributes)
 
     if instance_attributes:
         append_new_instance_attributes(
