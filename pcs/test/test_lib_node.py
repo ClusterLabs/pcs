@@ -196,3 +196,30 @@ class NodeAddressesListTest(TestCase):
         self.assertRaises(
             lib.NodeNotFound, lambda: node_list.find_by_label("node2")
         )
+
+class NodeAddressesList__add__(TestCase):
+    def test_can_add_node_addresses_list(self):
+        node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        node2 = lib.NodeAddresses("node2")
+        self.assertEqual(lib.NodeAddressesList(
+            [node0, node1, node2])._list,
+            (
+                lib.NodeAddressesList([node0, node1])
+                +
+                lib.NodeAddressesList([node2])
+            )._list
+        )
+
+    def test_can_add_list(self):
+        node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        node2 = lib.NodeAddresses("node2")
+        self.assertEqual(lib.NodeAddressesList(
+            [node0, node1, node2])._list,
+            (
+                lib.NodeAddressesList([node0, node1])
+                +
+                [node2]
+            )._list
+        )

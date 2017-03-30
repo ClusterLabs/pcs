@@ -85,6 +85,13 @@ class NodeAddressesList(object):
     def __reversed__(self):
         return self._list.__reversed__()
 
+    def __add__(self, other):
+        if isinstance(other, NodeAddressesList):
+            return NodeAddressesList(self._list + other._list)
+        #Suppose that the other is a list. If it is not a list it correctly
+        #raises.
+        return NodeAddressesList(self._list + other)
+
     def find_by_label(self, label):
         for node in self._list:
             if node.label == label:
