@@ -9,8 +9,9 @@ import sys
 
 from pcs.test.tools.pcs_unittest import TestCase, skipUnless
 
-need_python3 = skipUnless(sys.version_info.major == 3, "test requires python3")
-need_python2 = skipUnless(sys.version_info.major == 2, "test requires python2")
+#python 2.6 does not support sys.version_info.major
+need_python3 = skipUnless(sys.version_info[0] == 3, "test requires python3")
+need_python2 = skipUnless(sys.version_info[0] == 2, "test requires python2")
 
 import pcs.lib.node as lib
 
