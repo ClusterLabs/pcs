@@ -115,16 +115,19 @@ def is_required(option_name, option_type=""):
         return []
     return validate
 
-def value_in(
-    option_name, allowed_values, option_name_for_report=None,
+
+def value_cond(
+    option_name, predicate, value_type_or_enum, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
     """
-    Return a the function that takes option_dict and returns report list
+    Return a validation  function that takes option_dict and returns report list
     (with INVALID_OPTION_VALUE when option_name is not in allowed_values).
 
     string option_name is name of option of option_dict that will be tested
-    list allowed_values contains all possibilities of option value
+    function predicate takes one parameter, normalized value
+    list or string value_type_or_enum list of possible values or string
+        description of value type
     string option_name_for_report is substitued by option name if is None
     string code_to_allow_extra_values is code for forcing invalid names. If it is
         empty report INVALID_OPTION is non-forceable error. If it is not empty
@@ -141,7 +144,7 @@ def value_in(
         if not isinstance(value, ValuePair):
             value = ValuePair(value, value)
 
-        if(value.normalized not in allowed_values):
+        if not predicate(value.normalized):
             create_report = reports.get_problem_creator(
                 code_to_allow_extra_values,
                 allow_extra_values
@@ -152,10 +155,39 @@ def value_in(
                     else option_name
                 ,
                 value.original,
-                allowed_values,
+                value_type_or_enum,
             )]
         return []
     return validate
+
+
+def value_in(
+    option_name, allowed_values, option_name_for_report=None,
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
+    """
+    Special case of value_cond function.returned function checks whenever value
+    is included allowed_values. If not list of ReportItem will be returned.
+
+    option_name -- string, name of option to check
+    allowed_values -- list of strings, list of possible values
+    option_name_for_report -- string, it is substitued by option name if is None
+    code_to_allow_extra_values -- string, code for forcing invalid names. If it
+        is empty report INVALID_OPTION is non-forceable error. If it is not
+        empty report INVALID_OPTION is forceable error or warning.
+    allow_extra_values -- bool, flag that complements code_to_allow_extra_values
+        and determines wheter is report INVALID_OPTION forceable error or
+        warning.
+    """
+    return value_cond(
+        option_name,
+        lambda normalized_value: normalized_value in allowed_values,
+        allowed_values,
+        option_name_for_report=option_name_for_report,
+        code_to_allow_extra_values=code_to_allow_extra_values,
+        allow_extra_values=allow_extra_values,
+    )
+
 
 def mutually_exclusive(mutually_exclusive_names, option_type="option"):
     """
@@ -225,3 +257,19 @@ def names_in(
         sorted(allowed_name_list),
         option_type,
     )]
+
+
+def is_nonnegative_integer(value):
+    """
+    Check whenever specified value is non-negative integer.
+    Returns True if value is nonnegative integer, False otherwise.
+
+    value -- string, int or float, value to check
+    """
+    try:
+        if isinstance(value, float) or int(value) < 0:
+            return False
+    except ValueError:
+        return False
+    return True
+

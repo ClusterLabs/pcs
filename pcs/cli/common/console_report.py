@@ -870,9 +870,71 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.SBD_DISABLING_STARTED: "Disabling SBD service...",
 
+    codes.SBD_DEVICE_INITIALIZATION_STARTED: lambda info:
+        "Initializing device(s) {devices}..."
+        .format(devices=", ".join(info["device_list"]))
+    ,
+
+    codes.SBD_DEVICE_INITIALIZATION_SUCCESS:
+        "Device(s) initialized successfuly",
+
+    codes.SBD_DEVICE_INITIALIZATION_ERROR: lambda info:
+        "Initialization of device(s) failed: {reason}"
+        .format(**info)
+    ,
+
+    codes.SBD_DEVICE_LIST_ERROR: lambda info:
+        "Unable to get list of messages from device '{device}': {reason}"
+        .format(**info)
+    ,
+
+    codes.SBD_DEVICE_MESSAGE_ERROR: lambda info:
+        "Unable to set message '{message}' for node '{node}' on device "
+        "'{device}'"
+        .format(**info)
+    ,
+
+    codes.SBD_DEVICE_DUMP_ERROR: lambda info:
+        "Unable to get SBD headers from device '{device}': {reason}"
+        .format(**info)
+    ,
+
+    codes.SBD_DEVICE_PATH_NOT_ABSOLUTE: lambda info:
+        "Device path '{device}'{on_node} is not absolute"
+        .format(
+            on_node=format_optional(
+                info["node"], " on node '{0}'".format(info["node"])
+            ),
+            **info
+        )
+    ,
+
+    codes.SBD_DEVICE_DOES_NOT_EXIST: lambda info:
+        "{node}: device '{device}' not found"
+        .format(**info)
+    ,
+
+    codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE: lambda info:
+        "{node}: device '{device}' is not a block device"
+        .format(**info)
+    ,
+
     codes.INVALID_RESPONSE_FORMAT: lambda info:
         "{node}: Invalid format of response"
         .format(**info)
+    ,
+
+    codes.SBD_NO_DEVICE_FOR_NODE: lambda info:
+        "No device defined for node '{node}'"
+        .format(**info)
+    ,
+
+    codes.SBD_TOO_MANY_DEVICES_FOR_NODE: lambda info:
+        (
+            "More than {max_devices} devices defined for node '{node}' "
+            "(devices: {devices})"
+        )
+        .format(devices=", ".join(info["device_list"]), **info)
     ,
 
     codes.SBD_NOT_INSTALLED: lambda info:

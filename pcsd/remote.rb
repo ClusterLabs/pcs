@@ -2333,6 +2333,21 @@ def check_sbd(param, request, auth_user)
       :exist => File.exist?(watchdog)
     }
   end
+  begin
+    device_list = JSON.parse(param[:device_list])
+    if device_list and device_list.respond_to?('each')
+      out[:device_list] = []
+      device_list.each { |device|
+        out[:device_list] << {
+          :path => device,
+          :exist => File.exists?(device),
+          :block_device => File.blockdev?(device),
+        }
+      }
+    end
+  rescue JSON::ParserError
+    return [400, 'Invalid input data format']
+  end
   return [200, JSON.generate(out)]
 end
 

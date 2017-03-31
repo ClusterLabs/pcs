@@ -13,6 +13,7 @@
   information about the specified agent if the `--full` flag is used
 - `pcs resource manage | unmanage` enables respectively disables monitor
   operations when the `--monitor` flag is specified ([rhbz#1303969])
+- Support for shared storage in SBD ([rhbz#1413958])
 
 ### Changed
 - It is now possible to specify more than one resource in the `pcs resource
@@ -42,6 +43,7 @@
 [rhbz#1362493]: https://bugzilla.redhat.com/show_bug.cgi?id=1362493
 [rhbz#1378742]: https://bugzilla.redhat.com/show_bug.cgi?id=1378742
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
+[rhbz#1413958]: https://bugzilla.redhat.com/show_bug.cgi?id=1413958
 [rhbz#1415080]: https://bugzilla.redhat.com/show_bug.cgi?id=1415080
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1428350]: https://bugzilla.redhat.com/show_bug.cgi?id=1428350

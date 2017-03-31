@@ -633,3 +633,133 @@ class NodeIsRunningPacemakerRemote(NameBuildTest):
                 "service": "unknown",
             }
         )
+
+
+class SbdDeviceInitializationStarted(NameBuildTest):
+    code = codes.SBD_DEVICE_INITIALIZATION_STARTED
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Initializing device(s) /dev1, /dev2, /dev3...",
+            {
+                "device_list": ["/dev1", "/dev2", "/dev3"],
+            }
+        )
+
+
+class SbdDeviceInitializationError(NameBuildTest):
+    code = codes.SBD_DEVICE_INITIALIZATION_ERROR
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Initialization of device(s) failed: this is reason",
+            {
+                "reason": "this is reason"
+            }
+        )
+
+
+class SbdDeviceListError(NameBuildTest):
+    code = codes.SBD_DEVICE_LIST_ERROR
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Unable to get list of messages from device '/dev': this is reason",
+            {
+                "device": "/dev",
+                "reason": "this is reason",
+            }
+        )
+
+
+class SbdDeviceMessageError(NameBuildTest):
+    code = codes.SBD_DEVICE_MESSAGE_ERROR
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Unable to set message 'test' for node 'node1' on device '/dev1'",
+            {
+                "message": "test",
+                "node": "node1",
+                "device": "/dev1",
+            }
+        )
+
+
+class SbdDeviceDumpError(NameBuildTest):
+    code = codes.SBD_DEVICE_DUMP_ERROR
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Unable to get SBD headers from device '/dev1': this is reason",
+            {
+                "device": "/dev1",
+                "reason": "this is reason",
+            }
+        )
+
+
+class SbdDevcePathNotAbsolute(NameBuildTest):
+    code = codes.SBD_DEVICE_PATH_NOT_ABSOLUTE
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "Device path '/dev' on node 'node1' is not absolute",
+            {
+                "device": "/dev",
+                "node": "node1",
+            }
+        )
+
+    def test_build_message_without_node(self):
+        self.assert_message_from_info(
+            "Device path '/dev' is not absolute",
+            {
+                "device": "/dev",
+                "node": None,
+            }
+        )
+
+
+class SbdDeviceDoesNotExist(NameBuildTest):
+    code = codes.SBD_DEVICE_DOES_NOT_EXIST
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "node1: device '/dev' not found",
+            {
+                "node": "node1",
+                "device": "/dev",
+            }
+        )
+
+
+class SbdDeviceISNotBlockDevice(NameBuildTest):
+    code = codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "node1: device '/dev' is not a block device",
+            {
+                "node": "node1",
+                "device": "/dev",
+            }
+        )
+
+
+class SbdNoDEviceForNode(NameBuildTest):
+    code = codes.SBD_NO_DEVICE_FOR_NODE
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "No device defined for node 'node1'",
+            {
+                "node": "node1",
+            }
+        )
+
+
+class SbdTooManyDevicesForNode(NameBuildTest):
+    code = codes.SBD_TOO_MANY_DEVICES_FOR_NODE
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "More than 3 devices defined for node 'node1' (devices: /dev1, "
+                "/dev2, /dev3)",
+            {
+                "max_devices": 3,
+                "node": "node1",
+                "device_list": ["/dev1", "/dev2", "/dev3"]
+            }
+        )
+

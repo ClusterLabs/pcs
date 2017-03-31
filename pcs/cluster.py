@@ -1582,12 +1582,31 @@ def node_add(lib_env, node0, node1, modifiers):
             )
 
             report_processor.process(lib_reports.sbd_check_started())
+
+            device_list = utils.pcs_options.get("--device", [])
+            device_num = len(device_list)
+            sbd_with_device = lib_sbd.is_device_set_local()
+            sbd_cfg = environment_file_to_dict(lib_sbd.get_local_sbd_config())
+
+            if sbd_with_device and device_num not in range(1, 4):
+                utils.err(
+                    "SBD is configured to use shared storage, therefore it " +\
+                    "is required to specify at least one device and at most " +\
+                    "{0} devices (option --device),".format(
+                        settings.sbd_max_device_num
+                    )
+                )
+            elif not sbd_with_device and device_num > 0:
+                utils.err(
+                    "SBD is not configured to use shared device, " +\
+                    "therefore --device should not be specified"
+                )
+
             lib_sbd.check_sbd_on_node(
-                report_processor, node_communicator, node_addr, watchdog
+                report_processor, node_communicator, node_addr, watchdog,
+                device_list
             )
-            sbd_cfg = environment_file_to_dict(
-                lib_sbd.get_local_sbd_config()
-            )
+
             report_processor.process(
                 lib_reports.sbd_config_distribution_started()
             )
@@ -1596,7 +1615,8 @@ def node_add(lib_env, node0, node1, modifiers):
                 node_communicator,
                 node_addr,
                 sbd_cfg,
-                watchdog
+                watchdog,
+                device_list,
             )
             report_processor.process(lib_reports.sbd_enabling_started())
             lib_sbd.enable_sbd_service_on_node(

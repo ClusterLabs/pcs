@@ -1581,6 +1581,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
     @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_success_3nodes_sbd(
         self, mock_remote_stop, mock_remote_disable, mock_remove_net,
         mock_get_corosync, mock_push_corosync
@@ -1625,6 +1626,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: False)
     @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: False)
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_success_2nodes_no_sbd(
         self, mock_remote_stop, mock_remote_disable, mock_remove_net,
         mock_get_corosync, mock_push_corosync
@@ -1668,6 +1670,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
     @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_success_2nodes_sbd(
         self, mock_remote_stop, mock_remote_disable, mock_remove_net,
         mock_get_corosync, mock_push_corosync
@@ -1697,6 +1700,51 @@ class RemoveDeviceTest(TestCase, CmanMixin):
                     report_codes.SBD_REQUIRES_ATB,
                     {}
                 ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_DISABLE_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
+            ]
+        )
+        self.assertEqual(1, len(mock_remove_net.mock_calls))
+        self.assertEqual(2, len(mock_remote_disable.mock_calls))
+        self.assertEqual(2, len(mock_remote_stop.mock_calls))
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
+    @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["/dev"])
+    def test_success_2nodes_sbd_with_device(
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
+    ):
+        # cluster consists of two nodes, but SBD with shared storage is in use
+        # auto tie breaker doesn't need to be enabled
+        original_conf = open(rc("corosync-qdevice.conf")).read()
+        no_device_conf = open(rc("corosync.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.remove_device(lib_env)
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            no_device_conf
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
                 (
                     severity.INFO,
                     report_codes.SERVICE_DISABLE_STARTED,

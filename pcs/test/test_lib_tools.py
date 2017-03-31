@@ -28,6 +28,9 @@ ANOTHER ONE="complex value"
         }
         self.assertEqual(expected, tools.environment_file_to_dict(data))
 
+    def test_empty_string(self):
+        self.assertEqual({}, tools.environment_file_to_dict(""))
+
 
 class DictToEnvironmentFileTest(TestCase):
     def test_success(self):

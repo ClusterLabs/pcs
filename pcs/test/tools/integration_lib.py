@@ -5,13 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
+from os import path
+
 from pcs.test.tools.assertions import assert_xml_equal
+
+from pcs import settings
 
 class Call(object):
     command_completions = {
-        "crm_resource": "/usr/sbin/crm_resource",
-        "cibadmin": "/usr/sbin/cibadmin",
-        "crm_mon": "/usr/sbin/crm_mon",
+        "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
+        "cibadmin": path.join(settings.pacemaker_binaries, "cibadmin"),
+        "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
+        "sbd": settings.sbd_binary,
     }
 
     @staticmethod

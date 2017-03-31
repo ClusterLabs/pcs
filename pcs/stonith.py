@@ -463,11 +463,29 @@ def sbd_cmd(lib, argv, modifiers):
             sbd_config(lib, argv, modifiers)
         elif cmd == "local_config_in_json":
             local_sbd_config(lib, argv, modifiers)
+        elif cmd == "device":
+            sbd_device_cmd(lib, argv, modifiers)
         else:
             raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
             e, "stonith", "sbd {0}".format(cmd)
+        )
+
+def sbd_device_cmd(lib, argv, modifiers):
+    if len(argv) == 0:
+        raise CmdLineInputError()
+    cmd = argv.pop(0)
+    try:
+        if cmd == "setup":
+            sbd_setup_block_device(lib, argv, modifiers)
+        elif cmd == "message":
+            sbd_message(lib, argv, modifiers)
+        else:
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "stonith", "sbd device {0}".format(cmd)
         )
 
 
@@ -476,33 +494,58 @@ def sbd_enable(lib, argv, modifiers):
     default_watchdog, watchdog_dict = _sbd_parse_watchdogs(
         modifiers["watchdog"]
     )
+    default_device_list, node_device_dict = _sbd_parse_node_specific_options(
+        modifiers["device"]
+    )
+
     lib.sbd.enable_sbd(
         default_watchdog,
         watchdog_dict,
         sbd_cfg,
+        default_device_list=(
+            default_device_list if default_device_list else None
+        ),
+        node_device_dict=node_device_dict if node_device_dict else None,
         allow_unknown_opts=modifiers["force"],
-        ignore_offline_nodes=modifiers["skip_offline_nodes"]
+        ignore_offline_nodes=modifiers["skip_offline_nodes"],
     )
+
+def _sbd_parse_node_specific_options(arg_list):
+    default_option_list = []
+    node_specific_option_dict = {}
+
+    for arg in arg_list:
+        if "@" in arg:
+            option, node_name = arg.rsplit("@", 1)
+            if node_name in node_specific_option_dict:
+                node_specific_option_dict[node_name].append(option)
+            else:
+                node_specific_option_dict[node_name] = [option]
+        else:
+            default_option_list.append(arg)
+
+    return default_option_list, node_specific_option_dict
 
 
 def _sbd_parse_watchdogs(watchdog_list):
-    default_watchdog = None
-    watchdog_dict = {}
+    default_watchdog_list, node_specific_watchdog_dict =\
+        _sbd_parse_node_specific_options(watchdog_list)
+    if not default_watchdog_list:
+        default_watchdog = None
+    elif len(default_watchdog_list) == 1:
+        default_watchdog = default_watchdog_list[0]
+    else:
+        raise CmdLineInputError("Multiple watchdog definitions.")
 
-    for watchdog_node in watchdog_list:
-        if "@" not in watchdog_node:
-            if default_watchdog:
-                raise CmdLineInputError("Multiple watchdog definitions.")
-            default_watchdog = watchdog_node
-        else:
-            watchdog, node_name = watchdog_node.rsplit("@", 1)
-            if node_name in watchdog_dict:
-                raise CmdLineInputError(
-                    "Multiple watchdog definitions for node '{node}'".format(
-                        node=node_name
-                    )
+    watchdog_dict = {}
+    for node, watchdog_list in node_specific_watchdog_dict.items():
+        if len(watchdog_list) > 1:
+            raise CmdLineInputError(
+                "Multiple watchdog definitions for node '{node}'".format(
+                    node=node
                 )
-            watchdog_dict[node_name] = watchdog
+            )
+        watchdog_dict[node] = watchdog_list[0]
 
     return default_watchdog, watchdog_dict
 
@@ -532,11 +575,28 @@ def sbd_status(lib, argv, modifiers):
     for node_status in status_list:
         status = node_status["status"]
         print("{node}: {installed} | {enabled} | {running}".format(
-            node=node_status["node"].label,
+            node=node_status["node"],
             installed=_bool_to_str(status.get("installed")),
             enabled=_bool_to_str(status.get("enabled")),
             running=_bool_to_str(status.get("running"))
         ))
+    device_list = lib.sbd.get_local_devices_info(modifiers["full"])
+    for device in device_list:
+        print()
+        print("Messages list on device '{0}':".format(device["device"]))
+        print("<unknown>" if device["list"] is None else device["list"])
+        if modifiers["full"]:
+            print()
+            print("SBD header on device '{0}':".format(device["device"]))
+            print("<unknown>" if device["dump"] is None else device["dump"])
+
+def _print_per_node_option(config_list, config_option):
+    unknown_value = "<unknown>"
+    for config in config_list:
+        value = unknown_value
+        if config["config"] is not None:
+            value = config["config"].get(config_option, unknown_value)
+        print("  {node}: {value}".format(node=config["node"], value=value))
 
 
 def sbd_config(lib, argv, modifiers):
@@ -550,23 +610,54 @@ def sbd_config(lib, argv, modifiers):
 
     config = config_list[0]["config"]
 
-    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"]
+    filtered_options = [
+        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
+    ]
+    with_device = False
     for key, val in config.items():
+        if key == "SBD_DEVICE":
+            with_device = True
         if key in filtered_options:
             continue
         print("{key}={val}".format(key=key, val=val))
 
     print()
     print("Watchdogs:")
-    for config in config_list:
-        watchdog = "<unknown>"
-        if config["config"] is not None:
-            watchdog = config["config"].get("SBD_WATCHDOG_DEV", "<unknown>")
-        print("  {node}: {watchdog}".format(
-            node=config["node"].label,
-            watchdog=watchdog
-        ))
+    _print_per_node_option(config_list, "SBD_WATCHDOG_DEV")
+
+    if with_device:
+        print()
+        print("Devices:")
+        _print_per_node_option(config_list, "SBD_DEVICE")
 
 
 def local_sbd_config(lib, argv, modifiers):
     print(json.dumps(lib.sbd.get_local_sbd_config()))
+
+
+def sbd_setup_block_device(lib, argv, modifiers):
+    device_list = modifiers["device"]
+    if not device_list:
+        raise CmdLineInputError("No device defined")
+    options = parse_args.prepare_options(argv)
+
+    if "force" not in modifiers:
+        answer = utils.get_terminal_input(
+            (
+                "WARNING: All current content on device(s) '{device}' will be"
+                + " overwritten. Are you sure you want to continue? [y/N] "
+            ).format(device="', '".join(device_list))
+        )
+        if answer.lower() not in ["y", "yes"]:
+            print("Canceled")
+            return
+    lib.sbd.initialize_block_devices(device_list, options)
+
+
+def sbd_message(lib, argv, modifiers):
+    if len(argv) != 3:
+        raise CmdLineInputError()
+
+    device, node, message = argv
+    lib.sbd.set_message(device, node, message)
+

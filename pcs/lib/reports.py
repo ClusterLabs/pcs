@@ -1817,6 +1817,85 @@ def sbd_disabling_started():
     )
 
 
+def sbd_device_initialization_started(device_list):
+    """
+    initialization of SBD device(s) started
+    """
+    return ReportItem.info(
+        report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+        info={
+            "device_list": device_list,
+        }
+    )
+
+
+def sbd_device_initialization_success(device_list):
+    """
+    initialization of SBD device(s) successed
+    """
+    return ReportItem.info(
+        report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+        info={
+            "device_list": device_list,
+        }
+    )
+
+
+def sbd_device_initialization_error(device_list, reason):
+    """
+    initialization of SBD device failed
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_INITIALIZATION_ERROR,
+        info={
+            "device_list": device_list,
+            "reason": reason,
+        }
+    )
+
+
+def sbd_device_list_error(device, reason):
+    """
+    command 'sbd list' failed
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_LIST_ERROR,
+        info={
+            "device": device,
+            "reason": reason,
+        }
+    )
+
+
+def sbd_device_message_error(device, node, message, reason):
+    """
+    unable to set message 'message' on shared block device 'device'
+    for node 'node'.
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_MESSAGE_ERROR,
+        info={
+            "device": device,
+            "node": node,
+            "message": message,
+            "reason": reason,
+        }
+    )
+
+
+def sbd_device_dump_error(device, reason):
+    """
+    command 'sbd dump' failed
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_DUMP_ERROR,
+        info={
+            "device": device,
+            "reason": reason,
+        }
+    )
+
+
 def invalid_response_format(node):
     """
     error message that response in invalid format has been received from
@@ -1827,6 +1906,69 @@ def invalid_response_format(node):
     return ReportItem.error(
         report_codes.INVALID_RESPONSE_FORMAT,
         info={"node": node}
+    )
+
+
+def sbd_no_device_for_node(node):
+    """
+    there is no device defined for node when enabling sbd with device
+    """
+    return ReportItem.error(
+        report_codes.SBD_NO_DEVICE_FOR_NODE,
+        info={"node": node}
+    )
+
+
+def sbd_too_many_devices_for_node(node, device_list, max_devices):
+    """
+    More than 3 devices defined for node
+    """
+    return ReportItem.error(
+        report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
+        info={
+            "node": node,
+            "device_list": device_list,
+            "max_devices": max_devices,
+        }
+    )
+
+
+def sbd_device_path_not_absolute(device, node=None):
+    """
+    path of SBD device is not absolute
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
+        info={
+            "device": device,
+            "node": node,
+        }
+    )
+
+
+def sbd_device_does_not_exist(device, node):
+    """
+    specified device on node doesn't exist
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_DOES_NOT_EXIST,
+        info={
+            "device": device,
+            "node": node,
+        }
+    )
+
+
+def sbd_device_is_not_block_device(device, node):
+    """
+    specified device on node is not block device
+    """
+    return ReportItem.error(
+        report_codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE,
+        info={
+            "device": device,
+            "node": node,
+        }
     )
 
 

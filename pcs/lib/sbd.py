@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 import json
+from os import path
 
 from pcs import settings
 from pcs.common import tools
@@ -13,13 +14,21 @@ from pcs.lib import (
     external,
     reports,
 )
-from pcs.lib.tools import dict_to_environment_file
+from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
 from pcs.lib.external import (
     NodeCommunicator,
     node_communicator_exception_to_report_item,
     NodeCommunicationException,
 )
 from pcs.lib.errors import LibraryError
+
+
+DEVICE_INITIALIZATION_OPTIONS_MAPPING = {
+    "watchdog-timeout": "-1",
+    "allocate-timeout": "-2",
+    "loop-timeout": "-3",
+    "msgwait-timeout": "-4",
+}
 
 
 def _run_parallel_and_raise_lib_error_on_failure(func, param_list):
@@ -86,6 +95,8 @@ def is_auto_tie_breaker_needed(
         is_sbd_installed(runner)
         and
         is_sbd_enabled(runner)
+        and
+        not is_device_set_local()
     )
 
 
@@ -123,22 +134,29 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
     )
 
 
-def check_sbd(communicator, node, watchdog):
+def check_sbd(communicator, node, watchdog, device_list):
     """
-    Check SBD on specified 'node' and existence of specified watchdog.
+    Check SBD on specified 'node' and existence of specified watchdog and
+    devices.
 
     communicator -- NodeCommunicator
     node -- NodeAddresses
     watchdog -- watchdog path
+    device_list -- list of strings
     """
     return communicator.call_node(
         node,
         "remote/check_sbd",
-        NodeCommunicator.format_data_dict([("watchdog", watchdog)])
+        NodeCommunicator.format_data_dict([
+            ("watchdog", watchdog),
+            ("device_list", NodeCommunicator.format_data_json(device_list)),
+        ])
     )
 
 
-def check_sbd_on_node(report_processor, node_communicator, node, watchdog):
+def check_sbd_on_node(
+    report_processor, node_communicator, node, watchdog, device_list
+):
     """
     Check if SBD can be enabled on specified 'node'.
     Raises LibraryError if check fails.
@@ -148,15 +166,29 @@ def check_sbd_on_node(report_processor, node_communicator, node, watchdog):
     node_communicator -- NodeCommunicator
     node -- NodeAddresses
     watchdog -- watchdog path
+    device_list -- list of strings
     """
     report_list = []
     try:
-        data = json.loads(check_sbd(node_communicator, node, watchdog))
+        data = json.loads(
+            check_sbd(node_communicator, node, watchdog, device_list)
+        )
         if not data["sbd"]["installed"]:
             report_list.append(reports.sbd_not_installed(node.label))
         if not data["watchdog"]["exist"]:
             report_list.append(reports.watchdog_not_found(node.label, watchdog))
-    except (ValueError, KeyError):
+        for device in data.get("device_list", []):
+            if not device["exist"]:
+                report_list.append(reports.sbd_device_does_not_exist(
+                    device["path"], node.label
+                ))
+            elif not device["block_device"]:
+                report_list.append(reports.sbd_device_is_not_block_device(
+                    device["path"], node.label
+                ))
+            # TODO maybe we can check whenever device is initialized by sbd (by
+            # running 'sbd -d <dev> dump;')
+    except (ValueError, KeyError, TypeError):
         raise LibraryError(reports.invalid_response_format(node.label))
 
     if report_list:
@@ -164,25 +196,29 @@ def check_sbd_on_node(report_processor, node_communicator, node, watchdog):
     report_processor.process(reports.sbd_check_success(node.label))
 
 
-def check_sbd_on_all_nodes(report_processor, node_communicator, nodes_watchdog):
+def check_sbd_on_all_nodes(report_processor, node_communicator, nodes_data):
     """
     Checks SBD (if SBD is installed and watchdog exists) on all NodeAddresses
-        defined as keys in data.
+        defined as keys in nodes_data.
     Raises LibraryError with all ReportItems in case of any failure.
 
     report_processor --
     node_communicator -- NodeCommunicator
-    nodes_watchdog -- dictionary with NodeAddresses as keys and watchdog path
-        as value
+    nodes_data -- dictionary with NodeAddresses as keys and dict (with keys
+        'watchdog' and 'device_list') as value
     """
     report_processor.process(reports.sbd_check_started())
-    _run_parallel_and_raise_lib_error_on_failure(
-        check_sbd_on_node,
-        [
-            ([report_processor, node_communicator, node, watchdog], {})
-            for node, watchdog in sorted(nodes_watchdog.items())
-        ]
-    )
+    data_list = []
+    for node, data in sorted(nodes_data.items()):
+        data_list.append((
+            [
+                report_processor, node_communicator, node, data["watchdog"],
+                data["device_list"]
+            ],
+            {}
+        ))
+
+    _run_parallel_and_raise_lib_error_on_failure(check_sbd_on_node, data_list)
 
 
 def set_sbd_config(communicator, node, config):
@@ -201,7 +237,8 @@ def set_sbd_config(communicator, node, config):
 
 
 def set_sbd_config_on_node(
-    report_processor, node_communicator, node, config, watchdog
+    report_processor, node_communicator, node, config, watchdog,
+    device_list=None
 ):
     """
     Send SBD configuration to 'node' with specified watchdog set. Also puts
@@ -212,11 +249,14 @@ def set_sbd_config_on_node(
     node -- NodeAddresses
     config -- dictionary in format: <SBD config option>: <value>
     watchdog -- path to watchdog device
+    device_list -- list of strings
     """
     config = dict(config)
     config["SBD_OPTS"] = '"-n {node_name}"'.format(node_name=node.label)
     if watchdog:
         config["SBD_WATCHDOG_DEV"] = watchdog
+    if device_list:
+        config["SBD_DEVICE"] = '"{0}"'.format(";".join(device_list))
     set_sbd_config(node_communicator, node, dict_to_environment_file(config))
     report_processor.process(
         reports.sbd_config_accepted_by_node(node.label)
@@ -224,7 +264,8 @@ def set_sbd_config_on_node(
 
 
 def set_sbd_config_on_all_nodes(
-    report_processor, node_communicator, node_list, config, watchdog_dict
+    report_processor, node_communicator, node_list, config, watchdog_dict,
+    device_dict
 ):
     """
     Send SBD configuration 'config' to all nodes in 'node_list'. Option
@@ -237,6 +278,8 @@ def set_sbd_config_on_all_nodes(
     config -- dictionary in format: <SBD config option>: <value>
     watchdog_dict -- dictionary of watchdogs where key is NodeAdresses object
         and value is path to watchdog
+    device_dict -- distionary with NodeAddresses as keys and lists of devices
+        as values
     """
     report_processor.process(reports.sbd_config_distribution_started())
     _run_parallel_and_raise_lib_error_on_failure(
@@ -245,7 +288,7 @@ def set_sbd_config_on_all_nodes(
             (
                 [
                     report_processor, node_communicator, node, config,
-                    watchdog_dict.get(node)
+                    watchdog_dict.get(node), device_dict.get(node)
                 ],
                 {}
             )
@@ -412,7 +455,7 @@ def get_default_sbd_config():
     return {
         "SBD_DELAY_START": "no",
         "SBD_PACEMAKER": "yes",
-        "SBD_STARTMODE": "clean",
+        "SBD_STARTMODE": "always",
         "SBD_WATCHDOG_DEV": settings.sbd_watchdog_default,
         "SBD_WATCHDOG_TIMEOUT": "5"
     }
@@ -467,4 +510,115 @@ def is_sbd_installed(runner):
     runner -- CommandRunner
     """
     return external.is_service_installed(runner, get_sbd_service_name())
+
+
+def initialize_block_devices(
+    report_processor, cmd_runner, device_list, option_dict
+):
+    """
+    Initialize devices with specified options in option_dict.
+    Raise LibraryError on failure.
+
+    report_processor -- report processor
+    cmd_runner -- CommandRunner
+    device_list -- list of strings
+    option_dict -- dictionary of options and their values
+    """
+    report_processor.process(
+        reports.sbd_device_initialization_started(device_list)
+    )
+
+    cmd = [settings.sbd_binary]
+    for device in device_list:
+        cmd += ["-d", device]
+
+    for option, value in sorted(option_dict.items()):
+        cmd += [DEVICE_INITIALIZATION_OPTIONS_MAPPING[option], str(value)]
+
+    cmd.append("create")
+    _, std_err, ret_val = cmd_runner.run(cmd)
+    if ret_val != 0:
+        raise LibraryError(
+            reports.sbd_device_initialization_error(device_list, std_err)
+        )
+    report_processor.process(
+        reports.sbd_device_initialization_success(device_list)
+    )
+
+
+def get_local_sbd_device_list():
+    """
+    Returns list of devices specified in local SBD config
+    """
+    if not path.exists(settings.sbd_config):
+        return []
+
+    cfg = environment_file_to_dict(get_local_sbd_config())
+    if "SBD_DEVICE" not in cfg:
+        return []
+    devices = cfg["SBD_DEVICE"]
+    if devices.startswith('"') and devices.endswith('"'):
+        devices = devices[1:-1]
+    return [
+        device.strip()
+        for device in devices.split(";") if device.strip()
+    ]
+
+
+def is_device_set_local():
+    """
+    Returns True if there is at least one device specified in local SBD config,
+    False otherwise.
+    """
+    return len(get_local_sbd_device_list()) > 0
+
+
+def get_device_messages_info(cmd_runner, device):
+    """
+    Returns info about messages (string) stored on specified SBD device.
+
+    cmd_runner -- CommandRunner
+    device -- string
+    """
+    std_out, dummy_std_err, ret_val = cmd_runner.run(
+        [settings.sbd_binary, "-d", device, "list"]
+    )
+    if ret_val != 0:
+        # sbd writes error message into std_out
+        raise LibraryError(reports.sbd_device_list_error(device, std_out))
+    return std_out
+
+
+def get_device_sbd_header_dump(cmd_runner, device):
+    """
+    Returns header dump (string) of specified SBD device.
+
+    cmd_runner -- CommandRunner
+    device -- string
+    """
+    std_out, dummy_std_err, ret_val = cmd_runner.run(
+        [settings.sbd_binary, "-d", device, "dump"]
+    )
+    if ret_val != 0:
+        # sbd writes error message into std_out
+        raise LibraryError(reports.sbd_device_dump_error(device, std_out))
+    return std_out
+
+
+def set_message(cmd_runner, device, node_name, message):
+    """
+    Set message of specified type 'message' on SBD device for node.
+
+    cmd_runner -- CommandRunner
+    device -- string, device path
+    node_name -- string, nae of node for which message should be set
+    message -- string, message type
+    """
+    dummy_std_out, std_err, ret_val = cmd_runner.run(
+        [settings.sbd_binary, "-d", device, "message", node_name, message]
+    )
+    if ret_val != 0:
+        raise LibraryError(reports.sbd_device_message_error(
+            device, node_name, message, std_err
+        ))
 

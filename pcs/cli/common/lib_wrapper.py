@@ -337,6 +337,9 @@ def load_module(env, middleware_factory, name):
                 "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
                 "get_cluster_sbd_config": sbd.get_cluster_sbd_config,
                 "get_local_sbd_config": sbd.get_local_sbd_config,
+                "initialize_block_devices": sbd.initialize_block_devices,
+                "get_local_devices_info": sbd.get_local_devices_info,
+                "set_message": sbd.set_message,
             }
         )
 

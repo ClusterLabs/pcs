@@ -15,7 +15,9 @@ from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.integration_lib import Runner, Call
 
+from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.errors import (
     ReportItemSeverity as Severities,
@@ -33,6 +35,9 @@ from pcs.lib.external import (
     CommandRunner,
 )
 import pcs.lib.commands.sbd as cmd_sbd
+
+
+runner = Runner()
 
 
 def _assert_equal_list_of_dictionaries_without_order(expected, actual):
@@ -151,7 +156,8 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_WATCHDOG_TIMEOUT": "5",
             "SBD_STARTMODE": "clean",
             "SBD_WATCHDOG_DEV": "/dev/watchdog",
-            "SBD_OPTS": "  "
+            "SBD_OPTS": "  ",
+            "SBD_DEVICE": "/dev/vda",
         }
 
         assert_report_item_list_equal(
@@ -172,6 +178,16 @@ class ValidateSbdOptionsTest(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["SBD_OPTS"],
+                        "option_type": None,
+                        "allowed": self.allowed_sbd_options,
+                    },
+                    None
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["SBD_DEVICE"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -354,81 +370,183 @@ class ValidateSbdOptionsTest(TestCase):
         )
 
 
-class GetFullWatchdogListTest(TestCase):
-    def setUp(self):
-        self.node_list = NodeAddressesList(
-            [NodeAddresses("node" + str(i)) for i in range(5)]
+class ValidateWatchdogDictTest(TestCase):
+    def test_all_ok(self):
+        watchdog_dict = {
+            NodeAddresses("node1"): "/dev/watchdog1",
+            NodeAddresses("node2"): "/dev/watchdog2",
+        }
+        self.assertEqual([], cmd_sbd._validate_watchdog_dict(watchdog_dict))
+
+    def test_some_not_ok(self):
+        watchdog_dict = {
+            NodeAddresses("node1"): "",
+            NodeAddresses("node2"): None,
+            NodeAddresses("node3"): "/dev/watchdog",
+            NodeAddresses("node4"): "../dev/watchdog",
+        }
+        assert_report_item_list_equal(
+            cmd_sbd._validate_watchdog_dict(watchdog_dict),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.WATCHDOG_INVALID,
+                    {"watchdog": watchdog}
+                ) for watchdog in ["", None, "../dev/watchdog"]
+            ]
         )
 
-    def test_full(self):
-        watchdog_dict = {
-            self.node_list[1].label: "/dev/watchdog1",
-            self.node_list[2].label: "/dev/watchdog2"
+
+class ValidateDeviceDictTest(TestCase):
+    def test_all_ok(self):
+        device_dict = {
+            NodeAddresses("node1"): ["/dev1", "/dev2"],
+            NodeAddresses("node2"): ["/dev1"],
         }
+        self.assertEqual([], cmd_sbd._validate_device_dict(device_dict))
+
+    def test_some_not_ok(self):
+        too_many_devices = [
+            "dev" + str(i) for i in range(settings.sbd_max_device_num + 1)
+        ]
+        device_dict = {
+            NodeAddresses("node1"): [],
+            NodeAddresses("node2"): too_many_devices,
+            NodeAddresses("node3"): ["/dev/vda"],
+            NodeAddresses("node4"): ["/dev/vda1", "../dev/sda2"],
+        }
+        assert_report_item_list_equal(
+            cmd_sbd._validate_device_dict(device_dict),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.SBD_NO_DEVICE_FOR_NODE,
+                    {
+                        "node": "node1",
+                    }
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
+                    {
+                        "node": "node2",
+                        "device_list": too_many_devices,
+                        "max_devices": settings.sbd_max_device_num,
+                    }
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
+                    {
+                        "node": "node4",
+                        "device": "../dev/sda2",
+                    }
+                ),
+            ]
+        )
+
+
+class CheckNodeNamesInClusterTest(TestCase):
+    def setUp(self):
+        self.node_list = NodeAddressesList([
+            NodeAddresses("node1"),
+            NodeAddresses("node2"),
+            NodeAddresses("node3"),
+        ])
+
+    def test_all_ok(self):
+        node_name_list = ["node1", "node3"]
+        self.assertEqual(
+            [],
+            cmd_sbd._check_node_names_in_cluster(self.node_list, node_name_list)
+        )
+
+    def test_repeating_nodes(self):
+        node_name_list = ["node1", "node3", "node1"]
+        self.assertEqual(
+            [],
+            cmd_sbd._check_node_names_in_cluster(self.node_list, node_name_list)
+        )
+
+    def test_one_not_found(self):
+        node_name_list = ["node0", "node3"]
+        assert_report_item_list_equal(
+            cmd_sbd._check_node_names_in_cluster(
+                self.node_list, node_name_list
+            ),
+            [(
+                Severities.ERROR,
+                report_codes.NODE_NOT_FOUND,
+                {"node": "node0"}
+            )]
+        )
+
+    def test_multiple_not_found(self):
+        node_name_list = ["node0", "node3", "node4"]
+        assert_report_item_list_equal(
+            cmd_sbd._check_node_names_in_cluster(
+                self.node_list, node_name_list
+            ),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.NODE_NOT_FOUND,
+                    {"node": node}
+                ) for node in ["node0", "node4"]
+            ]
+        )
+
+    def test_multiple_not_found_repeating(self):
+        node_name_list = ["node0", "node3", "node4", "node0", "node1", "node3"]
+        assert_report_item_list_equal(
+            cmd_sbd._check_node_names_in_cluster(
+                self.node_list, node_name_list
+            ),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.NODE_NOT_FOUND,
+                    {"node": node}
+                ) for node in ["node0", "node4"]
+            ]
+        )
+
+
+class GetFullNodeDictTest(TestCase):
+    def setUp(self):
+        self.node_list = NodeAddressesList([
+            NodeAddresses("node1"),
+            NodeAddresses("node2"),
+            NodeAddresses("node3"),
+        ])
+
+    def test_not_using_default(self):
+        node_dict = dict([
+            ("node" + str(i), "val" + str(i)) for i in range(4)
+        ])
         expected = {
-            self.node_list[0]: "/dev/default",
-            self.node_list[1]: "/dev/watchdog1",
-            self.node_list[2]: "/dev/watchdog2",
-            self.node_list[3]: "/dev/default",
-            self.node_list[4]: "/dev/default",
+            self.node_list[0]: "val1",
+            self.node_list[1]: "val2",
+            self.node_list[2]: "val3",
         }
         self.assertEqual(
-            cmd_sbd._get_full_watchdog_list(
-                self.node_list, "/dev/default", watchdog_dict
-            ),
-            expected
+            expected,
+            cmd_sbd._get_full_node_dict(self.node_list, node_dict, None)
         )
 
-    def test_unknown_nodes(self):
-        watchdog_dict = {
-            self.node_list[1].label: "/dev/watchdog1",
-            self.node_list[2].label: "/dev/watchdog2",
-            "unknown_node": "/dev/watchdog0",
-            "another_unknown_node": "/dev/watchdog"
+    def test_using_default(self):
+        node_dict = dict([
+            ("node" + str(i), "val" + str(i)) for i in range(3)
+        ])
+        default = "default"
+        expected = {
+            self.node_list[0]: "val1",
+            self.node_list[1]: "val2",
+            self.node_list[2]: default,
         }
-        assert_raise_library_error(
-            lambda: cmd_sbd._get_full_watchdog_list(
-                self.node_list, "/dev/dog", watchdog_dict
-            ),
-            (
-                Severities.ERROR,
-                report_codes.NODE_NOT_FOUND,
-                {"node": "unknown_node"}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.NODE_NOT_FOUND,
-                {"node": "another_unknown_node"}
-            )
-        )
-
-    def test_invalid_watchdogs(self):
-        watchdog_dict = {
-            self.node_list[1].label: "",
-            self.node_list[2].label: None,
-            self.node_list[3].label: "not/abs/path",
-            self.node_list[4].label: "/dev/watchdog"
-
-        }
-        assert_raise_library_error(
-            lambda: cmd_sbd._get_full_watchdog_list(
-                self.node_list, "/dev/dog", watchdog_dict
-            ),
-            (
-                Severities.ERROR,
-                report_codes.WATCHDOG_INVALID,
-                {"watchdog": ""}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.WATCHDOG_INVALID,
-                {"watchdog": None}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.WATCHDOG_INVALID,
-                {"watchdog": "not/abs/path"}
-            )
+        self.assertEqual(
+            expected,
+            cmd_sbd._get_full_node_dict(self.node_list, node_dict, default)
         )
 
 
@@ -436,7 +554,7 @@ class GetFullWatchdogListTest(TestCase):
 @mock.patch("pcs.lib.sbd.check_sbd")
 class GetClusterSbdStatusTest(CommandSbdTest):
     def test_success(self, mock_check_sbd, mock_get_nodes):
-        def ret_val(communicator, node, empty_str):
+        def ret_val(communicator, node, empty_str, empty_list):
             self.assertEqual(communicator, self.mock_com)
             self.assertEqual(empty_str, "")
             if node.label == "node0":
@@ -475,7 +593,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
         mock_get_nodes.return_value = self.node_list
         expected = [
             {
-                "node": self.node_list.find_by_label("node0"),
+                "node": "node0",
                 "status": {
                     "installed": True,
                     "enabled": True,
@@ -483,7 +601,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
                 }
             },
             {
-                "node": self.node_list.find_by_label("node1"),
+                "node": "node1",
                 "status": {
                     "installed": False,
                     "enabled": False,
@@ -491,7 +609,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
                 }
             },
             {
-                "node": self.node_list.find_by_label("node2"),
+                "node": "node2",
                 "status": {
                     "installed": True,
                     "enabled": False,
@@ -507,7 +625,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
         self.assertEqual(self.mock_log.warning.call_count, 0)
 
     def test_failures(self, mock_check_sbd, mock_get_nodes):
-        def ret_val(communicator, node, empty_str):
+        def ret_val(communicator, node, empty_str, empty_list):
             self.assertEqual(communicator, self.mock_com)
             self.assertEqual(empty_str, "")
             if node.label == "node0":
@@ -539,15 +657,15 @@ class GetClusterSbdStatusTest(CommandSbdTest):
         }
         expected = [
             {
-                "node": self.node_list.find_by_label("node0"),
+                "node": "node0",
                 "status": all_none
             },
             {
-                "node": self.node_list.find_by_label("node1"),
+                "node": "node1",
                 "status": all_none
             },
             {
-                "node": self.node_list.find_by_label("node2"),
+                "node": "node2",
                 "status": all_none
             }
         ]
@@ -624,18 +742,18 @@ OPTION=   value
         mock_get_nodes.return_value = self.node_list
         expected = [
             {
-                "node": self.node_list.find_by_label("node0"),
+                "node": "node0",
                 "config": {
                     "SBD_TEST": "true",
                     "ANOTHER_OPT": "1"
                 }
             },
             {
-                "node": self.node_list.find_by_label("node1"),
+                "node": "node1",
                 "config": {"OPTION": "value"}
             },
             {
-                "node": self.node_list.find_by_label("node2"),
+                "node": "node2",
                 "config": {}
             }
         ]
@@ -675,18 +793,18 @@ invalid value
         mock_get_nodes.return_value = self.node_list
         expected = [
             {
-                "node": self.node_list.find_by_label("node0"),
+                "node": "node0",
                 "config": {
                     "SBD_TEST": "true",
                     "ANOTHER_OPT": "1"
                 }
             },
             {
-                "node": self.node_list.find_by_label("node1"),
+                "node": "node1",
                 "config": {}
             },
             {
-                "node": self.node_list.find_by_label("node2"),
+                "node": "node2",
                 "config": None
             }
         ]
@@ -754,3 +872,341 @@ SBD_WATCHDOG_TIMEOUT=0
                 {}
             )
         )
+
+
+class CommonTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.patcher = mock.patch.object(
+            LibraryEnvironment,
+            "cmd_runner",
+            lambda self: runner
+        )
+        cls.patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher.stop()
+
+    def setUp(self):
+        self.env = LibraryEnvironment(
+            mock.MagicMock(logging.Logger),
+            MockLibraryReportProcessor()
+        )
+
+
+class InitializeBlockDevicesTest(CommonTest):
+    def fixture_sbd_init(
+        self, device_list, options, stdout="", stderr="", return_code=0
+    ):
+        cmd = ["sbd"]
+        for device in device_list:
+            cmd += ["-d", device]
+
+        for opt, val in options:
+            cmd += [opt, val]
+
+        cmd.append("create")
+        return [Call(" ".join(cmd), stdout, stderr, return_code)]
+
+    def fixture_invalid_value(self, option, value):
+        return (
+            Severities.ERROR,
+            report_codes.INVALID_OPTION_VALUE,
+            {
+                "option_name": option,
+                "option_value": value,
+                "allowed_values": "nonnegative integer",
+            }
+        )
+
+    def test_all_options(self):
+        device_list = ["dev1", "dev2"]
+        option_dict = {
+            "watchdog-timeout": "1",
+            "loop-timeout": "10",
+            "allocate-timeout": "3",
+            "msgwait-timeout": "2",
+
+        }
+        runner.set_runs(self.fixture_sbd_init(
+            device_list,
+            [
+                ("-2", "3"),
+                ("-3", "10"),
+                ("-4", "2"),
+                ("-1", "1"),
+            ]
+        ))
+        cmd_sbd.initialize_block_devices(self.env, device_list, option_dict)
+        runner.assert_everything_launched()
+        self.env.report_processor.assert_reports([
+            (
+                Severities.INFO,
+                report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                {"device_list": device_list}
+            ),
+            (
+                Severities.INFO,
+                report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                {"device_list": device_list}
+            ),
+        ])
+
+    def test_no_options(self):
+        device_list = ["dev1", "dev2"]
+        runner.set_runs(self.fixture_sbd_init(device_list,{}))
+        cmd_sbd.initialize_block_devices(self.env, device_list, {})
+        runner.assert_everything_launched()
+        self.env.report_processor.assert_reports([
+            (
+                Severities.INFO,
+                report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                {"device_list": device_list}
+            ),
+            (
+                Severities.INFO,
+                report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                {"device_list": device_list}
+            ),
+        ])
+
+    def test_validation_failed(self):
+        option_dict = {
+            "unknown_option": "val",
+            "watchdog-timeout": "-1",
+            "another_one": "-1",
+            "loop-timeout": "-3",
+            "allocate-timeout": "-3",
+            "msgwait-timeout": "-2",
+        }
+        allowed_options = [
+            "watchdog-timeout", "loop-timeout", "allocate-timeout",
+            "msgwait-timeout",
+        ]
+        assert_raise_library_error(
+            lambda: cmd_sbd.initialize_block_devices(self.env, [], option_dict),
+            (
+                Severities.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {
+                    "option_names": ["device"],
+                    "option_type": None,
+                }
+            ),
+            (
+                Severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_names": sorted(["another_one", "unknown_option"]),
+                    "option_type": "option",
+                    "allowed": sorted(allowed_options),
+                }
+            ),
+            *[
+                self.fixture_invalid_value(opt, option_dict[opt])
+                for opt in allowed_options
+            ]
+        )
+
+
+@mock.patch("os.path.exists")
+@mock.patch("pcs.lib.sbd.get_local_sbd_config")
+class GetLocalDevicesInfoTest(CommonTest):
+    def fixture_sbd_info(self, device, stdout="", return_code=0):
+        cmd = ["sbd", "-d", device, "list"]
+        return [Call(" ".join(cmd), stdout, returncode=return_code)]
+
+    def fixture_sbd_dump(self, device, stdout="", return_code=0):
+        cmd = ["sbd", "-d", device, "dump"]
+        return [Call(" ".join(cmd), stdout, returncode=return_code)]
+
+    def test_success(self, mock_config, mock_config_exists):
+        mock_config_exists.return_value = True
+        mock_config.return_value = """
+SBD_DEVICE="/dev1;/dev2"
+        """
+        runner.set_runs(
+            self.fixture_sbd_info("/dev1", "1") +
+            self.fixture_sbd_info("/dev2", "2")
+        )
+        expected_output = [
+            {
+                "device": "/dev1",
+                "list": "1",
+                "dump": None,
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": None,
+            },
+        ]
+        self.assertEqual(
+            expected_output, cmd_sbd.get_local_devices_info(self.env)
+        )
+        runner.assert_everything_launched()
+        mock_config.assert_called_once_with()
+        mock_config_exists.assert_called_once_with(settings.sbd_config)
+
+    def test_with_dump(self, mock_config, mock_config_exists):
+        mock_config_exists.return_value = True
+        mock_config.return_value = """
+SBD_DEVICE="/dev1;/dev2"
+        """
+        runner.set_runs(
+            self.fixture_sbd_info("/dev1", "1") +
+            self.fixture_sbd_dump("/dev1", "3") +
+            self.fixture_sbd_info("/dev2", "2") +
+            self.fixture_sbd_dump("/dev2", "4")
+        )
+        expected_output = [
+            {
+                "device": "/dev1",
+                "list": "1",
+                "dump": "3",
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": "4",
+            },
+        ]
+        self.assertEqual(
+            expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
+        )
+        runner.assert_everything_launched()
+        mock_config.assert_called_once_with()
+        mock_config_exists.assert_called_once_with(settings.sbd_config)
+
+    def test_no_config(self, mock_config, mock_config_exists):
+        mock_config_exists.return_value = False
+        self.assertEqual([], cmd_sbd.get_local_devices_info(self.env))
+        self.assertEqual(0, mock_config.call_count)
+        mock_config_exists.assert_called_once_with(settings.sbd_config)
+
+    def test_with_failures(self, mock_config, mock_config_exists):
+        mock_config_exists.return_value = True
+        mock_config.return_value = """
+SBD_DEVICE="/dev1;/dev2;/dev3"
+        """
+        runner.set_runs(
+            self.fixture_sbd_info("/dev1", "1", 1) +
+            self.fixture_sbd_info("/dev2", "2") +
+            self.fixture_sbd_dump("/dev2", "4", 1) +
+            self.fixture_sbd_info("/dev3", "5") +
+            self.fixture_sbd_dump("/dev3", "6")
+        )
+        expected_output = [
+            {
+                "device": "/dev1",
+                "list": None,
+                "dump": None,
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": None,
+            },
+            {
+                "device": "/dev3",
+                "list": "5",
+                "dump": "6",
+            },
+        ]
+        self.assertEqual(
+            expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
+        )
+        self.env.report_processor.assert_reports([
+            (
+                Severities.WARNING,
+                report_codes.SBD_DEVICE_LIST_ERROR,
+                {
+                    "device": "/dev1",
+                    "reason": "1"
+                }
+            ),
+            (
+                Severities.WARNING,
+                report_codes.SBD_DEVICE_DUMP_ERROR,
+                {
+                    "device": "/dev2",
+                    "reason": "4"
+                }
+            ),
+        ])
+        runner.assert_everything_launched()
+        mock_config.assert_called_once_with()
+        mock_config_exists.assert_called_once_with(settings.sbd_config)
+
+
+class SetMessageTest(CommonTest):
+    def fixture_call_sbd_message(
+        self, device, node, message, stderr="", return_code=0
+    ):
+        return [Call(
+            "sbd -d {0} message {1} {2}".format(device, node, message),
+            stderr=stderr,
+            returncode=return_code
+        )]
+
+    def test_empty_options(self):
+        assert_raise_library_error(
+            lambda: cmd_sbd.set_message(self.env, "", "", ""),
+            (
+                Severities.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {
+                    "option_names": ["device", "node"],
+                    "option_type": None,
+                }
+            ),
+            (
+                Severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "message",
+                    "option_value": "",
+                    "allowed_values": settings.sbd_message_types,
+                }
+            )
+        )
+
+    def test_invalid_message_type(self):
+        assert_raise_library_error(
+            lambda: cmd_sbd.set_message(self.env, "device", "node1", "message"),
+            (
+                Severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "message",
+                    "option_value": "message",
+                    "allowed_values": settings.sbd_message_types,
+                }
+            )
+        )
+
+    def test_success(self):
+        runner.set_runs(self.fixture_call_sbd_message("device", "node", "test"))
+        cmd_sbd.set_message(self.env, "device", "node", "test")
+        runner.assert_everything_launched()
+
+    def test_failuer(self):
+        runner.set_runs(
+            self.fixture_call_sbd_message("device", "node", "test", "error", 1)
+        )
+        assert_raise_library_error(
+            lambda: cmd_sbd.set_message(self.env, "device", "node", "test"),
+            (
+                Severities.ERROR,
+                report_codes.SBD_DEVICE_MESSAGE_ERROR,
+                {
+                    "device": "device",
+                    "node": "node",
+                    "message": "test",
+                    "reason": "error",
+                }
+            )
+        )
+        runner.assert_everything_launched()
+

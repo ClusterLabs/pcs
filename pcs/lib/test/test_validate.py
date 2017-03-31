@@ -108,6 +108,129 @@ class IsRequired(TestCase):
             ]
         )
 
+
+class ValueCondTest(TestCase):
+    def setUp(self):
+        self.predicate = lambda a: a == "b"
+
+    def test_returns_empty_report_on_valid_option(self):
+        self.assertEqual(
+            [],
+            validate.value_cond("a", self.predicate, "test")({"a": "b"})
+        )
+
+    def test_returns_empty_report_on_valid_normalized_option(self):
+        self.assertEqual(
+            [],
+            validate.value_cond("a", self.predicate, "test")(
+                {"a": validate.ValuePair(original="C", normalized="b")}
+            ),
+        )
+
+    def test_returns_report_about_invalid_option(self):
+        assert_report_item_list_equal(
+            validate.value_cond("a", self.predicate, "test")({"a": "c"}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": "test",
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_support_OptionValuePair(self):
+        assert_report_item_list_equal(
+            validate.value_cond("a", self.predicate, "test")(
+                {"a": validate.ValuePair(original="b", normalized="c")}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "b",
+                        "allowed_values": "test",
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_supports_another_report_option_name(self):
+        assert_report_item_list_equal(
+            validate.value_cond(
+                "a", self.predicate, "test", option_name_for_report="option a"
+            )(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "option a",
+                        "option_value": "c",
+                        "allowed_values": "test",
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_supports_forceable_errors(self):
+        assert_report_item_list_equal(
+            validate.value_cond(
+                "a", self.predicate, "test", code_to_allow_extra_values="FORCE"
+            )(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": "test",
+                    },
+                    "FORCE"
+                ),
+            ]
+        )
+
+    def test_supports_warning(self):
+        assert_report_item_list_equal(
+            validate.value_cond(
+                "a",
+                self.predicate,
+                "test",
+                code_to_allow_extra_values="FORCE",
+                allow_extra_values=True
+            )(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": "test",
+                    },
+                    None
+                ),
+            ]
+        )
+
+
 class ValueIn(TestCase):
     def test_returns_empty_report_on_valid_option(self):
         self.assertEqual(
@@ -380,3 +503,42 @@ class NamesIn(TestCase):
                 )
             ]
         )
+
+
+class IsNonnegativeIntgerTest(TestCase):
+    def test_0(self):
+        self.assertTrue(validate.is_nonnegative_integer(0))
+
+    def test_0_string(self):
+        self.assertTrue(validate.is_nonnegative_integer("0"))
+
+    def test_empty_string(self):
+        self.assertFalse(validate.is_nonnegative_integer(""))
+
+    def test_1_string(self):
+        self.assertTrue(validate.is_nonnegative_integer("1"))
+
+    def test_1(self):
+        self.assertTrue(validate.is_nonnegative_integer(1))
+
+    def test_float_0(self):
+        self.assertFalse(validate.is_nonnegative_integer(0.0))
+
+    def test_float(self):
+        self.assertFalse(validate.is_nonnegative_integer(0.1))
+
+    def test_float_string(self):
+        self.assertFalse(validate.is_nonnegative_integer("1.0"))
+
+    def test_negative_int(self):
+        self.assertFalse(validate.is_nonnegative_integer(-1))
+
+    def test_negative_int_string(self):
+        self.assertFalse(validate.is_nonnegative_integer("-1"))
+
+    def test_negative_float(self):
+        self.assertFalse(validate.is_nonnegative_integer(-0.1))
+
+    def test_negative_float_string(self):
+        self.assertFalse(validate.is_nonnegative_integer("-0.1"))
+

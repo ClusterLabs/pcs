@@ -33,6 +33,12 @@ from pcs.lib.node import (
     NodeAddressesList,
     NodeNotFound
 )
+from pcs.lib.validate import (
+    is_nonnegative_integer,
+    names_in,
+    run_collection_of_option_validators,
+    value_cond,
+)
 
 
 def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
@@ -46,7 +52,7 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
 
     report_item_list = []
     unsupported_sbd_option_list = [
-        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"
+        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
     ]
     allowed_sbd_options = [
         "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
@@ -80,38 +86,89 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     return report_item_list
 
 
-def _get_full_watchdog_list(node_list, default_watchdog, watchdog_dict):
+def _validate_watchdog_dict(watchdog_dict):
     """
-    Validate if all nodes in watchdog_dict does exist and returns dictionary
-    where keys are nodes and value is corresponding watchdog.
-    Raises LibraryError if any of nodes doesn't belong to cluster.
+    Validates if all watchdogs are specified by absolute path.
+    Returns list of ReportItem.
+
+    watchdog_dict -- dictionary with NodeAddresses as keys and value as watchdog
+    """
+    return [
+        reports.invalid_watchdog_path(watchdog)
+        for watchdog in watchdog_dict.values()
+        if not watchdog or not os.path.isabs(watchdog)
+    ]
+
+
+def _validate_device_dict(node_device_dict):
+    """
+    Validates device list for all nodes. If node is present, it checks if there
+    is at least one device and at max settings.sbd_max_device_num. Also devices
+    have to be specified with absolute path.
+    Returns list of ReportItem
+
+    node_device_dict -- dictionary with NodeAddresses as keys and list of
+        devices as values
+    """
+    report_item_list = []
+    for node, device_list in node_device_dict.items():
+        if not device_list:
+            report_item_list.append(
+                reports.sbd_no_device_for_node(node.label)
+            )
+            continue
+        elif len(device_list) > settings.sbd_max_device_num:
+            report_item_list.append(reports.sbd_too_many_devices_for_node(
+                node.label, device_list, settings.sbd_max_device_num
+            ))
+            continue
+        for device in device_list:
+            if not device or not os.path.isabs(device):
+                report_item_list.append(
+                    reports.sbd_device_path_not_absolute(device, node.label)
+                )
+
+    return report_item_list
+
+
+def _check_node_names_in_cluster(node_list, node_name_list):
+    """
+    Check whenever all node names from node_name_list exists in node_list.
+    Returns list of ReportItem
 
     node_list -- NodeAddressesList
-    default_watchdog -- watchdog for nodes which are not specified
-        in watchdog_dict
-    watchdog_dict -- dictionary with node names as keys and value as watchdog
+    node_name_list -- list of stings
     """
-    full_dict = dict([(node, default_watchdog) for node in node_list])
-    report_item_list = []
-
-    for node_name, watchdog in watchdog_dict.items():
-        if not watchdog or not os.path.isabs(watchdog):
-            report_item_list.append(reports.invalid_watchdog_path(watchdog))
-            continue
+    not_existing_node_set = set()
+    for node_name in node_name_list:
         try:
-            full_dict[node_list.find_by_label(node_name)] = watchdog
+            node_list.find_by_label(node_name)
         except NodeNotFound:
-            report_item_list.append(reports.node_not_found(node_name))
+            not_existing_node_set.add(node_name)
 
-    if report_item_list:
-        raise LibraryError(*report_item_list)
+    return [reports.node_not_found(node) for node in not_existing_node_set]
 
-    return full_dict
+
+def _get_full_node_dict(node_list, node_value_dict, default_value):
+    """
+    Returns dictionary where keys NodeAdressesof all nodes in cluster and value
+    is obtained from node_value_dict for node name, or default+value if node
+    nade is not specified in node_value_dict.
+
+    node_list -- NodeAddressesList
+    node_value_dict -- dictionary, keys: node names, values: some velue
+    default_value -- some default value
+     """
+    return dict([
+        (node, node_value_dict.get(node.label, default_value))
+        for node in node_list
+    ])
 
 
 def enable_sbd(
-        lib_env, default_watchdog, watchdog_dict, sbd_options,
-        allow_unknown_opts=False, ignore_offline_nodes=False
+    lib_env, default_watchdog, watchdog_dict, sbd_options,
+    default_device_list=None, node_device_dict=None, allow_unknown_opts=False,
+    ignore_offline_nodes=False,
 ):
     """
     Enable SBD on all nodes in cluster.
@@ -119,44 +176,64 @@ def enable_sbd(
     lib_env -- LibraryEnvironment
     default_watchdog -- watchdog for nodes which are not specified in
         watchdog_dict. Uses default value from settings if None.
-    watchdog_dict -- dictionary with NodeAddresses as keys and watchdog path
+    watchdog_dict -- dictionary with node names as keys and watchdog path
         as value
     sbd_options -- dictionary in format: <SBD config option>: <value>
+    default_device_list -- list of devices for all nodes
+    node_device_dict -- dictionary with node names as keys and list of devices
+        as value
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
     """
     node_list = _get_cluster_nodes(lib_env)
-
+    using_devices = not (
+        default_device_list is None and node_device_dict is None
+    )
+    if default_device_list is None:
+        default_device_list = []
+    if node_device_dict is None:
+        node_device_dict = {}
     if not default_watchdog:
         default_watchdog = settings.sbd_watchdog_default
+    sbd_options = dict([(opt.upper(), val) for opt, val in sbd_options.items()])
 
-    # input validation begin
-    full_watchdog_dict = _get_full_watchdog_list(
-        node_list, default_watchdog, watchdog_dict
+    full_watchdog_dict = _get_full_node_dict(
+        node_list, watchdog_dict, default_watchdog
+    )
+    full_device_dict = _get_full_node_dict(
+        node_list, node_device_dict, default_device_list
     )
 
-    # config validation
-    sbd_options = dict([(opt.upper(), val) for opt, val in sbd_options.items()])
     lib_env.report_processor.process_list(
+        _check_node_names_in_cluster(
+            node_list, watchdog_dict.keys() + node_device_dict.keys()
+        )
+        +
+        _validate_watchdog_dict(full_watchdog_dict)
+        +
+        _validate_device_dict(full_device_dict) if using_devices else []
+        +
         _validate_sbd_options(sbd_options, allow_unknown_opts)
     )
 
-    # check nodes status
     online_nodes = _get_online_nodes(lib_env, node_list, ignore_offline_nodes)
-    for node in list(full_watchdog_dict):
-        if node not in online_nodes:
-            full_watchdog_dict.pop(node, None)
-    # input validation end
+
+    node_data_dict = {}
+    for node in online_nodes:
+        node_data_dict[node] = {
+            "watchdog": full_watchdog_dict[node],
+            "device_list": full_device_dict[node] if using_devices else [],
+        }
 
     # check if SBD can be enabled
     sbd.check_sbd_on_all_nodes(
         lib_env.report_processor,
         lib_env.node_communicator(),
-        full_watchdog_dict
+        node_data_dict,
     )
 
     # enable ATB if needed
-    if not lib_env.is_cman_cluster:
+    if not lib_env.is_cman_cluster and not using_devices:
         corosync_conf = lib_env.get_corosync_conf()
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.process(reports.sbd_requires_atb())
@@ -173,7 +250,8 @@ def enable_sbd(
         lib_env.node_communicator(),
         online_nodes,
         config,
-        full_watchdog_dict
+        full_watchdog_dict,
+        full_device_dict,
     )
 
     # remove cluster prop 'stonith_watchdog_timeout'
@@ -280,9 +358,11 @@ def get_cluster_sbd_status(lib_env):
     def get_sbd_status(node):
         try:
             status_list.append({
-                "node": node,
+                "node": node.label,
                 "status": json.loads(
-                    sbd.check_sbd(lib_env.node_communicator(), node, "")
+                    # here we just need info about sbd service,
+                    # therefore watchdog and device list is empty
+                    sbd.check_sbd(lib_env.node_communicator(), node, "", [])
                 )["sbd"]
             })
             successful_node_list.append(node)
@@ -307,7 +387,7 @@ def get_cluster_sbd_status(lib_env):
     for node in node_list:
         if node not in successful_node_list:
             status_list.append({
-                "node": node,
+                "node": node.label,
                 "status": {
                     "installed": None,
                     "enabled": None,
@@ -341,7 +421,7 @@ def get_cluster_sbd_config(lib_env):
     def get_sbd_config(node):
         try:
             config_list.append({
-                "node": node,
+                "node": node.label,
                 "config": environment_file_to_dict(
                     sbd.get_sbd_config(lib_env.node_communicator(), node)
                 )
@@ -373,13 +453,18 @@ def get_cluster_sbd_config(lib_env):
     for node in node_list:
         if node not in successful_node_list:
             config_list.append({
-                "node": node,
+                "node": node.label,
                 "config": None
             })
     return config_list
 
 
 def get_local_sbd_config(lib_env):
+    """
+    Returns local SBD config as dictionary.
+
+    lib_env -- LibraryEnvironment
+    """
     return environment_file_to_dict(sbd.get_local_sbd_config())
 
 
@@ -388,4 +473,102 @@ def _get_cluster_nodes(lib_env):
         return lib_env.get_cluster_conf().get_nodes()
     else:
         return lib_env.get_corosync_conf().get_nodes()
+
+
+def initialize_block_devices(lib_env, device_list, option_dict):
+    """
+    Initialize SBD devices in device_list with options_dict.
+
+    lib_env -- LibraryEnvironment
+    device_list -- list of strings
+    option_dict -- dictionary
+    """
+    report_item_list = []
+    if not device_list:
+        report_item_list.append(reports.required_option_is_missing(["device"]))
+
+    supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
+
+    report_item_list += names_in(supported_options, option_dict.keys())
+    validator_list = [
+        value_cond(key, is_nonnegative_integer, "nonnegative integer")
+        for key in supported_options
+    ]
+
+    report_item_list += run_collection_of_option_validators(
+        option_dict, validator_list
+    )
+
+    lib_env.report_processor.process_list(report_item_list)
+    sbd.initialize_block_devices(
+        lib_env.report_processor, lib_env.cmd_runner(), device_list, option_dict
+    )
+
+
+def get_local_devices_info(lib_env, dump=False):
+    """
+    Returns list of local devices info in format:
+    {
+        "device": <device_path>,
+        "list": <output of 'sbd list' command>,
+        "dump": <output of 'sbd dump' command> if dump is True, None otherwise
+    }
+
+    lib_env -- LibraryEnvironment
+    dump -- if True returns also output of command 'sbd dump'
+    """
+    device_list = sbd.get_local_sbd_device_list()
+    report_item_list = []
+    output = []
+    for device in device_list:
+        obj = {
+            "device": device,
+            "list": None,
+            "dump": None,
+        }
+        try:
+            obj["list"] = sbd.get_device_messages_info(
+                lib_env.cmd_runner(), device
+            )
+            if dump:
+                obj["dump"] = sbd.get_device_sbd_header_dump(
+                    lib_env.cmd_runner(), device
+                )
+        except LibraryError as e:
+            report_item_list += e.args
+
+        output.append(obj)
+
+    for report_item in report_item_list:
+        report_item.severity = Severities.WARNING
+    lib_env.report_processor.process_list(report_item_list)
+    return output
+
+
+def set_message(lib_env, device, node_name, message):
+    """
+    Set message on device for node_name.
+
+    lib_env -- LibrayEnvironment
+    device -- string, absolute path to device
+    node_name -- string
+    message -- string, mesage type, should be one of settings.sbd_message_types
+    """
+    report_item_list = []
+    missing_options = []
+    if not device:
+        missing_options.append("device")
+    if not node_name:
+        missing_options.append("node")
+    if missing_options:
+        report_item_list.append(
+            reports.required_option_is_missing(missing_options)
+        )
+    supported_messages = settings.sbd_message_types
+    if message not in supported_messages:
+        report_item_list.append(
+            reports.invalid_option_value("message", message, supported_messages)
+        )
+    lib_env.report_processor.process_list(report_item_list)
+    sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
 

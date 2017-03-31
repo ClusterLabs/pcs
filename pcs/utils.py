@@ -2842,6 +2842,7 @@ def get_modificators():
         "before": pcs_options.get("--before", None),
         "corosync_conf": pcs_options.get("--corosync_conf", None),
         "describe": "--nodesc" not in pcs_options,
+        "device": pcs_options.get("--device", []),
         "disabled": "--disabled" in pcs_options,
         "enable": "--enable" in pcs_options,
         "force": "--force" in pcs_options,

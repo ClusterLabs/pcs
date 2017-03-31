@@ -39,8 +39,13 @@ pcsd_exec_location = "/usr/lib/pcsd/"
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"
+sbd_binary = "/usr/sbin/sbd"
 sbd_watchdog_default = "/dev/watchdog"
 sbd_config = "/etc/sysconfig/sbd"
+# this limit is also mentioned in docs, change there as well
+sbd_max_device_num = 3
+# message types are also mentioned in docs, change there as well
+sbd_message_types = ["test", "reset", "off", "crashdump", "exit", "clear"]
 pacemaker_wait_timeout_status = 62
 booth_config_dir = "/etc/booth"
 booth_binary = "/usr/sbin/booth"

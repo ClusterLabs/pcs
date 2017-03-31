@@ -78,12 +78,12 @@ def main(argv=None):
     argv = parse_args.filter_out_options(argv)
     for o, a in pcs_options:
         if not o in utils.pcs_options:
-            if o == "--watchdog":
+            if o in ["--watchdog", "--device"]:
                 a = [a]
             utils.pcs_options[o] = a
         else:
             # If any options are a list then they've been entered twice which isn't valid
-            if o != "--watchdog":
+            if o not in ["--watchdog", "--device"]:
                 utils.err("%s can only be used once" % o)
             else:
                 utils.pcs_options[o].append(a)
