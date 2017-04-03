@@ -79,19 +79,6 @@ normalize = validate.option_value_normalization({
     "enabled": lambda value: value.lower(),
 })
 
-OPERATION_OPTIONS_VALIDATORS = [
-    validate.is_required("name", "resource operation"),
-    validate.value_in("role", ROLE_VALUES),
-    validate.value_in("requires", REQUIRES_VALUES),
-    validate.value_in("on-fail", ON_FAIL_VALUES),
-    validate.value_in("record-pending", BOOLEAN_VALUES),
-    validate.value_in("enabled", BOOLEAN_VALUES),
-    validate.mutually_exclusive(
-        ["interval-origin", "start-delay"],
-        "resource operation"
-    )
-]
-
 def prepare(
     report_processor, raw_operation_list, default_operation_list,
     allowed_operation_name_list, allow_invalid=False
@@ -107,29 +94,18 @@ def prepare(
         (most probably) resource agent
     bool allow_invalid is flag for validation skipping
     """
-    operations_to_validate = [
-        validate.values_to_pairs(op, normalize) for op in raw_operation_list
-    ]
+    operations_to_validate = operations_to_normalized(raw_operation_list)
 
     report_list = []
-
-    options_validators = OPERATION_OPTIONS_VALIDATORS + [
-        validate.value_in(
-            "name",
+    report_list.extend(
+        validate_operation_list(
+            operations_to_validate,
             allowed_operation_name_list,
-            option_name_for_report="operation name",
-            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            allow_extra_values=allow_invalid,
+            allow_invalid
         )
-    ]
-    for operation in operations_to_validate:
-        report_list.extend(
-            validate_operation(operation, options_validators)
-        )
+    )
 
-    operation_list = [
-        validate.pairs_to_values(op) for op in operations_to_validate
-    ]
+    operation_list = normalized_to_operations(operations_to_validate)
 
     report_list.extend(validate_different_intervals(operation_list))
 
@@ -141,6 +117,45 @@ def prepare(
         operation_list,
         default_operation_list
     )
+
+def operations_to_normalized(raw_operation_list):
+    return [
+        validate.values_to_pairs(op, normalize) for op in raw_operation_list
+    ]
+
+def normalized_to_operations(normalized_pairs):
+    return [
+        validate.pairs_to_values(op) for op in normalized_pairs
+    ]
+
+def validate_operation_list(
+    operation_list, allowed_operation_name_list, allow_invalid=False
+):
+    options_validators = [
+        validate.is_required("name", "resource operation"),
+        validate.value_in("role", ROLE_VALUES),
+        validate.value_in("requires", REQUIRES_VALUES),
+        validate.value_in("on-fail", ON_FAIL_VALUES),
+        validate.value_in("record-pending", BOOLEAN_VALUES),
+        validate.value_in("enabled", BOOLEAN_VALUES),
+        validate.mutually_exclusive(
+            ["interval-origin", "start-delay"],
+            "resource operation"
+        ),
+        validate.value_in(
+            "name",
+            allowed_operation_name_list,
+            option_name_for_report="operation name",
+            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
+            allow_extra_values=allow_invalid,
+        ),
+    ]
+    report_list = []
+    for operation in operation_list:
+        report_list.extend(
+            validate_operation(operation, options_validators)
+        )
+    return report_list
 
 def validate_operation(operation, options_validator_list):
     """

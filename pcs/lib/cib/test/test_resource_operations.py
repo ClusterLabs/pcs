@@ -11,38 +11,44 @@ from lxml import etree
 from pcs.common import report_codes
 from pcs.lib.cib.resource import operations
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.validate import ValuePair
 from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import TestCase, mock
-from pcs.lib.validate import ValuePair
 
 
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
-@patch_operations("OPERATION_OPTIONS_VALIDATORS", [])
 @patch_operations("get_remaining_defaults")
 @patch_operations("complete_all_intervals")
 @patch_operations("validate_different_intervals")
-@patch_operations("validate.value_in")
-@patch_operations("validate_operation")
+@patch_operations("validate_operation_list")
+@patch_operations("normalized_to_operations")
+@patch_operations("operations_to_normalized")
 class Prepare(TestCase):
     def test_prepare(
-        self, validate_operation, validate_value_in,
-        validate_different_intervals, complete_all_intervals,
-        get_remaining_defaults
+        self, operations_to_normalized, normalized_to_operations,
+        validate_operation_list, validate_different_intervals,
+        complete_all_intervals, get_remaining_defaults
     ):
-        validate_operation.side_effect = lambda operation, validator_list: [
-            operation["name"].normalized #values comes here in ValuePairs
+        validate_operation_list.return_value = ["options_report"]
+        validate_different_intervals.return_value = [
+            "different_interval_report"
         ]
-        validate_value_in.return_value = "value_in"
-        validate_different_intervals.return_value = ["different_interval"]
-
+        operations_to_normalized.return_value = [
+            {"name": ValuePair("Start", "start")},
+            {"name": ValuePair("Monitor", "monitor")},
+        ]
+        normalized_to_operations.return_value = [
+            {"name": "start"},
+            {"name": "monitor"},
+        ]
 
         report_processor = mock.MagicMock()
         raw_operation_list = [
-            {"name": "start"},
-            {"name": "monitor"},
+            {"name": "Start"},
+            {"name": "Monitor"},
         ]
         default_operation_list = [
             {"name": "stop"},
@@ -58,32 +64,31 @@ class Prepare(TestCase):
             allow_invalid,
         )
 
-        validate_value_in.assert_called_once_with(
-            "name",
+        operations_to_normalized.assert_called_once_with(raw_operation_list)
+        normalized_to_operations.assert_called_once_with(
+            operations_to_normalized.return_value
+        )
+        validate_operation_list.assert_called_once_with(
+            operations_to_normalized.return_value,
             allowed_operation_name_list,
-            option_name_for_report="operation name",
-            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            allow_extra_values=allow_invalid,
+            allow_invalid
         )
-
-        validate_different_intervals.assert_called_once_with(raw_operation_list)
+        validate_different_intervals.assert_called_once_with(
+            normalized_to_operations.return_value
+        )
+        complete_all_intervals.assert_called_once_with(
+            normalized_to_operations.return_value
+        )
+        get_remaining_defaults.assert_called_once_with(
+            report_processor,
+            normalized_to_operations.return_value,
+            default_operation_list
+        )
         report_processor.process_list.assert_called_once_with([
-            "start",
-            "monitor",
-            "different_interval",
+            "options_report",
+            "different_interval_report",
         ])
-        validate_operation.assert_has_calls(
-            [
-                mock.call(
-                    {"name": ValuePair("monitor", "monitor")},
-                    ["value_in"]
-                ),
-                mock.call({"name": ValuePair("start", "start")}, ["value_in"]),
-            ],
-            any_order=True
-        )
 
-        complete_all_intervals.assert_called_once_with(raw_operation_list)
 
 class ValidateDifferentIntervals(TestCase):
     def test_return_empty_reports_on_empty_list(self):
@@ -230,9 +235,9 @@ class Normalize(TestCase):
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
         assert_report_item_list_equal(
-            operations.validate_operation(
-                operation,
-                operations.OPERATION_OPTIONS_VALIDATORS
+            operations.validate_operation_list(
+                [operation],
+                ["monitor"],
             ),
             report_list
         )
@@ -240,7 +245,7 @@ class ValidateOperation(TestCase):
     def test_return_empty_report_on_valid_operation(self):
         self.assert_operation_produces_report(
             {
-                "name": "monitoring",
+                "name": "monitor",
                 "role": "Master"
             },
             []
@@ -249,7 +254,7 @@ class ValidateOperation(TestCase):
     def test_validate_all_individual_options(self):
         self.assertEqual(
             ["REQUIRES REPORT", "ROLE REPORT"],
-            sorted(operations.validate_operation({"name": "monitoring"}, [
+            sorted(operations.validate_operation({"name": "monitor"}, [
                 mock.Mock(return_value=["ROLE REPORT"]),
                 mock.Mock(return_value=["REQUIRES REPORT"]),
             ]))
@@ -258,7 +263,7 @@ class ValidateOperation(TestCase):
     def test_return_error_when_unknown_operation_attribute(self):
         self.assert_operation_produces_report(
             {
-                "name": "monitoring",
+                "name": "monitor",
                 "unknown": "invalid",
             },
             [
