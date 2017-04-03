@@ -505,6 +505,55 @@ class NamesIn(TestCase):
         )
 
 
+class IsInteger(TestCase):
+    def test_no_range(self):
+        self.assertTrue(validate.is_integer(1))
+        self.assertTrue(validate.is_integer("1"))
+        self.assertTrue(validate.is_integer(-1))
+        self.assertTrue(validate.is_integer("-1"))
+        self.assertTrue(validate.is_integer(+1))
+        self.assertTrue(validate.is_integer("+1"))
+        self.assertTrue(validate.is_integer(" 1"))
+        self.assertTrue(validate.is_integer("-1 "))
+        self.assertTrue(validate.is_integer("+1 "))
+
+        self.assertFalse(validate.is_integer(""))
+        self.assertFalse(validate.is_integer("1a"))
+        self.assertFalse(validate.is_integer("a1"))
+        self.assertFalse(validate.is_integer("aaa"))
+        self.assertFalse(validate.is_integer(1.0))
+        self.assertFalse(validate.is_integer("1.0"))
+
+    def test_at_least(self):
+        self.assertTrue(validate.is_integer(5, 5))
+        self.assertTrue(validate.is_integer(5, 4))
+        self.assertTrue(validate.is_integer("5", 5))
+        self.assertTrue(validate.is_integer("5", 4))
+
+        self.assertFalse(validate.is_integer(5, 6))
+        self.assertFalse(validate.is_integer("5", 6))
+
+    def test_at_most(self):
+        self.assertTrue(validate.is_integer(5, None, 5))
+        self.assertTrue(validate.is_integer(5, None, 6))
+        self.assertTrue(validate.is_integer("5", None, 5))
+        self.assertTrue(validate.is_integer("5", None, 6))
+
+        self.assertFalse(validate.is_integer(5, None, 4))
+        self.assertFalse(validate.is_integer("5", None, 4))
+
+    def test_range(self):
+        self.assertTrue(validate.is_integer(5, 5, 5))
+        self.assertTrue(validate.is_integer(5, 4, 6))
+        self.assertTrue(validate.is_integer("5", 5, 5))
+        self.assertTrue(validate.is_integer("5", 4, 6))
+
+        self.assertFalse(validate.is_integer(3, 4, 6))
+        self.assertFalse(validate.is_integer(7, 4, 6))
+        self.assertFalse(validate.is_integer("3", 4, 6))
+        self.assertFalse(validate.is_integer("7", 4, 6))
+
+
 class IsNonnegativeIntgerTest(TestCase):
     def test_0(self):
         self.assertTrue(validate.is_nonnegative_integer(0))

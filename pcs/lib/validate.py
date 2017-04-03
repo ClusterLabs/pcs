@@ -160,7 +160,6 @@ def value_cond(
         return []
     return validate
 
-
 def value_in(
     option_name, allowed_values, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
@@ -187,7 +186,6 @@ def value_in(
         code_to_allow_extra_values=code_to_allow_extra_values,
         allow_extra_values=allow_extra_values,
     )
-
 
 def mutually_exclusive(mutually_exclusive_names, option_type="option"):
     """
@@ -258,18 +256,28 @@ def names_in(
         option_type,
     )]
 
-
-def is_nonnegative_integer(value):
+def is_integer(value, at_least=None, at_most=None):
     """
-    Check whenever specified value is non-negative integer.
-    Returns True if value is nonnegative integer, False otherwise.
+    Check if the specified value is an integer, optionally check a range
 
     value -- string, int or float, value to check
     """
     try:
-        if isinstance(value, float) or int(value) < 0:
+        if isinstance(value, float):
+            return False
+        value_int = int(value)
+        if at_least is not None and value_int < at_least:
+            return False
+        if at_most is not None and value_int > at_most:
             return False
     except ValueError:
         return False
     return True
 
+def is_nonnegative_integer(value):
+    """
+    Check whenever specified value is non-negative integer.
+
+    value -- string, int or float, value to check
+    """
+    return is_integer(value, 0)
