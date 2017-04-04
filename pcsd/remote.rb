@@ -805,6 +805,12 @@ def remote_node_available(params, request, auth_user)
       :pacemaker_remote => true,
     })
   end
+  if pacemaker_running?()
+    return JSON.generate({
+      :node_available => true,
+      :pacemaker_running => true,
+    })
+  end
   return JSON.generate({:node_available => true})
 end
 
