@@ -5,21 +5,14 @@ from __future__ import (
     unicode_literals,
 )
 
-import logging
-
 from pcs.common import report_codes
 from pcs.lib.commands import resource
+from pcs.lib.commands.test.resource.common import ResourceWithStateTest
 import pcs.lib.commands.test.resource.fixture as fixture
-from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.integration_lib import Runner
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import  outdent
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
-
-runner = Runner()
 
 fixture_primitive_cib_enabled = """
     <resources>
@@ -451,15 +444,6 @@ fixture_clone_group_status_unmanaged = """
     </resources>
 """
 
-def fixture_calls_cib_and_status(cib_pre, status, cib_post):
-    return (
-        fixture.call_cib_load(fixture.cib_resources(cib_pre))
-        +
-        fixture.call_status(fixture.state_complete(status))
-        +
-        fixture.call_cib_push(fixture.cib_resources(cib_post))
-    )
-
 def fixture_report_unmanaged(resource):
     return (
         severities.WARNING,
@@ -470,61 +454,10 @@ def fixture_report_unmanaged(resource):
         None
     )
 
-def fixture_report_resource_not_running(resource, severity=severities.INFO):
-    return (
-        severity,
-        report_codes.RESOURCE_DOES_NOT_RUN,
-        {
-            "resource_id": resource,
-        },
-        None
-    )
 
-def fixture_report_resource_running(resource, roles, severity=severities.INFO):
-    return (
-        severity,
-        report_codes.RESOURCE_RUNNING_ON_NODES,
-        {
-            "resource_id": resource,
-            "roles_with_nodes": roles,
-        },
-        None
-    )
-
-class CommonResourceTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.patcher = mock.patch.object(
-            LibraryEnvironment,
-            "cmd_runner",
-            lambda self: runner
-        )
-        cls.patcher.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.patcher.stop()
-
-    def setUp(self):
-        self.env = LibraryEnvironment(
-            mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
-        )
-
-    def assert_command_effect(
-        self, cib_pre, status, cmd, cib_post, reports=None
-    ):
-        runner.set_runs(
-            fixture_calls_cib_and_status(cib_pre, status, cib_post)
-        )
-        cmd()
-        self.env.report_processor.assert_reports(reports if reports else [])
-        runner.assert_everything_launched()
-
-
-class DisablePrimitive(CommonResourceTest):
+class DisablePrimitive(ResourceWithStateTest):
     def test_nonexistent_resource(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_primitive_cib_enabled)
             )
@@ -534,10 +467,10 @@ class DisablePrimitive(CommonResourceTest):
             lambda: resource.disable(self.env, ["B"], False),
             fixture.report_not_found("B", "resources")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_nonexistent_resource_in_status(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_two_primitives_cib_enabled)
             )
@@ -551,7 +484,7 @@ class DisablePrimitive(CommonResourceTest):
             lambda: resource.disable(self.env, ["B"], False),
             fixture.report_not_found("B")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_correct_resource(self):
         self.assert_command_effect(
@@ -576,9 +509,9 @@ class DisablePrimitive(CommonResourceTest):
         )
 
 
-class EnablePrimitive(CommonResourceTest):
+class EnablePrimitive(ResourceWithStateTest):
     def test_nonexistent_resource(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_primitive_cib_disabled)
             )
@@ -588,10 +521,10 @@ class EnablePrimitive(CommonResourceTest):
             lambda: resource.enable(self.env, ["B"], False),
             fixture.report_not_found("B", "resources")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_nonexistent_resource_in_status(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_two_primitives_cib_disabled)
             )
@@ -605,7 +538,7 @@ class EnablePrimitive(CommonResourceTest):
             lambda: resource.enable(self.env, ["B"], False),
             fixture.report_not_found("B")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_correct_resource(self):
         self.assert_command_effect(
@@ -630,7 +563,7 @@ class EnablePrimitive(CommonResourceTest):
         )
 
 
-class MoreResources(CommonResourceTest):
+class MoreResources(ResourceWithStateTest):
     fixture_cib_enabled = """
         <resources>
             <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -744,7 +677,7 @@ class MoreResources(CommonResourceTest):
         )
 
     def test_bad_resource_enable(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(self.fixture_cib_disabled)
             )
@@ -755,10 +688,10 @@ class MoreResources(CommonResourceTest):
             fixture.report_not_found("X", "resources"),
             fixture.report_not_found("Y", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_bad_resource_disable(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(self.fixture_cib_enabled)
             )
@@ -769,10 +702,10 @@ class MoreResources(CommonResourceTest):
             fixture.report_not_found("X", "resources"),
             fixture.report_not_found("Y", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
 
-class Wait(CommonResourceTest):
+class Wait(ResourceWithStateTest):
     fixture_status_running = """
         <resources>
             <resource id="A" managed="true" role="Started">
@@ -808,7 +741,7 @@ class Wait(CommonResourceTest):
     )
 
     def test_enable_dont_wait_on_error(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
             fixture.call_cib_load(
@@ -820,10 +753,10 @@ class Wait(CommonResourceTest):
             lambda: resource.enable(self.env, ["B"], 10),
             fixture.report_not_found("B", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_disable_dont_wait_on_error(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
             fixture.call_cib_load(
@@ -835,13 +768,13 @@ class Wait(CommonResourceTest):
             lambda: resource.disable(self.env, ["B"], 10),
             fixture.report_not_found("B", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_enable_resource_stopped(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_two_primitives_cib_disabled_both,
                 self.fixture_status_stopped,
                 fixture_two_primitives_cib_enabled
@@ -856,16 +789,16 @@ class Wait(CommonResourceTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["A", "B"], 10),
-            fixture_report_resource_not_running("A", severities.ERROR),
-            fixture_report_resource_not_running("B", severities.ERROR),
+            fixture.report_resource_not_running("A", severities.ERROR),
+            fixture.report_resource_not_running("B", severities.ERROR),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_disable_resource_stopped(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_two_primitives_cib_enabled,
                 self.fixture_status_running,
                 fixture_two_primitives_cib_disabled_both
@@ -880,16 +813,16 @@ class Wait(CommonResourceTest):
 
         resource.disable(self.env, ["A", "B"], 10)
         self.env.report_processor.assert_reports([
-            fixture_report_resource_not_running("A"),
-            fixture_report_resource_not_running("B"),
+            fixture.report_resource_not_running("A"),
+            fixture.report_resource_not_running("B"),
         ])
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_enable_resource_running(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_two_primitives_cib_disabled_both,
                 self.fixture_status_stopped,
                 fixture_two_primitives_cib_enabled
@@ -905,16 +838,16 @@ class Wait(CommonResourceTest):
         resource.enable(self.env, ["A", "B"], 10)
 
         self.env.report_processor.assert_reports([
-            fixture_report_resource_running("A", {"Started": ["node1"]}),
-            fixture_report_resource_running("B", {"Started": ["node2"]}),
+            fixture.report_resource_running("A", {"Started": ["node1"]}),
+            fixture.report_resource_running("B", {"Started": ["node2"]}),
         ])
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_disable_resource_running(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_two_primitives_cib_enabled,
                 self.fixture_status_running,
                 fixture_two_primitives_cib_disabled_both
@@ -929,20 +862,20 @@ class Wait(CommonResourceTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["A", "B"], 10),
-            fixture_report_resource_running(
+            fixture.report_resource_running(
                 "A", {"Started": ["node1"]}, severities.ERROR
             ),
-            fixture_report_resource_running(
+            fixture.report_resource_running(
                 "B", {"Started": ["node2"]}, severities.ERROR
             ),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_enable_wait_timeout(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_primitive_cib_disabled,
                 self.fixture_status_stopped,
                 fixture_primitive_cib_enabled
@@ -964,13 +897,13 @@ class Wait(CommonResourceTest):
                 None
             )
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_disable_wait_timeout(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_primitive_cib_enabled,
                 self.fixture_status_running,
                 fixture_primitive_cib_disabled
@@ -992,10 +925,10 @@ class Wait(CommonResourceTest):
                 None
             )
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
 
-class WaitClone(CommonResourceTest):
+class WaitClone(ResourceWithStateTest):
     fixture_status_running = """
         <resources>
             <clone id="A-clone" managed="true" multi_state="false" unique="false">
@@ -1019,10 +952,10 @@ class WaitClone(CommonResourceTest):
         </resources>
     """
     def test_disable_clone(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_clone_cib_enabled,
                 self.fixture_status_running,
                 fixture_clone_cib_disabled_clone
@@ -1046,13 +979,13 @@ class WaitClone(CommonResourceTest):
                 None
             )
         ])
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_enable_clone(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_wait_supported()
             +
-            fixture_calls_cib_and_status(
+            fixture.calls_cib_and_status(
                 fixture_clone_cib_disabled_clone,
                 self.fixture_status_stopped,
                 fixture_clone_cib_enabled
@@ -1078,10 +1011,10 @@ class WaitClone(CommonResourceTest):
                 None
             )
         ])
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
 
-class DisableGroup(CommonResourceTest):
+class DisableGroup(ResourceWithStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_group_cib_enabled,
@@ -1121,7 +1054,7 @@ class DisableGroup(CommonResourceTest):
         )
 
 
-class EnableGroup(CommonResourceTest):
+class EnableGroup(ResourceWithStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_group_cib_disabled_primitive,
@@ -1177,7 +1110,7 @@ class EnableGroup(CommonResourceTest):
         )
 
 
-class DisableClone(CommonResourceTest):
+class DisableClone(ResourceWithStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_cib_enabled,
@@ -1217,7 +1150,7 @@ class DisableClone(CommonResourceTest):
         )
 
 
-class EnableClone(CommonResourceTest):
+class EnableClone(ResourceWithStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_cib_disabled_primitive,
@@ -1275,7 +1208,7 @@ class EnableClone(CommonResourceTest):
         )
 
 
-class DisableMaster(CommonResourceTest):
+class DisableMaster(ResourceWithStateTest):
     # same as clone, minimum tests in here
     def test_primitive(self):
         self.assert_command_effect(
@@ -1294,7 +1227,7 @@ class DisableMaster(CommonResourceTest):
         )
 
 
-class EnableMaster(CommonResourceTest):
+class EnableMaster(ResourceWithStateTest):
     # same as clone, minimum tests in here
     def test_primitive(self):
         self.assert_command_effect(
@@ -1328,7 +1261,7 @@ class EnableMaster(CommonResourceTest):
             fixture_master_cib_enabled
         )
 
-class DisableClonedGroup(CommonResourceTest):
+class DisableClonedGroup(ResourceWithStateTest):
     def test_clone(self):
         self.assert_command_effect(
             fixture_clone_group_cib_enabled,
@@ -1387,7 +1320,7 @@ class DisableClonedGroup(CommonResourceTest):
         )
 
 
-class EnableClonedGroup(CommonResourceTest):
+class EnableClonedGroup(ResourceWithStateTest):
     def test_clone(self):
         self.assert_command_effect(
             fixture_clone_group_cib_disabled_clone,

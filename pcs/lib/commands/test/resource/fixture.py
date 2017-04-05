@@ -46,6 +46,23 @@ def call_wait(timeout, retval=0, stderr=""):
         ),
     ]
 
+def calls_cib(cib_pre, cib_post):
+    return (
+        call_cib_load(cib_resources(cib_pre))
+        +
+        call_cib_push(cib_resources(cib_post))
+    )
+
+def calls_cib_and_status(cib_pre, status, cib_post):
+    return (
+        call_cib_load(cib_resources(cib_pre))
+        +
+        call_status(state_complete(status))
+        +
+        call_cib_push(cib_resources(cib_post))
+    )
+
+
 
 def cib_resources(cib_resources_xml):
     cib_xml = open(rc("cib-empty.xml")).read()
@@ -98,6 +115,27 @@ def report_not_found(res_id, context_type=""):
             "context_id": "",
             "id": res_id,
             "id_description": "resource/clone/master/group",
+        },
+        None
+    )
+
+def report_resource_not_running(resource, severity=severities.INFO):
+    return (
+        severity,
+        report_codes.RESOURCE_DOES_NOT_RUN,
+        {
+            "resource_id": resource,
+        },
+        None
+    )
+
+def report_resource_running(resource, roles, severity=severities.INFO):
+    return (
+        severity,
+        report_codes.RESOURCE_RUNNING_ON_NODES,
+        {
+            "resource_id": resource,
+            "roles_with_nodes": roles,
         },
         None
     )

@@ -5,20 +5,14 @@ from __future__ import (
     unicode_literals,
 )
 
-import logging
 
 from pcs.common import report_codes
 from pcs.lib.commands import resource
+from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
 import pcs.lib.commands.test.resource.fixture as fixture
-from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.integration_lib import Runner
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
-
-runner = Runner()
 
 fixture_primitive_cib_managed = """
     <resources>
@@ -358,13 +352,6 @@ fixture_clone_group_cib_unmanaged_everything = """
     </resources>
 """
 
-def fixture_calls_cib(cib_pre, cib_post):
-    return (
-        fixture.call_cib_load(fixture.cib_resources(cib_pre))
-        +
-        fixture.call_cib_push(fixture.cib_resources(cib_post))
-    )
-
 def fixture_report_no_monitors(resource):
     return (
         severities.WARNING,
@@ -376,38 +363,9 @@ def fixture_report_no_monitors(resource):
     )
 
 
-class CommonResourceTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.patcher = mock.patch.object(
-            LibraryEnvironment,
-            "cmd_runner",
-            lambda self: runner
-        )
-        cls.patcher.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.patcher.stop()
-
-    def setUp(self):
-        self.env = LibraryEnvironment(
-            mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
-        )
-
-    def assert_command_effect(self, cib_pre, cmd, cib_post, reports=None):
-        runner.set_runs(
-            fixture_calls_cib(cib_pre, cib_post)
-        )
-        cmd()
-        self.env.report_processor.assert_reports(reports if reports else [])
-        runner.assert_everything_launched()
-
-
-class UnmanagePrimitive(CommonResourceTest):
+class UnmanagePrimitive(ResourceWithoutStateTest):
     def test_nonexistent_resource(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_primitive_cib_managed)
             )
@@ -417,7 +375,7 @@ class UnmanagePrimitive(CommonResourceTest):
             lambda: resource.unmanage(self.env, ["B"]),
             fixture.report_not_found("B", "resources")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_primitive(self):
         self.assert_command_effect(
@@ -434,9 +392,9 @@ class UnmanagePrimitive(CommonResourceTest):
         )
 
 
-class ManagePrimitive(CommonResourceTest):
+class ManagePrimitive(ResourceWithoutStateTest):
     def test_nonexistent_resource(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(fixture_primitive_cib_unmanaged)
             )
@@ -446,7 +404,7 @@ class ManagePrimitive(CommonResourceTest):
             lambda: resource.manage(self.env, ["B"]),
             fixture.report_not_found("B", "resources")
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_primitive(self):
         self.assert_command_effect(
@@ -463,7 +421,7 @@ class ManagePrimitive(CommonResourceTest):
         )
 
 
-class UnmanageGroup(CommonResourceTest):
+class UnmanageGroup(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_group_cib_managed,
@@ -479,7 +437,7 @@ class UnmanageGroup(CommonResourceTest):
         )
 
 
-class ManageGroup(CommonResourceTest):
+class ManageGroup(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_group_cib_unmanaged_all_resources,
@@ -509,7 +467,7 @@ class ManageGroup(CommonResourceTest):
         )
 
 
-class UnmanageClone(CommonResourceTest):
+class UnmanageClone(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_cib_managed,
@@ -525,7 +483,7 @@ class UnmanageClone(CommonResourceTest):
         )
 
 
-class ManageClone(CommonResourceTest):
+class ManageClone(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_cib_unmanaged_clone,
@@ -569,7 +527,7 @@ class ManageClone(CommonResourceTest):
         )
 
 
-class UnmanageMaster(CommonResourceTest):
+class UnmanageMaster(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_master_cib_managed,
@@ -585,7 +543,7 @@ class UnmanageMaster(CommonResourceTest):
         )
 
 
-class ManageMaster(CommonResourceTest):
+class ManageMaster(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_master_cib_unmanaged_master,
@@ -615,7 +573,7 @@ class ManageMaster(CommonResourceTest):
         )
 
 
-class UnmanageClonedGroup(CommonResourceTest):
+class UnmanageClonedGroup(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_group_cib_managed,
@@ -638,7 +596,7 @@ class UnmanageClonedGroup(CommonResourceTest):
         )
 
 
-class ManageClonedGroup(CommonResourceTest):
+class ManageClonedGroup(ResourceWithoutStateTest):
     def test_primitive(self):
         self.assert_command_effect(
             fixture_clone_group_cib_unmanaged_primitive,
@@ -682,7 +640,7 @@ class ManageClonedGroup(CommonResourceTest):
         )
 
 
-class MoreResources(CommonResourceTest):
+class MoreResources(ResourceWithoutStateTest):
     fixture_cib_managed = """
         <resources>
             <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -763,7 +721,7 @@ class MoreResources(CommonResourceTest):
         )
 
     def test_bad_resource_unmanage(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(self.fixture_cib_managed)
             )
@@ -774,10 +732,10 @@ class MoreResources(CommonResourceTest):
             fixture.report_not_found("X", "resources"),
             fixture.report_not_found("Y", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
     def test_bad_resource_enable(self):
-        runner.set_runs(
+        self.runner.set_runs(
             fixture.call_cib_load(
                 fixture.cib_resources(self.fixture_cib_unmanaged)
             )
@@ -788,10 +746,10 @@ class MoreResources(CommonResourceTest):
             fixture.report_not_found("X", "resources"),
             fixture.report_not_found("Y", "resources"),
         )
-        runner.assert_everything_launched()
+        self.runner.assert_everything_launched()
 
 
-class WithMonitor(CommonResourceTest):
+class WithMonitor(ResourceWithoutStateTest):
     def test_unmanage_noop(self):
         self.assert_command_effect(
             fixture_primitive_cib_managed,
