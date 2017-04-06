@@ -820,3 +820,139 @@ class PrerequisiteOptionIsMissing(NameBuildTest):
                 "prerequisite_type": "other",
             }
         )
+
+class FileDistributionStarted(NameBuildTest):
+    code = codes.FILES_DISTRIBUTION_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Sending 'first', 'second'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": None
+            }
+        )
+
+    def test_build_messages_with_nodes(self):
+        self.assert_message_from_info(
+            "Sending 'first', 'second' to 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+            }
+        )
+
+class FileDistributionSucess(NameBuildTest):
+    code = codes.FILES_DISTRIBUTION_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Success distribution of files to nodes:\n"
+                "  node1\n"
+                "    some authfile\n"
+                "    some config file\n"
+                "  node2\n"
+                "    some config file"
+            ,
+            {
+                "nodes_success_files": {
+                    "node1": [
+                      "some config file",
+                      "some authfile",
+                    ],
+                    "node2": [
+                      "some config file",
+                    ],
+                }
+            }
+        )
+
+class FileDistributionError(NameBuildTest):
+    code = codes.FILES_DISTRIBUTION_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Unable to distribute files to some nodes:\n"
+                "  node1\n"
+                "    file1: permission denied\n"
+                "    file2: not enough space\n"
+                "  node2\n"
+                "    file1: permission denied"
+            ,
+            {
+                "node_file_errors": {
+                    "node1": {
+                        "file1": "permission denied",
+                        "file2": "not enough space",
+                    },
+                    "node2": {
+                        "file1": "permission denied",
+                    }
+                }
+            }
+        )
+
+class ActionsOnNodesStarted(NameBuildTest):
+    code = codes.ACTIONS_ON_NODES_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Requesting 'first', 'second'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": None
+            }
+        )
+
+    def test_build_messages_with_nodes(self):
+        self.assert_message_from_info(
+            "Requesting 'first', 'second' on 'node1', 'node2'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+            }
+        )
+
+class ActionsOnNodesSuccess(NameBuildTest):
+    code = codes.ACTIONS_ON_NODES_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Success actions on nodes:\n"
+                "  node1\n"
+                "    service enable\n"
+                "    service start\n"
+                "  node2\n"
+                "    service start"
+            ,
+            {
+                "nodes_success_actions": {
+                    "node1": [
+                        "service start",
+                        "service enable",
+                    ],
+                    "node2": [
+                        "service start",
+                    ]
+                }
+            }
+        )
+
+class ActionOnNodesError(NameBuildTest):
+    code = codes.ACTIONS_ON_NODES_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Some actions on some nodes failed:\n"
+                "  node1\n"
+                "    action1: permission denied\n"
+                "    action2: not such command\n"
+                "  node2\n"
+                "    action1: permission denied"
+            ,
+            {
+                "node_action_errors": {
+                    "node1": {
+                        "action1": "permission denied",
+                        "action2": "not such command",
+                    },
+                    "node2": {
+                        "action1": "permission denied",
+                    }
+                }
+            }
+        )

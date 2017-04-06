@@ -928,6 +928,88 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.FILES_DISTRIBUTION_STARTED: lambda info:
+        "Sending {files}{where}".format(
+            where="" if not info["node_list"] else " to " + ", ".join(
+                "'{0}'".format(node) for node in info["node_list"]
+            ),
+            files=", ".join([
+                "'{0}'".format(file_desc) for file_desc in info["file_list"]
+            ])
+        )
+    ,
+
+    codes.FILES_DISTRIBUTION_SUCCESS: lambda info:
+        "Success distribution of files to nodes:\n{details}".format(
+            details=(
+                "\n".join([
+                    "  {0}\n{1}".format(node, "\n".join([
+                        "    {0}".format(file_description)
+                        for file_description in sorted(file_infos)
+                    ]))
+                    for node, file_infos
+                    in sorted(info["nodes_success_files"].items())
+                ])
+            )
+        )
+    ,
+
+    codes.FILES_DISTRIBUTION_ERROR: lambda info:
+        "Unable to distribute files to some nodes:\n{details}".format(
+            details=(
+                "\n".join([
+                    "  {0}\n{1}".format(node, "\n".join([
+                        "    {0}: {1}".format(filename, reason)
+                        for filename, reason in sorted(file_infos.items())
+                    ]))
+                    for node, file_infos
+                    in sorted(info["node_file_errors"].items())
+                ])
+            )
+        )
+    ,
+
+    codes.ACTIONS_ON_NODES_STARTED: lambda info:
+        "Requesting {actions}{where}".format(
+            where="" if not info["node_list"] else " on " + ", ".join(
+                "'{0}'".format(node) for node in info["node_list"]
+            ),
+            actions=", ".join([
+                "'{0}'".format(file_desc) for file_desc in info["action_list"]
+            ])
+        )
+    ,
+
+    codes.ACTIONS_ON_NODES_SUCCESS: lambda info:
+        "Success actions on nodes:\n{details}".format(
+            details=(
+                "\n".join([
+                    "  {0}\n{1}".format(node, "\n".join([
+                        "    {0}".format(action_description)
+                        for action_description in sorted(action_infos)
+                    ]))
+                    for node, action_infos
+                    in sorted(info["nodes_success_actions"].items())
+                ])
+            )
+        )
+    ,
+
+    codes.ACTIONS_ON_NODES_ERROR: lambda info:
+        "Some actions on some nodes failed:\n{details}".format(
+            details=(
+                "\n".join([
+                    "  {0}\n{1}".format(node, "\n".join([
+                        "    {0}: {1}".format(actionname, reason)
+                        for actionname, reason in sorted(action_infos.items())
+                    ]))
+                    for node, action_infos
+                    in sorted(info["node_action_errors"].items())
+                ])
+            )
+        )
+    ,
+
     codes.SBD_DEVICE_PATH_NOT_ABSOLUTE: lambda info:
         "Device path '{device}'{on_node} is not absolute"
         .format(

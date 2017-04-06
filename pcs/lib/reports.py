@@ -1950,6 +1950,118 @@ def sbd_device_dump_error(device, reason):
         }
     )
 
+def files_distribution_started(file_list, node_list=""):
+    """
+    files is about to be sent to nodes
+    """
+    return ReportItem.info(
+        report_codes.FILES_DISTRIBUTION_STARTED,
+        info={
+            "file_list": file_list,
+            "node_list": node_list,
+        }
+    )
+
+def files_distribution_success(nodes_success_files):
+    """
+    files was successfuly distributed on nodes
+
+    dict nodes_success_files has as the key the node name and as value a list of
+    file descriptions eg.:
+    {
+        "node1": [
+          "some authfile",
+          "some config file",
+        ]
+    }
+    """
+    return ReportItem.info(
+        report_codes.FILES_DISTRIBUTION_SUCCESS,
+        info={
+            "nodes_success_files": nodes_success_files
+        },
+    )
+
+def files_distribution_error(
+    node_file_errors,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    cannot put files to specific nodes
+
+    dict node_file_error has as the key the node name and as value dict
+    file_name: reason eg.:
+    {
+        "node1": {
+          "file1": "no space there"
+        }
+    }
+    """
+    return ReportItem(
+        report_codes.FILES_DISTRIBUTION_ERROR,
+        severity,
+        info={
+            "node_file_errors": node_file_errors
+        },
+        forceable=forceable
+    )
+
+def actions_on_nodes_started(action_list, node_list=""):
+    """
+    node was requested for actions
+    """
+    return ReportItem.info(
+        report_codes.ACTIONS_ON_NODES_STARTED,
+        info={
+            "action_list": action_list,
+            "node_list": node_list,
+        }
+    )
+
+def actions_on_nodes_success(nodes_success_actions):
+    """
+    files was successfuly distributed on nodes
+
+    dict nodes_success_actions has as the key the node name and as value list of
+    file descriptions eg.:
+    {
+        "node1": [
+          "service enable",
+          "service start",
+        ]
+    }
+    """
+    return ReportItem.info(
+        report_codes.ACTIONS_ON_NODES_SUCCESS,
+        info={
+            "nodes_success_actions": nodes_success_actions
+        },
+    )
+
+def actions_on_nodes_error(
+    node_action_errors,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    action on nodes failed
+
+    dict node_action_error has as the key the node name and as value dict
+    action_name: reason eg.:
+    {
+        "node1": {
+          "action1": "access denied"
+        }
+    }
+    """
+    return ReportItem(
+        report_codes.ACTIONS_ON_NODES_ERROR,
+        severity,
+        info={
+            "node_action_errors": node_action_errors
+        },
+        forceable=forceable
+    )
+
 
 def invalid_response_format(node):
     """
