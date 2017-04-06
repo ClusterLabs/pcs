@@ -12,6 +12,7 @@ import tempfile
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
+from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
@@ -57,6 +58,7 @@ class LibraryEnvironment(object):
         cib_data=None,
         corosync_conf_data=None,
         booth=None,
+        pacemaker=None,
         auth_tokens_getter=None,
         cluster_conf_data=None,
         request_timeout=None,
@@ -70,6 +72,11 @@ class LibraryEnvironment(object):
         self._cluster_conf_data = cluster_conf_data
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
+        )
+        self._pacemaker = (
+            PacemakerEnv(report_processor, pacemaker, self.get_cib)
+            if pacemaker is not None
+            else None
         )
         self._request_timeout = request_timeout
         self._is_cman_cluster = None
@@ -309,3 +316,7 @@ class LibraryEnvironment(object):
     @property
     def booth(self):
         return self._booth
+
+    @property
+    def pacemaker(self):
+        return self._pacemaker

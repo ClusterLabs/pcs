@@ -14,6 +14,7 @@ class Env(object):
         self.groups = None
         self.corosync_conf_data = None
         self.booth = None
+        self.pacemaker = None
         self.auth_tokens_getter = None
         self.debug = False
         self.cluster_conf_data = None
