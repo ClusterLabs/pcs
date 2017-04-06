@@ -347,6 +347,15 @@
           <input type="text" name="watchdog" placeholder="/dev/watchdog" />
         </td>
       </tr>
+      <tr class="add_node_sbd_device">
+        <td>
+          SBD device(s):
+        </td>
+        <td>
+          <input type="text" name="devices[]" />
+          <a href="#" onclick="add_sbd_device_textbox(); return false;">(+)</a>
+        </td>
+      </tr>
       {{/if}}
       {{#if Pcs.is_cman_with_udpu_transport}}
       <tr>

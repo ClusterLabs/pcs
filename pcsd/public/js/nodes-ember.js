@@ -72,7 +72,9 @@ Pcs = Ember.Application.createWithMixins({
     }
     var out =
       '<table class="darkdatatable"><tr><th>OPTION</th><th>VALUE</th></tr>\n';
-    var banned_options = ["SBD_OPTS", "SBD_WATCHDOG_DEV", "SBD_PACEMAKER"];
+    var banned_options = [
+      "SBD_OPTS", "SBD_WATCHDOG_DEV", "SBD_PACEMAKER", "SBD_DEVICE"
+    ];
     $.each(this.get("sbd_config"), function(opt, val) {
       if (banned_options.indexOf(opt) == -1) {
         out += '<tr><td>' + htmlEncode(opt) + '</td><td>' + htmlEncode(val) + '</td></tr>\n';

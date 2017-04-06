@@ -208,6 +208,29 @@ function add_node_dialog() {
   });
 }
 
+function add_sbd_device_textbox() {
+  var max_count = 3;
+  var device_inputs = $("#add_node_selector .add_node_sbd_device");
+  var count = device_inputs.length;
+  if (count < max_count) {
+    $(device_inputs[count-1]).after(
+      '<tr class="add_node_sbd_device"> \
+        <td>&nbsp;</td> \
+        <td> \
+          <input type="text" name="devices[]" /> \
+          <a href="#" onclick="sbd_device_remove_textbox(this); return false;"> \
+            (-) \
+          </a> \
+        </td> \
+      </tr>'
+    )
+  }
+}
+
+function sbd_device_remove_textbox(obj) {
+  $(obj).parents(".add_node_sbd_device").remove();
+}
+
 function checkAddingNode(){
   var nodeName = $("#add_node").children("form").find("[name='new_nodename']").val().trim();
   if (nodeName == "") {

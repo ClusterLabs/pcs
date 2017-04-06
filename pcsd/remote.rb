@@ -819,8 +819,12 @@ def remote_add_node(params, request, auth_user, all=false)
     if params[:new_ring1addr] != nil
       node += ',' + params[:new_ring1addr]
     end
+    device_list = []
+    if params[:devices].kind_of?(Array)
+      device_list = params[:devices]
+    end
     retval, output = add_node(
-      auth_user, node, all, auto_start, params[:watchdog]
+      auth_user, node, all, auto_start, params[:watchdog], device_list
     )
   end
 

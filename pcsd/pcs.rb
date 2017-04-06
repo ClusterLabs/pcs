@@ -428,6 +428,23 @@ def _get_cookie_list(auth_user, cookies_data)
   return cookie_list
 end
 
+def _transform_data(data)
+  # Converts data in a way that URI.encode_www_form method will encode it
+  # corectly. If an arrray is passed as value to encode_www_form, then parser of
+  # webbrick will use only last value.
+  new_data = []
+  data.each { |key, val|
+    if val.kind_of?(Array)
+      val.each { |value|
+        new_data << ["#{key.to_s}[]", value]
+      }
+    else
+      new_data << [key, val]
+    end
+  }
+  return new_data
+end
+
 def send_request(
   auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
   timeout=nil, cookies_data=nil
@@ -448,6 +465,8 @@ def send_request(
     url = "https://#{node6}:2224/#{request}"
   end
 
+  data = _transform_data(data)
+
   if post
     encoded_data = (raw_data) ? raw_data : URI.encode_www_form(data)
   else
@@ -455,6 +474,7 @@ def send_request(
     prefix = request.include?('?') ? '&' : '?'
     url += "#{prefix}#{url_data}"
   end
+
 
   timeout_ms = 30000
   begin
@@ -504,11 +524,21 @@ def is_proxy_set(env_var_hash)
   return false
 end
 
-def add_node(auth_user, new_nodename, all=false, auto_start=true, watchdog=nil)
+def add_node(
+  auth_user, new_nodename, all=false, auto_start=true, watchdog=nil,
+  device_list=nil
+)
   if all
     command = [PCS, "cluster", "node", "add", new_nodename]
     if watchdog and not watchdog.strip.empty?
       command << "--watchdog=#{watchdog.strip}"
+    end
+    if device_list
+      device_list.each { |device|
+        if device and not device.strip.empty?
+          command << "--device=#{device.strip}"
+        end
+      }
     end
     if auto_start
       command << '--start'
