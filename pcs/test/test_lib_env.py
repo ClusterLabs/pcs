@@ -19,7 +19,7 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc, create_patcher
 from pcs.test.tools.pcs_unittest import mock
 
-from pcs.lib.env import LibraryEnvironment
+from pcs.lib.env import LibraryEnvironment, NodeLists
 from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
@@ -759,3 +759,15 @@ class PushCib(TestCase):
         self.env.push_cib(etree.fromstring("<cib/>"), 10)
         push_cib_xml.assert_called_once_with("<cib/>")
         wait_for_idle.assert_called_once_with(self.env.cmd_runner(), 10)
+
+class NodeList(TestCase):
+    def test_get_all_nodes(self):
+        node_lists = NodeLists(
+            ["coro1", "coro2"],
+            ["remo1"],
+            ["guest1", "guest2"],
+        )
+        self.assertEqual(
+            node_lists.all,
+            ["coro1", "coro2", "remo1", "guest1", "guest2"]
+        )

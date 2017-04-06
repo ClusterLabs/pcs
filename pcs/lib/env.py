@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 import os.path
 import tempfile
+from collections import namedtuple
 
 from pcs import settings
 from pcs.lib import reports
@@ -45,6 +46,10 @@ from pcs.lib.pacemaker.live import (
 from pcs.lib.pacemaker.state import get_cluster_state_dom
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 
+class NodeLists(namedtuple("NodeLists", "corosync remote guest")):
+    @property
+    def all(self):
+        return self.corosync + self.remote + self.guest
 
 class LibraryEnvironment(object):
     # pylint: disable=too-many-instance-attributes
@@ -89,6 +94,7 @@ class LibraryEnvironment(object):
         self._cib_data_tmp_file = None
 
         self.__timeout_cache = {}
+        self.__nodes = None
 
     @property
     def logger(self):
@@ -115,6 +121,17 @@ class LibraryEnvironment(object):
     @property
     def cib_upgraded(self):
         return self._cib_upgraded
+
+    @property
+    def nodes(self):
+        if self.__nodes is None:
+            self.__nodes = NodeLists(
+                self.get_corosync_conf().get_nodes(),
+                self.pacemaker.remote_nodes,
+                [], #TODO implement loading
+            )
+        return self.__nodes
+
 
     def _get_cib_xml(self):
         if self.is_cib_live:
