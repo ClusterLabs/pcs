@@ -40,6 +40,7 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
+import pcs.cli.cluster.command as cluster_command
 from pcs.lib import (
     sbd as lib_sbd,
     reports as lib_reports,
@@ -160,7 +161,22 @@ def cluster_cmd(argv):
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
-        cluster_node(argv)
+        if not argv:
+            usage.cluster()
+            sys.exit(1)
+        if argv[0] == "add-remote":
+            try:
+                cluster_command.node_add_remote(
+                    utils.get_library_wrapper(),
+                    argv[1:],
+                    utils.get_modificators()
+                )
+            except LibraryError as e:
+                utils.process_library_reports(e.args)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "node", "add-remote")
+        else:
+            cluster_node(argv)
     elif (sub_cmd == "localnode"):
         cluster_localnode(argv)
     elif (sub_cmd == "uidgid"):

@@ -4,6 +4,8 @@
 
 ### Added
 - Support for bundle resources (CLI only) ([rhbz#1433016])
+- Command `pcs cluster node add-remote` to add remote node to cluster
+  ([rhbz#1176018])
 
 ### Fixed
 - Fixed a bug which under specific conditions caused pcsd to crash on start
@@ -23,6 +25,7 @@
   ([rhbz#1373614])
 
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
+[rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 [rhbz#1373614]: https://bugzilla.redhat.com/show_bug.cgi?id=1373614
 [rhbz#1422667]: https://bugzilla.redhat.com/show_bug.cgi?id=1422667

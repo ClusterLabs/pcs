@@ -956,3 +956,11 @@ class ActionOnNodesError(NameBuildTest):
                 }
             }
         )
+
+class ambiguous_host_specification(NameBuildTest):
+    code = codes.AMBIGUOUS_HOST_SPECIFICATION
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "An ambiguous host specification: 'node1', 'node2'",
+            {"host_list": ["node1", "node2"]}
+        )

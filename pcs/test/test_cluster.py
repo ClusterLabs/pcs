@@ -2869,3 +2869,19 @@ class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
             "cluster disable rh7-1 rh7-2 --all",
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
         )
+
+class NodeAddRemote(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner()
+
+    def test_fail_on_duplicit_host_specification(self):
+        self.assert_pcs_fail(
+            "cluster node add-remote rh7-1 remote-node server=DIFFERENT",
+            "Error: An ambiguous host specification: 'rh7-1', 'DIFFERENT'\n"
+        )
+
+    def test_fail_on_duplicit_host_specification_without_name(self):
+        self.assert_pcs_fail(
+            "cluster node add-remote rh7-1 server=DIFFERENT",
+            "Error: An ambiguous host specification: 'rh7-1', 'DIFFERENT'\n"
+        )

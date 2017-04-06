@@ -726,6 +726,16 @@ Commands:
         SBD is enabled in cluster.
         This command can only be run on an existing cluster node.
 
+    node add-remote <node host> [<node-name>] [options]
+           [op <operation action> <operation options> [<operation action>
+           <operation options>]...] [meta <meta options>...] [--wait[=n]]
+        Add the node to the cluster as remote node. Make sure that the pacemaker
+        authkey is on all nodes. Start and enable pacemaker_remote daemon on the
+        node.
+        Options, operations and meta belongs to a connection resource
+        (ocf:pacemaker:remote).
+        Options can be server, port, reconnect_interval.
+
     node remove <node>
         Shutdown specified node and remove it from the cluster.
 

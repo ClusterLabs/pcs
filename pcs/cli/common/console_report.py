@@ -1167,4 +1167,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to read {path}: {reason}"
         .format(**info)
     ,
+    codes.AMBIGUOUS_HOST_SPECIFICATION: lambda info:
+        "An ambiguous host specification: {0}".format(
+            ", ".join(["'{0}'".format(host) for host in info["host_list"]])
+        )
+    ,
 }
