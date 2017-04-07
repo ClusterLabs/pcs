@@ -1012,7 +1012,12 @@ class InitializeBlockDevicesTest(CommonTest):
 
 @mock.patch("os.path.exists")
 @mock.patch("pcs.lib.sbd.get_local_sbd_config")
+@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class GetLocalDevicesInfoTest(CommonTest):
+    def fixture_sbd_enabled(self, enabled):
+        cmd = [settings.systemctl_binary, "is-enabled", "sbd.service"]
+        return [Call(" ".join(cmd), returncode=0 if enabled else 1)]
+
     def fixture_sbd_info(self, device, stdout="", return_code=0):
         cmd = ["sbd", "-d", device, "list"]
         return [Call(" ".join(cmd), stdout, returncode=return_code)]
@@ -1027,6 +1032,7 @@ class GetLocalDevicesInfoTest(CommonTest):
 SBD_DEVICE="/dev1;/dev2"
         """
         runner.set_runs(
+            self.fixture_sbd_enabled(True) +
             self.fixture_sbd_info("/dev1", "1") +
             self.fixture_sbd_info("/dev2", "2")
         )
@@ -1055,6 +1061,7 @@ SBD_DEVICE="/dev1;/dev2"
 SBD_DEVICE="/dev1;/dev2"
         """
         runner.set_runs(
+            self.fixture_sbd_enabled(True) +
             self.fixture_sbd_info("/dev1", "1") +
             self.fixture_sbd_dump("/dev1", "3") +
             self.fixture_sbd_info("/dev2", "2") +
@@ -1081,9 +1088,19 @@ SBD_DEVICE="/dev1;/dev2"
 
     def test_no_config(self, mock_config, mock_config_exists):
         mock_config_exists.return_value = False
+        runner.set_runs(self.fixture_sbd_enabled(True))
         self.assertEqual([], cmd_sbd.get_local_devices_info(self.env))
+        runner.assert_everything_launched()
         self.assertEqual(0, mock_config.call_count)
         mock_config_exists.assert_called_once_with(settings.sbd_config)
+
+    def test_sbd_disabled(self, mock_config, mock_config_exists):
+        mock_config_exists.return_value = True
+        runner.set_runs(self.fixture_sbd_enabled(False))
+        self.assertEqual([], cmd_sbd.get_local_devices_info(self.env))
+        runner.assert_everything_launched()
+        self.assertEqual(0, mock_config.call_count)
+        self.assertEqual(0, mock_config_exists.call_count)
 
     def test_with_failures(self, mock_config, mock_config_exists):
         mock_config_exists.return_value = True
@@ -1091,6 +1108,7 @@ SBD_DEVICE="/dev1;/dev2"
 SBD_DEVICE="/dev1;/dev2;/dev3"
         """
         runner.set_runs(
+            self.fixture_sbd_enabled(True) +
             self.fixture_sbd_info("/dev1", "1", 1) +
             self.fixture_sbd_info("/dev2", "2") +
             self.fixture_sbd_dump("/dev2", "4", 1) +
