@@ -16,6 +16,44 @@ from pcs.lib.xml_tools import (
     get_sub_element,
 )
 
+class IdProvider(object):
+    """
+    Book ids for future use in the CIB and generate new ids accordingly
+    """
+    def __init__(self, cib_element):
+        """
+        etree cib_element -- any element of the xml to being check against
+        """
+        self._cib = get_root(cib_element)
+        self._booked_ids = set()
+
+    def allocate_id(self, proposed_id):
+        """
+        Generate a new unique id based on the proposal and keep track of it
+        string proposed_id -- requested id
+        """
+        final_id = find_unique_id(self._cib, proposed_id, self._booked_ids)
+        self._booked_ids.add(final_id)
+        return final_id
+
+    def book_ids(self, *id_list):
+        """
+        Check if the ids are not already used and reserve them for future use
+        strings *id_list -- ids
+        """
+        reported_ids = set()
+        report_list = []
+        for id in id_list:
+            if id in reported_ids:
+                continue
+            if id in self._booked_ids or does_id_exist(self._cib, id):
+                report_list.append(reports.id_already_exists(id))
+                reported_ids.add(id)
+                continue
+            self._booked_ids.add(id)
+        return report_list
+
+
 def does_id_exist(tree, check_id):
     """
     Checks to see if id exists in the xml dom passed
@@ -40,16 +78,19 @@ def validate_id_does_not_exist(tree, id):
     if does_id_exist(tree, id):
         raise LibraryError(reports.id_already_exists(id))
 
-def find_unique_id(tree, check_id):
+def find_unique_id(tree, check_id, reserved_ids=None):
     """
     Returns check_id if it doesn't exist in the dom, otherwise it adds
     an integer to the end of the id and increments it until a unique id is found
-    tree cib etree node
-    check_id id to check
+    etree tree -- cib etree node
+    string check_id -- id to check
+    iterable reserved_ids -- ids to think about as already used
     """
+    if not reserved_ids:
+        reserved_ids = set()
     counter = 1
     temp_id = check_id
-    while does_id_exist(tree, temp_id):
+    while temp_id in reserved_ids or does_id_exist(tree, temp_id):
         temp_id = "{0}-{1}".format(check_id, counter)
         counter += 1
     return temp_id

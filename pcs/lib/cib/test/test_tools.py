@@ -10,7 +10,10 @@ from functools import partial
 from lxml import etree
 
 from pcs.test.tools.pcs_unittest import TestCase
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
@@ -22,7 +25,9 @@ from pcs.lib.cib import tools as lib
 
 class CibToolsTest(TestCase):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
+        self.create_cib = get_xml_manipulation_creator_from_file(
+            rc("cib-empty.xml")
+        )
         self.cib = self.create_cib()
 
     def fixture_add_primitive_with_id(self, element_id):
@@ -31,6 +36,102 @@ class CibToolsTest(TestCase):
             '<primitive id="{0}" class="ocf" provider="heartbeat" type="Dummy"/>'
                 .format(element_id)
         )
+
+
+class IdProviderTest(CibToolsTest):
+    def setUp(self):
+        super(IdProviderTest, self).setUp()
+        self.provider = lib.IdProvider(self.cib.tree)
+
+    def fixture_report(self, id):
+        return (
+            severities.ERROR,
+            report_codes.ID_ALREADY_EXISTS,
+            {
+                "id": id,
+            },
+            None
+        )
+
+
+class IdProviderBook(IdProviderTest):
+    def test_nonexisting_id(self):
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId"),
+            []
+        )
+
+    def test_existing_id(self):
+        self.fixture_add_primitive_with_id("myId")
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId"),
+            [
+                self.fixture_report("myId"),
+            ]
+        )
+
+    def test_double_book(self):
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId"),
+            []
+        )
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId"),
+            [
+                self.fixture_report("myId"),
+            ]
+        )
+
+    def test_more_ids(self):
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId1", "myId2"),
+            []
+        )
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId1", "myId2"),
+            [
+                self.fixture_report("myId1"),
+                self.fixture_report("myId2"),
+            ]
+        )
+
+    def test_complex(self):
+        # test ids existing in the cib, double booked, available
+        # test reports not repeated
+        self.fixture_add_primitive_with_id("myId1")
+        self.fixture_add_primitive_with_id("myId2")
+        assert_report_item_list_equal(
+            self.provider.book_ids(
+                "myId1", "myId2", "myId3", "myId2", "myId3", "myId4", "myId3"
+            ),
+            [
+                self.fixture_report("myId1"),
+                self.fixture_report("myId2"),
+                self.fixture_report("myId3"),
+            ]
+        )
+
+
+class IdProviderAllocate(IdProviderTest):
+    def test_nonexisting_id(self):
+        self.assertEqual("myId",  self.provider.allocate_id("myId"))
+
+    def test_existing_id(self):
+        self.fixture_add_primitive_with_id("myId")
+        self.assertEqual("myId-1",  self.provider.allocate_id("myId"))
+
+    def test_allocate_books(self):
+        self.assertEqual("myId",  self.provider.allocate_id("myId"))
+        self.assertEqual("myId-1",  self.provider.allocate_id("myId"))
+
+    def test_booked_ids(self):
+        self.fixture_add_primitive_with_id("myId")
+        assert_report_item_list_equal(
+            self.provider.book_ids("myId-1"),
+            []
+        )
+        self.assertEqual("myId-2",  self.provider.allocate_id("myId"))
+
 
 class DoesIdExistTest(CibToolsTest):
     def test_existing_id(self):
@@ -124,6 +225,13 @@ class FindUniqueIdTest(CibToolsTest):
         self.fixture_add_primitive_with_id("myId-1")
         self.fixture_add_primitive_with_id("myId-3")
         self.assertEqual("myId-2", lib.find_unique_id(self.cib.tree, "myId"))
+
+    def test_reserved_ids(self):
+        self.fixture_add_primitive_with_id("myId-1")
+        self.assertEqual(
+            "myId-3",
+            lib.find_unique_id(self.cib.tree, "myId", ["myId", "myId-2"])
+        )
 
 class CreateNvsetIdTest(TestCase):
     def test_create_plain_id_when_no_confilicting_id_there(self):
