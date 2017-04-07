@@ -18,11 +18,11 @@ SetupPatchMixin = create_setup_patch_mixin(node_communication_format)
 class PcmkAuthkeyFormat(TestCase, SetupPatchMixin):
     def test_create_expected_dict(self):
         b64encode = self.setup_patch("base64.b64encode")
-        b64encode.return_value = "encoded_content"
+        b64encode.return_value = "encoded_content".encode()
         self.assertEqual(
             node_communication_format.pcmk_authkey_format("content"),
             {
-                "data": b64encode.return_value,
+                "data": b64encode.return_value.decode("utf-8"),
                 "type": "pcmk_remote_authkey",
                 "rewrite_existing": True,
             }

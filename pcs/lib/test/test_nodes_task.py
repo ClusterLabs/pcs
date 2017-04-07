@@ -18,9 +18,10 @@ from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes
+from pcs.lib import node_communication_format
 from pcs.lib.external import NodeCommunicator, NodeAuthenticationException
 from pcs.lib.node import NodeAddresses, NodeAddressesList
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 
 import pcs.lib.nodes_task as lib
 
@@ -834,3 +835,93 @@ class PutFilesToNode(OnNodeTest):
         result = self.make_call()["file"]
         self.assertEqual(result.code, "some_code")
         self.assertEqual(result.message, "some_message")
+
+class DistributeFilesProcessResponses(TestCase):
+    def assert_cause_reports(
+        self, response_map, expected_report_list,
+        allow_incomplete_distribution=False
+    ):
+        reporter = MockLibraryReportProcessor()
+        try:
+            lib._distribute_files_process_responses(
+                reporter,
+                response_map,
+                allow_incomplete_distribution
+            )
+        except LibraryError as e:
+            assert_report_item_list_equal(e.args, expected_report_list)
+        else:
+            assert_report_item_list_equal(
+                reporter.report_item_list,
+                expected_report_list
+            )
+
+    def test_no_reports_on_empty_response(self):
+        self.assert_cause_reports({}, [])
+
+    def test_report_errors_when_not_forced(self):
+        self.assert_cause_reports(
+            {
+                NodeAddresses("node1"): {
+                    "file1": node_communication_format.Result("error", "")
+                }
+            },
+            [
+                (
+                    severity.ERROR,
+                    report_codes.FILES_DISTRIBUTION_ERROR,
+                    {
+                        "node_file_errors": {
+                            "node1": {
+                                "file1": "error",
+                            }
+                        }
+                    },
+                    report_codes.SKIP_FILE_DISTRIBUTION_ERRORS
+                )
+            ]
+        )
+
+    def test_report_warnings_when_forced(self):
+        self.assert_cause_reports(
+            {
+                NodeAddresses("node1"): {
+                    "file1": node_communication_format.Result("error", "")
+                }
+            },
+            [
+                (
+                    severity.WARNING,
+                    report_codes.FILES_DISTRIBUTION_ERROR,
+                    {
+                        "node_file_errors": {
+                            "node1": {
+                                "file1": "error",
+                            }
+                        }
+                    },
+                )
+            ],
+            allow_incomplete_distribution=True
+        )
+
+    def test_report_info_on_success(self):
+        self.assert_cause_reports(
+            {
+                NodeAddresses("node1"): {
+                    "file1": node_communication_format.Result("written", ""),
+                    "file2": node_communication_format.Result("rewritten", ""),
+                }
+            },
+            [
+                (
+                    severity.INFO,
+                    report_codes.FILES_DISTRIBUTION_SUCCESS,
+                    {
+                        "nodes_success_files": {
+                            "node1": ['file1', 'file2']
+                        }
+                    },
+                )
+            ],
+        )

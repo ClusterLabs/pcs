@@ -21,6 +21,10 @@ def pcmk_authkey_format(authkey_content):
         "rewrite_existing": True,
     }
 
+def pcmk_authkey_file(authkey_content):
+    return {
+        "pacemaker_remote authkey": pcmk_authkey_format(authkey_content)
+    }
 
 def service_cmd_format(service, command):
     """
@@ -53,7 +57,7 @@ def unpack_items_from_response(main_response, main_key, node_label):
     is_in_expected_format = (
         isinstance(main_response, dict)
         and
-        main_response.has_key(main_key)
+        main_key in main_response
         and
         isinstance(main_response[main_key], dict)
     )
@@ -82,9 +86,9 @@ def response_items_to_result(response_items, expected_keys, node_label):
         if(
             not isinstance(result, dict)
             or
-            not result.has_key("code")
+            "code" not in result
             or
-            not result.has_key("message")
+            "message" not in result
         ):
             raise LibraryError(reports.invalid_response_format(node_label))
 
@@ -156,7 +160,7 @@ def responses_to_report_infos(
     success = defaultdict(list)
     errors = defaultdict(dict)
     for node, response_map in node_responses_map.items():
-        for key, item_response in response_map.items():
+        for key, item_response in sorted(response_map.items()):
             if is_success(key, item_response):
                 success[get_node_label(node)].append(key)
             else:

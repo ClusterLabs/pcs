@@ -268,7 +268,7 @@ def check_can_add_node_to_cluster(
         isinstance(availability_info, dict)
         and
         #node_available is a mandatory field
-        availability_info.has_key("node_available")
+        "node_available" in availability_info
     )
 
     if not is_in_expected_format:
@@ -347,7 +347,7 @@ def put_files_to_node(
         node.label,
     )
 
-def distribute_files(
+def _distribute_files_make_call(
     node_communicator, report_processor, file_definitions, node_addresses_list,
     allow_incomplete_distribution=False
 ):
@@ -389,4 +389,58 @@ def distribute_files(
         allow_incomplete_distribution,
     )
 
+    return response_map
+
+def _distribute_files_process_responses(
+    report_processor, response_map, allow_incomplete_distribution=False
+):
+    success, errors = node_communication_format.responses_to_report_infos(
+        response_map,
+        is_success=(
+            lambda key, response: response.code in ["written", "rewritten"]
+        ),
+        get_node_label=lambda node: node.label
+    )
+
+    if success:
+        report_processor.process(reports.files_distribution_success(success))
+
+    if errors:
+        report_processor.process(
+            reports.get_problem_creator(
+                report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                allow_incomplete_distribution
+            )(reports.files_distribution_error, errors)
+        )
+
+def distribute_files(
+    node_communicator, report_processor, file_definitions, node_addresses_list,
+    allow_incomplete_distribution=False
+):
+    """
+    Put files specified in file_definitions to nodes specified in
+    node_addresses_list.
+
+    NodeCommunicator node_communicator is an object for making the http request
+    NodeAddresses node specifies the destination url
+    dict file_definitions has key that identifies the file and value is a dict
+        with a data that are specific per file type. Mandatory keys there are:
+        * type - is type of file like "booth_autfile" or "pcmk_remote_authkey"
+        * data - it contains content of file in file specific format (e.g.
+            binary is encoded by base64)
+        Common optional key is "rewrite_existing" (True/False) that specifies
+        the behaviour when file already exists.
+    bool allow_incomplete_distribution keep success even if some node(s) are
+        unavailable
+    """
+    response_map = _distribute_files_make_call(
+        node_communicator,
+        report_processor,
+        file_definitions,
+        node_addresses_list,
+        allow_incomplete_distribution,
+    )
+    _distribute_files_process_responses(
+        report_processor, response_map, allow_incomplete_distribution
+    )
     return response_map

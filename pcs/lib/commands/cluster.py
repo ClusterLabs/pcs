@@ -35,37 +35,14 @@ def _share_authkey(
         authkey_content = generate_key()
         node_addresses_list = env.nodes.all + [candidate_node_addresses]
 
-    authkey_key = "pacemaker_remote authkey"
-
     #TODO do only when authkey is live
-    response_map = nodes_task.distribute_files(
+    nodes_task.distribute_files(
         env.node_communicator(),
         env.report_processor,
-        {authkey_key: node_communication_format.pcmk_authkey_format(
-            authkey_content
-        )},
+        node_communication_format.pcmk_authkey_file(authkey_content),
         node_addresses_list,
         allow_incomplete_distribution
     )
-
-    success, errors = node_communication_format.responses_to_report_infos(
-        response_map,
-        is_success=(
-            lambda key, response: response.code in ["written", "rewritten"]
-        ),
-        get_node_label=lambda node: node.label
-    )
-
-    if success:
-        env.report_processor.process(reports.files_distribution_success(success))
-
-    if errors:
-        env.report_processor.process(
-            reports.get_problem_creator(
-                report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
-                allow_incomplete_distribution
-            )(reports.files_distribution_error, errors)
-        )
 
 def _start_and_enable_pacemaker_remote(
     env, candidate_node, allow_pacemaker_remote_service_fail=False
@@ -113,6 +90,7 @@ def node_add_remote(
     allow_invalid_instance_attributes=False,
     wait=False,
 ):
+    env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     if instance_attributes.get("server", node_host) != node_host:
         raise LibraryError(reports.ambiguous_host_specification(
