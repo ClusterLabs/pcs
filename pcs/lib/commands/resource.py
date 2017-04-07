@@ -14,6 +14,7 @@ from pcs.lib.cib.resource import operations
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
+    IdProvider,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
@@ -28,10 +29,11 @@ from pcs.lib.resource_agent import(
 
 @contextmanager
 def resource_environment(
-    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False
+    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False,
+    required_cib_version=None
 ):
     env.ensure_wait_satisfiable(wait)
-    cib = env.get_cib()
+    cib = env.get_cib(required_cib_version)
     yield get_resources(cib)
     env.push_cib(cib, wait)
     if wait is not False and wait_for_resource_ids:
@@ -240,6 +242,61 @@ def create_in_group(
 
 create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
 create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
+
+def bundle_create(
+    env, bundle_id, container_type, container_options=None,
+    network_options=None, port_map=None, storage_map=None,
+    force_options=False,
+    wait=False,
+):
+    """
+    Create a new bundle containing no resources
+
+    LibraryEnvironment env -- provides communication with externals
+    string bundle_id -- id of the new bundle
+    string container_type -- container engine name (docker, lxc...)
+    dict container_options -- container options
+    dict network_options -- network options
+    list of dict port_map -- list of port mapping options
+    list of dict storage_map -- list of storage mapping options
+    bool force_options -- return warnings instead of forceable errors
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    container_options = container_options or {}
+    network_options = network_options or {}
+    port_map = port_map or []
+    storage_map = storage_map or []
+
+    with resource_environment(
+        env,
+        False, # wait, # TODO add support for wait
+        [bundle_id],
+        disabled_after_wait=False,
+        required_cib_version=(2, 8, 0)
+    ) as resources_section:
+        id_provider = IdProvider(resources_section)
+        env.report_processor.process_list(
+            resource.bundle.validate_new(
+                id_provider,
+                bundle_id,
+                container_type,
+                container_options,
+                network_options,
+                port_map,
+                storage_map,
+                force_options
+            )
+        )
+        resource.bundle.append_new(
+            resources_section,
+            id_provider,
+            bundle_id,
+            container_type,
+            container_options,
+            network_options,
+            port_map,
+            storage_map
+        )
 
 def disable(env, resource_ids, wait):
     """

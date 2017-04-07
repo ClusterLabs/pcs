@@ -53,6 +53,31 @@ def parse_create(arg_list):
 
     return parts
 
+def parse_bundle_create_options(arg_list):
+    groups = group_by_keywords(
+        arg_list,
+        set(["container", "network", "port-map", "storage-map"]),
+        group_repeated_keywords=["port-map", "storage-map"]
+    )
+    container_options = groups.get("container", [])
+    container_type = None
+    if container_options and "=" not in container_options[0]:
+        container_type = container_options.pop(0)
+    parts = {
+        "container_type": container_type,
+        "container": prepare_options(container_options),
+        "network": prepare_options(groups.get("network", [])),
+        "port_map": [
+            prepare_options(port_map)
+            for port_map in groups.get("port-map", [])
+        ],
+        "storage_map": [
+            prepare_options(storage_map)
+            for storage_map in groups.get("storage-map", [])
+        ],
+    }
+    return parts
+
 def build_operations(op_group_list):
     """
     Return a list of dicts. Each dict represents one operation.

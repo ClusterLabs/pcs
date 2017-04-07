@@ -197,6 +197,229 @@ class ParseCreateSimple(TestCase):
             ],
         })
 
+
+class ParseBundleCreateOptions(TestCase):
+    def assert_produce(self, arg_list, result):
+        self.assertEqual(
+            result,
+            parse_args.parse_bundle_create_options(arg_list)
+        )
+
+    def assert_raises_cmdline(self, arg_list):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: parse_args.parse_bundle_create_options(arg_list)
+        )
+
+    def test_no_args(self):
+        self.assert_produce(
+            [],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_container_type(self):
+        self.assert_produce(
+            ["container", "docker"],
+            {
+                "container_type": "docker",
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_container_options(self):
+        self.assert_produce(
+            ["container", "a=b", "c=d"],
+            {
+                "container_type": None,
+                "container": {"a": "b", "c": "d"},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_container_type_and_options(self):
+        self.assert_produce(
+            ["container", "docker", "a=b", "c=d"],
+            {
+                "container_type": "docker",
+                "container": {"a": "b", "c": "d"},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_container_type_must_be_first(self):
+        self.assert_raises_cmdline(["container", "a=b", "docker", "c=d"])
+
+    def test_container_missing_key(self):
+        self.assert_raises_cmdline(["container", "docker", "=b", "c=d"])
+
+    def test_network(self):
+        self.assert_produce(
+            ["network", "a=b", "c=d"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {"a": "b", "c": "d"},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_network_empty(self):
+        self.assert_produce(
+            ["network"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+            }
+        )
+
+    def test_network_missing_value(self):
+        self.assert_raises_cmdline(["network", "a", "c=d"])
+
+    def test_network_missing_key(self):
+        self.assert_raises_cmdline(["network", "=b", "c=d"])
+
+    def test_port_map_empty(self):
+        self.assert_produce(
+            ["port-map"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [{}],
+                "storage_map": [],
+            }
+        )
+
+    def test_port_map_one(self):
+        self.assert_produce(
+            ["port-map", "a=b", "c=d"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [{"a": "b", "c": "d"}],
+                "storage_map": [],
+            }
+        )
+
+    def test_port_map_more(self):
+        self.assert_produce(
+            ["port-map", "a=b", "c=d", "port-map", "e=f"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [{"a": "b", "c": "d"}, {"e": "f"}],
+                "storage_map": [],
+            }
+        )
+
+    def test_port_map_missing_value(self):
+        self.assert_raises_cmdline(["port-map", "a", "c=d"])
+
+    def test_port_map_missing_key(self):
+        self.assert_raises_cmdline(["port-map", "=b", "c=d"])
+
+    def test_storage_map_empty(self):
+        self.assert_produce(
+            ["storage-map"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [{}],
+            }
+        )
+
+    def test_storage_map_one(self):
+        self.assert_produce(
+            ["storage-map", "a=b", "c=d"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [{"a": "b", "c": "d"}],
+            }
+        )
+
+    def test_storage_map_more(self):
+        self.assert_produce(
+            ["storage-map", "a=b", "c=d", "storage-map", "e=f"],
+            {
+                "container_type": None,
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [{"a": "b", "c": "d"}, {"e": "f"}],
+            }
+        )
+
+    def test_storage_map_missing_value(self):
+        self.assert_raises_cmdline(["storage-map", "a", "c=d"])
+
+    def test_storage_map_missing_key(self):
+        self.assert_raises_cmdline(["storage-map", "=b", "c=d"])
+
+    def test_all(self):
+        self.assert_produce(
+            [
+                "container", "docker", "a=b", "c=d",
+                "network", "e=f", "g=h",
+                "port-map", "i=j", "k=l",
+                "port-map", "m=n", "o=p",
+                "storage-map", "q=r", "s=t",
+                "storage-map", "u=v", "w=x",
+            ],
+            {
+                "container_type": "docker",
+                "container": {"a": "b", "c": "d"},
+                "network": {"e": "f", "g": "h"},
+                "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+            }
+        )
+
+    def test_all_mixed(self):
+        self.assert_produce(
+            [
+                "storage-map", "q=r", "s=t",
+                "port-map", "i=j", "k=l",
+                "network", "e=f",
+                "container", "docker", "a=b",
+                "storage-map", "u=v", "w=x",
+                "port-map", "m=n", "o=p",
+                "network", "g=h",
+                "container", "c=d",
+            ],
+            {
+                "container_type": "docker",
+                "container": {"a": "b", "c": "d"},
+                "network": {"e": "f", "g": "h"},
+                "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+            }
+        )
+
+
 class BuildOperations(TestCase):
     def assert_produce(self, arg_list, result):
         self.assertEqual(result, parse_args.build_operations(arg_list))

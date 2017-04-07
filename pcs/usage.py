@@ -427,6 +427,13 @@ Commands:
         If 'n' is not specified it defaults to 60 minutes.
         Note: to remove a master you must remove the resource/group it contains.
 
+    bundle create <bundle id> [container [<container type>] <container options>]
+            [network <network options>] [port-map <port options>]...
+            [storage-map <storage options>]...
+        Create a new bundle encapsulating no resources. The bundle can be used
+        either as it is or a resource may be put into it at any time.
+        If the container type is not specified, it defaults to 'docker'.
+
     manage <resource id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is
         specified, enable all monitor operations of the resources.

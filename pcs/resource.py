@@ -23,7 +23,10 @@ from pcs.settings import pacemaker_wait_timeout_status as \
 import pcs.lib.cib.acl as lib_acl
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
-from pcs.cli.resource.parse_args import parse_create as parse_create_args
+from pcs.cli.resource.parse_args import (
+    parse_bundle_create_options,
+    parse_create as parse_create_args,
+)
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
@@ -167,6 +170,8 @@ def resource_cmd(argv):
                 set_resource_utilization(argv_next.pop(0), argv_next)
         elif sub_cmd == "get_resource_agent_info":
             get_resource_agent_info(argv_next)
+        elif sub_cmd == "bundle":
+            resource_bundle_cmd(lib, argv_next, modifiers)
         else:
             usage.resource()
             sys.exit(1)
@@ -2481,3 +2486,40 @@ def get_resource_agent_info(argv):
         )
     except LibraryError as e:
         utils.process_library_reports(e.args)
+
+def resource_bundle_cmd(lib, argv, modifiers):
+    try:
+        if len(argv) < 1:
+            sub_cmd = ""
+            raise CmdLineInputError()
+        sub_cmd, argv_next = argv[0], argv[1:]
+
+        if sub_cmd == "create":
+            resource_bundle_create_cmd(lib, argv_next, modifiers)
+        else:
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "resource", "bundle {0}".format(sub_cmd)
+        )
+
+def resource_bundle_create_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+
+    bundle_id = argv[0]
+    parts = parse_bundle_create_options(argv[1:])
+    if not parts["container_type"]:
+        parts["container_type"] = "docker"
+
+    lib.resource.bundle_create(
+        bundle_id,
+        parts["container_type"],
+        parts["container"],
+        parts["network"],
+        parts["port_map"],
+        parts["storage_map"],
+        modifiers["force"],
+        modifiers["wait"]
+    )

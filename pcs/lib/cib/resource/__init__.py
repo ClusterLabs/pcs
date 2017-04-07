@@ -5,4 +5,11 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib.cib.resource import primitive, operations, clone, group, common
+from pcs.lib.cib.resource import (
+    bundle,
+    clone,
+    common,
+    group,
+    operations,
+    primitive,
+)

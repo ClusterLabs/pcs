@@ -304,6 +304,7 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.cib
             ),
             {
+                "bundle_create": resource.bundle_create,
                 "create": resource.create,
                 "create_as_master": resource.create_as_master,
                 "create_as_clone": resource.create_as_clone,
