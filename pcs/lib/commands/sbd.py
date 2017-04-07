@@ -34,10 +34,9 @@ from pcs.lib.node import (
     NodeNotFound
 )
 from pcs.lib.validate import (
-    is_nonnegative_integer,
     names_in,
     run_collection_of_option_validators,
-    value_cond,
+    value_nonnegative_integer,
 )
 
 
@@ -75,7 +74,7 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
         report_item = reports.invalid_option_value(
             "SBD_WATCHDOG_TIMEOUT",
             sbd_config["SBD_WATCHDOG_TIMEOUT"],
-            "nonnegative integer"
+            "a non-negative integer"
         )
         try:
             if int(sbd_config["SBD_WATCHDOG_TIMEOUT"]) < 0:
@@ -491,7 +490,7 @@ def initialize_block_devices(lib_env, device_list, option_dict):
 
     report_item_list += names_in(supported_options, option_dict.keys())
     validator_list = [
-        value_cond(key, is_nonnegative_integer, "nonnegative integer")
+        value_nonnegative_integer(key)
         for key in supported_options
     ]
 

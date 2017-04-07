@@ -179,6 +179,46 @@ def required_option_is_missing(
         }
     )
 
+def prerequisite_option_is_missing(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    if the option_name is specified, the prerequisite_option must be specified
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- decsribes the option
+    string prerequisite_type -- decsribes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_IS_MISSING,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
+def required_option_of_alternatives_is_missing(
+    option_names, option_type=None
+):
+    """
+    at least one option has to be specified
+    iterable option_names -- options from which at least one has to be specified
+    string option_type -- decsribes the option
+    """
+    severity = ReportItemSeverity.ERROR
+    forceable = None
+    return ReportItem(
+        report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+        severity,
+        forceable=forceable,
+        info={
+            "option_names": option_names,
+            "option_type": option_type,
+        }
+    )
+
 def invalid_option(
     option_names, allowed_options, option_type,
     severity=ReportItemSeverity.ERROR, forceable=None

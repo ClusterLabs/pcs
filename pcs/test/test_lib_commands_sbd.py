@@ -320,7 +320,7 @@ class ValidateSbdOptionsTest(TestCase):
                     {
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": "-1",
-                        "allowed_values": "nonnegative integer",
+                        "allowed_values": "a non-negative integer",
                     },
                     None
                 )
@@ -341,7 +341,7 @@ class ValidateSbdOptionsTest(TestCase):
                     {
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": "not int",
-                        "allowed_values": "nonnegative integer",
+                        "allowed_values": "a non-negative integer",
                     },
                     None
                 )
@@ -362,7 +362,7 @@ class ValidateSbdOptionsTest(TestCase):
                     {
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": None,
-                        "allowed_values": "nonnegative integer",
+                        "allowed_values": "a non-negative integer",
                     },
                     None
                 )
@@ -916,7 +916,7 @@ class InitializeBlockDevicesTest(CommonTest):
             {
                 "option_name": option,
                 "option_value": value,
-                "allowed_values": "nonnegative integer",
+                "allowed_values": "a non-negative integer",
             }
         )
 
