@@ -46,6 +46,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
+from pcs.lib.commands.cluster import _share_authkey
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
@@ -62,10 +63,11 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
-from pcs.lib.node import NodeAddresses
-from pcs.lib.nodes_task import check_corosync_offline_on_nodes
+from pcs.lib.node import NodeAddresses, NodeAddressesList
+from pcs.lib.nodes_task import check_corosync_offline_on_nodes, distribute_files
+from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs.lib.tools import environment_file_to_dict
+from pcs.lib.tools import environment_file_to_dict, generate_key
 
 def cluster_cmd(argv):
     if len(argv) == 0:
@@ -468,6 +470,24 @@ def cluster_setup(argv):
             start_cluster_nodes(primary_addr_list)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_addr_list)
+
+        try:
+            file_definitions = node_communication_format.pcmk_authkey_file(
+                generate_key()
+            )
+
+            distribute_files(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                file_definitions,
+                NodeAddressesList(
+                    [NodeAddresses(node) for node in primary_addr_list]
+                ),
+                #It is not sufficient reason for the failure of setup
+                allow_incomplete_distribution=True
+            )
+        except LibraryError as e: #Theoretically, this should not happen
+            utils.process_library_reports(e.args)
 
         # sync certificates as the last step because it restarts pcsd
         print()
@@ -1652,6 +1672,13 @@ def node_add(lib_env, node0, node1, modifiers):
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
+
+        _share_authkey(
+            lib_env,
+            node_addr,
+            allow_incomplete_distribution=modifiers["force"]
+        )
+
     except LibraryError as e:
         process_library_reports(e.args)
     except NodeCommunicationException as e:
