@@ -102,7 +102,8 @@ def validate_id(id_candidate, description="id", reporter=None):
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if len(id_candidate) < 1:
         report = reports.invalid_id_is_empty(id_candidate, description)
-        if reporter:
+        if reporter is not None:
+            # we check for None so it works with an empty list as well
             reporter.append(report)
             return
         else:
@@ -111,7 +112,7 @@ def validate_id(id_candidate, description="id", reporter=None):
         report = reports.invalid_id_bad_char(
             id_candidate, description, id_candidate[0], True
         )
-        if reporter:
+        if reporter is not None:
             reporter.append(report)
         else:
             raise LibraryError(report)
@@ -120,7 +121,7 @@ def validate_id(id_candidate, description="id", reporter=None):
             report = reports.invalid_id_bad_char(
                 id_candidate, description, char, False
             )
-            if reporter:
+            if reporter is not None:
                 reporter.append(report)
             else:
                 raise LibraryError(report)
