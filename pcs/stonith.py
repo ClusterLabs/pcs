@@ -641,7 +641,7 @@ def sbd_setup_block_device(lib, argv, modifiers):
         raise CmdLineInputError("No device defined")
     options = parse_args.prepare_options(argv)
 
-    if "force" not in modifiers:
+    if not modifiers["force"]:
         answer = utils.get_terminal_input(
             (
                 "WARNING: All current content on device(s) '{device}' will be"
