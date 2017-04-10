@@ -89,8 +89,8 @@ find_target = partial(_find, TAG_TARGET)
 def find_target_or_group(acl_section, target_or_group_id):
     """
     Returns acl_target or acl_group element with id target_or_group_id. Target
-    element has bigger pririty so if there are target and group with same id
-    only target element will be affected by this function.
+    element has bigger priority so if there are target and group with the same
+    id only target element will be affected by this function.
     Raises LibraryError if there is no target or group element with
     specified id.
 

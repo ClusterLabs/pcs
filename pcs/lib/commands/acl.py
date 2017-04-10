@@ -52,13 +52,13 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
 
 def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     """
-    Assign role wth id role_id to target or group with id target_or_group_id.
-    Target element has bigger pririty so if there are target and group with same
-    id only target element will be affected by this function.
+    Assign role with id role_id to target or group with id target_or_group_id.
+    Target element has bigger priority so if there are target and group with
+    the same id only target element will be affected by this function.
     Raises LibraryError on any failure.
 
     lib_env -- LibraryEnviroment
-    role_id -- id of role which should be assigne to target/group
+    role_id -- id of role which should be assigned to target/group
     target_or_group_id -- id of target/group element
     """
     with cib_acl_section(lib_env) as acl_section:
@@ -105,8 +105,8 @@ def unassign_role_not_specific(
 ):
     """
     Unassign role with role_id from target/group with id target_or_group_id.
-    Target element has bigger pririty so if there are target and group with same
-    id only target element will be affected by this function.
+    Target element has bigger priority so if there are target and group with
+    the same id only target element will be affected by this function.
     Raises LibraryError on any failure.
 
     lib_env -- LibraryEnvironment
@@ -247,7 +247,7 @@ def remove_permission(lib_env, permission_id):
 
 def get_config(lib_env):
     """
-    Returns ACL configuration in disctionary. Fromat of output:
+    Returns ACL configuration in dictionary. Format of output:
         {
             "target_list": <list of targets>,
             "group_list": <list og groups>,
