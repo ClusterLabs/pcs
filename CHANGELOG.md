@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.157] - 2017-04-10
 
 ### Added
 - Resources in location constraints now may be specified by resource name
