@@ -2885,3 +2885,9 @@ class NodeAddRemote(unittest.TestCase, AssertPcsMixin):
             "cluster node add-remote rh7-1 server=DIFFERENT",
             "Error: An ambiguous host specification: 'rh7-1', 'DIFFERENT'\n"
         )
+
+    def test_fail_on_bad_commandline_usage(self):
+        self.assert_pcs_fail(
+            "cluster node add-remote",
+            stdout_start="\nUsage: pcs cluster node..."
+        )

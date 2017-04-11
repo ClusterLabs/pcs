@@ -176,7 +176,7 @@ def cluster_cmd(argv):
             except LibraryError as e:
                 utils.process_library_reports(e.args)
             except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(e, "node", "add-remote")
+                utils.exit_on_cmdline_input_errror(e, "cluster", "node")
         else:
             cluster_node(argv)
     elif (sub_cmd == "localnode"):

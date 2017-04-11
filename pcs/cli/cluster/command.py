@@ -8,6 +8,7 @@ from __future__ import (
 from pcs.cli.resource.parse_args import(
     parse_create_simple as parse_resource_create_args
 )
+from pcs.cli.common.errors import CmdLineInputError
 
 def _node_add_remote_separate_host_and_name(arg_list):
     node_host = arg_list[0]
@@ -21,6 +22,9 @@ def _node_add_remote_separate_host_and_name(arg_list):
     return node_host, node_name, rest_args
 
 def node_add_remote(lib, arg_list, modifiers):
+    if not arg_list:
+        raise CmdLineInputError()
+
     node_host, node_name, rest_args = _node_add_remote_separate_host_and_name(
         arg_list
     )
