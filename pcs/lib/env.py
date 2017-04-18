@@ -128,7 +128,7 @@ class LibraryEnvironment(object):
             self.__nodes = NodeLists(
                 self.get_corosync_conf().get_nodes(),
                 self.pacemaker.remote_nodes,
-                [], #TODO implement loading
+                self.pacemaker.guest_nodes,
             )
         return self.__nodes
 

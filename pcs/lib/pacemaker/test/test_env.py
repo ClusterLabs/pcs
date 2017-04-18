@@ -12,7 +12,7 @@ from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
-class GetRemoteNodes(TestCase):
+class GetNodesTest(TestCase):
     def setUp(self):
         self.set_cib("<cib><resources /></cib>")
 
@@ -28,6 +28,7 @@ class GetRemoteNodes(TestCase):
     def set_cib(self, xml):
         self.cib = etree.fromstring(xml)
 
+class GetRemoteNodes(GetNodesTest):
     def test_get_all_remote_nodes(self):
         self.set_cib("""
             <cib>
@@ -59,3 +60,36 @@ class GetRemoteNodes(TestCase):
 
     def test_get_no_remote_nodes_when_not_in_cib(self):
         self.assertEqual([], self.env.remote_nodes)
+
+class GetGuestNodes(GetNodesTest):
+    def test_get_all_guest_nodes(self):
+        self.set_cib("""
+            <cib>
+                <resources>
+                    <primitive class="ocf" id="R1" provider="heartbeat"
+                        type="VirtualDomain"
+                    >
+                        <meta_attributes id="meta1">
+                            <nvpair id="rnode-1" name="remote-node" value="G1"/>
+                        </meta_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="R2" provider="heartbeat"
+                        type="VirtualDomain"
+                    >
+                        <meta_attributes id="meta2">
+                            <nvpair id="rnode-2" name="remote-node" value="G2"/>
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            </cib>
+        """)
+        self.assertEqual(
+            [
+                NodeAddresses("G1", name="R1"),
+                NodeAddresses("G2", name="R2"),
+            ],
+            self.env.guest_nodes
+        )
+
+    def test_get_no_guest_nodes_when_not_in_cib(self):
+        self.assertEqual([], self.env.guest_nodes)

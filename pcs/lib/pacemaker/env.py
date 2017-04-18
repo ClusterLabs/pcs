@@ -43,22 +43,33 @@ class PacemakerEnv(object):
     def get_authkey_content(self):
         return self.__authkey.read()
 
-    @property
-    def remote_nodes(self):
+    def __find_nodes(self, xpath):
         return [
             NodeAddresses(
                 nvpair.attrib["value"],
                 name=nvpair.getparent().getparent().attrib["id"]
             )
-            for nvpair in self.get_cib().xpath("""
-                .//primitive[
-                    @class="ocf"
-                    and
-                    @provider="pacemaker"
-                    and
-                    @type="remote"
-                ]
-                /instance_attributes
-                /nvpair[@name="server" and string-length(@value) > 0]
-            """)
+            for nvpair in self.get_cib().xpath(xpath)
         ]
+
+    @property
+    def remote_nodes(self):
+        return self.__find_nodes("""
+            .//primitive[
+                @class="ocf"
+                and
+                @provider="pacemaker"
+                and
+                @type="remote"
+            ]
+            /instance_attributes
+            /nvpair[@name="server" and string-length(@value) > 0]
+        """)
+
+    @property
+    def guest_nodes(self):
+        return self.__find_nodes("""
+            .//primitive
+            /meta_attributes
+            /nvpair[@name="remote-node" and string-length(@value) > 0]
+        """)
