@@ -81,8 +81,8 @@ def run_server(server, webrick_options, secondary_addrs)
     }
     # notify systemd we are running
     if ISSYSTEMCTL
-      socket_name = ENV['NOTIFY_SOCKET']
-      if socket_name
+      if ENV['NOTIFY_SOCKET']
+        socket_name = ENV['NOTIFY_SOCKET'].dup
         if socket_name.start_with?('@')
           # abstract namespace socket
           socket_name[0] = "\0"
