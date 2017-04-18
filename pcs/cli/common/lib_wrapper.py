@@ -310,6 +310,7 @@ def load_module(env, middleware_factory, name):
                 "create_as_master": resource.create_as_master,
                 "create_as_clone": resource.create_as_clone,
                 "create_in_group": resource.create_in_group,
+                "create_into_bundle": resource.create_into_bundle,
                 "disable": resource.disable,
                 "enable": resource.enable,
                 "manage": resource.manage,

@@ -213,9 +213,10 @@ Commands:
            <operation options>]...] [meta <meta options>...]
            [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
-           ] [--disabled] [--wait[=n]]
+           | bundle <bundle id>] [--disabled] [--wait[=n]]
         Create specified resource.  If clone is used a clone resource is
         created.  If master is specified a master/slave resource is created.
+        If bundle is used, resource will be created inside of specified bundle.
         If --group is specified the resource is added to the group named.  You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.

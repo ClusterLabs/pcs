@@ -243,6 +243,45 @@ def create_in_group(
 create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
 create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
 
+def create_into_bundle(
+    env, resource_id, resource_agent_name, bundle_id,
+    operations, meta_attributes, instance_attributes,
+    allow_absent_agent=False,
+    allow_invalid_operation=False,
+    allow_invalid_instance_attributes=False,
+    use_default_operations=True,
+    ensure_disabled=False,
+    wait=False,
+):
+    resource_agent = get_agent(
+        env.report_processor,
+        env.cmd_runner(),
+        resource_agent_name,
+        allow_absent_agent,
+    )
+    with resource_environment(
+        env,
+        False, # wait, # TODO add support for wait
+        [bundle_id],
+        disabled_after_wait=False,
+        required_cib_version=(2, 8, 0)
+    ) as resources_section:
+        primitive_element = resource.primitive.create(
+            env.report_processor, resources_section,
+            resource_id, resource_agent,
+            operations, meta_attributes, instance_attributes,
+            allow_invalid_operation,
+            allow_invalid_instance_attributes,
+            use_default_operations,
+            ensure_disabled,
+        )
+        resource.bundle.append(
+            find_element_by_tag_and_id(
+                "bundle", resources_section, bundle_id
+            ),
+            primitive_element
+        )
+
 def bundle_create(
     env, bundle_id, container_type, container_options=None,
     network_options=None, port_map=None, storage_map=None,

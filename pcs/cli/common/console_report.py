@@ -686,6 +686,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE: lambda info:
+        "bundle '{bundle_id}' already contains resource '{resource_id}'"
+        .format(**info)
+    ,
+
     codes.RESOURCE_CLEANUP_ERROR: lambda info:
         (
              "Unable to cleanup resource: {resource}\n{reason}"

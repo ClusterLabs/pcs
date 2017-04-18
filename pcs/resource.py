@@ -348,15 +348,22 @@ def resource_create(lib, argv, modifiers):
     ra_type = argv[1]
 
     parts = parse_create_args(argv[2:])
+    parts_sections = ["clone", "master", "bundle"]
+    defined_options = [opt for opt in parts_sections if opt in parts]
+    if modifiers["group"]:
+        defined_options.append("group")
 
-    if "clone" in parts and modifiers["group"]:
-        raise error("you cannot specify both clone and --group")
+    if len(
+        set(defined_options).intersection(set(parts_sections + ["group"]))
+    ) > 1:
+        raise error(
+            "you can specify only one of {0} or --group".format(
+                ", ".join(parts_sections)
+            )
+        )
 
-    if "clone" in parts and "master" in parts:
-        raise error("you cannot specify both clone and master")
-
-    if "master" in parts and modifiers["group"]:
-        raise error("you cannot specify both master and --group")
+    if "bundle" in parts and len(parts["bundle"]) != 1:
+        raise error("you have to specify exactly one bundle")
 
     if modifiers["before"] and modifiers["after"]:
         raise error("you cannot specify both --before and --after{0}".format(
@@ -394,6 +401,14 @@ def resource_create(lib, argv, modifiers):
             parts["master"],
             **settings
         )
+    elif "bundle" in parts:
+        lib.resource.create_into_bundle(
+            ra_id, ra_type, parts["bundle"][0], parts["op"],
+            parts["meta"],
+            parts["options"],
+            **settings
+        )
+
     elif not modifiers["group"]:
         lib.resource.create(
             ra_id, ra_type, parts["op"],

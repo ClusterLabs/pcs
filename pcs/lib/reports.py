@@ -1073,6 +1073,15 @@ def id_not_found(id, id_description, context_type="", context_id=""):
         }
     )
 
+def resource_already_defined_in_bundle(bundle_id, resource_id):
+    return ReportItem.error(
+        report_codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE,
+        info={
+            "bundle_id": bundle_id,
+            "resource_id": resource_id,
+        }
+    )
+
 def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
     """
     Cannot put resource(id=resource_id) into group(id=group_id) next to itself:

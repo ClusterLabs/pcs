@@ -15,6 +15,7 @@ from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.commands import resource
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.integration_lib import (
@@ -26,6 +27,8 @@ from pcs.test.tools.misc import (
     outdent,
 )
 from pcs.test.tools.xml import etree_to_str
+
+import pcs.lib.commands.test.resource.fixture as fixture
 
 
 runner = Runner()
@@ -239,21 +242,36 @@ def fixture_state_resources_xml(role="Started", failed="false"):
         )
     )
 
-def fixture_cib_calls(cib_resources_xml):
-    cib_xml = open(rc("cib-empty.xml")).read()
 
-    cib = etree.fromstring(cib_xml)
-    resources_section = cib.find(".//resources")
-    for child in etree.fromstring(cib_resources_xml):
+def _append_string_to_resources(etree_el, string):
+    resources_section = etree_el.find(".//resources")
+    for child in etree.fromstring(string):
         resources_section.append(child)
 
-    return [
-        Call("cibadmin --local --query", cib_xml),
-        Call(
-            "cibadmin --replace --verbose --xml-pipe --scope configuration",
-            check_stdin=Call.create_check_stdin_xml(etree_to_str(cib))
-        ),
-    ]
+
+def fixture_load_cib_call(etree_el):
+    return [Call("cibadmin --local --query", etree_to_str(etree_el))]
+
+def fixture_load_cib_append_resources_call(cib_xml, resources_xml_append=None):
+    cib = etree.fromstring(cib_xml)
+    if resources_xml_append:
+        _append_string_to_resources(cib, resources_xml_append)
+    return fixture_load_cib_call(cib)
+
+
+def fixture_cib_calls(cib_resources_xml, cib_resources_append=None):
+    cib_xml = open(rc("cib-empty.xml")).read()
+    cib = etree.fromstring(cib_xml)
+    _append_string_to_resources(cib, cib_resources_xml)
+    return (
+        fixture_load_cib_append_resources_call(cib_xml, cib_resources_append) +
+        [
+            Call(
+                "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                check_stdin=Call.create_check_stdin_xml(etree_to_str(cib))
+            )
+        ]
+    )
 
 def fixture_agent_load_calls():
     return [
@@ -315,11 +333,13 @@ class CommonResourceTest(TestCase):
         )
         self.create = partial(self.get_create(), self.env)
 
-    def assert_command_effect(self, cmd, cib_resources_xml, reports=None):
+    def assert_command_effect(
+        self, cmd, cib_resources_xml, reports=None, cib_resources_append=None
+    ):
         runner.set_runs(
             fixture_agent_load_calls()
             +
-            fixture_cib_calls(cib_resources_xml)
+            fixture_cib_calls(cib_resources_xml, cib_resources_append)
         )
         cmd()
         self.env.report_processor.assert_reports(reports if reports else [])
@@ -960,3 +980,147 @@ class CreateAsClone(CommonResourceTest):
             </resources>""",
             fixture_state_resources_xml(role="Stopped"),
         )
+
+
+class CreateInToBundle(ResourceWithoutStateTest):
+    def setUp(self):
+        super(CreateInToBundle, self).setUp()
+        self.upgraded_cib = "cib-empty-2.8.xml"
+        self.fixture_empty_resources = "<resources />"
+
+    def fixture_resources_pre(self):
+        return """<resources>
+            <bundle id="B"/>
+        </resources>"""
+
+    def fixture_resources_post_simple(self):
+        return """<resources>
+            <bundle id="B">
+                <primitive
+                    class="ocf" id="A" provider="heartbeat" type="Dummy"
+                >
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                        <op id="A-start-interval-0s" interval="0s"
+                            name="start" timeout="20"
+                        />
+                        <op id="A-stop-interval-0s" interval="0s"
+                            name="stop" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </bundle>
+        </resources>"""
+
+    def simplest_create(self, wait=False, disabled=False, meta_attributes=None):
+        return resource.create_into_bundle(
+            self.env,
+            "A", "ocf:heartbeat:Dummy", "B",
+            operations=[],
+            meta_attributes=meta_attributes if meta_attributes else {},
+            instance_attributes={},
+            wait=wait,
+            ensure_disabled=disabled
+        )
+
+    def test_upgrade_cib(self):
+        self.runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture.calls_cib_load_and_upgrade(self.fixture_empty_resources)
+            +
+            fixture.calls_cib(
+                self.fixture_resources_pre(),
+                self.fixture_resources_post_simple(),
+                self.upgraded_cib,
+            )
+        )
+        self.simplest_create()
+        self.runner.assert_everything_launched()
+
+    def test_simplest_resource(self):
+        self.runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture.calls_cib(
+                self.fixture_resources_pre(),
+                self.fixture_resources_post_simple(),
+                self.upgraded_cib,
+            )
+        )
+        self.simplest_create()
+        self.runner.assert_everything_launched()
+
+    def test_bundle_doesnt_exist(self):
+        self.runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture.call_cib_load(fixture.cib_resources(
+                self.fixture_empty_resources, self.upgraded_cib,
+            ))
+        )
+        assert_raise_library_error(
+            self.simplest_create,
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "B",
+                    "id_description": "bundle",
+                    "context_type": "resources",
+                    "context_id": "",
+                }
+            )
+        )
+
+    def test_id_not_bundle(self):
+        resources_pre_update = """<resources>
+            <primitive id="B"/>
+        </resources>"""
+        self.runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture.call_cib_load(fixture.cib_resources(
+                resources_pre_update, self.upgraded_cib,
+            ))
+        )
+        assert_raise_library_error(
+            self.simplest_create,
+            (
+                severities.ERROR,
+                report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                {
+                    "id": "B",
+                    "expected_types": ["bundle"],
+                    "current_type": "primitive",
+                }
+            )
+        )
+
+    def test_bundle_not_empty(self):
+        resources_pre_update = """<resources>
+            <bundle id="B">
+                <primitive id="P"/>
+            </bundle>
+        </resources>"""
+        self.runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture.call_cib_load(fixture.cib_resources(
+                resources_pre_update, self.upgraded_cib,
+            ))
+        )
+        assert_raise_library_error(
+            self.simplest_create,
+            (
+                severities.ERROR,
+                report_codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE,
+                {
+                    "bundle_id": "B",
+                    "resource_id": "P",
+                }
+            )
+        )
+

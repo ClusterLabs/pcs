@@ -8,7 +8,7 @@ from __future__ import (
 from lxml import etree
 
 from pcs.common import report_codes
-from pcs.lib import validate
+from pcs.lib import reports, validate
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
     LibraryError,
@@ -254,6 +254,14 @@ def update(
         if len(element) < 1 and not element.attrib:
             element.getparent().remove(element)
 
+def append(bundle_element, primitive_element):
+    inner_primitive = _get_inner_primitive(bundle_element)
+    if inner_primitive is not None:
+        raise LibraryError(reports.resource_already_defined_in_bundle(
+            bundle_element.get("id"), inner_primitive.get("id")
+        ))
+    bundle_element.append(primitive_element)
+
 def _validate_container_type(container_type):
     return validate.value_in("type", ("docker", ), "container type")({
         "type": container_type,
@@ -477,6 +485,12 @@ def _append_storage_map(
 def _get_container_element(bundle_el):
     # TODO get different types of container once supported by pacemaker
     return bundle_el.find("docker")
+
+def _get_inner_primitive(bundle_element):
+    primitive_list = bundle_element.xpath("./primitive")
+    if primitive_list:
+        return primitive_list[0]
+    return None
 
 def _remove_map_elements(element_list, id_to_remove_list):
     for el in element_list:
