@@ -5,8 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.misc import skip_unless_pacemaker_supports_systemd
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    skip_unless_pacemaker_supports_systemd,
+    skip_unless_pacemaker_version,
+)
 from pcs.test.cib_resource.common import ResourceTest
+
+
+skip_unless_resource_bundle_supported = skip_unless_pacemaker_version(
+    (1, 1, 16),
+    "bundle resources"
+)
 
 
 class Success(ResourceTest):
@@ -866,7 +876,29 @@ class SuccessClone(ResourceTest):
         )
 
 
+@skip_unless_resource_bundle_supported
 class Bundle(ResourceTest):
+    empty_cib = rc("cib-empty-2.8.xml")
+
+    def fixture_primitive(self, name, bundle=None):
+        if bundle:
+            self.assert_pcs_success(
+                "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
+                    name, bundle
+                )
+            )
+        else:
+            self.assert_pcs_success(
+                "resource create {0} ocf:heartbeat:Dummy".format(name)
+            )
+
+    def fixture_bundle(self, name):
+        self.assert_pcs_success(
+            "resource bundle create {0} container image=pcs:test".format(
+                name
+            )
+        )
+
     def test_bundle_id_not_specified(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops bundle"
@@ -875,20 +907,7 @@ class Bundle(ResourceTest):
         )
 
     def test_bundle_id_is_not_bundle(self):
-        self.assert_effect(
-            "resource create R1 ocf:heartbeat:Dummy --no-default-ops",
-            """<resources>
-                <primitive class="ocf" id="R1" provider="heartbeat"
-                    type="Dummy"
-                >
-                    <operations>
-                        <op id="R1-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
-                        />
-                    </operations>
-                </primitive>
-            </resources>"""
-        )
+        self.fixture_primitive("R1")
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy bundle R1",
             "Error: 'R1' is not bundle\n"
@@ -900,18 +919,19 @@ class Bundle(ResourceTest):
             "Error: bundle 'B' does not exist\n"
         )
 
-    def _create_primiteve_in_bundle(self):
-        self.assert_effect(
-            "resource bundle create B container image=pcs:test",
-            """
-                <resources>
-                    <bundle id="B">
-                        <docker image="pcs:test" />
-                    </bundle>
-                </resources>
-            """,
-            "CIB has been upgraded to the latest schema version.\n"
+    def test_primitive_already_in_bundle(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R1", bundle="B")
+        self.assert_pcs_fail(
+            "resource create R2 ocf:heartbeat:Dummy --no-default-ops bundle B",
+            (
+                "Error: bundle 'B' already contains resource 'R1', a bundle "
+                "may contain at most one resource\n"
+            )
         )
+
+    def test_success(self):
+        self.fixture_bundle("B")
         self.assert_effect(
             "resource create R1 ocf:heartbeat:Dummy --no-default-ops bundle B",
             """
@@ -931,16 +951,6 @@ class Bundle(ResourceTest):
                 </resources>
             """
         )
-
-    def test_primitive_already_in_bundle(self):
-        self._create_primiteve_in_bundle()
-        self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --no-default-ops bundle B",
-            "Error: bundle 'B' already contains resource 'R1'\n"
-        )
-
-    def test_success(self):
-        self._create_primiteve_in_bundle()
 
 
 class FailOrWarn(ResourceTest):

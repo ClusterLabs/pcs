@@ -686,9 +686,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE: lambda info:
-        "bundle '{bundle_id}' already contains resource '{resource_id}'"
-        .format(**info)
+    codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE: lambda info:
+        (
+            "bundle '{bundle_id}' already contains resource '{resource_id}'"
+            ", a bundle may contain at most one resource"
+        ).format(**info)
     ,
 
     codes.RESOURCE_CLEANUP_ERROR: lambda info:

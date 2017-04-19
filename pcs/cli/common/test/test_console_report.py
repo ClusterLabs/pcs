@@ -479,11 +479,14 @@ class FencingLevelDoesNotExist(NameBuildTest):
         )
 
 
-class ResourceAlreadyDefinedInBundleTest(NameBuildTest):
-    code = codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE
+class ResourceBundleAlreadyContainsAResource(NameBuildTest):
+    code = codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE
     def test_build_message_with_data(self):
         self.assert_message_from_info(
-            "bundle 'test_bundle' already contains resource 'test_resource'",
+            (
+                "bundle 'test_bundle' already contains resource "
+                "'test_resource', a bundle may contain at most one resource"
+            ),
             {
                 "resource_id": "test_resource",
                 "bundle_id": "test_bundle",

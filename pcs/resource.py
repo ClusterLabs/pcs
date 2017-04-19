@@ -403,9 +403,10 @@ def resource_create(lib, argv, modifiers):
         )
     elif "bundle" in parts:
         lib.resource.create_into_bundle(
-            ra_id, ra_type, parts["bundle"][0], parts["op"],
+            ra_id, ra_type, parts["op"],
             parts["meta"],
             parts["options"],
+            parts["bundle"][0],
             **settings
         )
 

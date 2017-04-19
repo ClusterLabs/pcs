@@ -16,6 +16,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.commands import resource
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
+import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.integration_lib import (
@@ -27,8 +28,6 @@ from pcs.test.tools.misc import (
     outdent,
 )
 from pcs.test.tools.xml import etree_to_str
-
-import pcs.lib.commands.test.resource.fixture as fixture
 
 
 runner = Runner()
@@ -242,36 +241,21 @@ def fixture_state_resources_xml(role="Started", failed="false"):
         )
     )
 
+def fixture_cib_calls(cib_resources_xml):
+    cib_xml = open(rc("cib-empty.xml")).read()
 
-def _append_string_to_resources(etree_el, string):
-    resources_section = etree_el.find(".//resources")
-    for child in etree.fromstring(string):
+    cib = etree.fromstring(cib_xml)
+    resources_section = cib.find(".//resources")
+    for child in etree.fromstring(cib_resources_xml):
         resources_section.append(child)
 
-
-def fixture_load_cib_call(etree_el):
-    return [Call("cibadmin --local --query", etree_to_str(etree_el))]
-
-def fixture_load_cib_append_resources_call(cib_xml, resources_xml_append=None):
-    cib = etree.fromstring(cib_xml)
-    if resources_xml_append:
-        _append_string_to_resources(cib, resources_xml_append)
-    return fixture_load_cib_call(cib)
-
-
-def fixture_cib_calls(cib_resources_xml, cib_resources_append=None):
-    cib_xml = open(rc("cib-empty.xml")).read()
-    cib = etree.fromstring(cib_xml)
-    _append_string_to_resources(cib, cib_resources_xml)
-    return (
-        fixture_load_cib_append_resources_call(cib_xml, cib_resources_append) +
-        [
-            Call(
-                "cibadmin --replace --verbose --xml-pipe --scope configuration",
-                check_stdin=Call.create_check_stdin_xml(etree_to_str(cib))
-            )
-        ]
-    )
+    return [
+        Call("cibadmin --local --query", cib_xml),
+        Call(
+            "cibadmin --replace --verbose --xml-pipe --scope configuration",
+            check_stdin=Call.create_check_stdin_xml(etree_to_str(cib))
+        ),
+    ]
 
 def fixture_agent_load_calls():
     return [
@@ -333,13 +317,11 @@ class CommonResourceTest(TestCase):
         )
         self.create = partial(self.get_create(), self.env)
 
-    def assert_command_effect(
-        self, cmd, cib_resources_xml, reports=None, cib_resources_append=None
-    ):
+    def assert_command_effect(self, cmd, cib_resources_xml, reports=None):
         runner.set_runs(
             fixture_agent_load_calls()
             +
-            fixture_cib_calls(cib_resources_xml, cib_resources_append)
+            fixture_cib_calls(cib_resources_xml)
         )
         cmd()
         self.env.report_processor.assert_reports(reports if reports else [])
@@ -1017,10 +999,11 @@ class CreateInToBundle(ResourceWithoutStateTest):
     def simplest_create(self, wait=False, disabled=False, meta_attributes=None):
         return resource.create_into_bundle(
             self.env,
-            "A", "ocf:heartbeat:Dummy", "B",
+            "A", "ocf:heartbeat:Dummy",
             operations=[],
             meta_attributes=meta_attributes if meta_attributes else {},
             instance_attributes={},
+            bundle_id="B",
             wait=wait,
             ensure_disabled=disabled
         )
@@ -1116,7 +1099,7 @@ class CreateInToBundle(ResourceWithoutStateTest):
             self.simplest_create,
             (
                 severities.ERROR,
-                report_codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE,
+                report_codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE,
                 {
                     "bundle_id": "B",
                     "resource_id": "P",

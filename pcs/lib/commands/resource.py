@@ -244,8 +244,9 @@ create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
 create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
 
 def create_into_bundle(
-    env, resource_id, resource_agent_name, bundle_id,
+    env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes,
+    bundle_id,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -253,6 +254,30 @@ def create_into_bundle(
     ensure_disabled=False,
     wait=False,
 ):
+    """
+    Create a new resource in a cib and put it into an existing bundle
+
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id is identifier of resource
+    string resource_agent_name contains name for the identification of agent
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
+    string bundle_id is id of an existing bundle to put the created resource in
+    bool allow_absent_agent is a flag for allowing agent that is not installed
+        in a system
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    """
     resource_agent = get_agent(
         env.report_processor,
         env.cmd_runner(),
@@ -275,7 +300,7 @@ def create_into_bundle(
             use_default_operations,
             ensure_disabled,
         )
-        resource.bundle.append(
+        resource.bundle.add_resource(
             find_element_by_tag_and_id(
                 "bundle", resources_section, bundle_id
             ),

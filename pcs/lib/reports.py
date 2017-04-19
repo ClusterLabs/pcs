@@ -1073,9 +1073,15 @@ def id_not_found(id, id_description, context_type="", context_id=""):
         }
     )
 
-def resource_already_defined_in_bundle(bundle_id, resource_id):
+def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
+    """
+    The bundle already contains a resource, another one caanot be added
+
+    string bundle_id -- id of the bundle
+    string resource_id -- id of the resource already contained in the bundle
+    """
     return ReportItem.error(
-        report_codes.RESOURCE_ALREADY_DEFINED_IN_BUNDLE,
+        report_codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE,
         info={
             "bundle_id": bundle_id,
             "resource_id": resource_id,

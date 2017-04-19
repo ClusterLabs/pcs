@@ -214,17 +214,17 @@ Commands:
            [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
            | bundle <bundle id>] [--disabled] [--wait[=n]]
-        Create specified resource.  If clone is used a clone resource is
-        created.  If master is specified a master/slave resource is created.
-        If bundle is used, resource will be created inside of specified bundle.
-        If --group is specified the resource is added to the group named.  You
+        Create specified resource. If clone is used a clone resource is
+        created. If master is specified a master/slave resource is created.
+        If --group is specified the resource is added to the group named. You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.
-        If --disabled is specified the resource is not started automatically.
-        If --wait is specified, pcs will wait up to 'n' seconds for the resource
-        to start and then return 0 if the resource is started, or 1 if
-        the resource has not yet started.  If 'n' is not specified it defaults
-        to 60 minutes.
+        If bundle is used, the resource will be created inside of the specified
+        bundle. If --disabled is specified the resource is not started
+        automatically. If --wait is specified, pcs will wait up to 'n' seconds
+        for the resource to start and then return 0 if the resource is started,
+        or 1 if the resource has not yet started.  If 'n' is not specified it
+        defaults to 60 minutes.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
             on eth2:

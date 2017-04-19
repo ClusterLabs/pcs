@@ -9,6 +9,7 @@ from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports, validate
+from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
     LibraryError,
@@ -254,10 +255,18 @@ def update(
         if len(element) < 1 and not element.attrib:
             element.getparent().remove(element)
 
-def append(bundle_element, primitive_element):
-    inner_primitive = _get_inner_primitive(bundle_element)
+def add_resource(bundle_element, primitive_element):
+    """
+    Add an existing resource to an existing bundle
+
+    etree bundle_element -- where to add the resource to
+    etree primitive_element -- the resource to be added to the bundle
+    """
+    # TODO possibly split to 'validate' and 'do' functions
+    # a bundle may currently contain at most one primitive resource
+    inner_primitive = bundle_element.find(TAG_PRIMITIVE)
     if inner_primitive is not None:
-        raise LibraryError(reports.resource_already_defined_in_bundle(
+        raise LibraryError(reports.resource_bundle_already_contains_a_resource(
             bundle_element.get("id"), inner_primitive.get("id")
         ))
     bundle_element.append(primitive_element)
@@ -485,12 +494,6 @@ def _append_storage_map(
 def _get_container_element(bundle_el):
     # TODO get different types of container once supported by pacemaker
     return bundle_el.find("docker")
-
-def _get_inner_primitive(bundle_element):
-    primitive_list = bundle_element.xpath("./primitive")
-    if primitive_list:
-        return primitive_list[0]
-    return None
 
 def _remove_map_elements(element_list, id_to_remove_list):
     for el in element_list:

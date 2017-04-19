@@ -21,7 +21,9 @@ class ResourceTest(
     TestCase,
     get_assert_pcs_effect_mixin(get_cib_resources)
 ):
+    empty_cib = rc("cib-empty-1.2.xml")
     temp_cib = rc("temp-cib.xml")
+
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), self.temp_cib)
+        shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
