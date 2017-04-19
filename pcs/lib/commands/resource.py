@@ -298,6 +298,74 @@ def bundle_create(
             storage_map
         )
 
+def bundle_update(
+    env, bundle_id, container_options=None, network_options=None,
+    port_map_add=None, port_map_remove=None, storage_map_add=None,
+    storage_map_remove=None,
+    force_options=False,
+    wait=False,
+):
+    """
+    Modify an existing bundle (does not touch encapsulated resources)
+
+    LibraryEnvironment env -- provides communication with externals
+    string bundle_id -- id of the bundle to modify
+    dict container_options -- container options to modify
+    dict network_options -- network options to modify
+    list of dict port_map_add -- list of port mapping options to add
+    list of string port_map_remove -- list of port mapping ids to remove
+    list of dict storage_map_add -- list of storage mapping options to add
+    list of string storage_map_remove -- list of storage mapping ids to remove
+    bool force_options -- return warnings instead of forceable errors
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    container_options = container_options or {}
+    network_options = network_options or {}
+    port_map_add = port_map_add or []
+    port_map_remove = port_map_remove or []
+    storage_map_add = storage_map_add or []
+    storage_map_remove = storage_map_remove or []
+
+    with resource_environment(
+        env,
+        False, # wait, # TODO add support for wait
+        [bundle_id],
+        disabled_after_wait=False
+        # No need to require specific cib version:
+        # - if the cib doesn't support bundles, there is nothing to update
+        #   and we don't want to update the cib just because
+        # - if the bundle exists in the cib, then the cib version is ok
+    ) as resources_section:
+        id_provider = IdProvider(resources_section)
+        bundle_element = find_element_by_tag_and_id(
+            resource.bundle.TAG,
+            resources_section,
+            bundle_id
+        )
+        env.report_processor.process_list(
+            resource.bundle.validate_update(
+                id_provider,
+                bundle_element,
+                container_options,
+                network_options,
+                port_map_add,
+                port_map_remove,
+                storage_map_add,
+                storage_map_remove,
+                force_options
+            )
+        )
+        resource.bundle.update(
+            id_provider,
+            bundle_element,
+            container_options,
+            network_options,
+            port_map_add,
+            port_map_remove,
+            storage_map_add,
+            storage_map_remove
+        )
+
 def disable(env, resource_ids, wait):
     """
     Disallow specified resource to be started by the cluster

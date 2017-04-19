@@ -434,6 +434,14 @@ Commands:
         either as it is or a resource may be put into it at any time.
         If the container type is not specified, it defaults to 'docker'.
 
+    bundle update <bundle id> [container <container options>]
+            [network <network options>]
+            [port-map (add <port options>) | (remove <id>...)]...
+            [storage-map (add <storage options>) | (remove <id>...)]...
+        Add, remove or change options to specified bundle. If you wish to update
+        a resource encapsulated in the bundle, use the 'pcs resource update'
+        command instead and specify the resource id.
+
     manage <resource id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is
         specified, enable all monitor operations of the resources.

@@ -165,6 +165,9 @@ Configure a resource or group as a multi\-state (master/slave) resource.  If \fB
 bundle create <bundle id> [container [<container type>] <container options>] [network <network options>] [port\-map <port options>]... [storage\-map <storage options>]...
 Create a new bundle encapsulating no resources. The bundle can be used either as it is or a resource may be put into it at any time. If the container type is not specified, it defaults to 'docker'.
 .TP
+bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (remove <id>...)]... [storage\-map (add <storage options>) | (remove <id>...)]...
+Add, remove or change options to specified bundle. If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.
+.TP
 manage <resource id>... [\fB\-\-monitor\fR]
 Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specified, enable all monitor operations of the resources.
 .TP

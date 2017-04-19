@@ -222,6 +222,33 @@ class CreateDocker(CommonTest):
         )
         self.runner.assert_everything_launched()
 
+    def test_empty_image(self):
+        self.runner.set_runs(
+            fixture.call_cib_load(
+                self.fixture_cib_resources(self.fixture_cib_pre)
+            )
+        )
+        assert_raise_library_error(
+            lambda: resource.bundle_create(
+                self.env, "B1", "docker",
+                {
+                    "image": "",
+                },
+                force_options=True
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "image",
+                    "option_value": "",
+                    "allowed_values": "image name",
+                },
+                None
+            ),
+        )
+        self.runner.assert_everything_launched()
+
     def test_unknow_option(self):
         self.runner.set_runs(
             fixture.call_cib_load(

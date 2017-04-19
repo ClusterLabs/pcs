@@ -53,12 +53,15 @@ def parse_create(arg_list):
 
     return parts
 
-def parse_bundle_create_options(arg_list):
-    groups = group_by_keywords(
+def _parse_bundle_groups(arg_list):
+    return group_by_keywords(
         arg_list,
         set(["container", "network", "port-map", "storage-map"]),
         group_repeated_keywords=["port-map", "storage-map"]
     )
+
+def parse_bundle_create_options(arg_list):
+    groups = _parse_bundle_groups(arg_list)
     container_options = groups.get("container", [])
     container_type = None
     if container_options and "=" not in container_options[0]:
@@ -75,6 +78,51 @@ def parse_bundle_create_options(arg_list):
             prepare_options(storage_map)
             for storage_map in groups.get("storage-map", [])
         ],
+    }
+    if not parts["container_type"]:
+        parts["container_type"] = "docker"
+    return parts
+
+def _split_bundle_map_update_op_and_options(
+    map_arg_list, result_parts, map_name
+):
+    if len(map_arg_list) < 2:
+        raise _bundle_map_update_not_valid(map_name)
+    op, options = map_arg_list[0], map_arg_list[1:]
+    if op == "add":
+        result_parts[op].append(prepare_options(options))
+    elif op == "remove":
+        result_parts[op].extend(options)
+    else:
+        raise _bundle_map_update_not_valid(map_name)
+
+def _bundle_map_update_not_valid(map_name):
+    return CmdLineInputError(
+        (
+            "When using '{map}' you must specify either 'add' and options or "
+            "'remove' and id(s)"
+        ).format(map=map_name)
+    )
+
+def parse_bundle_update_options(arg_list):
+    groups = _parse_bundle_groups(arg_list)
+    port_map = {"add": [], "remove": []}
+    for map_group in groups.get("port-map", []):
+        _split_bundle_map_update_op_and_options(
+            map_group, port_map, "port-map"
+        )
+    storage_map = {"add": [], "remove": []}
+    for map_group in groups.get("storage-map", []):
+        _split_bundle_map_update_op_and_options(
+            map_group, storage_map, "storage-map"
+        )
+    parts = {
+        "container": prepare_options(groups.get("container", [])),
+        "network": prepare_options(groups.get("network", [])),
+        "port_map_add": port_map["add"],
+        "port_map_remove": port_map["remove"],
+        "storage_map_add": storage_map["add"],
+        "storage_map_remove": storage_map["remove"],
     }
     return parts
 
@@ -120,5 +168,3 @@ def __every_operation_needs_name():
     return CmdLineInputError(
         "When using 'op' you must specify an operation name after 'op'"
     )
-
-

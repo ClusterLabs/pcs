@@ -215,7 +215,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             [],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -225,9 +225,9 @@ class ParseBundleCreateOptions(TestCase):
 
     def test_container_type(self):
         self.assert_produce(
-            ["container", "docker"],
+            ["container", "lxc"],
             {
-                "container_type": "docker",
+                "container_type": "lxc",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -239,7 +239,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["container", "a=b", "c=d"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {"a": "b", "c": "d"},
                 "network": {},
                 "port_map": [],
@@ -249,9 +249,9 @@ class ParseBundleCreateOptions(TestCase):
 
     def test_container_type_and_options(self):
         self.assert_produce(
-            ["container", "docker", "a=b", "c=d"],
+            ["container", "lxc", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "lxc",
                 "container": {"a": "b", "c": "d"},
                 "network": {},
                 "port_map": [],
@@ -262,6 +262,9 @@ class ParseBundleCreateOptions(TestCase):
     def test_container_type_must_be_first(self):
         self.assert_raises_cmdline(["container", "a=b", "docker", "c=d"])
 
+    def test_container_missing_value(self):
+        self.assert_raises_cmdline(["container", "docker", "a", "c=d"])
+
     def test_container_missing_key(self):
         self.assert_raises_cmdline(["container", "docker", "=b", "c=d"])
 
@@ -269,7 +272,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["network", "a=b", "c=d"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {"a": "b", "c": "d"},
                 "port_map": [],
@@ -281,7 +284,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["network"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -299,7 +302,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["port-map"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [{}],
@@ -311,7 +314,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["port-map", "a=b", "c=d"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}],
@@ -323,7 +326,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["port-map", "a=b", "c=d", "port-map", "e=f"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}, {"e": "f"}],
@@ -341,7 +344,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["storage-map"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -353,7 +356,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["storage-map", "a=b", "c=d"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -365,7 +368,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["storage-map", "a=b", "c=d", "storage-map", "e=f"],
             {
-                "container_type": None,
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -382,7 +385,7 @@ class ParseBundleCreateOptions(TestCase):
     def test_all(self):
         self.assert_produce(
             [
-                "container", "docker", "a=b", "c=d",
+                "container", "lxc", "a=b", "c=d",
                 "network", "e=f", "g=h",
                 "port-map", "i=j", "k=l",
                 "port-map", "m=n", "o=p",
@@ -390,7 +393,7 @@ class ParseBundleCreateOptions(TestCase):
                 "storage-map", "u=v", "w=x",
             ],
             {
-                "container_type": "docker",
+                "container_type": "lxc",
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
@@ -404,18 +407,239 @@ class ParseBundleCreateOptions(TestCase):
                 "storage-map", "q=r", "s=t",
                 "port-map", "i=j", "k=l",
                 "network", "e=f",
-                "container", "docker", "a=b",
+                "container", "lxc", "a=b",
                 "storage-map", "u=v", "w=x",
                 "port-map", "m=n", "o=p",
                 "network", "g=h",
                 "container", "c=d",
             ],
             {
-                "container_type": "docker",
+                "container_type": "lxc",
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
                 "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+            }
+        )
+
+
+class ParseBundleUpdateOptions(TestCase):
+    def assert_produce(self, arg_list, result):
+        self.assertEqual(
+            result,
+            parse_args.parse_bundle_update_options(arg_list)
+        )
+
+    def assert_raises_cmdline(self, arg_list):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: parse_args.parse_bundle_update_options(arg_list)
+        )
+
+    def test_no_args(self):
+        self.assert_produce(
+            [],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_container_options(self):
+        self.assert_produce(
+            ["container", "a=b", "c=d"],
+            {
+                "container": {"a": "b", "c": "d"},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_container_empty(self):
+        self.assert_produce(
+            ["container"],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_container_missing_value(self):
+        self.assert_raises_cmdline(["container", "a", "c=d"])
+
+    def test_container_missing_key(self):
+        self.assert_raises_cmdline(["container", "=b", "c=d"])
+
+    def test_network(self):
+        self.assert_produce(
+            ["network", "a=b", "c=d"],
+            {
+                "container": {},
+                "network": {"a": "b", "c": "d"},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_network_empty(self):
+        self.assert_produce(
+            ["network"],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_network_missing_value(self):
+        self.assert_raises_cmdline(["network", "a", "c=d"])
+
+    def test_network_missing_key(self):
+        self.assert_raises_cmdline(["network", "=b", "c=d"])
+
+    def test_port_map_missing_params(self):
+        self.assert_raises_cmdline(["port-map"])
+        self.assert_raises_cmdline(["port-map add"])
+        self.assert_raises_cmdline(["port-map remove"])
+
+    def test_port_map_wrong_keyword(self):
+        self.assert_raises_cmdline(["port-map", "wrong", "a=b"])
+
+    def test_port_map_missing_value(self):
+        self.assert_raises_cmdline(["port-map", "add", "a", "c=d"])
+
+    def test_port_map_missing_key(self):
+        self.assert_raises_cmdline(["port-map", "add", "=b", "c=d"])
+
+    def test_port_map_more(self):
+        self.assert_produce(
+            [
+                "port-map", "add", "a=b",
+                "port-map", "remove", "c", "d",
+                "port-map", "add", "e=f", "g=h",
+                "port-map", "remove", "i",
+            ],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [
+                    {"a": "b", },
+                    {"e": "f", "g": "h",},
+                ],
+                "port_map_remove": ["c", "d", "i"],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+            }
+        )
+
+    def test_storage_map_missing_params(self):
+        self.assert_raises_cmdline(["storage-map"])
+        self.assert_raises_cmdline(["storage-map add"])
+        self.assert_raises_cmdline(["storage-map remove"])
+
+    def test_storage_map_wrong_keyword(self):
+        self.assert_raises_cmdline(["storage-map", "wrong", "a=b"])
+
+    def test_storage_map_missing_value(self):
+        self.assert_raises_cmdline(["storage-map", "add", "a", "c=d"])
+
+    def test_storage_map_missing_key(self):
+        self.assert_raises_cmdline(["storage-map", "add", "=b", "c=d"])
+
+    def test_storage_map_more(self):
+        self.assert_produce(
+            [
+                "storage-map", "add", "a=b",
+                "storage-map", "remove", "c", "d",
+                "storage-map", "add", "e=f", "g=h",
+                "storage-map", "remove", "i",
+            ],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [
+                    {"a": "b", },
+                    {"e": "f", "g": "h",},
+                ],
+                "storage_map_remove": ["c", "d", "i"],
+            }
+        )
+
+    def test_all(self):
+        self.assert_produce(
+            [
+                "container", "a=b", "c=d",
+                "network", "e=f", "g=h",
+                "port-map", "add", "i=j", "k=l",
+                "port-map", "add", "m=n",
+                "port-map", "remove", "o", "p",
+                "port-map", "remove", "q",
+                "storage-map", "add", "r=s", "t=u",
+                "storage-map", "add", "v=w",
+                "storage-map", "remove", "x", "y",
+                "storage-map", "remove", "z",
+            ],
+            {
+                "container": {"a": "b", "c": "d"},
+                "network": {"e": "f", "g": "h"},
+                "port_map_add": [
+                    {"i": "j", "k": "l"},
+                    {"m": "n"},
+                ],
+                "port_map_remove": ["o", "p", "q"],
+                "storage_map_add": [
+                    {"r": "s", "t": "u"},
+                    {"v": "w"},
+                ],
+                "storage_map_remove": ["x", "y", "z"],
+            }
+        )
+
+    def test_all_mixed(self):
+        self.assert_produce(
+            [
+                "storage-map", "remove", "x", "y",
+                "port-map", "remove", "o", "p",
+                "network", "e=f", "g=h",
+                "storage-map", "add", "r=s", "t=u",
+                "port-map", "add", "i=j", "k=l",
+                "container", "a=b", "c=d",
+                "port-map", "remove", "q",
+                "storage-map", "remove", "z",
+                "storage-map", "add", "v=w",
+                "port-map", "add", "m=n",
+            ],
+            {
+                "container": {"a": "b", "c": "d"},
+                "network": {"e": "f", "g": "h"},
+                "port_map_add": [
+                    {"i": "j", "k": "l"},
+                    {"m": "n"},
+                ],
+                "port_map_remove": ["o", "p", "q"],
+                "storage_map_add": [
+                    {"r": "s", "t": "u"},
+                    {"v": "w"},
+                ],
+                "storage_map_remove": ["x", "y", "z"],
             }
         )
 

@@ -25,6 +25,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
+    parse_bundle_update_options,
     parse_create as parse_create_args,
 )
 from pcs.lib.errors import LibraryError
@@ -2496,6 +2497,8 @@ def resource_bundle_cmd(lib, argv, modifiers):
 
         if sub_cmd == "create":
             resource_bundle_create_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "update":
+            resource_bundle_update_cmd(lib, argv_next, modifiers)
         else:
             sub_cmd = ""
             raise CmdLineInputError()
@@ -2510,9 +2513,6 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
 
     bundle_id = argv[0]
     parts = parse_bundle_create_options(argv[1:])
-    if not parts["container_type"]:
-        parts["container_type"] = "docker"
-
     lib.resource.bundle_create(
         bundle_id,
         parts["container_type"],
@@ -2520,6 +2520,24 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
         parts["network"],
         parts["port_map"],
         parts["storage_map"],
+        modifiers["force"],
+        modifiers["wait"]
+    )
+
+def resource_bundle_update_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+
+    bundle_id = argv[0]
+    parts = parse_bundle_update_options(argv[1:])
+    lib.resource.bundle_update(
+        bundle_id,
+        parts["container"],
+        parts["network"],
+        parts["port_map_add"],
+        parts["port_map_remove"],
+        parts["storage_map_add"],
+        parts["storage_map_remove"],
         modifiers["force"],
         modifiers["wait"]
     )
