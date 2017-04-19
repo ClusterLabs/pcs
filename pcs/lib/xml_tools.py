@@ -49,6 +49,30 @@ def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
 def export_attributes(element):
     return  dict((key, value) for key, value in element.attrib.items())
 
+def update_attribute_remove_empty(element, name, value):
+    """
+    Set an attribute's value or remove the attribute if the value is ""
+
+    etree element -- element to be updated
+    string name -- attribute name
+    mixed value -- attribute value
+    """
+    if len(value) < 1:
+        if name in element.attrib:
+            del element.attrib[name]
+        return
+    element.set(name, value)
+
+def update_attributes_remove_empty(element, attributtes):
+    """
+    Set an attributes' values or remove an attribute if its new value is ""
+
+    etree element -- element to be updated
+    dict attributes -- new attributes' values
+    """
+    for name, value in attributtes.items():
+        update_attribute_remove_empty(element, name, value)
+
 def etree_element_attibutes_to_dict(etree_el, required_key_list):
     """
     Returns all attributes of etree_el from required_key_list in dictionary,

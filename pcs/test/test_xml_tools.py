@@ -80,6 +80,49 @@ class GetSubElementTest(TestCase):
         )
 
 
+class UpdateAttributeRemoveEmpty(TestCase):
+    def setUp(self):
+        self.el = etree.Element(
+            "test_element",
+            {
+                "a": "A",
+                "b": "B",
+            }
+        )
+
+    def assert_xml_equal(self, expected):
+        assert_xml_equal(expected, etree.tostring(self.el).decode())
+
+    def test_set_new_attr(self):
+        lib.update_attribute_remove_empty(self.el, "c", "C")
+        self.assert_xml_equal('<test_element a="A" b="B" c="C" />')
+
+    def test_change_existing_attr(self):
+        lib.update_attribute_remove_empty(self.el, "b", "b1")
+        self.assert_xml_equal('<test_element a="A" b="b1" />')
+
+    def test_remove_existing_attr(self):
+        lib.update_attribute_remove_empty(self.el, "b", "")
+        self.assert_xml_equal('<test_element a="A" />')
+
+    def test_zero_does_not_remove(self):
+        lib.update_attribute_remove_empty(self.el, "b", "0")
+        self.assert_xml_equal('<test_element a="A" b="0" />')
+
+    def test_remove_missing_attr(self):
+        lib.update_attribute_remove_empty(self.el, "c", "")
+        self.assert_xml_equal('<test_element a="A" b="B" />')
+
+    def test_more(self):
+        lib.update_attributes_remove_empty(self.el, {
+            "a": "X",
+            "b": "",
+            "c": "C",
+            "d": "",
+        })
+        self.assert_xml_equal('<test_element a="X" c="C" />')
+
+
 class EtreeElementAttributesToDictTest(TestCase):
     def setUp(self):
         self.el = etree.Element(
