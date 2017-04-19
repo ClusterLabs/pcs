@@ -305,6 +305,49 @@ class ValueCondTest(TestCase):
         )
 
 
+class ValueEmptyOrValid(TestCase):
+    def setUp(self):
+        self.validator = validate.value_cond("a", lambda a: a == "b", "test")
+
+    def test_missing(self):
+        assert_report_item_list_equal(
+            validate.value_empty_or_valid("a", self.validator)({"b": "c"}),
+            [
+            ]
+        )
+
+    def test_empty(self):
+        assert_report_item_list_equal(
+            validate.value_empty_or_valid("a", self.validator)({"a": ""}),
+            [
+            ]
+        )
+
+    def test_valid(self):
+        assert_report_item_list_equal(
+            validate.value_empty_or_valid("a", self.validator)({"a": "b"}),
+            [
+            ]
+        )
+
+    def test_not_valid(self):
+        assert_report_item_list_equal(
+            validate.value_empty_or_valid("a", self.validator)({"a": "c"}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": "test",
+                    },
+                    None
+                ),
+            ]
+        )
+
+
 class ValueId(TestCase):
     def test_empty_id(self):
         assert_report_item_list_equal(
@@ -564,6 +607,37 @@ class ValueNonnegativeInteger(TestCase):
                         "option_name": "key",
                         "option_value": "-10",
                         "allowed_values": "a non-negative integer",
+                    },
+                    None
+                ),
+            ]
+        )
+
+
+class ValueNotEmpty(TestCase):
+    def test_empty_report_on_not_empty_value(self):
+        assert_report_item_list_equal(
+            validate.value_not_empty("key", "description")({"key": "abc"}),
+            []
+        )
+
+    def test_empty_report_on_zero_int_value(self):
+        assert_report_item_list_equal(
+            validate.value_not_empty("key", "description")({"key": 0}),
+            []
+        )
+
+    def test_report_on_empty_string(self):
+        assert_report_item_list_equal(
+            validate.value_not_empty("key", "description")({"key": ""}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "key",
+                        "option_value": "",
+                        "allowed_values": "description",
                     },
                     None
                 ),
@@ -930,3 +1004,13 @@ class MatchesRegexp(TestCase):
             "abCeCBa",
             re.compile("^[a-d]+$", re.IGNORECASE)
         ))
+
+
+class IsEmptyString(TestCase):
+    def test_empty_string(self):
+        self.assertTrue(validate.is_empty_string(""))
+
+    def test_not_empty_string(self):
+        self.assertFalse(validate.is_empty_string("a"))
+        self.assertFalse(validate.is_empty_string("0"))
+        self.assertFalse(validate.is_empty_string(0))

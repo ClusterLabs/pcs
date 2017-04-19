@@ -41,6 +41,7 @@ from __future__ import (
 from collections import namedtuple
 import re
 
+from pcs.common.tools import is_string
 from pcs.lib import reports
 from pcs.lib.pacemaker.values import validate_id
 
@@ -267,7 +268,29 @@ def value_cond(
                 value.original,
                 value_type_or_enum,
             )]
+
         return []
+    return validate
+
+def value_empty_or_valid(option_name, validator):
+    """
+    Get a validator running the specified validator if the value is not empty
+
+    string option_name -- name of the option to check
+    function validator -- validator to run when the value is not an empty string
+    """
+    def validate(option_dict):
+        if option_name not in option_dict:
+            return []
+
+        value = option_dict[option_name]
+        if not isinstance(value, ValuePair):
+            value = ValuePair(value, value)
+
+        if is_empty_string(value.normalized):
+            return []
+
+        return validator(option_dict)
     return validate
 
 def value_id(option_name, option_name_for_report=None, id_provider=None):
@@ -339,6 +362,27 @@ def value_nonnegative_integer(
         option_name,
         lambda value: is_integer(value, 0),
         "a non-negative integer",
+        option_name_for_report=option_name_for_report,
+        code_to_allow_extra_values=code_to_allow_extra_values,
+        allow_extra_values=allow_extra_values,
+    )
+
+def value_not_empty(
+    option_name, value_type_or_enum, option_name_for_report=None,
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
+    """
+    Get a validator reporting INVALID_OPTION_VALUE when the value is empty
+
+    string option_name -- name of the option to check
+    string option_name_for_report -- substitued by the option_name if not set
+    string code_to_allow_extra_values -- create a report forceable by this code
+    bool allow_extra_values -- create a warning instead of an error if True
+    """
+    return value_cond(
+        option_name,
+        lambda value: not is_empty_string(value),
+        value_type_or_enum,
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
         allow_extra_values=allow_extra_values,
@@ -429,6 +473,14 @@ def run_collection_of_option_validators(option_dict, validator_list):
     for validate in validator_list:
         report_list.extend(validate(option_dict))
     return report_list
+
+def is_empty_string(value):
+    """
+    Check if the specified value is an empty string
+
+    mixed value -- value to check
+    """
+    return is_string(value) and not value
 
 def is_integer(value, at_least=None, at_most=None):
     """
