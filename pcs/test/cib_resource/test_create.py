@@ -7,16 +7,10 @@ from __future__ import (
 
 from pcs.test.tools.misc import (
     get_test_resource as rc,
+    skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_supports_systemd,
-    skip_unless_pacemaker_version,
 )
 from pcs.test.cib_resource.common import ResourceTest
-
-
-skip_unless_resource_bundle_supported = skip_unless_pacemaker_version(
-    (1, 1, 16),
-    "bundle resources"
-)
 
 
 class Success(ResourceTest):
@@ -876,7 +870,7 @@ class SuccessClone(ResourceTest):
         )
 
 
-@skip_unless_resource_bundle_supported
+@skip_unless_pacemaker_supports_bundle
 class Bundle(ResourceTest):
     empty_cib = rc("cib-empty-2.8.xml")
 

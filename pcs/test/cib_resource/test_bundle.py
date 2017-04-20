@@ -13,15 +13,10 @@ from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
-    skip_unless_pacemaker_version,
+    skip_unless_pacemaker_supports_bundle,
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
-
-skip_unless_resource_bundle_supported = skip_unless_pacemaker_version(
-    (1, 1, 16),
-    "bundle resources"
-)
 
 class BundleCreateCommon(
     TestCase,
@@ -38,7 +33,7 @@ class BundleCreateCommon(
         self.pcs_runner = PcsRunner(self.temp_cib)
 
 
-@skip_unless_resource_bundle_supported
+@skip_unless_pacemaker_supports_bundle
 class BundleCreateUpgradeCib(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -56,7 +51,7 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
         )
 
 
-@skip_unless_resource_bundle_supported
+@skip_unless_pacemaker_supports_bundle
 class BundleCreate(BundleCreateCommon):
     empty_cib = rc("cib-empty-2.8.xml")
 
@@ -201,7 +196,7 @@ class BundleCreate(BundleCreateCommon):
         )
 
 
-@skip_unless_resource_bundle_supported
+@skip_unless_pacemaker_supports_bundle
 class BundleUpdate(BundleCreateCommon):
     empty_cib = rc("cib-empty-2.8.xml")
 
