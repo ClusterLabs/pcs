@@ -93,6 +93,37 @@ class Basics(CommonTest):
             fixture_cib_pre
         )
 
+    def test_cib_upgrade(self):
+        fixture_cib_pre = """
+            <resources>
+                <bundle id="B1">
+                    <docker image="pcs:test" />
+                </bundle>
+            </resources>
+        """
+        self.runner.set_runs(
+            fixture.calls_cib_load_and_upgrade(fixture_cib_pre)
+            +
+            fixture.calls_cib(
+                fixture_cib_pre,
+                fixture_cib_pre,
+                cib_base_file=self.cib_base_file
+            )
+        )
+
+        resource.bundle_update(self.env, "B1")
+
+        self.env.report_processor.assert_reports([
+            (
+                severities.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {
+                },
+                None
+            ),
+        ])
+        self.runner.assert_everything_launched()
+
 
 class ContainerDocker(CommonTest):
     allowed_options = [

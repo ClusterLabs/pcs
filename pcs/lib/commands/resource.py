@@ -394,11 +394,8 @@ def bundle_update(
         env,
         False, # wait, # TODO add support for wait
         [bundle_id],
-        disabled_after_wait=False
-        # No need to require specific cib version:
-        # - if the cib doesn't support bundles, there is nothing to update
-        #   and we don't want to update the cib just because
-        # - if the bundle exists in the cib, then the cib version is ok
+        disabled_after_wait=False,
+        required_cib_version=(2, 8, 0)
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         bundle_element = find_element_by_tag_and_id(
