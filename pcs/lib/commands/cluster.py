@@ -14,6 +14,7 @@ from pcs.lib.cib import resource
 from pcs.lib.cib.resource import guest_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.state import ensure_resource_running
 
 def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
     report_items = []
@@ -121,7 +122,7 @@ def node_add_remote(
         ))
 
     instance_attributes["server"] = node_host
-    resource.primitive.create(
+    remote_resource_element = resource.primitive.create(
         env.report_processor,
         get_resources(cib),
         node_name,
@@ -144,6 +145,13 @@ def node_add_remote(
         allow_pacemaker_remote_service_fail,
     )
     env.push_cib(cib, wait)
+    if wait:
+        env.report_processor.process(
+            ensure_resource_running(
+                env.get_cluster_state(),
+                remote_resource_element.attrib["id"]
+            )
+        )
 
 
 def node_add_guest(
@@ -179,3 +187,7 @@ def node_add_guest(
         allow_pacemaker_remote_service_fail,
     )
     env.push_cib(cib, wait)
+    if wait:
+        env.report_processor.process(
+            ensure_resource_running(env.get_cluster_state(), resource_id)
+        )

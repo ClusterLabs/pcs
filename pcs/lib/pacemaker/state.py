@@ -220,6 +220,13 @@ def ensure_resource_state(expected_running, cluster_state, resource_id):
         severities.INFO if expected_running else severities.ERROR
     )
 
+def ensure_resource_running(cluster_state, resource_id):
+    return ensure_resource_state(
+        expected_running=True,
+        cluster_state=cluster_state,
+        resource_id=resource_id,
+    )
+
 def is_resource_managed(cluster_state, resource_id):
     """
     Check if the resource is managed
