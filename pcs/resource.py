@@ -2116,6 +2116,7 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
     if node.tag == "clone":
         print(spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
@@ -2123,12 +2124,14 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
     if node.tag == "primitive":
         print(spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_utilization_string(node, spaces)
         print_operations(node, spaces)
+        return
     if node.tag == "master":
         print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
         print_instance_vars_string(node, spaces)
@@ -2136,6 +2139,52 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
+    if node.tag == "bundle":
+        print(spaces + "Bundle: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
+        print_bundle_container(node, spaces + " ")
+        print_bundle_network(node, spaces + " ")
+        print_bundle_mapping(
+            "Port Mapping:",
+            node.findall("network/port-mapping"),
+            spaces + " "
+        )
+        print_bundle_mapping(
+            "Storage Mapping:",
+            node.findall("storage/storage-mapping"),
+            spaces + " "
+        )
+        for child in node:
+            print_node(child, tab + 1)
+        return
+
+def print_bundle_container(bundle_el, spaces):
+    # TODO support other types of container once supported by pacemaker
+    container_list = bundle_el.findall("docker")
+    for container_el in container_list:
+        print(
+            spaces
+            +
+            container_el.tag.capitalize()
+            +
+            get_attrs(container_el, ": ", "")
+        )
+
+def print_bundle_network(bundle_el, spaces):
+    network_list = bundle_el.findall("network")
+    for network_el in network_list:
+        attrs_string = get_attrs(network_el)
+        if attrs_string:
+            print(spaces + "Network: " + attrs_string)
+
+def print_bundle_mapping(first_line, map_items, spaces):
+    map_lines = [
+        spaces + " " + get_attrs(item, "", " ") + "(" + item.attrib["id"] + ")"
+        for item in map_items
+    ]
+    if map_lines:
+        print(spaces + first_line)
+        print("\n".join(map_lines))
 
 def print_utilization_string(element, spaces):
     output = []
@@ -2209,6 +2258,8 @@ def get_attrs(node, prepend_string = "", append_string = ""):
     for attr,val in sorted(node.attrib.items()):
         if attr in ["id"]:
             continue
+        if " " in val:
+            val = '"' + val + '"'
         output += attr + "=" + val + " "
     if output != "":
         return prepend_string + output.rstrip() + append_string

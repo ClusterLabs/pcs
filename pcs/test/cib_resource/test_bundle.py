@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 import shutil
 
+from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import (
@@ -22,6 +23,7 @@ class BundleCreateCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//resources")[0]
         )
     )
@@ -334,3 +336,120 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """
         )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleShow(TestCase, AssertPcsMixin):
+    empty_cib = rc("cib-empty-2.8.xml")
+    temp_cib = rc("temp-cib.xml")
+
+    def setUp(self):
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    def test_minimal(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container image=pcs:test"
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+            """
+        ))
+
+    def test_container(self):
+        self.assert_pcs_success(
+            """
+                resource bundle create B1
+                container image=pcs:test masters=2 replicas=4 options='a b c'
+            """
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test masters=2 options="a b c" replicas=4
+            """
+        ))
+
+    def test_network(self):
+        self.assert_pcs_success(
+            """
+                resource bundle create B1
+                container image=pcs:test
+                network host-interface=eth0 host-netmask=24 control-port=12345
+            """
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Network: control-port=12345 host-interface=eth0 host-netmask=24
+            """
+        ))
+
+    def test_port_map(self):
+        self.assert_pcs_success(
+            """
+                resource bundle create B1
+                container image=pcs:test
+                port-map id=B1-port-map-1001 internal-port=2002 port=2000
+                port-map range=3000-3300
+            """
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Port Mapping:
+               internal-port=2002 port=2000 (B1-port-map-1001)
+               range=3000-3300 (B1-port-map-3000-3300)
+            """
+        ))
+
+    def test_storage_map(self):
+        self.assert_pcs_success(
+            """
+                resource bundle create B1
+                container image=pcs:test
+                storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
+                storage-map id=my-storage-map source-dir=/tmp/docker2a
+                    target-dir=/tmp/docker2b
+            """
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Storage Mapping:
+               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+            """
+        ))
+
+    def test_all(self):
+        self.assert_pcs_success(
+            """
+                resource bundle create B1
+                container image=pcs:test masters=2 replicas=4 options='a b c'
+                network host-interface=eth0 host-netmask=24 control-port=12345
+                port-map id=B1-port-map-1001 internal-port=2002 port=2000
+                port-map range=3000-3300
+                storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
+                storage-map id=my-storage-map source-dir=/tmp/docker2a
+                    target-dir=/tmp/docker2b
+            """
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test masters=2 options="a b c" replicas=4
+              Network: control-port=12345 host-interface=eth0 host-netmask=24
+              Port Mapping:
+               internal-port=2002 port=2000 (B1-port-map-1001)
+               range=3000-3300 (B1-port-map-3000-3300)
+              Storage Mapping:
+               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+            """
+        ))
