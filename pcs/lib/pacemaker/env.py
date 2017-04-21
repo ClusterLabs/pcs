@@ -7,9 +7,8 @@ from __future__ import (
 
 from pcs.common import env_file_role_codes
 from pcs.lib.env_file import GhostFile, RealFile
-from pcs.lib.node import NodeAddresses
 from pcs.lib.cib.tools import get_resources
-from pcs.lib.cib.resource.guest_node import find_node_list
+from pcs.lib.cib.resource import remote_node, guest_node
 
 
 #TODO obtain authkey path from sysconfig
@@ -47,24 +46,8 @@ class PacemakerEnv(object):
 
     @property
     def remote_nodes(self):
-        return [
-            NodeAddresses(
-                nvpair.attrib["value"],
-                name=nvpair.getparent().getparent().attrib["id"]
-            )
-            for nvpair in get_resources(self.get_cib()).xpath("""
-                .//primitive[
-                    @class="ocf"
-                    and
-                    @provider="pacemaker"
-                    and
-                    @type="remote"
-                ]
-                /instance_attributes
-                /nvpair[@name="server" and string-length(@value) > 0]
-            """)
-        ]
+        return remote_node.find_node_list(get_resources(self.get_cib()))
 
     @property
     def guest_nodes(self):
-        return find_node_list(get_resources(self.get_cib()))
+        return guest_node.find_node_list(get_resources(self.get_cib()))

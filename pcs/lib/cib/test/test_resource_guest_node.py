@@ -16,7 +16,7 @@ from pcs.test.tools.pcs_unittest import TestCase
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
 
 class FindNodeList(TestCase, SetupPatchMixin):
-    def find_meta_attributes(self, xml, meta_attributes_xml_list):
+    def assert_find_meta_attributes(self, xml, meta_attributes_xml_list):
         get_node = self.setup_patch("get_node", return_value=None)
 
         self.assertEquals(
@@ -31,10 +31,10 @@ class FindNodeList(TestCase, SetupPatchMixin):
             )
 
     def test_get_no_nodes_when_no_primitives(self):
-        self.find_meta_attributes("<resources/>", [])
+        self.assert_find_meta_attributes("<resources/>", [])
 
     def test_get_no_nodes_when_no_meta_remote_node(self):
-        self.find_meta_attributes(
+        self.assert_find_meta_attributes(
             """
             <resources>
                 <primitive>
@@ -48,7 +48,7 @@ class FindNodeList(TestCase, SetupPatchMixin):
         )
 
     def test_get_multiple_nodes(self):
-        self.find_meta_attributes(
+        self.assert_find_meta_attributes(
             """
             <resources>
                 <primitive>

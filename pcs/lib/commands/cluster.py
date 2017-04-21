@@ -9,12 +9,10 @@ from pcs.common import report_codes
 from pcs.lib import reports, nodes_task, node_communication_format
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.tools import generate_key
-from pcs.lib.resource_agent import find_valid_resource_agent_by_name
-from pcs.lib.cib import resource
-from pcs.lib.cib.resource import guest_node
+from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.state import ensure_resource_running
+from pcs.lib.pacemaker import state
 
 def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
     report_items = []
@@ -82,7 +80,6 @@ def _start_and_enable_pacemaker_remote(
             )(reports.actions_on_nodes_error, errors)
         )
 
-
 def _prepare_pacemaker_remote_environment(
     env, node_host, allow_incomplete_distribution,
     allow_pacemaker_remote_service_fail
@@ -105,8 +102,13 @@ def _prepare_pacemaker_remote_environment(
             ])
         )
 
+def _ensure_resource_running(env, resource_id):
+    env.report_processor.process(
+        state.ensure_resource_running(env.get_cluster_state(), resource_id)
+    )
+
 def node_add_remote(
-    env, node_host, node_name, operations, meta_attributes, instance_attributes,
+    env, host, node_name, operations, meta_attributes, instance_attributes,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False,
     allow_invalid_operation=False,
@@ -116,43 +118,36 @@ def node_add_remote(
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
-    if instance_attributes.get("server", node_host) != node_host:
-        raise LibraryError(reports.ambiguous_host_specification(
-            [node_host, instance_attributes["server"]]
-        ))
-
-    instance_attributes["server"] = node_host
-    remote_resource_element = resource.primitive.create(
-        env.report_processor,
-        get_resources(cib),
-        node_name,
-        find_valid_resource_agent_by_name(
+    report_list = remote_node.validate_host_not_ambiguous(
+        host,
+        instance_attributes
+    )
+    try:
+        remote_resource_element = remote_node.create(
             env.report_processor,
             env.cmd_runner(),
-            "ocf:pacemaker:remote",
-        ),
-        operations,
-        meta_attributes,
-        instance_attributes,
-        allow_invalid_operation,
-        allow_invalid_instance_attributes,
-    )
+            get_resources(cib),
+            node_name,
+            operations,
+            meta_attributes,
+            remote_node.prepare_instance_atributes(instance_attributes, host),
+            allow_invalid_operation,
+            allow_invalid_instance_attributes,
+        )
+    except LibraryError as e:
+        report_list.extend(e.args)
+
+    env.report_processor.process_list(report_list)
 
     _prepare_pacemaker_remote_environment(
         env,
-        node_host,
+        host,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
     env.push_cib(cib, wait)
     if wait:
-        env.report_processor.process(
-            ensure_resource_running(
-                env.get_cluster_state(),
-                remote_resource_element.attrib["id"]
-            )
-        )
-
+        _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
 def node_add_guest(
     env, resource_id, options,
@@ -165,7 +160,7 @@ def node_add_guest(
     report_list = guest_node.validate_options(options)
     try:
         resource_element = find_element_by_tag_and_id(
-            resource.primitive.TAG,
+            primitive.TAG,
             get_resources(cib),
             resource_id
         )
@@ -188,6 +183,4 @@ def node_add_guest(
     )
     env.push_cib(cib, wait)
     if wait:
-        env.report_processor.process(
-            ensure_resource_running(env.get_cluster_state(), resource_id)
-        )
+        _ensure_resource_running(env, resource_id)
