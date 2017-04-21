@@ -386,8 +386,8 @@ Initialize SBD structures on device(s) with specified timeouts.
 
 .B WARNING: All content on device(s) will be overwritten.
 .TP
-sbd device message <device-path> <node> <message-type>
-Manually set message of specified type on device for node. Possible message types (see sbd documentation for more details): test, reset, off, crashdump, exit, clear
+sbd device message <device\-path> <node> <message\-type>
+Manually set a message of the specified type on the device for the node. Possible message types (they are documented in sbd(8) man page): test, reset, off, crashdump, exit, clear
 .TP
 sbd status [\fB\-\-full\fR]
 Show status of SBD services in cluster and local device(s) configured. If \fB\-\-full\fR is specified, also dump of SBD headers on device(s) will be shown.

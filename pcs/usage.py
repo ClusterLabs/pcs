@@ -906,7 +906,7 @@ Commands:
         WARNING: All content on device(s) will be overwritten.
 
     sbd device message <device-path> <node> <message-type>
-        Manually set message of specified type on device for node.
+        Manually set a message of the specified type on the device for the node.
         Possible message types (they are documented in sbd(8) man page): test,
         reset, off, crashdump, exit, clear
 
