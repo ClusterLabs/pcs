@@ -53,6 +53,10 @@ class ValuePair(namedtuple("ValuePair", "original normalized")):
     Storage for the original value and its normalized form
     """
 
+    @staticmethod
+    def get(val):
+        return val if isinstance(val, ValuePair) else ValuePair(val, val)
+
 def values_to_pairs(option_dict, normalize):
     """
     Return a dict derived from option_dict where every value is instance of
@@ -247,13 +251,9 @@ def value_cond(
         and determines wheter is report INVALID_OPTION forceable error or
         warning.
     """
+    @_if_option_exists(option_name)
     def validate(option_dict):
-        if option_name not in option_dict:
-            return []
-
-        value = option_dict[option_name]
-        if not isinstance(value, ValuePair):
-            value = ValuePair(value, value)
+        value = ValuePair.get(option_dict[option_name])
 
         if not predicate(value.normalized):
             create_report = reports.get_problem_creator(
@@ -279,18 +279,13 @@ def value_empty_or_valid(option_name, validator):
     string option_name -- name of the option to check
     function validator -- validator to run when the value is not an empty string
     """
+    @_if_option_exists(option_name)
     def validate(option_dict):
-        if option_name not in option_dict:
-            return []
-
-        value = option_dict[option_name]
-        if not isinstance(value, ValuePair):
-            value = ValuePair(value, value)
-
-        if is_empty_string(value.normalized):
-            return []
-
-        return validator(option_dict)
+        value = ValuePair.get(option_dict[option_name])
+        return (
+            [] if is_empty_string(value.normalized)
+            else validator(option_dict)
+        )
     return validate
 
 def value_id(option_name, option_name_for_report=None, id_provider=None):
@@ -301,14 +296,9 @@ def value_id(option_name, option_name_for_report=None, id_provider=None):
     string option_name_for_report -- substitued by the option_name if not set
     IdProvider id_provider -- used to check id uniqueness if set
     """
+    @_if_option_exists(option_name)
     def validate(option_dict):
-        if option_name not in option_dict:
-            return []
-
-        value = option_dict[option_name]
-        if not isinstance(value, ValuePair):
-            value = ValuePair(value, value)
-
+        value = ValuePair.get(option_dict[option_name])
         report_list = []
         validate_id(value.normalized, option_name_for_report, report_list)
         if id_provider is not None and not report_list:
@@ -518,3 +508,12 @@ def matches_regexp(value, regexp):
     if not hasattr(regexp, "match"):
         regexp = re.compile(regexp)
     return regexp.match(value) is not None
+
+def _if_option_exists(option_name):
+    def params_wrapper(validate_func):
+        def prepare(option_dict):
+            if option_name not in option_dict:
+                return []
+            return validate_func(option_dict)
+        return prepare
+    return params_wrapper
