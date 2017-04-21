@@ -166,9 +166,14 @@ def cluster_cmd(argv):
         if not argv:
             usage.cluster()
             sys.exit(1)
-        if argv[0] == "add-remote":
+
+        remote_node_command_map = {
+            "add-remote": cluster_command.node_add_remote,
+            "add-guest": cluster_command.node_add_guest
+        }
+        if argv[0] in remote_node_command_map:
             try:
-                cluster_command.node_add_remote(
+                remote_node_command_map[argv[0]](
                     utils.get_library_wrapper(),
                     argv[1:],
                     utils.get_modificators()

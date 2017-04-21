@@ -194,6 +194,7 @@ def load_module(env, middleware_factory, name):
             ),
             {
                 "node_add_remote": cluster.node_add_remote,
+                "node_add_guest": cluster.node_add_guest,
             }
         )
 

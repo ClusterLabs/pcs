@@ -6,6 +6,8 @@
 - Support for bundle resources (CLI only) ([rhbz#1433016])
 - Command `pcs cluster node add-remote` to add remote node to cluster
   ([rhbz#1176018])
+- Command `pcs cluster node add-guest` to add guest node to cluster
+  ([rhbz#1176018])
 
 ### Fixed
 - Fixed a bug which under specific conditions caused pcsd to crash on start

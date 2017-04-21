@@ -8,6 +8,8 @@ from __future__ import (
 from pcs.common import env_file_role_codes
 from pcs.lib.env_file import GhostFile, RealFile
 from pcs.lib.node import NodeAddresses
+from pcs.lib.cib.tools import get_resources
+from pcs.lib.cib.resource.guest_node import find_node_list
 
 
 #TODO obtain authkey path from sysconfig
@@ -43,33 +45,26 @@ class PacemakerEnv(object):
     def get_authkey_content(self):
         return self.__authkey.read()
 
-    def __find_nodes(self, xpath):
+    @property
+    def remote_nodes(self):
         return [
             NodeAddresses(
                 nvpair.attrib["value"],
                 name=nvpair.getparent().getparent().attrib["id"]
             )
-            for nvpair in self.get_cib().xpath(xpath)
+            for nvpair in get_resources(self.get_cib()).xpath("""
+                .//primitive[
+                    @class="ocf"
+                    and
+                    @provider="pacemaker"
+                    and
+                    @type="remote"
+                ]
+                /instance_attributes
+                /nvpair[@name="server" and string-length(@value) > 0]
+            """)
         ]
 
     @property
-    def remote_nodes(self):
-        return self.__find_nodes("""
-            .//primitive[
-                @class="ocf"
-                and
-                @provider="pacemaker"
-                and
-                @type="remote"
-            ]
-            /instance_attributes
-            /nvpair[@name="server" and string-length(@value) > 0]
-        """)
-
-    @property
     def guest_nodes(self):
-        return self.__find_nodes("""
-            .//primitive
-            /meta_attributes
-            /nvpair[@name="remote-node" and string-length(@value) > 0]
-        """)
+        return find_node_list(get_resources(self.get_cib()))

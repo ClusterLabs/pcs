@@ -964,3 +964,22 @@ class ambiguous_host_specification(NameBuildTest):
             "An ambiguous host specification: 'node1', 'node2'",
             {"host_list": ["node1", "node2"]}
         )
+
+class resource_is_guest_node_already(NameBuildTest):
+    code = codes.RESOURCE_IS_GUEST_NODE_ALREADY
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "the resource 'some-resource' is already a guest node",
+            {"resource_id": "some-resource"}
+        )
+
+class actions_skipped_when_no_live_environment(NameBuildTest):
+    code = codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "The following actions were skipped because -f was used:\n"
+                "  action1\n"
+                "  action2"
+            ,
+            {"action_list": ["action1", "action2"]}
+        )

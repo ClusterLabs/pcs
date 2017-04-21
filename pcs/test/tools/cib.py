@@ -40,7 +40,10 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                 assert_xml_equal(expected_xml_resources, xml.decode())
             except AssertionError as e:
                 raise AssertionError(
-                    "{0}\n\nCopy format ;)\n{1}".format(e.message, xml_format(xml))
+                    "{0}\n\nCopy format ;)\n{1}".format(
+                        e.args[0],
+                        xml_format(xml.decode())
+                    )
                 )
 
         def assert_effect_single(self, command, expected_xml, output=""):

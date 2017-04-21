@@ -1014,3 +1014,32 @@ class IsEmptyString(TestCase):
         self.assertFalse(validate.is_empty_string("a"))
         self.assertFalse(validate.is_empty_string("0"))
         self.assertFalse(validate.is_empty_string(0))
+
+
+class IsTimeInterval(TestCase):
+    def test_no_reports_for_valid_time_interval(self):
+        for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:
+            self.assertEquals(
+                [],
+                validate.is_time_interval("a")({"a": interval}),
+                "interval: {0}".format(interval)
+            )
+
+    def test_reports_about_invalid_interval(self):
+        assert_report_item_list_equal(
+            validate.is_time_interval("a")({"a": "invalid_value"}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "invalid_value",
+                        "allowed_values":
+                            "time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                        ,
+                    },
+                    None
+                ),
+            ]
+        )

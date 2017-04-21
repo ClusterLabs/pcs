@@ -8,6 +8,7 @@ from __future__ import (
 import os
 import shutil
 import socket
+from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.assertions import AssertPcsMixin
@@ -64,6 +65,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 0
 
     def testRemoteNode(self):
+        #pylint: disable=trailing-whitespace
         o,r = pcs(
             temp_cib,
             "resource create D1 ocf:heartbeat:Dummy --no-default-ops"
@@ -2870,10 +2872,7 @@ class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
         )
 
-class NodeAddRemote(unittest.TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.pcs_runner = PcsRunner()
-
+class NodeAddRemote(ResourceTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
             "cluster node add-remote rh7-1 remote-node server=DIFFERENT",
@@ -2890,4 +2889,174 @@ class NodeAddRemote(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "cluster node add-remote",
             stdout_start="\nUsage: pcs cluster node..."
+        )
+
+    def test_success(self):
+        self.assert_effect(
+            "cluster node add-remote node-host node-name",
+            """<resources>
+                <primitive class="ocf" id="node-name" provider="pacemaker"
+                    type="remote"
+                >
+                    <instance_attributes id="node-name-instance_attributes">
+                        <nvpair id="node-name-instance_attributes-server"
+                            name="server" value="node-host"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="node-name-monitor-interval-60s" interval="60s"
+                            name="monitor" timeout="30"
+                        />
+                        <op id="node-name-start-interval-0s" interval="0s"
+                            name="start" timeout="60"
+                        />
+                        <op id="node-name-stop-interval-0s" interval="0s"
+                            name="stop" timeout="60"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            output=outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
+        )
+
+class NodeAddGuest(ResourceTest):
+    def create_resource(self):
+        self.assert_effect(
+            "resource create G ocf:heartbeat:Dummy --no-default-ops",
+            """<resources>
+                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="G-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+        )
+
+    def test_fail_on_bad_commandline_usage(self):
+        self.assert_pcs_fail(
+            "cluster node add-guest",
+            stdout_start="\nUsage: pcs cluster node..."
+        )
+
+    def test_fail_when_resource_does_not_exists(self):
+        self.assert_pcs_fail(
+            "cluster node add-guest some-host non-existent",
+            "Error: primitive 'non-existent' does not exist\n"
+        )
+
+    def test_fail_when_option_remote_node_specified(self):
+        self.assert_pcs_fail(
+            "cluster node add-guest some-host node-name remote-node=node-name",
+            stdout_start="Error: option 'remote-node' is not allowed\n\n"
+                "Usage: pcs cluster node..."
+        )
+
+    def test_fail_when_resource_has_already_remote_node_meta(self):
+        self.assert_pcs_success(
+            "resource create already-guest-node ocf:heartbeat:Dummy"
+            " meta remote-node=some"
+        )
+        self.assert_pcs_fail(
+            "cluster node add-guest some-host already-guest-node",
+            "Error: the resource 'already-guest-node' is already a guest node\n"
+        )
+
+    def test_fail_on_combined_reasons(self):
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host G a=b",
+            "Error: primitive 'G' does not exist\n"
+                "Error: invalid guest options option 'a', allowed options are:"
+                " remote-addr, remote-connect-timeout, remote-port\n"
+        )
+
+    def test_fail_when_disallowed_option_appear(self):
+        self.create_resource()
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host G a=b",
+            "Error: invalid guest options option 'a', allowed options are:"
+                " remote-addr, remote-connect-timeout, remote-port\n"
+        )
+
+    def test_fail_when_invalid_interval_appear(self):
+        self.create_resource()
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host G remote-connect-timeout=A",
+            "Error: 'A' is not a valid remote-connect-timeout value, use time"
+                " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+        )
+
+    def test_success(self):
+        self.create_resource()
+        self.assert_effect(
+            "cluster node add-guest node-host G",
+            """<resources>
+                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="G-meta_attributes">
+                        <nvpair id="G-meta_attributes-remote-node"
+                            name="remote-node" value="node-host"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="G-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            output=outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
+        )
+
+    def test_success_with_options(self):
+        self.create_resource()
+        self.assert_effect(
+            "cluster node add-guest node-name G remote-port=3121"
+                " remote-addr=node-host remote-connect-timeout=80s"
+            ,
+            """<resources>
+                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="G-meta_attributes">
+                        <nvpair id="G-meta_attributes-remote-addr"
+                            name="remote-addr" value="node-host"
+                        />
+                        <nvpair id="G-meta_attributes-remote-connect-timeout"
+                            name="remote-connect-timeout" value="80s"
+                        />
+                        <nvpair id="G-meta_attributes-remote-node"
+                            name="remote-node" value="node-name"
+                        />
+                        <nvpair id="G-meta_attributes-remote-port"
+                            name="remote-port" value="3121"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="G-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            output=outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
         )

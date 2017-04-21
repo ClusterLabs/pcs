@@ -11,9 +11,9 @@ from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.tools import generate_key
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 from pcs.lib.cib import resource
-from pcs.lib.cib.tools import get_resources
+from pcs.lib.cib.resource import guest_node
+from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
-
 
 def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
     report_items = []
@@ -35,7 +35,6 @@ def _share_authkey(
         authkey_content = generate_key()
         node_addresses_list = env.nodes.all + [candidate_node_addresses]
 
-    #TODO do only when authkey is live
     nodes_task.distribute_files(
         env.node_communicator(),
         env.report_processor,
@@ -82,6 +81,29 @@ def _start_and_enable_pacemaker_remote(
             )(reports.actions_on_nodes_error, errors)
         )
 
+
+def _prepare_pacemaker_remote_environment(
+    env, node_host, allow_incomplete_distribution,
+    allow_pacemaker_remote_service_fail
+):
+    if env.is_cib_live:
+        candidate_node = NodeAddresses(node_host)
+        _ensure_can_add_node_to_remote_cluster(env, candidate_node)
+        _share_authkey(env, candidate_node, allow_incomplete_distribution)
+        _start_and_enable_pacemaker_remote(
+            env,
+            candidate_node,
+            allow_pacemaker_remote_service_fail
+        )
+    else:
+        env.report_processor.process(
+            reports.actions_skipped_when_no_live_environment([
+                "pacemaker authkey distribution",
+                "start pacemaker_remote on '{0}'".format(node_host),
+                "enable pacemaker_remote on '{0}'".format(node_host),
+            ])
+        )
+
 def node_add_remote(
     env, node_host, node_name, operations, meta_attributes, instance_attributes,
     allow_incomplete_distribution=False,
@@ -92,6 +114,7 @@ def node_add_remote(
 ):
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
+
     if instance_attributes.get("server", node_host) != node_host:
         raise LibraryError(reports.ambiguous_host_specification(
             [node_host, instance_attributes["server"]]
@@ -114,14 +137,45 @@ def node_add_remote(
         allow_invalid_instance_attributes,
     )
 
-    candidate_node = NodeAddresses(node_host)
-
-    _ensure_can_add_node_to_remote_cluster(env, candidate_node)
-    _share_authkey(env, candidate_node, allow_incomplete_distribution)
-    _start_and_enable_pacemaker_remote(
+    _prepare_pacemaker_remote_environment(
         env,
-        candidate_node,
-        allow_pacemaker_remote_service_fail
+        node_host,
+        allow_incomplete_distribution,
+        allow_pacemaker_remote_service_fail,
+    )
+    env.push_cib(cib, wait)
+
+
+def node_add_guest(
+    env, resource_id, options,
+    allow_incomplete_distribution=False,
+    allow_pacemaker_remote_service_fail=False, wait=False,
+):
+    env.ensure_wait_satisfiable(wait)
+    cib = env.get_cib()
+
+    report_list = guest_node.validate_options(options)
+    try:
+        resource_element = find_element_by_tag_and_id(
+            resource.primitive.TAG,
+            get_resources(cib),
+            resource_id
+        )
+    except LibraryError as e:
+        raise LibraryError(*(list(e.args) + report_list))
+
+    env.report_processor.process_list(
+        report_list
+        +
+        guest_node.validate_is_not_guest(resource_element)
     )
 
+    guest_node.set_as_guest(resource_element, options)
+
+    _prepare_pacemaker_remote_environment(
+        env,
+        guest_node.get_host_from_options(options),
+        allow_incomplete_distribution,
+        allow_pacemaker_remote_service_fail,
+    )
     env.push_cib(cib, wait)

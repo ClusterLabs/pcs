@@ -568,3 +568,36 @@ class Unmanage(TestCase):
                 </resource>
             """
         )
+
+class HasMetaAttribute(TestCase):
+    def test_return_false_if_does_not_have_such_attribute(self):
+        resource_element = etree.fromstring("""<primitive/>""")
+        self.assertFalse(
+            common.has_meta_attribute(resource_element, "attr_name")
+        )
+
+    def test_return_true_if_such_meta_attribute_exists(self):
+        resource_element = etree.fromstring("""
+            <primitive>
+                <meta_attributes>
+                    <nvpair id="a" name="attr_name" value="value"/>
+                </meta_attributes>
+            </primitive>
+        """)
+        self.assertTrue(
+            common.has_meta_attribute(resource_element, "attr_name")
+        )
+
+    def test_return_false_if_meta_attribute_exists_but_in_nested_element(self):
+        resource_element = etree.fromstring("""
+            <group>
+                <primitive>
+                    <meta_attributes>
+                        <nvpair id="a" name="attr_name" value="value"/>
+                    </meta_attributes>
+                </primitive>
+            </group>
+        """)
+        self.assertFalse(
+            common.has_meta_attribute(resource_element, "attr_name")
+        )

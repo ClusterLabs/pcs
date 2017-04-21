@@ -1149,6 +1149,20 @@ def resource_does_not_run(resource_id, severity=ReportItemSeverity.INFO):
         }
     )
 
+def resource_is_guest_node_already(resource_id):
+    """
+    The resource is already used as guest node (i.e. has meta attribute
+    remote-node).
+
+    string resource_id -- id of the unmanaged resource
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_IS_GUEST_NODE_ALREADY,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
 def resource_is_unmanaged(resource_id):
     """
     The resource the user works with is unmanaged (e.g. in enable/disable)
@@ -2349,6 +2363,19 @@ def live_environment_required_for_local_node():
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
     )
+
+def actions_skipped_when_no_live_environment(action_list):
+    """
+    Some parts of command was skipped because no live environment is there. For
+    example when command uses -f then calling real nodes is skipped.
+    """
+    return ReportItem.info(
+        report_codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT,
+        info={
+            "action_list": action_list,
+        }
+    )
+
 
 def quorum_cannot_disable_atb_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None

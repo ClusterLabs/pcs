@@ -43,7 +43,10 @@ import re
 
 from pcs.common.tools import is_string
 from pcs.lib import reports
-from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.values import (
+    timeout_to_seconds,
+    validate_id,
+)
 
 
 ### normalization
@@ -446,6 +449,16 @@ def value_positive_integer(
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
         allow_extra_values=allow_extra_values,
+    )
+
+def is_time_interval(option_name, option_name_for_report=None):
+    return value_cond(
+        option_name,
+        lambda normalized_value:
+            timeout_to_seconds(normalized_value) is not None
+        ,
+        "time interval (e.g. 1, 2s, 3m, 4h, ...)",
+        option_name_for_report=option_name_for_report,
     )
 
 ### tools and predicates

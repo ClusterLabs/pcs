@@ -736,6 +736,18 @@ Commands:
         (ocf:pacemaker:remote).
         Options can be server, port, reconnect_interval.
 
+    node add-guest <node name> <resource id> [options]
+        Enables the specified resource as a guest node resource. Make sure that
+        the pacemaker authkey is on all nodes. Start and enable pacemaker_remote
+        daemon on the node.
+        Options:
+        remote-addr: the IP address or hostname of guest node; if it is not
+            specified then node name is used
+        remote-port: the port on the virtual machine that the cluster will use
+            to connect to pacemaker_remote
+        remote-connect-timeout: how long before a pending guest connection will
+            time out
+
     node remove <node>
         Shutdown specified node and remove it from the cluster.
 

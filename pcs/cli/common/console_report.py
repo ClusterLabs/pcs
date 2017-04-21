@@ -739,6 +739,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.RESOURCE_IS_GUEST_NODE_ALREADY: lambda info:
+        "the resource '{resource_id}' is already a guest node"
+        .format(**info)
+    ,
+
     codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED: lambda info:
         (
             "Resource '{resource_id}' has no enabled monitor operations."
@@ -1146,6 +1151,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE:
         "Node(s) must be specified if -f is used"
+    ,
+
+    codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT: lambda info:
+        "The following actions were skipped because -f was used:\n  {actions}"
+        .format(actions="\n  ".join(info["action_list"]))
     ,
 
     codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:
