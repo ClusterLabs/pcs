@@ -1,5 +1,19 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- `pcs resource unmanage` now sets the unmanaged flag to primitive resources
+  even if a clone or master/slave resource is specified. Thus the primitive
+  resources will not become managed just by uncloning. This also prevents some
+  discrepancies between disabled monitor operations and the unmanaged flag.
+  ([rhbz#1303969])
+- `pcs resource unmanage --monitor` now properly disables monitor operations
+  even if a clone or master/slave resource is specified. ([rhbz#1303969])
+
+[rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
+
+
 ## [0.9.157] - 2017-04-10
 
 ### Added

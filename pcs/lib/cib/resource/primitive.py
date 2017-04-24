@@ -12,7 +12,6 @@ from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
     append_new_meta_attributes,
 )
-from pcs.lib.cib.resource.common import disable_meta
 from pcs.lib.cib.resource.operations import(
     prepare as prepare_operations,
     create_operations,
@@ -24,13 +23,15 @@ from pcs.lib.pacemaker.values import validate_id
 
 TAG = "primitive"
 
+def is_primitive(resource_el):
+    return resource_el.tag == TAG
+
 def create(
     report_processor, resources_section, resource_id, resource_agent,
     raw_operation_list=None, meta_attributes=None, instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
-    ensure_disabled=False,
 ):
     """
     Prepare all parts of primitive resource and append it into cib.
@@ -47,8 +48,6 @@ def create(
         instance_attributes
     bool use_default_operations is flag for completion operations with default
         actions specified in resource agent
-    bool ensure_disabled is flag for completion meta_attributes with attribute
-        causing disabling resource
     """
     if raw_operation_list is None:
         raw_operation_list = []
@@ -70,9 +69,6 @@ def create(
         [operation["name"] for operation in resource_agent.get_actions()],
         allow_invalid=allow_invalid_operation,
     )
-
-    if ensure_disabled:
-        meta_attributes = disable_meta(meta_attributes)
 
     report_processor.process_list(
         resource_agent.validate_parameters(

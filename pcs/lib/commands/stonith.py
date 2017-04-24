@@ -59,15 +59,16 @@ def create(
         stonith_id,
         ensure_disabled or are_meta_disabled(meta_attributes),
     ) as resources_section:
-        resource.primitive.create(
+        stonith_element = resource.primitive.create(
             env.report_processor, resources_section,
             stonith_id, stonith_agent,
             operations, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            ensure_disabled,
         )
+        if ensure_disabled:
+            resource.common.disable(stonith_element)
 
 def create_in_group(
     env, stonith_id, stonith_agent_name, group_id,
@@ -123,19 +124,20 @@ def create_in_group(
         stonith_id,
         ensure_disabled or are_meta_disabled(meta_attributes),
     ) as resources_section:
-        primitive_element = resource.primitive.create(
+        stonith_element = resource.primitive.create(
             env.report_processor, resources_section,
             stonith_id, stonith_agent,
             operations, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            ensure_disabled,
         )
+        if ensure_disabled:
+            resource.common.disable(stonith_element)
         validate_id(group_id, "group name")
         resource.group.place_resource(
             resource.group.provide_group(resources_section, group_id),
-            primitive_element,
+            stonith_element,
             adjacent_resource_id,
             put_after_adjacent,
         )

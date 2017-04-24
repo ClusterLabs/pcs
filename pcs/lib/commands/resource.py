@@ -86,15 +86,16 @@ def create(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
-        resource.primitive.create(
+        primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
             operations, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            ensure_disabled,
         )
+        if ensure_disabled:
+            resource.common.disable(primitive_element)
 
 def _create_as_clone_common(
     tag, env, resource_id, resource_agent_name,
@@ -161,18 +162,14 @@ def _create_as_clone_common(
             allow_invalid_instance_attributes,
             use_default_operations,
         )
-
-        if ensure_disabled:
-            clone_meta_options = resource.common.disable_meta(
-                clone_meta_options
-            )
-
-        resource.clone.append_new(
+        clone_element = resource.clone.append_new(
             tag,
             resources_section,
             primitive_element,
             clone_meta_options,
         )
+        if ensure_disabled:
+            resource.common.disable(clone_element)
 
 def create_in_group(
     env, resource_id, resource_agent_name, group_id,
@@ -230,8 +227,9 @@ def create_in_group(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            ensure_disabled,
         )
+        if ensure_disabled:
+            resource.common.disable(primitive_element)
         validate_id(group_id, "group name")
         resource.group.place_resource(
             resource.group.provide_group(resources_section, group_id),
@@ -318,14 +316,21 @@ def unmanage(env, resource_ids, with_monitor=False):
             resource_ids,
             resource.common.find_resources_to_unmanage
         )
+        primitives = []
+
         for resource_el in resource_el_list:
             resource.common.unmanage(resource_el)
             if with_monitor:
-                for op in operations.get_resource_operations(
-                    resource_el,
-                    ["monitor"]
-                ):
-                    operations.disable(op)
+                primitives.extend(
+                    resource.common.find_primitives(resource_el)
+                )
+
+        for resource_el in set(primitives):
+            for op in operations.get_resource_operations(
+                resource_el,
+                ["monitor"]
+            ):
+                operations.disable(op)
 
 def manage(env, resource_ids, with_monitor=False):
     """
@@ -341,8 +346,18 @@ def manage(env, resource_ids, with_monitor=False):
             resource_ids,
             resource.common.find_resources_to_manage
         )
+        primitives = []
+
         for resource_el in resource_el_list:
             resource.common.manage(resource_el)
+            primitives.extend(
+                resource.common.find_primitives(resource_el)
+            )
+
+        for resource_el in sorted(
+            set(primitives),
+            key=lambda element: element.get("id", "")
+        ):
             op_list = operations.get_resource_operations(
                 resource_el,
                 ["monitor"]
@@ -363,6 +378,7 @@ def manage(env, resource_ids, with_monitor=False):
                             resource_el.get("id", "")
                         )
                     )
+
         env.report_processor.process_list(report_list)
 
 def _find_resources_or_raise(

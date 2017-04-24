@@ -202,6 +202,37 @@ fixture_clone_cib_unmanaged_both = """
     </resources>
 """
 
+fixture_clone_cib_managed_op_enabled = """
+    <resources>
+        <clone id="A-clone">
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor"/>
+                </operations>
+            </primitive>
+        </clone>
+    </resources>
+"""
+fixture_clone_cib_unmanaged_primitive_op_disabled = """
+    <resources>
+        <clone id="A-clone">
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor" enabled="false"/>
+                </operations>
+            </primitive>
+        </clone>
+    </resources>
+"""
+
 fixture_master_cib_managed = """
     <resources>
         <master id="A-master">
@@ -222,6 +253,18 @@ fixture_master_cib_unmanaged_master = """
         </master>
     </resources>
 """
+fixture_master_cib_unmanaged_primitive = """
+    <resources>
+        <master id="A-master">
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+            </primitive>
+        </master>
+    </resources>
+"""
 fixture_master_cib_unmanaged_both = """
     <resources>
         <master id="A-master">
@@ -234,6 +277,37 @@ fixture_master_cib_unmanaged_both = """
                     <nvpair id="A-meta_attributes-is-managed"
                         name="is-managed" value="false" />
                 </meta_attributes>
+            </primitive>
+        </master>
+    </resources>
+"""
+
+fixture_master_cib_managed_op_enabled = """
+    <resources>
+        <master id="A-master">
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor"/>
+                </operations>
+            </primitive>
+        </master>
+    </resources>
+"""
+fixture_master_cib_unmanaged_primitive_op_disabled = """
+    <resources>
+        <master id="A-master">
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor" enabled="false"/>
+                </operations>
             </primitive>
         </master>
     </resources>
@@ -346,6 +420,97 @@ fixture_clone_group_cib_unmanaged_everything = """
                         <nvpair id="A2-meta_attributes-is-managed"
                             name="is-managed" value="false" />
                     </meta_attributes>
+                </primitive>
+            </group>
+        </clone>
+    </resources>
+"""
+
+fixture_clone_group_cib_managed_op_enabled = """
+    <resources>
+        <clone id="A-clone">
+            <group id="A">
+                <primitive id="A1" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <operations>
+                        <op id="A1-start" name="start" />
+                        <op id="A1-stop" name="stop" />
+                        <op id="A1-monitor" name="monitor" />
+                    </operations>
+                </primitive>
+                <primitive id="A2" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <operations>
+                        <op id="A2-start" name="start" />
+                        <op id="A2-stop" name="stop" />
+                        <op id="A2-monitor" name="monitor" />
+                    </operations>
+                </primitive>
+            </group>
+        </clone>
+    </resources>
+"""
+fixture_clone_group_cib_unmanaged_primitive_op_disabled = """
+    <resources>
+        <clone id="A-clone">
+            <group id="A">
+                <primitive id="A1" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <meta_attributes id="A1-meta_attributes">
+                        <nvpair id="A1-meta_attributes-is-managed"
+                            name="is-managed" value="false" />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A1-start" name="start" />
+                        <op id="A1-stop" name="stop" />
+                        <op id="A1-monitor" name="monitor" enabled="false" />
+                    </operations>
+                </primitive>
+                <primitive id="A2" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <operations>
+                        <op id="A2-start" name="start" />
+                        <op id="A2-stop" name="stop" />
+                        <op id="A2-monitor" name="monitor" />
+                    </operations>
+                </primitive>
+            </group>
+        </clone>
+    </resources>
+"""
+fixture_clone_group_cib_unmanaged_all_primitives_op_disabled = """
+    <resources>
+        <clone id="A-clone">
+            <group id="A">
+                <primitive id="A1" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <meta_attributes id="A1-meta_attributes">
+                        <nvpair id="A1-meta_attributes-is-managed"
+                            name="is-managed" value="false" />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A1-start" name="start" />
+                        <op id="A1-stop" name="stop" />
+                        <op id="A1-monitor" name="monitor" enabled="false" />
+                    </operations>
+                </primitive>
+                <primitive id="A2" class="ocf" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <meta_attributes id="A2-meta_attributes">
+                        <nvpair id="A2-meta_attributes-is-managed"
+                            name="is-managed" value="false" />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A2-start" name="start" />
+                        <op id="A2-stop" name="stop" />
+                        <op id="A2-monitor" name="monitor" enabled="false" />
+                    </operations>
                 </primitive>
             </group>
         </clone>
@@ -472,14 +637,14 @@ class UnmanageClone(ResourceWithoutStateTest):
         self.assert_command_effect(
             fixture_clone_cib_managed,
             lambda: resource.unmanage(self.env, ["A"]),
-            fixture_clone_cib_unmanaged_clone
+            fixture_clone_cib_unmanaged_primitive
         )
 
     def test_clone(self):
         self.assert_command_effect(
             fixture_clone_cib_managed,
             lambda: resource.unmanage(self.env, ["A-clone"]),
-            fixture_clone_cib_unmanaged_clone
+            fixture_clone_cib_unmanaged_primitive
         )
 
 
@@ -532,19 +697,26 @@ class UnmanageMaster(ResourceWithoutStateTest):
         self.assert_command_effect(
             fixture_master_cib_managed,
             lambda: resource.unmanage(self.env, ["A"]),
-            fixture_master_cib_unmanaged_master
+            fixture_master_cib_unmanaged_primitive
         )
 
     def test_master(self):
         self.assert_command_effect(
             fixture_master_cib_managed,
             lambda: resource.unmanage(self.env, ["A-master"]),
-            fixture_master_cib_unmanaged_master
+            fixture_master_cib_unmanaged_primitive
         )
 
 
 class ManageMaster(ResourceWithoutStateTest):
     def test_primitive(self):
+        self.assert_command_effect(
+            fixture_master_cib_unmanaged_primitive,
+            lambda: resource.manage(self.env, ["A"]),
+            fixture_master_cib_managed
+        )
+
+    def test_primitive_unmanaged_master(self):
         self.assert_command_effect(
             fixture_master_cib_unmanaged_master,
             lambda: resource.manage(self.env, ["A"]),
@@ -561,6 +733,13 @@ class ManageMaster(ResourceWithoutStateTest):
     def test_master(self):
         self.assert_command_effect(
             fixture_master_cib_unmanaged_master,
+            lambda: resource.manage(self.env, ["A-master"]),
+            fixture_master_cib_managed
+        )
+
+    def test_master_unmanaged_primitive(self):
+        self.assert_command_effect(
+            fixture_master_cib_unmanaged_primitive,
             lambda: resource.manage(self.env, ["A-master"]),
             fixture_master_cib_managed
         )
@@ -592,7 +771,7 @@ class UnmanageClonedGroup(ResourceWithoutStateTest):
         self.assert_command_effect(
             fixture_clone_group_cib_managed,
             lambda: resource.unmanage(self.env, ["A-clone"]),
-            fixture_clone_group_cib_unmanaged_clone
+            fixture_clone_group_cib_unmanaged_all_primitives
         )
 
 
@@ -793,4 +972,53 @@ class WithMonitor(ResourceWithoutStateTest):
             [
                 fixture_report_no_monitors("A"),
             ]
+        )
+
+    def test_unmanage_clone(self):
+        self.assert_command_effect(
+            fixture_clone_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A-clone"], True),
+            fixture_clone_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_in_clone(self):
+        self.assert_command_effect(
+            fixture_clone_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_clone_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_master(self):
+        self.assert_command_effect(
+            fixture_master_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A-master"], True),
+            fixture_master_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_in_master(self):
+        self.assert_command_effect(
+            fixture_master_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_master_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_clone_with_group(self):
+        self.assert_command_effect(
+            fixture_clone_group_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A-clone"], True),
+            fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        )
+
+    def test_unmanage_group_in_clone(self):
+        self.assert_command_effect(
+            fixture_clone_group_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        )
+
+    def test_unmanage_in_cloned_group(self):
+        self.assert_command_effect(
+            fixture_clone_group_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A1"], True),
+            fixture_clone_group_cib_unmanaged_primitive_op_disabled
         )

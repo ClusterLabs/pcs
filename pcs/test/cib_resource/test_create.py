@@ -608,6 +608,11 @@ class SuccessMaster(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled --master",
             """<resources>
                 <master id="R-master">
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
@@ -617,11 +622,6 @@ class SuccessMaster(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-target-role"
-                            name="target-role" value="Stopped"
-                        />
-                    </meta_attributes>
                 </master>
             </resources>"""
         )
@@ -841,6 +841,11 @@ class SuccessClone(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --clone --disabled",
             """<resources>
                 <clone id="R-clone">
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
@@ -856,11 +861,6 @@ class SuccessClone(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="R-clone-meta_attributes">
-                        <nvpair id="R-clone-meta_attributes-target-role"
-                            name="target-role" value="Stopped"
-                        />
-                    </meta_attributes>
                 </clone>
             </resources>"""
         )

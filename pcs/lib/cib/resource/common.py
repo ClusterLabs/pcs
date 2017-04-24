@@ -14,18 +14,9 @@ from pcs.lib.cib.resource.group import (
     is_group,
     get_inner_resources as get_group_inner_resources,
 )
+from pcs.lib.cib.resource.primitive import is_primitive
 from pcs.lib.xml_tools import find_parent
 
-
-def disable_meta(meta_attributes):
-    """
-    Return new dict with meta attributes containing values to disable resource.
-
-    dict meta_attributes are current meta attributes
-    """
-    disabled_meta_attributes = meta_attributes.copy()
-    disabled_meta_attributes["target-role"] = "Stopped"
-    return disabled_meta_attributes
 
 def are_meta_disabled(meta_attributes):
     return meta_attributes.get("target-role", "Started").lower() == "stopped"
@@ -39,6 +30,19 @@ def is_clone_deactivated_by_meta(meta_attributes):
         not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
         for key in ["clone-max", "clone-node-max"]
     ])
+
+def find_primitives(resource_el):
+    """
+    Get list of primitives contained in a given resource
+    etree resource_el -- resource element
+    """
+    if is_any_clone(resource_el):
+        resource_el = get_clone_inner_resource(resource_el)
+    if is_group(resource_el):
+        return get_group_inner_resources(resource_el)
+    if is_primitive(resource_el):
+        return [resource_el]
+    return []
 
 def find_resources_to_enable(resource_el):
     """
@@ -118,9 +122,12 @@ def find_resources_to_unmanage(resource_el):
     # resource hierarchy - specified resource - what to return
     # a primitive - the primitive - the primitive
     #
-    # a cloned primitive - the primitive - the clone
-    #   Otherwise the resource would run on all nodes after unclone.
-    # a cloned primitive - the clone - the clone
+    # a cloned primitive - the primitive - the primitive
+    # a cloned primitive - the clone - the primitive
+    #   The resource will run on all nodes after unclone. However that doesn't
+    #   seem to be bad behavior. Moreover, if monitor operations were disabled,
+    #   they would't enable on unclone, but the resource would become managed,
+    #   which is definitely bad.
     #
     # a primitive in a group - the primitive - the primitive
     #   Otherwise all primitives in the group would become unmanaged.
@@ -136,14 +143,9 @@ def find_resources_to_unmanage(resource_el):
     # a primitive in a cloned group - the primitive - the primitive
     # a primitive in a cloned group - the group - all primitives in the group
     #   See group notes above
-    # a primitive in a cloned group - the clone - the clone
+    # a primitive in a cloned group - the clone - all primitives in the group
     #   See clone notes above
-    if is_group(resource_el):
-        return get_group_inner_resources(resource_el)
-    parent = resource_el.getparent()
-    if is_any_clone(parent):
-        return [parent]
-    return [resource_el]
+    return find_primitives(resource_el)
 
 def manage(resource_el):
     """

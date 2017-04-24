@@ -42,20 +42,6 @@ fixture_cib = etree.fromstring("""
 """)
 
 
-class DisableMeta(TestCase):
-    def test_add_target_role(self):
-        self.assertEqual(
-            {"a": "b", "target-role": "Stopped"},
-            common.disable_meta({"a": "b"})
-        )
-
-    def test_modify_target_role(self):
-        self.assertEqual(
-            {"target-role": "Stopped"},
-            common.disable_meta({"target-role": "Started"})
-        )
-
-
 class AreMetaDisabled(TestCase):
     def test_detect_is_disabled(self):
         self.assertTrue(common.are_meta_disabled({"target-role": "Stopped"}))
@@ -92,6 +78,60 @@ class IsCloneDeactivatedByMeta(TestCase):
         self.assert_is_not_disabled({"clone-node-max": 1})
         self.assert_is_not_disabled({"clone-node-max": "1abc"})
         self.assert_is_not_disabled({"clone-node-max": "1.1"})
+
+
+class FindPrimitives(TestCase):
+    def assert_find_resources(self, input_resource_id, output_resource_ids):
+        self.assertEqual(
+            output_resource_ids,
+            [
+                element.get("id", "")
+                for element in
+                common.find_resources_to_unmanage(
+                    fixture_cib.find(
+                        './/*[@id="{0}"]'.format(input_resource_id)
+                    )
+                )
+            ]
+        )
+
+    def test_primitive(self):
+        self.assert_find_resources("A", ["A"])
+
+    def test_primitive_in_clone(self):
+        self.assert_find_resources("B", ["B"])
+
+    def test_primitive_in_master(self):
+        self.assert_find_resources("C", ["C"])
+
+    def test_primitive_in_group(self):
+        self.assert_find_resources("D1", ["D1"])
+        self.assert_find_resources("D2", ["D2"])
+        self.assert_find_resources("E1", ["E1"])
+        self.assert_find_resources("E2", ["E2"])
+        self.assert_find_resources("F1", ["F1"])
+        self.assert_find_resources("F2", ["F2"])
+
+    def test_group(self):
+        self.assert_find_resources("D", ["D1", "D2"])
+
+    def test_group_in_clone(self):
+        self.assert_find_resources("E", ["E1", "E2"])
+
+    def test_group_in_master(self):
+        self.assert_find_resources("F", ["F1", "F2"])
+
+    def test_cloned_primitive(self):
+        self.assert_find_resources("B-clone", ["B"])
+
+    def test_cloned_group(self):
+        self.assert_find_resources("E-clone", ["E1", "E2"])
+
+    def test_mastered_primitive(self):
+        self.assert_find_resources("C-master", ["C"])
+
+    def test_mastered_group(self):
+        self.assert_find_resources("F-master", ["F1", "F2"])
 
 
 class FindResourcesToEnable(TestCase):
@@ -338,10 +378,10 @@ class FindResourcesToUnmanage(TestCase):
         self.assert_find_resources("A", ["A"])
 
     def test_primitive_in_clone(self):
-        self.assert_find_resources("B", ["B-clone"])
+        self.assert_find_resources("B", ["B"])
 
     def test_primitive_in_master(self):
-        self.assert_find_resources("C", ["C-master"])
+        self.assert_find_resources("C", ["C"])
 
     def test_primitive_in_group(self):
         self.assert_find_resources("D1", ["D1"])
@@ -361,16 +401,16 @@ class FindResourcesToUnmanage(TestCase):
         self.assert_find_resources("F", ["F1", "F2"])
 
     def test_cloned_primitive(self):
-        self.assert_find_resources("B-clone", ["B-clone"])
+        self.assert_find_resources("B-clone", ["B"])
 
     def test_cloned_group(self):
-        self.assert_find_resources("E-clone", ["E-clone"])
+        self.assert_find_resources("E-clone", ["E1", "E2"])
 
     def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C-master"])
+        self.assert_find_resources("C-master", ["C"])
 
     def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F-master"])
+        self.assert_find_resources("F-master", ["F1", "F2"])
 
 
 class Manage(TestCase):
