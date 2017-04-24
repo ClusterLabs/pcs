@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed a bug which under specific conditions caused pcsd to crash on start
+  when running under systemd ([ghissue#134])
 - `pcs resource unmanage` now sets the unmanaged flag to primitive resources
   even if a clone or master/slave resource is specified. Thus the primitive
   resources will not become managed just by uncloning. This also prevents some
@@ -11,6 +13,7 @@
 - `pcs resource unmanage --monitor` now properly disables monitor operations
   even if a clone or master/slave resource is specified. ([rhbz#1303969])
 
+[ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 
 
