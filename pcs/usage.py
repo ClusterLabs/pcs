@@ -1605,7 +1605,7 @@ Commands:
 
     update <alert-id> [path=<path>] [description=<description>]
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
-        Update existing alert handler with specified id.
+        Update an existing alert handler with specified id.
 
     remove <alert-id> ...
         Remove alert handlers with specified ids.
@@ -1618,7 +1618,7 @@ Commands:
     recipient update <recipient-id> [value=<recipient-value>]
             [description=<description>] [options [<option>=<value>]...]
             [meta [<meta-option>=<value>]...]
-        Update existing recipient identified by it's id.
+        Update an existing recipient identified by its id.
 
     recipient remove <recipient-id> ...
         Remove specified recipients.
