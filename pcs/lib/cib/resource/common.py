@@ -126,7 +126,7 @@ def find_resources_to_unmanage(resource_el):
     # a cloned primitive - the clone - the primitive
     #   The resource will run on all nodes after unclone. However that doesn't
     #   seem to be bad behavior. Moreover, if monitor operations were disabled,
-    #   they would't enable on unclone, but the resource would become managed,
+    #   they wouldn't enable on unclone, but the resource would become managed,
     #   which is definitely bad.
     #
     # a primitive in a group - the primitive - the primitive
@@ -137,7 +137,7 @@ def find_resources_to_unmanage(resource_el):
     #   If the group as well as all its primitives were set to unmanaged, any
     #   primitive added to the group would become unmanaged. This new primitive
     #   would become managed if any original group primitive becomes managed.
-    #   Therefore changing one primitive inlfuences another one, which we do
+    #   Therefore changing one primitive influences another one, which we do
     #   not want to happen.
     #
     # a primitive in a cloned group - the primitive - the primitive
