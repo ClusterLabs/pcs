@@ -17,9 +17,12 @@
   even if a clone or master/slave resource is specified. ([rhbz#1303969])
 - `--help` option now shows help just for the specified command. Previously the
   usage for a whole group of commands was shown.
+- Fixed a crash when `pcs cluster cib-push` is called with an explicit value of
+  the `--wait` flag ([rhbz#1422667])
 
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
+[rhbz#1422667]: https://bugzilla.redhat.com/show_bug.cgi?id=1422667
 [rhbz#1433016]: https://bugzilla.redhat.com/show_bug.cgi?id=1433016
 
 

@@ -1351,7 +1351,7 @@ def cluster_push(argv):
         return
     cmd = ["crm_resource", "--wait"]
     if timeout:
-        cmd.extend(["--timeout", timeout])
+        cmd.extend(["--timeout", str(timeout)])
     output, retval = utils.run(cmd)
     if retval != 0:
         msg = []
