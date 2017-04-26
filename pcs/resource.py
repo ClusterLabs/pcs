@@ -1393,6 +1393,23 @@ def resource_remove(resource_id, output = True):
     if cloned_resource:
         resource_id = cloned_resource.getAttribute("id")
 
+    bundle = utils.dom_get_bundle(dom, resource_id)
+    if bundle is not None:
+        primitive_el = utils.dom_get_resource_bundle(bundle)
+        if primitive_el is not None:
+            resource_remove(primitive_el.getAttribute("id"))
+        utils.replace_cib_configuration(
+            remove_resource_references(utils.get_cib_dom(), resource_id, output)
+        )
+        args = [
+            "cibadmin", "-o", "resources", "-D", "--xpath",
+            "//bundle[@id='{0}']".format(resource_id)
+        ]
+        dummy_cmdoutput, retVal = utils.run(args)
+        if retVal != 0:
+            utils.err("Unable to remove resource '{0}'".format(resource_id))
+        return True
+
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
         print("Removing group: " + resource_id + " (and all resources within group)")
         group = utils.get_cib_xpath('//group[@id="'+resource_id+'"]')
@@ -1457,7 +1474,11 @@ def resource_remove(resource_id, output = True):
     ):
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
         sys.stdout.flush()
-        resource_disable([resource_id])
+        lib = utils.get_library_wrapper()
+        # we are not using wait from disable command, because if wait is not
+        # supported in pacemaker, we don't want error message but we try to
+        # simulate wait by waiting for resource to stop
+        lib.resource.disable([resource_id], False)
         output, retval = utils.run(["crm_resource", "--wait"])
         if retval != 0 and "unrecognized option '--wait'" in output:
             output = ""

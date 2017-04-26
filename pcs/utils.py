@@ -1323,6 +1323,22 @@ def dom_get_group(dom, group_id):
             return group
     return None
 
+def dom_get_bundle(dom, bundle_id):
+    for bundle in dom.getElementsByTagName("bundle"):
+        if bundle.getAttribute("id") == bundle_id:
+            return bundle
+    return None
+
+def dom_get_resource_bundle(bundle_el):
+    for child in bundle_el.childNodes:
+        if (
+            child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
+            and
+            child.tagName == "primitive"
+        ):
+            return child
+    return None
+
 def dom_get_group_clone(dom, group_id):
     for clone in dom.getElementsByTagName("clone"):
         group = dom_get_group(clone, group_id)

@@ -5,15 +5,19 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
 import re
 import shutil
 
 from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin
+from pcs.test.tools.cib import get_assert_pcs_effect_mixin
+from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
     outdent,
+    skip_unless_pacemaker_supports_bundle,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -218,6 +222,7 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
 
     def testDeleteResources(self):
         # Verify deleting resources works
+        # Additional tests are in class BundleDeleteTest
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
             " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -4604,3 +4609,63 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
                 "Deleting Resource - A",
             ]
         )
+
+@skip_unless_pacemaker_supports_bundle
+class BundleDeleteTest(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    temp_cib = rc("temp-cib.xml")
+    empty_cib = rc("cib-empty-2.8.xml")
+
+    def setUp(self):
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    def fixture_primitive(self, name, bundle):
+        self.assert_pcs_success(
+            "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
+                name, bundle
+            )
+        )
+
+    def fixture_bundle(self, name):
+        self.assert_pcs_success(
+            "resource bundle create {0} container image=pcs:test".format(
+                name
+            )
+        )
+
+    def test_without_primitive(self):
+        self.fixture_bundle("B")
+        self.assert_effect("resource delete B", "<resources/>")
+
+    def test_with_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "resource delete B",
+            "<resources/>",
+            "Deleting Resource - R\n",
+        )
+
+    def test_remove_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "resource delete R",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" />
+                    </bundle>
+                </resources>
+            """,
+            "Deleting Resource - R\n",
+        )
+
