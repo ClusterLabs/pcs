@@ -32,6 +32,7 @@ temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
+# pylint:disable=trailing-whitespace
 
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -264,6 +265,7 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         ))
 
     def testResourceUpdate(self):
+        # see also BundleMiscCommands
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -279,6 +281,7 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         assert output == ""
 
     def testAddOperation(self):
+        # see also BundleMiscCommands
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -562,6 +565,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ))
 
     def testRemoveOperation(self):
+        # see also BundleMiscCommands
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -1006,6 +1010,7 @@ Ticket Constraints:
         ))
 
     def testGroupAdd(self):
+        # see also BundleGroup
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy"
@@ -1795,6 +1800,7 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
 
     def testMetaAttrs(self):
+        # see also BundleMiscCommands
         self.assert_pcs_success(
              "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
                 " test=testA test2=test2a op monitor interval=30 meta"
@@ -1910,6 +1916,7 @@ Deleting Resource - ClusterIP5
         assert r == 0
 
     def testUnclone(self):
+        # see also BundleCloneMaster
         output, returnVal = pcs(
             temp_cib,
             "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy"
@@ -2078,6 +2085,7 @@ Deleting Resource - ClusterIP5
         ))
 
     def testUncloneMaster(self):
+        # see also BundleCloneMaster
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful",
             "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
@@ -2354,6 +2362,7 @@ Deleting Resource - ClusterIP5
         assert r == 0
 
     def testCloneMaster(self):
+        # see also BundleCloneMaster
         output, returnVal  = pcs(
             temp_cib,
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
@@ -3243,6 +3252,8 @@ Error: Cannot remove more than one resource from cloned group
         # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
         # However those test the pcs library. I'm leaving these tests here to
         # test the cli part for now.
+
+        # see also BundleMiscCommands
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
@@ -3313,6 +3324,8 @@ Error: Cannot remove more than one resource from cloned group
         # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
         # However those test the pcs library. I'm leaving these tests here to
         # test the cli part for now.
+
+        # see also BundleMiscCommands
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
@@ -3810,7 +3823,6 @@ Error: Cannot remove more than one resource from cloned group
                 """
             )
         )
-
 
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy")
@@ -4382,6 +4394,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ))
 
     def testResrourceUtilizationSet(self):
+        # see also BundleMiscCommands
         output, returnVal = pcs(
             temp_large_cib, "resource utilization dummy test1=10"
         )
@@ -4610,8 +4623,8 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
             ]
         )
 
-@skip_unless_pacemaker_supports_bundle
-class BundleDeleteTest(
+
+class BundleCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
@@ -4641,6 +4654,9 @@ class BundleDeleteTest(
             )
         )
 
+
+@skip_unless_pacemaker_supports_bundle
+class BundleDeleteTest(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
         self.assert_effect("resource delete B", "<resources/>")
@@ -4669,3 +4685,216 @@ class BundleDeleteTest(
             "Deleting Resource - R\n",
         )
 
+
+@skip_unless_pacemaker_supports_bundle
+class BundleGroup(BundleCommon):
+    def test_group_add_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource group add bundles B",
+            "Error: Unable to find resource: B\n"
+        )
+
+    def test_group_add_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource group add group R",
+            "Error: cannot group bundle resources\n"
+        )
+
+    def test_group_remove_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource group remove B R",
+            "Error: Group 'B' does not exist\n"
+        )
+
+    def test_ungroup_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource ungroup B",
+            "Error: Group 'B' does not exist\n"
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleCloneMaster(BundleCommon):
+    def test_clone_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource clone B",
+            "Error: unable to find group or resource: B\n"
+        )
+
+    def test_master_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource master B",
+            "Error: Unable to find resource or group with id B\n"
+        )
+
+    def test_clone_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource clone R",
+            "Error: cannot clone bundle resource\n"
+        )
+
+    def test_master_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource master R",
+            "Error: cannot make a master/slave resource from a bundle resource\n"
+        )
+
+    def test_unclone_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource unclone B",
+            "Error: could not find resource: B\n"
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleMiscCommands(BundleCommon):
+    def test_resource_enable_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource enable B",
+            "Error: 'B' is not clone/master/a group/primitive\n"
+        )
+
+    def test_resource_disable_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource disable B",
+            "Error: 'B' is not clone/master/a group/primitive\n"
+        )
+
+    def test_resource_manage_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource manage B",
+            "Error: 'B' is not clone/master/a group/primitive\n"
+        )
+
+    def test_resource_unmanage_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource unmanage B",
+            "Error: 'B' is not clone/master/a group/primitive\n"
+        )
+
+    def test_op_add(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource op add B monitor interval=30",
+            "Error: Unable to find resource: B\n"
+        )
+
+    def test_op_remove(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource op remove B monitor interval=30",
+            "Error: Unable to find resource: B\n"
+        )
+
+    def test_update(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource update B meta aaa=bbb",
+            "Error: Unable to find resource: B\n"
+        )
+
+    def test_meta(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource meta B aaa=bbb",
+            "Error: unable to find a resource/clone/master/group: B\n"
+        )
+
+    def test_utilization(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource utilization B aaa=10",
+            "Error: Unable to find a resource: B\n"
+        )
+
+    def test_debug_start_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-start B",
+            "Error: unable to debug-start a bundle\n"
+        )
+
+    def test_debug_start_with_resource(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-start B",
+            "Error: unable to debug-start a bundle, try the bundle's resource: R\n"
+        )
+
+    def test_debug_stop_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-stop B",
+            "Error: unable to debug-stop a bundle\n"
+        )
+
+    def test_debug_stop_with_resource(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-stop B",
+            "Error: unable to debug-stop a bundle, try the bundle's resource: R\n"
+        )
+
+    def test_debug_monitor_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-monitor B",
+            "Error: unable to debug-monitor a bundle\n"
+        )
+
+    def test_debug_monitor_with_resource(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-monitor B",
+            "Error: unable to debug-monitor a bundle, try the bundle's resource: R\n"
+        )
+
+    def test_debug_promote_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-promote B",
+            "Error: unable to debug-promote a bundle\n"
+        )
+
+    def test_debug_promote_with_resource(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-promote B",
+            "Error: unable to debug-promote a bundle, try the bundle's resource: R\n"
+        )
+
+    def test_debug_demote_bundle(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-demote B",
+            "Error: unable to debug-demote a bundle\n"
+        )
+
+    def test_debug_demote_with_resource(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource debug-demote B",
+            "Error: unable to debug-demote a bundle, try the bundle's resource: R\n"
+        )

@@ -11,7 +11,10 @@ from pcs.lib.commands.test.resource.common import ResourceWithStateTest
 import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.misc import  outdent
+from pcs.test.tools.misc import (
+    outdent,
+    skip_unless_pacemaker_supports_bundle,
+)
 
 
 fixture_primitive_cib_enabled = """
@@ -441,6 +444,57 @@ fixture_clone_group_status_unmanaged = """
                 <resource id="A2" managed="false" />
             </group>
         </clone>
+    </resources>
+"""
+
+fixture_bundle_cib_enabled = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+            </primitive>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_cib_disabled_primitive = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_status_managed = """
+    <resources>
+        <bundle id="A-bundle" type="docker" image="pcmktest:http"
+            unique="false" managed="true" failed="false"
+        >
+            <replica id="0">
+                <resource id="A" />
+            </replica>
+            <replica id="1">
+                <resource id="A" />
+            </replica>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_status_unmanaged = """
+    <resources>
+        <bundle id="A-bundle" type="docker" image="pcmktest:http"
+            unique="false" managed="true" failed="false"
+        >
+            <replica id="0">
+                <resource id="A" managed="false" />
+            </replica>
+            <replica id="1">
+                <resource id="A" managed="false" />
+            </replica>
+        </bundle>
     </resources>
 """
 
@@ -1401,5 +1455,75 @@ class EnableClonedGroup(ResourceWithStateTest):
             fixture_clone_group_cib_enabled,
             reports=[
                 fixture_report_unmanaged("A1"),
+            ]
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class DisableBundle(ResourceWithStateTest):
+    def test_primitive(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_enabled,
+            fixture_bundle_status_managed,
+            lambda: resource.disable(self.env, ["A"], False),
+            fixture_bundle_cib_disabled_primitive
+        )
+
+    def test_bundle(self):
+        self.runner.set_runs(
+            fixture.call_cib_load(
+                fixture.cib_resources(fixture_bundle_cib_enabled)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.disable(self.env, ["A-bundle"], False),
+            fixture.report_not_for_bundles("A-bundle")
+        )
+        self.runner.assert_everything_launched()
+
+    def test_primitive_unmanaged(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_enabled,
+            fixture_bundle_status_unmanaged,
+            lambda: resource.disable(self.env, ["A"], False),
+            fixture_bundle_cib_disabled_primitive,
+            reports=[
+                fixture_report_unmanaged("A"),
+            ]
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class EnableBundle(ResourceWithStateTest):
+    def test_primitive(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_primitive,
+            fixture_bundle_status_managed,
+            lambda: resource.enable(self.env, ["A"], False),
+            fixture_bundle_cib_enabled
+        )
+
+    def test_bundle(self):
+        self.runner.set_runs(
+            fixture.call_cib_load(
+                fixture.cib_resources(fixture_bundle_cib_enabled)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.enable(self.env, ["A-bundle"], False),
+            fixture.report_not_for_bundles("A-bundle")
+        )
+        self.runner.assert_everything_launched()
+
+    def test_primitive_unmanaged(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_primitive,
+            fixture_bundle_status_unmanaged,
+            lambda: resource.enable(self.env, ["A"], False),
+            fixture_bundle_cib_enabled,
+            reports=[
+                fixture_report_unmanaged("A"),
             ]
         )

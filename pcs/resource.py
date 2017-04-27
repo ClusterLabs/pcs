@@ -477,6 +477,8 @@ def resource_move(argv,clear=False,ban=False):
         not utils.dom_get_master(dom, resource_id)
         and
         not utils.dom_get_clone(dom, resource_id)
+        and
+        not utils.dom_get_bundle(dom, resource_id)
     ):
         utils.err("%s is not a valid resource" % resource_id)
 
@@ -489,6 +491,8 @@ def resource_move(argv,clear=False,ban=False):
             utils.dom_get_resource_clone(dom, resource_id)
             or
             utils.dom_get_group_clone(dom, resource_id)
+            or
+            utils.dom_get_bundle(dom, resource_id)
         )
     ):
         utils.err("cannot move cloned resources")
@@ -1190,6 +1194,9 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if not element:
         utils.err("unable to find group or resource: %s" % name)
 
+    if element.parentNode.tagName == "bundle":
+        utils.err("cannot clone bundle resource")
+
     if not update_existing:
         if utils.dom_get_resource_clone(cib_dom, name):
             utils.err("%s is already a clone resource" % name)
@@ -1361,6 +1368,12 @@ def resource_master_create(dom, argv, update=False, master_id=None):
                 break
         if not rg_found:
             utils.err("Unable to find resource or group with id %s" % rg_id)
+
+        if resource.parentNode.tagName == "bundle":
+            utils.err(
+                "cannot make a master/slave resource from a bundle resource"
+            )
+
         # If the resource elements parent is a group, and it's the last
         # element in the group, we remove the group
         if resource.parentNode.tagName == "group" and resource.parentNode.getElementsByTagName("primitive").length <= 1:
@@ -1719,6 +1732,8 @@ def resource_group_add(cib_dom, group_name, resource_ids):
                     utils.err("cannot group master/slave resources")
                 if resource.parentNode.tagName == "clone":
                     utils.err("cannot group clone resources")
+                if resource.parentNode.tagName == "bundle":
+                    utils.err("cannot group bundle resources")
                 resources_to_move.append(resource)
                 resource_found = True
                 break
@@ -1964,10 +1979,27 @@ def resource_force_action(action, argv):
     resource = argv[0]
     dom = utils.get_cib_dom()
 
-    if not utils.dom_get_any_resource(dom, resource):
+    if not (
+        utils.dom_get_any_resource(dom, resource)
+        or
+        utils.dom_get_bundle(dom, resource)
+    ):
         utils.err(
-            "unable to find a resource/clone/master/group: {0}".format(resource)
+            "unable to find a resource/clone/master/group/bundle: {0}".format(
+                resource
+            )
         )
+    bundle = utils.dom_get_bundle(dom, resource)
+    if bundle:
+        bundle_resource = utils.dom_get_resource_bundle(bundle)
+        if bundle_resource:
+            utils.err(
+                "unable to {0} a bundle, try the bundle's resource: {1}".format(
+                    action, bundle_resource.getAttribute("id")
+                )
+            )
+        else:
+            utils.err("unable to {0} a bundle".format(action))
     if utils.dom_get_group(dom, resource):
         group_resources = utils.get_group_children(resource)
         utils.err(

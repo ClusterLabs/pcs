@@ -517,6 +517,30 @@ fixture_clone_group_cib_unmanaged_all_primitives_op_disabled = """
     </resources>
 """
 
+fixture_bundle_cib_managed = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+            </primitive>
+        </bundle>
+    </resources>
+"""
+
+fixture_bundle_cib_unmanaged_primitive = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+
 def fixture_report_no_monitors(resource):
     return (
         severities.WARNING,
@@ -817,6 +841,50 @@ class ManageClonedGroup(ResourceWithoutStateTest):
             lambda: resource.manage(self.env, ["A-clone"]),
             fixture_clone_group_cib_managed
         )
+
+
+class UnmanageBundle(ResourceWithoutStateTest):
+    def test_primitive(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_managed,
+            lambda: resource.unmanage(self.env, ["A"]),
+            fixture_bundle_cib_unmanaged_primitive
+        )
+
+    def test_bundle(self):
+        self.runner.set_runs(
+            fixture.call_cib_load(
+                fixture.cib_resources(fixture_bundle_cib_managed)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.unmanage(self.env, ["A-bundle"], False),
+            fixture.report_not_for_bundles("A-bundle")
+        )
+        self.runner.assert_everything_launched()
+
+
+class ManageBundle(ResourceWithoutStateTest):
+    def test_primitive(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_primitive,
+            lambda: resource.manage(self.env, ["A"]),
+            fixture_bundle_cib_managed,
+        )
+
+    def test_bundle(self):
+        self.runner.set_runs(
+            fixture.call_cib_load(
+                fixture.cib_resources(fixture_bundle_cib_unmanaged_primitive)
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: resource.manage(self.env, ["A-bundle"], False),
+            fixture.report_not_for_bundles("A-bundle")
+        )
+        self.runner.assert_everything_launched()
 
 
 class MoreResources(ResourceWithoutStateTest):
