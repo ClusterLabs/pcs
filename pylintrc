@@ -95,7 +95,7 @@ dummy-variables-rgx=_$|dummy
 
 [FORMAT]
 # Maximum number of lines in a module
-max-module-lines=4606
+max-module-lines=4900
 # Maximum number of characters on a single line.
 max-line-length=637
 
