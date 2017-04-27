@@ -124,6 +124,35 @@ class SplitByKeywords(TestCase):
             }
         )
 
+    def test_returns_dict_with_empty_lists_for_no_opts_and_only_found_kws(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["first"],
+                set(["first", "second"]),
+                only_found_keywords=True,
+            ),
+            {
+                "first": [],
+            }
+        )
+
+    def test_returns_empty_lists_no_opts_and_only_found_kws_with_grouping(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["second", 1, "second", "second", 2, 3],
+                set(["first", "second"]),
+                group_repeated_keywords=["second"],
+                only_found_keywords=True,
+            ),
+            {
+                "second": [
+                    [1],
+                    [],
+                    [2, 3],
+                ],
+            }
+        )
+
     def test_allow_keywords_repeating(self):
         self.assertEqual(
             group_by_keywords(
@@ -188,6 +217,7 @@ class SplitByKeywords(TestCase):
                 "first": [3],
             }
         )
+
 
 class ParseTypedArg(TestCase):
     def assert_parse(self, arg, parsed):

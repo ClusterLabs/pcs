@@ -223,6 +223,9 @@ class ParseBundleCreateOptions(TestCase):
             }
         )
 
+    def test_container_empty(self):
+        self.assert_raises_cmdline(["container"])
+
     def test_container_type(self):
         self.assert_produce(
             ["container", "lxc"],
@@ -281,16 +284,7 @@ class ParseBundleCreateOptions(TestCase):
         )
 
     def test_network_empty(self):
-        self.assert_produce(
-            ["network"],
-            {
-                "container_type": "docker",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-            }
-        )
+        self.assert_raises_cmdline(["network"])
 
     def test_network_missing_value(self):
         self.assert_raises_cmdline(["network", "a", "c=d"])
@@ -299,15 +293,11 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_raises_cmdline(["network", "=b", "c=d"])
 
     def test_port_map_empty(self):
-        self.assert_produce(
-            ["port-map"],
-            {
-                "container_type": "docker",
-                "container": {},
-                "network": {},
-                "port_map": [{}],
-                "storage_map": [],
-            }
+        self.assert_raises_cmdline(["port-map"])
+
+    def test_one_of_port_map_empty(self):
+        self.assert_raises_cmdline(
+            ["port-map", "a=b", "port-map", "network", "c=d"]
         )
 
     def test_port_map_one(self):
@@ -341,15 +331,11 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_raises_cmdline(["port-map", "=b", "c=d"])
 
     def test_storage_map_empty(self):
-        self.assert_produce(
-            ["storage-map"],
-            {
-                "container_type": "docker",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [{}],
-            }
+        self.assert_raises_cmdline(["storage-map"])
+
+    def test_one_of_storage_map_empty(self):
+        self.assert_raises_cmdline(
+            ["storage-map", "port-map", "a=b", "storage-map", "c=d"]
         )
 
     def test_storage_map_one(self):
@@ -463,17 +449,7 @@ class ParseBundleUpdateOptions(TestCase):
         )
 
     def test_container_empty(self):
-        self.assert_produce(
-            ["container"],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-            }
-        )
+        self.assert_raises_cmdline(["container"])
 
     def test_container_missing_value(self):
         self.assert_raises_cmdline(["container", "a", "c=d"])
@@ -495,23 +471,21 @@ class ParseBundleUpdateOptions(TestCase):
         )
 
     def test_network_empty(self):
-        self.assert_produce(
-            ["network"],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-            }
-        )
+        self.assert_raises_cmdline(["network"])
 
     def test_network_missing_value(self):
         self.assert_raises_cmdline(["network", "a", "c=d"])
 
     def test_network_missing_key(self):
         self.assert_raises_cmdline(["network", "=b", "c=d"])
+
+    def test_port_map_empty(self):
+        self.assert_raises_cmdline(["port-map"])
+
+    def test_one_of_port_map_empty(self):
+        self.assert_raises_cmdline(
+            ["port-map", "a=b", "port-map", "network", "c=d"]
+        )
 
     def test_port_map_missing_params(self):
         self.assert_raises_cmdline(["port-map"])
@@ -546,6 +520,14 @@ class ParseBundleUpdateOptions(TestCase):
                 "storage_map_add": [],
                 "storage_map_remove": [],
             }
+        )
+
+    def test_storage_map_empty(self):
+        self.assert_raises_cmdline(["storage-map"])
+
+    def test_one_of_storage_map_empty(self):
+        self.assert_raises_cmdline(
+            ["storage-map", "port-map", "a=b", "storage-map", "c=d"]
         )
 
     def test_storage_map_missing_params(self):

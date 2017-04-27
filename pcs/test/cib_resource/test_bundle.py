@@ -197,6 +197,24 @@ class BundleCreate(BundleCreateCommon):
             )
         )
 
+    def assert_no_options(self, keyword):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource bundle create B {0}".format(keyword),
+            "Error: No {0} options specified\n".format(keyword),
+        )
+
+    def test_empty_container(self):
+        self.assert_no_options("container")
+
+    def test_empty_network(self):
+        self.assert_no_options("network")
+
+    def test_empty_storage_map(self):
+        self.assert_no_options("storage-map")
+
+    def test_empty_port_map(self):
+        self.assert_no_options("port-map")
+
 
 @skip_unless_pacemaker_supports_bundle
 class BundleUpdate(BundleCreateCommon):
@@ -234,8 +252,7 @@ class BundleUpdate(BundleCreateCommon):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B port-map",
-            "Error: When using 'port-map' you must specify either 'add' and "
-                "options or 'remove' and id(s)\n"
+            "Error: No port-map options specified\n"
         )
 
     def test_fail_when_missing_args_3(self):
@@ -336,6 +353,25 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """
         )
+
+    def assert_no_options(self, keyword):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource bundle update B {0}".format(keyword),
+            "Error: No {0} options specified\n".format(keyword),
+        )
+
+    def test_empty_container(self):
+        self.assert_no_options("container")
+
+    def test_empty_network(self):
+        self.assert_no_options("network")
+
+    def test_empty_storage_map(self):
+        self.assert_no_options("storage-map")
+
+    def test_empty_port_map(self):
+        self.assert_no_options("port-map")
 
 
 @skip_unless_pacemaker_supports_bundle

@@ -57,11 +57,29 @@ def parse_create(arg_list):
     return parts
 
 def _parse_bundle_groups(arg_list):
-    return group_by_keywords(
+    repeatable_keyword_list = ["port-map", "storage-map"]
+    keyword_list = ["container", "network"] + repeatable_keyword_list
+    groups = group_by_keywords(
         arg_list,
-        set(["container", "network", "port-map", "storage-map"]),
-        group_repeated_keywords=["port-map", "storage-map"]
+        set(keyword_list),
+        group_repeated_keywords=repeatable_keyword_list,
+        only_found_keywords=True,
     )
+    for keyword in keyword_list:
+        if keyword not in groups:
+            continue
+        if keyword in repeatable_keyword_list:
+            for repeated_section in groups[keyword]:
+                if len(repeated_section) == 0:
+                    raise CmdLineInputError(
+                        "No {0} options specified".format(keyword)
+                    )
+        else:
+            if len(groups[keyword]) == 0:
+                raise CmdLineInputError(
+                    "No {0} options specified".format(keyword)
+                )
+    return groups
 
 def parse_bundle_create_options(arg_list):
     groups = _parse_bundle_groups(arg_list)
