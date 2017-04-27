@@ -36,17 +36,18 @@ def _validate_attrib_names(attrib_names, options):
 def find_valid_resource_id(
     report_processor, cib, can_repair_to_clone, in_clone_allowed, id
 ):
+    parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
-        resource.clone.ALL_TAGS + [resource.primitive.TAG, resource.group.TAG],
+        parent_tags + [resource.primitive.TAG, resource.group.TAG],
         cib,
         id,
         id_description="resource"
     )
 
-    if resource_element.tag in resource.clone.ALL_TAGS:
+    if resource_element.tag in parent_tags:
         return resource_element.attrib["id"]
 
-    clone = find_parent(resource_element, resource.clone.ALL_TAGS)
+    clone = find_parent(resource_element, parent_tags)
     if clone is None:
         return resource_element.attrib["id"]
 

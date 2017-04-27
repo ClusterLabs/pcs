@@ -44,17 +44,47 @@ class FindValidResourceId(TestCase):
             in_clone_allowed=False,
         )
 
+    def fixture_error_multiinstance(self, parent_type, parent_id):
+        return (
+            severities.ERROR,
+            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+            {
+                "resource_id": "resourceA",
+                "parent_type": parent_type,
+                "parent_id": parent_id,
+            },
+            report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
+        )
+
+    def fixture_warning_multiinstance(self, parent_type, parent_id):
+        return (
+            severities.WARNING,
+            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+            {
+                "resource_id": "resourceA",
+                "parent_type": parent_type,
+                "parent_id": parent_id,
+            },
+            None
+        )
+
     def test_return_same_id_when_resource_is_clone(self, mock_find_by_id, _):
         mock_find_by_id.return_value = fixture_element("clone", "resourceA")
         self.assertEqual("resourceA", self.find(id="resourceA"))
 
+    def test_return_same_id_when_resource_is_master(self, mock_find_by_id, _):
+        mock_find_by_id.return_value = fixture_element("master", "resourceA")
+        self.assertEqual("resourceA", self.find(id="resourceA"))
 
-    def test_return_same_id_when_is_primitive_but_not_in_clone(
+    def test_return_same_id_when_resource_is_bundle(self, mock_find_by_id, _):
+        mock_find_by_id.return_value = fixture_element("bundle", "resourceA")
+        self.assertEqual("resourceA", self.find(id="resourceA"))
+
+    def test_return_same_id_when_resource_is_standalone_primitive(
          self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = None
-
         self.assertEqual("resourceA", self.find(id="resourceA"))
 
     def test_refuse_when_resource_is_in_clone(
@@ -62,19 +92,29 @@ class FindValidResourceId(TestCase):
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("clone", "clone_id")
-
         assert_raise_library_error(
             lambda: self.find(id="resourceA"),
-            (
-                severities.ERROR,
-                report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
-                {
-                    "resource_id": "resourceA",
-                    "parent_type": "clone",
-                    "parent_id": "clone_id",
-                },
-                report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
-            ),
+            self.fixture_error_multiinstance("clone", "clone_id"),
+        )
+
+    def test_refuse_when_resource_is_in_master(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("master", "master_id")
+        assert_raise_library_error(
+            lambda: self.find(id="resourceA"),
+            self.fixture_error_multiinstance("master", "master_id"),
+        )
+
+    def test_refuse_when_resource_is_in_bundle(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
+        assert_raise_library_error(
+            lambda: self.find(id="resourceA"),
+            self.fixture_error_multiinstance("bundle", "bundle_id"),
         )
 
     def test_return_clone_id_when_repair_allowed(
@@ -91,6 +131,34 @@ class FindValidResourceId(TestCase):
             self.report_processor.report_item_list, []
         )
 
+    def test_return_master_id_when_repair_allowed(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("master", "master_id")
+
+        self.assertEqual(
+            "master_id",
+            self.find(can_repair_to_clone=True, id="resourceA")
+        )
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list, []
+        )
+
+    def test_return_bundle_id_when_repair_allowed(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
+
+        self.assertEqual(
+            "bundle_id",
+            self.find(can_repair_to_clone=True, id="resourceA")
+        )
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list, []
+        )
+
     def test_return_resource_id_when_in_clone_allowed(
          self, mock_find_by_id, mock_find_parent
     ):
@@ -101,15 +169,46 @@ class FindValidResourceId(TestCase):
             "resourceA",
             self.find(in_clone_allowed=True, id="resourceA")
         )
-        assert_report_item_list_equal(self.report_processor.report_item_list, [(
-            severities.WARNING,
-            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
-            {
-                "resource_id": "resourceA",
-                "parent_type": "clone",
-                "parent_id": "clone_id",
-            },
-        )])
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list,
+            [
+                self.fixture_warning_multiinstance("clone", "clone_id"),
+            ]
+        )
+
+    def test_return_resource_id_when_in_master_allowed(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("master", "master_id")
+
+        self.assertEqual(
+            "resourceA",
+            self.find(in_clone_allowed=True, id="resourceA")
+        )
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list,
+            [
+                self.fixture_warning_multiinstance("master", "master_id"),
+            ]
+        )
+
+    def test_return_resource_id_when_in_bundle_allowed(
+         self, mock_find_by_id, mock_find_parent
+    ):
+        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
+        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
+
+        self.assertEqual(
+            "resourceA",
+            self.find(in_clone_allowed=True, id="resourceA")
+        )
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list,
+            [
+                self.fixture_warning_multiinstance("bundle", "bundle_id"),
+            ]
+        )
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):

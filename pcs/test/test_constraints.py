@@ -15,6 +15,7 @@ from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
+    skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_version,
     outdent,
 )
@@ -48,7 +49,7 @@ class ConstraintTest(unittest.TestCase):
         shutil.copy(empty_cib, temp_cib)
         return cib_content
 
-    # Setups up a cluster with Resources, groups, master/slave resource and clones
+    # Sets up a cluster with Resources, groups, master/slave resource and clones
     def setupClusterA(self,temp_cib):
         line = "resource create D1 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
@@ -295,6 +296,7 @@ Ticket Constraints:
         ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
 
     def testLocationConstraints(self):
+        # see also BundleLocation
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
 
@@ -338,6 +340,7 @@ Ticket Constraints:
         assert returnVal == 0
 
     def testColocationConstraints(self):
+        # see also BundleColocation
         line = "resource create M1 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -410,6 +413,7 @@ Ticket Constraints:
         ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\nTicket Constraints:\n')
 
     def testColocationSets(self):
+        # see also BundleColocation
         line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -664,6 +668,7 @@ Colocation Constraints:
         assert r == 0
 
     def testOrderSets(self):
+        # see also BundleOrder
         line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -2618,10 +2623,7 @@ Ticket Constraints:
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
     temp_cib = rc("temp-cib.xml")
-
-    @property
-    def empty_cib(self):
-        return rc("cib-empty.xml")
+    empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
@@ -2784,19 +2786,22 @@ class ConstraintEffect(
     unittest.TestCase,
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//constraints")[0]
         )
     )
 ):
     temp_cib = rc("temp-cib.xml")
-
-    @property
-    def empty_cib(self):
-        return rc("cib-empty.xml")
+    empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
+
+    def fixture_primitive(self, name):
+        self.assert_pcs_success(
+            "resource create {0} ocf:heartbeat:Dummy".format(name)
+        )
 
 
 class LocationTypeId(ConstraintEffect):
@@ -2804,13 +2809,8 @@ class LocationTypeId(ConstraintEffect):
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
     # complete test of location constraints. Instead it relies on legacy tests
     # to test location constraints with plain resource name.
-    def fixture_resource(self, name):
-        self.assert_pcs_success(
-            "resource create {0} ocf:heartbeat:Dummy".format(name)
-        )
-
     def test_prefers(self):
-        self.fixture_resource("A")
+        self.fixture_primitive("A")
         self.assert_effect(
             [
                 "constraint location A prefers node1",
@@ -2825,7 +2825,7 @@ class LocationTypeId(ConstraintEffect):
         )
 
     def test_avoids(self):
-        self.fixture_resource("A")
+        self.fixture_primitive("A")
         self.assert_effect(
             [
                 "constraint location A avoids node1",
@@ -2840,7 +2840,7 @@ class LocationTypeId(ConstraintEffect):
         )
 
     def test_add(self):
-        self.fixture_resource("A")
+        self.fixture_primitive("A")
         self.assert_effect(
             [
                 "constraint location add my-id A node1 INFINITY",
@@ -2853,7 +2853,7 @@ class LocationTypeId(ConstraintEffect):
         )
 
     def test_rule(self):
-        self.fixture_resource("A")
+        self.fixture_primitive("A")
         self.assert_effect(
             [
                 "constraint location A rule '#uname' eq node1",
@@ -2878,9 +2878,7 @@ class LocationTypePattern(ConstraintEffect):
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
     # complete test of location constraints. Instead it relies on legacy tests
     # to test location constraints with plain resource name.
-    @property
-    def empty_cib(self):
-        return rc("cib-empty-2.6.xml")
+    empty_cib = rc("cib-empty-2.6.xml")
 
     def stdout(self):
         return ""
@@ -2936,9 +2934,7 @@ class LocationTypePattern(ConstraintEffect):
 
 @skip_unless_location_rsc_pattern
 class LocationTypePatternWithCibUpgrade(LocationTypePattern):
-    @property
-    def empty_cib(self):
-        return rc("cib-empty.xml")
+    empty_cib = rc("cib-empty.xml")
 
     def stdout(self):
         return "Cluster CIB has been upgraded to latest version\n"
@@ -2950,9 +2946,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
     # complete test of location constraints. Instead it relies on legacy tests
     # to test location constraints with plain resource name.
-    @property
-    def empty_cib(self):
-        return rc("cib-empty-2.6.xml")
+    empty_cib = rc("cib-empty-2.6.xml")
 
     def fixture(self):
         self.assert_pcs_success_all([
@@ -3071,6 +3065,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         self.assert_pcs_success(
             "constraint location show nodes --full",
             outdent(
+            # pylint:disable=trailing-whitespace
             """\
             Location Constraints:
               Node: 
@@ -3181,3 +3176,369 @@ class LocationShowWithPattern(ConstraintBaseTest):
             )
         )
 
+
+class Bundle(ConstraintEffect):
+    empty_cib = rc("cib-empty-2.8.xml")
+
+    def setUp(self):
+        super(Bundle, self).setUp()
+        self.fixture_bundle("B")
+
+    def fixture_primitive(self, name, bundle=None):
+        #pylint:disable=arguments-differ
+        if not bundle:
+            super(Bundle, self).fixture_primitive(name)
+            return
+        self.assert_pcs_success(
+            "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
+                name, bundle
+            )
+        )
+
+    def fixture_bundle(self, name):
+        self.assert_pcs_success(
+            "resource bundle create {0} container image=pcs:test".format(
+                name
+            )
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleLocation(Bundle):
+    def test_bundle_prefers(self):
+        self.assert_effect(
+            "constraint location B prefers node1",
+            """
+                <constraints>
+                    <rsc_location id="location-B-node1-INFINITY" node="node1"
+                        rsc="B" score="INFINITY"
+                    />
+                </constraints>
+            """
+        )
+
+    def test_bundle_avoids(self):
+        self.assert_effect(
+            "constraint location B avoids node1",
+            """
+                <constraints>
+                    <rsc_location id="location-B-node1--INFINITY" node="node1"
+                        rsc="B" score="-INFINITY"
+                    />
+                </constraints>
+            """
+        )
+
+    def test_bundle_location(self):
+        self.assert_effect(
+            "constraint location add id B node1 100",
+            """
+                <constraints>
+                    <rsc_location id="id" node="node1" rsc="B" score="100" />
+                </constraints>
+            """
+        )
+
+    def test_primitive_prefers(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint location R prefers node1",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints. Use --force to override.\n"
+        )
+
+    def test_primitive_prefers_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint location R prefers node1 --force",
+            """
+                <constraints>
+                    <rsc_location id="location-R-node1-INFINITY" node="node1"
+                        rsc="R" score="INFINITY"
+                    />
+                </constraints>
+            """
+        )
+
+    def test_primitive_avoids(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint location R avoids node1",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints. Use --force to override.\n"
+        )
+
+    def test_primitive_avoids_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint location R avoids node1 --force",
+            """
+                <constraints>
+                    <rsc_location id="location-R-node1--INFINITY" node="node1"
+                        rsc="R" score="-INFINITY"
+                    />
+                </constraints>
+            """
+        )
+
+    def test_primitive_location(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint location add id R node1 100",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints. Use --force to override.\n"
+        )
+
+    def test_primitive_location_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint location add id R node1 100 --force",
+            """
+                <constraints>
+                    <rsc_location id="id" node="node1" rsc="R" score="100" />
+                </constraints>
+            """
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleColocation(Bundle):
+    def setUp(self):
+        super(BundleColocation, self).setUp()
+        self.fixture_primitive("X")
+
+    def test_bundle(self):
+        self.assert_effect(
+            "constraint colocation add B with X",
+            """
+                <constraints>
+                    <rsc_colocation id="colocation-B-X-INFINITY"
+                        rsc="B" with-rsc="X" score="INFINITY" />
+                </constraints>
+            """
+        )
+
+    def test_primitive(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint colocation add R with X",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints. Use --force to override.\n"
+        )
+
+    def test_primitive_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint colocation add R with X --force",
+            """
+                <constraints>
+                    <rsc_colocation id="colocation-R-X-INFINITY"
+                        rsc="R" with-rsc="X" score="INFINITY" />
+                </constraints>
+            """
+        )
+
+    def test_bundle_set(self):
+        self.assert_effect(
+            "constraint colocation set B X",
+            """
+                <constraints>
+                    <rsc_colocation id="pcs_rsc_colocation_set_B_X"
+                        score="INFINITY"
+                    >
+                        <resource_set id="pcs_rsc_set_B_X">
+                            <resource_ref id="B" />
+                            <resource_ref id="X" />
+                        </resource_set>
+                    </rsc_colocation>
+                </constraints>
+            """
+        )
+
+    def test_primitive_set(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint colocation set R X",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints, use --force to override\n"
+        )
+
+    def test_primitive_set_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint colocation set R X --force",
+            """
+                <constraints>
+                    <rsc_colocation id="pcs_rsc_colocation_set_R_X"
+                        score="INFINITY"
+                    >
+                        <resource_set id="pcs_rsc_set_R_X">
+                            <resource_ref id="R" />
+                            <resource_ref id="X" />
+                        </resource_set>
+                    </rsc_colocation>
+                </constraints>
+            """,
+            "Warning: R is a bundle resource, you should use the bundle id: B when adding constraints\n"
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleOrder(Bundle):
+    def setUp(self):
+        super(BundleOrder, self).setUp()
+        self.fixture_primitive("X")
+
+    def test_bundle(self):
+        self.assert_effect(
+            "constraint order B then X",
+            """
+                <constraints>
+                    <rsc_order id="order-B-X-mandatory"
+                        first="B" first-action="start"
+                        then="X" then-action="start" />
+                </constraints>
+            """,
+            "Adding B X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+        )
+
+    def test_primitive(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint order R then X",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints. Use --force to override.\n"
+        )
+
+    def test_primitive_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint order R then X --force",
+            """
+                <constraints>
+                    <rsc_order id="order-R-X-mandatory"
+                        first="R" first-action="start"
+                        then="X" then-action="start" />
+                </constraints>
+            """,
+            "Adding R X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+        )
+
+    def test_bundle_set(self):
+        self.assert_effect(
+            "constraint order set B X",
+            """
+                <constraints>
+                    <rsc_order id="pcs_rsc_order_set_B_X">
+                        <resource_set id="pcs_rsc_set_B_X">
+                            <resource_ref id="B" />
+                            <resource_ref id="X" />
+                        </resource_set>
+                    </rsc_order>
+                </constraints>
+            """
+        )
+
+    def test_primitive_set(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint order set R X",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints, use --force to override\n"
+        )
+
+    def test_primitive_set_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint order set R X --force",
+            """
+                <constraints>
+                    <rsc_order id="pcs_rsc_order_set_R_X">
+                        <resource_set id="pcs_rsc_set_R_X">
+                            <resource_ref id="R" />
+                            <resource_ref id="X" />
+                        </resource_set>
+                    </rsc_order>
+                </constraints>
+            """,
+            "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleTicket(Bundle):
+    def setUp(self):
+        super(BundleTicket, self).setUp()
+
+    def test_bundle(self):
+        self.assert_effect(
+            "constraint ticket add T B",
+            """
+                <constraints>
+                    <rsc_ticket id="ticket-T-B" rsc="B" ticket="T" />
+                </constraints>
+            """
+        )
+
+    def test_primitive(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint ticket add T R",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints, use --force to override\n"
+        )
+
+    def test_primitive_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint ticket add T R --force",
+            """
+                <constraints>
+                    <rsc_ticket id="ticket-T-R" rsc="R" ticket="T" />
+                </constraints>
+            """,
+            "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+        )
+
+    def test_bundle_set(self):
+        self.assert_effect(
+            "constraint ticket set B setoptions ticket=T",
+            """
+                <constraints>
+                    <rsc_ticket id="pcs_rsc_ticket_set_B" ticket="T">
+                        <resource_set id="pcs_rsc_set_B">
+                            <resource_ref id="B" />
+                        </resource_set>
+                    </rsc_ticket>
+                </constraints>
+            """
+        )
+
+    def test_primitive_set(self):
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "constraint ticket set R setoptions ticket=T",
+            "Error: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints, use --force to override\n"
+        )
+
+    def test_primitive_set_force(self):
+        self.fixture_primitive("R", "B")
+        self.assert_effect(
+            "constraint ticket set R setoptions ticket=T --force",
+            """
+                <constraints>
+                    <rsc_ticket id="pcs_rsc_ticket_set_R" ticket="T">
+                        <resource_set id="pcs_rsc_set_R">
+                            <resource_ref id="R" />
+                        </resource_set>
+                    </rsc_ticket>
+                </constraints>
+            """,
+            "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+        )

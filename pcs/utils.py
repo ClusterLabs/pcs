@@ -1294,16 +1294,18 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
         or
         dom_get_group(dom, resource_id)
     )
-    return dom_elem_get_resource_clone_ms_parent(resource)
+    if resource:
+        return dom_elem_get_resource_clone_ms_parent(resource)
+    return None
 
 def dom_elem_get_resource_clone_ms_parent(resource):
-    clone = resource
-    while True:
-        if not isinstance(clone, xml.dom.minidom.Element):
-            return None
-        if clone.tagName in ["clone", "master"]:
-            return clone
-        clone = clone.parentNode
+    return dom_get_parent_by_tag_names(resource, ["clone", "master"])
+
+def dom_get_resource_bundle_parent(dom, resource_id):
+    resource = dom_get_resource(dom, resource_id)
+    if resource:
+        return dom_get_parent_by_tag_names(resource, ["bundle"])
+    return None
 
 def dom_get_master(dom, master_id):
     for master in dom.getElementsByTagName("master"):
@@ -1395,9 +1397,11 @@ def validate_constraint_resource(dom, resource_id):
         dom_get_clone(dom, resource_id)
         or
         dom_get_master(dom, resource_id)
+        or
+        dom_get_bundle(dom, resource_id)
     )
     if resource_el:
-        # clone and master is always valid
+        # clones, masters and bundles are always valid
         return True, "", resource_id
 
     resource_el = (
@@ -1408,9 +1412,14 @@ def validate_constraint_resource(dom, resource_id):
     if not resource_el:
         return False, "Resource '%s' does not exist" % resource_id, None
 
-    clone_el = dom_get_resource_clone_ms_parent(dom, resource_id)
+    clone_el = (
+        dom_get_resource_clone_ms_parent(dom, resource_id)
+        or
+        dom_get_resource_bundle_parent(dom, resource_id)
+    )
     if not clone_el:
-        # primitive and group is valid if not in clone nor master
+        # a primitive and a group is valid if not in a clone nor a master nor a
+        # bundle
         return True, "", resource_id
 
     if "--force" in pcs_options:
@@ -1432,6 +1441,14 @@ def validate_constraint_resource(dom, resource_id):
         return (
             False,
             "%s is a master/slave resource, you should use the master id: %s "
+                "when adding constraints. Use --force to override."
+                % (resource_id, clone_el.getAttribute("id")),
+            clone_el.getAttribute("id")
+        )
+    if clone_el.tagName == "bundle":
+        return (
+            False,
+            "%s is a bundle resource, you should use the bundle id: %s "
                 "when adding constraints. Use --force to override."
                 % (resource_id, clone_el.getAttribute("id")),
             clone_el.getAttribute("id")
@@ -1485,12 +1502,12 @@ def dom_get_child_by_tag_name(dom_el, tag_name):
         return children[0]
     return None
 
-def dom_get_parent_by_tag_name(dom_el, tag_name):
+def dom_get_parent_by_tag_names(dom_el, tag_names):
     parent = dom_el.parentNode
     while parent:
         if not isinstance(parent, xml.dom.minidom.Element):
             return None
-        if parent.tagName == tag_name:
+        if parent.tagName in tag_names:
             return parent
         parent = parent.parentNode
     return None
