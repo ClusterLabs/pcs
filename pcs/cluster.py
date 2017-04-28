@@ -169,7 +169,11 @@ def cluster_cmd(argv):
 
         remote_node_command_map = {
             "add-remote": cluster_command.node_add_remote,
-            "add-guest": cluster_command.node_add_guest
+            "add-guest": cluster_command.node_add_guest,
+            "remove-remote": cluster_command.create_node_remove_remote(
+                resource.resource_remove
+            ),
+            "remove-guest": cluster_command.node_remove_guest,
         }
         if argv[0] in remote_node_command_map:
             try:

@@ -277,7 +277,9 @@ def check_can_add_node_to_cluster(
 
     check_response(availability_info, report_items, node.label)
 
-def run_action_on_node(node_communicator, report_processor, node, actions):
+def run_actions_on_node(
+    node_communicator, path, response_key, report_processor, node, actions
+):
     """
     NodeCommunicator node_communicator is an object for making the http request
     NodeAddresses node specifies the destination url
@@ -290,16 +292,10 @@ def run_action_on_node(node_communicator, report_processor, node, actions):
                 (eg. enable or start)
     """
     report_items = []
-
-    report_processor.process(reports.actions_on_nodes_started(
-        actions.keys(),
-        [node.label]
-    ))
-
     action_results = _call_for_json(
         node_communicator,
         node,
-        "remote/run_action",
+        path,
         report_items,
         [("data_json", json.dumps(actions))]
     )
@@ -309,81 +305,34 @@ def run_action_on_node(node_communicator, report_processor, node, actions):
 
     return node_communication_format.response_to_result(
         action_results,
-        "actions",
+        response_key,
         actions.keys(),
         node.label,
     )
 
-def put_files_to_node(
-    node_communicator, report_processor, node, file_definitions
+def _run_actions_on_multiple_nodes(
+    node_communicator, url, response_key, report_processor, create_start_report,
+    actions, node_addresses_list, allow_incomplete_distribution=False
 ):
-    """
-    NodeCommunicator node_communicator is an object for making the http request
-    NodeAddresses node specifies the destination url
-    dict file_definitions has key that identifies the file and value is a dict
-        with a data that are specific per file type. Mandatory keys there are:
-        * type - is type of file like "booth_autfile" or "pcmk_remote_authkey"
-        * data - it contains content of file in file specific format (e.g.
-            binary is encoded by base64)
-        Common optional key is "rewrite_existing" (True/False) that specifies
-        the behaviour when file already exists.
-    """
-    report_items = []
-    file_results = _call_for_json(
-        node_communicator,
-        node,
-        "remote/put_file",
-        report_items,
-        [("data_json", json.dumps(file_definitions))]
-    )
-
-    #can raise
-    report_processor.process_list(report_items)
-
-    return node_communication_format.response_to_result(
-        file_results,
-        "files",
-        file_definitions.keys(),
-        node.label,
-    )
-
-def _distribute_files_make_call(
-    node_communicator, report_processor, file_definitions, node_addresses_list,
-    allow_incomplete_distribution=False
-):
-    """
-    Put files specified in file_definitions to nodes specified in
-    node_addresses_list.
-
-    NodeCommunicator node_communicator is an object for making the http request
-    NodeAddresses node specifies the destination url
-    dict file_definitions has key that identifies the file and value is a dict
-        with a data that are specific per file type. Mandatory keys there are:
-        * type - is type of file like "booth_autfile" or "pcmk_remote_authkey"
-        * data - it contains content of file in file specific format (e.g.
-            binary is encoded by base64)
-        Common optional key is "rewrite_existing" (True/False) that specifies
-        the behaviour when file already exists.
-    bool allow_incomplete_distribution keep success even if some node(s) are
-        unavailable
-    """
     response_map = {}
-    def put_authkey_to_node(node_addresses):
-        result = put_files_to_node(
+    def worker(node_addresses):
+        result = run_actions_on_node(
             node_communicator,
+            url,
+            response_key,
             report_processor,
             node_addresses,
-            file_definitions=file_definitions
+            actions,
         )
         response_map[node_addresses] = result
 
-    report_processor.process(reports.files_distribution_started(
-        file_definitions.keys(),
+    report_processor.process(create_start_report(
+        actions.keys(),
         [node.label for node in node_addresses_list]
     ))
 
     parallel_nodes_communication_helper(
-        put_authkey_to_node,
+        worker,
         [([node_addresses], {}) for node_addresses in node_addresses_list],
         report_processor,
         allow_incomplete_distribution,
@@ -391,26 +340,25 @@ def _distribute_files_make_call(
 
     return response_map
 
-def _distribute_files_process_responses(
-    report_processor, response_map, allow_incomplete_distribution=False
+def _run_actions_process_responses(
+    report_processor, response_map, is_success,
+    create_success_report, create_error_report, force_code, allow_fails=False
 ):
     success, errors = node_communication_format.responses_to_report_infos(
         response_map,
-        is_success=(
-            lambda key, response: response.code in ["written", "rewritten"]
-        ),
+        is_success=is_success,
         get_node_label=lambda node: node.label
     )
 
     if success:
-        report_processor.process(reports.files_distribution_success(success))
+        report_processor.process(create_success_report(success))
 
     if errors:
         report_processor.process(
-            reports.get_problem_creator(
-                report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
-                allow_incomplete_distribution
-            )(reports.files_distribution_error, errors)
+            reports.get_problem_creator(force_code, allow_fails)(
+                create_error_report,
+                errors
+            )
         )
 
 def distribute_files(
@@ -433,14 +381,48 @@ def distribute_files(
     bool allow_incomplete_distribution keep success even if some node(s) are
         unavailable
     """
-    response_map = _distribute_files_make_call(
+    response_map = _run_actions_on_multiple_nodes(
         node_communicator,
+        "remote/put_file",
+        "files",
         report_processor,
+        reports.files_distribution_started,
         file_definitions,
         node_addresses_list,
         allow_incomplete_distribution,
     )
-    _distribute_files_process_responses(
-        report_processor, response_map, allow_incomplete_distribution
+    _run_actions_process_responses(
+        report_processor,
+        response_map,
+        lambda key, response: response.code in ["written", "rewritten"],
+        reports.files_distribution_success,
+        reports.files_distribution_error,
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        allow_incomplete_distribution,
+    )
+    return response_map
+
+def run_actions_on_multiple_nodes(
+    node_communicator, report_processor, action_definitions, is_success,
+    node_addresses_list, allow_fails=False
+):
+    response_map = _run_actions_on_multiple_nodes(
+        node_communicator,
+        "remote/run_action",
+        "actions",
+        report_processor,
+        reports.actions_on_nodes_started,
+        action_definitions,
+        node_addresses_list,
+        allow_fails,
+    )
+    _run_actions_process_responses(
+        report_processor,
+        response_map,
+        is_success,
+        reports.actions_on_nodes_success,
+        reports.actions_on_nodes_error,
+        report_codes.SKIP_ACTION_ON_NODES_ERRORS,
+        allow_fails,
     )
     return response_map

@@ -9,6 +9,17 @@ from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 import base64
 
+def create_pcmk_remote_actions(action_list):
+    return dict([
+        (
+            "pacemaker_remote {0}".format(action),
+            service_cmd_format(
+                "pacemaker_remote",
+                action
+            )
+        )
+        for action in action_list
+    ])
 
 def pcmk_authkey_format(authkey_content):
     """

@@ -9,17 +9,24 @@ from pcs.lib import reports, validate
 from pcs.lib.cib.resource.common import(
     has_meta_attribute,
     arrange_first_meta_attributes,
+    get_meta_attribute_value,
 )
 from pcs.lib.node import NodeAddresses
 
+
+#TODO pcs currently does not care about multiple meta_attributes and here
+#we don't care as well
+
+GUEST_OPTIONS = [
+    'remote-node',
+    'remote-port',
+    'remote-addr',
+    'remote-connect-timeout',
+]
+
 def validate_options(options):
     report_list = validate.names_in(
-        [
-            'remote-node',
-            'remote-port',
-            'remote-addr',
-            'remote-connect-timeout',
-        ],
+        GUEST_OPTIONS,
         options.keys(),
         "guest options",
     )
@@ -66,6 +73,26 @@ def set_as_guest(resource_element, meta_options):
     """
     arrange_first_meta_attributes(resource_element, meta_options)
 
+def unset_guest(resource_element):
+    """
+    Unset resource as guest node.
+
+    etree.Element resource_element
+    """
+    guest_nvpair_list = resource_element.xpath(
+        "./meta_attributes/nvpair[{0}]".format(
+            " or ".join([
+                '@name="{0}"'.format(option)
+                for option in GUEST_OPTIONS
+            ])
+        )
+    )
+    for nvpair in guest_nvpair_list:
+        meta_attributes = nvpair.getparent()
+        meta_attributes.remove(nvpair)
+        if not len(meta_attributes):
+            meta_attributes.getparent().remove(meta_attributes)
+
 def get_node(meta_attributes):
     """
     Return NodeAddresses with corresponding to guest node in meta_attributes.
@@ -85,10 +112,20 @@ def get_node(meta_attributes):
     return NodeAddresses(host, name=name) if name else None
 
 def get_host_from_options(meta_options):
+    """
+    Return host from meta options. Return None as a default value.
+    """
     return meta_options.get(
         "remote-addr",
         meta_options.get("remote-node", None)
     )
+
+def get_host(resource_element):
+    host = get_meta_attribute_value(resource_element, "remote-addr")
+    if host:
+        return host
+
+    return get_meta_attribute_value(resource_element, "remote-node")
 
 def find_node_list(resources_section):
     """
@@ -96,8 +133,6 @@ def find_node_list(resources_section):
 
     etree.Element resources_section is a researched element
     """
-    #TODO pcs currently does not care about multiple meta_attributes and here
-    #we don't care as well
     return [
         get_node(meta_attrs) for meta_attrs in resources_section.xpath("""
             .//primitive
@@ -110,3 +145,39 @@ def find_node_list(resources_section):
                 ]
         """)
     ]
+
+def find_node_resources(resources_section, node_identifier):
+    """
+    Return list of etree.Eleent primitives that are guest nodes.
+
+    etree.Element resources_section is a researched element
+    string node_identifier could be id of resource, node name or node address
+    """
+    resources = resources_section.xpath("""
+        .//primitive[
+            (
+                @id="{0}"
+                and
+                meta_attributes[
+                    nvpair[
+                        @name="remote-node"
+                        and
+                        string-length(@value) > 0
+                    ]
+                ]
+            )
+            or
+            meta_attributes[
+                nvpair[
+                    (
+                        @name="remote-addr"
+                        or
+                        @name="remote-node"
+                    )
+                    and
+                    @value="{0}"
+                ]
+            ]
+        ]
+    """.format(node_identifier))
+    return resources

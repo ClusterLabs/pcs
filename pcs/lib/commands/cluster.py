@@ -42,58 +42,23 @@ def _share_authkey(
         allow_incomplete_distribution
     )
 
-def _start_and_enable_pacemaker_remote(
-    env, candidate_node, allow_pacemaker_remote_service_fail=False
-):
-    actions = {
-        "pacemaker_remote start": node_communication_format.service_cmd_format(
-            "pacemaker_remote",
-            "start"
-        ),
-        "pacemaker_remote enable": node_communication_format.service_cmd_format(
-            "pacemaker_remote",
-            "enable"
-        ),
-    }
-
-    response = nodes_task.run_action_on_node(
+def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
+    nodes_task.run_actions_on_multiple_nodes(
         env.node_communicator(),
         env.report_processor,
-        candidate_node,
-        actions=actions,
+        node_communication_format.create_pcmk_remote_actions([
+            "start",
+            "enable",
+        ]),
+        lambda key, response: response.code == "success",
+        node_list,
+        allow_fails,
     )
-
-    success, errors = node_communication_format.responses_to_report_infos(
-        {candidate_node: response},
-        is_success=lambda key, response: response.code == "success",
-        get_node_label=lambda node: node.label
-    )
-
-    if success:
-        env.report_processor.process(reports.actions_on_nodes_success(success))
-
-    if errors:
-        env.report_processor.process(
-            reports.get_problem_creator(
-                report_codes.SKIP_ACTION_ON_NODES_ERRORS,
-                allow_pacemaker_remote_service_fail
-            )(reports.actions_on_nodes_error, errors)
-        )
 
 def _prepare_pacemaker_remote_environment(
-    env, node_host, allow_incomplete_distribution,
-    allow_pacemaker_remote_service_fail
+    env, node_host, allow_incomplete_distribution, allow_fails
 ):
-    if env.is_cib_live:
-        candidate_node = NodeAddresses(node_host)
-        _ensure_can_add_node_to_remote_cluster(env, candidate_node)
-        _share_authkey(env, candidate_node, allow_incomplete_distribution)
-        _start_and_enable_pacemaker_remote(
-            env,
-            candidate_node,
-            allow_pacemaker_remote_service_fail
-        )
-    else:
+    if not env.is_cib_live:
         env.report_processor.process(
             reports.actions_skipped_when_no_live_environment([
                 "pacemaker authkey distribution",
@@ -101,6 +66,12 @@ def _prepare_pacemaker_remote_environment(
                 "enable pacemaker_remote on '{0}'".format(node_host),
             ])
         )
+        return
+
+    candidate_node = NodeAddresses(node_host)
+    _ensure_can_add_node_to_remote_cluster(env, candidate_node)
+    _share_authkey(env, candidate_node, allow_incomplete_distribution)
+    _start_and_enable_pacemaker_remote(env, [candidate_node], allow_fails)
 
 def _ensure_resource_running(env, resource_id):
     env.report_processor.process(
@@ -113,15 +84,17 @@ def node_add_remote(
     allow_pacemaker_remote_service_fail=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
+    use_default_operations=True,
     wait=False,
 ):
     env.ensure_wait_satisfiable(wait)
-    cib = env.get_cib()
 
     report_list = remote_node.validate_host_not_ambiguous(
+        instance_attributes,
         host,
-        instance_attributes
     )
+
+    cib = env.get_cib()
     try:
         remote_resource_element = remote_node.create(
             env.report_processor,
@@ -133,6 +106,7 @@ def node_add_remote(
             remote_node.prepare_instance_atributes(instance_attributes, host),
             allow_invalid_operation,
             allow_invalid_instance_attributes,
+            use_default_operations,
         )
     except LibraryError as e:
         report_list.extend(e.args)
@@ -155,23 +129,21 @@ def node_add_guest(
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
     env.ensure_wait_satisfiable(wait)
-    cib = env.get_cib()
 
     report_list = guest_node.validate_options(options)
+
+    cib = env.get_cib()
     try:
         resource_element = find_element_by_tag_and_id(
             primitive.TAG,
             get_resources(cib),
             resource_id
         )
+        report_list.extend(guest_node.validate_is_not_guest(resource_element))
     except LibraryError as e:
-        raise LibraryError(*(list(e.args) + report_list))
+        report_list.extend(e.args)
 
-    env.report_processor.process_list(
-        report_list
-        +
-        guest_node.validate_is_not_guest(resource_element)
-    )
+    env.report_processor.process_list(report_list)
 
     guest_node.set_as_guest(resource_element, options)
 
@@ -184,3 +156,118 @@ def node_add_guest(
     env.push_cib(cib, wait)
     if wait:
         _ensure_resource_running(env, resource_id)
+
+def _find_resources_to_remove(
+    cib, report_processor,
+    node_type, node_identifier, allow_remove_multiple_nodes,
+    find_resources
+):
+    resource_element_list = find_resources(get_resources(cib), node_identifier)
+
+    if not resource_element_list:
+        raise LibraryError(reports.node_not_found(node_identifier, node_type))
+
+    if len(resource_element_list) > 1:
+        report_processor.process(
+            reports.get_problem_creator(
+                report_codes.FORCE_REMOVE_MULTIPLE_NODES,
+                allow_remove_multiple_nodes
+            )(
+                reports.multiple_result_found,
+                "resource",
+                [resource.attrib["id"] for resource in resource_element_list],
+                node_identifier
+            )
+        )
+
+    return resource_element_list
+
+def _remove_pcmk_remote(resource_element_list, get_host, remove_resource):
+    hosts = set()
+    for resource_element in resource_element_list:
+        hosts.add(get_host(resource_element))
+        remove_resource(resource_element)
+    return sorted(hosts)
+
+def _destroy_pcmk_remote_env(env, node_host_list, allow_fails):
+    if not env.is_cib_live:
+        formated_node_host_list = ", ".join([
+            "'{0}'".format(node_host) for node_host in node_host_list
+        ])
+        env.report_processor.process(
+            reports.actions_skipped_when_no_live_environment([
+                "pacemaker_remote authkey remove",
+                "stop pacemaker_remote on {0}".format(formated_node_host_list),
+                "disable pacemaker_remote on {0}".format(
+                    formated_node_host_list
+                ),
+            ])
+        )
+        return
+
+    actions = node_communication_format.create_pcmk_remote_actions([
+        "stop",
+        "disable",
+    ])
+    actions["pacemaker_remote authkey remove"] = {
+        "type": "remove_pcmk_remote_authkey"
+    }
+
+    def is_success(key, response):
+        if key == "pacemaker_remote authkey remove":
+            return response.code in ["deleted", "not_found"]
+        return response.code == "success"
+
+    nodes_task.run_actions_on_multiple_nodes(
+        env.node_communicator(),
+        env.report_processor,
+        actions,
+        is_success,
+        [NodeAddresses(node_host) for node_host in node_host_list],
+        allow_fails,
+    )
+
+def node_remove_remote(
+    env, node_identifier, remove_resource,
+    allow_remove_multiple_nodes=False,
+    allow_pacemaker_remote_service_fail=False
+):
+
+    resource_element_list = _find_resources_to_remove(
+        env.get_cib(),
+        env.report_processor,
+        "remote",
+        node_identifier,
+        allow_remove_multiple_nodes,
+        remote_node.find_node_resources,
+    )
+    hosts = _remove_pcmk_remote(
+        resource_element_list,
+        remote_node.get_host,
+        lambda resource_element: remove_resource(resource_element.attrib["id"])
+    )
+    _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
+
+def node_remove_guest(
+    env, node_identifier,
+    allow_remove_multiple_nodes=False,
+    allow_pacemaker_remote_service_fail=False
+):
+    cib = env.get_cib()
+
+    resource_element_list = _find_resources_to_remove(
+        cib,
+        env.report_processor,
+        "guest",
+        node_identifier,
+        allow_remove_multiple_nodes,
+        guest_node.find_node_resources,
+    )
+
+    hosts =  _remove_pcmk_remote(
+        resource_element_list,
+        guest_node.get_host,
+        guest_node.unset_guest,
+    )
+    _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
+    env.push_cib(cib)

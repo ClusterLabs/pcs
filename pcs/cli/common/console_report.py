@@ -134,6 +134,19 @@ def resource_running_on_nodes(info):
         ]))
     )
 
+def build_node_description(node_types):
+    if not node_types:
+        return  "Node"
+
+    label = "{0} node".format
+
+    if is_string(node_types):
+        return label(node_types)
+
+    if len(node_types) == 1:
+        return label(node_types[0])
+
+    return "nor " + " or ".join([label(ntype) for ntype in node_types])
 
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
@@ -753,8 +766,24 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_NOT_FOUND: lambda info:
-        "Node '{node}' does not appear to exist in configuration"
-        .format(**info)
+        "{desc} '{node}' does not appear to exist in configuration".format(
+            desc=build_node_description(info["searched_types"]),
+            node=info["node"]
+        )
+    ,
+
+    codes.MULTIPLE_RESULT_FOUND: lambda info:
+        "multiple {result_type} {search_description} found: {what_found}"
+        .format(
+            what_found=", ".join([
+                "'{0}'".format(result_identifier)
+                for result_identifier in info["result_identifier_list"]
+            ]),
+            search_description="" if not info["search_description"]
+                else "for '{0}'".format(info["search_description"])
+            ,
+            result_type=info["result_type"]
+        )
     ,
 
     codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND: lambda info:

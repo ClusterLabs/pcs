@@ -222,10 +222,11 @@ def _validate_target_valuewise(
             reporter.append(
                 reports.node_not_found(
                     target_value,
-                    ReportItemSeverity.WARNING if force_node and allow_force
+                    severity=ReportItemSeverity.WARNING
+                        if force_node and allow_force
                         else ReportItemSeverity.ERROR
                     ,
-                    None if force_node or not allow_force
+                    forceable=None if force_node or not allow_force
                         else report_codes.FORCE_NODE_DOES_NOT_EXIST
                 )
             )

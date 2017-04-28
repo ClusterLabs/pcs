@@ -1382,19 +1382,48 @@ def resource_operation_interval_adapted(
         }
     )
 
-def node_not_found(node, severity=ReportItemSeverity.ERROR, forceable=None):
+def node_not_found(
+    node, searched_types=None, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     specified node does not exist
     node string specified node
+    searched_types list|string
     """
     return ReportItem(
         report_codes.NODE_NOT_FOUND,
         severity,
         info={
             "node": node,
+            "searched_types": searched_types if searched_types else []
         },
         forceable=forceable
     )
+
+def multiple_result_found(
+    result_type, result_identifier_list, search_description="",
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Multiple result was found when something was looked for. E.g. resource for
+    remote node.
+
+    string result_type specifies what was looked for, e.g. "resource"
+    list result_identifier_list contains identifiers of results
+        e.g. resource ids
+    string search_description e.g. name of remote_node
+    """
+    return ReportItem(
+        report_codes.MULTIPLE_RESULT_FOUND,
+        severity,
+        info={
+            "result_type": result_type,
+            "result_identifier_list": result_identifier_list,
+            "search_description": search_description,
+        },
+        forceable=forceable
+    )
+
 
 def pacemaker_local_node_name_not_found(reason):
     """

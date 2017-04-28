@@ -79,9 +79,11 @@ class LibraryEnvironment(object):
             BoothEnv(report_processor, booth) if booth is not None else None
         )
         self._pacemaker = (
-            PacemakerEnv(report_processor, pacemaker, self.get_cib)
-            if pacemaker is not None
-            else None
+            PacemakerEnv(
+                report_processor,
+                pacemaker if pacemaker else {},
+                self.get_cib
+            )
         )
         self._request_timeout = request_timeout
         self._is_cman_cluster = None

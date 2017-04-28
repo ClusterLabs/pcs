@@ -218,3 +218,5 @@ def has_meta_attribute(resource_el, name):
     return 0 < len(resource_el.xpath(
         './meta_attributes/nvpair[@name="{0}"]'.format(name)
     ))
+
+get_meta_attribute_value = partial(nvpair.get_value, "meta_attributes")

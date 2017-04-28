@@ -283,8 +283,14 @@ Edit the cib in the editor specified by the $EDITOR environment variable and pus
 node add <node[,node\-altaddr]> [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-enable\fR] [\fB\-\-watchdog\fR=<watchdog\-path>]
 Add the node to the cluster and sync all relevant configuration files to the new node. If \fB\-\-start\fR is specified also start cluster on the new node, if \fB\-\-wait\fR is specified wait up to 'n' seconds for the new node to start. If \fB\-\-enable\fR is specified configure cluster to start on the new node on boot. When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address. Use \fB\-\-watchdog\fR to specify path to watchdog on newly added node, when SBD is enabled in cluster. This command can only be run on an existing cluster node.
 .TP
+node remove <node>
+Shutdown specified node and remove it from the cluster.
+.TP
 node add-remote <node host> [<node-name>] [options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-wait[=n]]
 Add the node to the cluster as remote node. Make sure that the pacemaker authkey is on all nodes. Start and enable pacemaker_remote daemon on the node. Options, operations and meta belongs to a connection resource (ocf:pacemaker:remote). Options can be server, port, reconnect_interval.
+.TP
+node remove-remote <node-identifier>
+Shutdown specified remote node and remove it from the cluster. The node-identifier could be the name of the node or the address of the node.
 .TP
 node add-guest <node name> <resource id> [options]
 Enables the specified resource as a guest node resource. Make sure that the pacemaker authkey is on all nodes. Start and enable pacemaker_remote daemon on the node.
@@ -293,8 +299,8 @@ remote-addr: the IP address or hostname of guest node; if it is not specified th
 remote-port: the port on the virtual machine that the cluster will use to connect to pacemaker_remote
 remote-connect-timeout: how long before a pending guest connection will time out
 .TP
-node remove <node>
-Shutdown specified node and remove it from the cluster.
+node remove-guest <node-identifier>
+Shutdown specified guest node and remove it from the cluster. The node-identifier could be the name of the node or the address of the node or id of resource that is used as guest node.
 .TP
 remote\-node add <hostname> <resource id> [options]
 Enables the specified resource as a remote\-node resource on the specified hostname (hostname should be the same as 'uname \-n').

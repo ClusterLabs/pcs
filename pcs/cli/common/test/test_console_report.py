@@ -983,3 +983,55 @@ class actions_skipped_when_no_live_environment(NameBuildTest):
             ,
             {"action_list": ["action1", "action2"]}
         )
+
+class NodeNotFound(NameBuildTest):
+    code = codes.NODE_NOT_FOUND
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": []
+            }
+        )
+
+    def test_build_messages_with_one_search_types(self):
+        self.assert_message_from_info(
+            "remote node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": ["remote"]
+            }
+        )
+
+    def test_build_messages_with_string_search_types(self):
+        self.assert_message_from_info(
+            "remote node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": "remote"
+            }
+        )
+
+    def test_build_messages_with_multiple_search_types(self):
+        self.assert_message_from_info(
+            "nor remote node or guest node 'SOME_NODE' does not appear to exist"
+                " in configuration"
+            ,
+            {
+                "node": "SOME_NODE",
+                "searched_types": ["remote", "guest"]
+            }
+        )
+
+class MultipleResultFound(NameBuildTest):
+    code = codes.MULTIPLE_RESULT_FOUND
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",
+            {
+                "result_type": "resource",
+                "result_identifier_list": ["ID1", "ID2"],
+                "search_description": "NODE-NAME",
+            }
+        )

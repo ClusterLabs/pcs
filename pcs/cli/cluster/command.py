@@ -46,8 +46,21 @@ def node_add_remote(lib, arg_list, modifiers):
         allow_pacemaker_remote_service_fail=force,
         allow_invalid_operation=force,
         allow_invalid_instance_attributes=force,
+        use_default_operations=not modifiers["no-default-ops"],
         wait=modifiers["wait"],
     )
+
+def create_node_remove_remote(remove_resource):
+    def node_remove_remote(lib, arg_list, modifiers):
+        if not arg_list:
+            raise CmdLineInputError()
+        lib.cluster.node_remove_remote(
+            arg_list[0],
+            remove_resource,
+            allow_remove_multiple_nodes=modifiers["force"],
+            allow_pacemaker_remote_service_fail=modifiers["force"],
+        )
+    return node_remove_remote
 
 def node_add_guest(lib, arg_list, modifiers):
     if len(arg_list) < 2:
@@ -79,3 +92,13 @@ def node_add_guest(lib, arg_list, modifiers):
                     if value != "remote-node"
                 ]
         raise e
+
+def node_remove_guest(lib, arg_list, modifiers):
+    if not arg_list:
+        raise CmdLineInputError()
+
+    lib.cluster.node_remove_guest(
+        arg_list[0],
+        allow_remove_multiple_nodes=modifiers["force"],
+        allow_pacemaker_remote_service_fail=modifiers["force"],
+    )

@@ -726,6 +726,9 @@ Commands:
         SBD is enabled in cluster.
         This command can only be run on an existing cluster node.
 
+    node remove <node>
+        Shutdown specified node and remove it from the cluster.
+
     node add-remote <node host> [<node-name>] [options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...] [--wait[=n]]
@@ -735,6 +738,11 @@ Commands:
         Options, operations and meta belongs to a connection resource
         (ocf:pacemaker:remote).
         Options can be server, port, reconnect_interval.
+
+    node remove-remote <node-identifier>
+        Shutdown specified remote node and remove it from the cluster.
+        The node-identifier could be the name of the node or the address of the
+        node.
 
     node add-guest <node name> <resource id> [options]
         Enables the specified resource as a guest node resource. Make sure that
@@ -748,8 +756,10 @@ Commands:
         remote-connect-timeout: how long before a pending guest connection will
             time out
 
-    node remove <node>
-        Shutdown specified node and remove it from the cluster.
+    node remove-guest <node-identifier>
+        Shutdown specified guest node and remove it from the cluster.
+        The node-identifier could be the name of the node or the address of the
+        node or id of resource that is used as guest node.
 
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the

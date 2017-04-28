@@ -267,3 +267,53 @@ class GetNvsetTest(TestCase):
             ],
             nvpair.get_nvset(nvset)
         )
+
+class GetValue(TestCase):
+    def assert_find_value(self, tag_name, name, value, xml, default=None):
+        self.assertEqual(
+            value,
+            nvpair.get_value(tag_name, etree.fromstring(xml), name, default)
+        )
+
+    def test_return_value_when_name_exists(self):
+        self.assert_find_value(
+            "meta_attributes",
+            "SOME-NAME",
+            "some-value",
+            """
+                <context>
+                    <meta_attributes>
+                        <nvpair name="SOME-NAME" value="some-value" />
+                    </meta_attributes>
+                </context>
+            """,
+        )
+
+    def test_return_none_when_name_not_exists(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                    <instance_attributes>
+                        <nvpair name="another-name" value="some-value" />
+                    </instance_attributes>
+                </context>
+            """,
+        )
+
+    def test_return_default_when_name_not_exists(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value="DEFAULT",
+            xml="""
+                <context>
+                    <instance_attributes>
+                        <nvpair name="another-name" value="some-value" />
+                    </instance_attributes>
+                </context>
+            """,
+            default="DEFAULT",
+        )

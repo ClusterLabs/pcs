@@ -6,7 +6,11 @@
 - Support for bundle resources (CLI only) ([rhbz#1433016])
 - Command `pcs cluster node add-remote` to add remote node to cluster
   ([rhbz#1176018])
+- Command `pcs cluster node remove-remote` to remove a remote node from a
+  cluster ([rhbz#1176018])
 - Command `pcs cluster node add-guest` to add guest node to cluster
+  ([rhbz#1176018])
+- Command `pcs cluster node remove-guest` to remove a guest node from a cluster
   ([rhbz#1176018])
 
 ### Fixed
