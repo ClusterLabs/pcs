@@ -8,6 +8,12 @@ from __future__ import (
 import sys
 import os.path
 
+is_2_7_or_higher = sys.version_info[0] > 2 or sys.version_info[1] > 6
+
+if is_2_7_or_higher:
+    import importlib
+
+
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 )))
@@ -22,8 +28,24 @@ def prepare_test_name(test_name):
     but loader need it in module path format like:
     "pcs.test.test_node"
     so is practical accept fs path format and prepare it for loader
+
+    Sometimes name could include the .py extension:
+    "pcs/test/test_node.py"
+    in such cause is extension removed
     """
-    return test_name.replace("/", ".")
+    candidate = test_name.replace("/", ".")
+    if not is_2_7_or_higher:
+        return candidate
+
+    py_extension = ".py"
+    if not candidate.endswith(py_extension):
+        return candidate
+
+    try:
+        importlib.import_module(candidate)
+        return candidate
+    except ImportError:
+        return candidate[:-len(py_extension)]
 
 def tests_from_suite(test_candidate):
     if isinstance(test_candidate, unittest.TestCase):
