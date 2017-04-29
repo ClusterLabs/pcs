@@ -204,6 +204,22 @@ class DoesIdExistTest(CibToolsTest):
         tree = etree.fromstring('<root><direct id="a"/></root>')
         self.assertTrue(lib.does_id_exist(tree, "a"))
 
+    def test_find_remote_node_pacemaker_internal_id(self):
+        tree = etree.fromstring("""
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="b">
+                            <meta_attributes>
+                                <nvpair name="remote-node" value="a"/>
+                            </meta_attributes>
+                        </primitive>
+                    </resources>
+                </configuration>
+            </cib>
+        """)
+        self.assertTrue(lib.does_id_exist(tree, "a"))
+
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):
         self.fixture_add_primitive_with_id("myId")
