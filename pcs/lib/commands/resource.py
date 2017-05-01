@@ -8,9 +8,10 @@ from __future__ import (
 from contextlib import contextmanager
 from functools import partial
 
+from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cib import resource
-from pcs.lib.cib.resource import operations
+from pcs.lib.cib.resource import operations, remote_node, guest_node
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
@@ -43,6 +44,77 @@ def resource_environment(
             for res_id in wait_for_resource_ids
         ])
 
+def _validate_remote_connection(
+    nodes, resource_id, instance_attributes,  allow_inappropriate_use
+):
+    report_list = []
+    report_list.append(
+        reports.get_problem_creator(
+            report_codes.FORCE_INAPPROPRIATE_USE,
+            allow_inappropriate_use
+        )(reports.use_command_node_add_remote)
+    )
+
+    report_list.extend(
+        remote_node.validate_host_not_conflicts(
+            nodes,
+            resource_id,
+            instance_attributes
+        )
+    )
+    return report_list
+
+def _validate_guest_change(
+    tree, nodes, meta_attributes, allow_inappropriate_use, detect_remove=False
+):
+    if not guest_node.contains_guest_options(meta_attributes):
+        return []
+
+    report_list = []
+    create_report = reports.use_command_node_add_guest
+    if detect_remove and not guest_node.get_guest_option_value(meta_attributes):
+        create_report = reports.use_command_node_remove_guest
+
+    report_list.append(
+        reports.get_problem_creator(
+            report_codes.FORCE_INAPPROPRIATE_USE,
+            allow_inappropriate_use
+        )(create_report)
+    )
+
+    report_list.extend(
+        guest_node.validate_host_conflicts(
+            tree,
+            nodes,
+            meta_attributes
+        )
+    )
+
+    return report_list
+
+def _validate_special_cases(
+    nodes, resource_agent, resources_section, resource_id, meta_attributes,
+    instance_attributes, allow_inappropriate_use
+):
+    report_list = []
+
+    if resource_agent.get_name() == remote_node.AGENT_NAME:
+        report_list.extend(_validate_remote_connection(
+            nodes,
+            resource_id,
+            instance_attributes,
+            allow_inappropriate_use,
+        ))
+
+    report_list.extend(_validate_guest_change(
+        resources_section,
+        nodes,
+        meta_attributes,
+        allow_inappropriate_use,
+    ))
+
+    return report_list
+
 def create(
     env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes,
@@ -52,6 +124,7 @@ def create(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_inappropriate_use=False,
 ):
     """
     Create resource in a cib.
@@ -88,6 +161,16 @@ def create(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            env.nodes.all,
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_inappropriate_use
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -108,6 +191,7 @@ def _create_as_clone_common(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_inappropriate_use=False,
 ):
     """
     Create resource in some kind of clone (clone or master).
@@ -156,6 +240,16 @@ def _create_as_clone_common(
             resource.common.is_clone_deactivated_by_meta(clone_meta_options)
         )
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            env.nodes.all,
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_inappropriate_use
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -184,6 +278,7 @@ def create_in_group(
     adjacent_resource_id=None,
     put_after_adjacent=False,
     wait=False,
+    allow_inappropriate_use=False,
 ):
     """
     Create resource in a cib and put it into defined group
@@ -222,6 +317,16 @@ def create_in_group(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            env.nodes.all,
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_inappropriate_use
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,

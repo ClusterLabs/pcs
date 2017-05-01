@@ -77,19 +77,37 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         )
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "cluster remote-node rh7-2 D1")
+        o,r = pcs(temp_cib, "cluster remote-node rh7-2g D1")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2 D1")
-        assert r==0 and o==""
+        o,r = pcs(temp_cib, "cluster remote-node add rh7-2g D1 --force")
+        assert r==0
+        self.assertEqual(
+            o,
+            "Warning: this command is deprecated use 'pcs cluster node"
+                " add-guest'\n"
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400 remote-connect-timeout=50")
-        assert r==0 and o==""
+        o,r = pcs(
+            temp_cib,
+            "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400"
+            " remote-connect-timeout=50 --force"
+        )
+        assert r==0
+        self.assertEqual(
+            o,
+            "Warning: this command is deprecated use 'pcs cluster node"
+                " add-guest'\n"
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
+        )
 
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-2 
+              Meta Attrs: remote-node=rh7-2g 
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
@@ -100,16 +118,37 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         o,r = pcs(temp_cib, "cluster remote-node remove")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
-        assert r==0 and o==""
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g",
+            "Error: this command is deprecated, use 'pcs cluster node"
+            " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "cluster remote-node remove rh7-2g --force",
+            "Warning: this command is deprecated, use 'pcs cluster node"
+            " remove-guest'\n"
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2 NOTARESOURCE")
-        assert r==1
-        ac(o,"Error: unable to find resource 'NOTARESOURCE'\n")
+        self.assert_pcs_fail(
+            "cluster remote-node add rh7-2g NOTARESOURCE",
+            "Error: unable to find resource 'NOTARESOURCE'\n"
+                "Warning: this command is deprecated use"
+                " 'pcs cluster node add-guest'\n"
+            ,
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
-        assert r==1
-        ac(o,"Error: unable to remove: cannot find remote-node 'rh7-2'\n")
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g",
+            "Error: this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g --force",
+            "Error: unable to remove: cannot find remote-node 'rh7-2g'\n"
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " remove-guest'\n"
+        )
+
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -121,8 +160,16 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             """
         ))
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-1")
-        assert r==0 and o==""
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-1",
+            "Error: this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "cluster remote-node remove rh7-1 --force",
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " remove-guest'\n"
+        )
 
         self.assert_pcs_success("resource --full", outdent(
             """\

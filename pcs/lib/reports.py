@@ -2525,3 +2525,42 @@ def ambiguous_host_specification(host_list):
             "host_list": host_list,
         }
     )
+
+def use_command_node_add_remote(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_ADD_REMOTE,
+        severity,
+        info={},
+        forceable=forceable
+    )
+
+def use_command_node_add_guest(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_ADD_GUEST,
+        severity,
+        info={},
+        forceable=forceable
+    )
+
+def use_command_node_remove_guest(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_REMOVE_GUEST,
+        severity,
+        info={},
+        forceable=forceable
+    )

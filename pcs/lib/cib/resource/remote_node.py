@@ -14,6 +14,8 @@ from pcs.lib.node import(
     node_addresses_contain_name,
 )
 
+AGENT_NAME = "ocf:pacemaker:remote"
+
 def find_node_list(resources_section):
     node_list = [
         NodeAddresses(
@@ -187,7 +189,7 @@ def create(
         find_valid_resource_agent_by_name(
             report_processor,
             cmd_runner,
-            "ocf:pacemaker:remote",
+            AGENT_NAME,
         ),
         raw_operation_list,
         meta_attributes,

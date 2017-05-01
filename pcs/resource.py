@@ -33,9 +33,22 @@ import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 from pcs.cli.common.console_report import error
+from pcs.lib.commands.resource import _validate_guest_change
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
+
+def _detect_guest_change(meta_attributes, allow_inappropriate_use):
+    env = utils.get_lib_env()
+    env.report_processor.process_list(
+        _validate_guest_change(
+            env.get_cib(),
+            env.nodes.all,
+            meta_attributes,
+            allow_inappropriate_use,
+            detect_remove=True,
+        )
+    )
 
 def resource_cmd(argv):
     if len(argv) < 1:
@@ -383,6 +396,7 @@ def resource_create(lib, argv, modifiers):
         use_default_operations=not modifiers["no-default-ops"],
         ensure_disabled=modifiers["disabled"],
         wait=modifiers["wait"],
+        allow_inappropriate_use=modifiers["force"],
     )
 
     if "clone" in parts:
@@ -669,7 +683,6 @@ def resource_agents(lib, argv, modifiers):
             " for {0}".format(argv[0]) if argv else ""
         ))
 
-
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
 def resource_update(res_id,args):
@@ -677,6 +690,10 @@ def resource_update(res_id,args):
 
 # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
+    _detect_guest_change(
+        prepare_options(meta_values),
+        "--force" in utils.pcs_options,
+    )
 
     wait = False
     wait_timeout = None
@@ -1041,6 +1058,11 @@ def resource_operation_remove(res_id, argv):
     utils.replace_cib_configuration(dom)
 
 def resource_meta(res_id, argv):
+    _detect_guest_change(
+        prepare_options(argv),
+        "--force" in utils.pcs_options,
+    )
+
     dom = utils.get_cib_dom()
     resource_el = utils.dom_get_any_resource(dom, res_id)
 

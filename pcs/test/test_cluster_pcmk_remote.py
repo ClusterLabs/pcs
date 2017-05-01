@@ -183,6 +183,8 @@ class NodeAddGuest(ResourceTest):
             "resource create already-guest-node ocf:heartbeat:Dummy"
                 " meta remote-node=some --force"
             ,
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_fail(
             "cluster node add-guest some-host already-guest-node",
@@ -244,6 +246,8 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
+            "Warning: this command is not sufficient for create remote"
+                " connection, use 'pcs cluster node add-remote'\n"
         )
         self.assert_pcs_fail(
             "cluster node add-guest node-host G",
@@ -254,6 +258,8 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
+            "Warning: this command is not sufficient for create remote"
+                " connection, use 'pcs cluster node add-remote'\n"
         )
         self.assert_pcs_fail(
             "cluster node add-guest another-host R",
@@ -338,7 +344,7 @@ class NodeRemoveRemote(ResourceTest):
     def fixture_remote_node(self):
         self.assert_effect(
             "resource create NODE-NAME ocf:pacemaker:remote server=NODE-HOST"
-                " --no-default-ops"
+                " --no-default-ops --force"
             ,
             """<resources>
                 <primitive class="ocf" id="NODE-NAME" provider="pacemaker"
@@ -355,7 +361,10 @@ class NodeRemoveRemote(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>""",
+            </resources>"""
+            ,
+            "Warning: this command is not sufficient for create remote"
+                " connection, use 'pcs cluster node add-remote'\n"
         )
 
     def fixture_multiple_remote_nodes(self):
@@ -457,7 +466,7 @@ class NodeRemoveGuest(ResourceTest):
     def fixture_guest_node(self):
         self.assert_effect(
             "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops"
-                " meta remote-node=NODE-NAME remote-addr=NODE-HOST"
+                " meta remote-node=NODE-NAME remote-addr=NODE-HOST --force"
             ,
             """<resources>
                 <primitive class="ocf" id="NODE-ID" provider="heartbeat"
@@ -478,6 +487,8 @@ class NodeRemoveGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
         )
 
     def test_fail_when_node_does_not_exists(self):

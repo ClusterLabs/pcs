@@ -1035,3 +1035,31 @@ class MultipleResultFound(NameBuildTest):
                 "search_description": "NODE-NAME",
             }
         )
+
+class UseCommandNodeAddRemote(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_ADD_REMOTE
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for create remote connection,"
+                " use 'pcs cluster node add-remote'"
+            ,
+            {}
+        )
+
+class UseCommandNodeAddGuest(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_ADD_GUEST
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for create guest node, use "
+            "'pcs cluster node add-guest'",
+            {}
+        )
+
+class UseCommandNodeRemoveGuest(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_REMOVE_GUEST
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for remove guest node, use "
+            "'pcs cluster node remove-guest'",
+            {}
+        )

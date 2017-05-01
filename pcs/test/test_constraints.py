@@ -1917,9 +1917,15 @@ Ticket Constraints:
         # deleting the remote node resource
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain'
+                ' hypervisor="qemu:///system" config="/root/guest1.xml" meta'
+                ' remote-node=guest1 --force'
         )
-        ac(output, "")
+        ac(
+            output,
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
+        )
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -1986,9 +1992,15 @@ Ticket Constraints:
         # removing the remote node
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain'
+                ' hypervisor="qemu:///system" config="/root/guest1.xml"'
+                ' meta remote-node=guest1 --force'
         )
-        ac(output, "")
+        ac(
+            output,
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
+        )
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -2019,9 +2031,13 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "cluster remote-node remove guest1"
+            temp_cib, "cluster remote-node remove guest1 --force"
         )
-        ac(output, "")
+        ac(
+            output,
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " remove-guest'\n"
+        )
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2047,9 +2063,13 @@ Deleting Resource - vm-guest1
         # deleting the remote node resource
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1 --force'
         )
-        ac(output, "")
+        ac(
+            output,
+            "Warning: this command is not sufficient for create guest node, use"
+                " 'pcs cluster node add-guest'\n"
+        )
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(

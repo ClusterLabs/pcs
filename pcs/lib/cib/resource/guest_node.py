@@ -42,6 +42,12 @@ def validate_host_conflicts(tree, nodes, options):
         return [reports.id_already_exists(host)]
     return []
 
+def contains_guest_options(options):
+    return "remote-node" in options
+
+def get_guest_option_value(options, default=None):
+    return options.get("remote-node", default)
+
 
 def validate_parts(tree, nodes, node_name, options):
     report_list = validate.names_in(

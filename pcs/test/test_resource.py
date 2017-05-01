@@ -4898,3 +4898,103 @@ class BundleMiscCommands(BundleCommon):
             "resource debug-demote B",
             "Error: unable to debug-demote a bundle, try the bundle's resource: R\n"
         )
+
+
+class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_update_fail_on_pacemaker_guest_attempt(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy",
+        )
+        self.assert_pcs_fail(
+            "resource update R meta remote-node=HOST",
+            "Error: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest', use --force to override\n"
+        )
+    def test_update_warn_on_pacemaker_guest_attempt(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy",
+        )
+        self.assert_pcs_success(
+            "resource update R meta remote-node=HOST --force",
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+    def test_update_fail_on_pacemaker_guest_attempt_remove(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                " --force"
+            ,
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+        self.assert_pcs_fail(
+            "resource update R meta remote-node=",
+            "Error: this command is not sufficient for remove guest node,"
+            " use 'pcs cluster node remove-guest', use --force to override\n"
+        )
+
+    def test_update_warn_on_pacemaker_guest_attempt_remove(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                " --force"
+            ,
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+        self.assert_pcs_success(
+            "resource update R meta remote-node= --force",
+            "Warning: this command is not sufficient for remove guest node,"
+            " use 'pcs cluster node remove-guest'\n"
+        )
+
+    def test_meta_fail_on_pacemaker_guest_attempt(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy",
+        )
+        self.assert_pcs_fail(
+            "resource meta R remote-node=HOST",
+            "Error: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest', use --force to override\n"
+        )
+
+    def test_meta_warn_on_pacemaker_guest_attempt(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy",
+        )
+        self.assert_pcs_success(
+            "resource meta R remote-node=HOST --force",
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+
+    def test_meta_fail_on_pacemaker_guest_attempt_remove(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                " --force"
+            ,
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+        self.assert_pcs_fail(
+            "resource meta R remote-node=",
+            "Error: this command is not sufficient for remove guest node,"
+            " use 'pcs cluster node remove-guest', use --force to override\n"
+        )
+
+    def test_meta_warn_on_pacemaker_guest_attempt_remove(self):
+        self.assert_pcs_success(
+            "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                " --force"
+            ,
+            "Warning: this command is not sufficient for create guest node,"
+            " use 'pcs cluster node add-guest'\n"
+        )
+        self.assert_pcs_success(
+            "resource meta R remote-node= --force",
+            "Warning: this command is not sufficient for remove guest node,"
+            " use 'pcs cluster node remove-guest'\n"
+        )

@@ -52,6 +52,7 @@ from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
     qdevice_net,
 )
+from pcs.cli.common.console_report import warn, error
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.errors import (
     LibraryError,
@@ -153,7 +154,10 @@ def cluster_cmd(argv):
         else:
             disable_cluster(argv)
     elif (sub_cmd == "remote-node"):
-        cluster_remote_node(argv)
+        try:
+            cluster_remote_node(argv)
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
     elif (sub_cmd == "cib"):
         get_cib(argv)
     elif (sub_cmd == "cib-push"):
@@ -2157,6 +2161,8 @@ def cluster_remote_node(argv):
         if len(argv) < 2:
             usage.cluster(["remote-node"])
             sys.exit(1)
+        #resource_udate is called so there is warning enough
+        warn("this command is deprecated use 'pcs cluster node add-guest'")
         hostname = argv.pop(0)
         rsc = argv.pop(0)
         if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
@@ -2167,6 +2173,16 @@ def cluster_remote_node(argv):
         if len(argv) < 1:
             usage.cluster(["remote-node"])
             sys.exit(1)
+        if "--force" in utils.pcs_options:
+            warn(
+                "this command is deprecated, use"
+                " 'pcs cluster node remove-guest'"
+            )
+        else:
+            raise error(
+                "this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override"
+            )
         hostname = argv.pop(0)
         dom = utils.get_cib_dom()
         nvpairs = dom.getElementsByTagName("nvpair")
