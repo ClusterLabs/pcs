@@ -11,14 +11,14 @@ from pcs.test.tools.misc import outdent
 class NodeAddRemote(ResourceTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
-            "cluster node add-remote rh7-1 remote-node server=DIFFERENT",
-            "Error: An ambiguous host specification: 'rh7-1', 'DIFFERENT'\n"
+            "cluster node add-remote HOST remote-node server=DIFFERENT",
+            "Error: An ambiguous host specification: 'HOST', 'DIFFERENT'\n"
         )
 
     def test_fail_on_duplicit_host_specification_without_name(self):
         self.assert_pcs_fail(
-            "cluster node add-remote rh7-1 server=DIFFERENT",
-            "Error: An ambiguous host specification: 'rh7-1', 'DIFFERENT'\n"
+            "cluster node add-remote HOST server=DIFFERENT",
+            "Error: An ambiguous host specification: 'HOST', 'DIFFERENT'\n"
         )
 
     def test_fail_on_bad_commandline_usage(self):
@@ -91,6 +91,59 @@ class NodeAddRemote(ResourceTest):
             )
         )
 
+    def test_fail_when_server_already_used(self):
+        self.assert_effect(
+            "cluster node add-remote node-host A --no-default-ops",
+            """<resources>
+                <primitive class="ocf" id="A" provider="pacemaker"
+                    type="remote"
+                >
+                    <instance_attributes id="A-instance_attributes">
+                        <nvpair id="A-instance_attributes-server" name="server"
+                            value="node-host"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-60s" interval="60s"
+                            name="monitor" timeout="30"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            output=outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
+        )
+        self.assert_pcs_fail(
+            "cluster node add-remote node-host B",
+            "Error: 'node-host' already exists\n"
+        )
+
+    def test_fail_when_server_already_used_as_guest(self):
+        self.assert_pcs_success(
+            "resource create G ocf:heartbeat:Dummy --no-default-ops",
+        )
+        self.assert_pcs_success(
+            "cluster node add-guest node-host G",
+            outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
+        )
+        self.assert_pcs_fail(
+            "cluster node add-remote node-host B",
+            "Error: 'node-host' already exists\n"
+        )
+
 class NodeAddGuest(ResourceTest):
     def create_resource(self):
         self.assert_effect(
@@ -128,7 +181,8 @@ class NodeAddGuest(ResourceTest):
     def test_fail_when_resource_has_already_remote_node_meta(self):
         self.assert_pcs_success(
             "resource create already-guest-node ocf:heartbeat:Dummy"
-            " meta remote-node=some"
+                " meta remote-node=some --force"
+            ,
         )
         self.assert_pcs_fail(
             "cluster node add-guest some-host already-guest-node",
@@ -157,6 +211,53 @@ class NodeAddGuest(ResourceTest):
             "cluster node add-guest node-host G remote-connect-timeout=A",
             "Error: 'A' is not a valid remote-connect-timeout value, use time"
                 " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+        )
+
+    def test_fail_when_guest_node_conflicts_with_existing_id(self):
+        self.create_resource()
+        self.assert_pcs_success("resource create CONFLICT ocf:heartbeat:Dummy")
+        self.assert_pcs_fail(
+            "cluster node add-guest CONFLICT G",
+            "Error: 'CONFLICT' already exists\n"
+        )
+
+    def test_fail_when_guest_node_conflicts_with_existing_guest(self):
+        self.create_resource()
+        self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
+        self.assert_pcs_success(
+            "cluster node add-guest node-host G",
+            outdent(
+                """\
+                The following actions were skipped because -f was used:
+                  pacemaker authkey distribution
+                  start pacemaker_remote on 'node-host'
+                  enable pacemaker_remote on 'node-host'
+                """
+            )
+        )
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host H",
+            "Error: 'node-host' already exists\n"
+        )
+
+    def test_fail_when_guest_node_conflicts_with_existing_remote(self):
+        self.create_resource()
+        self.assert_pcs_success(
+            "resource create R ocf:pacemaker:remote server=node-host --force",
+        )
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host G",
+            "Error: 'node-host' already exists\n"
+        )
+
+    def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
+        self.create_resource()
+        self.assert_pcs_success(
+            "resource create R ocf:pacemaker:remote server=node-host --force",
+        )
+        self.assert_pcs_fail(
+            "cluster node add-guest another-host R",
+            "Error: 'R' already exists\n"
         )
 
     def test_success(self):

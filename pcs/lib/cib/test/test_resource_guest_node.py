@@ -16,22 +16,135 @@ from pcs.test.tools.assertions import(
 )
 from pcs.test.tools.misc import create_setup_patch_mixin
 from pcs.test.tools.pcs_unittest import TestCase
+from pcs.lib.node import NodeAddresses
 
 
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
 
+class ValidateHostConflicts(TestCase):
+    def validate(self, options):
+        tree = etree.fromstring("""
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="CONFLICT"/>
+                        <primitive id="A">
+                            <meta_attributes>
+                                <nvpair name="remote-node"
+                                    value="GUEST_CONFLICT"
+                                />
+                            </meta_attributes>
+                        </primitive>
+                        <primitive id="B" class="ocf" provider="pacemaker"
+                            type="remote"
+                        >
+                            <instance_attributes>
+                                <nvpair name="server" value="REMOTE_CONFLICT"/>
+                            </instance_attributes>
+                        </primitive>
+                        <primitive id="C">
+                            <meta_attributes>
+                                <nvpair name="remote-node" value="some"/>
+                                <nvpair name="remote-addr"
+                                    value="GUEST_ADDR_CONFLICT"
+                                />
+                            </meta_attributes>
+                        </primitive>
+                    </resources>
+                </configuration>
+            </cib>
+        """)
+        nodes = [
+            NodeAddresses("RING0", "RING1", name="R1"),
+            NodeAddresses("REMOTE_CONFLICT", name="B"),
+            NodeAddresses("GUEST_CONFLICT", name="GUEST_CONFLICT"),
+            NodeAddresses("GUEST_ADDR_CONFLICT", name="some"),
+        ]
+        return guest_node.validate_host_conflicts(tree, nodes, options)
+
+    def assert_already_exists_error(self, conflict_name, options):
+        assert_report_item_list_equal(
+            self.validate(options),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.ID_ALREADY_EXISTS,
+                    {
+                        "id": conflict_name,
+                    },
+                    None
+                ),
+            ]
+        )
+
+
+    def test_report_conflict_with_id(self):
+        self.assert_already_exists_error("CONFLICT", {
+            "remote-node": "CONFLICT",
+        })
+
+    def test_report_conflict_guest_node(self):
+        self.assert_already_exists_error("GUEST_CONFLICT", {
+            "remote-node": "GUEST_CONFLICT",
+        })
+
+    def test_report_conflict_guest_addr(self):
+        self.assert_already_exists_error("GUEST_ADDR_CONFLICT", {
+            "remote-node": "GUEST_ADDR_CONFLICT",
+        })
+
+    def test_report_conflict_guest_addr_by_addr(self):
+        self.assert_already_exists_error("GUEST_ADDR_CONFLICT", {
+            "remote-addr": "GUEST_ADDR_CONFLICT",
+        })
+
+    def test_no_conflict_guest_node_whe_addr_is_different(self):
+        self.assertEqual([], self.validate({
+            "remote-node": "GUEST_ADDR_CONFLICT",
+            "remote-addr": "different",
+        }))
+
+    def test_report_conflict_remote_node(self):
+        self.assert_already_exists_error("REMOTE_CONFLICT", {
+            "remote-node": "REMOTE_CONFLICT",
+        })
+
+    def test_no_conflict_remote_node_whe_addr_is_different(self):
+        self.assertEqual([], self.validate({
+            "remote-node": "REMOTE_CONFLICT",
+            "remote-addr": "different",
+        }))
+
+    def test_report_conflict_remote_node_by_addr(self):
+        self.assert_already_exists_error("REMOTE_CONFLICT", {
+            "remote-node": "different",
+            "remote-addr": "REMOTE_CONFLICT",
+        })
+
 class ValidateOptions(TestCase):
+    def validate(self, options, name="some_name"):
+        return guest_node.validate_parts(
+            etree.fromstring('<cib/>'),
+            [NodeAddresses(
+                "EXISTING-HOST-RING0",
+                "EXISTING-HOST-RING0",
+                name="EXISTING-HOST-NAME"
+            )],
+            name,
+            options
+        )
+
     def test_no_report_on_valid(self):
         self.assertEqual(
             [],
-            guest_node.validate_options({
+            self.validate({
                 "remote-node": "node1"
             })
         )
 
     def test_report_missing_remote_node(self):
         assert_report_item_list_equal(
-            guest_node.validate_options({}),
+            self.validate({}),
             [
                 (
                     severities.ERROR,
@@ -46,7 +159,7 @@ class ValidateOptions(TestCase):
 
     def test_report_invalid_option(self):
         assert_report_item_list_equal(
-            guest_node.validate_options({
+            self.validate({
                 "remote-node": "node1",
                 "invalid": "invalid",
             }),
@@ -66,7 +179,7 @@ class ValidateOptions(TestCase):
 
     def test_report_invalid_interval(self):
         assert_report_item_list_equal(
-            guest_node.validate_options({
+            self.validate({
                 "remote-node": "node1",
                 "remote-connect-timeout": "invalid",
             }),
@@ -82,6 +195,25 @@ class ValidateOptions(TestCase):
                 ),
             ]
         )
+
+    def test_report_invalid_node_name(self):
+        assert_report_item_list_equal(
+            self.validate(
+                {"remote-node": "node1"},
+                "EXISTING-HOST-NAME",
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.ID_ALREADY_EXISTS,
+                    {
+                        "id": "EXISTING-HOST-NAME",
+                    },
+                    None
+                ),
+            ]
+        )
+
 
 class ValidateInNotGuest(TestCase):
     #guest_node.is_guest_node is tested here as well

@@ -6,12 +6,17 @@ from __future__ import (
 )
 
 from pcs.lib import reports, validate
+from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.resource.common import(
     has_meta_attribute,
     arrange_first_meta_attributes,
     get_meta_attribute_value,
 )
 from pcs.lib.node import NodeAddresses
+from pcs.lib.node import (
+    node_addresses_contain_host,
+    node_addresses_contain_name,
+)
 
 
 #TODO pcs currently does not care about multiple meta_attributes and here
@@ -24,7 +29,21 @@ GUEST_OPTIONS = [
     'remote-connect-timeout',
 ]
 
-def validate_options(options):
+def validate_host_conflicts(tree, nodes, options):
+    host = options.get("remote-addr", options.get("remote-node", None))
+    if(
+        does_id_exist(tree, options.get("remote-node", None))
+        or (
+            host
+            and
+            node_addresses_contain_host(nodes, host)
+        )
+    ):
+        return [reports.id_already_exists(host)]
+    return []
+
+
+def validate_parts(tree, nodes, node_name, options):
     report_list = validate.names_in(
         GUEST_OPTIONS,
         options.keys(),
@@ -40,6 +59,11 @@ def validate_options(options):
         options,
         validator_list
     ))
+
+    report_list.extend(validate_host_conflicts(tree, nodes, options))
+
+    if node_addresses_contain_name(nodes, node_name):
+        report_list.append(reports.id_already_exists(node_name))
 
     return report_list
 

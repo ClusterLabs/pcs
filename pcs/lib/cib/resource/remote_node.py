@@ -5,13 +5,17 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import reports
+from pcs.lib import reports, validate
 from pcs.lib.cib.resource import primitive
 from pcs.lib.node import NodeAddresses
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
+from pcs.lib.node import(
+    node_addresses_contain_host,
+    node_addresses_contain_name,
+)
 
 def find_node_list(resources_section):
-    return [
+    node_list = [
         NodeAddresses(
             nvpair.attrib["value"],
             name=nvpair.getparent().getparent().attrib["id"]
@@ -28,6 +32,29 @@ def find_node_list(resources_section):
             /nvpair[@name="server" and string-length(@value) > 0]
         """)
     ]
+
+    node_list.extend([
+        NodeAddresses(primitive.attrib["id"], name=primitive.attrib["id"])
+        for primitive in resources_section.xpath("""
+            .//primitive[
+                @class="ocf"
+                and
+                @provider="pacemaker"
+                and
+                @type="remote"
+                and
+                not(
+                    instance_attributes/nvpair[
+                        @name="server"
+                        and
+                        string-length(@value) > 0
+                    ]
+                )
+            ]
+        """)
+    ])
+
+    return node_list
 
 def find_node_resources(resources_section, node_identifier):
     """
@@ -59,16 +86,27 @@ def get_host(resource_element):
 
     etree.Element resource_element
     """
+    if not (
+        resource_element.attrib["class"] == "ocf"
+        and
+        resource_element.attrib["provider"] == "pacemaker"
+        and
+        resource_element.attrib["type"] == "remote"
+    ):
+        return None
+
+
     host_list = resource_element.xpath("""
-        ./instance_attributes
-        /nvpair[
+        ./instance_attributes/nvpair[
             @name="server"
             and
             string-length(@value) > 0
         ]
         /@value
     """)
-    return host_list[0] if host_list else None
+    if host_list:
+        return host_list[0]
+    return resource_element.attrib["id"]
 
 def validate_host_not_ambiguous(instance_attributes, host):
     if instance_attributes.get("server", host) != host:
@@ -81,6 +119,37 @@ def validate_host_not_ambiguous(instance_attributes, host):
             )
         ]
     return []
+
+def validate_pcmk_remote_host_not_used(option_name, nodes):
+    def validate(option_dict):
+        if(
+            option_name in option_dict
+            and
+            node_addresses_contain_host(nodes, option_dict[option_name])
+        ):
+            return [reports.id_already_exists(option_dict[option_name])]
+        return []
+    return validate
+
+def validate_host_not_conflicts(nodes, node_name, instance_attributes):
+    host = instance_attributes.get("server", node_name)
+    if node_addresses_contain_host(nodes, host):
+        return [reports.id_already_exists(host)]
+    return []
+
+def validate_parts(nodes, node_name, instance_attributes):
+    validator_list = [
+        validate.is_required("server", "remote node"),
+        validate_pcmk_remote_host_not_used("server", nodes)
+    ]
+    report_list = []
+    report_list.extend(validate.run_collection_of_option_validators(
+        instance_attributes,
+        validator_list
+    ))
+    if node_addresses_contain_name(nodes, node_name):
+        report_list.append(reports.id_already_exists(node_name))
+    return report_list
 
 def prepare_instance_atributes(instance_attributes, host):
     enriched_instance_attributes = instance_attributes.copy()

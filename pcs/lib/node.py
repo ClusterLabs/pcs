@@ -9,6 +9,16 @@ from __future__ import (
 class NodeNotFound(Exception):
     pass
 
+def node_addresses_contain_host(node_addresses_list, host):
+    return (
+        host in [node.ring0 for node in node_addresses_list]
+        or
+        host in [node.ring1 for node in node_addresses_list if node.ring1]
+    )
+
+def node_addresses_contain_name(node_addresses_list, name):
+    return name in [node.name for node in node_addresses_list]
+
 
 class NodeAddresses(object):
     def __init__(self, ring0, ring1=None, name=None, id=None):

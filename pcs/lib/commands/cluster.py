@@ -93,8 +93,18 @@ def node_add_remote(
         instance_attributes,
         host,
     )
+    enriched_instance_attributes = remote_node.prepare_instance_atributes(
+        instance_attributes, host
+    )
 
     cib = env.get_cib()
+
+    report_list.extend(remote_node.validate_parts(
+        env.nodes.all,
+        node_name,
+        enriched_instance_attributes
+    ))
+
     try:
         remote_resource_element = remote_node.create(
             env.report_processor,
@@ -103,7 +113,7 @@ def node_add_remote(
             node_name,
             operations,
             meta_attributes,
-            remote_node.prepare_instance_atributes(instance_attributes, host),
+            enriched_instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -130,9 +140,13 @@ def node_add_guest(
 ):
     env.ensure_wait_satisfiable(wait)
 
-    report_list = guest_node.validate_options(options)
-
     cib = env.get_cib()
+    report_list = guest_node.validate_parts(
+        cib,
+        env.nodes.all,
+        resource_id,
+        options
+    )
     try:
         resource_element = find_element_by_tag_and_id(
             primitive.TAG,
