@@ -153,6 +153,21 @@ class SplitByKeywords(TestCase):
             }
         )
 
+    def test_empty_repeatable(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["second"],
+                set(["first", "second"]),
+                group_repeated_keywords=["second"],
+                only_found_keywords=True,
+            ),
+            {
+                "second": [
+                    [],
+                ],
+            }
+        )
+
     def test_allow_keywords_repeating(self):
         self.assertEqual(
             group_by_keywords(
