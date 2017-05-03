@@ -1421,7 +1421,12 @@ def resource_master_create(dom, argv, update=False, master_id=None):
 
     return dom, master_element.getAttribute("id")
 
-def resource_remove(resource_id, output = True, is_remove_remote_context=False):
+def resource_remove(
+    resource_id, output = True, is_remove_remote_context=False,
+    warn_about_live_skip=True
+):
+    if utils.usefile and warn_about_live_skip:
+        warn("The live cluster actions were skipped because -f was used")
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
@@ -1485,7 +1490,7 @@ def resource_remove(resource_id, output = True, is_remove_remote_context=False):
                     msg.append("\n" + output)
                 utils.err("\n".join(msg).strip())
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
-            resource_remove(res.getAttribute("id"))
+            resource_remove(res.getAttribute("id"), warn_about_live_skip=False)
         sys.exit(0)
 
     # now we know resource is not a group, a clone nor a master

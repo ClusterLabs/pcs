@@ -478,11 +478,26 @@ Colocation Constraints:
         assert r == 0
 
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
+        ac(o, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing D5 from set pcs_rsc_set_D5_D6_D7
+            Removing D5 from set pcs_rsc_set_D5_D6-1
+            Deleting Resource - D5
+            """
+        ))
         assert r == 0
 
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
+        ac(o, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing D6 from set pcs_rsc_set_D5_D6_D7
+            Removing D6 from set pcs_rsc_set_D5_D6-1
+            Removing set pcs_rsc_set_D5_D6-1
+            Deleting Resource - D6
+            """
+        ))
         assert r == 0
 
         o, r = pcs(temp_cib, "constraint ref D7")
@@ -733,11 +748,26 @@ Ordering Constraints:
 """)
 
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
+        ac(o, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing D5 from set pcs_rsc_set_D5_D6_D7
+            Removing D5 from set pcs_rsc_set_D5_D6-1
+            Deleting Resource - D5
+            """
+        ))
         assert r == 0
 
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
+        ac(o, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing D6 from set pcs_rsc_set_D5_D6_D7
+            Removing D6 from set pcs_rsc_set_D5_D6-1
+            Removing set pcs_rsc_set_D5_D6-1
+            Deleting Resource - D6
+            """
+        ))
         assert r == 0
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 sequential=foo")
@@ -1968,11 +1998,14 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
-        ac(output, """\
-Removing Constraint - location-D1-guest1-200
-Removing Constraint - location-D2-guest1--400
-Deleting Resource - vm-guest1
-""")
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-D1-guest1-200
+            Removing Constraint - location-D2-guest1--400
+            Deleting Resource - vm-guest1
+            """
+        ))
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2054,9 +2087,12 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
-        ac(output, """\
-Deleting Resource - vm-guest1
-""")
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - vm-guest1
+            """
+        ))
         self.assertEqual(0, returnVal)
 
         # constraints referencing the remote node resource
@@ -2079,10 +2115,13 @@ Deleting Resource - vm-guest1
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
-        ac(output, """\
-Removing Constraint - location-vm-guest1-node1-INFINITY
-Deleting Resource - vm-guest1
-""")
+        ac(output, outdent(
+           """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-vm-guest1-node1-INFINITY
+            Deleting Resource - vm-guest1
+            """
+        ))
         self.assertEqual(0, returnVal)
 
     def testDuplicateOrder(self):
@@ -2993,6 +3032,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         ])
 
     def test_show(self):
+        #pylint: disable=trailing-whitespace
         self.fixture()
         self.assert_pcs_success(
             "constraint location show --full",

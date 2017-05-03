@@ -323,7 +323,9 @@ class RemoveTest(BoothTest):
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
         ])
         self.assert_pcs_success("booth remove", [
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource - booth-booth-ip",
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource (and group) - booth-booth-service",
         ])
         self.assert_pcs_success("resource show", "NO resources configured\n")
@@ -338,7 +340,9 @@ class RemoveTest(BoothTest):
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped (disabled)",
         ])
         self.assert_pcs_success("booth remove", [
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource - booth-booth-ip",
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource (and group) - booth-booth-service",
         ])
         self.assert_pcs_success("resource show", "NO resources configured\n")
@@ -358,8 +362,11 @@ class RemoveTest(BoothTest):
         ])
         self.assert_pcs_success("booth remove --force", [
             "Warning: found more than one booth instance 'booth' in cib",
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource - booth-booth-ip",
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource (and group) - booth-booth-service",
+            "Warning: The live cluster actions were skipped because -f was used",
             "Deleting Resource - some-id",
         ])
 

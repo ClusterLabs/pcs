@@ -234,10 +234,12 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
-        line = "resource delete ClusterIP"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == "Deleting Resource - ClusterIP\n"
+        self.assert_pcs_success("resource delete ClusterIP", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - ClusterIP
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 1
@@ -247,9 +249,12 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 0
         assert output == 'NO resources configured\n'
 
-        output, returnVal = pcs(temp_cib, "resource delete ClusterIP")
-        assert returnVal == 1
-        ac(output, "Error: Resource 'ClusterIP' does not exist.\n")
+        self.assert_pcs_fail("resource delete ClusterIP", outdent(
+            """\
+            Error: Resource 'ClusterIP' does not exist.
+            Warning: The live cluster actions were skipped because -f was used
+            """
+        ))
 
     def testResourceShow(self):
         self.assert_pcs_success(
@@ -876,9 +881,16 @@ monitor interval=20 (A-monitor-interval-20)
      A3\t(ocf::heartbeat:Dummy):\tStopped
 """)
 
-        o,r = pcs(temp_cib, "resource delete AGroup")
-        ac(o,"Removing group: AGroup (and all resources within group)\nStopping all resources in group: AGroup...\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete AGroup", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing group: AGroup (and all resources within group)
+            Stopping all resources in group: AGroup...
+            Deleting Resource - A1
+            Deleting Resource - A2
+            Deleting Resource (and group) - A3
+            """
+        ))
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
@@ -890,13 +902,20 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource delete ClusterIP2")
-        assert returnVal == 0
-        assert output =='Deleting Resource - ClusterIP2\n'
+        self.assert_pcs_success("resource delete ClusterIP2", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - ClusterIP2
+            """
+        ))
 
-        output, returnVal = pcs(temp_cib, "resource delete ClusterIP3")
-        assert returnVal == 0
-        assert output =="Removing Constraint - location-ClusterIP3-rh7-1-INFINITY\nDeleting Resource (and group) - ClusterIP3\n"
+        self.assert_pcs_success("resource delete ClusterIP3", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-ClusterIP3-rh7-1-INFINITY
+            Deleting Resource (and group) - ClusterIP3
+            """
+        ))
 
         o,r = pcs(
             temp_cib,
@@ -1311,11 +1330,14 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummies")
-        ac(output, """\
-Removing group: dummies (and all resources within group)
-Stopping all resources in group: dummies...
-Deleting Resource (and group) - dummylarge
-""")
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing group: dummies (and all resources within group)
+            Stopping all resources in group: dummies...
+            Deleting Resource (and group) - dummylarge
+            """
+        ))
         assert returnVal == 0
 
     def testGroupOrder(self):
@@ -1587,13 +1609,14 @@ Deleting Resource (and group) - dummylarge
             """
         ))
 
-        o,r = pcs("resource delete D1-clone")
-        assert r == 0
-        ac(o, """\
-Removing Constraint - location-D1-clone-rh7-1-INFINITY
-Removing Constraint - location-D1-rh7-1-INFINITY
-Deleting Resource - D1
-""")
+        self.assert_pcs_success("resource delete D1-clone", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-D1-clone-rh7-1-INFINITY
+            Removing Constraint - location-D1-rh7-1-INFINITY
+            Deleting Resource - D1
+            """
+        ))
 
         o,r = pcs("resource --full")
         assert r == 0
@@ -1605,16 +1628,24 @@ Deleting Resource - D1
         ac(o, "")
         assert r == 0
 
-        o, r = pcs("resource delete d99")
-        ac(o, "Deleting Resource - d99\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete d99", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - d99
+            """
+        ))
 
         output, returnVal = pcs(temp_large_cib, "resource clone dummylarge")
         ac(output, '')
         assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
-        ac(output, 'Deleting Resource - dummylarge\n')
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - dummylarge
+            """
+        ))
         assert returnVal == 0
 
     def testCloneGroupLargeResourceRemove(self):
@@ -1629,11 +1660,14 @@ Deleting Resource - D1
         assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummies")
-        ac(output, """\
-Removing group: dummies (and all resources within group)
-Stopping all resources in group: dummies...
-Deleting Resource (and group and clone) - dummylarge
-""")
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing group: dummies (and all resources within group)
+            Stopping all resources in group: dummies...
+            Deleting Resource (and group and clone) - dummylarge
+            """
+        ))
         assert returnVal == 0
 
     def testMasterSlaveRemove(self):
@@ -1646,13 +1680,14 @@ Deleting Resource (and group and clone) - dummylarge
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource delete Master")
-        assert returnVal == 0
-        ac(output, """\
-Removing Constraint - location-Master-rh7-2-INFINITY
-Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
-Deleting Resource - ClusterIP5
-""")
+        self.assert_pcs_success("resource delete Master", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-Master-rh7-2-INFINITY
+            Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
+            Deleting Resource - ClusterIP5
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -1668,10 +1703,14 @@ Deleting Resource - ClusterIP5
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
         assert returnVal == 0
         assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource delete ClusterIP5")
-        assert returnVal == 0
-        assert output == "Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nDeleting Resource - ClusterIP5\n",[output]
+        self.assert_pcs_success("resource delete ClusterIP5", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
+            Removing Constraint - location-ClusterIP5-rh7-2-INFINITY
+            Deleting Resource - ClusterIP5
+            """
+        ))
 
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
@@ -1747,8 +1786,12 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
-        ac(output, 'Deleting Resource - dummylarge\n')
-        assert returnVal == 0
+        ac(output, outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - dummylarge
+            """
+        ))
 
     def testMasterSlaveGroupLargeResourceRemove(self):
         output, returnVal = pcs(
@@ -1764,6 +1807,7 @@ Deleting Resource - ClusterIP5
         output, returnVal = pcs(temp_large_cib, "resource delete dummies")
         ac(output, outdent(
             """\
+            Warning: The live cluster actions were skipped because -f was used
             Removing group: dummies (and all resources within group)
             Stopping all resources in group: dummies...
             Deleting Resource (and group and M/S) - dummylarge
@@ -1883,13 +1927,19 @@ Deleting Resource - ClusterIP5
             """
         ))
 
-        output, returnVal = pcs(temp_cib, "resource delete D0")
-        assert returnVal == 0
-        assert output == "Deleting Resource - D0\n", [output]
+        self.assert_pcs_success("resource delete D0", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - D0
+            """
+        ))
 
-        output, returnVal = pcs(temp_cib, "resource delete D1")
-        assert returnVal == 0
-        assert output == 'Deleting Resource (and group and M/S) - D1\n', [output]
+        self.assert_pcs_success("resource delete D1", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource (and group and M/S) - D1
+            """
+        ))
 
     def testUncloneWithConstraints(self):
         o,r = pcs(
@@ -2416,13 +2466,19 @@ Deleting Resource - ClusterIP5
             """
         ))
 
-        output, returnVal = pcs(temp_cib, "resource delete D0")
-        assert returnVal == 0
-        assert output == "Deleting Resource - D0\n", [output]
+        self.assert_pcs_success("resource delete D0", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - D0
+            """
+        ))
 
-        output, returnVal = pcs(temp_cib, "resource delete D2")
-        assert returnVal == 0
-        assert output == "Deleting Resource - D2\n", [output]
+        self.assert_pcs_success("resource delete D2", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - D2
+            """
+        ))
 
         output, returnVal  = pcs(
             temp_cib,
@@ -2852,13 +2908,20 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
         ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1 (score:INFINITY) (role: Started)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
 
-        o,r = pcs(temp_cib, "resource delete D1")
-        ac(o,"Deleting Resource - D1\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete D1", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - D1
+            """
+        ))
 
-        o,r = pcs(temp_cib, "resource delete D2")
-        ac(o,"Removing Constraint - cli-prefer-DGroup\nDeleting Resource (and group) - D2\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete D2", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - cli-prefer-DGroup
+            Deleting Resource (and group) - D2
+            """
+        ))
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
@@ -2903,9 +2966,12 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             """
         ))
 
-        output, returnVal = pcs(temp_cib, "resource delete dummy")
-        ac(output, "Deleting Resource - dummy\n")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success("resource delete dummy", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - dummy
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -2975,9 +3041,12 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             """
         ))
 
-        output, returnVal = pcs(temp_cib, "resource delete dummy")
-        ac(output, "Deleting Resource - dummy\n")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success("resource delete dummy", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - dummy
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -3094,16 +3163,20 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         o,r = pcs(temp_cib, "constraint location AA-master prefers rh7-1")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource delete A1")
-        ac(o,"Deleting Resource - A1\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete A1", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource - A1
+            """
+        ))
 
-        o,r = pcs(temp_cib, "resource delete A2")
-        ac(o,"""\
-Removing Constraint - location-AA-master-rh7-1-INFINITY
-Deleting Resource (and group and M/S) - A2
-""")
-        assert r == 0
+        self.assert_pcs_success("resource delete A2", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing Constraint - location-AA-master-rh7-1-INFINITY
+            Deleting Resource (and group and M/S) - A2
+            """
+        ))
 
     def testMasteredGroup(self):
         o,r = pcs(
@@ -3939,9 +4012,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource delete dummy0")
-        ac(o,"Deleting Resource (and group and clone) - dummy0\n")
-        assert r == 0
+        self.assert_pcs_success("resource delete dummy0", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Deleting Resource (and group and clone) - dummy0
+            """
+        ))
 
     def testResourceMissingValues(self):
         self.assert_pcs_success(
@@ -4073,9 +4149,16 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         ))
 
-        output, retVal = pcs(temp_cib, "resource delete dummies-clone")
-        ac(output, "Removing group: dummies (and all resources within group)\nStopping all resources in group: dummies...\nDeleting Resource - dummy1\nDeleting Resource - dummy2\nDeleting Resource (and group and clone) - dummy3\n")
-        assert retVal == 0
+        self.assert_pcs_success("resource delete dummies-clone", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing group: dummies (and all resources within group)
+            Stopping all resources in group: dummies...
+            Deleting Resource - dummy1
+            Deleting Resource - dummy2
+            Deleting Resource (and group and clone) - dummy3
+            """
+        ))
         output, retVal = pcs(temp_cib, "resource show")
         ac(output, "NO resources configured\n")
         assert retVal == 0
@@ -4145,9 +4228,16 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         ))
 
-        output, retVal = pcs(temp_cib, "resource delete dummies-master")
-        ac(output, "Removing group: dummies (and all resources within group)\nStopping all resources in group: dummies...\nDeleting Resource - dummy1\nDeleting Resource - dummy2\nDeleting Resource (and group and M/S) - dummy3\n")
-        assert retVal == 0
+        self.assert_pcs_success("resource delete dummies-master", outdent(
+            """\
+            Warning: The live cluster actions were skipped because -f was used
+            Removing group: dummies (and all resources within group)
+            Stopping all resources in group: dummies...
+            Deleting Resource - dummy1
+            Deleting Resource - dummy2
+            Deleting Resource (and group and M/S) - dummy3
+            """
+        ))
         output, retVal = pcs(temp_cib, "resource show")
         ac(output, "NO resources configured\n")
         assert retVal == 0
@@ -4504,6 +4594,7 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success('resource create dummy ocf:heartbeat:Dummy')
         self.assert_pcs_success('acl role create read-dummy read id dummy')
         self.assert_pcs_success('resource delete dummy', [
+            'Warning: The live cluster actions were skipped because -f was used',
             'Deleting Resource - dummy'
         ])
 
@@ -4513,6 +4604,7 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
         self.assert_pcs_success('acl role create read-dummy read id dummy2')
         self.assert_pcs_success('resource delete dummy-group', [
+            'Warning: The live cluster actions were skipped because -f was used',
             'Removing group: dummy-group (and all resources within group)',
             'Stopping all resources in group: dummy-group...',
             'Deleting Resource - dummy1',
@@ -4525,6 +4617,7 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
         self.assert_pcs_success('acl role create acl-role-a read id dummy-group')
         self.assert_pcs_success('resource delete dummy-group', [
+            'Warning: The live cluster actions were skipped because -f was used',
             'Removing group: dummy-group (and all resources within group)',
             'Stopping all resources in group: dummy-group...',
             'Deleting Resource - dummy1',
@@ -4618,6 +4711,7 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource delete A",
             [
+                "Warning: The live cluster actions were skipped because -f was used",
                 "Removing Constraint - ticket-T-A-Master",
                 "Deleting Resource - A",
             ]
