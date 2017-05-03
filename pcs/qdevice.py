@@ -22,7 +22,7 @@ def qdevice_cmd(lib, argv, modifiers):
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
         if sub_cmd == "help":
-            usage.qdevice(argv)
+            usage.qdevice([" ".join(argv_next)])
         elif sub_cmd == "status":
             qdevice_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "setup":

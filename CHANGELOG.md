@@ -12,6 +12,8 @@
   ([rhbz#1303969])
 - `pcs resource unmanage --monitor` now properly disables monitor operations
   even if a clone or master/slave resource is specified. ([rhbz#1303969])
+- `--help` option now shows help just for the specified command. Previously the
+  usage for a whole group of commands was shown.
 
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969

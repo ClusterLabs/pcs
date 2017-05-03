@@ -30,7 +30,7 @@ def node_cmd(lib, argv, modifiers):
 
     try:
         if sub_cmd == "help":
-            usage.node(argv)
+            usage.node([" ".join(argv_next)])
         elif sub_cmd == "maintenance":
             node_maintenance_cmd(lib, argv_next, modifiers, True)
         elif sub_cmd == "unmaintenance":

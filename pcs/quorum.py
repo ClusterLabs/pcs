@@ -25,7 +25,7 @@ def quorum_cmd(lib, argv, modificators):
 
     try:
         if sub_cmd == "help":
-            usage.quorum(argv)
+            usage.quorum([" ".join(argv_next)])
         elif sub_cmd == "config":
             quorum_config_cmd(lib, argv_next, modificators)
         elif sub_cmd == "expected-votes":
@@ -242,4 +242,3 @@ def quorum_unblock_cmd(argv):
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes canceled")
-

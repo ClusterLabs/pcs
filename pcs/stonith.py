@@ -38,7 +38,7 @@ def stonith_cmd(argv):
 
     try:
         if sub_cmd == "help":
-            usage.stonith(argv)
+            usage.stonith([" ".join(argv_next)])
         elif sub_cmd == "list":
             stonith_list_available(lib, argv_next, modifiers)
         elif sub_cmd == "describe":
@@ -660,4 +660,3 @@ def sbd_message(lib, argv, modifiers):
 
     device, node, message = argv
     lib.sbd.set_message(device, node, message)
-
