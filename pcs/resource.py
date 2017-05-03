@@ -32,7 +32,7 @@ from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
-from pcs.cli.common.console_report import error
+from pcs.cli.common.console_report import error, warn
 from pcs.lib.commands.resource import _validate_guest_change
 
 
@@ -1421,7 +1421,7 @@ def resource_master_create(dom, argv, update=False, master_id=None):
 
     return dom, master_element.getAttribute("id")
 
-def resource_remove(resource_id, output = True):
+def resource_remove(resource_id, output = True, is_remove_remote_context=False):
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
@@ -1610,6 +1610,14 @@ def resource_remove(resource_id, output = True):
                 utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
             return False
     if remote_node_name and not utils.usefile:
+        if not is_remove_remote_context:
+            warn(
+                "this command is not sufficient for remove remote/guest node"
+                " you need remove pacemaker authkey and stop/disable"
+                " pacemaker_remote on the machine manually"
+            )
+
+        output, retval = utils.run(["crm_resource", "--wait"])
         output, retval = utils.run([
             "crm_node", "--force", "--remove", remote_node_name
         ])

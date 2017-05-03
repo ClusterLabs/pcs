@@ -258,7 +258,10 @@ def node_remove_remote(
     hosts = _remove_pcmk_remote(
         resource_element_list,
         remote_node.get_host,
-        lambda resource_element: remove_resource(resource_element.attrib["id"])
+        lambda resource_element: remove_resource(
+            resource_element.attrib["id"],
+            is_remove_remote_context=True,
+        )
     )
     _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
 
