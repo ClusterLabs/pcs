@@ -1063,3 +1063,14 @@ class UseCommandNodeRemoveGuest(NameBuildTest):
             "'pcs cluster node remove-guest'",
             {}
         )
+
+class NodeRemoveInPacemakerFailed(NameBuildTest):
+    code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "unable to remove node 'NODE' from pacemaker: reason",
+            {
+                "node_name": "NODE",
+                "reason": "reason"
+            }
+        )

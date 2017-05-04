@@ -1400,6 +1400,19 @@ def node_not_found(
         forceable=forceable
     )
 
+def node_remove_in_pacemaker_failed(node_name, reason):
+    """
+    calling of crm_node --remove failed
+    string reason is caught reason
+    """
+    return ReportItem.error(
+        report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
+        info={
+            "node_name": node_name,
+            "reason": reason,
+        }
+    )
+
 def multiple_result_found(
     result_type, result_identifier_list, search_description="",
     severity=ReportItemSeverity.ERROR, forceable=None

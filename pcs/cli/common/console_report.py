@@ -772,6 +772,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.NODE_REMOVE_IN_PACEMAKER_FAILED: lambda info:
+        "unable to remove node '{node_name}' from pacemaker{reason_part}"
+        .format(
+            reason_part=format_optional(info["reason"], ": {0}"),
+            **info
+
+        )
+    ,
+
     codes.MULTIPLE_RESULT_FOUND: lambda info:
         "multiple {result_type} {search_description} found: {what_found}"
         .format(
