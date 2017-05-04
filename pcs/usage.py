@@ -430,19 +430,19 @@ Commands:
 
     bundle create <bundle id> [container [<container type>] <container options>]
             [network <network options>] [port-map <port options>]...
-            [storage-map <storage options>]... [--wait[=n]
+            [storage-map <storage options>]... [--wait[=n]]
         Create a new bundle encapsulating no resources. The bundle can be used
         either as it is or a resource may be put into it at any time.
         If the container type is not specified, it defaults to 'docker'.
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        container to start and then return 0 on success or 1 on error.
-        If 'n' is not specified it defaults to 60 minutes.
+        If --wait is specified, pcs will wait up to 'n' seconds for the bundle
+        to start and then return 0 on success or 1 on error. If 'n' is not
+        specified it defaults to 60 minutes.
 
     bundle update <bundle id> [container <container options>]
             [network <network options>]
             [port-map (add <port options>) | (remove <id>...)]...
             [storage-map (add <storage options>) | (remove <id>...)]...
-            [--wait[=n]
+            [--wait[=n]]
         Add, remove or change options to specified bundle. If you wish to update
         a resource encapsulated in the bundle, use the 'pcs resource update'
         command instead and specify the resource id.  If --wait is specified,

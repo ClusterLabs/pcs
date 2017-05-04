@@ -712,7 +712,7 @@ class StorageMap(CommonTest):
 class Wait(CommonTest):
     fixture_status_running = """
         <resources>
-        <bundle id="B1" managed="true" image="new:image">
+            <bundle id="B1" managed="true" image="new:image">
                 <replica id="0">
                     <resource id="B1-docker-0" managed="true" role="Started">
                         <node name="node1" id="1" cached="false"/>
