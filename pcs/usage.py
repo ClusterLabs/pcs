@@ -761,6 +761,10 @@ Commands:
         The node-identifier could be the name of the node or the address of the
         node or id of resource that is used as guest node.
 
+    node clear <nodename>
+        Remove the (stopped) node with the specified nodename from Pacemaker's
+        configuration and caches.
+
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
         specified hostname (hostname should be the same as 'uname -n').

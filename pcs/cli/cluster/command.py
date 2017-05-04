@@ -106,3 +106,9 @@ def node_remove_guest(lib, arg_list, modifiers):
         allow_pacemaker_remote_service_fail=modifiers["force"],
         wait=modifiers["wait"],
     )
+
+def node_clear(lib, arg_list, modifiers):
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+
+    lib.cluster.node_clear(arg_list[0])

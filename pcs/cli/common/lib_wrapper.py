@@ -197,6 +197,7 @@ def load_module(env, middleware_factory, name):
                 "node_add_guest": cluster.node_add_guest,
                 "node_remove_remote": cluster.node_remove_remote,
                 "node_remove_guest": cluster.node_remove_guest,
+                "node_clear": cluster.node_clear,
             }
         )
 

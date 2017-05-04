@@ -12,6 +12,8 @@
   ([rhbz#1176018])
 - Command `pcs cluster node remove-guest` to remove a guest node from a cluster
   ([rhbz#1176018])
+- Command `pcs cluster node clear` to remove a node from Pacemaker's
+  configuration and caches
 
 ### Fixed
 - Fixed a bug which under specific conditions caused pcsd to crash on start

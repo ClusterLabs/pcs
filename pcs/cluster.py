@@ -178,6 +178,7 @@ def cluster_cmd(argv):
                 resource.resource_remove
             ),
             "remove-guest": cluster_command.node_remove_guest,
+            "clear": cluster_command.node_clear,
         }
         if argv[0] in remote_node_command_map:
             try:

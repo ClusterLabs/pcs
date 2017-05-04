@@ -310,3 +310,6 @@ def node_remove_guest(
         node_addresses_list,
         allow_pacemaker_remote_service_fail
     )
+
+def node_clear(env, node_name):
+    remove_node(env.cmd_runner(), node_name)
