@@ -40,6 +40,9 @@ _network_options = set((
     "ip-range-start",
 ))
 
+def is_bundle(resource_el):
+    return resource_el.tag == TAG
+
 def validate_new(
     id_provider, bundle_id, container_type, container_options, network_options,
     port_map, storage_map, force_options=False
@@ -270,6 +273,12 @@ def add_resource(bundle_element, primitive_element):
             bundle_element.get("id"), inner_primitive.get("id")
         ))
     bundle_element.append(primitive_element)
+
+def get_inner_resource(bundle_el):
+    resources = bundle_el.xpath("./primitive")
+    if resources:
+        return resources[0]
+    return None
 
 def _validate_container_type(container_type):
     return validate.value_in("type", ("docker", ), "container type")({

@@ -298,8 +298,9 @@ def create_into_bundle(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            ensure_disabled,
         )
+        if ensure_disabled:
+            resource.common.disable(primitive_element)
         resource.bundle.add_resource(
             find_element_by_tag_and_id(
                 "bundle", resources_section, bundle_id
