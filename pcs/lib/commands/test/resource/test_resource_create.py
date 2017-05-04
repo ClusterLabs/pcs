@@ -26,6 +26,7 @@ from pcs.test.tools.integration_lib import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
+    skip_unless_pacemaker_supports_bundle,
 )
 from pcs.test.tools.xml import etree_to_str
 
@@ -965,18 +966,18 @@ class CreateAsClone(CommonResourceTest):
 
 
 class CreateInToBundle(ResourceWithoutStateTest):
-    def setUp(self):
-        super(CreateInToBundle, self).setUp()
-        self.upgraded_cib = "cib-empty-2.8.xml"
-        self.fixture_empty_resources = "<resources />"
+    upgraded_cib = "cib-empty-2.8.xml"
 
-    def fixture_resources_pre(self):
-        return """<resources>
+    fixture_empty_resources = "<resources />"
+
+    fixture_resources_pre = """
+        <resources>
             <bundle id="B"/>
-        </resources>"""
+        </resources>
+    """
 
-    def fixture_resources_post_simple(self):
-        return """<resources>
+    fixture_resources_post_simple = """
+        <resources>
             <bundle id="B">
                 <primitive
                     class="ocf" id="A" provider="heartbeat" type="Dummy"
@@ -994,7 +995,81 @@ class CreateInToBundle(ResourceWithoutStateTest):
                     </operations>
                 </primitive>
             </bundle>
-        </resources>"""
+        </resources>
+    """
+
+    fixture_resources_post_disabled = """
+        <resources>
+            <bundle id="B">
+                <primitive
+                    class="ocf" id="A" provider="heartbeat" type="Dummy"
+                >
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                        <op id="A-start-interval-0s" interval="0s"
+                            name="start" timeout="20"
+                        />
+                        <op id="A-stop-interval-0s" interval="0s"
+                            name="stop" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </bundle>
+        </resources>
+    """
+
+    fixture_status_stopped = """
+        <resources>
+            <bundle id="B" managed="true">
+                <replica id="0">
+                    <resource id="B-0" managed="true" role="Stopped" />
+                </replica>
+            </bundle>
+        </resources>
+    """
+
+    fixture_status_running_with_primitive = """
+        <resources>
+            <bundle id="B" managed="true">
+                <replica id="0">
+                    <resource id="B-0" managed="true" role="Started">
+                        <node name="node1" id="1" cached="false"/>
+                    </resource>
+                    <resource id="A" managed="true" role="Started">
+                        <node name="node1" id="1" cached="false"/>
+                    </resource>
+                </replica>
+            </bundle>
+        </resources>
+    """
+
+    fixture_status_primitive_not_running = """
+        <resources>
+            <bundle id="B" managed="true">
+                <replica id="0">
+                    <resource id="B-0" managed="true" role="Started">
+                        <node name="node1" id="1" cached="false"/>
+                    </resource>
+                    <resource id="A" managed="true" role="Stopped"/>
+                </replica>
+            </bundle>
+        </resources>
+    """
+
+    fixture_wait_timeout_error = outdent(
+        """\
+        Pending actions:
+                Action 12: B-node2-stop on node2
+        Error performing operation: Timer expired
+        """
+    )
 
     def simplest_create(self, wait=False, disabled=False, meta_attributes=None):
         return resource.create_into_bundle(
@@ -1015,8 +1090,8 @@ class CreateInToBundle(ResourceWithoutStateTest):
             fixture.calls_cib_load_and_upgrade(self.fixture_empty_resources)
             +
             fixture.calls_cib(
-                self.fixture_resources_pre(),
-                self.fixture_resources_post_simple(),
+                self.fixture_resources_pre,
+                self.fixture_resources_post_simple,
                 self.upgraded_cib,
             )
         )
@@ -1028,8 +1103,8 @@ class CreateInToBundle(ResourceWithoutStateTest):
             fixture_agent_load_calls()
             +
             fixture.calls_cib(
-                self.fixture_resources_pre(),
-                self.fixture_resources_post_simple(),
+                self.fixture_resources_pre,
+                self.fixture_resources_post_simple,
                 self.upgraded_cib,
             )
         )
@@ -1106,4 +1181,109 @@ class CreateInToBundle(ResourceWithoutStateTest):
                 }
             )
         )
+
+    def test_wait_fail(self):
+        self.runner.set_runs(
+            fixture.call_dummy_metadata() +
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_resources_pre,
+                self.fixture_resources_post_simple,
+                cib_base_file=self.upgraded_cib,
+            ) +
+            fixture.call_wait(10, 62, self.fixture_wait_timeout_error)
+        )
+        assert_raise_library_error(
+            lambda: self.simplest_create(10),
+            fixture.report_wait_for_idle_timed_out(
+                self.fixture_wait_timeout_error
+            ),
+        )
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_wait_ok_run_ok(self):
+        self.runner.set_runs(
+            fixture.call_dummy_metadata() +
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_resources_pre,
+                self.fixture_resources_post_simple,
+                cib_base_file=self.upgraded_cib,
+            ) +
+            fixture.call_wait(10) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_running_with_primitive
+            ))
+        )
+        self.simplest_create(10)
+        self.env.report_processor.assert_reports([
+            fixture.report_resource_running("A", {"Started": ["node1"]}),
+        ])
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_wait_ok_run_fail(self):
+        self.runner.set_runs(
+            fixture.call_dummy_metadata() +
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_resources_pre,
+                self.fixture_resources_post_simple,
+                cib_base_file=self.upgraded_cib,
+            ) +
+            fixture.call_wait(10) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_primitive_not_running
+            ))
+        )
+        assert_raise_library_error(
+            lambda: self.simplest_create(10),
+            fixture.report_resource_not_running("A", severities.ERROR),
+        )
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_disabled_wait_ok_not_running(self):
+        self.runner.set_runs(
+            fixture.call_dummy_metadata() +
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_resources_pre,
+                self.fixture_resources_post_disabled,
+                cib_base_file=self.upgraded_cib,
+            ) +
+            fixture.call_wait(10) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_primitive_not_running
+            ))
+        )
+        self.simplest_create(10, disabled=True)
+        self.env.report_processor.assert_reports([
+            fixture.report_resource_not_running("A")
+        ])
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_disabled_wait_ok_running(self):
+        self.runner.set_runs(
+            fixture.call_dummy_metadata() +
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_resources_pre,
+                self.fixture_resources_post_disabled,
+                cib_base_file=self.upgraded_cib,
+            ) +
+            fixture.call_wait(10) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_running_with_primitive
+            ))
+        )
+        assert_raise_library_error(
+            lambda: self.simplest_create(10, disabled=True),
+            fixture.report_resource_running(
+                "A", {"Started": ["node1"]}, severities.ERROR
+            ),
+        )
+        self.runner.assert_everything_launched()
 

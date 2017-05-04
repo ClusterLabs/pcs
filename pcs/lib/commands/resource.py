@@ -286,9 +286,9 @@ def create_into_bundle(
     )
     with resource_environment(
         env,
-        False, # wait, # TODO add support for wait
-        [bundle_id],
-        disabled_after_wait=False,
+        wait,
+        [resource_id],
+        disabled_after_wait=ensure_disabled,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
         primitive_element = resource.primitive.create(
@@ -333,8 +333,9 @@ def bundle_create(
 
     with resource_environment(
         env,
-        False, # wait, # TODO add support for wait
+        wait,
         [bundle_id],
+        # bundles are always enabled, currently there is no way to disable them
         disabled_after_wait=False,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
@@ -392,8 +393,9 @@ def bundle_update(
 
     with resource_environment(
         env,
-        False, # wait, # TODO add support for wait
+        wait,
         [bundle_id],
+        # bundles are always enabled, currently there is no way to disable them
         disabled_after_wait=False,
         required_cib_version=(2, 8, 0)
     ) as resources_section:

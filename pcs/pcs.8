@@ -162,11 +162,11 @@ Remove the clone which contains the specified group or resource (the resource or
 master [<master/slave id>] <resource id | group id> [options] [\fB\-\-wait\fR[=n]]
 Configure a resource or group as a multi\-state (master/slave) resource.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and promoting resource instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.  Note: to remove a master you must remove the resource/group it contains.
 .TP
-bundle create <bundle id> [container [<container type>] <container options>] [network <network options>] [port\-map <port options>]... [storage\-map <storage options>]...
-Create a new bundle encapsulating no resources. The bundle can be used either as it is or a resource may be put into it at any time. If the container type is not specified, it defaults to 'docker'.
+bundle create <bundle id> [container [<container type>] <container options>] [network <network options>] [port\-map <port options>]... [storage\-map <storage options>]... [\fB\-\-wait\fR[=n]]
+Create a new bundle encapsulating no resources. The bundle can be used either as it is or a resource may be put into it at any time. If the container type is not specified, it defaults to 'docker'.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the container to start and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (remove <id>...)]... [storage\-map (add <storage options>) | (remove <id>...)]...
-Add, remove or change options to specified bundle. If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.
+bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (remove <id>...)]... [storage\-map (add <storage options>) | (remove <id>...)]... [\fB\-\-wait\fR[=n]]
+Add, remove or change options to specified bundle. If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 manage <resource id>... [\fB\-\-monitor\fR]
 Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specified, enable all monitor operations of the resources.

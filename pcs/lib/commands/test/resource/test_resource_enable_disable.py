@@ -942,14 +942,9 @@ class Wait(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["A"], 10),
-            (
-                severities.ERROR,
-                report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-                {
-                    "reason": self.fixture_wait_timeout_error.strip(),
-                },
-                None
-            )
+            fixture.report_wait_for_idle_timed_out(
+                self.fixture_wait_timeout_error
+            ),
         )
         self.runner.assert_everything_launched()
 
@@ -970,14 +965,9 @@ class Wait(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["A"], 10),
-            (
-                severities.ERROR,
-                report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-                {
-                    "reason": self.fixture_wait_timeout_error.strip(),
-                },
-                None
-            )
+            fixture.report_wait_for_idle_timed_out(
+                self.fixture_wait_timeout_error
+            ),
         )
         self.runner.assert_everything_launched()
 

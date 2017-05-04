@@ -51,6 +51,14 @@ def call_wait(timeout, retval=0, stderr=""):
         ),
     ]
 
+def call_dummy_metadata():
+    return [
+        Call(
+            "crm_resource --show-metadata ocf:heartbeat:Dummy",
+            open(rc("resource_agent_ocf_heartbeat_dummy.xml")).read()
+        ),
+    ]
+
 def calls_cib(cib_pre, cib_post, cib_base_file=None):
     return (
         call_cib_load(cib_resources(cib_pre, cib_base_file=cib_base_file))
@@ -108,6 +116,16 @@ def state_complete(resource_status_xml):
             {
                 "failed": "false",
                 "failure_ignored": "false",
+            }
+        )
+    for bundle in resource_status.xpath(".//bundle"):
+        _default_element_attributes(
+            bundle,
+            {
+                "type": "docker",
+                "image": "image:name",
+                "unique": "false",
+                "failed": "false",
             }
         )
     status.append(resource_status)
@@ -170,4 +188,14 @@ def report_not_for_bundles(element_id):
         element_id,
         "bundle",
         ["clone", "master", "group", "primitive"]
+    )
+
+def report_wait_for_idle_timed_out(reason):
+    return (
+        severities.ERROR,
+        report_codes.WAIT_FOR_IDLE_TIMED_OUT,
+        {
+            "reason": reason.strip(),
+        },
+        None
     )

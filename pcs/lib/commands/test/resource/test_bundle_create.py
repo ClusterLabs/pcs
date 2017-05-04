@@ -5,16 +5,26 @@ from __future__ import (
     unicode_literals,
 )
 
+from textwrap import dedent
+
 from pcs.common import report_codes
 from pcs.lib.commands import resource
 from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
 import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
 
 
 class CommonTest(ResourceWithoutStateTest):
     fixture_cib_pre = "<resources />"
+    fixture_resources_bundle_simple = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" />
+            </bundle>
+        </resources>
+    """
 
     def setUp(self):
         super(CommonTest, self).setUp()
@@ -25,14 +35,6 @@ class CommonTest(ResourceWithoutStateTest):
 
 
 class MinimalCreate(CommonTest):
-    fixture_cib_post = """
-        <resources>
-            <bundle id="B1">
-                <docker image="pcs:test" />
-            </bundle>
-        </resources>
-    """
-
     def test_success(self):
         self.assert_command_effect(
             self.fixture_cib_pre,
@@ -40,7 +42,7 @@ class MinimalCreate(CommonTest):
                 self.env, "B1", "docker",
                 {"image": "pcs:test", }
             ),
-            self.fixture_cib_post
+            self.fixture_resources_bundle_simple
         )
 
     def test_errors(self):
@@ -81,7 +83,7 @@ class MinimalCreate(CommonTest):
             +
             fixture.calls_cib(
                 self.fixture_cib_pre,
-                self.fixture_cib_post,
+                self.fixture_resources_bundle_simple,
                 cib_base_file=self.cib_base_file
             )
         )
@@ -102,7 +104,6 @@ class MinimalCreate(CommonTest):
         ])
         self.runner.assert_everything_launched()
 
-    # TODO test wait
 
 
 class CreateDocker(CommonTest):
@@ -123,13 +124,7 @@ class CreateDocker(CommonTest):
                 self.env, "B1", "docker",
                 {"image": "pcs:test", }
             ),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" />
-                    </bundle>
-                </resources>
-            """
+            self.fixture_resources_bundle_simple
         )
 
     def test_all_options(self):
@@ -325,13 +320,7 @@ class CreateWithNetwork(CommonTest):
                 {"image": "pcs:test", },
                 network_options={}
             ),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" />
-                    </bundle>
-                </resources>
-            """
+            self.fixture_resources_bundle_simple
         )
 
     def test_all_options(self):
@@ -474,13 +463,7 @@ class CreateWithPortMap(CommonTest):
                 {"image": "pcs:test", },
                 port_map=[]
             ),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" />
-                    </bundle>
-                </resources>
-            """
+            self.fixture_resources_bundle_simple
         )
 
     def test_several_mappings_and_handle_their_ids(self):
@@ -1066,3 +1049,104 @@ class CreateWithAllOptions(CommonTest):
                 </resources>
             """
         )
+
+
+class Wait(CommonTest):
+    fixture_status_running = """
+        <resources>
+            <bundle id="B1" managed="true">
+                <replica id="0">
+                    <resource id="B1-docker-0" managed="true" role="Started">
+                        <node name="node1" id="1" cached="false"/>
+                    </resource>
+                </replica>
+                <replica id="1">
+                    <resource id="B1-docker-1" managed="true" role="Started">
+                        <node name="node2" id="2" cached="false"/>
+                    </resource>
+                </replica>
+            </bundle>
+        </resources>
+    """
+
+    fixture_status_not_running = """
+        <resources>
+            <bundle id="B1" managed="true">
+                <replica id="0">
+                    <resource id="B1-docker-0" managed="true" role="Stopped" />
+                </replica>
+                <replica id="1">
+                    <resource id="B1-docker-1" managed="true" role="Stopped" />
+                </replica>
+            </bundle>
+        </resources>
+    """
+
+    timeout = 10
+
+    def fixture_calls_initial(self):
+        return (
+            fixture.call_wait_supported() +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple,
+                cib_base_file=self.cib_base_file,
+            )
+        )
+
+    def simple_bundle_create(self, wait=False):
+        return resource.bundle_create(
+            self.env, "B1", "docker", {"image": "pcs:test"}, wait=wait,
+        )
+
+    def test_wait_fail(self):
+        fixture_wait_timeout_error = dedent(
+            """\
+            Pending actions:
+                    Action 12: B1-node2-stop on node2
+            Error performing operation: Timer expired
+            """
+        )
+        self.runner.set_runs(
+            self.fixture_calls_initial() +
+            fixture.call_wait(self.timeout, 62, fixture_wait_timeout_error)
+        )
+        assert_raise_library_error(
+            lambda: self.simple_bundle_create(self.timeout),
+            fixture.report_wait_for_idle_timed_out(
+                fixture_wait_timeout_error
+            ),
+        )
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_wait_ok_run_ok(self):
+        self.runner.set_runs(
+            self.fixture_calls_initial() +
+            fixture.call_wait(self.timeout) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_running
+            ))
+        )
+        self.simple_bundle_create(self.timeout)
+        self.env.report_processor.assert_reports([
+            fixture.report_resource_running(
+                "B1", {"Started": ["node1", "node2"]}
+            ),
+        ])
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_wait_ok_run_fail(self):
+        self.runner.set_runs(
+            self.fixture_calls_initial() +
+            fixture.call_wait(self.timeout) +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_not_running
+            ))
+        )
+        assert_raise_library_error(
+            lambda: self.simple_bundle_create(self.timeout),
+            fixture.report_resource_not_running("B1", severities.ERROR),
+        )
+        self.runner.assert_everything_launched()
