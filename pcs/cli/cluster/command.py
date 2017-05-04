@@ -16,7 +16,10 @@ from pcs.common import report_codes
 
 def _node_add_remote_separate_host_and_name(arg_list):
     node_host = arg_list[0]
-    if "=" in arg_list[1] or arg_list[1] in ["op", "meta"]:
+    if len(arg_list) == 1:
+        node_name = node_host
+        rest_args = []
+    elif "=" in arg_list[1] or arg_list[1] in ["op", "meta"]:
         node_name = node_host
         rest_args = arg_list[1:]
     else:
