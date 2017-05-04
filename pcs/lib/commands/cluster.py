@@ -13,6 +13,7 @@ from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
+from pcs.lib.pacemaker.live import remove_node
 
 def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
     report_items = []
@@ -196,17 +197,23 @@ def _find_resources_to_remove(
 
     return resource_element_list
 
-def _remove_pcmk_remote(resource_element_list, get_host, remove_resource):
-    hosts = set()
+def _remove_pcmk_remote(
+    nodes, resource_element_list, get_host, remove_resource
+):
+    node_addresses_set = set()
     for resource_element in resource_element_list:
-        hosts.add(get_host(resource_element))
+        for node in nodes:
+            if get_host(resource_element) == node.ring0:
+                node_addresses_set.add(node)
         remove_resource(resource_element)
-    return sorted(hosts)
 
-def _destroy_pcmk_remote_env(env, node_host_list, allow_fails):
+    return sorted(node_addresses_set, key=lambda node: node.ring0)
+
+def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
     if not env.is_cib_live:
         formated_node_host_list = ", ".join([
-            "'{0}'".format(node_host) for node_host in node_host_list
+            "'{0}'".format(node_addresses.ring0)
+            for node_addresses in node_addresses_list
         ])
         env.report_processor.process(
             reports.actions_skipped_when_no_live_environment([
@@ -237,7 +244,7 @@ def _destroy_pcmk_remote_env(env, node_host_list, allow_fails):
         env.report_processor,
         actions,
         is_success,
-        [NodeAddresses(node_host) for node_host in node_host_list],
+        node_addresses_list,
         allow_fails,
     )
 
@@ -255,7 +262,8 @@ def node_remove_remote(
         allow_remove_multiple_nodes,
         remote_node.find_node_resources,
     )
-    hosts = _remove_pcmk_remote(
+    node_addresses_list = _remove_pcmk_remote(
+        env.nodes.remote,
         resource_element_list,
         remote_node.get_host,
         lambda resource_element: remove_resource(
@@ -263,7 +271,11 @@ def node_remove_remote(
             is_remove_remote_context=True,
         )
     )
-    _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
+    _destroy_pcmk_remote_env(
+        env,
+        node_addresses_list,
+        allow_pacemaker_remote_service_fail
+    )
 
 def node_remove_guest(
     env, node_identifier,
@@ -283,10 +295,18 @@ def node_remove_guest(
         guest_node.find_node_resources,
     )
 
-    hosts =  _remove_pcmk_remote(
+    node_addresses_list =  _remove_pcmk_remote(
+        env.nodes.guest,
         resource_element_list,
         guest_node.get_host,
         guest_node.unset_guest,
     )
-    _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
     env.push_cib(cib, wait)
+    for node_addresses in node_addresses_list:
+        remove_node(env.cmd_runner(), node_addresses.name)
+
+    _destroy_pcmk_remote_env(
+        env,
+        node_addresses_list,
+        allow_pacemaker_remote_service_fail
+    )
