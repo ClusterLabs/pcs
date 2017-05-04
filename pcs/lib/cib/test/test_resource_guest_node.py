@@ -252,7 +252,7 @@ class SetAsGuest(TestCase):
             "remote-connect-timeout": "10",
         })
         assert_xml_equal(
-            etree.tostring(resource_element),
+            etree.tostring(resource_element).decode(),
             """
                 <primitive id="A">
                     <meta_attributes id="A-meta_attributes">
@@ -282,7 +282,7 @@ class UnsetGuest(TestCase):
         """)
         guest_node.unset_guest(resource_element)
         assert_xml_equal(
-            etree.tostring(resource_element),
+            etree.tostring(resource_element).decode(),
             """
                 <primitive id="A">
                     <meta_attributes id="B">
@@ -305,7 +305,7 @@ class UnsetGuest(TestCase):
         """)
         guest_node.unset_guest(resource_element)
         assert_xml_equal(
-            etree.tostring(resource_element),
+            etree.tostring(resource_element).decode(),
             '<primitive id="A"/>'
         )
 
