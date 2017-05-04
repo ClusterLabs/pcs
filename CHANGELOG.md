@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Support for bundle resources (CLI only) ([rhbz#1433016])
+
 ### Fixed
 - Fixed a bug which under specific conditions caused pcsd to crash on start
   when running under systemd ([ghissue#134])
@@ -17,6 +20,7 @@
 
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
+[rhbz#1433016]: https://bugzilla.redhat.com/show_bug.cgi?id=1433016
 
 
 ## [0.9.157] - 2017-04-10
