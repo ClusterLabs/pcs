@@ -101,4 +101,5 @@ def node_remove_guest(lib, arg_list, modifiers):
         arg_list[0],
         allow_remove_multiple_nodes=modifiers["force"],
         allow_pacemaker_remote_service_fail=modifiers["force"],
+        wait=modifiers["wait"],
     )

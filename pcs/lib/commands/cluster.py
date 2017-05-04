@@ -268,8 +268,10 @@ def node_remove_remote(
 def node_remove_guest(
     env, node_identifier,
     allow_remove_multiple_nodes=False,
-    allow_pacemaker_remote_service_fail=False
+    allow_pacemaker_remote_service_fail=False,
+    wait=False,
 ):
+    env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
     resource_element_list = _find_resources_to_remove(
@@ -287,4 +289,4 @@ def node_remove_guest(
         guest_node.unset_guest,
     )
     _destroy_pcmk_remote_env(env, hosts, allow_pacemaker_remote_service_fail)
-    env.push_cib(cib)
+    env.push_cib(cib, wait)
