@@ -117,3 +117,15 @@ class ResourceForConstraintIsMultiinstanceTest(TestCase):
                 "parent_id": "RESOURCE_CLONE"
             })
         )
+
+    def test_build_message_for_bundle(self):
+        self.assertEqual(
+            "RESOURCE_PRIMITIVE is a bundle resource, you should use the"
+                " bundle id: RESOURCE_CLONE when adding constraints"
+            ,
+            self.build({
+                "resource_id": "RESOURCE_PRIMITIVE",
+                "parent_type": "bundle",
+                "parent_id": "RESOURCE_CLONE"
+            })
+        )

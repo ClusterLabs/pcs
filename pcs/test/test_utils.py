@@ -83,6 +83,11 @@ class UtilsTest(unittest.TestCase):
                           </primitive>
                       </group>
                   </master>
+                  <bundle id="myBundle">
+                      <primitive id="myBundledResource"
+                          class="ocf" provider="heartbeat" type="Dummy" />
+                  </bundle>
+                  <bundle id="myEmptyBundle"/>
             </resources>
         """).documentElement
         resources = cib_dom.getElementsByTagName("resources")[0]
@@ -119,6 +124,11 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myMasteredResource")
         )
+        self.assertIsNone(utils.dom_get_bundle(cib_dom, "myResource"))
+        self.assertIsNone(utils.dom_get_bundle(cib_dom, "notExisting"))
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myBundledResource")
+        )
 
         cib_dom = self.get_cib_resources()
         all_ids = set([
@@ -129,13 +139,15 @@ class UtilsTest(unittest.TestCase):
             "myGroup", "myGroupedResource",
             "myGroupClone", "myClonedGroup", "myClonedGroupedResource",
             "myGroupMaster", "myMasteredGroup", "myMasteredGroupedResource",
+            "myBundledResource", "myBundle", "myEmptyBundle",
         ])
 
         resource_ids = set([
             "myResource",
             "myClonedResource", "myUniqueClonedResource",
             "myGroupedResource", "myMasteredResource",
-            "myClonedGroupedResource", "myMasteredGroupedResource"
+            "myClonedGroupedResource", "myMasteredGroupedResource",
+            "myBundledResource",
         ])
         test_dom_get(
             utils.dom_get_resource, cib_dom,
@@ -186,6 +198,11 @@ class UtilsTest(unittest.TestCase):
             master_ids, all_ids - master_ids
         )
 
+        bundle_ids = set(["myBundle", "myEmptyBundle"])
+        test_dom_get(
+            utils.dom_get_bundle, cib_dom,
+            bundle_ids, all_ids - bundle_ids
+        )
 
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myClone"),
@@ -247,6 +264,54 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             None,
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroupedResource")
+        )
+
+        self.assertIsNone(utils.dom_get_resource_bundle(
+            utils.dom_get_bundle(cib_dom, "myEmptyBundle")
+        ))
+        self.assert_element_id(
+            utils.dom_get_resource_bundle(
+                utils.dom_get_bundle(cib_dom, "myBundle")
+            ),
+            "myBundledResource",
+            "primitive"
+        )
+
+        self.assert_element_id(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myBundledResource"),
+            "myBundle"
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myResource")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myClone")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myClonedResource")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myMaster")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myMasteredGroup")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myGroup")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myGroupedResource")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myGroupClone")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(cib_dom, "myClonedGroup")
+        )
+        self.assertIsNone(
+            utils.dom_get_resource_bundle_parent(
+                cib_dom, "myClonedGroupedResource"
+            )
         )
 
     def testDomGetResourceRemoteNodeName(self):
@@ -426,21 +491,21 @@ class UtilsTest(unittest.TestCase):
         cc1 = utils.dom_get_element_with_id(dom, "cc", "cc1")
 
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_name(bb1, "aa"),
+            utils.dom_get_parent_by_tag_names(bb1, ["aa"]),
             "aa1"
         )
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_name(cc1, "aa"),
+            utils.dom_get_parent_by_tag_names(cc1, ["aa"]),
             "aa1"
         )
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_name(cc1, "bb"),
+            utils.dom_get_parent_by_tag_names(cc1, ["bb"]),
             "bb2"
         )
 
-        self.assertEqual(None, utils.dom_get_parent_by_tag_name(bb1, "cc"))
-        self.assertEqual(None, utils.dom_get_parent_by_tag_name(cc1, "dd"))
-        self.assertEqual(None, utils.dom_get_parent_by_tag_name(cc1, "ee"))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_names(bb1, ["cc"]))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_names(cc1, ["dd"]))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_names(cc1, ["ee"]))
 
     def testValidateConstraintResource(self):
         dom = self.get_cib_resources()
@@ -459,6 +524,14 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myGroupMaster")
+        )
+        self.assertEqual(
+            (True, "", "myBundle"),
+            utils.validate_constraint_resource(dom, "myBundle")
+        )
+        self.assertEqual(
+            (True, "", "myEmptyBundle"),
+            utils.validate_constraint_resource(dom, "myEmptyBundle")
         )
         self.assertEqual(
             (True, "", "myResource"),
@@ -536,6 +609,19 @@ class UtilsTest(unittest.TestCase):
             utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
         )
 
+        message = (
+            "%s is a bundle resource, you should use the bundle id: "
+            "%s when adding constraints. Use --force to override."
+        )
+        self.assertEqual(
+            (
+                False,
+                message % ("myBundledResource", "myBundle"),
+                "myBundle"
+            ),
+            utils.validate_constraint_resource(dom, "myBundledResource")
+        )
+
         utils.pcs_options["--force"] = True
         self.assertEqual(
             (True, "", "myClone"),
@@ -560,6 +646,10 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
+        )
+        self.assertEqual(
+            (True, "", "myBundle"),
+            utils.validate_constraint_resource(dom, "myBundledResource")
         )
 
     def testValidateXmlId(self):
@@ -1793,12 +1883,14 @@ class UtilsTest(unittest.TestCase):
             utils.is_valid_cluster_property, definition, "unknown", "value"
         )
 
-    def assert_element_id(self, node, node_id):
+    def assert_element_id(self, node, node_id, tag=None):
         self.assertTrue(
             isinstance(node, xml.dom.minidom.Element),
             "element with id '%s' not found" % node_id
         )
         self.assertEqual(node.getAttribute("id"), node_id)
+        if tag:
+            self.assertEqual(node.tagName, tag)
 
 
 class RunParallelTest(unittest.TestCase):

@@ -61,7 +61,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "{resource_id} is a {mode} resource, you should use the"
             " {parent_type} id: {parent_id} when adding constraints"
         ).format(
-            mode="master/slave" if info["parent_type"] == "master" else "clone",
+            mode="master/slave" if info["parent_type"] == "master"
+                else info["parent_type"]
+            ,
             **info
         )
     ,

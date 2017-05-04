@@ -40,6 +40,18 @@ def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
     return os.path.join(testdir, "resources", name)
 
+def cmp3(a, b):
+    # python3 doesn't have the cmp function, this is an official workaround
+    # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+    return (a > b) - (a < b)
+
+def compare_version(a, b):
+    if a[0] == b[0]:
+        if a[1] == b[1]:
+            return cmp3(a[2], b[2])
+        return cmp3(a[1], b[1])
+    return cmp3(a[0], b[0])
+
 def is_minimum_pacemaker_version(cmajor, cminor, crev):
     output, dummy_retval = utils.run(["crm_mon", "--version"])
     pacemaker_version = output.split("\n")[0]
@@ -48,13 +60,17 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
     major = int(m.group(1))
     minor = int(m.group(2))
     rev = int(m.group(3))
-    return (
-        major > cmajor
-        or
-        (major == cmajor and minor > cminor)
-        or
-        (major == cmajor and minor == cminor and rev >= crev)
-    )
+    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+
+def is_minimum_pacemaker_features(cmajor, cminor, crev):
+    output, dummy_retval = utils.run(["pacemakerd", "--features"])
+    features_version = output.split("\n")[1]
+    r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
+    m = r.search(features_version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    rev = int(m.group(3))
+    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
 def skip_unless_pacemaker_version(version_tuple, feature):
     return skipUnless(
@@ -65,6 +81,21 @@ def skip_unless_pacemaker_version(version_tuple, feature):
                 feature=feature
             )
     )
+
+def skip_unless_pacemaker_features(version_tuple, feature):
+    return skipUnless(
+        is_minimum_pacemaker_features(*version_tuple),
+        "Pacemaker must support feature set version {version} to test {feature}"
+            .format(
+                version=".".join([str(x) for x in version_tuple]),
+                feature=feature
+            )
+    )
+
+skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
+    (3, 0, 12),
+    "bundle resources"
+)
 
 def skip_unless_pacemaker_supports_systemd():
     output, dummy_retval = utils.run(["pacemakerd", "--features"])

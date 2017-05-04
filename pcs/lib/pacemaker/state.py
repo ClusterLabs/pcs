@@ -175,6 +175,8 @@ def _get_primitives_for_state_check(
         .//clone[@id="{id}"]/resource
         |
         .//clone[@id="{id}"]/group/resource[{predicate_position}]
+        |
+        .//bundle[@id="{id}"]/replica/resource
     """.format(
         id=resource_id,
         predicate_id=_id_xpath_predicate(resource_id),

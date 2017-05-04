@@ -23,7 +23,11 @@ from pcs.settings import pacemaker_wait_timeout_status as \
 import pcs.lib.cib.acl as lib_acl
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
-from pcs.cli.resource.parse_args import parse_create as parse_create_args
+from pcs.cli.resource.parse_args import (
+    parse_bundle_create_options,
+    parse_bundle_update_options,
+    parse_create as parse_create_args,
+)
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
@@ -167,6 +171,8 @@ def resource_cmd(argv):
                 set_resource_utilization(argv_next.pop(0), argv_next)
         elif sub_cmd == "get_resource_agent_info":
             get_resource_agent_info(argv_next)
+        elif sub_cmd == "bundle":
+            resource_bundle_cmd(lib, argv_next, modifiers)
         else:
             usage.resource()
             sys.exit(1)
@@ -342,15 +348,22 @@ def resource_create(lib, argv, modifiers):
     ra_type = argv[1]
 
     parts = parse_create_args(argv[2:])
+    parts_sections = ["clone", "master", "bundle"]
+    defined_options = [opt for opt in parts_sections if opt in parts]
+    if modifiers["group"]:
+        defined_options.append("group")
 
-    if "clone" in parts and modifiers["group"]:
-        raise error("you cannot specify both clone and --group")
+    if len(
+        set(defined_options).intersection(set(parts_sections + ["group"]))
+    ) > 1:
+        raise error(
+            "you can specify only one of {0} or --group".format(
+                ", ".join(parts_sections)
+            )
+        )
 
-    if "clone" in parts and "master" in parts:
-        raise error("you cannot specify both clone and master")
-
-    if "master" in parts and modifiers["group"]:
-        raise error("you cannot specify both master and --group")
+    if "bundle" in parts and len(parts["bundle"]) != 1:
+        raise error("you have to specify exactly one bundle")
 
     if modifiers["before"] and modifiers["after"]:
         raise error("you cannot specify both --before and --after{0}".format(
@@ -388,6 +401,15 @@ def resource_create(lib, argv, modifiers):
             parts["master"],
             **settings
         )
+    elif "bundle" in parts:
+        lib.resource.create_into_bundle(
+            ra_id, ra_type, parts["op"],
+            parts["meta"],
+            parts["options"],
+            parts["bundle"][0],
+            **settings
+        )
+
     elif not modifiers["group"]:
         lib.resource.create(
             ra_id, ra_type, parts["op"],
@@ -455,6 +477,8 @@ def resource_move(argv,clear=False,ban=False):
         not utils.dom_get_master(dom, resource_id)
         and
         not utils.dom_get_clone(dom, resource_id)
+        and
+        not utils.dom_get_bundle(dom, resource_id)
     ):
         utils.err("%s is not a valid resource" % resource_id)
 
@@ -467,6 +491,8 @@ def resource_move(argv,clear=False,ban=False):
             utils.dom_get_resource_clone(dom, resource_id)
             or
             utils.dom_get_group_clone(dom, resource_id)
+            or
+            utils.dom_get_bundle(dom, resource_id)
         )
     ):
         utils.err("cannot move cloned resources")
@@ -1168,6 +1194,9 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if not element:
         utils.err("unable to find group or resource: %s" % name)
 
+    if element.parentNode.tagName == "bundle":
+        utils.err("cannot clone bundle resource")
+
     if not update_existing:
         if utils.dom_get_resource_clone(cib_dom, name):
             utils.err("%s is already a clone resource" % name)
@@ -1339,6 +1368,12 @@ def resource_master_create(dom, argv, update=False, master_id=None):
                 break
         if not rg_found:
             utils.err("Unable to find resource or group with id %s" % rg_id)
+
+        if resource.parentNode.tagName == "bundle":
+            utils.err(
+                "cannot make a master/slave resource from a bundle resource"
+            )
+
         # If the resource elements parent is a group, and it's the last
         # element in the group, we remove the group
         if resource.parentNode.tagName == "group" and resource.parentNode.getElementsByTagName("primitive").length <= 1:
@@ -1370,6 +1405,23 @@ def resource_remove(resource_id, output = True):
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
     if cloned_resource:
         resource_id = cloned_resource.getAttribute("id")
+
+    bundle = utils.dom_get_bundle(dom, resource_id)
+    if bundle is not None:
+        primitive_el = utils.dom_get_resource_bundle(bundle)
+        if primitive_el is not None:
+            resource_remove(primitive_el.getAttribute("id"))
+        utils.replace_cib_configuration(
+            remove_resource_references(utils.get_cib_dom(), resource_id, output)
+        )
+        args = [
+            "cibadmin", "-o", "resources", "-D", "--xpath",
+            "//bundle[@id='{0}']".format(resource_id)
+        ]
+        dummy_cmdoutput, retVal = utils.run(args)
+        if retVal != 0:
+            utils.err("Unable to remove resource '{0}'".format(resource_id))
+        return True
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
         print("Removing group: " + resource_id + " (and all resources within group)")
@@ -1435,7 +1487,11 @@ def resource_remove(resource_id, output = True):
     ):
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
         sys.stdout.flush()
-        resource_disable([resource_id])
+        lib = utils.get_library_wrapper()
+        # we are not using wait from disable command, because if wait is not
+        # supported in pacemaker, we don't want error message but we try to
+        # simulate wait by waiting for resource to stop
+        lib.resource.disable([resource_id], False)
         output, retval = utils.run(["crm_resource", "--wait"])
         if retval != 0 and "unrecognized option '--wait'" in output:
             output = ""
@@ -1676,6 +1732,8 @@ def resource_group_add(cib_dom, group_name, resource_ids):
                     utils.err("cannot group master/slave resources")
                 if resource.parentNode.tagName == "clone":
                     utils.err("cannot group clone resources")
+                if resource.parentNode.tagName == "bundle":
+                    utils.err("cannot group bundle resources")
                 resources_to_move.append(resource)
                 resource_found = True
                 break
@@ -1921,10 +1979,27 @@ def resource_force_action(action, argv):
     resource = argv[0]
     dom = utils.get_cib_dom()
 
-    if not utils.dom_get_any_resource(dom, resource):
+    if not (
+        utils.dom_get_any_resource(dom, resource)
+        or
+        utils.dom_get_bundle(dom, resource)
+    ):
         utils.err(
-            "unable to find a resource/clone/master/group: {0}".format(resource)
+            "unable to find a resource/clone/master/group/bundle: {0}".format(
+                resource
+            )
         )
+    bundle = utils.dom_get_bundle(dom, resource)
+    if bundle:
+        bundle_resource = utils.dom_get_resource_bundle(bundle)
+        if bundle_resource:
+            utils.err(
+                "unable to {0} a bundle, try the bundle's resource: {1}".format(
+                    action, bundle_resource.getAttribute("id")
+                )
+            )
+        else:
+            utils.err("unable to {0} a bundle".format(action))
     if utils.dom_get_group(dom, resource):
         group_resources = utils.get_group_children(resource)
         utils.err(
@@ -2094,6 +2169,7 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
     if node.tag == "clone":
         print(spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
@@ -2101,12 +2177,14 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
     if node.tag == "primitive":
         print(spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_utilization_string(node, spaces)
         print_operations(node, spaces)
+        return
     if node.tag == "master":
         print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
         print_instance_vars_string(node, spaces)
@@ -2114,6 +2192,52 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+        return
+    if node.tag == "bundle":
+        print(spaces + "Bundle: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
+        print_bundle_container(node, spaces + " ")
+        print_bundle_network(node, spaces + " ")
+        print_bundle_mapping(
+            "Port Mapping:",
+            node.findall("network/port-mapping"),
+            spaces + " "
+        )
+        print_bundle_mapping(
+            "Storage Mapping:",
+            node.findall("storage/storage-mapping"),
+            spaces + " "
+        )
+        for child in node:
+            print_node(child, tab + 1)
+        return
+
+def print_bundle_container(bundle_el, spaces):
+    # TODO support other types of container once supported by pacemaker
+    container_list = bundle_el.findall("docker")
+    for container_el in container_list:
+        print(
+            spaces
+            +
+            container_el.tag.capitalize()
+            +
+            get_attrs(container_el, ": ", "")
+        )
+
+def print_bundle_network(bundle_el, spaces):
+    network_list = bundle_el.findall("network")
+    for network_el in network_list:
+        attrs_string = get_attrs(network_el)
+        if attrs_string:
+            print(spaces + "Network: " + attrs_string)
+
+def print_bundle_mapping(first_line, map_items, spaces):
+    map_lines = [
+        spaces + " " + get_attrs(item, "", " ") + "(" + item.attrib["id"] + ")"
+        for item in map_items
+    ]
+    if map_lines:
+        print(spaces + first_line)
+        print("\n".join(map_lines))
 
 def print_utilization_string(element, spaces):
     output = []
@@ -2187,6 +2311,8 @@ def get_attrs(node, prepend_string = "", append_string = ""):
     for attr,val in sorted(node.attrib.items()):
         if attr in ["id"]:
             continue
+        if " " in val:
+            val = '"' + val + '"'
         output += attr + "=" + val + " "
     if output != "":
         return prepend_string + output.rstrip() + append_string
@@ -2481,3 +2607,57 @@ def get_resource_agent_info(argv):
         )
     except LibraryError as e:
         utils.process_library_reports(e.args)
+
+def resource_bundle_cmd(lib, argv, modifiers):
+    try:
+        if len(argv) < 1:
+            sub_cmd = ""
+            raise CmdLineInputError()
+        sub_cmd, argv_next = argv[0], argv[1:]
+
+        if sub_cmd == "create":
+            resource_bundle_create_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "update":
+            resource_bundle_update_cmd(lib, argv_next, modifiers)
+        else:
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "resource", "bundle {0}".format(sub_cmd)
+        )
+
+def resource_bundle_create_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+
+    bundle_id = argv[0]
+    parts = parse_bundle_create_options(argv[1:])
+    lib.resource.bundle_create(
+        bundle_id,
+        parts["container_type"],
+        parts["container"],
+        parts["network"],
+        parts["port_map"],
+        parts["storage_map"],
+        modifiers["force"],
+        modifiers["wait"]
+    )
+
+def resource_bundle_update_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+
+    bundle_id = argv[0]
+    parts = parse_bundle_update_options(argv[1:])
+    lib.resource.bundle_update(
+        bundle_id,
+        parts["container"],
+        parts["network"],
+        parts["port_map_add"],
+        parts["port_map_remove"],
+        parts["storage_map_add"],
+        parts["storage_map_remove"],
+        modifiers["force"],
+        modifiers["wait"]
+    )

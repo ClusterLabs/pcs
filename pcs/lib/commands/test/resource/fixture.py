@@ -27,6 +27,11 @@ def call_cib_push(cib):
         ),
     ]
 
+def call_cib_upgrade():
+    return [
+        Call("cibadmin --upgrade --force"),
+    ]
+
 def call_status(status):
     return [
         Call("/usr/sbin/crm_mon --one-shot --as-xml --inactive", status),
@@ -46,26 +51,41 @@ def call_wait(timeout, retval=0, stderr=""):
         ),
     ]
 
-def calls_cib(cib_pre, cib_post):
+def call_dummy_metadata():
+    return [
+        Call(
+            "crm_resource --show-metadata ocf:heartbeat:Dummy",
+            open(rc("resource_agent_ocf_heartbeat_dummy.xml")).read()
+        ),
+    ]
+
+def calls_cib(cib_pre, cib_post, cib_base_file=None):
     return (
-        call_cib_load(cib_resources(cib_pre))
+        call_cib_load(cib_resources(cib_pre, cib_base_file=cib_base_file))
         +
-        call_cib_push(cib_resources(cib_post))
+        call_cib_push(cib_resources(cib_post, cib_base_file=cib_base_file))
     )
 
-def calls_cib_and_status(cib_pre, status, cib_post):
+def calls_cib_and_status(cib_pre, status, cib_post, cib_base_file=None):
     return (
-        call_cib_load(cib_resources(cib_pre))
+        call_cib_load(cib_resources(cib_pre, cib_base_file=cib_base_file))
         +
         call_status(state_complete(status))
         +
-        call_cib_push(cib_resources(cib_post))
+        call_cib_push(cib_resources(cib_post, cib_base_file=cib_base_file))
+    )
+
+def calls_cib_load_and_upgrade(cib_old_version):
+    return (
+        call_cib_load(cib_resources(cib_old_version))
+        +
+        call_cib_upgrade()
     )
 
 
 
-def cib_resources(cib_resources_xml):
-    cib_xml = open(rc("cib-empty.xml")).read()
+def cib_resources(cib_resources_xml, cib_base_file=None):
+    cib_xml = open(rc(cib_base_file or "cib-empty.xml")).read()
     cib = etree.fromstring(cib_xml)
     resources_section = cib.find(".//resources")
     for child in etree.fromstring(cib_resources_xml):
@@ -81,6 +101,7 @@ def state_complete(resource_status_xml):
             resource,
             {
                 "active": "true",
+                "managed": "true",
                 "failed": "false",
                 "failure_ignored": "false",
                 "nodes_running_on": "1",
@@ -95,6 +116,16 @@ def state_complete(resource_status_xml):
             {
                 "failed": "false",
                 "failure_ignored": "false",
+            }
+        )
+    for bundle in resource_status.xpath(".//bundle"):
+        _default_element_attributes(
+            bundle,
+            {
+                "type": "docker",
+                "image": "image:name",
+                "unique": "false",
+                "failed": "false",
             }
         )
     status.append(resource_status)
@@ -136,6 +167,35 @@ def report_resource_running(resource, roles, severity=severities.INFO):
         {
             "resource_id": resource,
             "roles_with_nodes": roles,
+        },
+        None
+    )
+
+def report_unexpected_element(element_id, elemet_type, expected_types):
+    return (
+        severities.ERROR,
+        report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+        {
+            "id": element_id,
+            "expected_types": expected_types,
+            "current_type": elemet_type,
+        },
+        None
+    )
+
+def report_not_for_bundles(element_id):
+    return report_unexpected_element(
+        element_id,
+        "bundle",
+        ["clone", "master", "group", "primitive"]
+    )
+
+def report_wait_for_idle_timed_out(reason):
+    return (
+        severities.ERROR,
+        report_codes.WAIT_FOR_IDLE_TIMED_OUT,
+        {
+            "reason": reason.strip(),
         },
         None
     )

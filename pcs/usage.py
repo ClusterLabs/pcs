@@ -213,17 +213,18 @@ Commands:
            <operation options>]...] [meta <meta options>...]
            [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
-           ] [--disabled] [--wait[=n]]
-        Create specified resource.  If clone is used a clone resource is
-        created.  If master is specified a master/slave resource is created.
-        If --group is specified the resource is added to the group named.  You
+           | bundle <bundle id>] [--disabled] [--wait[=n]]
+        Create specified resource. If clone is used a clone resource is
+        created. If master is specified a master/slave resource is created.
+        If --group is specified the resource is added to the group named. You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.
-        If --disabled is specified the resource is not started automatically.
-        If --wait is specified, pcs will wait up to 'n' seconds for the resource
-        to start and then return 0 if the resource is started, or 1 if
-        the resource has not yet started.  If 'n' is not specified it defaults
-        to 60 minutes.
+        If bundle is used, the resource will be created inside of the specified
+        bundle. If --disabled is specified the resource is not started
+        automatically. If --wait is specified, pcs will wait up to 'n' seconds
+        for the resource to start and then return 0 if the resource is started,
+        or 1 if the resource has not yet started.  If 'n' is not specified it
+        defaults to 60 minutes.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
             on eth2:
@@ -426,6 +427,28 @@ Commands:
         instances if appropriate) and then return 0 on success or 1 on error.
         If 'n' is not specified it defaults to 60 minutes.
         Note: to remove a master you must remove the resource/group it contains.
+
+    bundle create <bundle id> [container [<container type>] <container options>]
+            [network <network options>] [port-map <port options>]...
+            [storage-map <storage options>]... [--wait[=n]]
+        Create a new bundle encapsulating no resources. The bundle can be used
+        either as it is or a resource may be put into it at any time.
+        If the container type is not specified, it defaults to 'docker'.
+        If --wait is specified, pcs will wait up to 'n' seconds for the bundle
+        to start and then return 0 on success or 1 on error. If 'n' is not
+        specified it defaults to 60 minutes.
+
+    bundle update <bundle id> [container <container options>]
+            [network <network options>]
+            [port-map (add <port options>) | (remove <id>...)]...
+            [storage-map (add <storage options>) | (remove <id>...)]...
+            [--wait[=n]]
+        Add, remove or change options to specified bundle. If you wish to update
+        a resource encapsulated in the bundle, use the 'pcs resource update'
+        command instead and specify the resource id.  If --wait is specified,
+        pcs will wait up to 'n' seconds for the operation to finish (including
+        moving resources if appropriate) and then return 0 on success or 1 on
+        error.  If 'n' is not specified it defaults to 60 minutes.
 
     manage <resource id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is

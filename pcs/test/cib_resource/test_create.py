@@ -5,7 +5,11 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.misc import skip_unless_pacemaker_supports_systemd
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    skip_unless_pacemaker_supports_bundle,
+    skip_unless_pacemaker_supports_systemd,
+)
 from pcs.test.cib_resource.common import ResourceTest
 
 
@@ -865,13 +869,92 @@ class SuccessClone(ResourceTest):
             </resources>"""
         )
 
+
+@skip_unless_pacemaker_supports_bundle
+class Bundle(ResourceTest):
+    empty_cib = rc("cib-empty-2.8.xml")
+
+    def fixture_primitive(self, name, bundle=None):
+        if bundle:
+            self.assert_pcs_success(
+                "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
+                    name, bundle
+                )
+            )
+        else:
+            self.assert_pcs_success(
+                "resource create {0} ocf:heartbeat:Dummy".format(name)
+            )
+
+    def fixture_bundle(self, name):
+        self.assert_pcs_success(
+            "resource bundle create {0} container image=pcs:test".format(
+                name
+            )
+        )
+
+    def test_bundle_id_not_specified(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --no-default-ops bundle"
+            ,
+            "Error: you have to specify exactly one bundle\n"
+        )
+
+    def test_bundle_id_is_not_bundle(self):
+        self.fixture_primitive("R1")
+        self.assert_pcs_fail(
+            "resource create R2 ocf:heartbeat:Dummy bundle R1",
+            "Error: 'R1' is not bundle\n"
+        )
+
+    def test_bundle_id_does_not_exist(self):
+        self.assert_pcs_fail(
+            "resource create R1 ocf:heartbeat:Dummy bundle B",
+            "Error: bundle 'B' does not exist\n"
+        )
+
+    def test_primitive_already_in_bundle(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R1", bundle="B")
+        self.assert_pcs_fail(
+            "resource create R2 ocf:heartbeat:Dummy --no-default-ops bundle B",
+            (
+                "Error: bundle 'B' already contains resource 'R1', a bundle "
+                "may contain at most one resource\n"
+            )
+        )
+
+    def test_success(self):
+        self.fixture_bundle("B")
+        self.assert_effect(
+            "resource create R1 ocf:heartbeat:Dummy --no-default-ops bundle B",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" />
+                        <primitive class="ocf" id="R1" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="R1-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                    </bundle>
+                </resources>
+            """
+        )
+
+
 class FailOrWarn(ResourceTest):
     def test_error_group_clone_combination(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --group G"
             ,
-            "Error: you cannot specify both clone and --group\n"
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
         )
 
     def test_error_master_clone_combination(self):
@@ -879,15 +962,44 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --master"
             ,
-            "Error: you cannot specify both clone and master\n"
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
         )
 
-    def test_warn_master_group_combination(self):
+    def test_error_master_group_combination(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --master"
                 " --group G"
             ,
-            "Error: you cannot specify both master and --group\n"
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
+        )
+
+    def test_error_bundle_clone_combination(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
+                " bundle bundle_id"
+            ,
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
+        )
+
+    def test_error_bundle_master_combination(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --no-default-ops --master"
+                " bundle bundle_id"
+            ,
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
+        )
+
+    def test_error_bundle_group_combination(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
+                " bundle bundle_id"
+            ,
+            "Error: you can specify only one of clone, master, bundle or"
+                " --group\n"
         )
 
     def test_fail_when_nonexisting_agent(self):

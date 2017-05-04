@@ -33,12 +33,17 @@ class CommonResourceTest(TestCase):
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor()
         )
+        self.cib_base_file = "cib-empty.xml"
 
 
 class ResourceWithoutStateTest(CommonResourceTest):
     def assert_command_effect(self, cib_pre, cmd, cib_post, reports=None):
         self.runner.set_runs(
-            fixture.calls_cib(cib_pre, cib_post)
+            fixture.calls_cib(
+                cib_pre,
+                cib_post,
+                cib_base_file=self.cib_base_file
+            )
         )
         cmd()
         self.env.report_processor.assert_reports(reports if reports else [])
@@ -50,7 +55,12 @@ class ResourceWithStateTest(CommonResourceTest):
         self, cib_pre, status, cmd, cib_post, reports=None
     ):
         self.runner.set_runs(
-            fixture.calls_cib_and_status(cib_pre, status, cib_post)
+            fixture.calls_cib_and_status(
+                cib_pre,
+                status,
+                cib_post,
+                cib_base_file=self.cib_base_file
+            )
         )
         cmd()
         self.env.report_processor.assert_reports(reports if reports else [])

@@ -6,6 +6,10 @@ from __future__ import (
 )
 
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.resource.bundle import (
+    is_bundle,
+    get_inner_resource as get_bundle_inner_resource,
+)
 from pcs.lib.cib.resource.clone import (
     is_any_clone,
     get_inner_resource as get_clone_inner_resource,
@@ -36,6 +40,9 @@ def find_primitives(resource_el):
     Get list of primitives contained in a given resource
     etree resource_el -- resource element
     """
+    if is_bundle(resource_el):
+        in_bundle = get_bundle_inner_resource(resource_el)
+        return [in_bundle] if in_bundle is not None else []
     if is_any_clone(resource_el):
         resource_el = get_clone_inner_resource(resource_el)
     if is_group(resource_el):
@@ -49,6 +56,11 @@ def find_resources_to_enable(resource_el):
     Get resources to enable in order to enable specified resource succesfully
     etree resource_el -- resource element
     """
+    if is_bundle(resource_el):
+        # bundles currently cannot be disabled - pcmk does not support that
+        # inner resources are supposed to be managed separately
+        return []
+
     if is_any_clone(resource_el):
         return [resource_el, get_clone_inner_resource(resource_el)]
 
@@ -96,6 +108,10 @@ def find_resources_to_manage(resource_el):
     # put there manually. If we didn't do it, the resource may stay unmanaged,
     # as a managed primitive in an unmanaged clone / group is still unmanaged
     # and vice versa.
+    # Bundle resources cannot be set as unmanaged - pcmk currently doesn't
+    # support that. Resources in a bundle are supposed to be treated separately.
+    if is_bundle(resource_el):
+        return []
     res_id = resource_el.attrib["id"]
     return (
         [resource_el] # the resource itself
@@ -145,7 +161,19 @@ def find_resources_to_unmanage(resource_el):
     #   See group notes above
     # a primitive in a cloned group - the clone - all primitives in the group
     #   See clone notes above
-    return find_primitives(resource_el)
+    #
+    # a bundled primitive - the primitive - the primitive
+    # a bundled primitive - the bundle - nothing
+    #  bundles currently cannot be set as unmanaged - pcmk does not support that
+    # an empty bundle - the bundle - nothing
+    #  bundles currently cannot be set as unmanaged - pcmk does not support that
+    if is_any_clone(resource_el):
+        resource_el = get_clone_inner_resource(resource_el)
+    if is_group(resource_el):
+        return get_group_inner_resources(resource_el)
+    if is_primitive(resource_el):
+        return [resource_el]
+    return []
 
 def manage(resource_el):
     """

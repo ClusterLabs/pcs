@@ -14,6 +14,7 @@ from pcs.lib.cib.resource import operations
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
+    IdProvider,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
@@ -28,10 +29,11 @@ from pcs.lib.resource_agent import(
 
 @contextmanager
 def resource_environment(
-    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False
+    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False,
+    required_cib_version=None
 ):
     env.ensure_wait_satisfiable(wait)
-    cib = env.get_cib()
+    cib = env.get_cib(required_cib_version)
     yield get_resources(cib)
     env.push_cib(cib, wait)
     if wait is not False and wait_for_resource_ids:
@@ -240,6 +242,193 @@ def create_in_group(
 
 create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
 create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
+
+def create_into_bundle(
+    env, resource_id, resource_agent_name,
+    operations, meta_attributes, instance_attributes,
+    bundle_id,
+    allow_absent_agent=False,
+    allow_invalid_operation=False,
+    allow_invalid_instance_attributes=False,
+    use_default_operations=True,
+    ensure_disabled=False,
+    wait=False,
+):
+    """
+    Create a new resource in a cib and put it into an existing bundle
+
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id is identifier of resource
+    string resource_agent_name contains name for the identification of agent
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
+    string bundle_id is id of an existing bundle to put the created resource in
+    bool allow_absent_agent is a flag for allowing agent that is not installed
+        in a system
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    """
+    resource_agent = get_agent(
+        env.report_processor,
+        env.cmd_runner(),
+        resource_agent_name,
+        allow_absent_agent,
+    )
+    with resource_environment(
+        env,
+        wait,
+        [resource_id],
+        disabled_after_wait=ensure_disabled,
+        required_cib_version=(2, 8, 0)
+    ) as resources_section:
+        primitive_element = resource.primitive.create(
+            env.report_processor, resources_section,
+            resource_id, resource_agent,
+            operations, meta_attributes, instance_attributes,
+            allow_invalid_operation,
+            allow_invalid_instance_attributes,
+            use_default_operations,
+        )
+        if ensure_disabled:
+            resource.common.disable(primitive_element)
+        resource.bundle.add_resource(
+            find_element_by_tag_and_id(
+                "bundle", resources_section, bundle_id
+            ),
+            primitive_element
+        )
+
+def bundle_create(
+    env, bundle_id, container_type, container_options=None,
+    network_options=None, port_map=None, storage_map=None,
+    force_options=False,
+    wait=False,
+):
+    """
+    Create a new bundle containing no resources
+
+    LibraryEnvironment env -- provides communication with externals
+    string bundle_id -- id of the new bundle
+    string container_type -- container engine name (docker, lxc...)
+    dict container_options -- container options
+    dict network_options -- network options
+    list of dict port_map -- list of port mapping options
+    list of dict storage_map -- list of storage mapping options
+    bool force_options -- return warnings instead of forceable errors
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    container_options = container_options or {}
+    network_options = network_options or {}
+    port_map = port_map or []
+    storage_map = storage_map or []
+
+    with resource_environment(
+        env,
+        wait,
+        [bundle_id],
+        # bundles are always enabled, currently there is no way to disable them
+        disabled_after_wait=False,
+        required_cib_version=(2, 8, 0)
+    ) as resources_section:
+        id_provider = IdProvider(resources_section)
+        env.report_processor.process_list(
+            resource.bundle.validate_new(
+                id_provider,
+                bundle_id,
+                container_type,
+                container_options,
+                network_options,
+                port_map,
+                storage_map,
+                force_options
+            )
+        )
+        resource.bundle.append_new(
+            resources_section,
+            id_provider,
+            bundle_id,
+            container_type,
+            container_options,
+            network_options,
+            port_map,
+            storage_map
+        )
+
+def bundle_update(
+    env, bundle_id, container_options=None, network_options=None,
+    port_map_add=None, port_map_remove=None, storage_map_add=None,
+    storage_map_remove=None,
+    force_options=False,
+    wait=False,
+):
+    """
+    Modify an existing bundle (does not touch encapsulated resources)
+
+    LibraryEnvironment env -- provides communication with externals
+    string bundle_id -- id of the bundle to modify
+    dict container_options -- container options to modify
+    dict network_options -- network options to modify
+    list of dict port_map_add -- list of port mapping options to add
+    list of string port_map_remove -- list of port mapping ids to remove
+    list of dict storage_map_add -- list of storage mapping options to add
+    list of string storage_map_remove -- list of storage mapping ids to remove
+    bool force_options -- return warnings instead of forceable errors
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    container_options = container_options or {}
+    network_options = network_options or {}
+    port_map_add = port_map_add or []
+    port_map_remove = port_map_remove or []
+    storage_map_add = storage_map_add or []
+    storage_map_remove = storage_map_remove or []
+
+    with resource_environment(
+        env,
+        wait,
+        [bundle_id],
+        # bundles are always enabled, currently there is no way to disable them
+        disabled_after_wait=False,
+        required_cib_version=(2, 8, 0)
+    ) as resources_section:
+        id_provider = IdProvider(resources_section)
+        bundle_element = find_element_by_tag_and_id(
+            resource.bundle.TAG,
+            resources_section,
+            bundle_id
+        )
+        env.report_processor.process_list(
+            resource.bundle.validate_update(
+                id_provider,
+                bundle_element,
+                container_options,
+                network_options,
+                port_map_add,
+                port_map_remove,
+                storage_map_add,
+                storage_map_remove,
+                force_options
+            )
+        )
+        resource.bundle.update(
+            id_provider,
+            bundle_element,
+            container_options,
+            network_options,
+            port_map_add,
+            port_map_remove,
+            storage_map_add,
+            storage_map_remove
+        )
 
 def disable(env, resource_ids, wait):
     """

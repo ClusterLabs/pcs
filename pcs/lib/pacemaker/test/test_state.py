@@ -313,6 +313,22 @@ class GetPrimitivesForStateCheck(TestCase):
                     <resource id="R24:1" failed="true" />
                 </group>
             </clone>
+            <bundle id="B1" managed="true">
+                <replica id="0">
+                    <resource id="B1-R1" failed="false" />
+                    <resource id="B1-R2" failed="false" />
+                </replica>
+            </bundle>
+            <bundle id="B2" managed="true">
+                <replica id="0">
+                    <resource id="B2-R1" failed="true" />
+                    <resource id="B2-R2" failed="false" />
+                </replica>
+                <replica id="1">
+                    <resource id="B2-R1" failed="false" />
+                    <resource id="B2-R2" failed="false" />
+                </replica>
+            </bundle>
         </resources>
     """)
 
@@ -459,6 +475,20 @@ class GetPrimitivesForStateCheck(TestCase):
         self.assert_primitives("R18", [], False)
         self.assert_primitives("R24", [], True)
         self.assert_primitives("R24", [], False)
+
+    def test_bundle(self):
+        self.assert_primitives("B1", ["B1-R1", "B1-R2"], True)
+        self.assert_primitives("B1", ["B1-R1", "B1-R2"], False)
+        self.assert_primitives("B2", ["B2-R2", "B2-R1", "B2-R2"], True)
+        self.assert_primitives("B2", ["B2-R2", "B2-R1", "B2-R2"], False)
+
+    def test_primitive_in_bundle(self):
+        self.assert_primitives("B1-R1", ["B1-R1"], True)
+        self.assert_primitives("B1-R1", ["B1-R1"], False)
+        self.assert_primitives("B2-R1", ["B2-R1"], True)
+        self.assert_primitives("B2-R1", ["B2-R1"], False)
+        self.assert_primitives("B2-R2", ["B2-R2", "B2-R2"], True)
+        self.assert_primitives("B2-R2", ["B2-R2", "B2-R2"], False)
 
 
 class EnsureResourceState(TestCase):

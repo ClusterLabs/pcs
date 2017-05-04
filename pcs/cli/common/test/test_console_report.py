@@ -479,6 +479,21 @@ class FencingLevelDoesNotExist(NameBuildTest):
         )
 
 
+class ResourceBundleAlreadyContainsAResource(NameBuildTest):
+    code = codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            (
+                "bundle 'test_bundle' already contains resource "
+                "'test_resource', a bundle may contain at most one resource"
+            ),
+            {
+                "resource_id": "test_resource",
+                "bundle_id": "test_bundle",
+            }
+        )
+
+
 class ResourceOperationIntevalDuplicationTest(NameBuildTest):
     code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
     def test_build_message_with_data(self):
@@ -763,3 +778,45 @@ class SbdTooManyDevicesForNode(NameBuildTest):
             }
         )
 
+class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
+    code = codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "option 'aAa' or 'bBb' or 'cCc' has to be specified",
+            {
+                "option_names": ["aAa", "bBb", "cCc"],
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "test option 'aAa' or 'bBb' or 'cCc' has to be specified",
+            {
+                "option_type": "test",
+                "option_names": ["aAa", "bBb", "cCc"],
+            }
+        )
+
+class PrerequisiteOptionIsMissing(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_IS_MISSING
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "If option 'a' is specified, option 'b' must be specified as well",
+            {
+                "option_name": "a",
+                "prerequisite_name": "b",
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "If some option 'a' is specified, "
+                "other option 'b' must be specified as well"
+            ,
+            {
+                "option_name": "a",
+                "option_type": "some",
+                "prerequisite_name": "b",
+                "prerequisite_type": "other",
+            }
+        )

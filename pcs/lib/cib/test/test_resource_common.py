@@ -38,6 +38,10 @@ fixture_cib = etree.fromstring("""
                 <primitive id="F2" />
             </group>
         </master>
+        <bundle id="G-bundle" />
+        <bundle id="H-bundle">
+            <primitive id="H" />
+        </bundle>
     </resources>
 """)
 
@@ -87,7 +91,7 @@ class FindPrimitives(TestCase):
             [
                 element.get("id", "")
                 for element in
-                common.find_resources_to_unmanage(
+                common.find_primitives(
                     fixture_cib.find(
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
@@ -112,6 +116,9 @@ class FindPrimitives(TestCase):
         self.assert_find_resources("F1", ["F1"])
         self.assert_find_resources("F2", ["F2"])
 
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", ["H"])
+
     def test_group(self):
         self.assert_find_resources("D", ["D1", "D2"])
 
@@ -132,6 +139,12 @@ class FindPrimitives(TestCase):
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F1", "F2"])
+
+    def test_bundle_empty(self):
+        self.assert_find_resources("G-bundle", [])
+
+    def test_bundle_with_primitive(self):
+        self.assert_find_resources("H-bundle", ["H"])
 
 
 class FindResourcesToEnable(TestCase):
@@ -166,6 +179,9 @@ class FindResourcesToEnable(TestCase):
         self.assert_find_resources("F1", ["F1"])
         self.assert_find_resources("F2", ["F2"])
 
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", ["H"])
+
     def test_group(self):
         self.assert_find_resources("D", ["D"])
 
@@ -186,6 +202,12 @@ class FindResourcesToEnable(TestCase):
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F-master", "F"])
+
+    def test_bundle_empty(self):
+        self.assert_find_resources("G-bundle", [])
+
+    def test_bundle_with_primitive(self):
+        self.assert_find_resources("H-bundle", [])
 
 
 class Enable(TestCase):
@@ -337,6 +359,9 @@ class FindResourcesToManage(TestCase):
         self.assert_find_resources("F1", ["F1", "F-master", "F"])
         self.assert_find_resources("F2", ["F2", "F-master", "F"])
 
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", ["H"])
+
     def test_group(self):
         self.assert_find_resources("D", ["D", "D1", "D2"])
 
@@ -357,6 +382,12 @@ class FindResourcesToManage(TestCase):
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F-master", "F", "F1", "F2"])
+
+    def test_bundle_empty(self):
+        self.assert_find_resources("G-bundle", [])
+
+    def test_bundle_with_primitive(self):
+        self.assert_find_resources("H-bundle", [])
 
 
 class FindResourcesToUnmanage(TestCase):
@@ -391,6 +422,9 @@ class FindResourcesToUnmanage(TestCase):
         self.assert_find_resources("F1", ["F1"])
         self.assert_find_resources("F2", ["F2"])
 
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", ["H"])
+
     def test_group(self):
         self.assert_find_resources("D", ["D1", "D2"])
 
@@ -411,6 +445,12 @@ class FindResourcesToUnmanage(TestCase):
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F1", "F2"])
+
+    def test_bundle_empty(self):
+        self.assert_find_resources("G-bundle", [])
+
+    def test_bundle_with_primitive(self):
+        self.assert_find_resources("H-bundle", [])
 
 
 class Manage(TestCase):

@@ -163,6 +163,28 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.PREREQUISITE_OPTION_IS_MISSING: lambda info:
+        (
+            "If {opt_desc}option '{option_name}' is specified, "
+            "{pre_desc}option '{prerequisite_name}' must be specified as well"
+        ).format(
+            opt_desc=format_optional(info.get("option_type"), "{0} "),
+            pre_desc=format_optional(info.get("prerequisite_type"), "{0} "),
+            **info
+        )
+    ,
+
+    codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING: lambda info:
+        "{desc}option {option_names_list} has to be specified"
+        .format(
+            desc=format_optional(info.get("option_type"), "{0} "),
+            option_names_list=" or ".join(sorted([
+                "'{0}'".format(name)
+                for name in info["option_names"]
+            ])),
+        )
+    ,
+
     codes.INVALID_OPTION: lambda info:
         (
             "invalid {desc}option{s} {option_names_list},"
@@ -662,6 +684,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.WAIT_FOR_IDLE_ERROR: lambda info:
         "{reason}"
         .format(**info)
+    ,
+
+    codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE: lambda info:
+        (
+            "bundle '{bundle_id}' already contains resource '{resource_id}'"
+            ", a bundle may contain at most one resource"
+        ).format(**info)
     ,
 
     codes.RESOURCE_CLEANUP_ERROR: lambda info:

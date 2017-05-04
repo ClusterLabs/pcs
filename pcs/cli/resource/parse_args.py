@@ -30,7 +30,7 @@ def parse_create_simple(arg_list):
 def parse_create(arg_list):
     groups = group_by_keywords(
         arg_list,
-        set(["op", "meta", "clone", "master"]),
+        set(["op", "meta", "clone", "master", "bundle"]),
         implicit_first_group_key="options",
         group_repeated_keywords=["op"],
         only_found_keywords=True,
@@ -51,6 +51,100 @@ def parse_create(arg_list):
     if "master" in groups:
         parts["master"] = prepare_options(groups["master"])
 
+    if "bundle" in groups:
+        parts["bundle"] = groups["bundle"]
+
+    return parts
+
+def _parse_bundle_groups(arg_list):
+    repeatable_keyword_list = ["port-map", "storage-map"]
+    keyword_list = ["container", "network"] + repeatable_keyword_list
+    groups = group_by_keywords(
+        arg_list,
+        set(keyword_list),
+        group_repeated_keywords=repeatable_keyword_list,
+        only_found_keywords=True,
+    )
+    for keyword in keyword_list:
+        if keyword not in groups:
+            continue
+        if keyword in repeatable_keyword_list:
+            for repeated_section in groups[keyword]:
+                if len(repeated_section) == 0:
+                    raise CmdLineInputError(
+                        "No {0} options specified".format(keyword)
+                    )
+        else:
+            if len(groups[keyword]) == 0:
+                raise CmdLineInputError(
+                    "No {0} options specified".format(keyword)
+                )
+    return groups
+
+def parse_bundle_create_options(arg_list):
+    groups = _parse_bundle_groups(arg_list)
+    container_options = groups.get("container", [])
+    container_type = None
+    if container_options and "=" not in container_options[0]:
+        container_type = container_options.pop(0)
+    parts = {
+        "container_type": container_type,
+        "container": prepare_options(container_options),
+        "network": prepare_options(groups.get("network", [])),
+        "port_map": [
+            prepare_options(port_map)
+            for port_map in groups.get("port-map", [])
+        ],
+        "storage_map": [
+            prepare_options(storage_map)
+            for storage_map in groups.get("storage-map", [])
+        ],
+    }
+    if not parts["container_type"]:
+        parts["container_type"] = "docker"
+    return parts
+
+def _split_bundle_map_update_op_and_options(
+    map_arg_list, result_parts, map_name
+):
+    if len(map_arg_list) < 2:
+        raise _bundle_map_update_not_valid(map_name)
+    op, options = map_arg_list[0], map_arg_list[1:]
+    if op == "add":
+        result_parts[op].append(prepare_options(options))
+    elif op == "remove":
+        result_parts[op].extend(options)
+    else:
+        raise _bundle_map_update_not_valid(map_name)
+
+def _bundle_map_update_not_valid(map_name):
+    return CmdLineInputError(
+        (
+            "When using '{map}' you must specify either 'add' and options or "
+            "'remove' and id(s)"
+        ).format(map=map_name)
+    )
+
+def parse_bundle_update_options(arg_list):
+    groups = _parse_bundle_groups(arg_list)
+    port_map = {"add": [], "remove": []}
+    for map_group in groups.get("port-map", []):
+        _split_bundle_map_update_op_and_options(
+            map_group, port_map, "port-map"
+        )
+    storage_map = {"add": [], "remove": []}
+    for map_group in groups.get("storage-map", []):
+        _split_bundle_map_update_op_and_options(
+            map_group, storage_map, "storage-map"
+        )
+    parts = {
+        "container": prepare_options(groups.get("container", [])),
+        "network": prepare_options(groups.get("network", [])),
+        "port_map_add": port_map["add"],
+        "port_map_remove": port_map["remove"],
+        "storage_map_add": storage_map["add"],
+        "storage_map_remove": storage_map["remove"],
+    }
     return parts
 
 def build_operations(op_group_list):
@@ -95,5 +189,3 @@ def __every_operation_needs_name():
     return CmdLineInputError(
         "When using 'op' you must specify an operation name after 'op'"
     )
-
-
