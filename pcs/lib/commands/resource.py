@@ -358,6 +358,7 @@ def create_into_bundle(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_inappropriate_use=False,
 ):
     """
     Create a new resource in a cib and put it into an existing bundle
@@ -396,6 +397,16 @@ def create_into_bundle(
         disabled_after_wait=ensure_disabled,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            env.nodes.all,
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_inappropriate_use
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
