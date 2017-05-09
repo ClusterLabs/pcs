@@ -21,6 +21,8 @@ corosync_qdevice_net_client_certs_dir = os.path.join(
     "qdevice/net/nssdb"
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
+corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
+pacemaker_authkey_file = "/etc/pacemaker/authkey"
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "/usr/sbin/"
 pengine_binary = "/usr/libexec/pacemaker/pengine"

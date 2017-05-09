@@ -17,8 +17,10 @@ from xml.dom.minidom import parse
 import logging
 import pwd
 import grp
+import tempfile
 import time
 import platform
+import shutil
 
 try:
     import clufter.facts
@@ -347,6 +349,7 @@ def config_restore_local(infile_name, infile_obj):
     file_list = config_backup_path_list(with_uid_gid=True)
     tarball_file_list = []
     version = None
+    tmp_dir = None
     try:
         tarball = tarfile.open(infile_name, "r|*", infile_obj)
         while True:
@@ -393,15 +396,30 @@ def config_restore_local(infile_name, infile_obj):
                 path = os.path.dirname(path)
             if not extract_info:
                 continue
-            path_extract = os.path.dirname(extract_info["path"])
-            tarball.extractall(path_extract, [tar_member_info])
-            path_full = os.path.join(path_extract, tar_member_info.name)
+            path_full = None
+            if hasattr(extract_info.get("pre_store_call"), '__call__'):
+                extract_info["pre_store_call"]()
+            if "rename" in extract_info and extract_info["rename"]:
+                if tmp_dir is None:
+                    tmp_dir = tempfile.mkdtemp()
+                tarball.extractall(tmp_dir, [tar_member_info])
+                path_full = extract_info["path"]
+                os.rename(
+                    os.path.join(tmp_dir, tar_member_info.name), path_full
+                )
+            else:
+                dir_path = os.path.dirname(extract_info["path"])
+                tarball.extractall(dir_path, [tar_member_info])
+                path_full = os.path.join(dir_path, tar_member_info.name)
             file_attrs = extract_info["attrs"]
             os.chmod(path_full, file_attrs["mode"])
             os.chown(path_full, file_attrs["uid"], file_attrs["gid"])
         tarball.close()
-    except (tarfile.TarError, EnvironmentError) as e:
+    except (tarfile.TarError, EnvironmentError, OSError) as e:
         utils.err("unable to restore the cluster: %s" % e)
+    finally:
+        if tmp_dir:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
     try:
         sig_path = os.path.join(settings.cib_dir, "cib.xml.sig")
@@ -420,31 +438,40 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
         "uid": 0,
         "gid": 0,
     }
+    corosync_authkey_attrs = dict(corosync_attrs)
+    corosync_authkey_attrs["mode"] = 0o400
     cib_attrs = {
         "mtime": int(time.time()),
         "mode": 0o600,
         "uname": settings.pacemaker_uname,
         "gname": settings.pacemaker_gname,
     }
+    pcmk_authkey_attrs = dict(cib_attrs)
+    pcmk_authkey_attrs["mode"] = 0o440
     if with_uid_gid:
-        try:
-            cib_attrs["uid"] = pwd.getpwnam(cib_attrs["uname"]).pw_uid
-        except KeyError:
-            utils.err(
-                "Unable to determine uid of user '%s'" % cib_attrs["uname"]
-            )
-        try:
-            cib_attrs["gid"] = grp.getgrnam(cib_attrs["gname"]).gr_gid
-        except KeyError:
-            utils.err(
-                "Unable to determine gid of group '%s'" % cib_attrs["gname"]
-            )
+        cib_attrs["uid"] = _get_uid(cib_attrs["uname"])
+        cib_attrs["gid"] = _get_gid(cib_attrs["gname"])
 
     file_list = {
         "cib.xml": {
             "path": os.path.join(settings.cib_dir, "cib.xml"),
             "required": True,
             "attrs": dict(cib_attrs),
+        },
+        "corosync_authkey": {
+            "path": settings.corosync_authkey_file,
+            "required": False,
+            "attrs": corosync_authkey_attrs,
+            "restore_procedure": None,
+            "rename": True,
+        },
+        "pacemaker_authkey": {
+            "path": settings.pacemaker_authkey_file,
+            "required": False,
+            "attrs": pcmk_authkey_attrs,
+            "restore_procedure": None,
+            "rename": True,
+            "pre_store_call": _ensure_etc_pacemaker_exists,
         },
     }
     if rhel6:
@@ -477,6 +504,35 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
             },
         }
     return file_list
+
+
+def _get_uid(user_name):
+    try:
+        return pwd.getpwnam(user_name).pw_uid
+    except KeyError:
+        utils.err("Unable to determine uid of user '{0}'".format(user_name))
+
+
+def _get_gid(group_name):
+    try:
+        return grp.getgrnam(group_name).gr_gid
+    except KeyError:
+        utils.err(
+            "Unable to determine gid of group '{0}'".format(group_name)
+        )
+
+
+def _ensure_etc_pacemaker_exists():
+    dir_name = os.path.dirname(settings.pacemaker_authkey_file)
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+        os.chmod(dir_name, 0o750)
+        os.chown(
+            dir_name,
+            _get_uid(settings.pacemaker_uname),
+            _get_gid(settings.pacemaker_gname)
+        )
+
 
 def config_backup_check_version(version):
     try:
