@@ -1439,7 +1439,10 @@ def resource_remove(
     if bundle is not None:
         primitive_el = utils.dom_get_resource_bundle(bundle)
         if primitive_el is not None:
-            resource_remove(primitive_el.getAttribute("id"))
+            resource_remove(
+                primitive_el.getAttribute("id"),
+                warn_about_live_skip=False
+            )
         utils.replace_cib_configuration(
             remove_resource_references(utils.get_cib_dom(), resource_id, output)
         )

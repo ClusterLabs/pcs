@@ -32,7 +32,7 @@ temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
-# pylint:disable=trailing-whitespace
+# pylint:disable=trailing-whitespace,too-many-lines
 
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -4753,7 +4753,15 @@ class BundleCommon(
 class BundleDeleteTest(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
-        self.assert_effect("resource delete B", "<resources/>")
+        self.assert_effect(
+            "resource delete B",
+            "<resources/>",
+            output=outdent(
+                """\
+                Warning: The live cluster actions were skipped because -f was used
+                """
+            )
+        )
 
     def test_with_primitive(self):
         self.fixture_bundle("B")
@@ -4761,7 +4769,12 @@ class BundleDeleteTest(BundleCommon):
         self.assert_effect(
             "resource delete B",
             "<resources/>",
-            "Deleting Resource - R\n",
+            output=outdent(
+                """\
+                Warning: The live cluster actions were skipped because -f was used
+                Deleting Resource - R
+                """
+            )
         )
 
     def test_remove_primitive(self):
@@ -4776,7 +4789,12 @@ class BundleDeleteTest(BundleCommon):
                     </bundle>
                 </resources>
             """,
-            "Deleting Resource - R\n",
+            output=outdent(
+                """\
+                Warning: The live cluster actions were skipped because -f was used
+                Deleting Resource - R
+                """
+            )
         )
 
 
