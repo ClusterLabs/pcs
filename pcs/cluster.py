@@ -64,6 +64,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.nodes_task import check_corosync_offline_on_nodes, distribute_files
 from pcs.lib import node_communication_format
@@ -1689,6 +1690,7 @@ def node_add(lib_env, node0, node1, modifiers):
 
         _share_authkey(
             lib_env,
+            get_nodes(lib_env.get_corosync_conf(), lib_env.get_cib()),
             node_addr,
             allow_incomplete_distribution=modifiers["force"]
         )

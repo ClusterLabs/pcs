@@ -251,10 +251,6 @@ def fixture_cib_calls(cib_resources_xml):
         resources_section.append(child)
 
     return [
-        #TODO everytime we call env.get_cib, we call cibadmin --local --query
-        #it is needed to rethink caching cib
-        Call("cibadmin --local --query", cib_xml),
-        Call("cibadmin --local --query", cib_xml),
         Call("cibadmin --local --query", cib_xml),
         Call(
             "cibadmin --replace --verbose --xml-pipe --scope configuration",

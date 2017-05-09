@@ -11,6 +11,7 @@ from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.tools import generate_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
+from pcs.lib.env_tools import get_nodes, get_nodes_remote, get_nodes_guest
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
@@ -26,14 +27,15 @@ def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
     env.report_processor.process_list(report_items)
 
 def _share_authkey(
-    env, candidate_node_addresses, allow_incomplete_distribution=False
+    env, current_nodes, candidate_node_addresses,
+    allow_incomplete_distribution=False
 ):
     if env.pacemaker.has_authkey:
         authkey_content = env.pacemaker.get_authkey_content()
         node_addresses_list = NodeAddressesList([candidate_node_addresses])
     else:
         authkey_content = generate_key()
-        node_addresses_list = env.nodes.all + [candidate_node_addresses]
+        node_addresses_list = current_nodes + [candidate_node_addresses]
 
     nodes_task.distribute_files(
         env.node_communicator(),
@@ -57,7 +59,7 @@ def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
     )
 
 def _prepare_pacemaker_remote_environment(
-    env, node_host, allow_incomplete_distribution, allow_fails
+    env, current_nodes, node_host, allow_incomplete_distribution, allow_fails
 ):
     if not env.is_cib_live:
         env.report_processor.process(
@@ -71,7 +73,12 @@ def _prepare_pacemaker_remote_environment(
 
     candidate_node = NodeAddresses(node_host)
     _ensure_can_add_node_to_remote_cluster(env, candidate_node)
-    _share_authkey(env, candidate_node, allow_incomplete_distribution)
+    _share_authkey(
+        env,
+        current_nodes,
+        candidate_node,
+        allow_incomplete_distribution
+    )
     _start_and_enable_pacemaker_remote(env, [candidate_node], allow_fails)
 
 def _ensure_resource_running(env, resource_id):
@@ -101,7 +108,7 @@ def node_add_remote(
     cib = env.get_cib()
 
     report_list.extend(remote_node.validate_parts(
-        env.nodes.all,
+        get_nodes(env.get_corosync_conf(), cib),
         node_name,
         enriched_instance_attributes
     ))
@@ -126,6 +133,7 @@ def node_add_remote(
 
     _prepare_pacemaker_remote_environment(
         env,
+        get_nodes(env.get_corosync_conf(), cib),
         host,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
@@ -144,7 +152,7 @@ def node_add_guest(
     cib = env.get_cib()
     report_list = guest_node.validate_parts(
         cib,
-        env.nodes.all,
+        get_nodes(env.get_corosync_conf(), cib),
         resource_id,
         options
     )
@@ -164,6 +172,7 @@ def node_add_guest(
 
     _prepare_pacemaker_remote_environment(
         env,
+        get_nodes(env.get_corosync_conf(), cib),
         guest_node.get_host_from_options(options),
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
@@ -254,8 +263,9 @@ def node_remove_remote(
     allow_pacemaker_remote_service_fail=False
 ):
 
+    cib = env.get_cib()
     resource_element_list = _find_resources_to_remove(
-        env.get_cib(),
+        cib,
         env.report_processor,
         "remote",
         node_identifier,
@@ -263,7 +273,7 @@ def node_remove_remote(
         remote_node.find_node_resources,
     )
     node_addresses_list = _remove_pcmk_remote(
-        env.nodes.remote,
+        get_nodes_remote(cib),
         resource_element_list,
         remote_node.get_host,
         lambda resource_element: remove_resource(
@@ -296,7 +306,7 @@ def node_remove_guest(
     )
 
     node_addresses_list =  _remove_pcmk_remote(
-        env.nodes.guest,
+        get_nodes_guest(cib),
         resource_element_list,
         guest_node.get_host,
         guest_node.unset_guest,

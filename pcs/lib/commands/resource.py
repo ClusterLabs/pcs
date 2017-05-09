@@ -17,6 +17,7 @@ from pcs.lib.cib.tools import (
     get_resources,
     IdProvider,
 )
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import (
@@ -162,7 +163,7 @@ def create(
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
         env.report_processor.process_list(_validate_special_cases(
-            env.nodes.all,
+            get_nodes(env.get_corosync_conf(), resources_section),
             resource_agent,
             resources_section,
             resource_id,
@@ -241,7 +242,7 @@ def _create_as_clone_common(
         )
     ) as resources_section:
         env.report_processor.process_list(_validate_special_cases(
-            env.nodes.all,
+            get_nodes(env.get_corosync_conf(), resources_section),
             resource_agent,
             resources_section,
             resource_id,
@@ -318,7 +319,7 @@ def create_in_group(
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
         env.report_processor.process_list(_validate_special_cases(
-            env.nodes.all,
+            get_nodes(env.get_corosync_conf(), resources_section),
             resource_agent,
             resources_section,
             resource_id,
@@ -398,7 +399,7 @@ def create_into_bundle(
         required_cib_version=(2, 8, 0)
     ) as resources_section:
         env.report_processor.process_list(_validate_special_cases(
-            env.nodes.all,
+            get_nodes(env.get_corosync_conf(), resources_section),
             resource_agent,
             resources_section,
             resource_id,

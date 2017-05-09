@@ -28,6 +28,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
@@ -40,10 +41,11 @@ RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 def _detect_guest_change(meta_attributes, allow_inappropriate_use):
     env = utils.get_lib_env()
+    cib = env.get_cib()
     env.report_processor.process_list(
         _validate_guest_change(
-            env.get_cib(),
-            env.nodes.all,
+            cib,
+            get_nodes(env.get_corosync_conf(), cib),
             meta_attributes,
             allow_inappropriate_use,
             detect_remove=True,
