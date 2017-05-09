@@ -714,7 +714,7 @@ Commands:
         the whole CIB or be warned in the case of outdated CIB.
 
     node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
-            [--watchdog=<watchdog-path>]
+            [--watchdog=<watchdog-path>] [--device=<path>] ...
         Add the node to the cluster and sync all relevant configuration files
         to the new node. If --start is specified also start cluster on the new
         node, if --wait is specified wait up to 'n' seconds for the new node to
@@ -723,7 +723,8 @@ Commands:
         When using Redundant Ring Protocol (RRP) with udpu transport, specify
         the ring 0 address first followed by a ',' and then the ring 1 address.
         Use --watchdog to specify path to watchdog on newly added node, when
-        SBD is enabled in cluster.
+        SBD is enabled in cluster. If SBD is configured with shared storage,
+        use --device to specify path to shared device on new node.
         This command can only be run on an existing cluster node.
 
     node remove <node>
