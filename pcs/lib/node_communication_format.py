@@ -32,9 +32,25 @@ def pcmk_authkey_format(authkey_content):
         "rewrite_existing": True,
     }
 
+def corosync_authkey_format(authkey_content):
+    """
+    Return a dict usable in the communication with a remote/put_file
+    authkey_content is raw authkey content
+    """
+    return {
+        "data": base64.b64encode(authkey_content).decode("utf-8"),
+        "type": "corosync_authkey",
+        "rewrite_existing": True,
+    }
+
 def pcmk_authkey_file(authkey_content):
     return {
         "pacemaker_remote authkey": pcmk_authkey_format(authkey_content)
+    }
+
+def corosync_authkey_file(authkey_content):
+    return {
+        "corosync authkey": corosync_authkey_format(authkey_content)
     }
 
 def service_cmd_format(service, command):

@@ -479,18 +479,15 @@ def cluster_setup(argv):
         for node in primary_addr_list:
             utils.setCorosyncConfig(node, config)
 
-        # start and enable the cluster if requested
-        if "--start" in utils.pcs_options:
-            print("\nStarting cluster on nodes: {0}...".format(
-                ", ".join(primary_addr_list)
-            ))
-            start_cluster_nodes(primary_addr_list)
-        if "--enable" in utils.pcs_options:
-            enable_cluster(primary_addr_list)
-
         try:
-            file_definitions = node_communication_format.pcmk_authkey_file(
-                generate_key()
+            file_definitions = {}
+            file_definitions.update(
+                node_communication_format.pcmk_authkey_file(generate_key())
+            )
+            file_definitions.update(
+                node_communication_format.corosync_authkey_file(
+                    generate_key(random_bytes_count=128)
+                )
             )
 
             distribute_files(
@@ -505,6 +502,15 @@ def cluster_setup(argv):
             )
         except LibraryError as e: #Theoretically, this should not happen
             utils.process_library_reports(e.args)
+
+        # start and enable the cluster if requested
+        if "--start" in utils.pcs_options:
+            print("\nStarting cluster on nodes: {0}...".format(
+                ", ".join(primary_addr_list)
+            ))
+            start_cluster_nodes(primary_addr_list)
+        if "--enable" in utils.pcs_options:
+            enable_cluster(primary_addr_list)
 
         # sync certificates as the last step because it restarts pcsd
         print()
@@ -741,7 +747,6 @@ def cluster_setup_create_corosync_conf(
     corosync_conf.add_section(logging_section)
 
     totem_section.add_attribute("version", "2")
-    totem_section.add_attribute("secauth", "off")
     totem_section.add_attribute("cluster_name", cluster_name)
 
     transport_options_names = (
@@ -1693,6 +1698,16 @@ def node_add(lib_env, node0, node1, modifiers):
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
+
+        if os.path.isfile(settings.corosync_authkey_path):
+            distribute_files(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                node_communication_format.corosync_authkey_file(
+                    open(settings.corosync_authkey_path).read()
+                ),
+                NodeAddressesList([node_addr]),
+            )
 
         _share_authkey(
             lib_env,

@@ -8,9 +8,8 @@ import binascii
 import os
 
 
-def generate_key():
-    return binascii.hexlify(os.urandom(32))
-
+def generate_key(random_bytes_count=32):
+    return binascii.hexlify(os.urandom(random_bytes_count))
 
 def environment_file_to_dict(config):
     """
