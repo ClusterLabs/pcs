@@ -247,10 +247,7 @@ class ValidateInNotGuest(TestCase):
 class SetAsGuest(TestCase):
     def test_set_guest_meta_correctly(self):
         resource_element = etree.fromstring('<primitive id="A"/>')
-        guest_node.set_as_guest(resource_element, {
-            "remote-node": "node1",
-            "remote-connect-timeout": "10",
-        })
+        guest_node.set_as_guest(resource_element, "node1", connect_timeout="10")
         assert_xml_equal(
             etree.tostring(resource_element).decode(),
             """

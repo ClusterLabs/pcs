@@ -147,6 +147,10 @@ def node_add_guest(
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
+    """
+    dict options could contain keys remote-node, remote-port, remote-addr,
+        remote-connect-timeout
+    """
     env.ensure_wait_satisfiable(wait)
 
     cib = env.get_cib()
@@ -168,7 +172,13 @@ def node_add_guest(
 
     env.report_processor.process_list(report_list)
 
-    guest_node.set_as_guest(resource_element, options)
+    guest_node.set_as_guest(
+        resource_element,
+        options["remote-node"],
+        options.get("remote-addr", None),
+        options.get("remote-port", None),
+        options.get("remote-connect-timeout", None),
+    )
 
     _prepare_pacemaker_remote_environment(
         env,

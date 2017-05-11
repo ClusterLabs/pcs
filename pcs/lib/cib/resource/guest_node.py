@@ -94,13 +94,23 @@ def validate_is_not_guest(resource_element):
         )
     ]
 
-def set_as_guest(resource_element, meta_options):
+def set_as_guest(
+    resource_element, node, addr=None, port=None, connect_timeout=None
+):
     """
     Set resource as guest node.
 
     etree.Element resource_element
-    dict meta_options
+
     """
+    meta_options = {"remote-node": str(node)}
+    if addr:
+        meta_options["remote-addr"] = str(addr)
+    if port:
+        meta_options["remote-port"] = str(port)
+    if connect_timeout:
+        meta_options["remote-connect-timeout"] = str(connect_timeout)
+
     arrange_first_meta_attributes(resource_element, meta_options)
 
 def unset_guest(resource_element):
