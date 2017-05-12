@@ -845,23 +845,16 @@ class FileDistributionSucess(NameBuildTest):
     code = codes.FILES_DISTRIBUTION_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Success distribution of files to nodes:\n"
-                "  node1\n"
-                "    some authfile\n"
-                "    some config file\n"
-                "  node2\n"
-                "    some config file"
+            "node1: success distribution of files 'some config file',"
+            " 'some authfile'"
             ,
             {
-                "nodes_success_files": {
-                    "node1": [
-                      "some config file",
-                      "some authfile",
-                    ],
-                    "node2": [
-                      "some config file",
-                    ],
-                }
+                "nodes_success_files": None,
+                "node": "node1",
+                "results": [
+                  "some config file",
+                  "some authfile",
+                ],
             }
         )
 
@@ -869,22 +862,16 @@ class FileDistributionError(NameBuildTest):
     code = codes.FILES_DISTRIBUTION_ERROR
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Unable to distribute files to some nodes:\n"
-                "  node1\n"
-                "    file1: permission denied\n"
-                "    file2: not enough space\n"
-                "  node2\n"
-                "    file1: permission denied"
+            "Unable to distribute files to 'node1':\n"
+                "  file1: permission denied\n"
+                "  file2: not enough space"
             ,
             {
-                "node_file_errors": {
-                    "node1": {
-                        "file1": "permission denied",
-                        "file2": "not enough space",
-                    },
-                    "node2": {
-                        "file1": "permission denied",
-                    }
+                "node_file_errors": None,
+                "node": "node1",
+                "results": {
+                    "file1": "permission denied",
+                    "file2": "not enough space",
                 }
             }
         )
@@ -913,23 +900,14 @@ class ActionsOnNodesSuccess(NameBuildTest):
     code = codes.ACTIONS_ON_NODES_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Success actions on nodes:\n"
-                "  node1\n"
-                "    service enable\n"
-                "    service start\n"
-                "  node2\n"
-                "    service start"
-            ,
+            "node1: success actions 'service start', 'service enable'",
             {
-                "nodes_success_actions": {
-                    "node1": [
-                        "service start",
-                        "service enable",
-                    ],
-                    "node2": [
-                        "service start",
-                    ]
-                }
+                "nodes_success_actions": None,
+                "node": "node1",
+                "results": [
+                    "service start",
+                    "service enable",
+                ],
             }
         )
 
@@ -937,22 +915,16 @@ class ActionOnNodesError(NameBuildTest):
     code = codes.ACTIONS_ON_NODES_ERROR
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Some actions on some nodes failed:\n"
-                "  node1\n"
-                "    action1: permission denied\n"
-                "    action2: not such command\n"
-                "  node2\n"
-                "    action1: permission denied"
+            "Some actions on 'node1' failed:\n"
+                "  action1: permission denied\n"
+                "  action2: not such command"
             ,
             {
-                "node_action_errors": {
-                    "node1": {
-                        "action1": "permission denied",
-                        "action2": "not such command",
-                    },
-                    "node2": {
-                        "action1": "permission denied",
-                    }
+                "node_action_errors": None,
+                "node": "node1",
+                "results": {
+                    "action1": "permission denied",
+                    "action2": "not such command",
                 }
             }
         )

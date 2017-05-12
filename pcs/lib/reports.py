@@ -2018,7 +2018,7 @@ def files_distribution_started(file_list, node_list=""):
         }
     )
 
-def files_distribution_success(nodes_success_files):
+def files_distribution_success(node=None, results=None):
     """
     files was successfuly distributed on nodes
 
@@ -2034,12 +2034,13 @@ def files_distribution_success(nodes_success_files):
     return ReportItem.info(
         report_codes.FILES_DISTRIBUTION_SUCCESS,
         info={
-            "nodes_success_files": nodes_success_files
+            "node": node,
+            "results": results,
         },
     )
 
 def files_distribution_error(
-    node_file_errors,
+    node=None, results=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -2057,7 +2058,8 @@ def files_distribution_error(
         report_codes.FILES_DISTRIBUTION_ERROR,
         severity,
         info={
-            "node_file_errors": node_file_errors
+            "node": node,
+            "results": results,
         },
         forceable=forceable
     )
@@ -2074,7 +2076,7 @@ def actions_on_nodes_started(action_list, node_list=""):
         }
     )
 
-def actions_on_nodes_success(nodes_success_actions):
+def actions_on_nodes_success(node=None, results=None):
     """
     files was successfuly distributed on nodes
 
@@ -2090,12 +2092,13 @@ def actions_on_nodes_success(nodes_success_actions):
     return ReportItem.info(
         report_codes.ACTIONS_ON_NODES_SUCCESS,
         info={
-            "nodes_success_actions": nodes_success_actions
+            "node": node,
+            "results": results,
         },
     )
 
 def actions_on_nodes_error(
-    node_action_errors,
+    node=None, results=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -2113,7 +2116,8 @@ def actions_on_nodes_error(
         report_codes.ACTIONS_ON_NODES_ERROR,
         severity,
         info={
-            "node_action_errors": node_action_errors
+            "node": node,
+            "results": results,
         },
         forceable=forceable
     )

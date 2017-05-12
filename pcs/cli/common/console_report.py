@@ -983,32 +983,24 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.FILES_DISTRIBUTION_SUCCESS: lambda info:
-        "Success distribution of files to nodes:\n{details}".format(
-            details=(
-                "\n".join([
-                    "  {0}\n{1}".format(node, "\n".join([
-                        "    {0}".format(file_description)
-                        for file_description in sorted(file_infos)
-                    ]))
-                    for node, file_infos
-                    in sorted(info["nodes_success_files"].items())
-                ])
-            )
+        "{node}: success distribution of files {files}"
+        .format(
+            files=", ".join([
+                "'{0}'".format(action) for action in info["results"]
+            ]),
+            **info
         )
     ,
 
+
     codes.FILES_DISTRIBUTION_ERROR: lambda info:
-        "Unable to distribute files to some nodes:\n{details}".format(
-            details=(
-                "\n".join([
-                    "  {0}\n{1}".format(node, "\n".join([
-                        "    {0}: {1}".format(filename, reason)
-                        for filename, reason in sorted(file_infos.items())
-                    ]))
-                    for node, file_infos
-                    in sorted(info["node_file_errors"].items())
-                ])
-            )
+        "Unable to distribute files to '{node}':\n{details}"
+        .format(
+            details="\n".join([
+                "  {0}: {1}".format(filename, reason)
+                for filename, reason in sorted(info["results"].items())
+            ]),
+            **info
         )
     ,
 
@@ -1024,32 +1016,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.ACTIONS_ON_NODES_SUCCESS: lambda info:
-        "Success actions on nodes:\n{details}".format(
-            details=(
-                "\n".join([
-                    "  {0}\n{1}".format(node, "\n".join([
-                        "    {0}".format(action_description)
-                        for action_description in sorted(action_infos)
-                    ]))
-                    for node, action_infos
-                    in sorted(info["nodes_success_actions"].items())
-                ])
-            )
+        "{node}: success actions {actions}"
+        .format(
+            actions=", ".join([
+                "'{0}'".format(action) for action in info["results"]
+            ]),
+            **info
         )
     ,
 
     codes.ACTIONS_ON_NODES_ERROR: lambda info:
-        "Some actions on some nodes failed:\n{details}".format(
-            details=(
-                "\n".join([
-                    "  {0}\n{1}".format(node, "\n".join([
-                        "    {0}: {1}".format(actionname, reason)
-                        for actionname, reason in sorted(action_infos.items())
-                    ]))
-                    for node, action_infos
-                    in sorted(info["node_action_errors"].items())
-                ])
-            )
+        "Some actions on '{node}' failed:\n{details}"
+        .format(
+            details="\n".join([
+                "  {0}: {1}".format(filename, reason)
+                for filename, reason in sorted(info["results"].items())
+            ]),
+            **info
         )
     ,
 

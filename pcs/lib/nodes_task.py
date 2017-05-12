@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from collections import defaultdict
 import json
 
 from pcs.common import report_codes
@@ -312,9 +313,11 @@ def run_actions_on_node(
 
 def _run_actions_on_multiple_nodes(
     node_communicator, url, response_key, report_processor, create_start_report,
-    actions, node_addresses_list, allow_incomplete_distribution=False
+    actions, node_addresses_list, is_success,
+    create_success_report, create_error_report, force_code,
+    allow_incomplete_distribution=False
 ):
-    response_map = {}
+    error_map = defaultdict(dict)
     def worker(node_addresses):
         result = run_actions_on_node(
             node_communicator,
@@ -324,7 +327,21 @@ def _run_actions_on_multiple_nodes(
             node_addresses,
             actions,
         )
-        response_map[node_addresses] = result
+        success_list = []
+        for key, item_response in sorted(result.items()):
+            if is_success(key, item_response):
+                success_list.append(key)
+            else:
+                error_map[node_addresses.label][key] = (
+                    node_communication_format.format_result(item_response)
+                )
+
+        #only success process individually
+        if success_list:
+            report_processor.process(create_success_report(
+                node=node_addresses.label,
+                results=success_list,
+            ))
 
     report_processor.process(create_start_report(
         actions.keys(),
@@ -338,28 +355,16 @@ def _run_actions_on_multiple_nodes(
         allow_incomplete_distribution,
     )
 
-    return response_map
-
-def _run_actions_process_responses(
-    report_processor, response_map, is_success,
-    create_success_report, create_error_report, force_code, allow_fails=False
-):
-    success, errors = node_communication_format.responses_to_report_infos(
-        response_map,
-        is_success=is_success,
-        get_node_label=lambda node: node.label
-    )
-
-    if success:
-        report_processor.process(create_success_report(success))
-
-    if errors:
-        report_processor.process(
-            reports.get_problem_creator(force_code, allow_fails)(
-                create_error_report,
-                errors
-            )
+    #now we process errors
+    if error_map:
+        make_report = reports.get_problem_creator(
+            force_code,
+            allow_incomplete_distribution
         )
+        report_processor.process_list([
+            make_report(create_error_report, node=node_name, results=errors)
+            for node_name, errors in error_map.items()
+        ])
 
 def distribute_files(
     node_communicator, report_processor, file_definitions, node_addresses_list,
@@ -381,7 +386,7 @@ def distribute_files(
     bool allow_incomplete_distribution keep success even if some node(s) are
         unavailable
     """
-    response_map = _run_actions_on_multiple_nodes(
+    _run_actions_on_multiple_nodes(
         node_communicator,
         "remote/put_file",
         "files",
@@ -389,24 +394,18 @@ def distribute_files(
         reports.files_distribution_started,
         file_definitions,
         node_addresses_list,
-        allow_incomplete_distribution,
-    )
-    _run_actions_process_responses(
-        report_processor,
-        response_map,
         lambda key, response: response.code in ["written", "rewritten"],
         reports.files_distribution_success,
         reports.files_distribution_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
         allow_incomplete_distribution,
     )
-    return response_map
 
 def run_actions_on_multiple_nodes(
     node_communicator, report_processor, action_definitions, is_success,
     node_addresses_list, allow_fails=False
 ):
-    response_map = _run_actions_on_multiple_nodes(
+    _run_actions_on_multiple_nodes(
         node_communicator,
         "remote/run_action",
         "actions",
@@ -414,15 +413,9 @@ def run_actions_on_multiple_nodes(
         reports.actions_on_nodes_started,
         action_definitions,
         node_addresses_list,
-        allow_fails,
-    )
-    _run_actions_process_responses(
-        report_processor,
-        response_map,
         is_success,
         reports.actions_on_nodes_success,
         reports.actions_on_nodes_error,
         report_codes.SKIP_ACTION_ON_NODES_ERRORS,
         allow_fails,
     )
-    return response_map

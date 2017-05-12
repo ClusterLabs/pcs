@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 import base64
@@ -157,39 +157,3 @@ def format_result(result):
         code=result.code,
         message="" if not result.message else " ({0})".format(result.message)
     )
-
-def responses_to_report_infos(
-    node_responses_map, is_success, get_node_label=lambda name:name
-):
-    """
-    Return tuple with information about success and errors deduced from
-    node_responses_map.
-
-    dict node_responses_map has node as key and on values is another dict.
-        The nested dict has an action/file description as key and dict with a
-        result as value. The result is Result.
-        Example:
-        {
-            "node1": {
-                "action1/file1 desc": Result("success", ""),
-                "action2/file2 desc": Result("success", ""),
-            },
-            "node2": {
-                "action1/file1 desc": Result("success", ""),
-                "action2/file2 desc": Result("error", "something is wrong"),
-            }
-        }
-    callable is_success takes "action/file description" and the result and
-        returns bool: if the result means success
-    callable get_node_label takes node (key from node_response_map) and returns
-        string representation of node
-    """
-    success = defaultdict(list)
-    errors = defaultdict(dict)
-    for node, response_map in node_responses_map.items():
-        for key, item_response in sorted(response_map.items()):
-            if is_success(key, item_response):
-                success[get_node_label(node)].append(key)
-            else:
-                errors[get_node_label(node)][key] = format_result(item_response)
-    return success, errors
