@@ -236,7 +236,6 @@ Warning: Unable to resolve hostname: nonexistant-address.invalid
         corosync_conf = """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -295,7 +294,6 @@ Error: {0} already exists, use --force to overwrite
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -442,7 +440,6 @@ Error: {0} already exists, use --force to overwrite
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -483,7 +480,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -528,7 +524,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -569,7 +564,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -615,7 +609,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -657,7 +650,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -699,7 +691,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -740,7 +731,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -786,7 +776,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -832,7 +821,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -882,7 +870,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
 }
@@ -1283,7 +1270,6 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
     ip_version: ipv6
@@ -1391,7 +1377,6 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1450,7 +1435,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1509,7 +1493,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1568,7 +1551,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1636,7 +1618,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: active
@@ -1702,7 +1683,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: active
@@ -1778,7 +1758,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
     rrp_mode: passive
@@ -1867,7 +1846,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: test99
     transport: udpu
 }
@@ -2452,7 +2430,6 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: test99
     transport: udpu
     token: 20000
@@ -2696,7 +2673,6 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: unknown
 }
