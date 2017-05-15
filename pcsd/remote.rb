@@ -1461,6 +1461,9 @@ def update_resource (params, request, auth_user)
       end
       resource_group = params[:resource_group]
     end
+    # workaround for Error: this command is not sufficient for create remote
+    # connection, use 'pcs cluster node add-remote', use --force to override
+    cmd << "--force"
     out, stderr, retval = run_cmd(auth_user, *cmd)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
