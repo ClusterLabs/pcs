@@ -7,8 +7,6 @@ from __future__ import (
 
 from pcs.common import env_file_role_codes
 from pcs.lib.env_file import GhostFile, RealFile
-from pcs.lib.cib.tools import get_resources
-from pcs.lib.cib.resource import remote_node, guest_node
 
 
 #TODO obtain authkey path from sysconfig
@@ -43,11 +41,3 @@ class PacemakerEnv(object):
 
     def get_authkey_content(self):
         return self.__authkey.read()
-
-    @property
-    def remote_nodes(self):
-        return remote_node.find_node_list(get_resources(self.get_cib()))
-
-    @property
-    def guest_nodes(self):
-        return guest_node.find_node_list(get_resources(self.get_cib()))

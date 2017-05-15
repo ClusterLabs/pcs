@@ -52,7 +52,6 @@ def cli_env_to_lib_env(cli_env):
         cli_env.cib_data,
         cli_env.corosync_conf_data,
         booth=cli_env.booth,
-        pacemaker=cli_env.pacemaker,
         auth_tokens_getter=cli_env.auth_tokens_getter,
         cluster_conf_data=cli_env.cluster_conf_data,
         request_timeout=cli_env.request_timeout,
@@ -68,18 +67,16 @@ def lib_env_to_cli_env(lib_env, cli_env):
         cli_env.cluster_conf_data = lib_env.get_cluster_conf_data()
 
     #TODO
-    #now we know: if is in cli_env booth (pacemaker) is in lib_env as well
+    #now we know: if is in cli_env booth is in lib_env as well
     #when we communicate with the library over the network we will need extra
     #sanitization here
-    #this applies generally, not only for booth, pacemaker
+    #this applies generally, not only for booth
     #corosync_conf and cib suffers with this problem as well but in this cases
     #it is dangerously hidden: when inconsistency between cli and lib
     #environment inconsitency occurs, original content is put to file (which is
     #wrong)
     if cli_env.booth:
         cli_env.booth["modified_env"] = lib_env.booth.export()
-    if cli_env.pacemaker is not None:
-        cli_env.pacemaker["modified_env"] = lib_env.pacemaker.export()
 
     return cli_env
 
@@ -188,10 +185,7 @@ def load_module(env, middleware_factory, name):
     if name == "cluster":
         return bind_all(
             env,
-            middleware.build(
-                middleware_factory.cib,
-                middleware_factory.pacemaker.authkey,
-            ),
+            middleware.build(middleware_factory.cib),
             {
                 "node_add_remote": cluster.node_add_remote,
                 "node_add_guest": cluster.node_add_guest,

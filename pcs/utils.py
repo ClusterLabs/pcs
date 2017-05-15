@@ -22,7 +22,6 @@ import getpass
 import base64
 import threading
 import logging
-from collections import namedtuple
 
 from pcs import settings, usage
 
@@ -48,7 +47,6 @@ from pcs.cli.common.reports import (
 )
 from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
 import pcs.cli.booth.env
-from pcs.cli.pacemaker import env as pacemaker_env
 
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
@@ -2852,11 +2850,6 @@ def get_middleware_factory():
             pcs_options.get("--name", DEFAULT_BOOTH_NAME),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
-        ),
-        pacemaker=namedtuple("pacemaker_middleware", "authkey")(
-            pacemaker_env.middleware_config(
-                pcs_options.get("--pacemaker-authkey", None)
-            )
         ),
         cluster_conf_read_only=middleware.cluster_conf_read_only(
             pcs_options.get("--cluster_conf", None)
