@@ -24,7 +24,7 @@ class NodeAddRemote(ResourceTest):
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
             "cluster node add-remote",
-            stdout_start="\nUsage: pcs cluster node..."
+            stdout_start="\nUsage: pcs cluster node add-remote..."
         )
 
     def test_success(self):
@@ -162,7 +162,7 @@ class NodeAddGuest(ResourceTest):
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
             "cluster node add-guest",
-            stdout_start="\nUsage: pcs cluster node..."
+            stdout_start="\nUsage: pcs cluster node add-guest..."
         )
 
     def test_fail_when_resource_does_not_exists(self):
@@ -175,7 +175,7 @@ class NodeAddGuest(ResourceTest):
         self.assert_pcs_fail(
             "cluster node add-guest some-host node-name remote-node=node-name",
             stdout_start="Error: option 'remote-node' is not allowed\n\n"
-                "Usage: pcs cluster node..."
+                "Usage: pcs cluster node add-guest..."
         )
 
     def test_fail_when_resource_has_already_remote_node_meta(self):

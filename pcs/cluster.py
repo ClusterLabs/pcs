@@ -169,7 +169,7 @@ def cluster_cmd(argv):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
         if not argv:
-            usage.cluster()
+            usage.cluster(["node"])
             sys.exit(1)
 
         remote_node_command_map = {
@@ -191,7 +191,9 @@ def cluster_cmd(argv):
             except LibraryError as e:
                 utils.process_library_reports(e.args)
             except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(e, "cluster", "node")
+                utils.exit_on_cmdline_input_errror(
+                    e, "cluster", "node " + argv[0]
+                )
         else:
             cluster_node(argv)
     elif (sub_cmd == "localnode"):
@@ -1529,8 +1531,8 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
 
 
 def cluster_node(argv):
-    if len(argv) != 2:
-        usage.cluster()
+    if len(argv) < 1:
+        usage.cluster(["node"])
         sys.exit(1)
 
     if argv[0] == "add":
@@ -1538,7 +1540,11 @@ def cluster_node(argv):
     elif argv[0] in ["remove","delete"]:
         add_node = False
     else:
-        usage.cluster()
+        usage.cluster(["node"])
+        sys.exit(1)
+
+    if len(argv) != 2:
+        usage.cluster([" ".join(["node", argv[0]])])
         sys.exit(1)
 
     node = argv[1]
