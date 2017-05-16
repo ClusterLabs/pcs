@@ -51,7 +51,7 @@ def _validate_remote_connection(
     report_list = []
     report_list.append(
         reports.get_problem_creator(
-            report_codes.FORCE_INAPPROPRIATE_USE,
+            report_codes.FORCE_NOT_SUITABLE_COMMAND,
             allow_inappropriate_use
         )(reports.use_command_node_add_remote)
     )
@@ -78,7 +78,7 @@ def _validate_guest_change(
 
     report_list.append(
         reports.get_problem_creator(
-            report_codes.FORCE_INAPPROPRIATE_USE,
+            report_codes.FORCE_NOT_SUITABLE_COMMAND,
             allow_inappropriate_use
         )(create_report)
     )

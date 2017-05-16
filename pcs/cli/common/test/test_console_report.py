@@ -1049,7 +1049,7 @@ class NodeNotFound(NameBuildTest):
         )
 
 class MultipleResultFound(NameBuildTest):
-    code = codes.MULTIPLE_RESULT_FOUND
+    code = codes.MULTIPLE_RESULTS_FOUND
     def test_build_messages(self):
         self.assert_message_from_info(
             "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",

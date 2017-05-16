@@ -1427,7 +1427,7 @@ def multiple_result_found(
     string search_description e.g. name of remote_node
     """
     return ReportItem(
-        report_codes.MULTIPLE_RESULT_FOUND,
+        report_codes.MULTIPLE_RESULTS_FOUND,
         severity,
         info={
             "result_type": result_type,

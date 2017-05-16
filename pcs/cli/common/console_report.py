@@ -783,7 +783,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.MULTIPLE_RESULT_FOUND: lambda info:
+    codes.MULTIPLE_RESULTS_FOUND: lambda info:
         "multiple {result_type} {search_description} found: {what_found}"
         .format(
             what_found=joined_list(info["result_identifier_list"]),
