@@ -126,9 +126,7 @@ def resource_running_on_nodes(info):
             "{run_type} on node{s} {node_list}".format(
                 run_type=run_type,
                 s="s" if len(node_list) > 1 else "",
-                node_list=", ".join(
-                    ["'{0}'".format(node) for node in node_list]
-                )
+                node_list=joined_list(node_list)
             )
             for run_type, node_list in state_info.items()
         ]))
@@ -173,10 +171,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "required {desc}option{s} {option_names_list} {are} missing"
         .format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names_list=", ".join(sorted([
-                "'{0}'".format(name)
-                for name in info["option_names"]
-            ])),
+            option_names_list=joined_list(info["option_names"]),
             s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
                 "are" if len(info["option_names"]) > 1
@@ -214,10 +209,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(
             desc=format_optional(info["option_type"], "{0} "),
             allowed_values=", ".join(sorted(info["allowed"])),
-            option_names_list=", ".join(sorted([
-                "'{0}'".format(name)
-                for name in info["option_names"]
-            ])),
+            option_names_list=joined_list(info["option_names"]),
             s=("s:" if len(info["option_names"]) > 1 else ""),
             are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
@@ -262,10 +254,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         # "{desc}options {option_names} are muttually exclusive".format(
         "Only one of {desc}options {option_names} can be used".format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names = ", ".join([
-                "'{0}'".format(name)
-                for name in sorted(info["option_names"])[:-1]
-            ]) + " and '{0}'".format(sorted(info["option_names"])[-1])
+            option_names=(
+                joined_list(sorted(info["option_names"])[:-1])
+                +
+                " and '{0}'".format(sorted(info["option_names"])[-1])
+            )
         )
     ,
 
@@ -793,10 +786,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.MULTIPLE_RESULT_FOUND: lambda info:
         "multiple {result_type} {search_description} found: {what_found}"
         .format(
-            what_found=", ".join([
-                "'{0}'".format(result_identifier)
-                for result_identifier in info["result_identifier_list"]
-            ]),
+            what_found=joined_list(info["result_identifier_list"]),
             search_description="" if not info["search_description"]
                 else "for '{0}'".format(info["search_description"])
             ,
@@ -982,21 +972,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.FILES_DISTRIBUTION_STARTED: lambda info:
         "Sending {files}{where}".format(
-            where="" if not info["node_list"] else " to " + ", ".join(
-                "'{0}'".format(node) for node in info["node_list"]
+            where=(
+                "" if not info["node_list"]
+                else " to " + joined_list(info["node_list"])
             ),
-            files=", ".join([
-                "'{0}'".format(file_desc) for file_desc in info["file_list"]
-            ])
+            files=joined_list(info["file_list"])
         )
     ,
 
     codes.FILES_DISTRIBUTION_SUCCESS: lambda info:
         "{node}: success distribution of files {files}"
         .format(
-            files=", ".join([
-                "'{0}'".format(action) for action in info["results"]
-            ]),
+            files=joined_list(info["results"]),
             **info
         )
     ,
@@ -1015,21 +1002,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.ACTIONS_ON_NODES_STARTED: lambda info:
         "Requesting {actions}{where}".format(
-            where="" if not info["node_list"] else " on " + ", ".join(
-                "'{0}'".format(node) for node in info["node_list"]
+            where=(
+                "" if not info["node_list"]
+                else " on " + joined_list(info["node_list"])
             ),
-            actions=", ".join([
-                "'{0}'".format(file_desc) for file_desc in info["action_list"]
-            ])
+            actions=joined_list(info["action_list"])
         )
     ,
 
     codes.ACTIONS_ON_NODES_SUCCESS: lambda info:
         "{node}: success actions {actions}"
         .format(
-            actions=", ".join([
-                "'{0}'".format(action) for action in info["results"]
-            ]),
+            actions=joined_list(info["results"]),
             **info
         )
     ,
@@ -1239,9 +1223,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
     codes.AMBIGUOUS_HOST_SPECIFICATION: lambda info:
-        "An ambiguous host specification: {0}".format(
-            ", ".join(["'{0}'".format(host) for host in info["host_list"]])
-        )
+        "An ambiguous host specification: {0}"
+        .format(joined_list(info["host_list"]))
     ,
     codes.USE_COMMAND_NODE_ADD_REMOTE: lambda info:
         (

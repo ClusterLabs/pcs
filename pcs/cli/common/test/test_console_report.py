@@ -845,8 +845,8 @@ class FileDistributionSucess(NameBuildTest):
     code = codes.FILES_DISTRIBUTION_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "node1: success distribution of files 'some config file',"
-            " 'some authfile'"
+            "node1: success distribution of files 'some authfile',"
+            " 'some config file'"
             ,
             {
                 "nodes_success_files": None,
@@ -900,7 +900,7 @@ class ActionsOnNodesSuccess(NameBuildTest):
     code = codes.ACTIONS_ON_NODES_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "node1: success actions 'service start', 'service enable'",
+            "node1: success actions 'service enable', 'service start'",
             {
                 "nodes_success_actions": None,
                 "node": "node1",

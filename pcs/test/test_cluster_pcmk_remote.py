@@ -31,13 +31,13 @@ class NodeAddRemote(ResourceTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
             "cluster node add-remote HOST remote-node server=DIFFERENT",
-            "Error: An ambiguous host specification: 'HOST', 'DIFFERENT'\n"
+            "Error: An ambiguous host specification: 'DIFFERENT', 'HOST'\n"
         )
 
     def test_fail_on_duplicit_host_specification_without_name(self):
         self.assert_pcs_fail(
             "cluster node add-remote HOST server=DIFFERENT",
-            "Error: An ambiguous host specification: 'HOST', 'DIFFERENT'\n"
+            "Error: An ambiguous host specification: 'DIFFERENT', 'HOST'\n"
         )
 
     def test_fail_on_bad_commandline_usage(self):
@@ -403,7 +403,7 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_pcs_fail(
             "cluster node remove-remote HOST-A", #
             "Error: multiple resource for 'HOST-A' found: "
-                "'NODE-NAME', 'HOST-A', use --force to override\n"
+                "'HOST-A', 'NODE-NAME', use --force to override\n"
         )
 
     def test_success_remove_multiple_nodes(self):
@@ -413,7 +413,7 @@ class NodeRemoveRemote(ResourceTest):
             "<resources/>",
             outdent(
                 """\
-                Warning: multiple resource for 'HOST-A' found: 'NODE-NAME', 'HOST-A'
+                Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'
                 Deleting Resource - NODE-NAME
                 Deleting Resource - HOST-A
                 """
