@@ -157,3 +157,21 @@ def get_value(tag_name, context_element, name, default=None):
         /@value
     """.format(tag_name, name))
     return value_list[0] if value_list else default
+
+def has_meta_attribute(resource_el, name):
+    """
+    Return if the element contains meta attribute 'name'
+
+    etree.Element resource_el is researched element
+    string name specifies attribute
+    """
+    return 0 < len(resource_el.xpath(
+        './meta_attributes/nvpair[@name="{0}"]'.format(name)
+    ))
+
+arrange_first_meta_attributes = partial(
+    arrange_first_nvset,
+    "meta_attributes"
+)
+
+get_meta_attribute_value = partial(get_value, "meta_attributes")

@@ -5,7 +5,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from functools import partial
 
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
@@ -202,21 +201,3 @@ def unmanage(resource_el):
             "is-managed": "false",
         }
     )
-
-arrange_first_meta_attributes = partial(
-    nvpair.arrange_first_nvset,
-    "meta_attributes"
-)
-
-def has_meta_attribute(resource_el, name):
-    """
-    Return if the element contains meta attribute 'name'
-
-    etree.Element resource_el is researched element
-    string name specifies attribute
-    """
-    return 0 < len(resource_el.xpath(
-        './meta_attributes/nvpair[@name="{0}"]'.format(name)
-    ))
-
-get_meta_attribute_value = partial(nvpair.get_value, "meta_attributes")

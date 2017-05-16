@@ -140,22 +140,6 @@ def _upgrade_cib(runner):
 
 ### wait for idle
 
-def remove_node(runner, node_name):
-    stdout, stderr, retval = runner.run([
-        __exec("crm_node"),
-        "--force",
-        "--remove",
-        node_name,
-    ])
-    if retval != 0:
-        raise LibraryError(
-            reports.node_remove_in_pacemaker_failed(
-                node_name,
-                reason=join_multilines([stderr, stdout])
-            )
-        )
-
-
 def has_wait_for_idle_support(runner):
     # returns 1 on success so we don't care about retval
     stdout, stderr, dummy_retval = runner.run(
@@ -246,6 +230,21 @@ def get_local_node_status(runner):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
     raise LibraryError(reports.node_not_found(node_name))
+
+def remove_node(runner, node_name):
+    stdout, stderr, retval = runner.run([
+        __exec("crm_node"),
+        "--force",
+        "--remove",
+        node_name,
+    ])
+    if retval != 0:
+        raise LibraryError(
+            reports.node_remove_in_pacemaker_failed(
+                node_name,
+                reason=join_multilines([stderr, stdout])
+            )
+        )
 
 ### resources
 

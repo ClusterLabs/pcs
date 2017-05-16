@@ -7,7 +7,7 @@ from __future__ import (
 
 from pcs.lib import reports, validate
 from pcs.lib.cib.tools import does_id_exist
-from pcs.lib.cib.resource.common import(
+from pcs.lib.cib.nvpair import(
     has_meta_attribute,
     arrange_first_meta_attributes,
     get_meta_attribute_value,
