@@ -581,6 +581,7 @@ class HasMetaAttribute(TestCase):
             <primitive>
                 <meta_attributes>
                     <nvpair id="a" name="attr_name" value="value"/>
+                    <nvpair id="b" name="other_name" value="other-value"/>
                 </meta_attributes>
             </primitive>
         """)

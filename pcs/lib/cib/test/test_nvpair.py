@@ -284,6 +284,7 @@ class GetValue(TestCase):
                 <context>
                     <meta_attributes>
                         <nvpair name="SOME-NAME" value="some-value" />
+                        <nvpair name="OTHER-NAME" value="other-value" />
                     </meta_attributes>
                 </context>
             """,
@@ -316,4 +317,27 @@ class GetValue(TestCase):
                 </context>
             """,
             default="DEFAULT",
+        )
+
+    def test_return_none_when_no_nvpair(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                    <instance_attributes />
+                </context>
+            """,
+        )
+
+    def test_return_none_when_no_nvset(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                </context>
+            """,
         )
