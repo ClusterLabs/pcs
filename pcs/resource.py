@@ -48,7 +48,7 @@ def resource_cmd(argv):
 
     try:
         if sub_cmd == "help":
-            usage.resource([" ".join(argv_next)])
+            usage.resource([" ".join(argv_next)] if argv_next else [])
         elif sub_cmd == "list":
             resource_list_available(lib, argv_next, modifiers)
         elif sub_cmd == "describe":

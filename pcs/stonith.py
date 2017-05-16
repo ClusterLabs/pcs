@@ -38,7 +38,7 @@ def stonith_cmd(argv):
 
     try:
         if sub_cmd == "help":
-            usage.stonith([" ".join(argv_next)])
+            usage.stonith([" ".join(argv_next)] if argv_next else [])
         elif sub_cmd == "list":
             stonith_list_available(lib, argv_next, modifiers)
         elif sub_cmd == "describe":

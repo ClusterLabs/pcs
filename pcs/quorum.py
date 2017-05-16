@@ -25,7 +25,7 @@ def quorum_cmd(lib, argv, modificators):
 
     try:
         if sub_cmd == "help":
-            usage.quorum([" ".join(argv_next)])
+            usage.quorum([" ".join(argv_next)] if argv_next else [])
         elif sub_cmd == "config":
             quorum_config_cmd(lib, argv_next, modificators)
         elif sub_cmd == "expected-votes":
