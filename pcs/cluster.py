@@ -2155,14 +2155,29 @@ def cluster_report(argv):
     print(newoutput)
 
 def cluster_remote_node(argv):
+    usage_add = """\
+    remote-node add <hostname> <resource id> [options]
+        Enables the specified resource as a remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n')."""
+    usage_remove = """\
+    remote-node remove <hostname>
+        Disables any resources configured to be remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n')."""
+
     if len(argv) < 1:
-        usage.cluster(["remote-node"])
+        print("\nUsage: pcs cluster remote-node...")
+        print(usage_add)
+        print()
+        print(usage_remove)
+        print()
         sys.exit(1)
 
     command = argv.pop(0)
     if command == "add":
         if len(argv) < 2:
-            usage.cluster(["remote-node"])
+            print("\nUsage: pcs cluster remote-node add...")
+            print(usage_add)
+            print()
             sys.exit(1)
         #resource_udate is called so there is warning enough
         warn("this command is deprecated use 'pcs cluster node add-guest'")
@@ -2174,7 +2189,9 @@ def cluster_remote_node(argv):
 
     elif command in ["remove","delete"]:
         if len(argv) < 1:
-            usage.cluster(["remote-node"])
+            print("\nUsage: pcs cluster remote-node remove...")
+            print(usage_remove)
+            print()
             sys.exit(1)
         if "--force" in utils.pcs_options:
             warn(
@@ -2210,5 +2227,9 @@ def cluster_remote_node(argv):
             if retval != 0:
                 utils.err("unable to remove: {0}".format(output))
     else:
-        usage.cluster(["remote-node"])
+        print("\nUsage: pcs cluster remote-node...")
+        print(usage_add)
+        print()
+        print(usage_remove)
+        print()
         sys.exit(1)

@@ -765,14 +765,6 @@ Commands:
         Remove the (stopped) node with the specified nodename from Pacemaker's
         configuration and caches.
 
-    remote-node add <hostname> <resource id> [options]
-        Enables the specified resource as a remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n').
-
-    remote-node remove <hostname>
-        Disables any resources configured to be remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n').
-
     uidgid
         List the current configured uids and gids of users allowed to connect
         to corosync.
