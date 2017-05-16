@@ -10,7 +10,7 @@ import os.path
 import tempfile
 
 from pcs import settings
-from pcs.lib import reports, node
+from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
@@ -90,7 +90,6 @@ class LibraryEnvironment(object):
         self._cib_data_tmp_file = None
 
         self.__timeout_cache = {}
-        self.__nodes = None
 
     @property
     def logger(self):

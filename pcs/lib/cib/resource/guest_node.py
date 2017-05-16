@@ -12,8 +12,8 @@ from pcs.lib.cib.resource.common import(
     arrange_first_meta_attributes,
     get_meta_attribute_value,
 )
-from pcs.lib.node import NodeAddresses
 from pcs.lib.node import (
+    NodeAddresses,
     node_addresses_contain_host,
     node_addresses_contain_name,
 )

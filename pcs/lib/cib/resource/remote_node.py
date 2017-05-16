@@ -7,12 +7,12 @@ from __future__ import (
 
 from pcs.lib import reports, validate
 from pcs.lib.cib.resource import primitive
-from pcs.lib.node import NodeAddresses
-from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 from pcs.lib.node import(
+    NodeAddresses,
     node_addresses_contain_host,
     node_addresses_contain_name,
 )
+from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 AGENT_NAME = "ocf:pacemaker:remote"
 
