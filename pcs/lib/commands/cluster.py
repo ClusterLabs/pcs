@@ -61,14 +61,23 @@ def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
 def _prepare_pacemaker_remote_environment(
     env, current_nodes, node_host, allow_incomplete_distribution, allow_fails
 ):
-    if not env.is_cib_live:
-        env.report_processor.process(
-            reports.actions_skipped_when_no_live_environment([
-                "pacemaker authkey distribution",
-                "start pacemaker_remote on '{0}'".format(node_host),
-                "enable pacemaker_remote on '{0}'".format(node_host),
-            ])
-        )
+    if not env.is_corosync_conf_live:
+        env.report_processor.process_list([
+            reports.nolive_skip_files_distribution(
+                ["pacemaker authkey"],
+                [node_host]
+            ),
+            reports.nolive_skip_service_command_on_nodes(
+                "pacemaker_remote",
+                "start",
+                [node_host]
+            ),
+            reports.nolive_skip_service_command_on_nodes(
+                "pacemaker_remote",
+                "enable",
+                [node_host]
+            ),
+        ])
         return
 
     candidate_node = NodeAddresses(node_host)
@@ -86,6 +95,19 @@ def _ensure_resource_running(env, resource_id):
         state.ensure_resource_running(env.get_cluster_state(), resource_id)
     )
 
+def _ensure_consistently_live_env(env):
+    if env.is_cib_live and env.is_corosync_conf_live:
+        return
+
+    #we accept is as well, we need it for tests
+    if not env.is_cib_live and not env.is_corosync_conf_live:
+        return
+
+    raise LibraryError(reports.live_environment_required([
+        "CIB" if not env.is_cib_live else "COROSYNC_CONF"
+    ]))
+
+
 def node_add_remote(
     env, host, node_name, operations, meta_attributes, instance_attributes,
     allow_incomplete_distribution=False,
@@ -95,6 +117,7 @@ def node_add_remote(
     use_default_operations=True,
     wait=False,
 ):
+    _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
     report_list = remote_node.validate_host_not_ambiguous(
@@ -106,9 +129,10 @@ def node_add_remote(
     )
 
     cib = env.get_cib()
+    current_nodes = get_nodes(env.get_corosync_conf(), cib)
 
     report_list.extend(remote_node.validate_parts(
-        get_nodes(env.get_corosync_conf(), cib),
+        current_nodes,
         node_name,
         enriched_instance_attributes
     ))
@@ -133,7 +157,7 @@ def node_add_remote(
 
     _prepare_pacemaker_remote_environment(
         env,
-        get_nodes(env.get_corosync_conf(), cib),
+        current_nodes,
         host,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
@@ -151,12 +175,15 @@ def node_add_guest(
     dict options could contain keys remote-node, remote-port, remote-addr,
         remote-connect-timeout
     """
+    _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
     cib = env.get_cib()
+    current_nodes = get_nodes(env.get_corosync_conf(), cib)
+
     report_list = guest_node.validate_parts(
         cib,
-        get_nodes(env.get_corosync_conf(), cib),
+        current_nodes,
         resource_id,
         options
     )
@@ -182,11 +209,12 @@ def node_add_guest(
 
     _prepare_pacemaker_remote_environment(
         env,
-        get_nodes(env.get_corosync_conf(), cib),
+        current_nodes,
         guest_node.get_host_from_options(options),
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
+
     env.push_cib(cib, wait)
     if wait:
         _ensure_resource_running(env, resource_id)
@@ -216,12 +244,13 @@ def _find_resources_to_remove(
 
     return resource_element_list
 
-def _remove_pcmk_remote(
+def _remove_pcmk_remote_from_cib(
     nodes, resource_element_list, get_host, remove_resource
 ):
     node_addresses_set = set()
     for resource_element in resource_element_list:
         for node in nodes:
+            #remote nodes uses ring0 only
             if get_host(resource_element) == node.ring0:
                 node_addresses_set.add(node)
         remove_resource(resource_element)
@@ -229,22 +258,6 @@ def _remove_pcmk_remote(
     return sorted(node_addresses_set, key=lambda node: node.ring0)
 
 def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
-    if not env.is_cib_live:
-        formated_node_host_list = ", ".join([
-            "'{0}'".format(node_addresses.ring0)
-            for node_addresses in node_addresses_list
-        ])
-        env.report_processor.process(
-            reports.actions_skipped_when_no_live_environment([
-                "pacemaker_remote authkey remove",
-                "stop pacemaker_remote on {0}".format(formated_node_host_list),
-                "disable pacemaker_remote on {0}".format(
-                    formated_node_host_list
-                ),
-            ])
-        )
-        return
-
     actions = node_communication_format.create_pcmk_remote_actions([
         "stop",
         "disable",
@@ -267,12 +280,30 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         allow_fails,
     )
 
+def _report_skip_live_parts_in_remove(node_addresses_list):
+    #remote nodes uses ring0 only
+    node_host_list = [addresses.ring0 for addresses in node_addresses_list]
+    return [
+        reports.nolive_skip_service_command_on_nodes(
+            "pacemaker_remote",
+            "stop",
+            node_host_list
+        ),
+        reports.nolive_skip_service_command_on_nodes(
+            "pacemaker_remote",
+            "disable",
+            node_host_list
+        ),
+        reports.nolive_skip_files_remove(["pacemaker authkey"], node_host_list)
+    ]
+
 def node_remove_remote(
     env, node_identifier, remove_resource,
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False
 ):
 
+    _ensure_consistently_live_env(env)
     cib = env.get_cib()
     resource_element_list = _find_resources_to_remove(
         cib,
@@ -282,7 +313,7 @@ def node_remove_remote(
         allow_remove_multiple_nodes,
         remote_node.find_node_resources,
     )
-    node_addresses_list = _remove_pcmk_remote(
+    node_addresses_list = _remove_pcmk_remote_from_cib(
         get_nodes_remote(cib),
         resource_element_list,
         remote_node.get_host,
@@ -291,6 +322,14 @@ def node_remove_remote(
             is_remove_remote_context=True,
         )
     )
+    if not env.is_corosync_conf_live:
+        env.report_processor.process_list(
+            _report_skip_live_parts_in_remove(node_addresses_list)
+        )
+        return
+
+    #remove node from pcmk caches is currently integrated in remove_resource
+    #function
     _destroy_pcmk_remote_env(
         env,
         node_addresses_list,
@@ -303,6 +342,7 @@ def node_remove_guest(
     allow_pacemaker_remote_service_fail=False,
     wait=False,
 ):
+    _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
@@ -315,13 +355,21 @@ def node_remove_guest(
         guest_node.find_node_resources,
     )
 
-    node_addresses_list =  _remove_pcmk_remote(
+    node_addresses_list =  _remove_pcmk_remote_from_cib(
         get_nodes_guest(cib),
         resource_element_list,
         guest_node.get_host,
         guest_node.unset_guest,
     )
     env.push_cib(cib, wait)
+
+    if not env.is_corosync_conf_live:
+        env.report_processor.process_list(
+            _report_skip_live_parts_in_remove(node_addresses_list)
+        )
+        return
+
+    #remove node from pcmk caches
     for node_addresses in node_addresses_list:
         remove_node(env.cmd_runner(), node_addresses.name)
 

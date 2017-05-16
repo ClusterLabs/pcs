@@ -12,11 +12,20 @@ from pcs.lib.node import NodeAddressesList
 
 def get_nodes(corosync_conf=None, tree=None):
     return NodeAddressesList(
-        (corosync_conf.get_nodes() if corosync_conf else [])
+        (
+            corosync_conf.get_nodes() if corosync_conf
+            else NodeAddressesList([])
+        )
         +
-        (get_nodes_remote(tree) if tree is not None else [])
+        (
+            get_nodes_remote(tree) if tree is not None
+            else NodeAddressesList([])
+        )
         +
-        (get_nodes_guest(tree) if tree is not None else [])
+        (
+            get_nodes_guest(tree) if tree is not None
+            else NodeAddressesList([])
+        )
     )
 
 def get_nodes_remote(tree):

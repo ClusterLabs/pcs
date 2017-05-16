@@ -185,7 +185,10 @@ def load_module(env, middleware_factory, name):
     if name == "cluster":
         return bind_all(
             env,
-            middleware.build(middleware_factory.cib),
+            middleware.build(
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
+            ),
             {
                 "node_add_remote": cluster.node_add_remote,
                 "node_add_guest": cluster.node_add_guest,

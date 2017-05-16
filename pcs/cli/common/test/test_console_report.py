@@ -945,15 +945,67 @@ class resource_is_guest_node_already(NameBuildTest):
             {"resource_id": "some-resource"}
         )
 
-class actions_skipped_when_no_live_environment(NameBuildTest):
-    code = codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT
+class live_environment_required(NameBuildTest):
+    code = codes.LIVE_ENVIRONMENT_REQUIRED
     def test_build_messages(self):
         self.assert_message_from_info(
-            "The following actions were skipped because -f was used:\n"
-                "  action1\n"
-                "  action2"
+            "This command does not support '--corosync_conf'",
+            {
+                "forbidden_options": ["--corosync_conf"]
+            }
+        )
+
+    def test_build_messages_transformable_codes(self):
+        self.assert_message_from_info(
+            "This command does not support '--corosync_conf', '-f'",
+            {
+                "forbidden_options": ["COROSYNC_CONF", "CIB"]
+            }
+        )
+
+class nolive_skip_files_distribution(NameBuildTest):
+    code = codes.NOLIVE_SKIP_FILES_DISTRIBUTION
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "the distribution of 'file1', 'file2' to 'node1', 'node2' was"
+                " skipped because command"
+                " does not run on live cluster (e.g. -f was used)."
+                " You will have to do it manually."
             ,
-            {"action_list": ["action1", "action2"]}
+            {
+                "files_description": ["file1", 'file2'],
+                "nodes": ["node1", "node2"],
+            }
+        )
+
+class nolive_skip_files_remove(NameBuildTest):
+    code = codes.NOLIVE_SKIP_FILES_REMOVE
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "'file1', 'file2' remove from 'node1', 'node2'"
+                " was skipped because command"
+                " does not run on live cluster (e.g. -f was used)."
+                " You will have to do it manually."
+            ,
+            {
+                "files_description": ["file1", 'file2'],
+                "nodes": ["node1", "node2"],
+            }
+        )
+
+class nolive_skip_service_command_on_nodes(NameBuildTest):
+    code = codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "running 'pacemaker_remote start' on 'node1', 'node2' was skipped"
+                " because command does not run on live cluster (e.g. -f was"
+                " used). You will have to run it manually."
+            ,
+            {
+                "service": "pacemaker_remote",
+                "command": "start",
+                "nodes": ["node1", "node2"]
+            }
         )
 
 class NodeNotFound(NameBuildTest):

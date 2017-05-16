@@ -148,6 +148,15 @@ def build_node_description(node_types):
 
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
 
+def joined_list(item_list, optional_transformations=None):
+    if not optional_transformations:
+        optional_transformations={}
+
+    return ", ".join(sorted([
+        "'{0}'".format(optional_transformations.get(item, item))
+        for item in item_list
+    ]))
+
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
 #If it is necessary to put the force text inside the string then the callable
@@ -1167,16 +1176,47 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
         "This command does not support {forbidden_options}"
-        .format(forbidden_options=", ".join(info["forbidden_options"]))
+        .format(
+            forbidden_options=joined_list(info["forbidden_options"], {
+                "CIB": "-f",
+                "COROSYNC_CONF": "--corosync_conf",
+            })
+        )
     ,
 
     codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE:
         "Node(s) must be specified if -f is used"
     ,
 
-    codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT: lambda info:
-        "The following actions were skipped because -f was used:\n  {actions}"
-        .format(actions="\n  ".join(info["action_list"]))
+    codes.NOLIVE_SKIP_FILES_DISTRIBUTION: lambda info:
+        (
+            "the distribution of {files} to {nodes} was skipped because command"
+            " does not run on live cluster (e.g. -f was used)."
+            " You will have to do it manually."
+        ).format(
+            files=joined_list(info["files_description"]),
+            nodes=joined_list(info["nodes"]),
+        )
+    ,
+    codes.NOLIVE_SKIP_FILES_REMOVE: lambda info:
+        (
+            "{files} remove from {nodes} was skipped because command"
+            " does not run on live cluster (e.g. -f was used)."
+            " You will have to do it manually."
+        ).format(
+            files=joined_list(info["files_description"]),
+            nodes=joined_list(info["nodes"]),
+        )
+    ,
+    codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES: lambda info:
+        (
+            "running '{command}' on {nodes} was skipped"
+                " because command does not run on live cluster (e.g. -f was"
+                " used). You will have to run it manually."
+        ).format(
+            command="{0} {1}".format(info["service"], info["command"]),
+            nodes=joined_list(info["nodes"]),
+        )
     ,
 
     codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:

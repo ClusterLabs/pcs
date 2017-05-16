@@ -8,6 +8,25 @@ from __future__ import (
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.misc import outdent
 
+fixture_nolive_add_report = outdent(
+    """\
+    the distribution of 'pacemaker authkey' to 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+    running 'pacemaker_remote start' on 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+    running 'pacemaker_remote enable' on 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+    """
+)
+
+def fixture_nolive_remove_report(host_list):
+    return outdent(
+        """\
+        running 'pacemaker_remote stop' on {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+        running 'pacemaker_remote disable' on {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+        'pacemaker authkey' remove from {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+        """
+    ).format(hosts=", ".join("'{0}'".format(host) for host in host_list))
+
+
+
 class NodeAddRemote(ResourceTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
@@ -52,14 +71,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            output=fixture_nolive_add_report
         )
 
     def test_success_no_default_ops(self):
@@ -81,14 +93,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            output=fixture_nolive_add_report
         )
 
     def test_fail_when_server_already_used(self):
@@ -110,14 +115,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            output=fixture_nolive_add_report
         )
         self.assert_pcs_fail(
             "cluster node add-remote node-host B",
@@ -130,14 +128,7 @@ class NodeAddRemote(ResourceTest):
         )
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
-            outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            fixture_nolive_add_report
         )
         self.assert_pcs_fail(
             "cluster node add-remote node-host B",
@@ -228,14 +219,7 @@ class NodeAddGuest(ResourceTest):
         self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
-            outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            fixture_nolive_add_report
         )
         self.assert_pcs_fail(
             "cluster node add-guest node-host H",
@@ -284,14 +268,7 @@ class NodeAddGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            output=fixture_nolive_add_report
         )
 
     def test_success_with_options(self):
@@ -323,14 +300,7 @@ class NodeAddGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker authkey distribution
-                  start pacemaker_remote on 'node-host'
-                  enable pacemaker_remote on 'node-host'
-                """
-            )
+            output=fixture_nolive_add_report
         )
 
 class NodeRemoveRemote(ResourceTest):
@@ -412,12 +382,8 @@ class NodeRemoveRemote(ResourceTest):
             outdent(
                 """\
                 Deleting Resource - NODE-NAME
-                The following actions were skipped because -f was used:
-                  pacemaker_remote authkey remove
-                  stop pacemaker_remote on 'NODE-HOST'
-                  disable pacemaker_remote on 'NODE-HOST'
                 """
-            )
+            ) + fixture_nolive_remove_report(["NODE-HOST"])
         )
 
     def test_success_remove_by_node_name(self):
@@ -428,12 +394,8 @@ class NodeRemoveRemote(ResourceTest):
             outdent(
                 """\
                 Deleting Resource - NODE-NAME
-                The following actions were skipped because -f was used:
-                  pacemaker_remote authkey remove
-                  stop pacemaker_remote on 'NODE-HOST'
-                  disable pacemaker_remote on 'NODE-HOST'
                 """
-            )
+            ) + fixture_nolive_remove_report(["NODE-HOST"])
         )
 
     def test_refuse_on_duplicit(self):
@@ -454,12 +416,8 @@ class NodeRemoveRemote(ResourceTest):
                 Warning: multiple resource for 'HOST-A' found: 'NODE-NAME', 'HOST-A'
                 Deleting Resource - NODE-NAME
                 Deleting Resource - HOST-A
-                The following actions were skipped because -f was used:
-                  pacemaker_remote authkey remove
-                  stop pacemaker_remote on 'HOST-A', 'HOST-B'
-                  disable pacemaker_remote on 'HOST-A', 'HOST-B'
                 """
-            )
+            ) + fixture_nolive_remove_report(["HOST-A", "HOST-B"])
         )
 
 class NodeRemoveGuest(ResourceTest):
@@ -513,14 +471,7 @@ class NodeRemoveGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            outdent(
-                """\
-                The following actions were skipped because -f was used:
-                  pacemaker_remote authkey remove
-                  stop pacemaker_remote on 'NODE-HOST'
-                  disable pacemaker_remote on 'NODE-HOST'
-                """
-            )
+            fixture_nolive_remove_report(["NODE-HOST"])
         )
 
     def test_success_remove_by_node_name(self):

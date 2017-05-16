@@ -2410,18 +2410,49 @@ def live_environment_required_for_local_node():
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
     )
 
-def actions_skipped_when_no_live_environment(action_list):
+def nolive_skip_files_distribution(files_description, nodes):
     """
-    Some parts of command was skipped because no live environment is there. For
-    example when command uses -f then calling real nodes is skipped.
+    When running action with e.g. -f the files was not distributed to nodes.
+    list files_description -- contains description of files
+    list nodes -- destinations where should be files distributed
     """
     return ReportItem.info(
-        report_codes.ACTIONS_SKIPPED_WHEN_NO_LIVE_ENVIRONMENT,
+        report_codes.NOLIVE_SKIP_FILES_DISTRIBUTION,
         info={
-            "action_list": action_list,
+            "files_description": files_description,
+            "nodes": nodes,
         }
     )
 
+def nolive_skip_files_remove(files_description, nodes):
+    """
+    When running action with e.g. -f the files was not removed from nodes.
+    list files_description -- contains description of files
+    list nodes -- destinations from where should be files removed
+    """
+    return ReportItem.info(
+        report_codes.NOLIVE_SKIP_FILES_REMOVE,
+        info={
+            "files_description": files_description,
+            "nodes": nodes,
+        }
+    )
+
+def nolive_skip_service_command_on_nodes(service, command, nodes):
+    """
+    When running action with e.g. -f the service command is not run on nodes.
+    string service -- e.g. pacemaker, pacemaker_remote, corosync
+    string command -- e.g. start, enable, stop, disable
+    list nodes -- destinations where should be commad run
+    """
+    return ReportItem.info(
+        report_codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES,
+        info={
+            "service": service,
+            "command": command,
+            "nodes": nodes,
+        }
+    )
 
 def quorum_cannot_disable_atb_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None
