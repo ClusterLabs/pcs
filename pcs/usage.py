@@ -731,39 +731,35 @@ Commands:
 
     node add-remote <node host> [<node-name>] [options]
            [op <operation action> <operation options> [<operation action>
-           <operation options>]...] [meta <meta options>...] [--wait[=n]]
-        Add the node to the cluster as remote node. Make sure that the pacemaker
-        authkey is on all nodes. Start and enable pacemaker_remote daemon on the
-        node.
-        Options, operations and meta belongs to a connection resource
-        (ocf:pacemaker:remote).
-        Options can be server, port, reconnect_interval.
+           <operation options>]...] [meta <meta options>...] [--wait[=<n>]]
+        Add the node to the cluster as a remote node. Sync all relevant
+        configuration files to the new node. Start the node and configure it to
+        start the cluster on boot.
+        Options are server, port and reconnect_interval. Operations and meta
+        belong to an underlying connection resource (ocf:pacemaker:remote).
+        If --wait is specified, wait up to 'n' seconds for the node to start.
 
     node remove-remote <node-identifier>
         Shutdown specified remote node and remove it from the cluster.
-        The node-identifier could be the name of the node or the address of the
+        The node-identifier can be the name of the node or the address of the
         node.
 
-    node add-guest <node name> <resource id> [options]
-        Enables the specified resource as a guest node resource. Make sure that
-        the pacemaker authkey is on all nodes. Start and enable pacemaker_remote
-        daemon on the node.
-        Options:
-        remote-addr: the IP address or hostname of guest node; if it is not
-            specified then node name is used
-        remote-port: the port on the virtual machine that the cluster will use
-            to connect to pacemaker_remote
-        remote-connect-timeout: how long before a pending guest connection will
-            time out
+    node add-guest <node name> <resource id> [options] [--wait[=<n>]]
+        Make the specified resource a guest node resource. Sync all relevant
+        configuration files to the new node. Start the node and configure it to
+        start the cluster on boot.
+        Options are remote-addr, remote-port and remote-connect-timeout.
+        If --wait is specified, wait up to 'n' seconds for the node to start.
 
     node remove-guest <node-identifier>
         Shutdown specified guest node and remove it from the cluster.
-        The node-identifier could be the name of the node or the address of the
-        node or id of resource that is used as guest node.
+        The node-identifier can be the name of the node or the address of the
+        node or id of the resource that is used as the guest node.
 
     node clear <nodename>
-        Remove the (stopped) node with the specified nodename from Pacemaker's
-        configuration and caches.
+        Remove specified node from various cluster caches. Use this if a
+        removed node is still considered by the cluster to be a member of the
+        cluster.
 
     uidgid
         List the current configured uids and gids of users allowed to connect
