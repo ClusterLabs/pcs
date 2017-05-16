@@ -32,7 +32,6 @@ temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
-# pylint:disable=trailing-whitespace,too-many-lines
 
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -1834,6 +1833,7 @@ Ticket Constraints:
         assert output == "", [output]
 
         self.assert_pcs_success("resource show D0", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
               Attributes: test=testB test2=testC test4=test4A test3=testD
@@ -3086,6 +3086,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, r)
 
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
               Meta Attrs: foo=bar 
@@ -3097,6 +3098,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource update D1-clone bar=baz")
 
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
               Meta Attrs: foo=bar bar=baz 
@@ -3110,6 +3112,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, "")
 
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
               Meta Attrs: bar=baz 
@@ -3340,6 +3343,7 @@ Error: Cannot remove more than one resource from cloned group
         assert r == 0
 
         self.assert_pcs_success("resource show D1", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: target-role=Stopped 
@@ -3584,6 +3588,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-clone", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped 
@@ -3612,6 +3617,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-clone", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped 
@@ -3728,6 +3734,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Master: dummy-master
               Meta Attrs: target-role=Stopped 
@@ -3758,6 +3765,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Master: dummy-master
               Meta Attrs: target-role=Stopped 
@@ -3812,6 +3820,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
+                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped 
@@ -3829,6 +3838,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
+                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped 
@@ -3847,6 +3857,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
+                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
@@ -3866,6 +3877,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
+                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
@@ -3885,6 +3897,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
+                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
@@ -4326,6 +4339,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
 
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0 
@@ -4374,6 +4388,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0 
@@ -4416,6 +4431,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
@@ -4458,6 +4474,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
