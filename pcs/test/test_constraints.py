@@ -1949,7 +1949,7 @@ Ticket Constraints:
         )
         ac(
             output,
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
         self.assertEqual(0, returnVal)
@@ -2026,7 +2026,7 @@ Ticket Constraints:
         )
         ac(
             output,
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
         self.assertEqual(0, returnVal)
@@ -2093,7 +2093,7 @@ Ticket Constraints:
         )
         ac(
             output,
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
         self.assertEqual(0, returnVal)

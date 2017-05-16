@@ -86,7 +86,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             o,
             "Warning: this command is deprecated use 'pcs cluster node"
                 " add-guest'\n"
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
 
@@ -100,7 +100,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             o,
             "Warning: this command is deprecated use 'pcs cluster node"
                 " add-guest'\n"
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
 

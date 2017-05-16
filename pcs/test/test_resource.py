@@ -4971,7 +4971,7 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource update R meta remote-node=HOST",
-            "Error: this command is not sufficient for create guest node,"
+            "Error: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest', use --force to override\n"
         )
     def test_update_warn_on_pacemaker_guest_attempt(self):
@@ -4980,7 +4980,7 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource update R meta remote-node=HOST --force",
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
     def test_update_fail_on_pacemaker_guest_attempt_remove(self):
@@ -4988,12 +4988,12 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
                 " --force"
             ,
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_fail(
             "resource update R meta remote-node=",
-            "Error: this command is not sufficient for remove guest node,"
+            "Error: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest', use --force to override\n"
         )
 
@@ -5002,12 +5002,12 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
                 " --force"
             ,
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_success(
             "resource update R meta remote-node= --force",
-            "Warning: this command is not sufficient for remove guest node,"
+            "Warning: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest'\n"
         )
 
@@ -5017,7 +5017,7 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource meta R remote-node=HOST",
-            "Error: this command is not sufficient for create guest node,"
+            "Error: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest', use --force to override\n"
         )
 
@@ -5027,7 +5027,7 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource meta R remote-node=HOST --force",
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
 
@@ -5036,12 +5036,12 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
                 " --force"
             ,
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_fail(
             "resource meta R remote-node=",
-            "Error: this command is not sufficient for remove guest node,"
+            "Error: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest', use --force to override\n"
         )
 
@@ -5050,11 +5050,11 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
                 " --force"
             ,
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_success(
             "resource meta R remote-node= --force",
-            "Warning: this command is not sufficient for remove guest node,"
+            "Warning: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest'\n"
         )

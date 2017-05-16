@@ -2201,7 +2201,7 @@ def cluster_remote_node(argv):
             print()
             sys.exit(1)
         #resource_udate is called so there is warning enough
-        warn("this command is deprecated use 'pcs cluster node add-guest'")
+        warn("this command is deprecated, use 'pcs cluster node add-guest'")
         hostname = argv.pop(0)
         rsc = argv.pop(0)
         if not utils.dom_get_resource(utils.get_cib_dom(), rsc):

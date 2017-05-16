@@ -1352,7 +1352,7 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote",
-            "Error: this command is not sufficient for create remote"
+            "Error: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'"
                 ", use --force to override\n"
         )
@@ -1360,56 +1360,56 @@ class FailOrWarnGroup(ResourceTest):
     def test_warn_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_success(
             "resource create R2 ocf:pacemaker:remote --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_node(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote server=R --force",
             "Error: 'R' already exists\n"
-                "Warning: this command is not sufficient for create remote"
+                "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_id(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=R2 --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote --force",
             "Error: 'R2' already exists\n"
-                "Warning: this command is not sufficient for create remote"
+                "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
     def test_fail_when_on_guest_conflict_with_existing_node(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy meta remote-node=R --force",
             "Error: 'R' already exists\n"
-                "Warning: this command is not sufficient for create guest node"
+                "Warning: this command is not sufficient for creating a guest node"
                 ", use 'pcs cluster node add-guest'\n"
         )
 
     def test_fail_when_on_guest_conflict_with_existing_node_host(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
@@ -1418,14 +1418,14 @@ class FailOrWarnGroup(ResourceTest):
                 " --force"
             ,
             "Error: 'HOST' already exists\n"
-                "Warning: this command is not sufficient for create guest node"
+                "Warning: this command is not sufficient for creating a guest node"
                 ", use 'pcs cluster node add-guest'\n"
         )
 
     def test_fail_when_on_guest_conflict_with_existing_node_host_addr(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
@@ -1434,14 +1434,14 @@ class FailOrWarnGroup(ResourceTest):
                 " remote-addr=HOST --force"
             ,
             "Error: 'HOST' already exists\n"
-                "Warning: this command is not sufficient for create guest node"
+                "Warning: this command is not sufficient for creating a guest node"
                 ", use 'pcs cluster node add-guest'\n"
         )
 
     def test_not_fail_when_on_guest_when_conflict_host_with_name(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
@@ -1449,14 +1449,14 @@ class FailOrWarnGroup(ResourceTest):
             "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST"
                 " remote-addr=R --force"
             ,
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
 
     def test_fail_when_on_pacemaker_remote_guest_attempt(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST",
-            "Error: this command is not sufficient for create guest node,"
+            "Error: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest', use --force to override\n"
         )
 
@@ -1465,6 +1465,6 @@ class FailOrWarnGroup(ResourceTest):
             "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST"
                 " --force"
             ,
-            "Warning: this command is not sufficient for create guest node,"
+            "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n"
         )

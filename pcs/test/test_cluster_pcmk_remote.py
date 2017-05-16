@@ -174,7 +174,7 @@ class NodeAddGuest(ResourceTest):
             "resource create already-guest-node ocf:heartbeat:Dummy"
                 " meta remote-node=some --force"
             ,
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
         self.assert_pcs_fail(
@@ -238,7 +238,7 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
         self.assert_pcs_fail(
@@ -250,7 +250,7 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
         self.assert_pcs_fail(
@@ -341,7 +341,7 @@ class NodeRemoveRemote(ResourceTest):
                 </primitive>
             </resources>"""
             ,
-            "Warning: this command is not sufficient for create remote"
+            "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
 
@@ -453,7 +453,7 @@ class NodeRemoveGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: this command is not sufficient for create guest node, use"
+            "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
 

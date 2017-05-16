@@ -1228,19 +1228,19 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.USE_COMMAND_NODE_ADD_REMOTE: lambda info:
         (
-            "this command is not sufficient for create remote connection,"
+            "this command is not sufficient for creating a remote connection,"
             " use 'pcs cluster node add-remote'"
         )
     ,
     codes.USE_COMMAND_NODE_ADD_GUEST: lambda info:
         (
-            "this command is not sufficient for create guest node, use"
+            "this command is not sufficient for creating a guest node, use"
             " 'pcs cluster node add-guest'"
         )
     ,
     codes.USE_COMMAND_NODE_REMOVE_GUEST: lambda info:
         (
-            "this command is not sufficient for remove guest node, use"
+            "this command is not sufficient for removing a guest node, use"
             " 'pcs cluster node remove-guest'"
         )
     ,
