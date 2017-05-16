@@ -117,6 +117,29 @@ def node_add_remote(
     use_default_operations=True,
     wait=False,
 ):
+    """
+    create resource ocf:pacemaker:remote and use it as remote node
+
+    LibraryEnvironment env provides all for communication with externals
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
+    bool allow_incomplete_distribution -- is a flag for allowing successfully
+        finish this command even if is file distribution not succeeded
+    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
+        successfully finish this command even if starting/enabling
+        pacemaker_remote not succeeded
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    """
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
@@ -171,9 +194,20 @@ def node_add_guest(
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
+
     """
+    setup resource (resource_id) as guest node and setup node as guest
+
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id -- specifies resource that should be guest node
     dict options could contain keys remote-node, remote-port, remote-addr,
         remote-connect-timeout
+    bool allow_incomplete_distribution -- is a flag for allowing successfully
+        finish this command even if is file distribution not succeeded
+    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
+        successfully finish this command even if starting/enabling
+        pacemaker_remote not succeeded
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
     """
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
@@ -302,6 +336,18 @@ def node_remove_remote(
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False
 ):
+    """
+    remove a resource representing remote node and destroy remote node
+
+    LibraryEnvironment env provides all for communication with externals
+    string node_identifier -- node name or hostname
+    callable remove_resource -- function for remove resource
+    bool allow_remove_multiple_nodes -- is a flag for allowing
+        remove unexpected multiple occurence of remote node for node_identifier
+    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
+        successfully finish this command even if stoping/disabling
+        pacemaker_remote not succeeded
+    """
 
     _ensure_consistently_live_env(env)
     cib = env.get_cib()
@@ -342,6 +388,17 @@ def node_remove_guest(
     allow_pacemaker_remote_service_fail=False,
     wait=False,
 ):
+    """
+    remove a resource representing remote node and destroy remote node
+
+    LibraryEnvironment env provides all for communication with externals
+    string node_identifier -- node name, hostname or resource id
+    bool allow_remove_multiple_nodes -- is a flag for allowing
+        remove unexpected multiple occurence of remote node for node_identifier
+    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
+        successfully finish this command even if stoping/disabling
+        pacemaker_remote not succeeded
+    """
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()

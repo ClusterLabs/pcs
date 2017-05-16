@@ -78,7 +78,7 @@ def is_guest_node(resource_element):
     """
     Return True if resource_element is already set as guest node.
 
-    etree.Element resource_element is a researched element
+    etree.Element resource_element is a search element
     """
     return has_meta_attribute(resource_element, "remote-node")
 

@@ -62,7 +62,7 @@ def find_node_resources(resources_section, node_identifier):
     """
     Return list of resource elements that match to node_identifier
 
-    etree.Element resources_section is a researched element
+    etree.Element resources_section is a search element
     string node_identifier could be id of the resource or its instance attribute
         "server"
     """
@@ -140,6 +140,13 @@ def validate_host_not_conflicts(nodes, node_name, instance_attributes):
     return []
 
 def validate_parts(nodes, node_name, instance_attributes):
+    """
+    validate inputs for create
+
+    list of NodeAddresses nodes -- nodes already used
+    string node_name -- name of future node
+    dict instance_attributes -- data for future resource instance attributes
+    """
     validator_list = [
         validate.is_required("server", "remote node"),
         validate_pcmk_remote_host_not_used("server", nodes)

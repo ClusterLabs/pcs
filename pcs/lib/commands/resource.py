@@ -149,6 +149,7 @@ def create(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -222,6 +223,7 @@ def _create_as_clone_common(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -305,6 +307,7 @@ def create_in_group(
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent resource
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -384,6 +387,7 @@ def create_into_bundle(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,

@@ -1154,7 +1154,7 @@ def resource_is_guest_node_already(resource_id):
     The resource is already used as guest node (i.e. has meta attribute
     remote-node).
 
-    string resource_id -- id of the unmanaged resource
+    string resource_id -- id of the resource that is guest node
     """
     return ReportItem.error(
         report_codes.RESOURCE_IS_GUEST_NODE_ALREADY,
