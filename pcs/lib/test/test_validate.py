@@ -1021,13 +1021,13 @@ class IsTimeInterval(TestCase):
         for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:
             self.assertEquals(
                 [],
-                validate.is_time_interval("a")({"a": interval}),
+                validate.value_time_interval("a")({"a": interval}),
                 "interval: {0}".format(interval)
             )
 
     def test_reports_about_invalid_interval(self):
         assert_report_item_list_equal(
-            validate.is_time_interval("a")({"a": "invalid_value"}),
+            validate.value_time_interval("a")({"a": "invalid_value"}),
             [
                 (
                     severities.ERROR,

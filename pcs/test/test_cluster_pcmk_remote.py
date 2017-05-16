@@ -206,6 +206,14 @@ class NodeAddGuest(ResourceTest):
                 " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
         )
 
+    def test_fail_when_invalid_port_appear(self):
+        self.create_resource()
+        self.assert_pcs_fail(
+            "cluster node add-guest node-host G remote-port=70000",
+            "Error: '70000' is not a valid remote-port value, use a port number"
+                " (1-65535)\n"
+        )
+
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
         self.create_resource()
         self.assert_pcs_success("resource create CONFLICT ocf:heartbeat:Dummy")

@@ -451,7 +451,7 @@ def value_positive_integer(
         allow_extra_values=allow_extra_values,
     )
 
-def is_time_interval(option_name, option_name_for_report=None):
+def value_time_interval(option_name, option_name_for_report=None):
     return value_cond(
         option_name,
         lambda normalized_value:

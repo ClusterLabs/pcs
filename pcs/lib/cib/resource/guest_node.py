@@ -58,7 +58,8 @@ def validate_parts(tree, nodes, node_name, options):
 
     validator_list = [
         validate.is_required("remote-node"),
-        validate.is_time_interval("remote-connect-timeout")
+        validate.value_time_interval("remote-connect-timeout"),
+        validate.value_port_number("remote-port"),
     ]
 
     report_list.extend(validate.run_collection_of_option_validators(
