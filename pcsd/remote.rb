@@ -16,6 +16,7 @@ require 'cluster_entity.rb'
 require 'permissions.rb'
 require 'auth.rb'
 require 'pcsd_file'
+require 'pcsd_remove_file'
 require 'pcsd_action_command'
 require 'pcsd_exchange_format.rb'
 
@@ -92,7 +93,8 @@ def remote(params, request, auth_user)
       :booth_save_files => method(:booth_save_files),
       :booth_get_config => method(:booth_get_config),
       :put_file => method(:put_file),
-      :run_action => method(:run_action),
+      :remove_file => method(:remove_file),
+      :run_service_command => method(:run_service_command),
 
   }
   remote_cmd_with_pacemaker = {
@@ -2874,7 +2876,30 @@ def put_file(params, request, auth_user)
   end
 end
 
-def run_action(params, request, auth_user)
+def remove_file(params, request, auth_user)
+  begin
+    check_permissions(auth_user, Permissions::WRITE)
+
+    files = check_request_data_for_json(params, auth_user)
+    PcsdExchangeFormat::validate_item_map_is_Hash('files', files)
+
+    return pcsd_success(
+      JSON.generate({"files" => Hash[files.map{|id, file_data|
+        PcsdExchangeFormat::validate_item_is_Hash('file', id, file_data)
+        [id, PcsdExchangeFormat::run_action(
+          PcsdRemoveFile::TYPES, 'file', id, file_data
+        )]
+      }]})
+    )
+  rescue PcsdRequestException => e
+    return e.code, e.message
+  rescue PcsdExchangeFormat::Error => e
+    return 400, "Invalid input data format: #{e.message}"
+  end
+end
+
+
+def run_service_command(params, request, auth_user)
   begin
     check_permissions(auth_user, Permissions::WRITE)
 

@@ -876,6 +876,53 @@ class FileDistributionError(NameBuildTest):
             }
         )
 
+class FileRemoveFromNodeStarted(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODE_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Requesting remove 'first', 'second' from 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+            }
+        )
+
+class FileRemoveFromNodeSucess(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODE_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: success remove of files 'some authfile',"
+            " 'some config file'"
+            ,
+            {
+                "nodes_success_files": None,
+                "node": "node1",
+                "results": [
+                  "some config file",
+                  "some authfile",
+                ],
+            }
+        )
+
+class FileRemoveFromNodeError(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODE_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Unable to remove files from 'node1':\n"
+                "  file1: permission denied\n"
+                "  file2: not enough space"
+            ,
+            {
+                "node_file_errors": None,
+                "node": "node1",
+                "results": {
+                    "file1": "permission denied",
+                    "file2": "not enough space",
+                }
+            }
+        )
+
+
 class ActionsOnNodesStarted(NameBuildTest):
     code = codes.ACTIONS_ON_NODES_STARTED
     def test_build_messages(self):

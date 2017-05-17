@@ -401,13 +401,32 @@ def distribute_files(
         allow_incomplete_distribution,
     )
 
+def remove_files(
+    node_communicator, report_processor, file_definitions, node_addresses_list,
+    allow_incomplete_distribution=False
+):
+    _run_actions_on_multiple_nodes(
+        node_communicator,
+        "remote/remove_file",
+        "files",
+        report_processor,
+        reports.files_remove_from_node_started,
+        file_definitions,
+        node_addresses_list,
+        lambda key, response: response.code in ["deleted", "not_found"],
+        reports.files_remove_from_node_success,
+        reports.files_remove_from_node_error,
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        allow_incomplete_distribution,
+    )
+
 def run_actions_on_multiple_nodes(
     node_communicator, report_processor, action_definitions, is_success,
     node_addresses_list, allow_fails=False
 ):
     _run_actions_on_multiple_nodes(
         node_communicator,
-        "remote/run_action",
+        "remote/run_service_command",
         "actions",
         report_processor,
         reports.actions_on_nodes_started,

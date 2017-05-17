@@ -2022,14 +2022,8 @@ def files_distribution_success(node=None, results=None):
     """
     files was successfuly distributed on nodes
 
-    dict nodes_success_files has as the key the node name and as value a list of
-    file descriptions eg.:
-    {
-        "node1": [
-          "some authfile",
-          "some config file",
-        ]
-    }
+    string node -- name of destination node
+    list results -- contains names (codes) of sucessfully put files
     """
     return ReportItem.info(
         report_codes.FILES_DISTRIBUTION_SUCCESS,
@@ -2046,16 +2040,58 @@ def files_distribution_error(
     """
     cannot put files to specific nodes
 
-    dict node_file_error has as the key the node name and as value dict
-    file_name: reason eg.:
-    {
-        "node1": {
-          "file1": "no space there"
-        }
-    }
+    string node -- name of destination node
+    dict results -- file code is a key, error message is a value
     """
     return ReportItem(
         report_codes.FILES_DISTRIBUTION_ERROR,
+        severity,
+        info={
+            "node": node,
+            "results": results,
+        },
+        forceable=forceable
+    )
+
+def files_remove_from_node_started(file_list, node_list=""):
+    """
+    files is about to be removed from nodes
+    """
+    return ReportItem.info(
+        report_codes.FILES_REMOVE_FROM_NODE_STARTED,
+        info={
+            "file_list": file_list,
+            "node_list": node_list,
+        }
+    )
+
+def files_remove_from_node_success(node=None, results=None):
+    """
+    files was successfuly removed nodes
+
+    string node -- name of destination node
+    list results -- contains names (codes) of sucessfully put files
+    """
+    return ReportItem.info(
+        report_codes.FILES_REMOVE_FROM_NODE_SUCCESS,
+        info={
+            "node": node,
+            "results": results,
+        },
+    )
+
+def files_remove_from_node_error(
+    node=None, results=None,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    cannot remove files from specific nodes
+
+    string node -- name of destination node
+    dict results -- file code is a key, error message is a value
+    """
+    return ReportItem(
+        report_codes.FILES_REMOVE_FROM_NODE_ERROR,
         severity,
         info={
             "node": node,

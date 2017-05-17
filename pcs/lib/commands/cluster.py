@@ -296,20 +296,23 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         "stop",
         "disable",
     ])
-    actions["pacemaker_remote authkey remove"] = {
-        "type": "remove_pcmk_remote_authkey"
+    files = {
+        "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
-
-    def is_success(key, response):
-        if key == "pacemaker_remote authkey remove":
-            return response.code in ["deleted", "not_found"]
-        return response.code == "success"
 
     nodes_task.run_actions_on_multiple_nodes(
         env.node_communicator(),
         env.report_processor,
         actions,
-        is_success,
+        lambda key, response: response.code == "success",
+        node_addresses_list,
+        allow_fails,
+    )
+
+    nodes_task.remove_files(
+        env.node_communicator(),
+        env.report_processor,
+        files,
         node_addresses_list,
         allow_fails,
     )

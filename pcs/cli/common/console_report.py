@@ -1000,6 +1000,36 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.FILES_REMOVE_FROM_NODE_STARTED: lambda info:
+        "Requesting remove {files}{where}".format(
+            where=(
+                "" if not info["node_list"]
+                else " from " + joined_list(info["node_list"])
+            ),
+            files=joined_list(info["file_list"])
+        )
+    ,
+
+    codes.FILES_REMOVE_FROM_NODE_SUCCESS: lambda info:
+        "{node}: success remove of files {files}"
+        .format(
+            files=joined_list(info["results"]),
+            **info
+        )
+    ,
+
+
+    codes.FILES_REMOVE_FROM_NODE_ERROR: lambda info:
+        "Unable to remove files from '{node}':\n{details}"
+        .format(
+            details="\n".join([
+                "  {0}: {1}".format(filename, reason)
+                for filename, reason in sorted(info["results"].items())
+            ]),
+            **info
+        )
+    ,
+
     codes.ACTIONS_ON_NODES_STARTED: lambda info:
         "Requesting {actions}{where}".format(
             where=(
