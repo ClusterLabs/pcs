@@ -51,11 +51,21 @@ module PcsdFile
         self.full_file_name,
         self.permissions,
         self.binary? ? Base64.decode64(@file[:data]) : @file[:data],
-        self.binary?
+        self.binary?,
+        self.user,
+        self.group
       )
     end
 
     def permissions()
+      return nil
+    end
+
+    def user()
+      return nil
+    end
+
+    def group()
       return nil
     end
 
@@ -123,8 +133,16 @@ module PcsdFile
       @full_file_name ||= File.join(PACEMAKER_CONFIG_DIR, "authkey")
     end
 
-    def binary
-      return true
+    def permissions()
+      return 0400
+    end
+
+    def user()
+      return 'hacluster'
+    end
+
+    def group()
+      return 'haclient'
     end
   end
 
