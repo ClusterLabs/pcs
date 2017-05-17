@@ -411,7 +411,6 @@ class NodeRemoveRemote(ResourceTest):
             "<resources/>",
             outdent(
                 """\
-                Warning: The live cluster actions were skipped because -f was used
                 Deleting Resource - NODE-NAME
                 The following actions were skipped because -f was used:
                   pacemaker_remote authkey remove
@@ -428,7 +427,6 @@ class NodeRemoveRemote(ResourceTest):
             "<resources/>",
             outdent(
                 """\
-                Warning: The live cluster actions were skipped because -f was used
                 Deleting Resource - NODE-NAME
                 The following actions were skipped because -f was used:
                   pacemaker_remote authkey remove
@@ -454,9 +452,7 @@ class NodeRemoveRemote(ResourceTest):
             outdent(
                 """\
                 Warning: multiple resource for 'HOST-A' found: 'NODE-NAME', 'HOST-A'
-                Warning: The live cluster actions were skipped because -f was used
                 Deleting Resource - NODE-NAME
-                Warning: The live cluster actions were skipped because -f was used
                 Deleting Resource - HOST-A
                 The following actions were skipped because -f was used:
                   pacemaker_remote authkey remove

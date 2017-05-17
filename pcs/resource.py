@@ -1423,12 +1423,7 @@ def resource_master_create(dom, argv, update=False, master_id=None):
 
     return dom, master_element.getAttribute("id")
 
-def resource_remove(
-    resource_id, output = True, is_remove_remote_context=False,
-    warn_about_live_skip=True
-):
-    if utils.usefile and warn_about_live_skip:
-        warn("The live cluster actions were skipped because -f was used")
+def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
@@ -1439,10 +1434,7 @@ def resource_remove(
     if bundle is not None:
         primitive_el = utils.dom_get_resource_bundle(bundle)
         if primitive_el is not None:
-            resource_remove(
-                primitive_el.getAttribute("id"),
-                warn_about_live_skip=False
-            )
+            resource_remove(primitive_el.getAttribute("id"))
         utils.replace_cib_configuration(
             remove_resource_references(utils.get_cib_dom(), resource_id, output)
         )
@@ -1495,7 +1487,7 @@ def resource_remove(
                     msg.append("\n" + output)
                 utils.err("\n".join(msg).strip())
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
-            resource_remove(res.getAttribute("id"), warn_about_live_skip=False)
+            resource_remove(res.getAttribute("id"))
         sys.exit(0)
 
     # now we know resource is not a group, a clone nor a master
@@ -1622,11 +1614,10 @@ def resource_remove(
     if remote_node_name and not utils.usefile:
         if not is_remove_remote_context:
             warn(
-                "this command is not sufficient for remove remote/guest node"
-                " you need remove pacemaker authkey and stop/disable"
-                " pacemaker_remote on the machine manually"
+                "This command is not sufficient for removing remote and guest "
+                "nodes. To complete the removal, remove pacemaker authkey and "
+                "stop and disable pacemaker_remote on the node(s) manually."
             )
-
         output, retval = utils.run(["crm_resource", "--wait"])
         output, retval = utils.run([
             "crm_node", "--force", "--remove", remote_node_name
