@@ -315,7 +315,7 @@ def _run_actions_on_multiple_nodes(
     node_communicator, url, response_key, report_processor, create_start_report,
     actions, node_addresses_list, is_success,
     create_success_report, create_error_report, force_code,
-    allow_incomplete_distribution=False
+    allow_incomplete_distribution=False, description=""
 ):
     error_map = defaultdict(dict)
     def worker(node_addresses):
@@ -327,25 +327,21 @@ def _run_actions_on_multiple_nodes(
             node_addresses,
             actions,
         )
-        success_list = []
         for key, item_response in sorted(result.items()):
             if is_success(key, item_response):
-                success_list.append(key)
+                #only success process individually
+                report_processor.process(
+                    create_success_report(node_addresses.label, key)
+                )
             else:
                 error_map[node_addresses.label][key] = (
                     node_communication_format.format_result(item_response)
                 )
 
-        #only success process individually
-        if success_list:
-            report_processor.process(create_success_report(
-                node=node_addresses.label,
-                results=success_list,
-            ))
-
     report_processor.process(create_start_report(
         actions.keys(),
-        [node.label for node in node_addresses_list]
+        [node.label for node in node_addresses_list],
+        description
     ))
 
     parallel_nodes_communication_helper(
@@ -362,13 +358,14 @@ def _run_actions_on_multiple_nodes(
             allow_incomplete_distribution
         )
         report_processor.process_list([
-            make_report(create_error_report, node=node_name, results=errors)
+            make_report(create_error_report, node_name, action_key, message)
             for node_name, errors in error_map.items()
+            for action_key, message in errors.items()
         ])
 
 def distribute_files(
     node_communicator, report_processor, file_definitions, node_addresses_list,
-    allow_incomplete_distribution=False
+    allow_incomplete_distribution=False, description=""
 ):
     """
     Put files specified in file_definitions to nodes specified in
@@ -395,15 +392,16 @@ def distribute_files(
         file_definitions,
         node_addresses_list,
         lambda key, response: response.code in ["written", "rewritten"],
-        reports.files_distribution_success,
-        reports.files_distribution_error,
+        reports.file_distribution_success,
+        reports.file_distribution_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
         allow_incomplete_distribution,
+        description,
     )
 
 def remove_files(
     node_communicator, report_processor, file_definitions, node_addresses_list,
-    allow_incomplete_distribution=False
+    allow_incomplete_distribution=False, description=""
 ):
     _run_actions_on_multiple_nodes(
         node_communicator,
@@ -414,27 +412,29 @@ def remove_files(
         file_definitions,
         node_addresses_list,
         lambda key, response: response.code in ["deleted", "not_found"],
-        reports.files_remove_from_node_success,
-        reports.files_remove_from_node_error,
+        reports.file_remove_from_node_success,
+        reports.file_remove_from_node_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
         allow_incomplete_distribution,
+        description,
     )
 
 def run_actions_on_multiple_nodes(
     node_communicator, report_processor, action_definitions, is_success,
-    node_addresses_list, allow_fails=False
+    node_addresses_list, allow_fails=False, description=""
 ):
     _run_actions_on_multiple_nodes(
         node_communicator,
         "remote/run_service_command",
         "actions",
         report_processor,
-        reports.actions_on_nodes_started,
+        reports.service_commands_on_nodes_started,
         action_definitions,
         node_addresses_list,
         is_success,
-        reports.actions_on_nodes_success,
-        reports.actions_on_nodes_error,
+        reports.service_command_on_node_success,
+        reports.service_command_on_node_error,
         report_codes.SKIP_ACTION_ON_NODES_ERRORS,
         allow_fails,
+        description,
     )

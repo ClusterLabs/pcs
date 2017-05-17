@@ -2006,154 +2006,159 @@ def sbd_device_dump_error(device, reason):
         }
     )
 
-def files_distribution_started(file_list, node_list=""):
+def files_distribution_started(file_list, node_list=None, description=None):
     """
     files is about to be sent to nodes
     """
+    file_list = file_list if file_list else []
     return ReportItem.info(
         report_codes.FILES_DISTRIBUTION_STARTED,
         info={
             "file_list": file_list,
             "node_list": node_list,
+            "description": description,
         }
     )
 
-def files_distribution_success(node=None, results=None):
+def file_distribution_success(node=None, file_description=None):
     """
     files was successfuly distributed on nodes
 
     string node -- name of destination node
-    list results -- contains names (codes) of sucessfully put files
+    string file_description -- name (code) of sucessfully put files
     """
     return ReportItem.info(
-        report_codes.FILES_DISTRIBUTION_SUCCESS,
+        report_codes.FILE_DISTRIBUTION_SUCCESS,
         info={
             "node": node,
-            "results": results,
+            "file_description": file_description,
         },
     )
 
-def files_distribution_error(
-    node=None, results=None,
+def file_distribution_error(
+    node=None, file_description=None, reason=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     cannot put files to specific nodes
 
     string node -- name of destination node
-    dict results -- file code is a key, error message is a value
+    string file_description -- is file code
+    string reason -- is error message
     """
     return ReportItem(
-        report_codes.FILES_DISTRIBUTION_ERROR,
+        report_codes.FILE_DISTRIBUTION_ERROR,
         severity,
         info={
             "node": node,
-            "results": results,
+            "file_description": file_description,
+            "reason": reason,
         },
         forceable=forceable
     )
 
-def files_remove_from_node_started(file_list, node_list=""):
+def files_remove_from_node_started(file_list, node_list=None, description=None):
     """
     files is about to be removed from nodes
     """
+    file_list = file_list if file_list else []
     return ReportItem.info(
         report_codes.FILES_REMOVE_FROM_NODE_STARTED,
         info={
             "file_list": file_list,
             "node_list": node_list,
+            "description": description,
         }
     )
 
-def files_remove_from_node_success(node=None, results=None):
+def file_remove_from_node_success(node=None, file_description=None):
     """
     files was successfuly removed nodes
 
     string node -- name of destination node
-    list results -- contains names (codes) of sucessfully put files
+    string file_description -- name (code) of sucessfully put files
     """
     return ReportItem.info(
-        report_codes.FILES_REMOVE_FROM_NODE_SUCCESS,
+        report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
         info={
             "node": node,
-            "results": results,
+            "file_description": file_description,
         },
     )
 
-def files_remove_from_node_error(
-    node=None, results=None,
+def file_remove_from_node_error(
+    node=None, file_description=None, reason=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     cannot remove files from specific nodes
 
     string node -- name of destination node
-    dict results -- file code is a key, error message is a value
+    string file_description -- is file code
+    string reason -- is error message
     """
     return ReportItem(
-        report_codes.FILES_REMOVE_FROM_NODE_ERROR,
+        report_codes.FILE_REMOVE_FROM_NODE_ERROR,
         severity,
         info={
             "node": node,
-            "results": results,
+            "file_description": file_description,
+            "reason": reason,
         },
         forceable=forceable
     )
 
-def actions_on_nodes_started(action_list, node_list=""):
+def service_commands_on_nodes_started(
+    action_list, node_list=None, description=None
+):
     """
     node was requested for actions
     """
+    action_list = action_list if action_list else []
     return ReportItem.info(
-        report_codes.ACTIONS_ON_NODES_STARTED,
+        report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
         info={
             "action_list": action_list,
             "node_list": node_list,
+            "description": description,
         }
     )
 
-def actions_on_nodes_success(node=None, results=None):
+def service_command_on_node_success(
+    node=None, service_command_description=None
+):
     """
     files was successfuly distributed on nodes
 
-    dict nodes_success_actions has as the key the node name and as value list of
-    file descriptions eg.:
-    {
-        "node1": [
-          "service enable",
-          "service start",
-        ]
-    }
+    string service_command_description -- name (code) of sucessfully service
+        command
     """
     return ReportItem.info(
-        report_codes.ACTIONS_ON_NODES_SUCCESS,
+        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
         info={
             "node": node,
-            "results": results,
+            "service_command_description": service_command_description,
         },
     )
 
-def actions_on_nodes_error(
-    node=None, results=None,
+def service_command_on_node_error(
+    node=None, service_command_description=None, reason=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     action on nodes failed
 
-    dict node_action_error has as the key the node name and as value dict
-    action_name: reason eg.:
-    {
-        "node1": {
-          "action1": "access denied"
-        }
-    }
+    string service_command_description -- name (code) of sucessfully service
+        command
+    string reason -- is error message
     """
     return ReportItem(
-        report_codes.ACTIONS_ON_NODES_ERROR,
+        report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
         severity,
         info={
             "node": node,
-            "results": results,
+            "service_command_description": service_command_description,
+            "reason": reason,
         },
         forceable=forceable
     )

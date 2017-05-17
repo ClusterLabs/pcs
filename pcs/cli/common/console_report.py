@@ -971,90 +971,81 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.FILES_DISTRIBUTION_STARTED: lambda info:
-        "Sending {files}{where}".format(
+        "Sending {description}{where}".format(
             where=(
                 "" if not info["node_list"]
                 else " to " + joined_list(info["node_list"])
             ),
-            files=joined_list(info["file_list"])
+            description=info["description"] if info["description"]
+                else joined_list(info["file_list"])
         )
     ,
 
-    codes.FILES_DISTRIBUTION_SUCCESS: lambda info:
-        "{node}: success distribution of files {files}"
+    codes.FILE_DISTRIBUTION_SUCCESS: lambda info:
+        "{node}: successful distribution of the file '{file_description}'"
         .format(
-            files=joined_list(info["results"]),
             **info
         )
     ,
 
 
-    codes.FILES_DISTRIBUTION_ERROR: lambda info:
-        "Unable to distribute files to '{node}':\n{details}"
+    codes.FILE_DISTRIBUTION_ERROR: lambda info:
+        "{node}: unable to distribute file '{file_description}': {reason}"
         .format(
-            details="\n".join([
-                "  {0}: {1}".format(filename, reason)
-                for filename, reason in sorted(info["results"].items())
-            ]),
             **info
         )
     ,
 
     codes.FILES_REMOVE_FROM_NODE_STARTED: lambda info:
-        "Requesting remove {files}{where}".format(
+        "Requesting remove {description}{where}".format(
             where=(
                 "" if not info["node_list"]
                 else " from " + joined_list(info["node_list"])
             ),
-            files=joined_list(info["file_list"])
+            description=info["description"] if info["description"]
+                else joined_list(info["file_list"])
         )
     ,
 
-    codes.FILES_REMOVE_FROM_NODE_SUCCESS: lambda info:
-        "{node}: success remove of files {files}"
+    codes.FILE_REMOVE_FROM_NODE_SUCCESS: lambda info:
+        "{node}: successful removal of the file '{file_description}'"
         .format(
-            files=joined_list(info["results"]),
             **info
         )
     ,
 
 
-    codes.FILES_REMOVE_FROM_NODE_ERROR: lambda info:
-        "Unable to remove files from '{node}':\n{details}"
+    codes.FILE_REMOVE_FROM_NODE_ERROR: lambda info:
+        "{node}: unable to remove file '{file_description}': {reason}"
         .format(
-            details="\n".join([
-                "  {0}: {1}".format(filename, reason)
-                for filename, reason in sorted(info["results"].items())
-            ]),
             **info
         )
     ,
 
-    codes.ACTIONS_ON_NODES_STARTED: lambda info:
-        "Requesting {actions}{where}".format(
+    codes.SERVICE_COMMANDS_ON_NODES_STARTED: lambda info:
+        "Requesting {description}{where}".format(
             where=(
                 "" if not info["node_list"]
                 else " on " + joined_list(info["node_list"])
             ),
-            actions=joined_list(info["action_list"])
+            description=info["description"] if info["description"]
+                else joined_list(info["action_list"])
         )
     ,
 
-    codes.ACTIONS_ON_NODES_SUCCESS: lambda info:
-        "{node}: success actions {actions}"
+    codes.SERVICE_COMMAND_ON_NODE_SUCCESS: lambda info:
+        "{node}: successful run of '{service_command_description}'"
         .format(
-            actions=joined_list(info["results"]),
             **info
         )
     ,
 
-    codes.ACTIONS_ON_NODES_ERROR: lambda info:
-        "Some actions on '{node}' failed:\n{details}"
+    codes.SERVICE_COMMAND_ON_NODE_ERROR: lambda info:
+        (
+            "{node}: service command failed:"
+            " {service_command_description}: {reason}"
+        )
         .format(
-            details="\n".join([
-                "  {0}: {1}".format(filename, reason)
-                for filename, reason in sorted(info["results"].items())
-            ]),
             **info
         )
     ,

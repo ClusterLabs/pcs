@@ -42,7 +42,8 @@ def _share_authkey(
         env.report_processor,
         node_communication_format.pcmk_authkey_file(authkey_content),
         node_addresses_list,
-        allow_incomplete_distribution
+        allow_incomplete_distribution,
+        description="remote node configuration files"
     )
 
 def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
@@ -56,6 +57,7 @@ def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
         lambda key, response: response.code == "success",
         node_list,
         allow_fails,
+        description="start of service pacemaker_remote"
     )
 
 def _prepare_pacemaker_remote_environment(
@@ -307,6 +309,7 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         lambda key, response: response.code == "success",
         node_addresses_list,
         allow_fails,
+        description="stop of service pacemaker_remote"
     )
 
     nodes_task.remove_files(
@@ -315,6 +318,7 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         files,
         node_addresses_list,
         allow_fails,
+        description="remote node files"
     )
 
 def _report_skip_live_parts_in_remove(node_addresses_list):

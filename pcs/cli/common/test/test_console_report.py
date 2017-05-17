@@ -828,7 +828,8 @@ class FileDistributionStarted(NameBuildTest):
             "Sending 'first', 'second'",
             {
                 "file_list": ["first", "second"],
-                "node_list": None
+                "node_list": None,
+                "description": None,
             }
         )
 
@@ -838,41 +839,42 @@ class FileDistributionStarted(NameBuildTest):
             {
                 "file_list": ["first", "second"],
                 "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Sending configuration files to 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "configuration files",
             }
         )
 
 class FileDistributionSucess(NameBuildTest):
-    code = codes.FILES_DISTRIBUTION_SUCCESS
+    code = codes.FILE_DISTRIBUTION_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "node1: success distribution of files 'some authfile',"
-            " 'some config file'"
-            ,
+            "node1: successful distribution of the file 'some authfile'",
             {
                 "nodes_success_files": None,
                 "node": "node1",
-                "results": [
-                  "some config file",
-                  "some authfile",
-                ],
+                "file_description": "some authfile",
             }
         )
 
 class FileDistributionError(NameBuildTest):
-    code = codes.FILES_DISTRIBUTION_ERROR
+    code = codes.FILE_DISTRIBUTION_ERROR
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Unable to distribute files to 'node1':\n"
-                "  file1: permission denied\n"
-                "  file2: not enough space"
-            ,
+            "node1: unable to distribute file 'file1': permission denied",
             {
                 "node_file_errors": None,
                 "node": "node1",
-                "results": {
-                    "file1": "permission denied",
-                    "file2": "not enough space",
-                }
+                "file_description": "file1",
+                "reason": "permission denied",
             }
         )
 
@@ -884,53 +886,57 @@ class FileRemoveFromNodeStarted(NameBuildTest):
             {
                 "file_list": ["first", "second"],
                 "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Requesting remove remote configuration files from 'node1',"
+                " 'node2'"
+            ,
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "remote configuration files",
             }
         )
 
 class FileRemoveFromNodeSucess(NameBuildTest):
-    code = codes.FILES_REMOVE_FROM_NODE_SUCCESS
+    code = codes.FILE_REMOVE_FROM_NODE_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "node1: success remove of files 'some authfile',"
-            " 'some config file'"
-            ,
+            "node1: successful removal of the file 'some authfile'",
             {
                 "nodes_success_files": None,
                 "node": "node1",
-                "results": [
-                  "some config file",
-                  "some authfile",
-                ],
+                "file_description": "some authfile",
             }
         )
 
 class FileRemoveFromNodeError(NameBuildTest):
-    code = codes.FILES_REMOVE_FROM_NODE_ERROR
+    code = codes.FILE_REMOVE_FROM_NODE_ERROR
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Unable to remove files from 'node1':\n"
-                "  file1: permission denied\n"
-                "  file2: not enough space"
-            ,
+            "node1: unable to remove file 'file1': permission denied",
             {
                 "node_file_errors": None,
                 "node": "node1",
-                "results": {
-                    "file1": "permission denied",
-                    "file2": "not enough space",
-                }
+                "file_description": "file1",
+                "reason": "permission denied",
             }
         )
 
 
 class ActionsOnNodesStarted(NameBuildTest):
-    code = codes.ACTIONS_ON_NODES_STARTED
+    code = codes.SERVICE_COMMANDS_ON_NODES_STARTED
     def test_build_messages(self):
         self.assert_message_from_info(
             "Requesting 'first', 'second'",
             {
                 "action_list": ["first", "second"],
-                "node_list": None
+                "node_list": None,
+                "description": None,
             }
         )
 
@@ -940,39 +946,42 @@ class ActionsOnNodesStarted(NameBuildTest):
             {
                 "action_list": ["first", "second"],
                 "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Requesting running pacemaker_remote on 'node1', 'node2'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "running pacemaker_remote",
             }
         )
 
 class ActionsOnNodesSuccess(NameBuildTest):
-    code = codes.ACTIONS_ON_NODES_SUCCESS
+    code = codes.SERVICE_COMMAND_ON_NODE_SUCCESS
     def test_build_messages(self):
         self.assert_message_from_info(
-            "node1: success actions 'service enable', 'service start'",
+            "node1: successful run of 'service enable'",
             {
                 "nodes_success_actions": None,
                 "node": "node1",
-                "results": [
-                    "service start",
-                    "service enable",
-                ],
+                "service_command_description": "service enable",
             }
         )
 
 class ActionOnNodesError(NameBuildTest):
-    code = codes.ACTIONS_ON_NODES_ERROR
+    code = codes.SERVICE_COMMAND_ON_NODE_ERROR
     def test_build_messages(self):
         self.assert_message_from_info(
-            "Some actions on 'node1' failed:\n"
-                "  action1: permission denied\n"
-                "  action2: not such command"
-            ,
+            "node1: service command failed: service1 start: permission denied",
             {
                 "node_action_errors": None,
                 "node": "node1",
-                "results": {
-                    "action1": "permission denied",
-                    "action2": "not such command",
-                }
+                "service_command_description": "service1 start",
+                "reason": "permission denied",
             }
         )
 
