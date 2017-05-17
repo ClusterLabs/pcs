@@ -144,6 +144,13 @@ module PcsdFile
     def group()
       return 'haclient'
     end
+
+    def write()
+      if not File.directory?(PACEMAKER_CONFIG_DIR)
+        Dir.mkdir(PACEMAKER_CONFIG_DIR)
+      end
+      super
+    end
   end
 
   TYPES = {
