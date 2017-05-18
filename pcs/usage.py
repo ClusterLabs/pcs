@@ -285,7 +285,7 @@ Commands:
         This is mainly used for debugging resources that fail to demote.
 
     debug-monitor <resource id> [--full]
-        This command will force the specified resource to be moniored on this
+        This command will force the specified resource to be monitored on this
         node  ignoring the cluster recommendations and print the output from
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
@@ -761,7 +761,7 @@ Commands:
         cluster processes and removing all cluster configuration files. Using
         --all will attempt to destroy the cluster on all nodes in the local
         cluster.
-        WARNING: This command permantly removes any cluster configuration that
+        WARNING: This command permanently removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
 
@@ -1376,7 +1376,7 @@ Commands:
     maintenance [--all | <node>...] [--wait[=n]]
         Put specified node(s) into maintenance mode, if no nodes or options are
         specified the current node will be put into maintenance mode, if --all
-        is specified all nodes will be put into maintenace mode.
+        is specified all nodes will be put into maintenance mode.
         If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
         to be put into maintenance mode and then return 0 on success or 1 if
         the operation not succeeded yet. If 'n' is not specified it defaults
