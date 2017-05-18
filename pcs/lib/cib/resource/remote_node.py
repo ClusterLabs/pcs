@@ -5,7 +5,9 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import reports, validate
+from pcs.common import report_codes
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.cib.resource import primitive
 from pcs.lib.node import(
     NodeAddresses,
@@ -15,6 +17,13 @@ from pcs.lib.node import(
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 AGENT_NAME = "ocf:pacemaker:remote"
+
+def get_agent(report_processor, cmd_runner):
+    return find_valid_resource_agent_by_name(
+        report_processor,
+        cmd_runner,
+        AGENT_NAME,
+    )
 
 def find_node_list(resources_section):
     node_list = [
@@ -110,28 +119,18 @@ def get_host(resource_element):
         return host_list[0]
     return resource_element.attrib["id"]
 
-def validate_host_not_ambiguous(instance_attributes, host):
-    if instance_attributes.get("server", host) != host:
-        return [
-            reports.ambiguous_host_specification(
-                [
-                    host,
-                    instance_attributes["server"]
-                ]
-            )
-        ]
+def _validate_server_not_used(agent, option_dict):
+    if "server" in option_dict:
+        return [reports.invalid_option(
+            ["server"],
+            sorted([
+                attr["name"] for attr in agent.get_parameters()
+                if attr["name"] != "server"
+            ]),
+            "resource",
+        )]
     return []
 
-def validate_pcmk_remote_host_not_used(option_name, nodes):
-    def validate(option_dict):
-        if(
-            option_name in option_dict
-            and
-            node_addresses_contain_host(nodes, option_dict[option_name])
-        ):
-            return [reports.id_already_exists(option_dict[option_name])]
-        return []
-    return validate
 
 def validate_host_not_conflicts(nodes, node_name, instance_attributes):
     host = instance_attributes.get("server", node_name)
@@ -139,7 +138,9 @@ def validate_host_not_conflicts(nodes, node_name, instance_attributes):
         return [reports.id_already_exists(host)]
     return []
 
-def validate_parts(nodes, node_name, instance_attributes):
+def validate_create(
+    nodes, resource_agent, host, node_name, instance_attributes
+):
     """
     validate inputs for create
 
@@ -147,17 +148,14 @@ def validate_parts(nodes, node_name, instance_attributes):
     string node_name -- name of future node
     dict instance_attributes -- data for future resource instance attributes
     """
-    validator_list = [
-        validate.is_required("server", "remote node"),
-        validate_pcmk_remote_host_not_used("server", nodes)
-    ]
-    report_list = []
-    report_list.extend(validate.run_collection_of_option_validators(
-        instance_attributes,
-        validator_list
-    ))
+    report_list = _validate_server_not_used(resource_agent, instance_attributes)
+
+    if node_addresses_contain_host(nodes, host):
+        report_list.append(reports.id_already_exists(host))
+
     if node_addresses_contain_name(nodes, node_name):
         report_list.append(reports.id_already_exists(node_name))
+
     return report_list
 
 def prepare_instance_atributes(instance_attributes, host):
@@ -166,7 +164,7 @@ def prepare_instance_atributes(instance_attributes, host):
     return enriched_instance_attributes
 
 def create(
-    report_processor, cmd_runner, resources_section, node_name,
+    report_processor, resource_agent, resources_section, host, node_name,
     raw_operation_list=None, meta_attributes=None,
     instance_attributes=None,
     allow_invalid_operation=False,
@@ -189,19 +187,26 @@ def create(
     bool use_default_operations is flag for completion operations with default
         actions specified in resource agent
     """
-    return primitive.create(
-        report_processor,
-        resources_section,
-        node_name,
-        find_valid_resource_agent_by_name(
+    all_instance_attributes = instance_attributes.copy()
+    all_instance_attributes.update({"server": host})
+    try:
+        return primitive.create(
             report_processor,
-            cmd_runner,
-            AGENT_NAME,
-        ),
-        raw_operation_list,
-        meta_attributes,
-        instance_attributes,
-        allow_invalid_operation,
-        allow_invalid_instance_attributes,
-        use_default_operations,
-    )
+            resources_section,
+            node_name,
+            resource_agent,
+            raw_operation_list,
+            meta_attributes,
+            all_instance_attributes,
+            allow_invalid_operation,
+            allow_invalid_instance_attributes,
+            use_default_operations,
+        )
+    except LibraryError as e:
+        for report in e.args:
+            if report.code == report_codes.INVALID_OPTION:
+                report.info["allowed"] = [
+                    value for value in report.info["allowed"]
+                    if value != "server"
+                ]
+        raise e

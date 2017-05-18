@@ -145,32 +145,32 @@ def node_add_remote(
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
-    report_list = remote_node.validate_host_not_ambiguous(
-        instance_attributes,
-        host,
-    )
-    enriched_instance_attributes = remote_node.prepare_instance_atributes(
-        instance_attributes, host
-    )
-
     cib = env.get_cib()
     current_nodes = get_nodes(env.get_corosync_conf(), cib)
 
-    report_list.extend(remote_node.validate_parts(
+    resource_agent = remote_node.get_agent(
+        env.report_processor,
+        env.cmd_runner()
+    )
+
+    report_list = remote_node.validate_create(
         current_nodes,
+        resource_agent,
+        host,
         node_name,
-        enriched_instance_attributes
-    ))
+        instance_attributes
+    )
 
     try:
         remote_resource_element = remote_node.create(
             env.report_processor,
-            env.cmd_runner(),
+            resource_agent,
             get_resources(cib),
+            host,
             node_name,
             operations,
             meta_attributes,
-            enriched_instance_attributes,
+            instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,

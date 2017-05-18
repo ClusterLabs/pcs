@@ -12,7 +12,7 @@ from pcs.lib.cib.resource import remote_node
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.lib.node import NodeAddresses
 from pcs.test.tools.assertions import assert_report_item_list_equal
-from pcs.test.tools.pcs_unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
 class FindNodeList(TestCase):
@@ -164,89 +164,27 @@ class GetHost(TestCase):
             """))
         )
 
-class ValidateHostNotAmbiguous(TestCase):
-    def test_no_report_when_no_server_in_instance_attributes(self):
-        self.assertEqual(
-            remote_node.validate_host_not_ambiguous({}, "HOST"),
-            [],
-        )
-
-    def test_no_report_when_host_eq_server_in_instance_attributes(self):
-        self.assertEqual(
-            remote_node.validate_host_not_ambiguous({"server": "HOST"}, "HOST"),
-            [],
-        )
-
-    def test_report_on_unambiguous(self):
-        assert_report_item_list_equal(
-            remote_node.validate_host_not_ambiguous({"server": "NEXT"}, "HOST"),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.AMBIGUOUS_HOST_SPECIFICATION,
-                    {
-                        "host_list": ["HOST", "NEXT"]
-                    }
-                )
-            ]
-        )
-
-class ValidatePcmkRemoteHostNotUsed(TestCase):
-    def validate_options(self, options):
-        nodes = [
-            NodeAddresses("RING0", "RING1", name="R1"),
-            NodeAddresses("HOST", name="R1"),
-        ]
-
-        assert_report_item_list_equal(
-            remote_node.validate_pcmk_remote_host_not_used("server", nodes)
-                (options)
-            ,
-            [
-                (
-                    severities.ERROR,
-                    report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": options["server"]
-                    }
-                )
-            ]
-        )
-
-    def test_report_when_conflict_with_existing(self):
-        self.validate_options({"server": "HOST"})
-
-    def test_report_when_conflict_with_ring1(self):
-        self.validate_options({"server": "RING1"})
-
 class Validate(TestCase):
-    def validate(self, instance_attributes, node_name="NODE-NAME"):
+    def validate(
+        self, instance_attributes=None, node_name="NODE-NAME", host="node-host"
+    ):
         nodes = [
             NodeAddresses("RING0", "RING1", name="R"),
         ]
-        return remote_node.validate_parts(nodes, node_name, instance_attributes)
-
-    def test_report_required_server(self):
-        assert_report_item_list_equal(
-            self.validate(instance_attributes={}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_type": "remote node",
-                        "option_names": ["server"],
-                    },
-                    None
-                )
-            ]
+        resource_agent = mock.MagicMock()
+        return remote_node.validate_create(
+            nodes,
+            resource_agent,
+            host,
+            node_name,
+            instance_attributes if instance_attributes else {},
         )
 
     def test_report_conflict_node_name(self):
         assert_report_item_list_equal(
             self.validate(
-                instance_attributes={"server": "host"},
                 node_name="R",
+                host="host",
             ),
             [
                 (
@@ -254,6 +192,59 @@ class Validate(TestCase):
                     report_codes.ID_ALREADY_EXISTS,
                     {
                         "id": "R",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_report_conflict_node_host(self):
+        assert_report_item_list_equal(
+            self.validate(
+                host="RING0",
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.ID_ALREADY_EXISTS,
+                    {
+                        "id": "RING0",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_report_conflict_node_host_ring1(self):
+        assert_report_item_list_equal(
+            self.validate(
+                host="RING1",
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.ID_ALREADY_EXISTS,
+                    {
+                        "id": "RING1",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_report_used_disallowed_server(self):
+        assert_report_item_list_equal(
+            self.validate(
+                instance_attributes={"server": "A"}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        'option_type': 'resource',
+                        'option_names': ['server'],
+                        'allowed': [],
                     },
                     None
                 )

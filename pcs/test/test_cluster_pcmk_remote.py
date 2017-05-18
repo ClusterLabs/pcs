@@ -31,13 +31,23 @@ class NodeAddRemote(ResourceTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
             "cluster node add-remote HOST remote-node server=DIFFERENT",
-            "Error: An ambiguous host specification: 'DIFFERENT', 'HOST'\n"
+            "Error: invalid resource option 'server', allowed options"
+                " are: port, reconnect_interval, trace_file, trace_ra\n"
         )
 
     def test_fail_on_duplicit_host_specification_without_name(self):
         self.assert_pcs_fail(
             "cluster node add-remote HOST server=DIFFERENT",
-            "Error: An ambiguous host specification: 'DIFFERENT', 'HOST'\n"
+            "Error: invalid resource option 'server', allowed options"
+                " are: port, reconnect_interval, trace_file, trace_ra\n"
+        )
+
+    def test_fail_on_unknown_instance_attribute_not_offer_server(self):
+        self.assert_pcs_fail(
+            "cluster node add-remote HOST remote-node abcd=efgh",
+            "Error: invalid resource option 'abcd', allowed options"
+                " are: port, reconnect_interval, trace_file, trace_ra, use"
+                " --force to override\n"
         )
 
     def test_fail_on_bad_commandline_usage(self):
