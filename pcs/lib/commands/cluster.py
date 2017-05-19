@@ -7,7 +7,11 @@ from __future__ import (
 
 from pcs.common import report_codes
 from pcs.lib import reports, nodes_task, node_communication_format
-from pcs.lib.node import NodeAddresses, NodeAddressesList
+from pcs.lib.node import(
+    NodeAddresses,
+    NodeAddressesList,
+    node_addresses_contain_name,
+)
 from pcs.lib.tools import generate_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
@@ -443,5 +447,21 @@ def node_remove_guest(
         allow_pacemaker_remote_service_fail
     )
 
-def node_clear(env, node_name):
+def node_clear(env, node_name, allow_clear_cluster_node=False):
+    current_nodes = get_nodes(env.get_corosync_conf(), env.get_cib())
+    if(
+        node_addresses_contain_name(current_nodes, node_name)
+        or
+        node_addresses_contain_host(current_nodes, node_name)
+    ):
+        env.report_processor.process(
+            reports.get_problem_creator(
+                report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                allow_clear_cluster_node
+            )(
+                reports.node_to_clear_is_still_in_cluster,
+                node_name
+            )
+        )
+
     remove_node(env.cmd_runner(), node_name)

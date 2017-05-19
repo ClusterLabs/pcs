@@ -783,6 +783,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER: lambda info:
+        (
+            "node '{node}' seems to be still in the cluster"
+            "; this command should be used only with nodes that have been"
+            " removed from the cluster"
+        )
+        .format(**info)
+    ,
+
     codes.MULTIPLE_RESULTS_FOUND: lambda info:
         "multiple {result_type} {search_description} found: {what_found}"
         .format(

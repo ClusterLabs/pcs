@@ -1154,3 +1154,16 @@ class NodeRemoveInPacemakerFailed(NameBuildTest):
                 "reason": "reason"
             }
         )
+
+class NodeToClearIsStillInCluster(NameBuildTest):
+    code = codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node 'node1' seems to be still in the cluster"
+                "; this command should be used only with nodes that have been"
+                " removed from the cluster"
+            ,
+            {
+                "node": "node1"
+            }
+        )

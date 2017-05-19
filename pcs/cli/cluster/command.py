@@ -111,4 +111,7 @@ def node_clear(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError()
 
-    lib.cluster.node_clear(arg_list[0])
+    lib.cluster.node_clear(
+        arg_list[0],
+        allow_clear_cluster_node=modifiers["force"]
+    )

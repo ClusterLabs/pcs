@@ -1400,6 +1400,24 @@ def node_not_found(
         forceable=forceable
     )
 
+def node_to_clear_is_still_in_cluster(
+    node, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    specified node is still in cluster and `crm_node --remove` should be not
+    used
+
+    node string specified node
+    """
+    return ReportItem(
+        report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
+        severity,
+        info={
+            "node": node,
+        },
+        forceable=forceable
+    )
+
 def node_remove_in_pacemaker_failed(node_name, reason):
     """
     calling of crm_node --remove failed
