@@ -49,7 +49,6 @@ class CompleteAllIntervals(TestCase):
             ])
         )
 
-
 class GetResourceAgentNameFromString(TestCase):
     def test_returns_resource_agent_name_when_is_valid(self):
         self.assertEqual(

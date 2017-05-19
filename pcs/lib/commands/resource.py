@@ -99,7 +99,7 @@ def _validate_special_cases(
 ):
     report_list = []
 
-    if resource_agent.get_name() == remote_node.AGENT_NAME:
+    if resource_agent.get_name() == remote_node.AGENT_NAME.full_name:
         report_list.extend(_validate_remote_connection(
             nodes,
             resource_id,

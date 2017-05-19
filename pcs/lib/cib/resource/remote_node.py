@@ -14,16 +14,33 @@ from pcs.lib.node import(
     node_addresses_contain_host,
     node_addresses_contain_name,
 )
-from pcs.lib.resource_agent import find_valid_resource_agent_by_name
+from pcs.lib.resource_agent import(
+    find_valid_resource_agent_by_name,
+    ResourceAgentName,
+)
 
-AGENT_NAME = "ocf:pacemaker:remote"
+AGENT_NAME = ResourceAgentName("ocf", "pacemaker", "remote")
 
 def get_agent(report_processor, cmd_runner):
     return find_valid_resource_agent_by_name(
         report_processor,
         cmd_runner,
-        AGENT_NAME,
+        AGENT_NAME.full_name,
     )
+
+_IS_REMOTE_AGENT_XPATH_SNIPPET = """
+    @class="{0}" and @provider="{1}" and @type="{2}"
+""".format(AGENT_NAME.standard, AGENT_NAME.provider, AGENT_NAME.type)
+
+_HAS_SERVER_XPATH_SNIPPET = """
+    instance_attributes/nvpair[
+        @name="server"
+        and
+        string-length(@value) > 0
+    ]
+"""
+
+
 
 def find_node_list(resources_section):
     node_list = [
@@ -31,38 +48,24 @@ def find_node_list(resources_section):
             nvpair.attrib["value"],
             name=nvpair.getparent().getparent().attrib["id"]
         )
-        for nvpair in resources_section.xpath("""
-            .//primitive[
-                @class="ocf"
-                and
-                @provider="pacemaker"
-                and
-                @type="remote"
-            ]
-            /instance_attributes
-            /nvpair[@name="server" and string-length(@value) > 0]
-        """)
+        for nvpair in resources_section.xpath(
+            ".//primitive[{is_remote}]/{has_server}"
+            .format(
+                is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
+                has_server=_HAS_SERVER_XPATH_SNIPPET,
+            )
+        )
     ]
 
     node_list.extend([
         NodeAddresses(primitive.attrib["id"], name=primitive.attrib["id"])
-        for primitive in resources_section.xpath("""
-            .//primitive[
-                @class="ocf"
-                and
-                @provider="pacemaker"
-                and
-                @type="remote"
-                and
-                not(
-                    instance_attributes/nvpair[
-                        @name="server"
-                        and
-                        string-length(@value) > 0
-                    ]
-                )
-            ]
-        """)
+        for primitive in resources_section.xpath(
+            ".//primitive[{is_remote} and not({has_server})]"
+            .format(
+                is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
+                has_server=_HAS_SERVER_XPATH_SNIPPET,
+            )
+        )
     ])
 
     return node_list
@@ -75,20 +78,25 @@ def find_node_resources(resources_section, node_identifier):
     string node_identifier could be id of the resource or its instance attribute
         "server"
     """
-    return resources_section.xpath("""
-        .//primitive[
-            @class="ocf"
-            and
-            @provider="pacemaker"
-            and
-            @type="remote"
-            and (
-                @id="{0}"
-                or
-                instance_attributes/nvpair[@name="server" and @value="{0}"]
-            )
-        ]
-    """.format(node_identifier))
+    return resources_section.xpath(
+        """
+            .//primitive[
+                {is_remote} and (
+                    @id="{identifier}"
+                    or
+                    instance_attributes/nvpair[
+                        @name="server"
+                        and
+                        @value="{identifier}"
+                    ]
+                )
+            ]
+        """
+        .format(
+            is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
+            identifier=node_identifier
+        )
+    )
 
 def get_host(resource_element):
     """
@@ -98,23 +106,18 @@ def get_host(resource_element):
     etree.Element resource_element
     """
     if not (
-        resource_element.attrib["class"] == "ocf"
+        resource_element.attrib["class"] == AGENT_NAME.standard
         and
-        resource_element.attrib["provider"] == "pacemaker"
+        resource_element.attrib["provider"] == AGENT_NAME.provider
         and
-        resource_element.attrib["type"] == "remote"
+        resource_element.attrib["type"] == AGENT_NAME.type
     ):
         return None
 
 
-    host_list = resource_element.xpath("""
-        ./instance_attributes/nvpair[
-            @name="server"
-            and
-            string-length(@value) > 0
-        ]
-        /@value
-    """)
+    host_list = resource_element.xpath(
+        "./{has_server}/@value".format(has_server=_HAS_SERVER_XPATH_SNIPPET)
+    )
     if host_list:
         return host_list[0]
     return resource_element.attrib["id"]

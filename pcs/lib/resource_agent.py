@@ -91,7 +91,17 @@ class InvalidResourceAgentName(ResourceAgentError):
 class InvalidStonithAgentName(ResourceAgentError):
     pass
 
-ResourceAgentName = namedtuple("ResourceAgentName", "standard provider type")
+class ResourceAgentName(
+    namedtuple("ResourceAgentName", "standard provider type")
+):
+    @property
+    def full_name(self):
+        return ":".join(
+            filter(
+                None,
+                [self.standard, self.provider, self.type]
+            )
+        )
 
 def get_resource_agent_name_from_string(full_agent_name):
     #full_agent_name could be for example systemd:lvm2-pvscan@252:2
@@ -661,11 +671,7 @@ class CrmAgent(Agent):
         raise NotImplementedError()
 
     def _get_full_name(self):
-        return ":".join(filter(None, [
-            self.get_standard(),
-            self.get_provider(),
-            self.get_type(),
-        ]))
+        return self._name_parts.full_name
 
     def get_standard(self):
         return self._name_parts.standard
