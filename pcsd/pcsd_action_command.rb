@@ -43,7 +43,7 @@ module PcsdActionCommand
       unless @@services.key?(@action[:service])
         raise self.error(
           "unsupported 'service' ('#{@action[:service]}')"+
-          " supported are #{@@services.keys}"
+          " supported are #{@@services.keys.sort}"
         )
       end
 
@@ -51,7 +51,7 @@ module PcsdActionCommand
         raise self.error(
           "unsupported 'command' ('#{@action[:command]}') for service "+
           "'#{@action[:service]}',"+
-          " supported are #{@@services[@action[:service]]}"
+          " supported are #{@@services[@action[:service]].sort}"
         )
       end
     end
