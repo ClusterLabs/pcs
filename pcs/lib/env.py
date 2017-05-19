@@ -72,13 +72,9 @@ class LibraryEnvironment(object):
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
-        self._pacemaker = (
-            PacemakerEnv(
-                report_processor,
-                pacemaker if pacemaker else {},
-                self.get_cib
-            )
-        )
+        #pacemaker is currently not mocked and it provides only an access to
+        #the authkey
+        self._pacemaker =  PacemakerEnv()
         self._request_timeout = request_timeout
         self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
