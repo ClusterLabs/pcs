@@ -135,6 +135,29 @@ class FindNodeResources(TestCase):
             ["R1", "R2"]
         )
 
+    def test_find_by_resource_id(self):
+        self.assert_resources_equals(
+            "HOST",
+            """<resources>
+                <primitive class="ocf" id="HOST"
+                    provider="pacemaker" type="remote"
+                />
+            </resources>""",
+            ["HOST"]
+        )
+
+    def test_ignore_non_remote_primitives(self):
+        self.assert_resources_equals(
+            "HOST",
+            """<resources>
+                <primitive class="ocf" id="HOST"
+                    provider="heartbeat" type="Dummy"
+                />
+            </resources>""",
+            []
+        )
+
+
 class GetHost(TestCase):
     def test_return_host_when_there(self):
         self.assertEqual(
