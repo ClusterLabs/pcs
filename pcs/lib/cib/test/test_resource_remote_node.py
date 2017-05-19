@@ -154,6 +154,18 @@ class GetHost(TestCase):
             <primitive class="ocf" id="R" provider="heartbeat" type="dummy"/>
         """)))
 
+    def test_return_none_when_primitive_is_without_agent(self):
+        case_list = [
+            '<primitive id="R"/>',
+            '<primitive id="R" class="ocf"/>',
+            '<primitive id="R" class="ocf" provider="pacemaker"/>',
+        ]
+        for case in case_list:
+            self.assertIsNone(
+                remote_node.get_host(etree.fromstring(case)),
+                "for '{0}' is not returned None".format(case)
+            )
+
     def test_return_host_from_resource_id(self):
         self.assertEqual(
             "R",

@@ -106,11 +106,11 @@ def get_host(resource_element):
     etree.Element resource_element
     """
     if not (
-        resource_element.attrib["class"] == AGENT_NAME.standard
+        resource_element.attrib.get("class", "") == AGENT_NAME.standard
         and
-        resource_element.attrib["provider"] == AGENT_NAME.provider
+        resource_element.attrib.get("provider", "") == AGENT_NAME.provider
         and
-        resource_element.attrib["type"] == AGENT_NAME.type
+        resource_element.attrib.get("type", "") == AGENT_NAME.type
     ):
         return None
 
