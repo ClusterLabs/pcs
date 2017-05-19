@@ -157,10 +157,6 @@ module PcsdFile
     def full_file_name
       @full_file_name ||= File.join(COROSYNC_CONFIG_DIR, "authkey")
     end
-
-    def binary
-      return true
-    end
   end
 
   TYPES = {
