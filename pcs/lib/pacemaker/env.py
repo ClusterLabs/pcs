@@ -7,10 +7,8 @@ from __future__ import (
 
 from pcs.common import env_file_role_codes
 from pcs.lib.env_file import GhostFile, RealFile
+from pcs import settings
 
-
-#TODO obtain authkey path from sysconfig
-AUTHKEY_PATH = "/etc/pacemaker/authkey"
 
 class PacemakerEnv(object):
     def __init__(self, report_processor, env_data, get_cib):
@@ -26,7 +24,7 @@ class PacemakerEnv(object):
         else:
             self.__authkey = RealFile(
                 file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
-                file_path=AUTHKEY_PATH,
+                file_path=settings.pacemaker_authkey_path,
             )
         self.get_cib = get_cib
 
