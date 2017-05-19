@@ -15,6 +15,48 @@ need_python2 = skipUnless(sys.version_info[0] == 2, "test requires python2")
 
 import pcs.lib.node as lib
 
+class NodeAddressesContainHost(TestCase):
+    def test_return_true_if_is_as_ring0(self):
+        self.assertTrue(
+            lib.node_addresses_contain_host(
+                [lib.NodeAddresses("HOST")],
+                "HOST"
+            )
+        )
+
+    def test_return_true_if_is_as_ring1(self):
+        self.assertTrue(
+            lib.node_addresses_contain_host(
+                [lib.NodeAddresses("SOME", ring1="HOST")],
+                "HOST"
+            )
+        )
+
+    def test_return_false_if_not_match(self):
+        self.assertFalse(
+            lib.node_addresses_contain_host(
+                [lib.NodeAddresses("SOME", ring1="ANOTHER")],
+                "HOST"
+            )
+        )
+
+class NodeAddressesContainName(TestCase):
+    def test_return_true_if_is_as_name(self):
+        self.assertTrue(
+            lib.node_addresses_contain_name(
+                [lib.NodeAddresses("HOST", name="NAME")],
+                "NAME"
+            )
+        )
+
+    def test_return_false_if_not_match(self):
+        self.assertFalse(
+            lib.node_addresses_contain_name(
+                [lib.NodeAddresses(ring0="NAME")],
+                "NAME"
+            )
+        )
+
 class NodeAddressesTest(TestCase):
     def test_properties_all(self):
         ring0 = "test_ring0"
