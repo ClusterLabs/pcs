@@ -173,10 +173,12 @@ class NodeAddGuest(ResourceTest):
         )
 
     def test_fail_when_option_remote_node_specified(self):
+        self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest some-host node-name remote-node=node-name",
-            stdout_start="Error: option 'remote-node' is not allowed\n\n"
-                "Usage: pcs cluster node add-guest..."
+            "cluster node add-guest some-host G remote-node=node-name",
+            stdout_start="Error: invalid guest options option 'remote-node',"
+                " allowed options are: remote-addr, remote-connect-timeout,"
+                " remote-port\n"
         )
 
     def test_fail_when_resource_has_already_remote_node_meta(self):
@@ -264,7 +266,7 @@ class NodeAddGuest(ResourceTest):
                 " connection, use 'pcs cluster node add-remote'\n"
         )
         self.assert_pcs_fail(
-            "cluster node add-guest another-host R",
+            "cluster node add-guest R G",
             "Error: 'R' already exists\n"
         )
 

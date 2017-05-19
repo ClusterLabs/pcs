@@ -68,8 +68,10 @@ def _validate_remote_connection(
 def _validate_guest_change(
     tree, nodes, meta_attributes, allow_inappropriate_use, detect_remove=False
 ):
-    if not guest_node.contains_guest_options(meta_attributes):
+    if not guest_node.is_node_name_in_options(meta_attributes):
         return []
+
+    node_name = guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
     create_report = reports.use_command_node_add_guest
@@ -84,9 +86,10 @@ def _validate_guest_change(
     )
 
     report_list.extend(
-        guest_node.validate_host_conflicts(
+        guest_node.validate_conflicts(
             tree,
             nodes,
+            node_name,
             meta_attributes
         )
     )

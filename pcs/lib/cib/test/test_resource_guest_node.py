@@ -22,7 +22,7 @@ from pcs.lib.node import NodeAddresses
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
 
 class ValidateHostConflicts(TestCase):
-    def validate(self, options):
+    def validate(self, node_name, options):
         tree = etree.fromstring("""
             <cib>
                 <configuration>
@@ -60,11 +60,13 @@ class ValidateHostConflicts(TestCase):
             NodeAddresses("GUEST_CONFLICT", name="GUEST_CONFLICT"),
             NodeAddresses("GUEST_ADDR_CONFLICT", name="some"),
         ]
-        return guest_node.validate_host_conflicts(tree, nodes, options)
+        return guest_node.validate_conflicts(tree, nodes, node_name, options)
 
-    def assert_already_exists_error(self, conflict_name, options):
+    def assert_already_exists_error(
+        self, conflict_name, node_name, options=None
+    ):
         assert_report_item_list_equal(
-            self.validate(options),
+            self.validate(node_name, options if options else {}),
             [
                 (
                     severities.ERROR,
@@ -79,45 +81,38 @@ class ValidateHostConflicts(TestCase):
 
 
     def test_report_conflict_with_id(self):
-        self.assert_already_exists_error("CONFLICT", {
-            "remote-node": "CONFLICT",
-        })
+        self.assert_already_exists_error("CONFLICT", "CONFLICT")
 
     def test_report_conflict_guest_node(self):
-        self.assert_already_exists_error("GUEST_CONFLICT", {
-            "remote-node": "GUEST_CONFLICT",
-        })
+        self.assert_already_exists_error("GUEST_CONFLICT", "GUEST_CONFLICT")
 
     def test_report_conflict_guest_addr(self):
-        self.assert_already_exists_error("GUEST_ADDR_CONFLICT", {
-            "remote-node": "GUEST_ADDR_CONFLICT",
-        })
+        self.assert_already_exists_error(
+            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
+        )
 
     def test_report_conflict_guest_addr_by_addr(self):
-        self.assert_already_exists_error("GUEST_ADDR_CONFLICT", {
-            "remote-addr": "GUEST_ADDR_CONFLICT",
-        })
+        self.assert_already_exists_error(
+            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
+        )
 
     def test_no_conflict_guest_node_whe_addr_is_different(self):
-        self.assertEqual([], self.validate({
-            "remote-node": "GUEST_ADDR_CONFLICT",
+        self.assertEqual([], self.validate("GUEST_ADDR_CONFLICT", {
             "remote-addr": "different",
         }))
 
     def test_report_conflict_remote_node(self):
-        self.assert_already_exists_error("REMOTE_CONFLICT", {
-            "remote-node": "REMOTE_CONFLICT",
-        })
+        self.assert_already_exists_error("REMOTE_CONFLICT", "REMOTE_CONFLICT")
 
     def test_no_conflict_remote_node_whe_addr_is_different(self):
-        self.assertEqual([], self.validate({
-            "remote-node": "REMOTE_CONFLICT",
+        self.assertEqual([], self.validate("REMOTE_CONFLICT", {
             "remote-addr": "different",
         }))
 
     def test_report_conflict_remote_node_by_addr(self):
-        self.assert_already_exists_error("REMOTE_CONFLICT", {
-            "remote-node": "different",
+        self.assert_already_exists_error("REMOTE_CONFLICT", "different", {
             "remote-addr": "REMOTE_CONFLICT",
         })
 
@@ -137,32 +132,12 @@ class ValidateOptions(TestCase):
     def test_no_report_on_valid(self):
         self.assertEqual(
             [],
-            self.validate({
-                "remote-node": "node1"
-            })
-        )
-
-    def test_report_missing_remote_node(self):
-        assert_report_item_list_equal(
-            self.validate({}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_names": ["remote-node"],
-                    },
-                    None
-                ),
-            ]
+            self.validate({}, "node1")
         )
 
     def test_report_invalid_option(self):
         assert_report_item_list_equal(
-            self.validate({
-                "remote-node": "node1",
-                "invalid": "invalid",
-            }),
+            self.validate({"invalid": "invalid"}, "node1"),
             [
                 (
                     severities.ERROR,
@@ -179,10 +154,7 @@ class ValidateOptions(TestCase):
 
     def test_report_invalid_interval(self):
         assert_report_item_list_equal(
-            self.validate({
-                "remote-node": "node1",
-                "remote-connect-timeout": "invalid",
-            }),
+            self.validate({"remote-connect-timeout": "invalid"}, "node1"),
             [
                 (
                     severities.ERROR,
@@ -198,10 +170,7 @@ class ValidateOptions(TestCase):
 
     def test_report_invalid_node_name(self):
         assert_report_item_list_equal(
-            self.validate(
-                {"remote-node": "node1"},
-                "EXISTING-HOST-NAME",
-            ),
+            self.validate({}, "EXISTING-HOST-NAME"),
             [
                 (
                     severities.ERROR,

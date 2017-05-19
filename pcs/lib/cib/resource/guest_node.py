@@ -21,28 +21,35 @@ from pcs.lib.node import (
 
 #TODO pcs currently does not care about multiple meta_attributes and here
 #we don't care as well
-
 GUEST_OPTIONS = [
-    'remote-node',
     'remote-port',
     'remote-addr',
     'remote-connect-timeout',
 ]
 
-def validate_host_conflicts(tree, nodes, options):
-    host = get_host_from_options(options)
+def validate_conflicts(tree, nodes, node_name, options):
+    report_list = []
     if(
-        does_id_exist(tree, options.get("remote-node", None))
+        does_id_exist(tree, node_name)
+        or
+        node_addresses_contain_name(nodes, node_name)
         or (
-            host
+            "remote-addr" not in options
             and
-            node_addresses_contain_host(nodes, host)
+            node_addresses_contain_host(nodes, node_name)
         )
     ):
-        return [reports.id_already_exists(host)]
-    return []
+        report_list.append(reports.id_already_exists(node_name))
 
-def contains_guest_options(options):
+    if(
+        "remote-addr" in options
+        and
+        node_addresses_contain_host(nodes, options["remote-addr"])
+    ):
+        report_list.append(reports.id_already_exists(options["remote-addr"]))
+    return report_list
+
+def is_node_name_in_options(options):
     return "remote-node" in options
 
 def get_guest_option_value(options, default=None):
@@ -57,20 +64,26 @@ def validate_set_as_guest(tree, nodes, node_name, options):
     )
 
     validator_list = [
-        validate.is_required("remote-node"),
         validate.value_time_interval("remote-connect-timeout"),
         validate.value_port_number("remote-port"),
     ]
 
-    report_list.extend(validate.run_collection_of_option_validators(
-        options,
-        validator_list
-    ))
+    report_list.extend(
+        validate.run_collection_of_option_validators(options, validator_list)
+    )
 
-    report_list.extend(validate_host_conflicts(tree, nodes, options))
+    report_list.extend(
+        validate_conflicts(tree, nodes, node_name, options)
+    )
 
-    if node_addresses_contain_name(nodes, node_name):
-        report_list.append(reports.id_already_exists(node_name))
+    if not node_name.strip():
+        report_list.append(
+            reports.invalid_option_value(
+                "node name",
+                node_name,
+                "no empty value",
+            )
+        )
 
     return report_list
 
@@ -124,7 +137,7 @@ def unset_guest(resource_element):
         "./meta_attributes/nvpair[{0}]".format(
             " or ".join([
                 '@name="{0}"'.format(option)
-                for option in GUEST_OPTIONS
+                for option in (GUEST_OPTIONS + ["remote-node"])
             ])
         )
     )
@@ -152,14 +165,20 @@ def get_node(meta_attributes):
                 host = name
     return NodeAddresses(host, name=name) if name else None
 
-def get_host_from_options(meta_options):
+def get_host_from_options(node_name, meta_options):
     """
-    Return host from meta options. Return None as a default value.
+    Return host from node_name meta options.
+    dict meta_options
     """
-    return meta_options.get(
-        "remote-addr",
-        meta_options.get("remote-node", None)
-    )
+    return meta_options.get("remote-addr", node_name)
+
+def get_node_name_from_options(meta_options, default=None):
+    """
+    Return node_name from meta options.
+    dict meta_options
+    """
+    return meta_options.get("remote-node", default)
+
 
 def get_host(resource_element):
     host = get_meta_attribute_value(resource_element, "remote-addr")

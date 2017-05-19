@@ -11,6 +11,7 @@ from pcs.lib.node import(
     NodeAddresses,
     NodeAddressesList,
     node_addresses_contain_name,
+    node_addresses_contain_host,
 )
 from pcs.lib.tools import generate_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
@@ -196,7 +197,7 @@ def node_add_remote(
         _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
 def node_add_guest(
-    env, resource_id, options,
+    env, node_name, resource_id, options,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
@@ -224,7 +225,7 @@ def node_add_guest(
     report_list = guest_node.validate_set_as_guest(
         cib,
         current_nodes,
-        resource_id,
+        node_name,
         options
     )
     try:
@@ -241,7 +242,7 @@ def node_add_guest(
 
     guest_node.set_as_guest(
         resource_element,
-        options["remote-node"],
+        node_name,
         options.get("remote-addr", None),
         options.get("remote-port", None),
         options.get("remote-connect-timeout", None),
@@ -250,7 +251,7 @@ def node_add_guest(
     _prepare_pacemaker_remote_environment(
         env,
         current_nodes,
-        guest_node.get_host_from_options(options),
+        guest_node.get_host_from_options(node_name, options),
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
