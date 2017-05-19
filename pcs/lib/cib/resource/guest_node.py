@@ -30,7 +30,7 @@ GUEST_OPTIONS = [
 ]
 
 def validate_host_conflicts(tree, nodes, options):
-    host = options.get("remote-addr", options.get("remote-node", None))
+    host = get_host_from_options(options)
     if(
         does_id_exist(tree, options.get("remote-node", None))
         or (
@@ -49,7 +49,7 @@ def get_guest_option_value(options, default=None):
     return options.get("remote-node", default)
 
 
-def validate_parts(tree, nodes, node_name, options):
+def validate_set_as_guest(tree, nodes, node_name, options):
     report_list = validate.names_in(
         GUEST_OPTIONS,
         options.keys(),

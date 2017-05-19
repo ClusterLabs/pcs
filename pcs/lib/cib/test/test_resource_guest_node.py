@@ -123,7 +123,7 @@ class ValidateHostConflicts(TestCase):
 
 class ValidateOptions(TestCase):
     def validate(self, options, name="some_name"):
-        return guest_node.validate_parts(
+        return guest_node.validate_set_as_guest(
             etree.fromstring('<cib/>'),
             [NodeAddresses(
                 "EXISTING-HOST-RING0",

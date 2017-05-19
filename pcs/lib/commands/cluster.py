@@ -217,7 +217,7 @@ def node_add_guest(
     cib = env.get_cib()
     current_nodes = get_nodes(env.get_corosync_conf(), cib)
 
-    report_list = guest_node.validate_parts(
+    report_list = guest_node.validate_set_as_guest(
         cib,
         current_nodes,
         resource_id,
