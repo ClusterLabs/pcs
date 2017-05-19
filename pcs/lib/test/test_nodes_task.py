@@ -697,6 +697,21 @@ class AvailabilityCheckerNode(TestCase):
             ]
         )
 
+    def test_report_node_is_running_pacemaker(self):
+        self.assert_result_causes_reports(
+            {"node_available": False, "pacemaker_running": True},
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
+                    {
+                        "node": self.node,
+                        "service": "pacemaker",
+                    }
+                ),
+            ]
+        )
+
 class AvailabilityCheckerRemoteNode(TestCase):
     def setUp(self):
         self.node = "node1"
@@ -717,7 +732,7 @@ class AvailabilityCheckerRemoteNode(TestCase):
 
     def test_report_node_is_running_pacemaker(self):
         self.assert_result_causes_reports(
-            {"node_available": True, "pacemaker_running": True},
+            {"node_available": False, "pacemaker_running": True},
             [
                 (
                     severity.ERROR,

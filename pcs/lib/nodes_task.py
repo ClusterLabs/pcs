@@ -208,38 +208,49 @@ def node_check_auth(communicator, node):
     )
 
 def availability_checker_node(availability_info, report_items, node_label):
+    """
+    Check if availability_info means that the node is suitable as cluster
+    (corosync) node.
+    """
     if availability_info["node_available"]:
         return
 
-    if not availability_info.get("pacemaker_remote", False):
-        report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
-        return
-
-    report_items.append(reports.cannot_add_node_is_running_service(
-        node_label,
-        "pacemaker_remote"
-    ))
-
-def availability_checker_remote_node(
-    availability_info, report_items, node_label
-):
-    if (
-        availability_info["node_available"]
-        and
-        availability_info.get("pacemaker_running", False)
-    ):
+    if availability_info.get("pacemaker_running", False):
         report_items.append(reports.cannot_add_node_is_running_service(
             node_label,
             "pacemaker"
         ))
         return
 
-    if (
-        not availability_info["node_available"]
-        and
-        not availability_info.get("pacemaker_remote", False)
-    ):
+    if availability_info.get("pacemaker_remote", False):
+        report_items.append(reports.cannot_add_node_is_running_service(
+            node_label,
+            "pacemaker_remote"
+        ))
+        return
+
+    report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
+
+def availability_checker_remote_node(
+    availability_info, report_items, node_label
+):
+    """
+    Check if availability_info means that the node is suitable as remote node.
+    """
+    if availability_info["node_available"]:
+        return
+
+    if availability_info.get("pacemaker_running", False):
+        report_items.append(reports.cannot_add_node_is_running_service(
+            node_label,
+            "pacemaker"
+        ))
+        return
+
+    if not availability_info.get("pacemaker_remote", False):
         report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
+        return
+
 
 def check_can_add_node_to_cluster(
     node_communicator, node, report_items,
@@ -252,6 +263,8 @@ def check_can_add_node_to_cluster(
     NodeCommunicator node_communicator is an object for making the http request
     NodeAddresses node specifies the destination url
     list report_items is place where report items should be collected
+    callable check_response -- make decision about availability based on
+        response info
     """
     safe_report_items = []
     availability_info = _call_for_json(

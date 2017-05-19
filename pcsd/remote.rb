@@ -809,7 +809,7 @@ def remote_node_available(params, request, auth_user)
   end
   if pacemaker_running?()
     return JSON.generate({
-      :node_available => true,
+      :node_available => false,
       :pacemaker_running => true,
     })
   end
