@@ -122,17 +122,12 @@ class TestConfig < Test::Unit::TestCase
   ]
 }'
     cfg = PCSConfig.new(text)
-    if JSON::VERSION_MAJOR >= 2
-      parser_error = "Unable to parse pcs_settings file: 409: unexpected token at '\"rh71-node2\"\n      ]\n    }\n  ]\n}'"
-    else
-      parser_error = "Unable to parse pcs_settings file: 399: unexpected token at '\"rh71-node2\"\n      ]\n    }\n  ]\n}'"
-    end
-    assert_equal(
-      [[
-        'error',
-        parser_error
-      ]],
-      $logger.log
+    assert_equal(1, $logger.log.length)
+    assert_equal('error', $logger.log[0][0])
+    assert_match(
+      # the number is based on JSON gem version
+      /Unable to parse pcs_settings file: \d+: unexpected token/,
+      $logger.log[0][1]
     )
     assert_equal(fixture_empty_config, cfg.text)
   end
