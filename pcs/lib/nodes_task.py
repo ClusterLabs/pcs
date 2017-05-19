@@ -425,7 +425,7 @@ def run_actions_on_multiple_nodes(
 ):
     _run_actions_on_multiple_nodes(
         node_communicator,
-        "remote/run_service_command",
+        "remote/manage_services",
         "actions",
         report_processor,
         reports.service_commands_on_nodes_started,

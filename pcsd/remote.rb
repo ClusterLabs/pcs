@@ -94,7 +94,7 @@ def remote(params, request, auth_user)
       :booth_get_config => method(:booth_get_config),
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
-      :run_service_command => method(:run_service_command),
+      :manage_services => method(:manage_services),
 
   }
   remote_cmd_with_pacemaker = {
@@ -2899,7 +2899,7 @@ def remove_file(params, request, auth_user)
 end
 
 
-def run_service_command(params, request, auth_user)
+def manage_services(params, request, auth_user)
   begin
     check_permissions(auth_user, Permissions::WRITE)
 
