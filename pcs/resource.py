@@ -39,7 +39,7 @@ from pcs.lib.commands.resource import _validate_guest_change
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
-def _detect_guest_change(meta_attributes, allow_inappropriate_use):
+def _detect_guest_change(meta_attributes, allow_not_suitable_command):
     env = utils.get_lib_env()
     cib = env.get_cib()
     env.report_processor.process_list(
@@ -47,7 +47,7 @@ def _detect_guest_change(meta_attributes, allow_inappropriate_use):
             cib,
             get_nodes(env.get_corosync_conf(), cib),
             meta_attributes,
-            allow_inappropriate_use,
+            allow_not_suitable_command,
             detect_remove=True,
         )
     )
@@ -398,7 +398,7 @@ def resource_create(lib, argv, modifiers):
         use_default_operations=not modifiers["no-default-ops"],
         ensure_disabled=modifiers["disabled"],
         wait=modifiers["wait"],
-        allow_inappropriate_use=modifiers["force"],
+        allow_not_suitable_command=modifiers["force"],
     )
 
     if "clone" in parts:

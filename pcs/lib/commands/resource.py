@@ -46,13 +46,13 @@ def resource_environment(
         ])
 
 def _validate_remote_connection(
-    nodes, resource_id, instance_attributes,  allow_inappropriate_use
+    nodes, resource_id, instance_attributes,  allow_not_suitable_command
 ):
     report_list = []
     report_list.append(
         reports.get_problem_creator(
             report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_inappropriate_use
+            allow_not_suitable_command
         )(reports.use_command_node_add_remote)
     )
 
@@ -66,7 +66,8 @@ def _validate_remote_connection(
     return report_list
 
 def _validate_guest_change(
-    tree, nodes, meta_attributes, allow_inappropriate_use, detect_remove=False
+    tree, nodes, meta_attributes, allow_not_suitable_command,
+    detect_remove=False
 ):
     if not guest_node.is_node_name_in_options(meta_attributes):
         return []
@@ -81,7 +82,7 @@ def _validate_guest_change(
     report_list.append(
         reports.get_problem_creator(
             report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_inappropriate_use
+            allow_not_suitable_command
         )(create_report)
     )
 
@@ -98,7 +99,7 @@ def _validate_guest_change(
 
 def _validate_special_cases(
     nodes, resource_agent, resources_section, resource_id, meta_attributes,
-    instance_attributes, allow_inappropriate_use
+    instance_attributes, allow_not_suitable_command
 ):
     report_list = []
 
@@ -107,14 +108,14 @@ def _validate_special_cases(
             nodes,
             resource_id,
             instance_attributes,
-            allow_inappropriate_use,
+            allow_not_suitable_command,
         ))
 
     report_list.extend(_validate_guest_change(
         resources_section,
         nodes,
         meta_attributes,
-        allow_inappropriate_use,
+        allow_not_suitable_command,
     ))
 
     return report_list
@@ -128,7 +129,7 @@ def create(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
-    allow_inappropriate_use=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in a cib.
@@ -152,7 +153,7 @@ def create(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
-    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -173,7 +174,7 @@ def create(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_inappropriate_use
+            allow_not_suitable_command
         ))
 
         primitive_element = resource.primitive.create(
@@ -196,7 +197,7 @@ def _create_as_clone_common(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
-    allow_inappropriate_use=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in some kind of clone (clone or master).
@@ -226,7 +227,7 @@ def _create_as_clone_common(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
-    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -253,7 +254,7 @@ def _create_as_clone_common(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_inappropriate_use
+            allow_not_suitable_command
         ))
 
         primitive_element = resource.primitive.create(
@@ -284,7 +285,7 @@ def create_in_group(
     adjacent_resource_id=None,
     put_after_adjacent=False,
     wait=False,
-    allow_inappropriate_use=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in a cib and put it into defined group
@@ -310,7 +311,7 @@ def create_in_group(
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent resource
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
-    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -331,7 +332,7 @@ def create_in_group(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_inappropriate_use
+            allow_not_suitable_command
         ))
 
         primitive_element = resource.primitive.create(
@@ -365,7 +366,7 @@ def create_into_bundle(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
-    allow_inappropriate_use=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create a new resource in a cib and put it into an existing bundle
@@ -390,7 +391,7 @@ def create_into_bundle(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
-    bool allow_inappropriate_use -- flag for FORCE_NOT_SUITABLE_COMMAND
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -412,7 +413,7 @@ def create_into_bundle(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_inappropriate_use
+            allow_not_suitable_command
         ))
 
         primitive_element = resource.primitive.create(
