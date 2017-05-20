@@ -735,7 +735,7 @@ Commands:
         Add the node to the cluster as a remote node. Sync all relevant
         configuration files to the new node. Start the node and configure it to
         start the cluster on boot.
-        Options are server, port and reconnect_interval. Operations and meta
+        Options are port and reconnect_interval. Operations and meta
         belong to an underlying connection resource (ocf:pacemaker:remote).
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
