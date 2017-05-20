@@ -46,7 +46,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
-from pcs.lib.commands.cluster import _share_authkey
+from pcs.lib.commands.cluster import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
@@ -2064,6 +2064,15 @@ def cluster_reload(argv):
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
     if "--all" in utils.pcs_options:
+        lib_env = utils.get_lib_env()
+        all_remote_nodes = get_nodes(tree=lib_env.get_cib())
+        if len(all_remote_nodes) > 0:
+            _destroy_pcmk_remote_env(
+                lib_env,
+                all_remote_nodes,
+                allow_fails=True
+            )
+
         destroy_cluster(utils.getNodesFromCorosyncConf())
     else:
         print("Shutting down pacemaker/corosync services...")
@@ -2090,10 +2099,12 @@ def cluster_destroy(argv):
             os.system("rm -f /etc/cluster/cluster.conf")
         else:
             os.system("rm -f /etc/corosync/corosync.conf")
+            os.system("rm -f {0}".format(settings.corosync_authkey_path))
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
             os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
+        os.system("rm -f {0}".format(settings.pacemaker_authkey_path))
         try:
             qdevice_net.client_destroy()
         except:
