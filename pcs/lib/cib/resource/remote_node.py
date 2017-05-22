@@ -153,11 +153,14 @@ def validate_create(
     """
     report_list = _validate_server_not_used(resource_agent, instance_attributes)
 
+    host_is_used = False
     if node_addresses_contain_host(nodes, host):
         report_list.append(reports.id_already_exists(host))
+        host_is_used = True
 
-    if node_addresses_contain_name(nodes, node_name):
-        report_list.append(reports.id_already_exists(node_name))
+    if not host_is_used or host != node_name:
+        if node_addresses_contain_name(nodes, node_name):
+            report_list.append(reports.id_already_exists(node_name))
 
     return report_list
 
@@ -191,7 +194,8 @@ def create(
         actions specified in resource agent
     """
     all_instance_attributes = instance_attributes.copy()
-    all_instance_attributes.update({"server": host})
+    if host != node_name:
+        all_instance_attributes.update({"server": host})
     try:
         return primitive.create(
             report_processor,

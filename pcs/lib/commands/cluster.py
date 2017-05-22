@@ -181,7 +181,18 @@ def node_add_remote(
             use_default_operations,
         )
     except LibraryError as e:
-        report_list.extend(e.args)
+        #Check unique id conflict with check against nodes. Until validation
+        #resource create is not separated, we need to make unique post
+        #validation.
+        already_exists = []
+        unified_report_list = []
+        for report in report_list + list(e.args):
+            if report.code != report_codes.ID_ALREADY_EXISTS:
+                unified_report_list.append(report)
+            elif report.info.get["id"] not in already_exists:
+                unified_report_list.append(report)
+                already_exists.append(report.info["id"])
+        report_list = unified_report_list
 
     env.report_processor.process_list(report_list)
 
