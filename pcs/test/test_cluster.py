@@ -86,8 +86,6 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             o,
             "Warning: this command is deprecated, use 'pcs cluster node"
                 " add-guest'\n"
-            "Warning: this command is not sufficient for creating a guest node, use"
-                " 'pcs cluster node add-guest'\n"
         )
 
         o,r = pcs(
@@ -100,8 +98,6 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             o,
             "Warning: this command is deprecated, use 'pcs cluster node"
                 " add-guest'\n"
-            "Warning: this command is not sufficient for creating a guest node, use"
-                " 'pcs cluster node add-guest'\n"
         )
 
         self.assert_pcs_success("resource --full", outdent(
@@ -130,7 +126,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "cluster remote-node add rh7-2g NOTARESOURCE",
+            "cluster remote-node add rh7-2g NOTARESOURCE --force",
             "Error: unable to find resource 'NOTARESOURCE'\n"
                 "Warning: this command is deprecated, use"
                 " 'pcs cluster node add-guest'\n"

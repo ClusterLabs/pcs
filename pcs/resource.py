@@ -687,15 +687,16 @@ def resource_agents(lib, argv, modifiers):
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(res_id,args):
+def resource_update(res_id,args, deal_with_guest_change=True):
     dom = utils.get_cib_dom()
 
 # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
-    _detect_guest_change(
-        prepare_options(meta_values),
-        "--force" in utils.pcs_options,
-    )
+    if deal_with_guest_change:
+        _detect_guest_change(
+            prepare_options(meta_values),
+            "--force" in utils.pcs_options,
+        )
 
     wait = False
     wait_timeout = None

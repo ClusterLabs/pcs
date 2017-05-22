@@ -2211,13 +2211,22 @@ def cluster_remote_node(argv):
             print(usage_add)
             print()
             sys.exit(1)
-        #resource_udate is called so there is warning enough
-        warn("this command is deprecated, use 'pcs cluster node add-guest'")
+        if "--force" in utils.pcs_options:
+            warn("this command is deprecated, use 'pcs cluster node add-guest'")
+        else:
+            raise error(
+                "this command is deprecated, use 'pcs cluster node add-guest'"
+                ", use --force to override"
+            )
         hostname = argv.pop(0)
         rsc = argv.pop(0)
         if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
             utils.err("unable to find resource '%s'" % rsc)
-        resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
+        resource.resource_update(
+            rsc,
+            ["meta", "remote-node="+hostname] + argv,
+            deal_with_guest_change=False
+        )
 
     elif command in ["remove","delete"]:
         if len(argv) < 1:
