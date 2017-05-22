@@ -446,6 +446,30 @@ def cluster_setup(argv):
         destroy_cluster(primary_addr_list)
         print()
 
+        try:
+            file_definitions = {}
+            file_definitions.update(
+                node_communication_format.pcmk_authkey_file(generate_key())
+            )
+            file_definitions.update(
+                node_communication_format.corosync_authkey_file(
+                    generate_key(random_bytes_count=128)
+                )
+            )
+
+            distribute_files(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                file_definitions,
+                NodeAddressesList(
+                    [NodeAddresses(node) for node in primary_addr_list]
+                ),
+                allow_incomplete_distribution="--force" in utils.pcs_options
+            )
+        except LibraryError as e: #Theoretically, this should not happen
+            utils.process_library_reports(e.args)
+
+
         # send local cluster pcsd configs to the new nodes
         print("Sending cluster config files to the nodes...")
         pcsd_data = {
@@ -478,29 +502,6 @@ def cluster_setup(argv):
         # send the cluster config
         for node in primary_addr_list:
             utils.setCorosyncConfig(node, config)
-
-        try:
-            file_definitions = {}
-            file_definitions.update(
-                node_communication_format.pcmk_authkey_file(generate_key())
-            )
-            file_definitions.update(
-                node_communication_format.corosync_authkey_file(
-                    generate_key(random_bytes_count=128)
-                )
-            )
-
-            distribute_files(
-                lib_env.node_communicator(),
-                lib_env.report_processor,
-                file_definitions,
-                NodeAddressesList(
-                    [NodeAddresses(node) for node in primary_addr_list]
-                ),
-                allow_incomplete_distribution="--force" in utils.pcs_options
-            )
-        except LibraryError as e: #Theoretically, this should not happen
-            utils.process_library_reports(e.args)
 
         # start and enable the cluster if requested
         if "--start" in utils.pcs_options:
