@@ -61,6 +61,7 @@ from pcs.lib.errors import (
 from pcs.lib.external import (
     disable_service,
     is_systemctl,
+    NodeCommandUnsuccessfulException,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
@@ -1544,6 +1545,16 @@ def cluster_node(argv):
         add_node = True
     elif argv[0] in ["remove","delete"]:
         add_node = False
+    elif argv[0] == "add-outside":
+        try:
+            node_add_outside_cluster(
+                utils.get_library_wrapper(),
+                argv[1:],
+                utils.get_modificators(),
+            )
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", "node")
+        return
     else:
         usage.cluster(["node"])
         sys.exit(1)
@@ -1581,6 +1592,43 @@ def cluster_node(argv):
         node_add(lib_env, node0, node1, modifiers)
     else:
         node_remove(lib_env, node0, modifiers)
+
+
+def node_add_outside_cluster(lib, argv, modifiers):
+    if len(argv) != 2:
+        raise CmdLineInputError(
+            "Usage: pcs cluster node add-outside <node[,node-altaddr]> <cluster node>"
+        )
+
+    if len(modifiers["watchdog"]) > 1:
+        raise CmdLineInputError("Multiple watchdogs defined")
+
+    node_ring0, node_ring1 = utils.parse_multiring_node(argv[0])
+    cluster_node = argv[1]
+    data = [
+        ("new_nodename", node_ring0),
+    ]
+
+    if node_ring1:
+        data.append(("new_ring1addr", node_ring1))
+    if modifiers["watchdog"]:
+        data.append(("watchdog", modifiers["watchdog"][0]))
+    if modifiers["device"]:
+        # way to send data in array
+        data += [("devices[]", device) for device in modifiers["device"]]
+
+    communicator = utils.get_lib_env().node_communicator()
+    try:
+        communicator.call_host(
+            cluster_node,
+            "remote/add_node_all",
+            communicator.format_data_dict(data),
+        )
+    except NodeCommandUnsuccessfulException as e:
+        print(e.reason)
+    except NodeCommunicationException as e:
+        process_library_reports([node_communicator_exception_to_report_item(e)])
+
 
 def node_add(lib_env, node0, node1, modifiers):
     wait = False
