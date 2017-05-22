@@ -497,8 +497,7 @@ def cluster_setup(argv):
                 NodeAddressesList(
                     [NodeAddresses(node) for node in primary_addr_list]
                 ),
-                #It is not sufficient reason for the failure of setup
-                allow_incomplete_distribution=True
+                allow_incomplete_distribution="--force" in utils.pcs_options
             )
         except LibraryError as e: #Theoretically, this should not happen
             utils.process_library_reports(e.args)
