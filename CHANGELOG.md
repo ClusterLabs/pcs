@@ -33,11 +33,12 @@
   ([rhbz#1373614])
 - Removal of a pacemaker remote resource no longer causes the respective remote
   node to be fenced ([rhbz#1390609])
-  
+
 ### Changed
 - `pcs cluster setup` configure corosync with an encrypted communication
-  ([rhbz#1165821])
+  ([rhbz#1165821], [ghissue#98])
 
+[ghissue#98]: https://github.com/ClusterLabs/pcs/issues/98
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1254984]: https://bugzilla.redhat.com/show_bug.cgi?id=1254984
