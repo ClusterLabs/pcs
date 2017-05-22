@@ -152,8 +152,10 @@ def response_to_result(
         node_label
     )
 
-def format_result(result):
-    return "{code}{message}".format(
-        code=result.code,
-        message="" if not result.message else " ({0})".format(result.message)
-    )
+def get_format_result(code_message_map):
+    def format_result(result):
+        if result.code in code_message_map:
+            return code_message_map[result.code]
+
+        return result.message
+    return format_result

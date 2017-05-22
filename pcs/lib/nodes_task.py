@@ -327,7 +327,7 @@ def run_actions_on_node(
 def _run_actions_on_multiple_nodes(
     node_communicator, url, response_key, report_processor, create_start_report,
     actions, node_addresses_list, is_success,
-    create_success_report, create_error_report, force_code,
+    create_success_report, create_error_report, force_code, format_result,
     allow_incomplete_distribution=False, description=""
 ):
     error_map = defaultdict(dict)
@@ -347,8 +347,8 @@ def _run_actions_on_multiple_nodes(
                     create_success_report(node_addresses.label, key)
                 )
             else:
-                error_map[node_addresses.label][key] = (
-                    node_communication_format.format_result(item_response)
+                error_map[node_addresses.label][key] = format_result(
+                    item_response
                 )
 
     report_processor.process(create_start_report(
@@ -404,10 +404,17 @@ def distribute_files(
         reports.files_distribution_started,
         file_definitions,
         node_addresses_list,
-        lambda key, response: response.code in ["written", "rewritten"],
+        lambda key, response: response.code in [
+            "written",
+            "rewritten",
+            "same_content",
+        ],
         reports.file_distribution_success,
         reports.file_distribution_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        node_communication_format.get_format_result({
+            "conflict": "File already exists",
+        }),
         allow_incomplete_distribution,
         description,
     )
@@ -428,6 +435,7 @@ def remove_files(
         reports.file_remove_from_node_success,
         reports.file_remove_from_node_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        node_communication_format.get_format_result({}),
         allow_incomplete_distribution,
         description,
     )
@@ -448,6 +456,9 @@ def run_actions_on_multiple_nodes(
         reports.service_command_on_node_success,
         reports.service_command_on_node_error,
         report_codes.SKIP_ACTION_ON_NODES_ERRORS,
+        node_communication_format.get_format_result({
+            "fail": "Operation failed.",
+        }),
         allow_fails,
         description,
     )
