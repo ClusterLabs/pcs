@@ -130,7 +130,7 @@ module PcsdFile
   class PutFilePcmkRemoteAuthkey < PutFile
     def full_file_name
       #TODO determine the file name from the system
-      @full_file_name ||= File.join(PACEMAKER_CONFIG_DIR, "authkey")
+      @full_file_name ||= PACEMAKER_AUTHKEY
     end
 
     def permissions()
@@ -146,8 +146,9 @@ module PcsdFile
     end
 
     def write()
-      if not File.directory?(PACEMAKER_CONFIG_DIR)
-        Dir.mkdir(PACEMAKER_CONFIG_DIR)
+      pacemaker_config_dir = File.dirname(PACEMAKER_AUTHKEY)
+      if not File.directory?(pacemaker_config_dir)
+        Dir.mkdir(pacemaker_config_dir)
       end
       super
     end
@@ -155,7 +156,7 @@ module PcsdFile
 
   class PutFileCorosyncAuthkey < PutFile
     def full_file_name
-      @full_file_name ||= File.join(COROSYNC_CONFIG_DIR, "authkey")
+      @full_file_name ||= COROSYNC_AUTHKEY
     end
   end
 

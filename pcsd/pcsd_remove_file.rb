@@ -11,12 +11,11 @@ module PcsdRemoveFile
     end
 
     def process()
-      authkey_file = File.join(PACEMAKER_CONFIG_DIR, "authkey")
-      unless File.exists? authkey_file
+      unless File.exists? PACEMAKER_AUTHKEY
         return PcsdExchangeFormat::result(:not_found)
       end
       begin
-        File.delete(authkey_file)
+        File.delete(PACEMAKER_AUTHKEY)
         return PcsdExchangeFormat::result(:deleted)
       rescue => e
         return PcsdExchangeFormat::result(:unexpected, e.message)
