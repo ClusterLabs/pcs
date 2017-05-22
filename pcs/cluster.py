@@ -1747,12 +1747,12 @@ def node_add(lib_env, node0, node1, modifiers):
             skip_wrong_config=modifiers["force"]
         )
 
-        if os.path.isfile(settings.corosync_authkey_path):
+        if os.path.isfile(settings.corosync_authkey_file):
             distribute_files(
                 lib_env.node_communicator(),
                 lib_env.report_processor,
                 node_communication_format.corosync_authkey_file(
-                    open(settings.corosync_authkey_path).read()
+                    open(settings.corosync_authkey_file).read()
                 ),
                 NodeAddressesList([node_addr]),
             )
@@ -2147,12 +2147,12 @@ def cluster_destroy(argv):
             os.system("rm -f /etc/cluster/cluster.conf")
         else:
             os.system("rm -f /etc/corosync/corosync.conf")
-            os.system("rm -f {0}".format(settings.corosync_authkey_path))
+            os.system("rm -f {0}".format(settings.corosync_authkey_file))
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
             os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
-        os.system("rm -f {0}".format(settings.pacemaker_authkey_path))
+        os.system("rm -f {0}".format(settings.pacemaker_authkey_file))
         try:
             qdevice_net.client_destroy()
         except:
