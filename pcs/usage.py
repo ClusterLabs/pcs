@@ -729,7 +729,7 @@ Commands:
     node remove <node>
         Shutdown specified node and remove it from the cluster.
 
-    node add-remote <node host> [<node-name>] [options]
+    node add-remote <node host> [<node name>] [options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...] [--wait[=<n>]]
         Add the node to the cluster as a remote node. Sync all relevant
@@ -739,24 +739,24 @@ Commands:
         belong to an underlying connection resource (ocf:pacemaker:remote).
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
-    node remove-remote <node-identifier>
+    node remove-remote <node identifier>
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node.
 
-    node add-guest <node name> <resource id> [options] [--wait[=<n>]]
+    node add-guest <node host> <resource id> [options] [--wait[=<n>]]
         Make the specified resource a guest node resource. Sync all relevant
         configuration files to the new node. Start the node and configure it to
         start the cluster on boot.
         Options are remote-addr, remote-port and remote-connect-timeout.
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
-    node remove-guest <node-identifier>
+    node remove-guest <node identifier>
         Shutdown specified guest node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node or id of the resource that is used as the guest node.
 
-    node clear <nodename>
+    node clear <node name>
         Remove specified node from various cluster caches. Use this if a
         removed node is still considered by the cluster to be a member of the
         cluster.

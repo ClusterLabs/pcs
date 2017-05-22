@@ -78,7 +78,7 @@ def cluster_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.cluster(argv)
+        usage.cluster([" ".join(argv)] if argv else [])
     elif (sub_cmd == "setup"):
         if "--name" in utils.pcs_options:
             cluster_setup([utils.pcs_options["--name"]] + argv)
