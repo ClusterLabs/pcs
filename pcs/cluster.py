@@ -40,16 +40,19 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
+import pcs.cli.cluster.command as cluster_command
 from pcs.lib import (
     sbd as lib_sbd,
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
+from pcs.lib.commands.cluster import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
     qdevice_net,
 )
+from pcs.cli.common.console_report import warn, error
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.errors import (
     LibraryError,
@@ -61,10 +64,12 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
-from pcs.lib.node import NodeAddresses
-from pcs.lib.nodes_task import check_corosync_offline_on_nodes
+from pcs.lib.env_tools import get_nodes
+from pcs.lib.node import NodeAddresses, NodeAddressesList
+from pcs.lib.nodes_task import check_corosync_offline_on_nodes, distribute_files
+from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs.lib.tools import environment_file_to_dict
+from pcs.lib.tools import environment_file_to_dict, generate_key
 
 def cluster_cmd(argv):
     if len(argv) == 0:
@@ -73,7 +78,7 @@ def cluster_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.cluster(argv)
+        usage.cluster([" ".join(argv)] if argv else [])
     elif (sub_cmd == "setup"):
         if "--name" in utils.pcs_options:
             cluster_setup([utils.pcs_options["--name"]] + argv)
@@ -150,7 +155,10 @@ def cluster_cmd(argv):
         else:
             disable_cluster(argv)
     elif (sub_cmd == "remote-node"):
-        cluster_remote_node(argv)
+        try:
+            cluster_remote_node(argv)
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
     elif (sub_cmd == "cib"):
         get_cib(argv)
     elif (sub_cmd == "cib-push"):
@@ -160,7 +168,34 @@ def cluster_cmd(argv):
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
-        cluster_node(argv)
+        if not argv:
+            usage.cluster(["node"])
+            sys.exit(1)
+
+        remote_node_command_map = {
+            "add-remote": cluster_command.node_add_remote,
+            "add-guest": cluster_command.node_add_guest,
+            "remove-remote": cluster_command.create_node_remove_remote(
+                resource.resource_remove
+            ),
+            "remove-guest": cluster_command.node_remove_guest,
+            "clear": cluster_command.node_clear,
+        }
+        if argv[0] in remote_node_command_map:
+            try:
+                remote_node_command_map[argv[0]](
+                    utils.get_library_wrapper(),
+                    argv[1:],
+                    utils.get_modificators()
+                )
+            except LibraryError as e:
+                utils.process_library_reports(e.args)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(
+                    e, "cluster", "node " + argv[0]
+                )
+        else:
+            cluster_node(argv)
     elif (sub_cmd == "localnode"):
         cluster_localnode(argv)
     elif (sub_cmd == "uidgid"):
@@ -410,6 +445,30 @@ def cluster_setup(argv):
         ))
         destroy_cluster(primary_addr_list)
         print()
+
+        try:
+            file_definitions = {}
+            file_definitions.update(
+                node_communication_format.pcmk_authkey_file(generate_key())
+            )
+            file_definitions.update(
+                node_communication_format.corosync_authkey_file(
+                    generate_key(random_bytes_count=128)
+                )
+            )
+
+            distribute_files(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                file_definitions,
+                NodeAddressesList(
+                    [NodeAddresses(node) for node in primary_addr_list]
+                ),
+                allow_incomplete_distribution="--force" in utils.pcs_options
+            )
+        except LibraryError as e: #Theoretically, this should not happen
+            utils.process_library_reports(e.args)
+
 
         # send local cluster pcsd configs to the new nodes
         print("Sending cluster config files to the nodes...")
@@ -688,7 +747,6 @@ def cluster_setup_create_corosync_conf(
     corosync_conf.add_section(logging_section)
 
     totem_section.add_attribute("version", "2")
-    totem_section.add_attribute("secauth", "off")
     totem_section.add_attribute("cluster_name", cluster_name)
 
     transport_options_names = (
@@ -1478,8 +1536,8 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
 
 
 def cluster_node(argv):
-    if len(argv) != 2:
-        usage.cluster()
+    if len(argv) < 1:
+        usage.cluster(["node"])
         sys.exit(1)
 
     if argv[0] == "add":
@@ -1487,7 +1545,11 @@ def cluster_node(argv):
     elif argv[0] in ["remove","delete"]:
         add_node = False
     else:
-        usage.cluster()
+        usage.cluster(["node"])
+        sys.exit(1)
+
+    if len(argv) != 2:
+        usage.cluster([" ".join(["node", argv[0]])])
         sys.exit(1)
 
     node = argv[1]
@@ -1636,6 +1698,24 @@ def node_add(lib_env, node0, node1, modifiers):
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
+
+        if os.path.isfile(settings.corosync_authkey_path):
+            distribute_files(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                node_communication_format.corosync_authkey_file(
+                    open(settings.corosync_authkey_path).read()
+                ),
+                NodeAddressesList([node_addr]),
+            )
+
+        _share_authkey(
+            lib_env,
+            get_nodes(lib_env.get_corosync_conf(), lib_env.get_cib()),
+            node_addr,
+            allow_incomplete_distribution=modifiers["force"]
+        )
+
     except LibraryError as e:
         process_library_reports(e.args)
     except NodeCommunicationException as e:
@@ -1984,6 +2064,15 @@ def cluster_reload(argv):
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
     if "--all" in utils.pcs_options:
+        lib_env = utils.get_lib_env()
+        all_remote_nodes = get_nodes(tree=lib_env.get_cib())
+        if len(all_remote_nodes) > 0:
+            _destroy_pcmk_remote_env(
+                lib_env,
+                all_remote_nodes,
+                allow_fails=True
+            )
+
         destroy_cluster(utils.getNodesFromCorosyncConf())
     else:
         print("Shutting down pacemaker/corosync services...")
@@ -2010,10 +2099,12 @@ def cluster_destroy(argv):
             os.system("rm -f /etc/cluster/cluster.conf")
         else:
             os.system("rm -f /etc/corosync/corosync.conf")
+            os.system("rm -f {0}".format(settings.corosync_authkey_path))
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
             os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
+        os.system("rm -f {0}".format(settings.pacemaker_authkey_path))
         try:
             qdevice_net.client_destroy()
         except:
@@ -2096,25 +2187,63 @@ def cluster_report(argv):
     print(newoutput)
 
 def cluster_remote_node(argv):
+    usage_add = """\
+    remote-node add <hostname> <resource id> [options]
+        Enables the specified resource as a remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n')."""
+    usage_remove = """\
+    remote-node remove <hostname>
+        Disables any resources configured to be remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n')."""
+
     if len(argv) < 1:
-        usage.cluster(["remote-node"])
+        print("\nUsage: pcs cluster remote-node...")
+        print(usage_add)
+        print()
+        print(usage_remove)
+        print()
         sys.exit(1)
 
     command = argv.pop(0)
     if command == "add":
         if len(argv) < 2:
-            usage.cluster(["remote-node"])
+            print("\nUsage: pcs cluster remote-node add...")
+            print(usage_add)
+            print()
             sys.exit(1)
+        if "--force" in utils.pcs_options:
+            warn("this command is deprecated, use 'pcs cluster node add-guest'")
+        else:
+            raise error(
+                "this command is deprecated, use 'pcs cluster node add-guest'"
+                ", use --force to override"
+            )
         hostname = argv.pop(0)
         rsc = argv.pop(0)
         if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
             utils.err("unable to find resource '%s'" % rsc)
-        resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
+        resource.resource_update(
+            rsc,
+            ["meta", "remote-node="+hostname] + argv,
+            deal_with_guest_change=False
+        )
 
     elif command in ["remove","delete"]:
         if len(argv) < 1:
-            usage.cluster(["remote-node"])
+            print("\nUsage: pcs cluster remote-node remove...")
+            print(usage_remove)
+            print()
             sys.exit(1)
+        if "--force" in utils.pcs_options:
+            warn(
+                "this command is deprecated, use"
+                " 'pcs cluster node remove-guest'"
+            )
+        else:
+            raise error(
+                "this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override"
+            )
         hostname = argv.pop(0)
         dom = utils.get_cib_dom()
         nvpairs = dom.getElementsByTagName("nvpair")
@@ -2139,5 +2268,9 @@ def cluster_remote_node(argv):
             if retval != 0:
                 utils.err("unable to remove: {0}".format(output))
     else:
-        usage.cluster(["remote-node"])
+        print("\nUsage: pcs cluster remote-node...")
+        print(usage_add)
+        print()
+        print(usage_remove)
+        print()
         sys.exit(1)

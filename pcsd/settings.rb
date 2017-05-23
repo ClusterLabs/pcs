@@ -18,12 +18,14 @@ CIBADMIN = "/usr/sbin/cibadmin"
 SBD_CONFIG = '/etc/sysconfig/sbd'
 CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
 BOOTH_CONFIG_DIR='/etc/booth'
+PACEMAKER_AUTHKEY='/etc/pacemaker/authkey'
 
 COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR = "/etc/corosync/qnetd/nssdb"
 COROSYNC_QDEVICE_NET_SERVER_CA_FILE = (
   COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR + "/qnetd-cacert.crt"
 )
 COROSYNC_QDEVICE_NET_CLIENT_CERTS_DIR = "/etc/corosync/qdevice/net/nssdb"
+COROSYNC_AUTHKEY = "/etc/corosync/authkey"
 
 SUPERUSER = 'hacluster'
 ADMIN_GROUP = 'haclient'

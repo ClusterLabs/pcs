@@ -1,5 +1,6 @@
 # Wrapper for PCS command
-#
+
+require 'etc'
 require 'open4'
 require 'shellwords'
 require 'cgi'
@@ -60,8 +61,14 @@ def add_node_attr(auth_user, node, key, value)
 end
 
 def add_meta_attr(auth_user, resource, key, value)
+  # --force is a workaround for:
+  # 1) Error: this command is not sufficient for create guest node, use 'pcs
+  # cluster node add-guest', use --force to override
+  # 2) Error: this command is not sufficient for remove guest node, use 'pcs
+  # cluster node remove-guest', use --force to override
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "resource", "meta", resource, key.to_s + "=" + value.to_s
+    auth_user, PCS, "resource", "meta", resource, key.to_s + "=" + value.to_s,
+    "--force"
   )
   return retval
 end
@@ -1450,11 +1457,22 @@ def pcsd_restart_nodes(auth_user, nodes)
   }
 end
 
-def write_file_lock(path, perm, data, binary=false)
+def get_uid(username)
+  return Etc.getpwnam(username).uid
+end
+
+def get_gid(groupname)
+  return Etc.getgrnam(groupname).gid
+end
+
+def write_file_lock(path, perm, data, binary=false, user=nil, group=nil)
   file = nil
   begin
     file = File.open(path, binary ? 'wb' : 'w', perm)
     file.flock(File::LOCK_EX)
+    if user or group
+      File.chown(get_uid(user), get_gid(group), path)
+    end
     file.write(data)
   rescue => e
     $logger.error("Cannot save file '#{path}': #{e.message}")

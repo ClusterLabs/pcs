@@ -63,12 +63,37 @@ def does_id_exist(tree, check_id):
 
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
-    existing = get_root(tree).xpath(
+
+    #pacemaker creates an implicit resource for the pacemaker_remote connection,
+    #which will be named the same as the value of the remote-node attribute of
+    #the explicit resource. So the value of nvpair named "remote-node" is
+    #considered to be id
+    existing = get_root(tree).xpath("""
         (
-            '(/cib/*[name()!="status"]|/*[name()!="cib"])'
-            '//*[name()!="acl_target" and name()!="role" and @id="{0}"]'
-        ).format(check_id)
-    )
+            /cib/*[name()!="status"]
+            |
+            /*[name()!="cib"]
+        )
+        //*[
+            (
+                name()!="acl_target"
+                and
+                name()!="role"
+                and
+                @id="{0}"
+            ) or (
+                name()="primitive"
+                and
+                meta_attributes[
+                    nvpair[
+                        @name="remote-node"
+                        and
+                        @value="{0}"
+                    ]
+                ]
+            )
+        ]
+    """.format(check_id))
     return len(existing) > 0
 
 def validate_id_does_not_exist(tree, id):

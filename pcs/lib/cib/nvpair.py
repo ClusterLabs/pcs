@@ -135,3 +135,43 @@ def get_nvset(nvset):
             "value": nvpair.get("value", "")
         })
     return nvpair_list
+
+def get_value(tag_name, context_element, name, default=None):
+    """
+    Return value from nvpair.
+
+    WARNING: does not solve multiple nvsets (with the same tag_name) in the
+    context_element nor multiple nvpair with the same name
+
+    string tag_name should be "instance_attributes" or "meta_attributes"
+    etree.Element context_element is searched element
+    string name specify nvpair name
+    """
+    value_list = context_element.xpath("""
+        ./{0}
+        /nvpair[
+            @name="{1}"
+            and
+            string-length(@value) > 0
+        ]
+        /@value
+    """.format(tag_name, name))
+    return value_list[0] if value_list else default
+
+def has_meta_attribute(resource_el, name):
+    """
+    Return if the element contains meta attribute 'name'
+
+    etree.Element resource_el is researched element
+    string name specifies attribute
+    """
+    return 0 < len(resource_el.xpath(
+        './meta_attributes/nvpair[@name="{0}"]'.format(name)
+    ))
+
+arrange_first_meta_attributes = partial(
+    arrange_first_nvset,
+    "meta_attributes"
+)
+
+get_meta_attribute_value = partial(get_value, "meta_attributes")

@@ -5,12 +5,13 @@ from __future__ import (
     unicode_literals,
 )
 
+from collections import defaultdict
 import json
 
 from pcs.common import report_codes
 from pcs.common.tools import run_parallel as tools_run_parallel
-from pcs.lib import reports
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib import reports, node_communication_format
+from pcs.lib.errors import LibraryError, ReportItemSeverity, ReportListAnalyzer
 from pcs.lib.external import (
     NodeCommunicator,
     NodeCommunicationException,
@@ -21,6 +22,34 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_client,
 )
+
+
+def _call_for_json(
+    node_communicator, node, request_path, report_items,
+    data=None, request_timeout=None
+):
+    """
+    Return python object parsed from a json call response.
+    """
+    try:
+        return json.loads(node_communicator.call_node(
+            node,
+            request_path,
+            data=None if data is None
+                else NodeCommunicator.format_data_dict(data)
+            ,
+            request_timeout=request_timeout
+        ))
+    except NodeCommunicationException as e:
+        report_items.append(
+            node_communicator_exception_to_report_item(
+                e,
+                ReportItemSeverity.ERROR,
+            )
+        )
+    except ValueError:
+        #e.g. response is not in json format
+        report_items.append(reports.invalid_response_format(node.label))
 
 
 def distribute_corosync_conf(
@@ -178,32 +207,258 @@ def node_check_auth(communicator, node):
         NodeCommunicator.format_data_dict({"check_auth_only": 1})
     )
 
-def check_can_add_node_to_cluster(node_communicator, node, report_items):
-    try:
-        availability_info = json.loads(node_communicator.call_node(
-            node,
-            "remote/node_available",
-            data=None
+def availability_checker_node(availability_info, report_items, node_label):
+    """
+    Check if availability_info means that the node is suitable as cluster
+    (corosync) node.
+    """
+    if availability_info["node_available"]:
+        return
+
+    if availability_info.get("pacemaker_running", False):
+        report_items.append(reports.cannot_add_node_is_running_service(
+            node_label,
+            "pacemaker"
         ))
-        if availability_info["node_available"]:
-            return
+        return
+
+    if availability_info.get("pacemaker_remote", False):
+        report_items.append(reports.cannot_add_node_is_running_service(
+            node_label,
+            "pacemaker_remote"
+        ))
+        return
+
+    report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
+
+def availability_checker_remote_node(
+    availability_info, report_items, node_label
+):
+    """
+    Check if availability_info means that the node is suitable as remote node.
+    """
+    if availability_info["node_available"]:
+        return
+
+    if availability_info.get("pacemaker_running", False):
+        report_items.append(reports.cannot_add_node_is_running_service(
+            node_label,
+            "pacemaker"
+        ))
+        return
+
+    if not availability_info.get("pacemaker_remote", False):
+        report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
+        return
 
 
-        if availability_info.get("pacemaker_remote", False):
-            report_items.append(reports.cannot_add_node_is_running_service(
-                node.label,
-                "pacemaker_remote"
-            ))
-            return
+def check_can_add_node_to_cluster(
+    node_communicator, node, report_items,
+    check_response=availability_checker_node
+):
+    """
+    Analyze result of node_available check if it is possible use the node as
+    cluster node.
 
-        report_items.append(reports.cannot_add_node_is_in_cluster(node.label))
+    NodeCommunicator node_communicator is an object for making the http request
+    NodeAddresses node specifies the destination url
+    list report_items is place where report items should be collected
+    callable check_response -- make decision about availability based on
+        response info
+    """
+    safe_report_items = []
+    availability_info = _call_for_json(
+        node_communicator,
+        node,
+        "remote/node_available",
+        safe_report_items
+    )
+    report_items.extend(safe_report_items)
 
-    except NodeCommunicationException as e:
-        report_items.append(
-            node_communicator_exception_to_report_item(
-                e,
-                ReportItemSeverity.ERROR,
-            )
-        )
-    except(ValueError, TypeError, KeyError):
+    if ReportListAnalyzer(safe_report_items).error_list:
+        return
+
+    is_in_expected_format = (
+        isinstance(availability_info, dict)
+        and
+        #node_available is a mandatory field
+        "node_available" in availability_info
+    )
+
+    if not is_in_expected_format:
         report_items.append(reports.invalid_response_format(node.label))
+        return
+
+    check_response(availability_info, report_items, node.label)
+
+def run_actions_on_node(
+    node_communicator, path, response_key, report_processor, node, actions
+):
+    """
+    NodeCommunicator node_communicator is an object for making the http request
+    NodeAddresses node specifies the destination url
+    dict actions has key that identifies the action and value is a dict
+        with a data that are specific per action type. Mandatory keys there are:
+        * type - is type of file like "booth_autfile" or "pcmk_remote_authkey"
+          For type == 'service_command' are mandatory
+            * service - specify the service (eg. pacemaker_remote)
+            * command - specify the command should be applied on service
+                (eg. enable or start)
+    """
+    report_items = []
+    action_results = _call_for_json(
+        node_communicator,
+        node,
+        path,
+        report_items,
+        [("data_json", json.dumps(actions))]
+    )
+
+    #can raise
+    report_processor.process_list(report_items)
+
+    return node_communication_format.response_to_result(
+        action_results,
+        response_key,
+        actions.keys(),
+        node.label,
+    )
+
+def _run_actions_on_multiple_nodes(
+    node_communicator, url, response_key, report_processor, create_start_report,
+    actions, node_addresses_list, is_success,
+    create_success_report, create_error_report, force_code, format_result,
+    allow_incomplete_distribution=False, description=""
+):
+    error_map = defaultdict(dict)
+    def worker(node_addresses):
+        result = run_actions_on_node(
+            node_communicator,
+            url,
+            response_key,
+            report_processor,
+            node_addresses,
+            actions,
+        )
+        for key, item_response in sorted(result.items()):
+            if is_success(key, item_response):
+                #only success process individually
+                report_processor.process(
+                    create_success_report(node_addresses.label, key)
+                )
+            else:
+                error_map[node_addresses.label][key] = format_result(
+                    item_response
+                )
+
+    report_processor.process(create_start_report(
+        actions.keys(),
+        [node.label for node in node_addresses_list],
+        description
+    ))
+
+    parallel_nodes_communication_helper(
+        worker,
+        [([node_addresses], {}) for node_addresses in node_addresses_list],
+        report_processor,
+        allow_incomplete_distribution,
+    )
+
+    #now we process errors
+    if error_map:
+        make_report = reports.get_problem_creator(
+            force_code,
+            allow_incomplete_distribution
+        )
+        report_processor.process_list([
+            make_report(create_error_report, node_name, action_key, message)
+            for node_name, errors in error_map.items()
+            for action_key, message in errors.items()
+        ])
+
+def distribute_files(
+    node_communicator, report_processor, file_definitions, node_addresses_list,
+    allow_incomplete_distribution=False, description=""
+):
+    """
+    Put files specified in file_definitions to nodes specified in
+    node_addresses_list.
+
+    NodeCommunicator node_communicator is an object for making the http request
+    NodeAddresses node specifies the destination url
+    dict file_definitions has key that identifies the file and value is a dict
+        with a data that are specific per file type. Mandatory keys there are:
+        * type - is type of file like "booth_autfile" or "pcmk_remote_authkey"
+        * data - it contains content of file in file specific format (e.g.
+            binary is encoded by base64)
+        Common optional key is "rewrite_existing" (True/False) that specifies
+        the behaviour when file already exists.
+    bool allow_incomplete_distribution keep success even if some node(s) are
+        unavailable
+    """
+    _run_actions_on_multiple_nodes(
+        node_communicator,
+        "remote/put_file",
+        "files",
+        report_processor,
+        reports.files_distribution_started,
+        file_definitions,
+        node_addresses_list,
+        lambda key, response: response.code in [
+            "written",
+            "rewritten",
+            "same_content",
+        ],
+        reports.file_distribution_success,
+        reports.file_distribution_error,
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        node_communication_format.get_format_result({
+            "conflict": "File already exists",
+        }),
+        allow_incomplete_distribution,
+        description,
+    )
+
+def remove_files(
+    node_communicator, report_processor, file_definitions, node_addresses_list,
+    allow_incomplete_distribution=False, description=""
+):
+    _run_actions_on_multiple_nodes(
+        node_communicator,
+        "remote/remove_file",
+        "files",
+        report_processor,
+        reports.files_remove_from_node_started,
+        file_definitions,
+        node_addresses_list,
+        lambda key, response: response.code in ["deleted", "not_found"],
+        reports.file_remove_from_node_success,
+        reports.file_remove_from_node_error,
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        node_communication_format.get_format_result({}),
+        allow_incomplete_distribution,
+        description,
+    )
+
+def run_actions_on_multiple_nodes(
+    node_communicator, report_processor, action_definitions, is_success,
+    node_addresses_list, allow_fails=False, description=""
+):
+    _run_actions_on_multiple_nodes(
+        node_communicator,
+        "remote/manage_services",
+        "actions",
+        report_processor,
+        reports.service_commands_on_nodes_started,
+        action_definitions,
+        node_addresses_list,
+        is_success,
+        reports.service_command_on_node_success,
+        reports.service_command_on_node_error,
+        report_codes.SKIP_ACTION_ON_NODES_ERRORS,
+        node_communication_format.get_format_result({
+            "fail": "Operation failed.",
+        }),
+        allow_fails,
+        description,
+    )

@@ -4,6 +4,16 @@
 
 ### Added
 - Support for bundle resources (CLI only) ([rhbz#1433016])
+- Commands for adding and removing guest and remote nodes including handling
+  pacemaker authkey (CLI only) ([rhbz#1176018], [rhbz#1254984], [rhbz#1386114],
+  [rhbz#1386512])
+- Command `pcs cluster node clear` to remove a node from pacemaker's
+  configuration and caches
+
+### Deprecated
+- `pcs cluster remote-node add` and `pcs cluster remote-node remove `commands
+  have been deprecated in favor of `pcs cluster node add-guest` and `pcs
+  cluster node remove-guest` commands ([rhbz#1386512])
 
 ### Fixed
 - Fixed a bug which under specific conditions caused pcsd to crash on start
@@ -21,12 +31,25 @@
   the `--wait` flag ([rhbz#1422667])
 - Handle pcsd crash when an unusable address is set in `PCSD_BIND_ADDR`
   ([rhbz#1373614])
+- Removal of a pacemaker remote resource no longer causes the respective remote
+  node to be fenced ([rhbz#1390609])
 
+### Changed
+- Newly created clusters are set up to encrypt corosync communication
+  ([rhbz#1165821], [ghissue#98])
+
+[ghissue#98]: https://github.com/ClusterLabs/pcs/issues/98
 [ghissue#134]: https://github.com/ClusterLabs/pcs/issues/134
+[rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
+[rhbz#1254984]: https://bugzilla.redhat.com/show_bug.cgi?id=1254984
 [rhbz#1303969]: https://bugzilla.redhat.com/show_bug.cgi?id=1303969
 [rhbz#1373614]: https://bugzilla.redhat.com/show_bug.cgi?id=1373614
+[rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
+[rhbz#1386512]: https://bugzilla.redhat.com/show_bug.cgi?id=1386512
+[rhbz#1390609]: https://bugzilla.redhat.com/show_bug.cgi?id=1390609
 [rhbz#1422667]: https://bugzilla.redhat.com/show_bug.cgi?id=1422667
 [rhbz#1433016]: https://bugzilla.redhat.com/show_bug.cgi?id=1433016
+[rhbz#1165821]: https://bugzilla.redhat.com/show_bug.cgi?id=1165821
 
 
 ## [0.9.157] - 2017-04-10

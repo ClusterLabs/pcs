@@ -820,3 +820,342 @@ class PrerequisiteOptionIsMissing(NameBuildTest):
                 "prerequisite_type": "other",
             }
         )
+
+class FileDistributionStarted(NameBuildTest):
+    code = codes.FILES_DISTRIBUTION_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Sending 'first', 'second'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": None,
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_nodes(self):
+        self.assert_message_from_info(
+            "Sending 'first', 'second' to 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Sending configuration files to 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "configuration files",
+            }
+        )
+
+class FileDistributionSucess(NameBuildTest):
+    code = codes.FILE_DISTRIBUTION_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: successful distribution of the file 'some authfile'",
+            {
+                "nodes_success_files": None,
+                "node": "node1",
+                "file_description": "some authfile",
+            }
+        )
+
+class FileDistributionError(NameBuildTest):
+    code = codes.FILE_DISTRIBUTION_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: unable to distribute file 'file1': permission denied",
+            {
+                "node_file_errors": None,
+                "node": "node1",
+                "file_description": "file1",
+                "reason": "permission denied",
+            }
+        )
+
+class FileRemoveFromNodeStarted(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODE_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Requesting remove 'first', 'second' from 'node1', 'node2'",
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Requesting remove remote configuration files from 'node1',"
+                " 'node2'"
+            ,
+            {
+                "file_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "remote configuration files",
+            }
+        )
+
+class FileRemoveFromNodeSucess(NameBuildTest):
+    code = codes.FILE_REMOVE_FROM_NODE_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: successful removal of the file 'some authfile'",
+            {
+                "nodes_success_files": None,
+                "node": "node1",
+                "file_description": "some authfile",
+            }
+        )
+
+class FileRemoveFromNodeError(NameBuildTest):
+    code = codes.FILE_REMOVE_FROM_NODE_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: unable to remove file 'file1': permission denied",
+            {
+                "node_file_errors": None,
+                "node": "node1",
+                "file_description": "file1",
+                "reason": "permission denied",
+            }
+        )
+
+
+class ActionsOnNodesStarted(NameBuildTest):
+    code = codes.SERVICE_COMMANDS_ON_NODES_STARTED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Requesting 'first', 'second'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": None,
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_nodes(self):
+        self.assert_message_from_info(
+            "Requesting 'first', 'second' on 'node1', 'node2'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": None,
+            }
+        )
+
+    def test_build_messages_with_description(self):
+        self.assert_message_from_info(
+            "Requesting running pacemaker_remote on 'node1', 'node2'",
+            {
+                "action_list": ["first", "second"],
+                "node_list": ["node1", "node2"],
+                "description": "running pacemaker_remote",
+            }
+        )
+
+class ActionsOnNodesSuccess(NameBuildTest):
+    code = codes.SERVICE_COMMAND_ON_NODE_SUCCESS
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: successful run of 'service enable'",
+            {
+                "nodes_success_actions": None,
+                "node": "node1",
+                "service_command_description": "service enable",
+            }
+        )
+
+class ActionOnNodesError(NameBuildTest):
+    code = codes.SERVICE_COMMAND_ON_NODE_ERROR
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node1: service command failed: service1 start: permission denied",
+            {
+                "node_action_errors": None,
+                "node": "node1",
+                "service_command_description": "service1 start",
+                "reason": "permission denied",
+            }
+        )
+
+class resource_is_guest_node_already(NameBuildTest):
+    code = codes.RESOURCE_IS_GUEST_NODE_ALREADY
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "the resource 'some-resource' is already a guest node",
+            {"resource_id": "some-resource"}
+        )
+
+class live_environment_required(NameBuildTest):
+    code = codes.LIVE_ENVIRONMENT_REQUIRED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "This command does not support '--corosync_conf'",
+            {
+                "forbidden_options": ["--corosync_conf"]
+            }
+        )
+
+    def test_build_messages_transformable_codes(self):
+        self.assert_message_from_info(
+            "This command does not support '--corosync_conf', '-f'",
+            {
+                "forbidden_options": ["COROSYNC_CONF", "CIB"]
+            }
+        )
+
+class nolive_skip_files_distribution(NameBuildTest):
+    code = codes.NOLIVE_SKIP_FILES_DISTRIBUTION
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "the distribution of 'file1', 'file2' to 'node1', 'node2' was"
+                " skipped because command"
+                " does not run on live cluster (e.g. -f was used)."
+                " You will have to do it manually."
+            ,
+            {
+                "files_description": ["file1", 'file2'],
+                "nodes": ["node1", "node2"],
+            }
+        )
+
+class nolive_skip_files_remove(NameBuildTest):
+    code = codes.NOLIVE_SKIP_FILES_REMOVE
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "'file1', 'file2' remove from 'node1', 'node2'"
+                " was skipped because command"
+                " does not run on live cluster (e.g. -f was used)."
+                " You will have to do it manually."
+            ,
+            {
+                "files_description": ["file1", 'file2'],
+                "nodes": ["node1", "node2"],
+            }
+        )
+
+class nolive_skip_service_command_on_nodes(NameBuildTest):
+    code = codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "running 'pacemaker_remote start' on 'node1', 'node2' was skipped"
+                " because command does not run on live cluster (e.g. -f was"
+                " used). You will have to run it manually."
+            ,
+            {
+                "service": "pacemaker_remote",
+                "command": "start",
+                "nodes": ["node1", "node2"]
+            }
+        )
+
+class NodeNotFound(NameBuildTest):
+    code = codes.NODE_NOT_FOUND
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "Node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": []
+            }
+        )
+
+    def test_build_messages_with_one_search_types(self):
+        self.assert_message_from_info(
+            "remote node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": ["remote"]
+            }
+        )
+
+    def test_build_messages_with_string_search_types(self):
+        self.assert_message_from_info(
+            "remote node 'SOME_NODE' does not appear to exist in configuration",
+            {
+                "node": "SOME_NODE",
+                "searched_types": "remote"
+            }
+        )
+
+    def test_build_messages_with_multiple_search_types(self):
+        self.assert_message_from_info(
+            "nor remote node or guest node 'SOME_NODE' does not appear to exist"
+                " in configuration"
+            ,
+            {
+                "node": "SOME_NODE",
+                "searched_types": ["remote", "guest"]
+            }
+        )
+
+class MultipleResultFound(NameBuildTest):
+    code = codes.MULTIPLE_RESULTS_FOUND
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",
+            {
+                "result_type": "resource",
+                "result_identifier_list": ["ID1", "ID2"],
+                "search_description": "NODE-NAME",
+            }
+        )
+
+class UseCommandNodeAddRemote(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_ADD_REMOTE
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for creating a remote connection,"
+                " use 'pcs cluster node add-remote'"
+            ,
+            {}
+        )
+
+class UseCommandNodeAddGuest(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_ADD_GUEST
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for creating a guest node, use "
+            "'pcs cluster node add-guest'",
+            {}
+        )
+
+class UseCommandNodeRemoveGuest(NameBuildTest):
+    code = codes.USE_COMMAND_NODE_REMOVE_GUEST
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "this command is not sufficient for removing a guest node, use "
+            "'pcs cluster node remove-guest'",
+            {}
+        )
+
+class NodeRemoveInPacemakerFailed(NameBuildTest):
+    code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "unable to remove node 'NODE' from pacemaker: reason",
+            {
+                "node_name": "NODE",
+                "reason": "reason"
+            }
+        )
+
+class NodeToClearIsStillInCluster(NameBuildTest):
+    code = codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER
+    def test_build_messages(self):
+        self.assert_message_from_info(
+            "node 'node1' seems to be still in the cluster"
+                "; this command should be used only with nodes that have been"
+                " removed from the cluster"
+            ,
+            {
+                "node": "node1"
+            }
+        )

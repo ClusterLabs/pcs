@@ -28,14 +28,29 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
-from pcs.cli.common.console_report import error
+from pcs.cli.common.console_report import error, warn
+from pcs.lib.commands.resource import _validate_guest_change
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
+
+def _detect_guest_change(meta_attributes, allow_not_suitable_command):
+    env = utils.get_lib_env()
+    cib = env.get_cib()
+    env.report_processor.process_list(
+        _validate_guest_change(
+            cib,
+            get_nodes(env.get_corosync_conf(), cib),
+            meta_attributes,
+            allow_not_suitable_command,
+            detect_remove=True,
+        )
+    )
 
 def resource_cmd(argv):
     if len(argv) < 1:
@@ -383,6 +398,7 @@ def resource_create(lib, argv, modifiers):
         use_default_operations=not modifiers["no-default-ops"],
         ensure_disabled=modifiers["disabled"],
         wait=modifiers["wait"],
+        allow_not_suitable_command=modifiers["force"],
     )
 
     if "clone" in parts:
@@ -669,14 +685,18 @@ def resource_agents(lib, argv, modifiers):
             " for {0}".format(argv[0]) if argv else ""
         ))
 
-
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(res_id,args):
+def resource_update(res_id,args, deal_with_guest_change=True):
     dom = utils.get_cib_dom()
 
 # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
+    if deal_with_guest_change:
+        _detect_guest_change(
+            prepare_options(meta_values),
+            "--force" in utils.pcs_options,
+        )
 
     wait = False
     wait_timeout = None
@@ -1041,6 +1061,11 @@ def resource_operation_remove(res_id, argv):
     utils.replace_cib_configuration(dom)
 
 def resource_meta(res_id, argv):
+    _detect_guest_change(
+        prepare_options(argv),
+        "--force" in utils.pcs_options,
+    )
+
     dom = utils.get_cib_dom()
     resource_el = utils.dom_get_any_resource(dom, res_id)
 
@@ -1399,7 +1424,7 @@ def resource_master_create(dom, argv, update=False, master_id=None):
 
     return dom, master_element.getAttribute("id")
 
-def resource_remove(resource_id, output = True):
+def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
@@ -1588,6 +1613,13 @@ def resource_remove(resource_id, output = True):
                 utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
             return False
     if remote_node_name and not utils.usefile:
+        if not is_remove_remote_context:
+            warn(
+                "This command is not sufficient for removing remote and guest "
+                "nodes. To complete the removal, remove pacemaker authkey and "
+                "stop and disable pacemaker_remote on the node(s) manually."
+            )
+        output, retval = utils.run(["crm_resource", "--wait"])
         output, retval = utils.run([
             "crm_node", "--force", "--remove", remote_node_name
         ])

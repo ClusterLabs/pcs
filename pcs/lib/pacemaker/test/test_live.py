@@ -614,6 +614,37 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         self.assertEqual(len(return_value_list), mock_runner.run.call_count)
         mock_runner.run.assert_has_calls(call_list)
 
+class RemoveNode(LibraryPacemakerTest):
+    def test_success(self):
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = ("", "", 0)
+        lib.remove_node(
+            mock_runner,
+            "NODE_NAME"
+        )
+        mock_runner.run.assert_called_once_with([
+            self.path("crm_node"),
+            "--force",
+            "--remove",
+            "NODE_NAME",
+        ])
+
+    def test_error(self):
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        expected_stderr = "expected stderr"
+        mock_runner.run.return_value = ("", expected_stderr, 1)
+        assert_raise_library_error(
+            lambda: lib.remove_node(mock_runner, "NODE_NAME") ,
+            (
+                Severity.ERROR,
+                report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
+                {
+                    "node_name": "NODE_NAME",
+                    "reason": expected_stderr,
+                }
+            )
+        )
+
 class ResourceCleanupTest(LibraryPacemakerTest):
     def fixture_status_xml(self, nodes, resources):
         xml_man = XmlManipulation.from_file(rc("crm_mon.minimal.xml"))
@@ -960,4 +991,3 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--wait"]
         )
-

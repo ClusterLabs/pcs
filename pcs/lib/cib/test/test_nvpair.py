@@ -267,3 +267,111 @@ class GetNvsetTest(TestCase):
             ],
             nvpair.get_nvset(nvset)
         )
+
+class GetValue(TestCase):
+    def assert_find_value(self, tag_name, name, value, xml, default=None):
+        self.assertEqual(
+            value,
+            nvpair.get_value(tag_name, etree.fromstring(xml), name, default)
+        )
+
+    def test_return_value_when_name_exists(self):
+        self.assert_find_value(
+            "meta_attributes",
+            "SOME-NAME",
+            "some-value",
+            """
+                <context>
+                    <meta_attributes>
+                        <nvpair name="SOME-NAME" value="some-value" />
+                        <nvpair name="OTHER-NAME" value="other-value" />
+                    </meta_attributes>
+                </context>
+            """,
+        )
+
+    def test_return_none_when_name_not_exists(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                    <instance_attributes>
+                        <nvpair name="another-name" value="some-value" />
+                    </instance_attributes>
+                </context>
+            """,
+        )
+
+    def test_return_default_when_name_not_exists(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value="DEFAULT",
+            xml="""
+                <context>
+                    <instance_attributes>
+                        <nvpair name="another-name" value="some-value" />
+                    </instance_attributes>
+                </context>
+            """,
+            default="DEFAULT",
+        )
+
+    def test_return_none_when_no_nvpair(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                    <instance_attributes />
+                </context>
+            """,
+        )
+
+    def test_return_none_when_no_nvset(self):
+        self.assert_find_value(
+            "instance_attributes",
+            "SOME-NAME",
+            value=None,
+            xml="""
+                <context>
+                </context>
+            """,
+        )
+
+class HasMetaAttribute(TestCase):
+    def test_return_false_if_does_not_have_such_attribute(self):
+        resource_element = etree.fromstring("""<primitive/>""")
+        self.assertFalse(
+            nvpair.has_meta_attribute(resource_element, "attr_name")
+        )
+
+    def test_return_true_if_such_meta_attribute_exists(self):
+        resource_element = etree.fromstring("""
+            <primitive>
+                <meta_attributes>
+                    <nvpair id="a" name="attr_name" value="value"/>
+                    <nvpair id="b" name="other_name" value="other-value"/>
+                </meta_attributes>
+            </primitive>
+        """)
+        self.assertTrue(
+            nvpair.has_meta_attribute(resource_element, "attr_name")
+        )
+
+    def test_return_false_if_meta_attribute_exists_but_in_nested_element(self):
+        resource_element = etree.fromstring("""
+            <group>
+                <primitive>
+                    <meta_attributes>
+                        <nvpair id="a" name="attr_name" value="value"/>
+                    </meta_attributes>
+                </primitive>
+            </group>
+        """)
+        self.assertFalse(
+            nvpair.has_meta_attribute(resource_element, "attr_name")
+        )

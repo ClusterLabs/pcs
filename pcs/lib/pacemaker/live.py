@@ -231,6 +231,21 @@ def get_local_node_status(runner):
             return result
     raise LibraryError(reports.node_not_found(node_name))
 
+def remove_node(runner, node_name):
+    stdout, stderr, retval = runner.run([
+        __exec("crm_node"),
+        "--force",
+        "--remove",
+        node_name,
+    ])
+    if retval != 0:
+        raise LibraryError(
+            reports.node_remove_in_pacemaker_failed(
+                node_name,
+                reason=join_multilines([stderr, stdout])
+            )
+        )
+
 ### resources
 
 def resource_cleanup(runner, resource=None, node=None, force=False):

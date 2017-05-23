@@ -126,14 +126,34 @@ def resource_running_on_nodes(info):
             "{run_type} on node{s} {node_list}".format(
                 run_type=run_type,
                 s="s" if len(node_list) > 1 else "",
-                node_list=", ".join(
-                    ["'{0}'".format(node) for node in node_list]
-                )
+                node_list=joined_list(node_list)
             )
             for run_type, node_list in state_info.items()
         ]))
     )
 
+def build_node_description(node_types):
+    if not node_types:
+        return  "Node"
+
+    label = "{0} node".format
+
+    if is_string(node_types):
+        return label(node_types)
+
+    if len(node_types) == 1:
+        return label(node_types[0])
+
+    return "nor " + " or ".join([label(ntype) for ntype in node_types])
+
+def joined_list(item_list, optional_transformations=None):
+    if not optional_transformations:
+        optional_transformations={}
+
+    return ", ".join(sorted([
+        "'{0}'".format(optional_transformations.get(item, item))
+        for item in item_list
+    ]))
 
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
@@ -151,10 +171,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "required {desc}option{s} {option_names_list} {are} missing"
         .format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names_list=", ".join(sorted([
-                "'{0}'".format(name)
-                for name in info["option_names"]
-            ])),
+            option_names_list=joined_list(info["option_names"]),
             s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
                 "are" if len(info["option_names"]) > 1
@@ -192,10 +209,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(
             desc=format_optional(info["option_type"], "{0} "),
             allowed_values=", ".join(sorted(info["allowed"])),
-            option_names_list=", ".join(sorted([
-                "'{0}'".format(name)
-                for name in info["option_names"]
-            ])),
+            option_names_list=joined_list(info["option_names"]),
             s=("s:" if len(info["option_names"]) > 1 else ""),
             are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
@@ -240,10 +254,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         # "{desc}options {option_names} are muttually exclusive".format(
         "Only one of {desc}options {option_names} can be used".format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names = ", ".join([
-                "'{0}'".format(name)
-                for name in sorted(info["option_names"])[:-1]
-            ]) + " and '{0}'".format(sorted(info["option_names"])[-1])
+            option_names=(
+                joined_list(sorted(info["option_names"])[:-1])
+                +
+                " and '{0}'".format(sorted(info["option_names"])[-1])
+            )
         )
     ,
 
@@ -739,6 +754,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.RESOURCE_IS_GUEST_NODE_ALREADY: lambda info:
+        "the resource '{resource_id}' is already a guest node"
+        .format(**info)
+    ,
+
     codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED: lambda info:
         (
             "Resource '{resource_id}' has no enabled monitor operations."
@@ -748,8 +768,39 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_NOT_FOUND: lambda info:
-        "Node '{node}' does not appear to exist in configuration"
+        "{desc} '{node}' does not appear to exist in configuration".format(
+            desc=build_node_description(info["searched_types"]),
+            node=info["node"]
+        )
+    ,
+
+    codes.NODE_REMOVE_IN_PACEMAKER_FAILED: lambda info:
+        "unable to remove node '{node_name}' from pacemaker{reason_part}"
+        .format(
+            reason_part=format_optional(info["reason"], ": {0}"),
+            **info
+
+        )
+    ,
+
+    codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER: lambda info:
+        (
+            "node '{node}' seems to be still in the cluster"
+            "; this command should be used only with nodes that have been"
+            " removed from the cluster"
+        )
         .format(**info)
+    ,
+
+    codes.MULTIPLE_RESULTS_FOUND: lambda info:
+        "multiple {result_type} {search_description} found: {what_found}"
+        .format(
+            what_found=joined_list(info["result_identifier_list"]),
+            search_description="" if not info["search_description"]
+                else "for '{0}'".format(info["search_description"])
+            ,
+            result_type=info["result_type"]
+        )
     ,
 
     codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND: lambda info:
@@ -928,6 +979,86 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.FILES_DISTRIBUTION_STARTED: lambda info:
+        "Sending {description}{where}".format(
+            where=(
+                "" if not info["node_list"]
+                else " to " + joined_list(info["node_list"])
+            ),
+            description=info["description"] if info["description"]
+                else joined_list(info["file_list"])
+        )
+    ,
+
+    codes.FILE_DISTRIBUTION_SUCCESS: lambda info:
+        "{node}: successful distribution of the file '{file_description}'"
+        .format(
+            **info
+        )
+    ,
+
+
+    codes.FILE_DISTRIBUTION_ERROR: lambda info:
+        "{node}: unable to distribute file '{file_description}': {reason}"
+        .format(
+            **info
+        )
+    ,
+
+    codes.FILES_REMOVE_FROM_NODE_STARTED: lambda info:
+        "Requesting remove {description}{where}".format(
+            where=(
+                "" if not info["node_list"]
+                else " from " + joined_list(info["node_list"])
+            ),
+            description=info["description"] if info["description"]
+                else joined_list(info["file_list"])
+        )
+    ,
+
+    codes.FILE_REMOVE_FROM_NODE_SUCCESS: lambda info:
+        "{node}: successful removal of the file '{file_description}'"
+        .format(
+            **info
+        )
+    ,
+
+
+    codes.FILE_REMOVE_FROM_NODE_ERROR: lambda info:
+        "{node}: unable to remove file '{file_description}': {reason}"
+        .format(
+            **info
+        )
+    ,
+
+    codes.SERVICE_COMMANDS_ON_NODES_STARTED: lambda info:
+        "Requesting {description}{where}".format(
+            where=(
+                "" if not info["node_list"]
+                else " on " + joined_list(info["node_list"])
+            ),
+            description=info["description"] if info["description"]
+                else joined_list(info["action_list"])
+        )
+    ,
+
+    codes.SERVICE_COMMAND_ON_NODE_SUCCESS: lambda info:
+        "{node}: successful run of '{service_command_description}'"
+        .format(
+            **info
+        )
+    ,
+
+    codes.SERVICE_COMMAND_ON_NODE_ERROR: lambda info:
+        (
+            "{node}: service command failed:"
+            " {service_command_description}: {reason}"
+        )
+        .format(
+            **info
+        )
+    ,
+
     codes.SBD_DEVICE_PATH_NOT_ABSOLUTE: lambda info:
         "Device path '{device}'{on_node} is not absolute"
         .format(
@@ -1059,11 +1190,47 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
         "This command does not support {forbidden_options}"
-        .format(forbidden_options=", ".join(info["forbidden_options"]))
+        .format(
+            forbidden_options=joined_list(info["forbidden_options"], {
+                "CIB": "-f",
+                "COROSYNC_CONF": "--corosync_conf",
+            })
+        )
     ,
 
     codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE:
         "Node(s) must be specified if -f is used"
+    ,
+
+    codes.NOLIVE_SKIP_FILES_DISTRIBUTION: lambda info:
+        (
+            "the distribution of {files} to {nodes} was skipped because command"
+            " does not run on live cluster (e.g. -f was used)."
+            " You will have to do it manually."
+        ).format(
+            files=joined_list(info["files_description"]),
+            nodes=joined_list(info["nodes"]),
+        )
+    ,
+    codes.NOLIVE_SKIP_FILES_REMOVE: lambda info:
+        (
+            "{files} remove from {nodes} was skipped because command"
+            " does not run on live cluster (e.g. -f was used)."
+            " You will have to do it manually."
+        ).format(
+            files=joined_list(info["files_description"]),
+            nodes=joined_list(info["nodes"]),
+        )
+    ,
+    codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES: lambda info:
+        (
+            "running '{command}' on {nodes} was skipped"
+                " because command does not run on live cluster (e.g. -f was"
+                " used). You will have to run it manually."
+        ).format(
+            command="{0} {1}".format(info["service"], info["command"]),
+            nodes=joined_list(info["nodes"]),
+        )
     ,
 
     codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:
@@ -1084,5 +1251,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CLUSTER_CONF_READ_ERROR: lambda info:
         "Unable to read {path}: {reason}"
         .format(**info)
+    ,
+    codes.USE_COMMAND_NODE_ADD_REMOTE: lambda info:
+        (
+            "this command is not sufficient for creating a remote connection,"
+            " use 'pcs cluster node add-remote'"
+        )
+    ,
+    codes.USE_COMMAND_NODE_ADD_GUEST: lambda info:
+        (
+            "this command is not sufficient for creating a guest node, use"
+            " 'pcs cluster node add-guest'"
+        )
+    ,
+    codes.USE_COMMAND_NODE_REMOVE_GUEST: lambda info:
+        (
+            "this command is not sufficient for removing a guest node, use"
+            " 'pcs cluster node remove-guest'"
+        )
     ,
 }

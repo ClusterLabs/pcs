@@ -16,6 +16,9 @@ require 'cluster_entity.rb'
 require 'permissions.rb'
 require 'auth.rb'
 require 'pcsd_file'
+require 'pcsd_remove_file'
+require 'pcsd_action_command'
+require 'pcsd_exchange_format.rb'
 
 # Commands for remote access
 def remote(params, request, auth_user)
@@ -89,7 +92,9 @@ def remote(params, request, auth_user)
       :booth_set_config => method(:booth_set_config),
       :booth_save_files => method(:booth_save_files),
       :booth_get_config => method(:booth_get_config),
-      :put_file => method(:put_file)
+      :put_file => method(:put_file),
+      :remove_file => method(:remove_file),
+      :manage_services => method(:manage_services),
 
   }
   remote_cmd_with_pacemaker = {
@@ -802,6 +807,12 @@ def remote_node_available(params, request, auth_user)
       :pacemaker_remote => true,
     })
   end
+  if pacemaker_running?()
+    return JSON.generate({
+      :node_available => false,
+      :pacemaker_running => true,
+    })
+  end
   return JSON.generate({:node_available => true})
 end
 
@@ -1452,6 +1463,9 @@ def update_resource (params, request, auth_user)
       end
       resource_group = params[:resource_group]
     end
+    # workaround for Error: this command is not sufficient for create remote
+    # connection, use 'pcs cluster node add-remote', use --force to override
+    cmd << "--force"
     out, stderr, retval = run_cmd(auth_user, *cmd)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
@@ -2685,14 +2699,16 @@ def booth_set_config(params, request, auth_user)
     check_permissions(auth_user, Permissions::WRITE)
     data = check_request_data_for_json(params, auth_user)
 
-    PcsdFile::validate_file_map_is_Hash(data)
-    PcsdFile::validate_file_is_Hash(:config, data[:config])
+    PcsdExchangeFormat::validate_item_map_is_Hash('files', data)
+    PcsdExchangeFormat::validate_item_is_Hash('file', :config, data[:config])
     if data[:authfile]
-      PcsdFile::validate_file_is_Hash(:config, data[:config])
+      PcsdExchangeFormat::validate_item_is_Hash('file', :config, data[:config])
     end
 
     action_results = {
-      :config => PcsdFile::put_file(
+      :config => PcsdExchangeFormat::run_action(
+        PcsdFile::TYPES,
+        "file",
         :config,
         data[:config].merge({
           :type => "booth_config",
@@ -2702,7 +2718,9 @@ def booth_set_config(params, request, auth_user)
     }
 
     if data[:authfile]
-      action_results[:authfile] = PcsdFile::put_file(
+      action_results[:authfile] = PcsdExchangeFormat::run_action(
+        PcsdFile::TYPES,
+        "file",
         :authfile,
         data[:authfile].merge({
           :type => "booth_authfile",
@@ -2727,7 +2745,7 @@ def booth_set_config(params, request, auth_user)
     }")
   rescue PcsdRequestException => e
     return e.code, e.message
-  rescue PcsdFormatError => e
+  rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
   rescue => e
     return pcsd_error("Unable to save booth configuration: #{e.message}")
@@ -2743,10 +2761,12 @@ def booth_save_files(params, request, auth_user)
     )
 
     action_results = Hash[data.each_with_index.map{|file, i|
-      PcsdFile::validate_file_is_Hash(i, file)
+      PcsdExchangeFormat::validate_item_is_Hash('file', i, file)
       [
         i,
-        PcsdFile::put_file(
+        PcsdExchangeFormat::run_action(
+          PcsdFile::TYPES,
+          'file',
           i,
           file.merge({
             :rewrite_existing => rewrite_existing,
@@ -2784,7 +2804,7 @@ def booth_save_files(params, request, auth_user)
     return [200, JSON.generate(results)]
   rescue PcsdRequestException => e
     return e.code, e.message
-  rescue PcsdFormatError => e
+  rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
   end
 end
@@ -2839,17 +2859,64 @@ def put_file(params, request, auth_user)
     check_permissions(auth_user, Permissions::WRITE)
 
     files = check_request_data_for_json(params, auth_user)
-    PcsdFile::validate_file_map_is_Hash(files)
+    PcsdExchangeFormat::validate_item_map_is_Hash('files', files)
 
     return pcsd_success(
       JSON.generate({"files" => Hash[files.map{|id, file_data|
-        PcsdFile::validate_file_is_Hash(id, file_data)
-        [id, PcsdFile::put_file(id, file_data)]
+        PcsdExchangeFormat::validate_item_is_Hash('file', id, file_data)
+        [id, PcsdExchangeFormat::run_action(
+          PcsdFile::TYPES, 'file', id, file_data
+        )]
       }]})
     )
   rescue PcsdRequestException => e
     return e.code, e.message
-  rescue PcsdFormatError => e
+  rescue PcsdExchangeFormat::Error => e
+    return 400, "Invalid input data format: #{e.message}"
+  end
+end
+
+def remove_file(params, request, auth_user)
+  begin
+    check_permissions(auth_user, Permissions::WRITE)
+
+    files = check_request_data_for_json(params, auth_user)
+    PcsdExchangeFormat::validate_item_map_is_Hash('files', files)
+
+    return pcsd_success(
+      JSON.generate({"files" => Hash[files.map{|id, file_data|
+        PcsdExchangeFormat::validate_item_is_Hash('file', id, file_data)
+        [id, PcsdExchangeFormat::run_action(
+          PcsdRemoveFile::TYPES, 'file', id, file_data
+        )]
+      }]})
+    )
+  rescue PcsdRequestException => e
+    return e.code, e.message
+  rescue PcsdExchangeFormat::Error => e
+    return 400, "Invalid input data format: #{e.message}"
+  end
+end
+
+
+def manage_services(params, request, auth_user)
+  begin
+    check_permissions(auth_user, Permissions::WRITE)
+
+    actions = check_request_data_for_json(params, auth_user)
+    PcsdExchangeFormat::validate_item_map_is_Hash('actions', actions)
+
+    return pcsd_success(
+      JSON.generate({"actions" => Hash[actions.map{|id, action_data|
+        PcsdExchangeFormat::validate_item_is_Hash("action", id, action_data)
+        [id, PcsdExchangeFormat::run_action(
+          PcsdActionCommand::TYPES, "action", id, action_data
+        )]
+      }]})
+    )
+  rescue PcsdRequestException => e
+    return e.code, e.message
+  rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
   end
 end

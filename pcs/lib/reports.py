@@ -1149,6 +1149,20 @@ def resource_does_not_run(resource_id, severity=ReportItemSeverity.INFO):
         }
     )
 
+def resource_is_guest_node_already(resource_id):
+    """
+    The resource is already used as guest node (i.e. has meta attribute
+    remote-node).
+
+    string resource_id -- id of the resource that is guest node
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_IS_GUEST_NODE_ALREADY,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
 def resource_is_unmanaged(resource_id):
     """
     The resource the user works with is unmanaged (e.g. in enable/disable)
@@ -1368,19 +1382,79 @@ def resource_operation_interval_adapted(
         }
     )
 
-def node_not_found(node, severity=ReportItemSeverity.ERROR, forceable=None):
+def node_not_found(
+    node, searched_types=None, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     specified node does not exist
     node string specified node
+    searched_types list|string
     """
     return ReportItem(
         report_codes.NODE_NOT_FOUND,
         severity,
         info={
             "node": node,
+            "searched_types": searched_types if searched_types else []
         },
         forceable=forceable
     )
+
+def node_to_clear_is_still_in_cluster(
+    node, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    specified node is still in cluster and `crm_node --remove` should be not
+    used
+
+    node string specified node
+    """
+    return ReportItem(
+        report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
+        severity,
+        info={
+            "node": node,
+        },
+        forceable=forceable
+    )
+
+def node_remove_in_pacemaker_failed(node_name, reason):
+    """
+    calling of crm_node --remove failed
+    string reason is caught reason
+    """
+    return ReportItem.error(
+        report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
+        info={
+            "node_name": node_name,
+            "reason": reason,
+        }
+    )
+
+def multiple_result_found(
+    result_type, result_identifier_list, search_description="",
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Multiple result was found when something was looked for. E.g. resource for
+    remote node.
+
+    string result_type specifies what was looked for, e.g. "resource"
+    list result_identifier_list contains identifiers of results
+        e.g. resource ids
+    string search_description e.g. name of remote_node
+    """
+    return ReportItem(
+        report_codes.MULTIPLE_RESULTS_FOUND,
+        severity,
+        info={
+            "result_type": result_type,
+            "result_identifier_list": result_identifier_list,
+            "search_description": search_description,
+        },
+        forceable=forceable
+    )
+
 
 def pacemaker_local_node_name_not_found(reason):
     """
@@ -1950,6 +2024,163 @@ def sbd_device_dump_error(device, reason):
         }
     )
 
+def files_distribution_started(file_list, node_list=None, description=None):
+    """
+    files is about to be sent to nodes
+    """
+    file_list = file_list if file_list else []
+    return ReportItem.info(
+        report_codes.FILES_DISTRIBUTION_STARTED,
+        info={
+            "file_list": file_list,
+            "node_list": node_list,
+            "description": description,
+        }
+    )
+
+def file_distribution_success(node=None, file_description=None):
+    """
+    files was successfuly distributed on nodes
+
+    string node -- name of destination node
+    string file_description -- name (code) of sucessfully put files
+    """
+    return ReportItem.info(
+        report_codes.FILE_DISTRIBUTION_SUCCESS,
+        info={
+            "node": node,
+            "file_description": file_description,
+        },
+    )
+
+def file_distribution_error(
+    node=None, file_description=None, reason=None,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    cannot put files to specific nodes
+
+    string node -- name of destination node
+    string file_description -- is file code
+    string reason -- is error message
+    """
+    return ReportItem(
+        report_codes.FILE_DISTRIBUTION_ERROR,
+        severity,
+        info={
+            "node": node,
+            "file_description": file_description,
+            "reason": reason,
+        },
+        forceable=forceable
+    )
+
+def files_remove_from_node_started(file_list, node_list=None, description=None):
+    """
+    files is about to be removed from nodes
+    """
+    file_list = file_list if file_list else []
+    return ReportItem.info(
+        report_codes.FILES_REMOVE_FROM_NODE_STARTED,
+        info={
+            "file_list": file_list,
+            "node_list": node_list,
+            "description": description,
+        }
+    )
+
+def file_remove_from_node_success(node=None, file_description=None):
+    """
+    files was successfuly removed nodes
+
+    string node -- name of destination node
+    string file_description -- name (code) of sucessfully put files
+    """
+    return ReportItem.info(
+        report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+        info={
+            "node": node,
+            "file_description": file_description,
+        },
+    )
+
+def file_remove_from_node_error(
+    node=None, file_description=None, reason=None,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    cannot remove files from specific nodes
+
+    string node -- name of destination node
+    string file_description -- is file code
+    string reason -- is error message
+    """
+    return ReportItem(
+        report_codes.FILE_REMOVE_FROM_NODE_ERROR,
+        severity,
+        info={
+            "node": node,
+            "file_description": file_description,
+            "reason": reason,
+        },
+        forceable=forceable
+    )
+
+def service_commands_on_nodes_started(
+    action_list, node_list=None, description=None
+):
+    """
+    node was requested for actions
+    """
+    action_list = action_list if action_list else []
+    return ReportItem.info(
+        report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
+        info={
+            "action_list": action_list,
+            "node_list": node_list,
+            "description": description,
+        }
+    )
+
+def service_command_on_node_success(
+    node=None, service_command_description=None
+):
+    """
+    files was successfuly distributed on nodes
+
+    string service_command_description -- name (code) of sucessfully service
+        command
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
+        info={
+            "node": node,
+            "service_command_description": service_command_description,
+        },
+    )
+
+def service_command_on_node_error(
+    node=None, service_command_description=None, reason=None,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    action on nodes failed
+
+    string service_command_description -- name (code) of sucessfully service
+        command
+    string reason -- is error message
+    """
+    return ReportItem(
+        report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
+        severity,
+        info={
+            "node": node,
+            "service_command_description": service_command_description,
+            "reason": reason,
+        },
+        forceable=forceable
+    )
+
 
 def invalid_response_format(node):
     """
@@ -2238,6 +2469,50 @@ def live_environment_required_for_local_node():
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
     )
 
+def nolive_skip_files_distribution(files_description, nodes):
+    """
+    When running action with e.g. -f the files was not distributed to nodes.
+    list files_description -- contains description of files
+    list nodes -- destinations where should be files distributed
+    """
+    return ReportItem.info(
+        report_codes.NOLIVE_SKIP_FILES_DISTRIBUTION,
+        info={
+            "files_description": files_description,
+            "nodes": nodes,
+        }
+    )
+
+def nolive_skip_files_remove(files_description, nodes):
+    """
+    When running action with e.g. -f the files was not removed from nodes.
+    list files_description -- contains description of files
+    list nodes -- destinations from where should be files removed
+    """
+    return ReportItem.info(
+        report_codes.NOLIVE_SKIP_FILES_REMOVE,
+        info={
+            "files_description": files_description,
+            "nodes": nodes,
+        }
+    )
+
+def nolive_skip_service_command_on_nodes(service, command, nodes):
+    """
+    When running action with e.g. -f the service command is not run on nodes.
+    string service -- e.g. pacemaker, pacemaker_remote, corosync
+    string command -- e.g. start, enable, stop, disable
+    list nodes -- destinations where should be commad run
+    """
+    return ReportItem.info(
+        report_codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES,
+        info={
+            "service": service,
+            "command": command,
+            "nodes": nodes,
+        }
+    )
+
 def quorum_cannot_disable_atb_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -2348,4 +2623,43 @@ def fencing_level_does_not_exist(level, target_type, target_value, devices):
             "target_value": target_value,
             "devices": devices,
         }
+    )
+
+def use_command_node_add_remote(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_ADD_REMOTE,
+        severity,
+        info={},
+        forceable=forceable
+    )
+
+def use_command_node_add_guest(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_ADD_GUEST,
+        severity,
+        info={},
+        forceable=forceable
+    )
+
+def use_command_node_remove_guest(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Advise the user for more appropriate command.
+    """
+    return ReportItem(
+        report_codes.USE_COMMAND_NODE_REMOVE_GUEST,
+        severity,
+        info={},
+        forceable=forceable
     )

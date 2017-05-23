@@ -64,6 +64,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 0
 
     def testRemoteNode(self):
+        #pylint: disable=trailing-whitespace
         o,r = pcs(
             temp_cib,
             "resource create D1 ocf:heartbeat:Dummy --no-default-ops"
@@ -76,19 +77,33 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         )
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "cluster remote-node rh7-2 D1")
+        o,r = pcs(temp_cib, "cluster remote-node rh7-2g D1")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2 D1")
-        assert r==0 and o==""
+        o,r = pcs(temp_cib, "cluster remote-node add rh7-2g D1 --force")
+        assert r==0
+        self.assertEqual(
+            o,
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " add-guest'\n"
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400 remote-connect-timeout=50")
-        assert r==0 and o==""
+        o,r = pcs(
+            temp_cib,
+            "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400"
+            " remote-connect-timeout=50 --force"
+        )
+        assert r==0
+        self.assertEqual(
+            o,
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " add-guest'\n"
+        )
 
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-2 
+              Meta Attrs: remote-node=rh7-2g 
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
@@ -99,16 +114,37 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         o,r = pcs(temp_cib, "cluster remote-node remove")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
-        assert r==0 and o==""
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g",
+            "Error: this command is deprecated, use 'pcs cluster node"
+            " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "cluster remote-node remove rh7-2g --force",
+            "Warning: this command is deprecated, use 'pcs cluster node"
+            " remove-guest'\n"
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2 NOTARESOURCE")
-        assert r==1
-        ac(o,"Error: unable to find resource 'NOTARESOURCE'\n")
+        self.assert_pcs_fail(
+            "cluster remote-node add rh7-2g NOTARESOURCE --force",
+            "Error: unable to find resource 'NOTARESOURCE'\n"
+                "Warning: this command is deprecated, use"
+                " 'pcs cluster node add-guest'\n"
+            ,
+        )
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
-        assert r==1
-        ac(o,"Error: unable to remove: cannot find remote-node 'rh7-2'\n")
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g",
+            "Error: this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-2g --force",
+            "Error: unable to remove: cannot find remote-node 'rh7-2g'\n"
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " remove-guest'\n"
+        )
+
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -120,8 +156,16 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             """
         ))
 
-        o,r = pcs(temp_cib, "cluster remote-node remove rh7-1")
-        assert r==0 and o==""
+        self.assert_pcs_fail(
+            "cluster remote-node remove rh7-1",
+            "Error: this command is deprecated, use 'pcs cluster node"
+                " remove-guest', use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "cluster remote-node remove rh7-1 --force",
+            "Warning: this command is deprecated, use 'pcs cluster node"
+                " remove-guest'\n"
+        )
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -188,7 +232,6 @@ Warning: Unable to resolve hostname: nonexistant-address.invalid
         corosync_conf = """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -247,7 +290,6 @@ Error: {0} already exists, use --force to overwrite
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -394,7 +436,6 @@ Error: {0} already exists, use --force to overwrite
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -435,7 +476,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -480,7 +520,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -521,7 +560,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -567,7 +605,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -609,7 +646,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -651,7 +687,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -692,7 +727,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -738,7 +772,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -784,7 +817,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
 }
@@ -834,7 +866,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
 }
@@ -1235,7 +1266,6 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
     ip_version: ipv6
@@ -1343,7 +1373,6 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1402,7 +1431,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1461,7 +1489,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1520,7 +1547,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: passive
@@ -1588,7 +1614,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: active
@@ -1654,7 +1679,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udp
     rrp_mode: active
@@ -1730,7 +1754,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: udpu
     rrp_mode: passive
@@ -1819,7 +1842,6 @@ logging {
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: test99
     transport: udpu
 }
@@ -2404,7 +2426,6 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: test99
     transport: udpu
     token: 20000
@@ -2648,7 +2669,6 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             ac(data, """\
 totem {
     version: 2
-    secauth: off
     cluster_name: cname
     transport: unknown
 }
@@ -2868,4 +2888,15 @@ class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "cluster disable rh7-1 rh7-2 --all",
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+
+class NodeRemove(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner()
+
+    def test_fail_when_node_does_not_exists(self):
+        self.assert_pcs_fail(
+            "cluster node remove not-existent --force", #
+            "Error: node 'not-existent' does not appear to exist in"
+                " configuration\n"
         )

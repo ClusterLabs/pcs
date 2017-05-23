@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
     is_bundle,

@@ -12,6 +12,7 @@ import tempfile
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
+from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
@@ -44,7 +45,6 @@ from pcs.lib.pacemaker.live import (
 from pcs.lib.pacemaker.state import get_cluster_state_dom
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 
-
 class LibraryEnvironment(object):
     # pylint: disable=too-many-instance-attributes
 
@@ -57,6 +57,7 @@ class LibraryEnvironment(object):
         cib_data=None,
         corosync_conf_data=None,
         booth=None,
+        pacemaker=None,
         auth_tokens_getter=None,
         cluster_conf_data=None,
         request_timeout=None,
@@ -71,6 +72,9 @@ class LibraryEnvironment(object):
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
+        #pacemaker is currently not mocked and it provides only an access to
+        #the authkey
+        self._pacemaker =  PacemakerEnv()
         self._request_timeout = request_timeout
         self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
@@ -309,3 +313,7 @@ class LibraryEnvironment(object):
     @property
     def booth(self):
         return self._booth
+
+    @property
+    def pacemaker(self):
+        return self._pacemaker

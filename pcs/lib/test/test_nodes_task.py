@@ -15,6 +15,7 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes
 from pcs.lib.external import NodeCommunicator, NodeAuthenticationException
@@ -23,13 +24,14 @@ from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.nodes_task as lib
 
+patch_nodes_task = create_patcher(lib)
 
 class DistributeCorosyncConfTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
         self.mock_communicator = "mock node communicator"
 
-    @mock.patch("pcs.lib.nodes_task.corosync_live")
+    @patch_nodes_task("corosync_live")
     def test_success(self, mock_corosync_live):
         conf_text = "test conf text"
         nodes = ["node1", "node2"]
@@ -83,7 +85,7 @@ class DistributeCorosyncConfTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.nodes_task.corosync_live")
+    @patch_nodes_task("corosync_live")
     def test_one_node_down(self, mock_corosync_live):
         conf_text = "test conf text"
         nodes = ["node1", "node2"]
@@ -176,7 +178,7 @@ class DistributeCorosyncConfTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.nodes_task.corosync_live")
+    @patch_nodes_task("corosync_live")
     def test_one_node_down_forced(self, mock_corosync_live):
         conf_text = "test conf text"
         nodes = ["node1", "node2"]
@@ -444,8 +446,8 @@ class CheckCorosyncOfflineTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.nodes_task.qdevice_client.remote_client_stop")
-@mock.patch("pcs.lib.nodes_task.qdevice_client.remote_client_start")
+@patch_nodes_task("qdevice_client.remote_client_stop")
+@patch_nodes_task("qdevice_client.remote_client_start")
 class QdeviceReloadOnNodesTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
@@ -599,40 +601,47 @@ class NodeCheckAuthTest(TestCase):
             node, "remote/check_auth", "check_auth_only=1"
         )
 
-class EnsureCanAddNodeToCluster(TestCase):
+
+def fixture_invalid_response_format(node_label):
+    return (
+        severity.ERROR,
+        report_codes.INVALID_RESPONSE_FORMAT,
+        {
+            "node": node_label
+        },
+        None
+    )
+
+def assert_call_cause_reports(call, expected_report_items):
+    report_items = []
+    call(report_items)
+    assert_report_item_list_equal(report_items, expected_report_items)
+
+class CallForJson(TestCase):
     def setUp(self):
         self.node = NodeAddresses("node1")
         self.node_communicator = mock.MagicMock(spec_set=NodeCommunicator)
 
-    def fixture_invalid_response_format(self):
-       return (
-            severity.ERROR,
-            report_codes.INVALID_RESPONSE_FORMAT,
-            {
-                "node": self.node.label
-            }
-        )
-
-    def assert_communicator_cause_reports(self, expected_report_items):
-        report_items = []
-        lib.check_can_add_node_to_cluster(
+    def make_call(self, report_items):
+        lib._call_for_json(
             self.node_communicator,
             self.node,
+            "some/path",
             report_items
         )
-        assert_report_item_list_equal(report_items, expected_report_items)
 
-    def assert_result_cause_reports(self, result, expected_report_items):
-        self.node_communicator.call_node = mock.Mock(
-            return_value=json.dumps(result)
-        )
-        self.assert_communicator_cause_reports(expected_report_items)
+    def test_report_no_json_response(self):
+        #leads to ValueError
+        self.node_communicator.call_node = mock.Mock(return_value="bad answer")
+        assert_call_cause_reports(self.make_call, [
+            fixture_invalid_response_format(self.node.label)
+        ])
 
     def test_process_communication_exception(self):
         self.node_communicator.call_node = mock.Mock(
             side_effect=NodeAuthenticationException("node", "request", "reason")
         )
-        self.assert_communicator_cause_reports([
+        assert_call_cause_reports(self.make_call, [
             (
                 severity.ERROR,
                 report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
@@ -641,54 +650,180 @@ class EnsureCanAddNodeToCluster(TestCase):
                     'reason': 'reason',
                     'command': 'request'
                 }
-            ),
+            )
         ])
 
-    def test_report_no_json_response(self):
-        #leads to ValueError
-        self.node_communicator.call_node = mock.Mock(return_value="bad answer")
-        self.assert_communicator_cause_reports([
-            self.fixture_invalid_response_format()
-        ])
+class AvailabilityCheckerNode(TestCase):
+    def setUp(self):
+        self.node = "node1"
 
-    def test_report_no_dict_in_json_response(self):
-        #leads to TypeError
-        self.assert_result_cause_reports("bad answer", [
-            self.fixture_invalid_response_format()
-        ])
+    def assert_result_causes_reports(
+        self, availability_info, expected_report_items
+    ):
+        report_items = []
+        lib.availability_checker_node(
+            availability_info,
+            report_items,
+            self.node
+        )
+        assert_report_item_list_equal(report_items, expected_report_items)
 
-    def test_report_dict_without_mandatory_key(self):
-        #leads to KeyError
-        self.assert_result_cause_reports({}, [
-            self.fixture_invalid_response_format()
-        ])
-
-
-    def test_no_reports_on_communication_success(self):
-        self.assert_result_cause_reports({"node_available": True}, [])
+    def test_no_reports_when_available(self):
+        self.assert_result_causes_reports({"node_available": True}, [])
 
     def test_report_node_is_in_cluster(self):
-        self.assert_result_cause_reports({"node_available": False}, [
+        self.assert_result_causes_reports({"node_available": False}, [
             (
                 severity.ERROR,
                 report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER,
                 {
-                    "node": self.node.label
+                    "node": self.node
                 }
             ),
         ])
 
     def test_report_node_is_running_pacemaker_remote(self):
-        self.assert_result_cause_reports(
+        self.assert_result_causes_reports(
             {"node_available": False, "pacemaker_remote": True},
             [
                 (
                     severity.ERROR,
                     report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
                     {
-                        "node": self.node.label,
-                        "service": "pacemaker_remote"
+                        "node": self.node,
+                        "service": "pacemaker_remote",
                     }
                 ),
             ]
         )
+
+    def test_report_node_is_running_pacemaker(self):
+        self.assert_result_causes_reports(
+            {"node_available": False, "pacemaker_running": True},
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
+                    {
+                        "node": self.node,
+                        "service": "pacemaker",
+                    }
+                ),
+            ]
+        )
+
+class AvailabilityCheckerRemoteNode(TestCase):
+    def setUp(self):
+        self.node = "node1"
+
+    def assert_result_causes_reports(
+        self, availability_info, expected_report_items
+    ):
+        report_items = []
+        lib.availability_checker_remote_node(
+            availability_info,
+            report_items,
+            self.node
+        )
+        assert_report_item_list_equal(report_items, expected_report_items)
+
+    def test_no_reports_when_available(self):
+        self.assert_result_causes_reports({"node_available": True}, [])
+
+    def test_report_node_is_running_pacemaker(self):
+        self.assert_result_causes_reports(
+            {"node_available": False, "pacemaker_running": True},
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
+                    {
+                        "node": self.node,
+                        "service": "pacemaker",
+                    }
+                ),
+            ]
+        )
+
+    def test_report_node_is_in_cluster(self):
+        self.assert_result_causes_reports({"node_available": False}, [
+            (
+                severity.ERROR,
+                report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER,
+                {
+                    "node": self.node
+                }
+            ),
+        ])
+
+    def test_no_reports_when_pacemaker_remote_there(self):
+        self.assert_result_causes_reports(
+            {"node_available": False, "pacemaker_remote": True},
+            []
+        )
+
+class CheckCanAddNodeToCluster(TestCase):
+    def setUp(self):
+        self.node = NodeAddresses("node1")
+        self.node_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+
+    def assert_result_causes_invalid_format(self, result):
+        self.node_communicator.call_node = mock.Mock(
+            return_value=json.dumps(result)
+        )
+        assert_call_cause_reports(
+            self.make_call,
+            [fixture_invalid_response_format(self.node.label)],
+        )
+
+    def make_call(self, report_items):
+        lib.check_can_add_node_to_cluster(
+            self.node_communicator,
+            self.node,
+            report_items,
+            check_response=(
+                lambda availability_info, report_items, node_label: None
+            )
+        )
+
+    def test_report_no_dict_in_json_response(self):
+        self.assert_result_causes_invalid_format("bad answer")
+
+    def test_report_dict_without_mandatory_key(self):
+        self.assert_result_causes_invalid_format({})
+
+
+class OnNodeTest(TestCase):
+    def setUp(self):
+        self.reporter = MockLibraryReportProcessor()
+        self.node = NodeAddresses("node1")
+        self.node_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+
+    def set_call_result(self, result):
+        self.node_communicator.call_node = mock.Mock(
+            return_value=json.dumps(result)
+        )
+
+class RunActionOnNode(OnNodeTest):
+    def make_call(self):
+        return lib.run_actions_on_node(
+            self.node_communicator,
+            "remote/run_action",
+            "actions",
+            self.reporter,
+            self.node,
+            {"action": {"type": "any_mock_type"}}
+        )
+
+    def test_return_node_action_result(self):
+        self.set_call_result({
+            "actions": {
+                "action": {
+                    "code": "some_code",
+                    "message": "some_message",
+                }
+            }
+        })
+        result = self.make_call()["action"]
+        self.assertEqual(result.code, "some_code")
+        self.assertEqual(result.message, "some_message")

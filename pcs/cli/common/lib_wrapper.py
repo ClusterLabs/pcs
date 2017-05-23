@@ -18,6 +18,7 @@ from pcs.lib.commands import (
     acl,
     alert,
     booth,
+    cluster,
     fencing_topology,
     node,
     qdevice,
@@ -178,6 +179,22 @@ def load_module(env, middleware_factory, name):
                 "status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
                 "ticket_revoke": booth.ticket_revoke,
+            }
+        )
+
+    if name == "cluster":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
+            ),
+            {
+                "node_add_remote": cluster.node_add_remote,
+                "node_add_guest": cluster.node_add_guest,
+                "node_remove_remote": cluster.node_remove_remote,
+                "node_remove_guest": cluster.node_remove_guest,
+                "node_clear": cluster.node_clear,
             }
         )
 

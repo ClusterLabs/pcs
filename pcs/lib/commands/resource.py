@@ -8,14 +8,16 @@ from __future__ import (
 from contextlib import contextmanager
 from functools import partial
 
+from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cib import resource
-from pcs.lib.cib.resource import operations
+from pcs.lib.cib.resource import operations, remote_node, guest_node
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
     IdProvider,
 )
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import (
@@ -43,6 +45,81 @@ def resource_environment(
             for res_id in wait_for_resource_ids
         ])
 
+def _validate_remote_connection(
+    nodes, resource_id, instance_attributes,  allow_not_suitable_command
+):
+    report_list = []
+    report_list.append(
+        reports.get_problem_creator(
+            report_codes.FORCE_NOT_SUITABLE_COMMAND,
+            allow_not_suitable_command
+        )(reports.use_command_node_add_remote)
+    )
+
+    report_list.extend(
+        remote_node.validate_host_not_conflicts(
+            nodes,
+            resource_id,
+            instance_attributes
+        )
+    )
+    return report_list
+
+def _validate_guest_change(
+    tree, nodes, meta_attributes, allow_not_suitable_command,
+    detect_remove=False
+):
+    if not guest_node.is_node_name_in_options(meta_attributes):
+        return []
+
+    node_name = guest_node.get_node_name_from_options(meta_attributes)
+
+    report_list = []
+    create_report = reports.use_command_node_add_guest
+    if detect_remove and not guest_node.get_guest_option_value(meta_attributes):
+        create_report = reports.use_command_node_remove_guest
+
+    report_list.append(
+        reports.get_problem_creator(
+            report_codes.FORCE_NOT_SUITABLE_COMMAND,
+            allow_not_suitable_command
+        )(create_report)
+    )
+
+    report_list.extend(
+        guest_node.validate_conflicts(
+            tree,
+            nodes,
+            node_name,
+            meta_attributes
+        )
+    )
+
+    return report_list
+
+def _validate_special_cases(
+    nodes, resource_agent, resources_section, resource_id, meta_attributes,
+    instance_attributes, allow_not_suitable_command
+):
+    report_list = []
+
+    if resource_agent.get_name() == remote_node.AGENT_NAME.full_name:
+        report_list.extend(_validate_remote_connection(
+            nodes,
+            resource_id,
+            instance_attributes,
+            allow_not_suitable_command,
+        ))
+
+    report_list.extend(_validate_guest_change(
+        resources_section,
+        nodes,
+        meta_attributes,
+        allow_not_suitable_command,
+    ))
+
+    return report_list
+
 def create(
     env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes,
@@ -52,6 +129,7 @@ def create(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in a cib.
@@ -75,6 +153,7 @@ def create(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -88,6 +167,16 @@ def create(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            get_nodes(env.get_corosync_conf(), resources_section),
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_not_suitable_command
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -108,6 +197,7 @@ def _create_as_clone_common(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in some kind of clone (clone or master).
@@ -137,6 +227,7 @@ def _create_as_clone_common(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -156,6 +247,16 @@ def _create_as_clone_common(
             resource.common.is_clone_deactivated_by_meta(clone_meta_options)
         )
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            get_nodes(env.get_corosync_conf(), resources_section),
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_not_suitable_command
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -184,6 +285,7 @@ def create_in_group(
     adjacent_resource_id=None,
     put_after_adjacent=False,
     wait=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create resource in a cib and put it into defined group
@@ -209,6 +311,7 @@ def create_in_group(
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent resource
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -222,6 +325,16 @@ def create_in_group(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            get_nodes(env.get_corosync_conf(), resources_section),
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_not_suitable_command
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -253,6 +366,7 @@ def create_into_bundle(
     use_default_operations=True,
     ensure_disabled=False,
     wait=False,
+    allow_not_suitable_command=False,
 ):
     """
     Create a new resource in a cib and put it into an existing bundle
@@ -277,6 +391,7 @@ def create_into_bundle(
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -291,6 +406,16 @@ def create_into_bundle(
         disabled_after_wait=ensure_disabled,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
+        env.report_processor.process_list(_validate_special_cases(
+            get_nodes(env.get_corosync_conf(), resources_section),
+            resource_agent,
+            resources_section,
+            resource_id,
+            meta_attributes,
+            instance_attributes,
+            allow_not_suitable_command
+        ))
+
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,

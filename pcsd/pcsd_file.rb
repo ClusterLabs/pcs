@@ -1,12 +1,8 @@
 require 'base64'
 require 'pcs.rb' #write_file_lock, read_file_lock
 require 'settings.rb'
+require 'pcsd_exchange_format.rb'
 
-class PcsdFormatError < StandardError
-  def self.for_file(id, message)
-    new "file (key: #{id}): #{message}"
-  end
-end
 
 module PcsdFile
   class PutFile
@@ -55,11 +51,21 @@ module PcsdFile
         self.full_file_name,
         self.permissions,
         self.binary? ? Base64.decode64(@file[:data]) : @file[:data],
-        self.binary?
+        self.binary?,
+        self.user,
+        self.group
       )
     end
 
     def permissions()
+      return nil
+    end
+
+    def user()
+      return nil
+    end
+
+    def group()
       return nil
     end
 
@@ -72,21 +78,21 @@ module PcsdFile
       begin
         unless self.exists?
           self.write()
-          return PcsdFile::result(:written)
+          return PcsdExchangeFormat::result(:written)
         end
 
         if self.rewrite_existing
           self.write()
-          return PcsdFile::result(:rewritten)
+          return PcsdExchangeFormat::result(:rewritten)
         end
 
         if self.exists_with_same_content()
-          return PcsdFile::result(:same_content)
+          return PcsdExchangeFormat::result(:same_content)
         end
 
-        return PcsdFile::result(:conflict)
+        return PcsdExchangeFormat::result(:conflict)
       rescue => e
-        return PcsdFile::result(:unexpected, e.message)
+        return PcsdExchangeFormat::result(:unexpected, e.message)
       end
     end
   end
@@ -96,7 +102,7 @@ module PcsdFile
       super
       PcsdFile::validate_file_key_with_string(@id, @file, :name)
       if @file[:name].empty?
-        raise PcsdFormatError.for_file(@id, "'name' is empty")
+        raise PcsdExchangeFormat::Error.for_item('file', @id, "'name' is empty")
       end
     end
 
@@ -107,7 +113,6 @@ module PcsdFile
     def full_file_name()
       @full_file_name ||= File.join(self.dir, @file[:name])
     end
-
   end
 
   class PutFileBoothAuthfile < PutFileBooth
@@ -122,61 +127,63 @@ module PcsdFile
     end
   end
 
+  class PutFilePcmkRemoteAuthkey < PutFile
+    def full_file_name
+      #TODO determine the file name from the system
+      @full_file_name ||= PACEMAKER_AUTHKEY
+    end
+
+    def permissions()
+      return 0400
+    end
+
+    def user()
+      return 'hacluster'
+    end
+
+    def group()
+      return 'haclient'
+    end
+
+    def write()
+      pacemaker_config_dir = File.dirname(PACEMAKER_AUTHKEY)
+      if not File.directory?(pacemaker_config_dir)
+        Dir.mkdir(pacemaker_config_dir)
+      end
+      super
+    end
+  end
+
+  class PutFileCorosyncAuthkey < PutFile
+    def full_file_name
+      @full_file_name ||= COROSYNC_AUTHKEY
+    end
+
+    def permissions()
+      return 0400
+    end
+  end
+
   TYPES = {
     "booth_authfile" => PutFileBoothAuthfile,
     "booth_config" => PutFileBoothConfig,
-  }
-end
-
-def PcsdFile.result(code, message="")
-  return {
-    :code => code,
-    :message => message,
+    "pcmk_remote_authkey" => PutFilePcmkRemoteAuthkey,
+    "corosync_authkey" => PutFileCorosyncAuthkey,
   }
 end
 
 def PcsdFile.validate_file_key_with_string(id, file_hash, key_name)
   unless file_hash.has_key?(key_name)
-    raise PcsdFormatError.for_file(id, "'#{key_name}' is missing")
+    raise PcsdExchangeFormat::Error.for_item(
+      'file', id, "'#{key_name}' is missing"
+    )
   end
 
   unless file_hash[key_name].is_a? String
-    raise PcsdFormatError.for_file(
+    raise PcsdExchangeFormat::Error.for_item(
+      'file',
       id,
       "'#{key_name}' is not String: '#{file_hash[key_name].class}'"
     )
   end
-end
-
-def PcsdFile.no_hash_message(no_hash)
-  return "should be 'Hash'. "+
-      "But it is '#{no_hash.class}': #{JSON.generate(no_hash)}"
-end
-
-def PcsdFile.validate_file_map_is_Hash(file_map)
-  unless file_map.is_a? Hash
-    raise PcsdFormatError.new("files #{self.no_hash_message(file_map)}")
-  end
-end
-
-def PcsdFile.validate_file_is_Hash(id, file_data)
-  unless file_data.is_a? Hash
-    raise PcsdFormatError.for_file(id, self.no_hash_message(file_data))
-  end
-end
-
-def PcsdFile.put_file(id, file_hash)
-  unless file_hash.has_key?(:type)
-    raise PcsdFormatError.for_file(id, "'type' is missing")
-  end
-
-  unless PcsdFile::TYPES.key?(file_hash[:type])
-    raise PcsdFormatError.for_file(
-      id,
-      "unsupported 'type' ('#{file_hash[:type]}')"+
-      " supported are #{PcsdFile::TYPES.keys}"
-    )
-  end
-
-  return PcsdFile::TYPES[file_hash[:type]].new(id, file_hash).process()
 end

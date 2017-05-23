@@ -139,9 +139,10 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_cib, "stonith delete test9")
-        assert returnVal == 0
-        assert output == "Deleting Resource - test9\n",[output]
+        self.assert_pcs_success(
+            "stonith delete test9",
+            "Deleting Resource - test9\n"
+        )
 
         self.assert_pcs_fail(
             "stonith create test3 fence_ilo ipaddr=test",
@@ -171,9 +172,10 @@ class StonithTest(TestCase, AssertPcsMixin):
             """
         ))
 
-        output, returnVal = pcs(temp_cib, 'stonith delete apc-fencing')
-        assert returnVal == 0
-        assert output == 'Deleting Resource - apc-fencing\n',[output]
+        self.assert_pcs_success(
+            "stonith delete apc-fencing",
+            "Deleting Resource - apc-fencing\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith update test3 bad_ipaddr=test")
         assert returnVal == 1
@@ -463,9 +465,10 @@ class StonithTest(TestCase, AssertPcsMixin):
    Level 2 - n2-apc1,n2-apc2,n2-apc3
 """)
 
-        output, returnVal = pcs(temp_cib, "stonith delete n2-apc2")
-        self.assertEqual(returnVal, 0)
-        ac(output, "Deleting Resource - n2-apc2\n")
+        self.assert_pcs_success(
+            "stonith delete n2-apc2",
+            "Deleting Resource - n2-apc2\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -484,9 +487,10 @@ class StonithTest(TestCase, AssertPcsMixin):
    Level 2 - n2-apc1,n2-apc3
 """)
 
-        output, returnVal = pcs(temp_cib, "stonith delete n2-apc1")
-        self.assertEqual(returnVal, 0)
-        ac(output, "Deleting Resource - n2-apc1\n")
+        self.assert_pcs_success(
+            "stonith delete n2-apc1",
+            "Deleting Resource - n2-apc1\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -504,9 +508,10 @@ class StonithTest(TestCase, AssertPcsMixin):
    Level 2 - n2-apc3
 """)
 
-        output, returnVal = pcs(temp_cib, "stonith delete n2-apc3")
-        self.assertEqual(returnVal, 0)
-        ac(output, "Deleting Resource - n2-apc3\n")
+        self.assert_pcs_success(
+            "stonith delete n2-apc3",
+            "Deleting Resource - n2-apc3\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -522,9 +527,10 @@ class StonithTest(TestCase, AssertPcsMixin):
    Level 1 - n2-ipmi
 """)
 
-        output, returnVal = pcs(temp_cib, "resource delete n1-apc1")
-        self.assertEqual(returnVal, 0)
-        ac(output, "Deleting Resource - n1-apc1\n")
+        self.assert_pcs_success(
+            "resource delete n1-apc1",
+            "Deleting Resource - n1-apc1\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -539,9 +545,11 @@ class StonithTest(TestCase, AssertPcsMixin):
    Level 1 - n2-ipmi
 """)
 
-        output, returnVal = pcs(temp_cib, "resource delete n1-apc2")
-        self.assertEqual(returnVal, 0)
-        ac(output, "Deleting Resource - n1-apc2\n")
+        self.assert_pcs_success("resource delete n1-apc2", outdent(
+            """\
+            Deleting Resource - n1-apc2
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -565,9 +573,10 @@ class StonithTest(TestCase, AssertPcsMixin):
         o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " not in o
 
-        o,r = pcs(temp_cib, "stonith delete test_stonith")
-        ac(o,"Deleting Resource - test_stonith\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "stonith delete test_stonith",
+            "Deleting Resource - test_stonith\n"
+        )
 
         o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
         ac(o,"")
