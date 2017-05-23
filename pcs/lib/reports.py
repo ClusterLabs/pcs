@@ -523,19 +523,23 @@ def node_communication_error_unsupported_command(
         forceable=forceable
     )
 
-def node_communication_command_unsuccessful(node, command, reason):
+def node_communication_command_unsuccessful(
+    node, command, reason, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     node rejected a request for another reason with a plain text explanation
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+        severity,
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
 

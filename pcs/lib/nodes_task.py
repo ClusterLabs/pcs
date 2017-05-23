@@ -15,6 +15,7 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity, ReportListAnalyzer
 from pcs.lib.external import (
     NodeCommunicator,
     NodeCommunicationException,
+    NodeCommandUnsuccessfulException,
     node_communicator_exception_to_report_item,
     parallel_nodes_communication_helper,
 )
@@ -26,7 +27,7 @@ from pcs.lib.corosync import (
 
 def _call_for_json(
     node_communicator, node, request_path, report_items,
-    data=None, request_timeout=None
+    data=None, request_timeout=None, warn_on_communication_exception=False
 ):
     """
     Return python object parsed from a json call response.
@@ -40,11 +41,33 @@ def _call_for_json(
             ,
             request_timeout=request_timeout
         ))
+    except NodeCommandUnsuccessfulException as e:
+        report_items.append(
+            reports.node_communication_command_unsuccessful(
+                e.node,
+                e.command,
+                e.reason,
+                severity=(
+                    ReportItemSeverity.WARNING
+                    if warn_on_communication_exception else
+                    ReportItemSeverity.ERROR
+                ),
+                forceable=(
+                    None if warn_on_communication_exception
+                    else report_codes.SKIP_OFFLINE_NODES
+                ),
+            )
+        )
+
     except NodeCommunicationException as e:
         report_items.append(
             node_communicator_exception_to_report_item(
                 e,
-                ReportItemSeverity.ERROR,
+                ReportItemSeverity.WARNING if warn_on_communication_exception
+                    else ReportItemSeverity.ERROR
+                ,
+                forceable=None if warn_on_communication_exception
+                    else report_codes.SKIP_OFFLINE_NODES
             )
         )
     except ValueError:
@@ -292,7 +315,8 @@ def check_can_add_node_to_cluster(
     check_response(availability_info, report_items, node.label)
 
 def run_actions_on_node(
-    node_communicator, path, response_key, report_processor, node, actions
+    node_communicator, path, response_key, report_processor, node, actions,
+    warn_on_communication_exception=False
 ):
     """
     NodeCommunicator node_communicator is an object for making the http request
@@ -311,11 +335,19 @@ def run_actions_on_node(
         node,
         path,
         report_items,
-        [("data_json", json.dumps(actions))]
+        [("data_json", json.dumps(actions))],
+        warn_on_communication_exception=warn_on_communication_exception
     )
 
     #can raise
     report_processor.process_list(report_items)
+    #If there was a communication error and --skip-offline is in effect, no
+    #exception was raised. If there is no result cannot process it.
+    #Note: the error may be caused by older pcsd daemon not supporting commands
+    #sent by newer client.
+    if not action_results:
+        return
+
 
     return node_communication_format.response_to_result(
         action_results,
@@ -339,7 +371,15 @@ def _run_actions_on_multiple_nodes(
             report_processor,
             node_addresses,
             actions,
+            warn_on_communication_exception=allow_incomplete_distribution,
         )
+        #If there was a communication error and --skip-offline is in effect, no
+        #exception was raised. If there is no result cannot process it.
+        #Note: the error may be caused by older pcsd daemon not supporting
+        #commands sent by newer client.
+        if not result:
+            return
+
         for key, item_response in sorted(result.items()):
             if is_success(key, item_response):
                 #only success process individually

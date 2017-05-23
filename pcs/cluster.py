@@ -1761,7 +1761,7 @@ def node_add(lib_env, node0, node1, modifiers):
             lib_env,
             get_nodes(lib_env.get_corosync_conf(), lib_env.get_cib()),
             node_addr,
-            allow_incomplete_distribution=modifiers["force"]
+            allow_incomplete_distribution=modifiers["skip_offline_nodes"]
         )
 
     except LibraryError as e:
