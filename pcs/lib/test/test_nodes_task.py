@@ -649,7 +649,8 @@ class CallForJson(TestCase):
                     'node': 'node',
                     'reason': 'reason',
                     'command': 'request'
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES,
             )
         ])
 
