@@ -32,7 +32,6 @@ PCS_LONG_OPTIONS = [
     "miss_count_const=", "fail_recv_const=",
     "corosync_conf=", "cluster_conf=",
     "booth-conf=", "booth-key=",
-    "pacemaker-authkey=",
     "remote", "watchdog=", "device=",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
