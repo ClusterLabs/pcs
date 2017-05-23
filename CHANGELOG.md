@@ -35,7 +35,7 @@
   node to be fenced ([rhbz#1390609])
 
 ### Changed
-- `pcs cluster setup` configure corosync with an encrypted communication
+- Newly created clusters are set up to encrypt corosync communication
   ([rhbz#1165821], [ghissue#98])
 
 [ghissue#98]: https://github.com/ClusterLabs/pcs/issues/98
