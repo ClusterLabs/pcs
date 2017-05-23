@@ -158,6 +158,10 @@ module PcsdFile
     def full_file_name
       @full_file_name ||= COROSYNC_AUTHKEY
     end
+
+    def permissions()
+      return 0400
+    end
   end
 
   TYPES = {
