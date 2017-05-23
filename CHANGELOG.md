@@ -9,6 +9,9 @@
   [rhbz#1386512])
 - Command `pcs cluster node clear` to remove a node from pacemaker's
   configuration and caches
+- Backing up and restoring cluster configuration by `pcs config backup` and
+  `pcs config restore` commands now support corosync and pacemaker authkeys
+  ([rhbz#1165821], [rhbz#1176018])
 
 ### Deprecated
 - `pcs cluster remote-node add` and `pcs cluster remote-node remove `commands
