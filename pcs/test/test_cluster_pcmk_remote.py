@@ -176,7 +176,7 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_fail(
             "cluster node add-guest some-host G remote-node=node-name",
-            stdout_start="Error: invalid guest options option 'remote-node',"
+            stdout_start="Error: invalid guest option 'remote-node',"
                 " allowed options are: remote-addr, remote-connect-timeout,"
                 " remote-port\n"
         )
@@ -197,7 +197,7 @@ class NodeAddGuest(ResourceTest):
     def test_fail_on_combined_reasons(self):
         self.assert_pcs_fail(
             "cluster node add-guest node-host G a=b",
-            "Error: invalid guest options option 'a', allowed options are:"
+            "Error: invalid guest option 'a', allowed options are:"
                 " remote-addr, remote-connect-timeout, remote-port\n"
                 "Error: primitive 'G' does not exist\n"
         )
@@ -206,7 +206,7 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_fail(
             "cluster node add-guest node-host G a=b",
-            "Error: invalid guest options option 'a', allowed options are:"
+            "Error: invalid guest option 'a', allowed options are:"
                 " remote-addr, remote-connect-timeout, remote-port\n"
         )
 

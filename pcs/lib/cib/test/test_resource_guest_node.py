@@ -143,7 +143,7 @@ class ValidateOptions(TestCase):
                     severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_type": "guest options",
+                        "option_type": "guest",
                         "option_names": ["invalid"],
                         "allowed": sorted(guest_node.GUEST_OPTIONS),
                     },

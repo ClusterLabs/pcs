@@ -60,7 +60,7 @@ def validate_set_as_guest(tree, nodes, node_name, options):
     report_list = validate.names_in(
         GUEST_OPTIONS,
         options.keys(),
-        "guest options",
+        "guest",
     )
 
     validator_list = [
