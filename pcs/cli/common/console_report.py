@@ -1252,10 +1252,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to read {path}: {reason}"
         .format(**info)
     ,
-    codes.AMBIGUOUS_HOST_SPECIFICATION: lambda info:
-        "An ambiguous host specification: {0}"
-        .format(joined_list(info["host_list"]))
-    ,
     codes.USE_COMMAND_NODE_ADD_REMOTE: lambda info:
         (
             "this command is not sufficient for creating a remote connection,"

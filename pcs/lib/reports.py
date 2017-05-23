@@ -2625,14 +2625,6 @@ def fencing_level_does_not_exist(level, target_type, target_value, devices):
         }
     )
 
-def ambiguous_host_specification(host_list):
-    return ReportItem.error(
-        report_codes.AMBIGUOUS_HOST_SPECIFICATION,
-        info={
-            "host_list": host_list,
-        }
-    )
-
 def use_command_node_add_remote(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
