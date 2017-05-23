@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.158] - 2017-05-23
 
 ### Added
 - Support for bundle resources (CLI only) ([rhbz#1433016])
