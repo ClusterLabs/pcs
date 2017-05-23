@@ -11,6 +11,7 @@ import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.integration_lib import Runner
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
 class CommonResourceTest(TestCase):
@@ -24,9 +25,17 @@ class CommonResourceTest(TestCase):
         )
         cls.patcher.start()
 
+        cls.patcher_corosync = mock.patch.object(
+            LibraryEnvironment,
+            "get_corosync_conf_data",
+            lambda self: open(rc("corosync.conf")).read()
+        )
+        cls.patcher_corosync.start()
+
     @classmethod
     def tearDownClass(cls):
         cls.patcher.stop()
+        cls.patcher_corosync.stop()
 
     def setUp(self):
         self.env = LibraryEnvironment(

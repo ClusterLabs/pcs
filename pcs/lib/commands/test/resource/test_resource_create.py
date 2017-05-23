@@ -306,10 +306,17 @@ class CommonResourceTest(TestCase):
             lambda self: runner
         )
         cls.patcher.start()
+        cls.patcher_corosync = mock.patch.object(
+            LibraryEnvironment,
+            "get_corosync_conf_data",
+            lambda self: open(rc("corosync.conf")).read()
+        )
+        cls.patcher_corosync.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.patcher.stop()
+        cls.patcher_corosync.stop()
 
     def setUp(self):
         self.env = LibraryEnvironment(
