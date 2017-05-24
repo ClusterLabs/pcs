@@ -1,7 +1,13 @@
+begin
+  require 'openssl'
+  Object.send(:remove_const, :Digest)
+  Digest = OpenSSL::Digest
+rescue LoadError
+  require 'digest/sha1'
+end
+
 require 'fileutils'
 require 'rexml/document'
-require 'digest/sha1'
-
 require 'settings.rb'
 require 'config.rb'
 require 'corosyncconf.rb'
