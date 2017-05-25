@@ -446,12 +446,12 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
         "uname": settings.pacemaker_uname,
         "gname": settings.pacemaker_gname,
     }
-    pcmk_authkey_attrs = dict(cib_attrs)
-    pcmk_authkey_attrs["mode"] = 0o440
     if with_uid_gid:
         cib_attrs["uid"] = _get_uid(cib_attrs["uname"])
         cib_attrs["gid"] = _get_gid(cib_attrs["gname"])
 
+    pcmk_authkey_attrs = dict(cib_attrs)
+    pcmk_authkey_attrs["mode"] = 0o440
     file_list = {
         "cib.xml": {
             "path": os.path.join(settings.cib_dir, "cib.xml"),
