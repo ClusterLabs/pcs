@@ -5,6 +5,8 @@
 ### Fixed
 - Fixed crash of the `pcs cluster setup` command when the `--force` flag was
   used ([rhbz#1176018])
+- Fixed crash of the `pcs cluster destroy --all` command when the cluster was
+  not running ([rhbz#1176018])
 
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 

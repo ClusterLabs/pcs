@@ -2112,15 +2112,29 @@ def cluster_reload(argv):
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
     if "--all" in utils.pcs_options:
+        # destroy remote and guest nodes
+        cib = None
         lib_env = utils.get_lib_env()
-        all_remote_nodes = get_nodes(tree=lib_env.get_cib())
-        if len(all_remote_nodes) > 0:
-            _destroy_pcmk_remote_env(
-                lib_env,
-                all_remote_nodes,
-                allow_fails=True
+        try:
+            cib = lib_env.get_cib()
+        except LibraryError as e:
+            warn(
+                "Unable to load CIB to get guest and remote nodes from it, "
+                "those nodes will not be deconfigured."
             )
+        if cib is not None:
+            try:
+                all_remote_nodes = get_nodes(tree=cib)
+                if len(all_remote_nodes) > 0:
+                    _destroy_pcmk_remote_env(
+                        lib_env,
+                        all_remote_nodes,
+                        allow_fails=True
+                    )
+            except LibraryError as e:
+                utils.process_library_reports(e.args)
 
+        # destroy full-stack nodes
         destroy_cluster(utils.getNodesFromCorosyncConf())
     else:
         print("Shutting down pacemaker/corosync services...")
