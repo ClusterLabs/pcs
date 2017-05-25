@@ -1757,9 +1757,12 @@ def node_add(lib_env, node0, node1, modifiers):
                 NodeAddressesList([node_addr]),
             )
 
+        # do not send pcmk authkey to guest and remote nodes, they either have
+        # it or are not working anyway
+        # if the cluster is stopped, we cannot get the cib anyway
         _share_authkey(
             lib_env,
-            get_nodes(lib_env.get_corosync_conf(), lib_env.get_cib()),
+            get_nodes(lib_env.get_corosync_conf()),
             node_addr,
             allow_incomplete_distribution=modifiers["skip_offline_nodes"]
         )

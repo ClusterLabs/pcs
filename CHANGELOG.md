@@ -9,6 +9,8 @@
   not running ([rhbz#1176018])
 - Fixed crash of the `pcs config restore` command when restoring pacemaker
   authkey ([rhbz#1176018])
+- Fixed "Error: unable to get cib" when adding a node to a stopped cluster
+  ([rhbz#1176018])
 
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 
