@@ -425,9 +425,9 @@ def cluster_setup(argv):
     else:
         # verify and ensure no cluster is set up on the nodes
         # checks that nodes are authenticated as well
+        lib_env = utils.get_lib_env()
         if "--force" not in utils.pcs_options:
             all_nodes_available = True
-            lib_env = utils.get_lib_env()
             for node in primary_addr_list:
                 available, message = utils.canAddNodeToCluster(
                     lib_env.node_communicator(),

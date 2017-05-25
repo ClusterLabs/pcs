@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Fixed crash of the `pcs cluster setup` command when the `--force` flag was
+  used ([rhbz#1176018])
+
+[rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
+
+
 ## [0.9.158] - 2017-05-23
 
 ### Added
