@@ -11,8 +11,11 @@
   authkey ([rhbz#1176018])
 - Fixed "Error: unable to get cib" when adding a node to a stopped cluster
   ([rhbz#1176018])
+- Fixed a crash in the `pcs cluster node add-remote` command when an id
+  conflict occurs ([rhbz#1386114])
 
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
+[rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
 
 
 ## [0.9.158] - 2017-05-23
