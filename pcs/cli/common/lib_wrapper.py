@@ -318,7 +318,8 @@ def load_module(env, middleware_factory, name):
         return bind_all(
             env,
             middleware.build(
-                middleware_factory.cib
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
             ),
             {
                 "bundle_create": resource.bundle_create,
@@ -338,7 +339,8 @@ def load_module(env, middleware_factory, name):
         return bind_all(
             env,
             middleware.build(
-                middleware_factory.cib
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
             ),
             {
                 "create": stonith.create,

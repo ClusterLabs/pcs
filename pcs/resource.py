@@ -28,24 +28,31 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
-from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
+from pcs.lib.cib.resource import guest_node
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 from pcs.cli.common.console_report import error, warn
-from pcs.lib.commands.resource import _validate_guest_change
+from pcs.lib.commands.resource import(
+    _validate_guest_change,
+    _get_nodes_to_validate_against,
+)
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 def _detect_guest_change(meta_attributes, allow_not_suitable_command):
+    if not guest_node.is_node_name_in_options(meta_attributes):
+        return
+
     env = utils.get_lib_env()
     cib = env.get_cib()
+    nodes_to_validate_against = _get_nodes_to_validate_against(env, cib)
     env.report_processor.process_list(
         _validate_guest_change(
             cib,
-            get_nodes(env.get_corosync_conf(), cib),
+            nodes_to_validate_against,
             meta_attributes,
             allow_not_suitable_command,
             detect_remove=True,

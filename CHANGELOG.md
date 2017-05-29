@@ -23,6 +23,8 @@
   ([rhbz#1176018])
 - `pcs cluster node remove-guest` can be run again when the guest node was
   unreachable first time ([rhbz#1176018])
+- Fixed "Error: Unable to read /etc/corosync/corosync.conf" when running
+  `pcs resource create`([rhbz#1386114])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])

@@ -46,8 +46,12 @@ def resource_environment(
         ])
 
 def _validate_remote_connection(
-    nodes, resource_id, instance_attributes,  allow_not_suitable_command
+    resource_agent, nodes_to_validate_against, resource_id, instance_attributes,
+    allow_not_suitable_command
 ):
+    if resource_agent.get_name() != remote_node.AGENT_NAME.full_name:
+        return []
+
     report_list = []
     report_list.append(
         reports.get_problem_creator(
@@ -58,7 +62,7 @@ def _validate_remote_connection(
 
     report_list.extend(
         remote_node.validate_host_not_conflicts(
-            nodes,
+            nodes_to_validate_against,
             resource_id,
             instance_attributes
         )
@@ -66,8 +70,8 @@ def _validate_remote_connection(
     return report_list
 
 def _validate_guest_change(
-    tree, nodes, meta_attributes, allow_not_suitable_command,
-    detect_remove=False
+    tree, nodes_to_validate_against, meta_attributes,
+    allow_not_suitable_command, detect_remove=False
 ):
     if not guest_node.is_node_name_in_options(meta_attributes):
         return []
@@ -89,7 +93,7 @@ def _validate_guest_change(
     report_list.extend(
         guest_node.validate_conflicts(
             tree,
-            nodes,
+            nodes_to_validate_against,
             node_name,
             meta_attributes
         )
@@ -97,28 +101,54 @@ def _validate_guest_change(
 
     return report_list
 
-def _validate_special_cases(
-    nodes, resource_agent, resources_section, resource_id, meta_attributes,
+def _get_nodes_to_validate_against(env, tree):
+    if not env.is_corosync_conf_live and env.is_cib_live:
+        raise LibraryError(
+            reports.live_environment_required(["COROSYNC_CONF"])
+        )
+
+    if not env.is_cib_live and env.is_corosync_conf_live:
+        #we do not try to get corosync.conf from live cluster when cib is not
+        #taken from live cluster
+        return get_nodes(tree=tree)
+
+    return get_nodes(env.get_corosync_conf(), tree)
+
+
+def _check_special_cases(
+    env, resource_agent, resources_section, resource_id, meta_attributes,
     instance_attributes, allow_not_suitable_command
 ):
+    if(
+        resource_agent.get_name() != remote_node.AGENT_NAME.full_name
+        and
+        not guest_node.is_node_name_in_options(meta_attributes)
+    ):
+        #if no special case happens we won't take care about corosync.conf that
+        #is needed for getting nodes to validate against
+        return
+
+    nodes_to_validate_against = _get_nodes_to_validate_against(
+        env,
+        resources_section
+    )
+
     report_list = []
-
-    if resource_agent.get_name() == remote_node.AGENT_NAME.full_name:
-        report_list.extend(_validate_remote_connection(
-            nodes,
-            resource_id,
-            instance_attributes,
-            allow_not_suitable_command,
-        ))
-
+    report_list.extend(_validate_remote_connection(
+        resource_agent,
+        nodes_to_validate_against,
+        resource_id,
+        instance_attributes,
+        allow_not_suitable_command,
+    ))
     report_list.extend(_validate_guest_change(
         resources_section,
-        nodes,
+        nodes_to_validate_against,
         meta_attributes,
         allow_not_suitable_command,
     ))
 
-    return report_list
+    env.report_processor.process_list(report_list)
 
 def create(
     env, resource_id, resource_agent_name,
@@ -167,15 +197,15 @@ def create(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
-        env.report_processor.process_list(_validate_special_cases(
-            get_nodes(env.get_corosync_conf(), resources_section),
+        _check_special_cases(
+            env,
             resource_agent,
             resources_section,
             resource_id,
             meta_attributes,
             instance_attributes,
             allow_not_suitable_command
-        ))
+        )
 
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
@@ -247,15 +277,15 @@ def _create_as_clone_common(
             resource.common.is_clone_deactivated_by_meta(clone_meta_options)
         )
     ) as resources_section:
-        env.report_processor.process_list(_validate_special_cases(
-            get_nodes(env.get_corosync_conf(), resources_section),
+        _check_special_cases(
+            env,
             resource_agent,
             resources_section,
             resource_id,
             meta_attributes,
             instance_attributes,
             allow_not_suitable_command
-        ))
+        )
 
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
@@ -325,15 +355,15 @@ def create_in_group(
         [resource_id],
         ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
     ) as resources_section:
-        env.report_processor.process_list(_validate_special_cases(
-            get_nodes(env.get_corosync_conf(), resources_section),
+        _check_special_cases(
+            env,
             resource_agent,
             resources_section,
             resource_id,
             meta_attributes,
             instance_attributes,
             allow_not_suitable_command
-        ))
+        )
 
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
@@ -406,15 +436,15 @@ def create_into_bundle(
         disabled_after_wait=ensure_disabled,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
-        env.report_processor.process_list(_validate_special_cases(
-            get_nodes(env.get_corosync_conf(), resources_section),
+        _check_special_cases(
+            env,
             resource_agent,
             resources_section,
             resource_id,
             meta_attributes,
             instance_attributes,
             allow_not_suitable_command
-        ))
+        )
 
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
