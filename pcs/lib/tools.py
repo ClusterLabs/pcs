@@ -9,7 +9,10 @@ import os
 
 
 def generate_key(random_bytes_count=32):
-    return binascii.hexlify(os.urandom(random_bytes_count))
+    return binascii.hexlify(generate_binary_key(random_bytes_count))
+
+def generate_binary_key(random_bytes_count):
+    return os.urandom(random_bytes_count)
 
 def environment_file_to_dict(config):
     """

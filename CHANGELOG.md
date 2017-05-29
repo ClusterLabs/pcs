@@ -15,6 +15,10 @@
   conflict occurs ([rhbz#1386114])
 - Fixed creating a new cluster from the web UI ([rhbz#1284404])
 
+### Changed
+- Binary data are stored in corosync authkey ([rhbz#1165821])
+
+[rhbz#1165821]: https://bugzilla.redhat.com/show_bug.cgi?id=1165821
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114

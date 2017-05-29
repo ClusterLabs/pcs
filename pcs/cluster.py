@@ -70,7 +70,11 @@ from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.nodes_task import check_corosync_offline_on_nodes, distribute_files
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs.lib.tools import environment_file_to_dict, generate_key
+from pcs.lib.tools import (
+    environment_file_to_dict,
+    generate_binary_key,
+    generate_key,
+)
 
 def cluster_cmd(argv):
     if len(argv) == 0:
@@ -455,7 +459,7 @@ def cluster_setup(argv):
             )
             file_definitions.update(
                 node_communication_format.corosync_authkey_file(
-                    generate_key(random_bytes_count=128)
+                    generate_binary_key(random_bytes_count=128)
                 )
             )
 
