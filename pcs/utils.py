@@ -2882,6 +2882,7 @@ def get_modificators():
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
         "group": pcs_options.get("--group", None),
+        "hardened": "--no-hardened" not in pcs_options,
         "monitor": "--monitor" in pcs_options,
         "name": pcs_options.get("--name", None),
         "no-default-ops": "--no-default-ops" in pcs_options,

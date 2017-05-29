@@ -32,7 +32,7 @@ PCS_LONG_OPTIONS = [
     "miss_count_const=", "fail_recv_const=",
     "corosync_conf=", "cluster_conf=",
     "booth-conf=", "booth-key=",
-    "remote", "watchdog=", "device=",
+    "remote", "watchdog=", "device=", "no-hardened",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations

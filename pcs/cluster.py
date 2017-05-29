@@ -385,7 +385,8 @@ def cluster_setup(argv):
             node_list,
             options["transport_options"],
             options["totem_options"],
-            options["quorum_options"]
+            options["quorum_options"],
+            modifiers["hardened"]
         )
     process_library_reports(messages)
 
@@ -457,11 +458,12 @@ def cluster_setup(argv):
             file_definitions.update(
                 node_communication_format.pcmk_authkey_file(generate_key())
             )
-            file_definitions.update(
-                node_communication_format.corosync_authkey_file(
-                    generate_binary_key(random_bytes_count=128)
+            if modifiers["hardened"]:
+                file_definitions.update(
+                    node_communication_format.corosync_authkey_file(
+                        generate_binary_key(random_bytes_count=128)
+                    )
                 )
-            )
 
             distribute_files(
                 lib_env.node_communicator(),
@@ -740,7 +742,8 @@ def cluster_setup_parse_options_cman(options, force=False):
     return parsed, messages
 
 def cluster_setup_create_corosync_conf(
-    cluster_name, node_list, transport_options, totem_options, quorum_options
+    cluster_name, node_list, transport_options, totem_options, quorum_options,
+    is_hardened
 ):
     messages = []
 
@@ -756,6 +759,8 @@ def cluster_setup_create_corosync_conf(
 
     totem_section.add_attribute("version", "2")
     totem_section.add_attribute("cluster_name", cluster_name)
+    if not is_hardened:
+        totem_section.add_attribute("secauth", "off")
 
     transport_options_names = (
         "transport",
