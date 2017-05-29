@@ -99,8 +99,10 @@ def run_server(server, webrick_options, secondary_addrs)
   rescue Errno::EADDRNOTAVAIL, Errno::EADDRINUSE => e
     $logger.error 'Unable to bind to specified address(es), exiting'
     $logger.error e.message
+    exit 1
   rescue SocketError => e
     $logger.error e.message
+    exit 1
   end
 end
 
