@@ -21,13 +21,16 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 
-def _ensure_can_add_node_to_remote_cluster(env, node_addresses):
+def _ensure_can_add_node_to_remote_cluster(
+    env, node_addresses, warn_on_communication_exception=False
+):
     report_items = []
     nodes_task.check_can_add_node_to_cluster(
         env.node_communicator(),
         node_addresses,
         report_items,
-        check_response=nodes_task.availability_checker_remote_node
+        check_response=nodes_task.availability_checker_remote_node,
+        warn_on_communication_exception=warn_on_communication_exception,
     )
     env.report_processor.process_list(report_items)
 
@@ -88,7 +91,11 @@ def _prepare_pacemaker_remote_environment(
         return
 
     candidate_node = NodeAddresses(node_host)
-    _ensure_can_add_node_to_remote_cluster(env, candidate_node)
+    _ensure_can_add_node_to_remote_cluster(
+        env,
+        candidate_node,
+        allow_incomplete_distribution
+    )
     _share_authkey(
         env,
         current_nodes,

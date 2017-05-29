@@ -19,6 +19,8 @@
 - Fixed a crash in the `pcs cluster node add-remote` command when an id
   conflict occurs ([rhbz#1386114])
 - Fixed creating a new cluster from the web UI ([rhbz#1284404])
+- `pcs cluster node add-guest` now works with the flag `--skipp-offline`
+  ([rhbz#1176018])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])

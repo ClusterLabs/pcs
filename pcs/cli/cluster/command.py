@@ -35,6 +35,7 @@ def node_add_remote(lib, arg_list, modifiers):
 
     parts = parse_resource_create_args(rest_args)
     force = modifiers["force"]
+    skip_offline = modifiers["skip_offline_nodes"]
 
     lib.cluster.node_add_remote(
         node_host,
@@ -42,8 +43,8 @@ def node_add_remote(lib, arg_list, modifiers):
         parts["op"],
         parts["meta"],
         parts["options"],
-        allow_incomplete_distribution=force,
-        allow_pacemaker_remote_service_fail=force,
+        allow_incomplete_distribution=skip_offline,
+        allow_pacemaker_remote_service_fail=skip_offline,
         allow_invalid_operation=force,
         allow_invalid_instance_attributes=force,
         use_default_operations=not modifiers["no-default-ops"],
@@ -58,7 +59,7 @@ def create_node_remove_remote(remove_resource):
             arg_list[0],
             remove_resource,
             allow_remove_multiple_nodes=modifiers["force"],
-            allow_pacemaker_remote_service_fail=modifiers["force"],
+            allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
         )
     return node_remove_remote
 
@@ -71,14 +72,14 @@ def node_add_guest(lib, arg_list, modifiers):
     resource_id = arg_list[1]
     meta_options = prepare_options(arg_list[2:])
 
-    force = modifiers["force"]
+    skip_offline = modifiers["skip_offline_nodes"]
 
     lib.cluster.node_add_guest(
         node_name,
         resource_id,
         meta_options,
-        allow_incomplete_distribution=force,
-        allow_pacemaker_remote_service_fail=force,
+        allow_incomplete_distribution=skip_offline,
+        allow_pacemaker_remote_service_fail=skip_offline,
         wait=modifiers["wait"],
     )
 
@@ -89,7 +90,7 @@ def node_remove_guest(lib, arg_list, modifiers):
     lib.cluster.node_remove_guest(
         arg_list[0],
         allow_remove_multiple_nodes=modifiers["force"],
-        allow_pacemaker_remote_service_fail=modifiers["force"],
+        allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
         wait=modifiers["wait"],
     )
 

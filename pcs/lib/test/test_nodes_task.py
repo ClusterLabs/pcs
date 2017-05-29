@@ -790,10 +790,6 @@ class CheckCanAddNodeToCluster(TestCase):
     def test_report_no_dict_in_json_response(self):
         self.assert_result_causes_invalid_format("bad answer")
 
-    def test_report_dict_without_mandatory_key(self):
-        self.assert_result_causes_invalid_format({})
-
-
 class OnNodeTest(TestCase):
     def setUp(self):
         self.reporter = MockLibraryReportProcessor()

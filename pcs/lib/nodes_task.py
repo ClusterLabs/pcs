@@ -277,7 +277,8 @@ def availability_checker_remote_node(
 
 def check_can_add_node_to_cluster(
     node_communicator, node, report_items,
-    check_response=availability_checker_node
+    check_response=availability_checker_node,
+    warn_on_communication_exception=False,
 ):
     """
     Analyze result of node_available check if it is possible use the node as
@@ -294,11 +295,19 @@ def check_can_add_node_to_cluster(
         node_communicator,
         node,
         "remote/node_available",
-        safe_report_items
+        safe_report_items,
+        warn_on_communication_exception=warn_on_communication_exception
     )
     report_items.extend(safe_report_items)
 
     if ReportListAnalyzer(safe_report_items).error_list:
+        return
+
+    #If there was a communication error and --skip-offline is in effect, no
+    #exception was raised. If there is no result cannot process it.
+    #Note: the error may be caused by older pcsd daemon not supporting commands
+    #sent by newer client.
+    if not availability_info:
         return
 
     is_in_expected_format = (
