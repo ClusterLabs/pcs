@@ -2870,6 +2870,7 @@ def get_modificators():
     return {
         "after": pcs_options.get("--after", None),
         "all": "--all" in pcs_options,
+        "async": "--async" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
         "autodelete": "--autodelete" in pcs_options,
         "before": pcs_options.get("--before", None),

@@ -965,8 +965,8 @@ def setup_cluster(params, request, auth_user)
   nodes_options = nodes + options
   nodes_options += options_udp if transport_udp
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "cluster", "setup", "--enable", "--start",
-    "--name", params[:clustername], *nodes_options
+    auth_user, PCS, "cluster", "setup", "--enable", "--start", "--async",
+    "--name",  params[:clustername], *nodes_options
   )
   if retval != 0
     return [

@@ -79,7 +79,7 @@ def pcsd_certkey(argv):
 
     print("Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect")
 
-def pcsd_sync_certs(argv, exit_after_error=True):
+def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
     error = False
     nodes_sync = argv if argv else utils.getNodesFromCorosyncConf()
     nodes_restart = []
@@ -117,7 +117,9 @@ def pcsd_sync_certs(argv, exit_after_error=True):
         return
 
     print("Restarting pcsd on the nodes in order to reload the certificates...")
-    pcsd_restart_nodes(nodes_restart, exit_after_error)
+    pcsd_restart_nodes(
+        nodes_restart, exit_after_error, async_restart=async_restart
+    )
 
 def pcsd_clear_auth(argv):
     output = []
@@ -148,7 +150,7 @@ def pcsd_clear_auth(argv):
             print("Error: " + o)
         sys.exit(1)
 
-def pcsd_restart_nodes(nodes, exit_after_error=True):
+def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
     pcsd_data = {
         "nodes": nodes,
     }
@@ -186,6 +188,10 @@ def pcsd_restart_nodes(nodes, exit_after_error=True):
             return
     else:
         utils.err("Unable to restart pcsd", exit_after_error)
+        return
+
+    if async_restart:
+        print("Not waiting for restart of pcsd on all nodes.")
         return
 
     # check if the restart was performed already

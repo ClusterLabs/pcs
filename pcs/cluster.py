@@ -298,6 +298,7 @@ def cluster_certkey(argv):
 
 
 def cluster_setup(argv):
+    modifiers = utils.get_modificators()
     if len(argv) < 2:
         usage.cluster(["setup"])
         sys.exit(1)
@@ -515,7 +516,9 @@ def cluster_setup(argv):
 
         # sync certificates as the last step because it restarts pcsd
         print()
-        pcsd.pcsd_sync_certs([], exit_after_error=False)
+        pcsd.pcsd_sync_certs(
+            [], exit_after_error=False, async_restart=modifiers["async"]
+        )
         if wait:
             print()
             wait_for_nodes_started(primary_addr_list, wait_timeout)

@@ -17,7 +17,7 @@ PCS_SHORT_OPTIONS = "hf:p:u:V"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
     "force", "skip-offline", "autocorrect", "interactive", "autodelete",
-    "all", "full", "groups", "local", "wait", "config",
+    "all", "full", "groups", "local", "wait", "config", "async",
     "start", "enable", "disabled", "off", "request-timeout=",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",

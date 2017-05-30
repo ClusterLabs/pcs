@@ -1034,7 +1034,8 @@ def pcsd_restart()
   # request
   fork {
     # let us send the response to the restart request
-    sleep(3)
+    # we need little bit more time to finish some things when setting up cluster
+    sleep(10)
     if ISSYSTEMCTL
       exec("systemctl", "restart", "pcsd")
     else

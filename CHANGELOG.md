@@ -13,8 +13,10 @@
   ([rhbz#1176018])
 - Fixed a crash in the `pcs cluster node add-remote` command when an id
   conflict occurs ([rhbz#1386114])
+- Fixed creating a new cluster from the web UI ([rhbz#1284404])
 
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
+[rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
 
 
