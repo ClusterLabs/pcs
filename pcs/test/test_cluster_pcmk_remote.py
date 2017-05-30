@@ -399,11 +399,11 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_effect(
             "cluster node remove-remote NODE-HOST",
             "<resources/>",
-            outdent(
+            fixture_nolive_remove_report(["NODE-HOST"]) + outdent(
                 """\
                 Deleting Resource - NODE-NAME
                 """
-            ) + fixture_nolive_remove_report(["NODE-HOST"])
+            )
         )
 
     def test_success_remove_by_node_name(self):
@@ -411,11 +411,11 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_effect(
             "cluster node remove-remote NODE-NAME",
             "<resources/>",
-            outdent(
+            fixture_nolive_remove_report(["NODE-HOST"]) + outdent(
                 """\
                 Deleting Resource - NODE-NAME
                 """
-            ) + fixture_nolive_remove_report(["NODE-HOST"])
+            )
         )
 
     def test_refuse_on_duplicit(self):
@@ -431,13 +431,17 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_effect(
             "cluster node remove-remote HOST-A --force",
             "<resources/>",
+
+            "Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'\n"
+            +
+            fixture_nolive_remove_report(["HOST-A", "HOST-B"])
+            +
             outdent(
                 """\
-                Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'
                 Deleting Resource - NODE-NAME
                 Deleting Resource - HOST-A
                 """
-            ) + fixture_nolive_remove_report(["HOST-A", "HOST-B"])
+            )
         )
 
 class NodeRemoveGuest(ResourceTest):

@@ -303,17 +303,13 @@ def _find_resources_to_remove(
 
     return resource_element_list
 
-def _remove_pcmk_remote_from_cib(
-    nodes, resource_element_list, get_host, remove_resource
-):
+def _get_node_addresses_from_resources(nodes, resource_element_list, get_host):
     node_addresses_set = set()
     for resource_element in resource_element_list:
         for node in nodes:
             #remote nodes uses ring0 only
             if get_host(resource_element) == node.ring0:
                 node_addresses_set.add(node)
-        remove_resource(resource_element)
-
     return sorted(node_addresses_set, key=lambda node: node.ring0)
 
 def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
@@ -389,28 +385,31 @@ def node_remove_remote(
         allow_remove_multiple_nodes,
         remote_node.find_node_resources,
     )
-    node_addresses_list = _remove_pcmk_remote_from_cib(
+
+    node_addresses_list = _get_node_addresses_from_resources(
         get_nodes_remote(cib),
         resource_element_list,
         remote_node.get_host,
-        lambda resource_element: remove_resource(
-            resource_element.attrib["id"],
-            is_remove_remote_context=True,
-        )
     )
+
     if not env.is_corosync_conf_live:
         env.report_processor.process_list(
             _report_skip_live_parts_in_remove(node_addresses_list)
         )
-        return
+    else:
+        _destroy_pcmk_remote_env(
+            env,
+            node_addresses_list,
+            allow_pacemaker_remote_service_fail
+        )
 
     #remove node from pcmk caches is currently integrated in remove_resource
     #function
-    _destroy_pcmk_remote_env(
-        env,
-        node_addresses_list,
-        allow_pacemaker_remote_service_fail
-    )
+    for resource_element in resource_element_list:
+        remove_resource(
+            resource_element.attrib["id"],
+            is_remove_remote_context=True,
+        )
 
 def node_remove_guest(
     env, node_identifier,
@@ -442,29 +441,32 @@ def node_remove_guest(
         guest_node.find_node_resources,
     )
 
-    node_addresses_list =  _remove_pcmk_remote_from_cib(
+    node_addresses_list = _get_node_addresses_from_resources(
         get_nodes_guest(cib),
         resource_element_list,
         guest_node.get_host,
-        guest_node.unset_guest,
     )
-    env.push_cib(cib, wait)
 
     if not env.is_corosync_conf_live:
         env.report_processor.process_list(
             _report_skip_live_parts_in_remove(node_addresses_list)
         )
-        return
+    else:
+        _destroy_pcmk_remote_env(
+            env,
+            node_addresses_list,
+            allow_pacemaker_remote_service_fail
+        )
+
+    for resource_element in resource_element_list:
+        guest_node.unset_guest(resource_element)
+
+    env.push_cib(cib, wait)
 
     #remove node from pcmk caches
     for node_addresses in node_addresses_list:
         remove_node(env.cmd_runner(), node_addresses.name)
 
-    _destroy_pcmk_remote_env(
-        env,
-        node_addresses_list,
-        allow_pacemaker_remote_service_fail
-    )
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
     """

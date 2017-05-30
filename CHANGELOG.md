@@ -21,6 +21,8 @@
 - Fixed creating a new cluster from the web UI ([rhbz#1284404])
 - `pcs cluster node add-guest` now works with the flag `--skipp-offline`
   ([rhbz#1176018])
+- `pcs cluster node remove-guest` can be run again when the guest node was
+  unreachable first time ([rhbz#1176018])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
