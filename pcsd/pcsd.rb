@@ -568,7 +568,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
       {
         :clustername => @cluster_name,
         :nodes => @nodes_rrp.join(';'),
-        :options => options.to_json
+        :options => options.to_json,
+        :no_hardened => params[:no_hardened],
       },
       true,
       nil,

@@ -222,6 +222,9 @@
       <table>
 	<% transport_desc = "\
 Enables either udpu (unicast) or udp (multicast) cluster communication (default: udpu)"%>
+	<% hardened_desc = "\
+Create cluster with encrypted corosync communication. This option may not work \
+with pcs version lower than 0.9.159." %>
 	<% wait_for_all_desc = "\
 Enables Wait For All (WFA) feature (default: off).
 
@@ -343,6 +346,12 @@ Specify ring 1 address for each node if you want to use RRP." %>
                 <option value="udpu" selected>UDPU (default)</option>
                 <option value="udp">UDP</option>
             </select>
+          </td>
+        </tr>
+        <tr title="<%= h(hardened_desc) %>"><td align=right>Hardened:</td>
+          <td>
+            <label><input type="radio" name="no_hardened" value="0" checked="checked">Yes</label>
+            <label><input type="radio" name="no_hardened" value="1">No</label>
           </td>
         </tr>
 	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>

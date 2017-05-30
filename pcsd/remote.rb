@@ -964,6 +964,9 @@ def setup_cluster(params, request, auth_user)
   end
   nodes_options = nodes + options
   nodes_options += options_udp if transport_udp
+  if params[:no_hardened] == "1"
+      nodes_options << "--no-hardened"
+  end
   stdout, stderr, retval = run_cmd(
     auth_user, PCS, "cluster", "setup", "--enable", "--start", "--async",
     "--name",  params[:clustername], *nodes_options

@@ -1835,6 +1835,7 @@ def get_node_status(auth_user, cib_dom)
         'moving_resource_in_group',
         'unmanaged_resource',
         'alerts',
+        'hardened_cluster',
       ]
   }
 
