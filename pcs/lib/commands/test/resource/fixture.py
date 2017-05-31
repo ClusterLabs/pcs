@@ -150,6 +150,19 @@ def report_not_found(res_id, context_type=""):
         None
     )
 
+def report_not_found_bundle(res_id, context_type=""):
+    return (
+        severities.ERROR,
+        report_codes.ID_NOT_FOUND,
+        {
+            "context_type": context_type,
+            "context_id": "",
+            "id": res_id,
+            "id_description": "resource/clone/master/group/bundle",
+        },
+        None
+    )
+
 def report_resource_not_running(resource, severity=severities.INFO):
     return (
         severity,

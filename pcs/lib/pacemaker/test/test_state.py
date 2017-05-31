@@ -733,6 +733,60 @@ class IsResourceManaged(TestCase):
                     <resource id="R38:1" managed="false" />
                 </group>
             </clone>
+
+            <bundle id="B1" managed="true" />
+            <bundle id="B2" managed="false" />
+
+            <bundle id="B3" managed="true">
+                <replica id="0">
+                    <resource id="R39" managed="true" />
+                    <resource id="R40" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R39" managed="true" />
+                    <resource id="R40" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B4" managed="false">
+                <replica id="0">
+                    <resource id="R41" managed="true" />
+                    <resource id="R42" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R41" managed="true" />
+                    <resource id="R42" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B5" managed="true">
+                <replica id="0">
+                    <resource id="R43" managed="false" />
+                    <resource id="R44" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R43" managed="false" />
+                    <resource id="R44" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B6" managed="true">
+                <replica id="0">
+                    <resource id="R45" managed="true" />
+                    <resource id="R46" managed="false" />
+                </replica>
+                <replica id="1">
+                    <resource id="R45" managed="true" />
+                    <resource id="R46" managed="false" />
+                </replica>
+            </bundle>
+            <bundle id="B7" managed="false">
+                <replica id="0">
+                    <resource id="R47" managed="false" />
+                    <resource id="R48" managed="false" />
+                </replica>
+                <replica id="1">
+                    <resource id="R47" managed="false" />
+                    <resource id="R48" managed="false" />
+                </replica>
+            </bundle>
         </resources>
     """)
 
@@ -856,3 +910,24 @@ class IsResourceManaged(TestCase):
         self.assert_managed("R36", False)
         self.assert_managed("R37", False)
         self.assert_managed("R38", False)
+
+    def test_bundle(self):
+        self.assert_managed("B1", True)
+        self.assert_managed("B2", False)
+        self.assert_managed("B3", True)
+        self.assert_managed("B4", False)
+        self.assert_managed("B5", False)
+        self.assert_managed("B6", False)
+        self.assert_managed("B7", False)
+
+    def test_primitive_in_bundle(self):
+        self.assert_managed("R39", True)
+        self.assert_managed("R40", True)
+        self.assert_managed("R41", False)
+        self.assert_managed("R42", False)
+        self.assert_managed("R43", False)
+        self.assert_managed("R44", True)
+        self.assert_managed("R45", True)
+        self.assert_managed("R46", False)
+        self.assert_managed("R47", False)
+        self.assert_managed("R48", False)

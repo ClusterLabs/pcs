@@ -3321,11 +3321,11 @@ Error: Cannot remove more than one resource from cloned group
 
         # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
+        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
+        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
@@ -3829,7 +3829,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource enable dummy3 dummyX",
-            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
@@ -3849,7 +3849,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource disable dummy1 dummyX",
-            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
@@ -4823,16 +4823,14 @@ class BundleCloneMaster(BundleCommon):
 class BundleMiscCommands(BundleCommon):
     def test_resource_enable_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource enable B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource enable B"
         )
 
     def test_resource_disable_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource disable B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource disable B"
         )
 
     def test_resource_manage_bundle(self):

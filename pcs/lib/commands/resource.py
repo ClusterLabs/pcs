@@ -597,7 +597,8 @@ def disable(env, resource_ids, wait):
     ) as resources_section:
         resource_el_list = _find_resources_or_raise(
             resources_section,
-            resource_ids
+            resource_ids,
+            bundle=True
         )
         env.report_processor.process_list(
             _resource_list_enable_disable(
@@ -620,7 +621,8 @@ def enable(env, resource_ids, wait):
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
-            resource.common.find_resources_to_enable
+            resource.common.find_resources_to_enable,
+            bundle=True
         )
         env.report_processor.process_list(
             _resource_list_enable_disable(
@@ -642,7 +644,7 @@ def _resource_list_enable_disable(resource_el_list, func, cluster_state):
             report_list.append(
                 reports.id_not_found(
                     res_id,
-                    id_description="resource/clone/master/group"
+                    id_description="resource/clone/master/group/bundle"
                )
             )
     return report_list
@@ -726,7 +728,7 @@ def manage(env, resource_ids, with_monitor=False):
         env.report_processor.process_list(report_list)
 
 def _find_resources_or_raise(
-    resources_section, resource_ids, additional_search=None
+    resources_section, resource_ids, additional_search=None, bundle=False
 ):
     if not additional_search:
         additional_search = lambda x: [x]
@@ -737,6 +739,10 @@ def _find_resources_or_raise(
         +
         [resource.group.TAG, resource.primitive.TAG]
     )
+    id_description="resource/clone/master/group"
+    if bundle:
+        resource_tags.append(resource.bundle.TAG)
+        id_description="resource/clone/master/group/bundle"
     for res_id in resource_ids:
         try:
             resource_el_list.extend(
@@ -745,7 +751,7 @@ def _find_resources_or_raise(
                         resource_tags,
                         resources_section,
                         res_id,
-                        id_description="resource/clone/master/group"
+                        id_description=id_description
                     )
                 )
             )

@@ -180,7 +180,7 @@ class FindResourcesToEnable(TestCase):
         self.assert_find_resources("F2", ["F2"])
 
     def test_primitive_in_bundle(self):
-        self.assert_find_resources("H", ["H"])
+        self.assert_find_resources("H", ["H", "H-bundle"])
 
     def test_group(self):
         self.assert_find_resources("D", ["D"])
@@ -204,10 +204,10 @@ class FindResourcesToEnable(TestCase):
         self.assert_find_resources("F-master", ["F-master", "F"])
 
     def test_bundle_empty(self):
-        self.assert_find_resources("G-bundle", [])
+        self.assert_find_resources("G-bundle", ["G-bundle"])
 
     def test_bundle_with_primitive(self):
-        self.assert_find_resources("H-bundle", [])
+        self.assert_find_resources("H-bundle", ["H-bundle", "H"])
 
 
 class Enable(TestCase):

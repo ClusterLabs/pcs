@@ -58,16 +58,18 @@ def find_resources_to_enable(resource_el):
     etree resource_el -- resource element
     """
     if is_bundle(resource_el):
-        # bundles currently cannot be disabled - pcmk does not support that
-        # inner resources are supposed to be managed separately
-        return []
+        to_enable = [resource_el]
+        in_bundle = get_bundle_inner_resource(resource_el)
+        if in_bundle is not None:
+            to_enable.append(in_bundle)
+        return to_enable
 
     if is_any_clone(resource_el):
         return [resource_el, get_clone_inner_resource(resource_el)]
 
     to_enable = [resource_el]
     parent = resource_el.getparent()
-    if is_any_clone(parent):
+    if is_any_clone(parent) or is_bundle(parent):
         to_enable.append(parent)
     return to_enable
 
