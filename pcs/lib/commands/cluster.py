@@ -464,8 +464,9 @@ def node_remove_guest(
     env.push_cib(cib, wait)
 
     #remove node from pcmk caches
-    for node_addresses in node_addresses_list:
-        remove_node(env.cmd_runner(), node_addresses.name)
+    if env.is_cib_live:
+        for node_addresses in node_addresses_list:
+            remove_node(env.cmd_runner(), node_addresses.name)
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
