@@ -303,6 +303,8 @@ def cluster_certkey(argv):
 
 def cluster_setup(argv):
     modifiers = utils.get_modificators()
+    if modifiers["encryption"] not in ["0", "1"]:
+        utils.err("Invalid value for option --encryption")
     if len(argv) < 2:
         usage.cluster(["setup"])
         sys.exit(1)
@@ -386,7 +388,7 @@ def cluster_setup(argv):
             options["transport_options"],
             options["totem_options"],
             options["quorum_options"],
-            modifiers["hardened"]
+            modifiers["encryption"] == "1"
         )
     process_library_reports(messages)
 
@@ -458,7 +460,7 @@ def cluster_setup(argv):
             file_definitions.update(
                 node_communication_format.pcmk_authkey_file(generate_key())
             )
-            if modifiers["hardened"]:
+            if modifiers["encryption"] == "1":
                 file_definitions.update(
                     node_communication_format.corosync_authkey_file(
                         generate_binary_key(random_bytes_count=128)
@@ -743,7 +745,7 @@ def cluster_setup_parse_options_cman(options, force=False):
 
 def cluster_setup_create_corosync_conf(
     cluster_name, node_list, transport_options, totem_options, quorum_options,
-    is_hardened
+    encrypted
 ):
     messages = []
 
@@ -759,7 +761,7 @@ def cluster_setup_create_corosync_conf(
 
     totem_section.add_attribute("version", "2")
     totem_section.add_attribute("cluster_name", cluster_name)
-    if not is_hardened:
+    if not encrypted:
         totem_section.add_attribute("secauth", "off")
 
     transport_options_names = (

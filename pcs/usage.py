@@ -576,7 +576,7 @@ Commands:
             [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
             [--join <timeout>] [--consensus <timeout>]
             [--miss_count_const <count>] [--fail_recv_const <failures>]
-            [--no-hardened]
+            [--encryption 0|1]
         Configure corosync and sync configuration out to listed nodes.
         --local will only perform changes on the local node,
         --start will also start the cluster on the specified nodes,
@@ -612,8 +612,8 @@ Commands:
             without receiving any messages when messages should be received
             may occur before a new configuration is formed
             (default 2500 failures)
-        If --no-hardened is specified, the cluster will be set up in way that all
-            corosync communication will be encrypted.
+        --encryption 0|1 disables (0) or enables (1) corosync communication
+            encryption (default 1)
 
         Configuring Redundant Ring Protocol (RRP)
 

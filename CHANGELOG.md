@@ -3,9 +3,8 @@
 ## [Unreleased]
 
 ### Added
-- Option to create not hardened cluster with the `pcs cluster setup` command
-  using the `--no-hardened` flag ([rhbz#1165821])
-- Option to create not hardened cluster from web UI ([rhbz#1165821])
+- Option to create a cluster with or without corosync encryption enabled
+  ([rhbz#1165821])
 
 ### Fixed
 - Fixed crash of the `pcs cluster setup` command when the `--force` flag was
