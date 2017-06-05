@@ -40,7 +40,7 @@ class MinimalCreate(CommonTest):
             self.fixture_cib_pre,
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {"image": "pcs:test", }
+                container_options={"image": "pcs:test", }
             ),
             self.fixture_resources_bundle_simple
         )
@@ -90,7 +90,7 @@ class MinimalCreate(CommonTest):
 
         resource.bundle_create(
             self.env, "B1", "docker",
-            {"image": "pcs:test", }
+            container_options={"image": "pcs:test", }
         )
 
         self.env.report_processor.assert_reports([
@@ -122,7 +122,7 @@ class CreateDocker(CommonTest):
             self.fixture_cib_pre,
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {"image": "pcs:test", }
+                container_options={"image": "pcs:test", }
             ),
             self.fixture_resources_bundle_simple
         )
@@ -132,7 +132,7 @@ class CreateDocker(CommonTest):
             self.fixture_cib_pre,
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "image": "pcs:test",
                     "masters": "0",
                     "network": "extra network settings",
@@ -168,7 +168,7 @@ class CreateDocker(CommonTest):
         assert_raise_library_error(
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "replicas-per-host": "0",
                     "replicas": "0",
                     "masters": "-1",
@@ -226,7 +226,7 @@ class CreateDocker(CommonTest):
         assert_raise_library_error(
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "image": "",
                 },
                 force_options=True
@@ -253,7 +253,7 @@ class CreateDocker(CommonTest):
         assert_raise_library_error(
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "image": "pcs:test",
                     "extra": "option",
                 }
@@ -276,7 +276,7 @@ class CreateDocker(CommonTest):
             self.fixture_cib_pre,
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "image": "pcs:test",
                     "extra": "option",
                 },
@@ -932,13 +932,61 @@ class CreateWithStorageMap(CommonTest):
         )
 
 
+class CreateWithMeta(CommonTest):
+    def test_success(self):
+        self.assert_command_effect(
+            self.fixture_cib_pre,
+            lambda: resource.bundle_create(
+                self.env, "B1", "docker",
+                container_options={"image": "pcs:test", },
+                meta_attributes={
+                    "target-role": "Stopped",
+                    "is-managed": "false",
+                }
+            ),
+            """
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" />
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair id="B1-meta_attributes-is-managed"
+                                name="is-managed" value="false" />
+                            <nvpair id="B1-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
+                    </bundle>
+                </resources>
+            """
+        )
+
+    def test_disabled(self):
+        self.assert_command_effect(
+            self.fixture_cib_pre,
+            lambda: resource.bundle_create(
+                self.env, "B1", "docker",
+                container_options={"image": "pcs:test", },
+                ensure_disabled=True
+            ),
+            """
+                <resources>
+                    <bundle id="B1">
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair id="B1-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
+                        <docker image="pcs:test" />
+                    </bundle>
+                </resources>
+            """
+        )
+
 class CreateWithAllOptions(CommonTest):
     def test_success(self):
         self.assert_command_effect(
             self.fixture_cib_pre,
             lambda: resource.bundle_create(
                 self.env, "B1", "docker",
-                {
+                container_options={
                     "image": "pcs:test",
                     "masters": "0",
                     "network": "extra network settings",
@@ -947,13 +995,13 @@ class CreateWithAllOptions(CommonTest):
                     "replicas": "4",
                     "replicas-per-host": "2",
                 },
-                {
+                network_options={
                     "control-port": "12345",
                     "host-interface": "eth0",
                     "host-netmask": "24",
                     "ip-range-start": "192.168.100.200",
                 },
-                [
+                port_map=[
                     {
                         "port": "1001",
                     },
@@ -967,7 +1015,7 @@ class CreateWithAllOptions(CommonTest):
                         "range": "3000-3300",
                     },
                 ],
-                [
+                storage_map=[
                     {
                         "source-dir": "/tmp/docker1a",
                         "target-dir": "/tmp/docker1b",
@@ -1082,21 +1130,26 @@ class Wait(CommonTest):
         </resources>
     """
 
+    fixture_resources_bundle_simple_disabled = """
+        <resources>
+            <bundle id="B1">
+                <meta_attributes id="B1-meta_attributes">
+                    <nvpair id="B1-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+                <docker image="pcs:test" />
+            </bundle>
+        </resources>
+    """
+
     timeout = 10
 
-    def fixture_calls_initial(self):
-        return (
-            fixture.call_wait_supported() +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple,
-                cib_base_file=self.cib_base_file,
-            )
-        )
-
-    def simple_bundle_create(self, wait=False):
+    def simple_bundle_create(self, wait=False, disabled=False):
         return resource.bundle_create(
-            self.env, "B1", "docker", {"image": "pcs:test"}, wait=wait,
+            self.env, "B1", "docker",
+            container_options={"image": "pcs:test"},
+            ensure_disabled=disabled,
+            wait=wait,
         )
 
     def test_wait_fail(self):
@@ -1108,7 +1161,14 @@ class Wait(CommonTest):
             """
         )
         self.runner.set_runs(
-            self.fixture_calls_initial() +
+            fixture.call_wait_supported()
+            +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple,
+                cib_base_file=self.cib_base_file,
+            )
+            +
             fixture.call_wait(self.timeout, 62, fixture_wait_timeout_error)
         )
         assert_raise_library_error(
@@ -1122,8 +1182,16 @@ class Wait(CommonTest):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
         self.runner.set_runs(
-            self.fixture_calls_initial() +
-            fixture.call_wait(self.timeout) +
+            fixture.call_wait_supported()
+            +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple,
+                cib_base_file=self.cib_base_file,
+            )
+            +
+            fixture.call_wait(self.timeout)
+            +
             fixture.call_status(fixture.state_complete(
                 self.fixture_status_running
             ))
@@ -1139,8 +1207,16 @@ class Wait(CommonTest):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
         self.runner.set_runs(
-            self.fixture_calls_initial() +
-            fixture.call_wait(self.timeout) +
+            fixture.call_wait_supported()
+            +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple,
+                cib_base_file=self.cib_base_file,
+            )
+            +
+            fixture.call_wait(self.timeout)
+            +
             fixture.call_status(fixture.state_complete(
                 self.fixture_status_not_running
             ))
@@ -1148,5 +1224,50 @@ class Wait(CommonTest):
         assert_raise_library_error(
             lambda: self.simple_bundle_create(self.timeout),
             fixture.report_resource_not_running("B1", severities.ERROR),
+        )
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_disabled_wait_ok_run_ok(self):
+        self.runner.set_runs(
+            fixture.call_wait_supported()
+            +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple_disabled,
+                cib_base_file=self.cib_base_file,
+            )
+            +
+            fixture.call_wait(self.timeout)
+            +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_not_running
+            ))
+        )
+        self.simple_bundle_create(self.timeout, disabled=True)
+        self.runner.assert_everything_launched()
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_disabled_wait_ok_run_fail(self):
+        self.runner.set_runs(
+            fixture.call_wait_supported()
+            +
+            fixture.calls_cib(
+                self.fixture_cib_pre,
+                self.fixture_resources_bundle_simple_disabled,
+                cib_base_file=self.cib_base_file,
+            )
+            +
+            fixture.call_wait(self.timeout)
+            +
+            fixture.call_status(fixture.state_complete(
+                self.fixture_status_running
+            ))
+        )
+        assert_raise_library_error(
+            lambda: self.simple_bundle_create(self.timeout, disabled=True),
+            fixture.report_resource_running(
+                "B1", {"Started": ["node1", "node2"]}, severities.ERROR
+            )
         )
         self.runner.assert_everything_launched()

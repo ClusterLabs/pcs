@@ -11,18 +11,19 @@ from functools import partial
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.xml_tools import get_sub_element
 
-def _append_new_nvpair(nvset_element, name, value):
+def _append_new_nvpair(nvset_element, name, value, id_provider=None):
     """
     Create nvpair with name and value as subelement of nvset_element.
 
     etree.Element nvset_element is context of new nvpair
     string name is name attribute of new nvpair
     string value is value attribute of new nvpair
+    IdProvider id_provider -- elements' ids generator
     """
     etree.SubElement(
         nvset_element,
         "nvpair",
-        id=create_subelement_id(nvset_element, name),
+        id=create_subelement_id(nvset_element, name, id_provider),
         name=name,
         value=value
     )
@@ -73,7 +74,7 @@ def arrange_first_nvset(tag_name, context_element, nvpair_dict):
 
     update_nvset(nvset_element, nvpair_dict)
 
-def append_new_nvset(tag_name, context_element, nvpair_dict):
+def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider=None):
     """
     Append new nvset_element comprising nvpairs children (corresponding
     nvpair_dict) to the context_element
@@ -81,12 +82,13 @@ def append_new_nvset(tag_name, context_element, nvpair_dict):
     string tag_name should be "instance_attributes" or "meta_attributes"
     etree.Element context_element is element where new nvset will be appended
     dict nvpair_dict contains source for nvpair children
+    IdProvider id_provider -- elements' ids generator
     """
     nvset_element = etree.SubElement(context_element, tag_name, {
-        "id": create_subelement_id(context_element, tag_name)
+        "id": create_subelement_id(context_element, tag_name, id_provider)
     })
     for name, value in sorted(nvpair_dict.items()):
-        _append_new_nvpair(nvset_element, name, value)
+        _append_new_nvpair(nvset_element, name, value, id_provider)
 
 append_new_instance_attributes = partial(
     append_new_nvset,

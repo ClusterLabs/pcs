@@ -2676,12 +2676,14 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
     lib.resource.bundle_create(
         bundle_id,
         parts["container_type"],
-        parts["container"],
-        parts["network"],
-        parts["port_map"],
-        parts["storage_map"],
-        modifiers["force"],
-        modifiers["wait"]
+        container_options=parts["container"],
+        network_options=parts["network"],
+        port_map=parts["port_map"],
+        storage_map=parts["storage_map"],
+        meta_attributes=parts["meta"],
+        force_options=modifiers["force"],
+        ensure_disabled=modifiers["disabled"],
+        wait=modifiers["wait"]
     )
 
 def resource_bundle_update_cmd(lib, argv, modifiers):

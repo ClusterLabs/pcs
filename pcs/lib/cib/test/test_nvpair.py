@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import etree_to_str
@@ -24,6 +25,21 @@ class AppendNewNvpair(TestCase):
             </nvset>
             """
         )
+
+    def test_with_id_provider(self):
+        nvset_element = etree.fromstring('<nvset id="a"/>')
+        provider = IdProvider(nvset_element)
+        provider.book_ids("a-b")
+        nvpair._append_new_nvpair(nvset_element, "b", "c", provider)
+        assert_xml_equal(
+            etree_to_str(nvset_element),
+            """
+            <nvset id="a">
+                <nvpair id="a-b-1" name="b" value="c"></nvpair>
+            </nvset>
+            """
+        )
+
 
 class UpdateNvsetTest(TestCase):
     @mock.patch(
@@ -166,6 +182,32 @@ class AppendNewNvsetTest(TestCase):
             """,
             etree_to_str(context_element)
         )
+
+    def test_with_id_provider(self):
+        context_element = etree.fromstring('<context id="a"/>')
+        provider = IdProvider(context_element)
+        provider.book_ids("a-instance_attributes", "a-instance_attributes-1-a")
+        nvpair.append_new_nvset(
+            "instance_attributes",
+            context_element,
+            {
+                "a": "b",
+                "c": "d",
+            },
+            provider
+        )
+        assert_xml_equal(
+            """
+                <context id="a">
+                    <instance_attributes id="a-instance_attributes-1">
+                        <nvpair id="a-instance_attributes-1-a-1" name="a" value="b"/>
+                        <nvpair id="a-instance_attributes-1-c" name="c" value="d"/>
+                    </instance_attributes>
+                </context>
+            """,
+            etree_to_str(context_element)
+        )
+
 
 class ArrangeFirstNvsetTest(TestCase):
     def setUp(self):

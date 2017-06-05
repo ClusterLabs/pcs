@@ -465,8 +465,9 @@ def create_into_bundle(
 
 def bundle_create(
     env, bundle_id, container_type, container_options=None,
-    network_options=None, port_map=None, storage_map=None,
+    network_options=None, port_map=None, storage_map=None, meta_attributes=None,
     force_options=False,
+    ensure_disabled=False,
     wait=False,
 ):
     """
@@ -477,24 +478,32 @@ def bundle_create(
     string container_type -- container engine name (docker, lxc...)
     dict container_options -- container options
     dict network_options -- network options
-    list of dict port_map -- list of port mapping options
-    list of dict storage_map -- list of storage mapping options
+    list of dict port_map -- a list of port mapping options
+    list of dict storage_map -- a list of storage mapping options
+    dict meta_attributes -- bundle's meta attributes
     bool force_options -- return warnings instead of forceable errors
+    bool ensure_disabled -- set the bundle's target-role to "Stopped"
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
     container_options = container_options or {}
     network_options = network_options or {}
     port_map = port_map or []
     storage_map = storage_map or []
+    meta_attributes = meta_attributes or {}
 
     with resource_environment(
         env,
         wait,
         [bundle_id],
-        # bundles are always enabled, currently there is no way to disable them
-        disabled_after_wait=False,
+        disabled_after_wait=(
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+        ),
         required_cib_version=(2, 8, 0)
     ) as resources_section:
+        # no need to run validations related to remote and guest nodes as those
+        # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)
         env.report_processor.process_list(
             resource.bundle.validate_new(
@@ -505,10 +514,11 @@ def bundle_create(
                 network_options,
                 port_map,
                 storage_map,
+                # TODO meta attributes - there is no validation for now
                 force_options
             )
         )
-        resource.bundle.append_new(
+        bundle_element = resource.bundle.append_new(
             resources_section,
             id_provider,
             bundle_id,
@@ -516,8 +526,11 @@ def bundle_create(
             container_options,
             network_options,
             port_map,
-            storage_map
+            storage_map,
+            meta_attributes
         )
+        if ensure_disabled:
+            resource.common.disable(bundle_element)
 
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,

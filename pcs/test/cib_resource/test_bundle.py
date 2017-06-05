@@ -75,6 +75,7 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1
                 container replicas=4 replicas-per-host=2 run-command=/bin/true
                 port-map port=1001
+                meta target-role=Stopped
                 network control-port=12345 host-interface=eth0 host-netmask=24
                 port-map id=B1-port-map-1001 internal-port=2002 port=2000
                 port-map range=3000-3300
@@ -83,6 +84,7 @@ class BundleCreate(BundleCreateCommon):
                 storage-map id=B1-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
                 container image=pcs:test masters=0
+                meta is-managed=false
                 storage-map source-dir-root=/tmp/docker3a
                     target-dir=/tmp/docker3b
                 storage-map id=B1-port-map-1001-1 source-dir-root=/tmp/docker4a
@@ -140,6 +142,18 @@ class BundleCreate(BundleCreateCommon):
                                 target-dir="/tmp/docker4b"
                             />
                         </storage>
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair
+                                id="B1-meta_attributes-is-managed"
+                                name="is-managed"
+                                value="false"
+                            />
+                            <nvpair
+                                id="B1-meta_attributes-target-role"
+                                name="target-role"
+                                value="Stopped"
+                            />
+                        </meta_attributes>
                     </bundle>
                 </resources>
             """
@@ -214,6 +228,9 @@ class BundleCreate(BundleCreateCommon):
 
     def test_empty_port_map(self):
         self.assert_no_options("port-map")
+
+    def test_empty_meta(self):
+        self.assert_no_options("meta")
 
 
 @skip_unless_pacemaker_supports_bundle
