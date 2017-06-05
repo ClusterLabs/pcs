@@ -463,6 +463,38 @@ class BundleShow(TestCase, AssertPcsMixin):
             """
         ))
 
+    def test_meta(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container image=pcs:test"
+        )
+        self.assert_pcs_success(
+            "resource disable B1"
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            # pylint:disable=trailing-whitespace
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Meta Attrs: target-role=Stopped 
+            """
+        ))
+
+    def test_resource(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container image=pcs:test"
+        )
+        self.assert_pcs_success(
+            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Resource: A (class=ocf provider=pacemaker type=Dummy)
+               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+            """
+        ))
+
     def test_all(self):
         self.assert_pcs_success(
             """
@@ -476,7 +508,14 @@ class BundleShow(TestCase, AssertPcsMixin):
                     target-dir=/tmp/docker2b
             """
         )
+        self.assert_pcs_success(
+            "resource disable B1"
+        )
+        self.assert_pcs_success(
+            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
+        )
         self.assert_pcs_success("resource show B1", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Bundle: B1
               Docker: image=pcs:test masters=2 options="a b c" replicas=4
@@ -487,5 +526,8 @@ class BundleShow(TestCase, AssertPcsMixin):
               Storage Mapping:
                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+              Meta Attrs: target-role=Stopped 
+              Resource: A (class=ocf provider=pacemaker type=Dummy)
+               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
             """
         ))

@@ -2246,6 +2246,7 @@ def print_node(node, tab = 0):
             node.findall("storage/storage-mapping"),
             spaces + " "
         )
+        print_meta_vars_string(node, spaces)
         for child in node:
             print_node(child, tab + 1)
         return
