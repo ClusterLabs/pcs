@@ -548,7 +548,7 @@ class DisablePrimitive(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["B"], False),
-            fixture.report_not_found_bundle("B", "resources")
+            fixture.report_not_found("B", "resources")
         )
         self.runner.assert_everything_launched()
 
@@ -565,7 +565,7 @@ class DisablePrimitive(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["B"], False),
-            fixture.report_not_found_bundle("B")
+            fixture.report_not_found("B")
         )
         self.runner.assert_everything_launched()
 
@@ -602,7 +602,7 @@ class EnablePrimitive(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["B"], False),
-            fixture.report_not_found_bundle("B", "resources")
+            fixture.report_not_found("B", "resources")
         )
         self.runner.assert_everything_launched()
 
@@ -619,7 +619,7 @@ class EnablePrimitive(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["B"], False),
-            fixture.report_not_found_bundle("B")
+            fixture.report_not_found("B")
         )
         self.runner.assert_everything_launched()
 
@@ -768,8 +768,8 @@ class MoreResources(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["B", "X", "Y", "A"], False),
-            fixture.report_not_found_bundle("X", "resources"),
-            fixture.report_not_found_bundle("Y", "resources"),
+            fixture.report_not_found("X", "resources"),
+            fixture.report_not_found("Y", "resources"),
         )
         self.runner.assert_everything_launched()
 
@@ -782,8 +782,8 @@ class MoreResources(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["B", "X", "Y", "A"], False),
-            fixture.report_not_found_bundle("X", "resources"),
-            fixture.report_not_found_bundle("Y", "resources"),
+            fixture.report_not_found("X", "resources"),
+            fixture.report_not_found("Y", "resources"),
         )
         self.runner.assert_everything_launched()
 
@@ -834,7 +834,7 @@ class Wait(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.enable(self.env, ["B"], 10),
-            fixture.report_not_found_bundle("B", "resources"),
+            fixture.report_not_found("B", "resources"),
         )
         self.runner.assert_everything_launched()
 
@@ -849,7 +849,7 @@ class Wait(ResourceWithStateTest):
 
         assert_raise_library_error(
             lambda: resource.disable(self.env, ["B"], 10),
-            fixture.report_not_found_bundle("B", "resources"),
+            fixture.report_not_found("B", "resources"),
         )
         self.runner.assert_everything_launched()
 

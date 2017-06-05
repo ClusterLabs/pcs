@@ -4835,16 +4835,14 @@ class BundleMiscCommands(BundleCommon):
 
     def test_resource_manage_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource manage B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource manage B"
         )
 
     def test_resource_unmanage_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource unmanage B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource unmanage B"
         )
 
     def test_op_add(self):

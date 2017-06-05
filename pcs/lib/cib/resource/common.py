@@ -111,20 +111,25 @@ def find_resources_to_manage(resource_el):
     # put there manually. If we didn't do it, the resource may stay unmanaged,
     # as a managed primitive in an unmanaged clone / group is still unmanaged
     # and vice versa.
-    # Bundle resources cannot be set as unmanaged - pcmk currently doesn't
-    # support that. Resources in a bundle are supposed to be treated separately.
-    if is_bundle(resource_el):
-        return []
     res_id = resource_el.attrib["id"]
     return (
         [resource_el] # the resource itself
         +
         # its parents
         find_parent(resource_el, "resources").xpath(
+            # a master or a clone which contains a group, a primitve, or a
+            # grouped primitive with the specified id
+            # OR
+            # a group (in a clone, master, etc. - hence //) which contains a
+            # primitive with the specified id
+            # OR
+            # a bundle which contains a primitive with the specified id
             """
                 (./master|./clone)[(group|group/primitive|primitive)[@id='{r}']]
                 |
                 //group[primitive[@id='{r}']]
+                |
+                ./bundle[primitive[@id='{r}']]
             """
             .format(r=res_id)
         )
@@ -166,10 +171,19 @@ def find_resources_to_unmanage(resource_el):
     #   See clone notes above
     #
     # a bundled primitive - the primitive - the primitive
-    # a bundled primitive - the bundle - nothing
-    #  bundles currently cannot be set as unmanaged - pcmk does not support that
-    # an empty bundle - the bundle - nothing
-    #  bundles currently cannot be set as unmanaged - pcmk does not support that
+    # a bundled primitive - the bundle - the bundle and the primitive
+    #  We need to unmanage implicit resources create by pacemaker and there is
+    #  no other way to do it than unmanage the bundle itself.
+    #  Since it is not possible to unbundle a resource, the concers described
+    #  at unclone don't apply here. However to prevent future bugs, in case
+    #  unbundling becomes possible, we unmanage the primitive as well.
+    # an empty bundle - the bundle - the bundle
+    #  There is nothing else to unmanage.
+    if is_bundle(resource_el):
+        in_bundle = get_bundle_inner_resource(resource_el)
+        return (
+            [resource_el, in_bundle] if in_bundle is not None else [resource_el]
+        )
     if is_any_clone(resource_el):
         resource_el = get_clone_inner_resource(resource_el)
     if is_group(resource_el):
