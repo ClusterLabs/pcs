@@ -22,6 +22,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import (
     ensure_resource_state,
+    info_resource_state,
     is_resource_managed,
     ResourceNotFound,
 )
@@ -31,7 +32,10 @@ from pcs.lib.resource_agent import(
 
 @contextmanager
 def resource_environment(
-    env, wait=False, wait_for_resource_ids=None, disabled_after_wait=False,
+    env,
+    wait=False,
+    wait_for_resource_ids=None,
+    resource_state_reporter=info_resource_state,
     required_cib_version=None
 ):
     env.ensure_wait_satisfiable(wait)
@@ -41,9 +45,18 @@ def resource_environment(
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
         env.report_processor.process_list([
-            ensure_resource_state(not disabled_after_wait, state, res_id)
+            resource_state_reporter(state, res_id)
             for res_id in wait_for_resource_ids
         ])
+
+def _ensure_disabled_after_wait(disabled_after_wait):
+    def inner(state, resource_id):
+        return ensure_resource_state(
+            not disabled_after_wait,
+            state,
+            resource_id
+        )
+    return inner
 
 def _validate_remote_connection(
     resource_agent, nodes_to_validate_against, resource_id, instance_attributes,
@@ -195,7 +208,11 @@ def create(
         env,
         wait,
         [resource_id],
-        ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
+        _ensure_disabled_after_wait(
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+        )
     ) as resources_section:
         _check_special_cases(
             env,
@@ -269,7 +286,7 @@ def _create_as_clone_common(
         env,
         wait,
         [resource_id],
-        (
+        _ensure_disabled_after_wait(
             ensure_disabled
             or
             resource.common.are_meta_disabled(meta_attributes)
@@ -353,7 +370,11 @@ def create_in_group(
         env,
         wait,
         [resource_id],
-        ensure_disabled or resource.common.are_meta_disabled(meta_attributes),
+        _ensure_disabled_after_wait(
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+        )
     ) as resources_section:
         _check_special_cases(
             env,
@@ -433,7 +454,11 @@ def create_into_bundle(
         env,
         wait,
         [resource_id],
-        disabled_after_wait=ensure_disabled,
+        _ensure_disabled_after_wait(
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+        ),
         required_cib_version=(2, 8, 0)
     ) as resources_section:
         _check_special_cases(
@@ -495,7 +520,7 @@ def bundle_create(
         env,
         wait,
         [bundle_id],
-        disabled_after_wait=(
+        _ensure_disabled_after_wait(
             ensure_disabled
             or
             resource.common.are_meta_disabled(meta_attributes)
@@ -535,7 +560,7 @@ def bundle_create(
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,
     port_map_add=None, port_map_remove=None, storage_map_add=None,
-    storage_map_remove=None,
+    storage_map_remove=None, meta_attributes=None,
     force_options=False,
     wait=False,
 ):
@@ -550,6 +575,7 @@ def bundle_update(
     list of string port_map_remove -- list of port mapping ids to remove
     list of dict storage_map_add -- list of storage mapping options to add
     list of string storage_map_remove -- list of storage mapping ids to remove
+    dict meta_attributes -- meta attributes to update
     bool force_options -- return warnings instead of forceable errors
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
@@ -559,15 +585,16 @@ def bundle_update(
     port_map_remove = port_map_remove or []
     storage_map_add = storage_map_add or []
     storage_map_remove = storage_map_remove or []
+    meta_attributes = meta_attributes or {}
 
     with resource_environment(
         env,
         wait,
         [bundle_id],
-        # bundles are always enabled, currently there is no way to disable them
-        disabled_after_wait=False,
         required_cib_version=(2, 8, 0)
     ) as resources_section:
+        # no need to run validations related to remote and guest nodes as those
+        # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)
         bundle_element = find_element_by_tag_and_id(
             resource.bundle.TAG,
@@ -584,6 +611,7 @@ def bundle_update(
                 port_map_remove,
                 storage_map_add,
                 storage_map_remove,
+                # TODO meta attributes - there is no validation for now
                 force_options
             )
         )
@@ -595,7 +623,8 @@ def bundle_update(
             port_map_add,
             port_map_remove,
             storage_map_add,
-            storage_map_remove
+            storage_map_remove,
+            meta_attributes
         )
 
 def disable(env, resource_ids, wait):
@@ -606,7 +635,7 @@ def disable(env, resource_ids, wait):
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
     with resource_environment(
-        env, wait, resource_ids, True
+        env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
         resource_el_list = _find_resources_or_raise(
             resources_section,
@@ -628,7 +657,7 @@ def enable(env, resource_ids, wait):
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
     with resource_environment(
-        env, wait, resource_ids, False
+        env, wait, resource_ids, _ensure_disabled_after_wait(False)
     ) as resources_section:
         resource_el_list = _find_resources_or_raise(
             resources_section,

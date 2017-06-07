@@ -256,6 +256,7 @@ class BundleUpdate(BundleCreateCommon):
                 "storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b "
                 "storage-map source-dir=/tmp/docker2a target-dir=/tmp/docker2b "
                 "storage-map source-dir=/tmp/docker3a target-dir=/tmp/docker3b "
+                "meta priority=15 resource-stickiness=100 is-managed=false "
             ).format(name)
         )
 
@@ -299,6 +300,7 @@ class BundleUpdate(BundleCreateCommon):
                 port-map add internal-port=1003 port=2003
                 storage-map remove B-storage-map B-storage-map-2
                 storage-map add source-dir=/tmp/docker4a target-dir=/tmp/docker4b
+                meta priority=10 is-managed= target-role=Stopped
             """,
             """
                 <resources>
@@ -336,6 +338,14 @@ class BundleUpdate(BundleCreateCommon):
                                 target-dir="/tmp/docker4b"
                             />
                         </storage>
+                        <meta_attributes id="B-meta_attributes">
+                            <nvpair id="B-meta_attributes-priority"
+                                name="priority" value="10" />
+                            <nvpair id="B-meta_attributes-resource-stickiness"
+                                name="resource-stickiness" value="100" />
+                            <nvpair id="B-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
                     </bundle>
                 </resources>
             """
@@ -389,6 +399,9 @@ class BundleUpdate(BundleCreateCommon):
 
     def test_empty_port_map(self):
         self.assert_no_options("port-map")
+
+    def test_empty_meta(self):
+        self.assert_no_options("meta")
 
 
 @skip_unless_pacemaker_supports_bundle
@@ -482,10 +495,7 @@ class BundleShow(TestCase, AssertPcsMixin):
 
     def test_meta(self):
         self.assert_pcs_success(
-            "resource bundle create B1 container image=pcs:test"
-        )
-        self.assert_pcs_success(
-            "resource disable B1"
+            "resource bundle create B1 container image=pcs:test --disabled"
         )
         self.assert_pcs_success("resource show B1", outdent(
             # pylint:disable=trailing-whitespace
@@ -523,10 +533,8 @@ class BundleShow(TestCase, AssertPcsMixin):
                 storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
                 storage-map id=my-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
+                meta target-role=Stopped is-managed=false
             """
-        )
-        self.assert_pcs_success(
-            "resource disable B1"
         )
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
@@ -543,7 +551,7 @@ class BundleShow(TestCase, AssertPcsMixin):
               Storage Mapping:
                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: is-managed=false target-role=Stopped 
               Resource: A (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
             """

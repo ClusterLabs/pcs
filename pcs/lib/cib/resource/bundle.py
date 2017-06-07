@@ -9,7 +9,10 @@ from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports, validate
-from pcs.lib.cib.nvpair import append_new_meta_attributes
+from pcs.lib.cib.nvpair import (
+    append_new_meta_attributes,
+    arrange_first_meta_attributes,
+)
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
@@ -207,7 +210,8 @@ def validate_update(
 
 def update(
     id_provider, bundle_el, container_options, network_options,
-    port_map_add, port_map_remove, storage_map_add, storage_map_remove
+    port_map_add, port_map_remove, storage_map_add, storage_map_remove,
+    meta_attributes
 ):
     """
     Modify an existing bundle (does not touch encapsulated resources)
@@ -220,6 +224,7 @@ def update(
     list of string port_map_remove -- list of port mapping ids to remove
     list of dict storage_map_add -- list of storage mapping options to add
     list of string storage_map_remove -- list of storage mapping ids to remove
+    dict meta_attributes -- meta attributes to update
     """
     bundle_id = bundle_el.get("id")
     update_attributes_remove_empty(
@@ -257,7 +262,11 @@ def update(
             storage_element, id_provider, bundle_id, storage_map_options
         )
 
+    if meta_attributes:
+        arrange_first_meta_attributes(bundle_el, meta_attributes)
+
     # remove empty elements with no attributes
+    # meta attributes are handled in their own function
     for element in (network_element, storage_element):
         if len(element) < 1 and not element.attrib:
             element.getparent().remove(element)

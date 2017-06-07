@@ -709,6 +709,96 @@ class StorageMap(CommonTest):
         self.runner.assert_everything_launched()
 
 
+class Meta(CommonTest):
+    fixture_no_meta = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" masters="3" replicas="6"/>
+            </bundle>
+        </resources>
+    """
+
+    fixture_meta_stopped = """
+        <resources>
+            <bundle id="B1">
+                <meta_attributes id="B1-meta_attributes">
+                <nvpair id="B1-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+                </meta_attributes>
+                <docker image="pcs:test" masters="3" replicas="6"/>
+            </bundle>
+        </resources>
+    """
+
+    def test_add_meta_element(self):
+        self.assert_command_effect(
+            self.fixture_no_meta,
+            lambda: resource.bundle_update(
+                self.env, "B1",
+                meta_attributes={
+                    "target-role": "Stopped",
+                }
+            ),
+            self.fixture_meta_stopped
+        )
+
+    def test_remove_meta_element(self):
+        self.assert_command_effect(
+            self.fixture_meta_stopped,
+            lambda: resource.bundle_update(
+                self.env, "B1",
+                meta_attributes={
+                    "target-role": "",
+                }
+            ),
+            self.fixture_no_meta
+        )
+
+    def test_change_meta(self):
+        fixture_cib_pre = """
+            <resources>
+                <bundle id="B1">
+                    <meta_attributes id="B1-meta_attributes">
+                    <nvpair id="B1-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                    <nvpair id="B1-meta_attributes-priority"
+                        name="priority" value="15" />
+                    <nvpair id="B1-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                    </meta_attributes>
+                    <docker image="pcs:test" masters="3" replicas="6"/>
+                </bundle>
+            </resources>
+        """
+        fixture_cib_post = """
+            <resources>
+                <bundle id="B1">
+                    <meta_attributes id="B1-meta_attributes">
+                    <nvpair id="B1-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                    <nvpair id="B1-meta_attributes-priority"
+                        name="priority" value="10" />
+                    <nvpair id="B1-meta_attributes-resource-stickiness"
+                        name="resource-stickiness" value="100" />
+                    </meta_attributes>
+                    <docker image="pcs:test" masters="3" replicas="6"/>
+                </bundle>
+            </resources>
+        """
+        self.assert_command_effect(
+            fixture_cib_pre,
+            lambda: resource.bundle_update(
+                self.env, "B1",
+                meta_attributes={
+                    "priority": "10",
+                    "resource-stickiness": "100",
+                    "is-managed": "",
+                }
+            ),
+            fixture_cib_post
+        )
+
+
 class Wait(CommonTest):
     fixture_status_running = """
         <resources>
@@ -794,7 +884,7 @@ class Wait(CommonTest):
         self.runner.assert_everything_launched()
 
     @skip_unless_pacemaker_supports_bundle
-    def test_wait_ok_run_ok(self):
+    def test_wait_ok_running(self):
         self.runner.set_runs(
             self.fixture_calls_initial() +
             fixture.call_wait(self.timeout) +
@@ -811,7 +901,7 @@ class Wait(CommonTest):
         self.runner.assert_everything_launched()
 
     @skip_unless_pacemaker_supports_bundle
-    def test_wait_ok_run_fail(self):
+    def test_wait_ok_not_running(self):
         self.runner.set_runs(
             self.fixture_calls_initial() +
             fixture.call_wait(self.timeout) +
@@ -819,8 +909,8 @@ class Wait(CommonTest):
                 self.fixture_status_not_running
             ))
         )
-        assert_raise_library_error(
-            lambda: self.simple_bundle_update(self.timeout),
-            fixture.report_resource_not_running("B1", severities.ERROR),
-        )
+        self.simple_bundle_update(self.timeout)
+        self.env.report_processor.assert_reports([
+            fixture.report_resource_not_running("B1", severities.INFO),
+        ])
         self.runner.assert_everything_launched()

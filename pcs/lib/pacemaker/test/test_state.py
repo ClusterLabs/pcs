@@ -491,7 +491,7 @@ class GetPrimitivesForStateCheck(TestCase):
         self.assert_primitives("B2-R2", ["B2-R2", "B2-R2"], False)
 
 
-class EnsureResourceState(TestCase):
+class CommonResourceState(TestCase):
     resource_id = "R"
     def setUp(self):
         self.cluster_state = "state"
@@ -526,6 +526,8 @@ class EnsureResourceState(TestCase):
             "resource_id": self.resource_id
         })
 
+
+class EnsureResourceState(CommonResourceState):
     def assert_running_info_transform(self, run_info, report, expected_running):
         self.get_primitives_for_state_check.return_value = ["elem1", "elem2"]
         self.get_primitive_roles_with_nodes.return_value = run_info
@@ -572,6 +574,35 @@ class EnsureResourceState(TestCase):
             [],
             self.fixture_not_running_report(severities.INFO),
             expected_running=False,
+        )
+
+
+class InfoResourceState(CommonResourceState):
+    def assert_running_info_transform(self, run_info, report):
+        self.get_primitives_for_state_check.return_value = ["elem1", "elem2"]
+        self.get_primitive_roles_with_nodes.return_value = run_info
+        assert_report_item_equal(
+            state.info_resource_state(self.cluster_state, self.resource_id),
+            report
+        )
+        self.get_primitives_for_state_check.assert_called_once_with(
+            self.cluster_state,
+            self.resource_id,
+            expected_running=True
+        )
+        self.get_primitive_roles_with_nodes.assert_called_once_with(
+            ["elem1", "elem2"]
+        )
+
+    def test_report_info_running(self):
+        self.assert_running_info_transform(
+            self.fixture_running_state_info(),
+            self.fixture_running_report(severities.INFO)
+        )
+    def test_report_info_not_running(self):
+        self.assert_running_info_transform(
+            [],
+            self.fixture_not_running_report(severities.INFO)
         )
 
 

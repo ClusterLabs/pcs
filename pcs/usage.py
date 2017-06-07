@@ -444,13 +444,14 @@ Commands:
             [network <network options>]
             [port-map (add <port options>) | (remove <id>...)]...
             [storage-map (add <storage options>) | (remove <id>...)]...
+            [meta <meta options>]
             [--wait[=n]]
         Add, remove or change options to specified bundle. If you wish to update
         a resource encapsulated in the bundle, use the 'pcs resource update'
-        command instead and specify the resource id.  If --wait is specified,
+        command instead and specify the resource id. If --wait is specified,
         pcs will wait up to 'n' seconds for the operation to finish (including
         moving resources if appropriate) and then return 0 on success or 1 on
-        error.  If 'n' is not specified it defaults to 60 minutes.
+        error. If 'n' is not specified it defaults to 60 minutes.
 
     manage <resource id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is

@@ -2694,12 +2694,13 @@ def resource_bundle_update_cmd(lib, argv, modifiers):
     parts = parse_bundle_update_options(argv[1:])
     lib.resource.bundle_update(
         bundle_id,
-        parts["container"],
-        parts["network"],
-        parts["port_map_add"],
-        parts["port_map_remove"],
-        parts["storage_map_add"],
-        parts["storage_map_remove"],
-        modifiers["force"],
-        modifiers["wait"]
+        container_options=parts["container"],
+        network_options=parts["network"],
+        port_map_add=parts["port_map_add"],
+        port_map_remove=parts["port_map_remove"],
+        storage_map_add=parts["storage_map_add"],
+        storage_map_remove=parts["storage_map_remove"],
+        meta_attributes=parts["meta"],
+        force_options=modifiers["force"],
+        wait=modifiers["wait"]
     )

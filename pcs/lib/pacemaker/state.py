@@ -201,6 +201,25 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
         for role, nodes in roles_with_nodes.items()
     ])
 
+def info_resource_state(cluster_state, resource_id):
+    roles_with_nodes = _get_primitive_roles_with_nodes(
+        _get_primitives_for_state_check(
+            cluster_state,
+            resource_id,
+            expected_running=True
+        )
+    )
+    if not roles_with_nodes:
+        return reports.resource_does_not_run(
+            resource_id,
+            severities.INFO
+        )
+    return reports.resource_running_on_nodes(
+        resource_id,
+        roles_with_nodes,
+        severities.INFO
+    )
+
 def ensure_resource_state(expected_running, cluster_state, resource_id):
     roles_with_nodes = _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
