@@ -2243,6 +2243,10 @@ def show_defaults(def_type, indent=""):
         print(indent + "No defaults set")
 
 def set_default(def_type, argv):
+    warn(
+        "Defaults do not apply to resources which override them with their "
+        "own defined values"
+    )
     for arg in argv:
         args = arg.split('=')
         if (len(args) != 2):

@@ -213,7 +213,7 @@ Commands:
            <operation options>]...] [meta <meta options>...]
            [clone [<clone options>] | master [<master options>] |
            --group <group id> [--before <resource id> | --after <resource id>]
-           | bundle <bundle id>] [--disabled] [--wait[=n]]
+           | bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
         Create specified resource. If clone is used a clone resource is
         created. If master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named. You
@@ -221,10 +221,12 @@ Commands:
         resource relatively to some resource already existing in the group.
         If bundle is used, the resource will be created inside of the specified
         bundle. If --disabled is specified the resource is not started
-        automatically. If --wait is specified, pcs will wait up to 'n' seconds
-        for the resource to start and then return 0 if the resource is started,
-        or 1 if the resource has not yet started.  If 'n' is not specified it
-        defaults to 60 minutes.
+        automatically. If --no-default-ops is specified, only monitor
+        operations are created for the resource and all other operations use
+        default settings. If --wait is specified, pcs will wait up to 'n'
+        seconds for the resource to start and then return 0 if the resource is
+        started, or 1 if the resource has not yet started. If 'n' is not
+        specified it defaults to 60 minutes.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
             on eth2:
@@ -367,7 +369,8 @@ Commands:
 
     op defaults [options]
         Set default values for operations, if no options are passed, lists
-        currently configured defaults.
+        currently configured defaults. Defaults do not apply to resources which
+        override them with their own defined operations.
 
     meta <resource id | group id | master id | clone id> <meta options>
          [--wait[=n]]
@@ -465,7 +468,8 @@ Commands:
 
     defaults [options]
         Set default values for resources, if no options are passed, lists
-        currently configured defaults.
+        currently configured defaults. Defaults do not apply to resources which
+        override them with their own defined values.
 
     cleanup [<resource id>] [--node <node>]
         Make the cluster forget the operation history of the resource and
