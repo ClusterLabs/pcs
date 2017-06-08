@@ -220,6 +220,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -235,6 +236,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -247,6 +249,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -259,6 +262,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -280,6 +284,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {"a": "b", "c": "d"},
                 "port_map": [],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -309,6 +314,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -321,6 +327,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}, {"e": "f"}],
                 "storage_map": [],
+                "meta": {},
             }
         )
 
@@ -347,6 +354,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [{"a": "b", "c": "d"}],
+                "meta": {},
             }
         )
 
@@ -359,6 +367,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {},
                 "port_map": [],
                 "storage_map": [{"a": "b", "c": "d"}, {"e": "f"}],
+                "meta": {},
             }
         )
 
@@ -367,6 +376,28 @@ class ParseBundleCreateOptions(TestCase):
 
     def test_storage_map_missing_key(self):
         self.assert_raises_cmdline(["storage-map", "=b", "c=d"])
+
+    def test_meta(self):
+        self.assert_produce(
+            ["meta", "a=b", "c=d"],
+            {
+                "container_type": "docker",
+                "container": {},
+                "network": {},
+                "port_map": [],
+                "storage_map": [],
+                "meta": {"a": "b", "c": "d"},
+            }
+        )
+
+    def test_meta_empty(self):
+        self.assert_raises_cmdline(["meta"])
+
+    def test_meta_missing_value(self):
+        self.assert_raises_cmdline(["meta", "a", "c=d"])
+
+    def test_meta_missing_key(self):
+        self.assert_raises_cmdline(["meta", "=b", "c=d"])
 
     def test_all(self):
         self.assert_produce(
@@ -377,6 +408,7 @@ class ParseBundleCreateOptions(TestCase):
                 "port-map", "m=n", "o=p",
                 "storage-map", "q=r", "s=t",
                 "storage-map", "u=v", "w=x",
+                "meta", "y=z", "A=B",
             ],
             {
                 "container_type": "lxc",
@@ -384,6 +416,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
                 "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                "meta": {"y": "z", "A": "B"},
             }
         )
 
@@ -391,11 +424,13 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             [
                 "storage-map", "q=r", "s=t",
+                "meta", "y=z",
                 "port-map", "i=j", "k=l",
                 "network", "e=f",
                 "container", "lxc", "a=b",
                 "storage-map", "u=v", "w=x",
                 "port-map", "m=n", "o=p",
+                "meta", "A=B",
                 "network", "g=h",
                 "container", "c=d",
             ],
@@ -405,6 +440,7 @@ class ParseBundleCreateOptions(TestCase):
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
                 "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                "meta": {"y": "z", "A": "B"},
             }
         )
 
@@ -432,6 +468,7 @@ class ParseBundleUpdateOptions(TestCase):
                 "port_map_remove": [],
                 "storage_map_add": [],
                 "storage_map_remove": [],
+                "meta": {},
             }
         )
 
@@ -445,6 +482,7 @@ class ParseBundleUpdateOptions(TestCase):
                 "port_map_remove": [],
                 "storage_map_add": [],
                 "storage_map_remove": [],
+                "meta": {},
             }
         )
 
@@ -467,6 +505,7 @@ class ParseBundleUpdateOptions(TestCase):
                 "port_map_remove": [],
                 "storage_map_add": [],
                 "storage_map_remove": [],
+                "meta": {},
             }
         )
 
@@ -519,6 +558,7 @@ class ParseBundleUpdateOptions(TestCase):
                 "port_map_remove": ["c", "d", "i"],
                 "storage_map_add": [],
                 "storage_map_remove": [],
+                "meta": {},
             }
         )
 
@@ -562,8 +602,33 @@ class ParseBundleUpdateOptions(TestCase):
                     {"e": "f", "g": "h",},
                 ],
                 "storage_map_remove": ["c", "d", "i"],
+                "meta": {},
             }
         )
+
+    def test_meta(self):
+        self.assert_produce(
+            ["meta", "a=b", "c=d"],
+            {
+                "container": {},
+                "network": {},
+                "port_map_add": [],
+                "port_map_remove": [],
+                "storage_map_add": [],
+                "storage_map_remove": [],
+                "meta": {"a": "b", "c": "d"},
+            }
+        )
+
+    def test_meta_empty(self):
+        self.assert_raises_cmdline(["meta"])
+
+    def test_meta_missing_value(self):
+        self.assert_raises_cmdline(["meta", "a", "c=d"])
+
+    def test_meta_missing_key(self):
+        self.assert_raises_cmdline(["meta", "=b", "c=d"])
+
 
     def test_all(self):
         self.assert_produce(
@@ -578,6 +643,7 @@ class ParseBundleUpdateOptions(TestCase):
                 "storage-map", "add", "v=w",
                 "storage-map", "remove", "x", "y",
                 "storage-map", "remove", "z",
+                "meta", "A=B", "C=D",
             ],
             {
                 "container": {"a": "b", "c": "d"},
@@ -592,6 +658,7 @@ class ParseBundleUpdateOptions(TestCase):
                     {"v": "w"},
                 ],
                 "storage_map_remove": ["x", "y", "z"],
+                "meta": {"A": "B", "C": "D"},
             }
         )
 
@@ -599,11 +666,13 @@ class ParseBundleUpdateOptions(TestCase):
         self.assert_produce(
             [
                 "storage-map", "remove", "x", "y",
+                "meta", "A=B",
                 "port-map", "remove", "o", "p",
                 "network", "e=f", "g=h",
                 "storage-map", "add", "r=s", "t=u",
                 "port-map", "add", "i=j", "k=l",
                 "container", "a=b", "c=d",
+                "meta", "C=D",
                 "port-map", "remove", "q",
                 "storage-map", "remove", "z",
                 "storage-map", "add", "v=w",
@@ -622,6 +691,7 @@ class ParseBundleUpdateOptions(TestCase):
                     {"v": "w"},
                 ],
                 "storage_map_remove": ["x", "y", "z"],
+                "meta": {"A": "B", "C": "D"},
             }
         )
 

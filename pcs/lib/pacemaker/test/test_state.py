@@ -491,7 +491,7 @@ class GetPrimitivesForStateCheck(TestCase):
         self.assert_primitives("B2-R2", ["B2-R2", "B2-R2"], False)
 
 
-class EnsureResourceState(TestCase):
+class CommonResourceState(TestCase):
     resource_id = "R"
     def setUp(self):
         self.cluster_state = "state"
@@ -526,6 +526,8 @@ class EnsureResourceState(TestCase):
             "resource_id": self.resource_id
         })
 
+
+class EnsureResourceState(CommonResourceState):
     def assert_running_info_transform(self, run_info, report, expected_running):
         self.get_primitives_for_state_check.return_value = ["elem1", "elem2"]
         self.get_primitive_roles_with_nodes.return_value = run_info
@@ -572,6 +574,35 @@ class EnsureResourceState(TestCase):
             [],
             self.fixture_not_running_report(severities.INFO),
             expected_running=False,
+        )
+
+
+class InfoResourceState(CommonResourceState):
+    def assert_running_info_transform(self, run_info, report):
+        self.get_primitives_for_state_check.return_value = ["elem1", "elem2"]
+        self.get_primitive_roles_with_nodes.return_value = run_info
+        assert_report_item_equal(
+            state.info_resource_state(self.cluster_state, self.resource_id),
+            report
+        )
+        self.get_primitives_for_state_check.assert_called_once_with(
+            self.cluster_state,
+            self.resource_id,
+            expected_running=True
+        )
+        self.get_primitive_roles_with_nodes.assert_called_once_with(
+            ["elem1", "elem2"]
+        )
+
+    def test_report_info_running(self):
+        self.assert_running_info_transform(
+            self.fixture_running_state_info(),
+            self.fixture_running_report(severities.INFO)
+        )
+    def test_report_info_not_running(self):
+        self.assert_running_info_transform(
+            [],
+            self.fixture_not_running_report(severities.INFO)
         )
 
 
@@ -733,6 +764,60 @@ class IsResourceManaged(TestCase):
                     <resource id="R38:1" managed="false" />
                 </group>
             </clone>
+
+            <bundle id="B1" managed="true" />
+            <bundle id="B2" managed="false" />
+
+            <bundle id="B3" managed="true">
+                <replica id="0">
+                    <resource id="R39" managed="true" />
+                    <resource id="R40" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R39" managed="true" />
+                    <resource id="R40" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B4" managed="false">
+                <replica id="0">
+                    <resource id="R41" managed="true" />
+                    <resource id="R42" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R41" managed="true" />
+                    <resource id="R42" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B5" managed="true">
+                <replica id="0">
+                    <resource id="R43" managed="false" />
+                    <resource id="R44" managed="true" />
+                </replica>
+                <replica id="1">
+                    <resource id="R43" managed="false" />
+                    <resource id="R44" managed="true" />
+                </replica>
+            </bundle>
+            <bundle id="B6" managed="true">
+                <replica id="0">
+                    <resource id="R45" managed="true" />
+                    <resource id="R46" managed="false" />
+                </replica>
+                <replica id="1">
+                    <resource id="R45" managed="true" />
+                    <resource id="R46" managed="false" />
+                </replica>
+            </bundle>
+            <bundle id="B7" managed="false">
+                <replica id="0">
+                    <resource id="R47" managed="false" />
+                    <resource id="R48" managed="false" />
+                </replica>
+                <replica id="1">
+                    <resource id="R47" managed="false" />
+                    <resource id="R48" managed="false" />
+                </replica>
+            </bundle>
         </resources>
     """)
 
@@ -856,3 +941,24 @@ class IsResourceManaged(TestCase):
         self.assert_managed("R36", False)
         self.assert_managed("R37", False)
         self.assert_managed("R38", False)
+
+    def test_bundle(self):
+        self.assert_managed("B1", True)
+        self.assert_managed("B2", False)
+        self.assert_managed("B3", True)
+        self.assert_managed("B4", False)
+        self.assert_managed("B5", False)
+        self.assert_managed("B6", False)
+        self.assert_managed("B7", False)
+
+    def test_primitive_in_bundle(self):
+        self.assert_managed("R39", True)
+        self.assert_managed("R40", True)
+        self.assert_managed("R41", False)
+        self.assert_managed("R42", False)
+        self.assert_managed("R43", False)
+        self.assert_managed("R44", True)
+        self.assert_managed("R45", True)
+        self.assert_managed("R46", False)
+        self.assert_managed("R47", False)
+        self.assert_managed("R48", False)

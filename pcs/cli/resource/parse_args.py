@@ -58,7 +58,7 @@ def parse_create(arg_list):
 
 def _parse_bundle_groups(arg_list):
     repeatable_keyword_list = ["port-map", "storage-map"]
-    keyword_list = ["container", "network"] + repeatable_keyword_list
+    keyword_list = ["meta", "container", "network"] + repeatable_keyword_list
     groups = group_by_keywords(
         arg_list,
         set(keyword_list),
@@ -99,6 +99,7 @@ def parse_bundle_create_options(arg_list):
             prepare_options(storage_map)
             for storage_map in groups.get("storage-map", [])
         ],
+        "meta": prepare_options(groups.get("meta", []))
     }
     if not parts["container_type"]:
         parts["container_type"] = "docker"
@@ -144,6 +145,7 @@ def parse_bundle_update_options(arg_list):
         "port_map_remove": port_map["remove"],
         "storage_map_add": storage_map["add"],
         "storage_map_remove": storage_map["remove"],
+        "meta": prepare_options(groups.get("meta", []))
     }
     return parts
 

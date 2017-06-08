@@ -469,6 +469,35 @@ fixture_bundle_cib_disabled_primitive = """
         </bundle>
     </resources>
 """
+fixture_bundle_cib_disabled_bundle = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy" />
+        </bundle>
+    </resources>
+"""
+fixture_bundle_cib_disabled_both = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </primitive>
+        </bundle>
+    </resources>
+"""
 fixture_bundle_status_managed = """
     <resources>
         <bundle id="A-bundle" type="docker" image="pcmktest:http"
@@ -486,7 +515,7 @@ fixture_bundle_status_managed = """
 fixture_bundle_status_unmanaged = """
     <resources>
         <bundle id="A-bundle" type="docker" image="pcmktest:http"
-            unique="false" managed="true" failed="false"
+            unique="false" managed="false" failed="false"
         >
             <replica id="0">
                 <resource id="A" managed="false" />
@@ -1460,17 +1489,12 @@ class DisableBundle(ResourceWithStateTest):
         )
 
     def test_bundle(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_bundle_cib_enabled)
-            )
-        )
-
-        assert_raise_library_error(
+        self.assert_command_effect(
+            fixture_bundle_cib_enabled,
+            fixture_bundle_status_managed,
             lambda: resource.disable(self.env, ["A-bundle"], False),
-            fixture.report_not_for_bundles("A-bundle")
+            fixture_bundle_cib_disabled_bundle
         )
-        self.runner.assert_everything_launched()
 
     def test_primitive_unmanaged(self):
         self.assert_command_effect(
@@ -1480,6 +1504,17 @@ class DisableBundle(ResourceWithStateTest):
             fixture_bundle_cib_disabled_primitive,
             reports=[
                 fixture_report_unmanaged("A"),
+            ]
+        )
+
+    def test_bundle_unmanaged(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_enabled,
+            fixture_bundle_status_unmanaged,
+            lambda: resource.disable(self.env, ["A-bundle"], False),
+            fixture_bundle_cib_disabled_bundle,
+            reports=[
+                fixture_report_unmanaged("A-bundle"),
             ]
         )
 
@@ -1494,18 +1529,29 @@ class EnableBundle(ResourceWithStateTest):
             fixture_bundle_cib_enabled
         )
 
-    def test_bundle(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_bundle_cib_enabled)
-            )
+    def test_primitive_disabled_both(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_both,
+            fixture_bundle_status_managed,
+            lambda: resource.enable(self.env, ["A"], False),
+            fixture_bundle_cib_enabled
         )
 
-        assert_raise_library_error(
+    def test_bundle(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_bundle,
+            fixture_bundle_status_managed,
             lambda: resource.enable(self.env, ["A-bundle"], False),
-            fixture.report_not_for_bundles("A-bundle")
+            fixture_bundle_cib_enabled
         )
-        self.runner.assert_everything_launched()
+
+    def test_bundle_disabled_both(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_both,
+            fixture_bundle_status_managed,
+            lambda: resource.enable(self.env, ["A-bundle"], False),
+            fixture_bundle_cib_enabled
+        )
 
     def test_primitive_unmanaged(self):
         self.assert_command_effect(
@@ -1514,6 +1560,19 @@ class EnableBundle(ResourceWithStateTest):
             lambda: resource.enable(self.env, ["A"], False),
             fixture_bundle_cib_enabled,
             reports=[
+                fixture_report_unmanaged("A"),
+                fixture_report_unmanaged("A-bundle"),
+            ]
+        )
+
+    def test_bundle_unmanaged(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_disabled_primitive,
+            fixture_bundle_status_unmanaged,
+            lambda: resource.enable(self.env, ["A-bundle"], False),
+            fixture_bundle_cib_enabled,
+            reports=[
+                fixture_report_unmanaged("A-bundle"),
                 fixture_report_unmanaged("A"),
             ]
         )

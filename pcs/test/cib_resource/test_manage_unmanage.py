@@ -18,6 +18,7 @@ class ManageUnmanage(
     TestCase,
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//resources")[0]
         )
     )
@@ -234,7 +235,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource unmanage A B",
-            "Error: resource/clone/master/group 'B' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'B' does not exist\n"
         )
         self.assert_resources_xml_in_cib(
             """
@@ -255,7 +256,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource manage A B",
-            "Error: resource/clone/master/group 'B' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'B' does not exist\n"
         )
         self.assert_resources_xml_in_cib(
             """

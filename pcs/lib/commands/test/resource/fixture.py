@@ -145,7 +145,7 @@ def report_not_found(res_id, context_type=""):
             "context_type": context_type,
             "context_id": "",
             "id": res_id,
-            "id_description": "resource/clone/master/group",
+            "id_description": "resource/clone/master/group/bundle",
         },
         None
     )

@@ -5,6 +5,8 @@
 ### Added
 - Option to create a cluster with or without corosync encryption enabled
   ([rhbz#1165821])
+- It is now possible to disable, enable, unmanage and manage bundle resources
+  and set their meta attributes ([rhbz#1447910])
 
 ### Fixed
 - Fixed crash of the `pcs cluster setup` command when the `--force` flag was
@@ -32,6 +34,7 @@
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
+[rhbz#1447910]: https://bugzilla.redhat.com/show_bug.cgi?id=1447910
 
 
 ## [0.9.158] - 2017-05-23

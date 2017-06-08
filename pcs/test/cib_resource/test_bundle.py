@@ -75,6 +75,7 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1
                 container replicas=4 replicas-per-host=2 run-command=/bin/true
                 port-map port=1001
+                meta target-role=Stopped
                 network control-port=12345 host-interface=eth0 host-netmask=24
                 port-map id=B1-port-map-1001 internal-port=2002 port=2000
                 port-map range=3000-3300
@@ -83,6 +84,7 @@ class BundleCreate(BundleCreateCommon):
                 storage-map id=B1-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
                 container image=pcs:test masters=0
+                meta is-managed=false
                 storage-map source-dir-root=/tmp/docker3a
                     target-dir=/tmp/docker3b
                 storage-map id=B1-port-map-1001-1 source-dir-root=/tmp/docker4a
@@ -140,6 +142,18 @@ class BundleCreate(BundleCreateCommon):
                                 target-dir="/tmp/docker4b"
                             />
                         </storage>
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair
+                                id="B1-meta_attributes-is-managed"
+                                name="is-managed"
+                                value="false"
+                            />
+                            <nvpair
+                                id="B1-meta_attributes-target-role"
+                                name="target-role"
+                                value="Stopped"
+                            />
+                        </meta_attributes>
                     </bundle>
                 </resources>
             """
@@ -215,6 +229,9 @@ class BundleCreate(BundleCreateCommon):
     def test_empty_port_map(self):
         self.assert_no_options("port-map")
 
+    def test_empty_meta(self):
+        self.assert_no_options("meta")
+
 
 @skip_unless_pacemaker_supports_bundle
 class BundleUpdate(BundleCreateCommon):
@@ -239,6 +256,7 @@ class BundleUpdate(BundleCreateCommon):
                 "storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b "
                 "storage-map source-dir=/tmp/docker2a target-dir=/tmp/docker2b "
                 "storage-map source-dir=/tmp/docker3a target-dir=/tmp/docker3b "
+                "meta priority=15 resource-stickiness=100 is-managed=false "
             ).format(name)
         )
 
@@ -282,6 +300,7 @@ class BundleUpdate(BundleCreateCommon):
                 port-map add internal-port=1003 port=2003
                 storage-map remove B-storage-map B-storage-map-2
                 storage-map add source-dir=/tmp/docker4a target-dir=/tmp/docker4b
+                meta priority=10 is-managed= target-role=Stopped
             """,
             """
                 <resources>
@@ -319,6 +338,14 @@ class BundleUpdate(BundleCreateCommon):
                                 target-dir="/tmp/docker4b"
                             />
                         </storage>
+                        <meta_attributes id="B-meta_attributes">
+                            <nvpair id="B-meta_attributes-priority"
+                                name="priority" value="10" />
+                            <nvpair id="B-meta_attributes-resource-stickiness"
+                                name="resource-stickiness" value="100" />
+                            <nvpair id="B-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
                     </bundle>
                 </resources>
             """
@@ -372,6 +399,9 @@ class BundleUpdate(BundleCreateCommon):
 
     def test_empty_port_map(self):
         self.assert_no_options("port-map")
+
+    def test_empty_meta(self):
+        self.assert_no_options("meta")
 
 
 @skip_unless_pacemaker_supports_bundle
@@ -463,6 +493,35 @@ class BundleShow(TestCase, AssertPcsMixin):
             """
         ))
 
+    def test_meta(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container image=pcs:test --disabled"
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            # pylint:disable=trailing-whitespace
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Meta Attrs: target-role=Stopped 
+            """
+        ))
+
+    def test_resource(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container image=pcs:test"
+        )
+        self.assert_pcs_success(
+            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
+        )
+        self.assert_pcs_success("resource show B1", outdent(
+            """\
+             Bundle: B1
+              Docker: image=pcs:test
+              Resource: A (class=ocf provider=pacemaker type=Dummy)
+               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+            """
+        ))
+
     def test_all(self):
         self.assert_pcs_success(
             """
@@ -474,9 +533,14 @@ class BundleShow(TestCase, AssertPcsMixin):
                 storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
                 storage-map id=my-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
+                meta target-role=Stopped is-managed=false
             """
         )
+        self.assert_pcs_success(
+            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
+        )
         self.assert_pcs_success("resource show B1", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Bundle: B1
               Docker: image=pcs:test masters=2 options="a b c" replicas=4
@@ -487,5 +551,8 @@ class BundleShow(TestCase, AssertPcsMixin):
               Storage Mapping:
                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+              Meta Attrs: is-managed=false target-role=Stopped 
+              Resource: A (class=ocf provider=pacemaker type=Dummy)
+               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
             """
         ))

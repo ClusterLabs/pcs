@@ -517,6 +517,26 @@ fixture_clone_group_cib_unmanaged_all_primitives_op_disabled = """
     </resources>
 """
 
+
+fixture_bundle_empty_cib_managed = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+        </bundle>
+    </resources>
+"""
+fixture_bundle_empty_cib_unmanaged_bundle = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+        </bundle>
+    </resources>
+"""
+
 fixture_bundle_cib_managed = """
     <resources>
         <bundle id="A-bundle">
@@ -526,7 +546,19 @@ fixture_bundle_cib_managed = """
         </bundle>
     </resources>
 """
-
+fixture_bundle_cib_unmanaged_bundle = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+            </primitive>
+        </bundle>
+    </resources>
+"""
 fixture_bundle_cib_unmanaged_primitive = """
     <resources>
         <bundle id="A-bundle">
@@ -536,6 +568,78 @@ fixture_bundle_cib_unmanaged_primitive = """
                     <nvpair id="A-meta_attributes-is-managed"
                         name="is-managed" value="false" />
                 </meta_attributes>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_cib_unmanaged_both = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+
+fixture_bundle_cib_managed_op_enabled = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor"/>
+                </operations>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_cib_unmanaged_primitive_op_disabled = """
+    <resources>
+        <bundle id="A-bundle">
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor" enabled="false"/>
+                </operations>
+            </primitive>
+        </bundle>
+    </resources>
+"""
+fixture_bundle_cib_unmanaged_both_op_disabled = """
+    <resources>
+        <bundle id="A-bundle">
+            <meta_attributes id="A-bundle-meta_attributes">
+                <nvpair id="A-bundle-meta_attributes-is-managed"
+                    name="is-managed" value="false" />
+            </meta_attributes>
+            <docker image="pcs:test" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-is-managed"
+                        name="is-managed" value="false" />
+                </meta_attributes>
+                <operations>
+                    <op id="A-start" name="start" />
+                    <op id="A-stop" name="stop" />
+                    <op id="A-monitor" name="monitor" enabled="false"/>
+                </operations>
             </primitive>
         </bundle>
     </resources>
@@ -852,17 +956,18 @@ class UnmanageBundle(ResourceWithoutStateTest):
         )
 
     def test_bundle(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_bundle_cib_managed)
-            )
+        self.assert_command_effect(
+            fixture_bundle_cib_managed,
+            lambda: resource.unmanage(self.env, ["A-bundle"]),
+            fixture_bundle_cib_unmanaged_both
         )
 
-        assert_raise_library_error(
-            lambda: resource.unmanage(self.env, ["A-bundle"], False),
-            fixture.report_not_for_bundles("A-bundle")
+    def test_bundle_empty(self):
+        self.assert_command_effect(
+            fixture_bundle_empty_cib_managed,
+            lambda: resource.unmanage(self.env, ["A-bundle"]),
+            fixture_bundle_empty_cib_unmanaged_bundle
         )
-        self.runner.assert_everything_launched()
 
 
 class ManageBundle(ResourceWithoutStateTest):
@@ -873,18 +978,47 @@ class ManageBundle(ResourceWithoutStateTest):
             fixture_bundle_cib_managed,
         )
 
-    def test_bundle(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_bundle_cib_unmanaged_primitive)
-            )
+    def test_primitive_unmanaged_bundle(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_bundle,
+            lambda: resource.manage(self.env, ["A"]),
+            fixture_bundle_cib_managed,
         )
 
-        assert_raise_library_error(
-            lambda: resource.manage(self.env, ["A-bundle"], False),
-            fixture.report_not_for_bundles("A-bundle")
+    def test_primitive_unmanaged_both(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_both,
+            lambda: resource.manage(self.env, ["A"]),
+            fixture_bundle_cib_managed,
         )
-        self.runner.assert_everything_launched()
+
+    def test_bundle(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_bundle,
+            lambda: resource.manage(self.env, ["A-bundle"]),
+            fixture_bundle_cib_managed,
+        )
+
+    def test_bundle_unmanaged_primitive(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_primitive,
+            lambda: resource.manage(self.env, ["A-bundle"]),
+            fixture_bundle_cib_managed,
+        )
+
+    def test_bundle_unmanaged_both(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_unmanaged_both,
+            lambda: resource.manage(self.env, ["A-bundle"]),
+            fixture_bundle_cib_managed,
+        )
+
+    def test_bundle_empty(self):
+        self.assert_command_effect(
+            fixture_bundle_empty_cib_unmanaged_bundle,
+            lambda: resource.manage(self.env, ["A-bundle"]),
+            fixture_bundle_empty_cib_managed
+        )
 
 
 class MoreResources(ResourceWithoutStateTest):
@@ -1089,4 +1223,25 @@ class WithMonitor(ResourceWithoutStateTest):
             fixture_clone_group_cib_managed_op_enabled,
             lambda: resource.unmanage(self.env, ["A1"], True),
             fixture_clone_group_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_bundle(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A-bundle"], True),
+            fixture_bundle_cib_unmanaged_both_op_disabled
+        )
+
+    def test_unmanage_in_bundle(self):
+        self.assert_command_effect(
+            fixture_bundle_cib_managed_op_enabled,
+            lambda: resource.unmanage(self.env, ["A"], True),
+            fixture_bundle_cib_unmanaged_primitive_op_disabled
+        )
+
+    def test_unmanage_bundle_empty(self):
+        self.assert_command_effect(
+            fixture_bundle_empty_cib_managed,
+            lambda: resource.unmanage(self.env, ["A-bundle"], True),
+            fixture_bundle_empty_cib_unmanaged_bundle
         )

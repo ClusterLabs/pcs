@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 import re
 import shutil
+from textwrap import dedent
 
 from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin
@@ -3321,11 +3322,11 @@ Error: Cannot remove more than one resource from cloned group
 
         # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
+        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: resource/clone/master/group 'NoExist' does not exist\n")
+        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
@@ -3829,7 +3830,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource enable dummy3 dummyX",
-            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
@@ -3849,7 +3850,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource disable dummy1 dummyX",
-            "Error: resource/clone/master/group 'dummyX' does not exist\n"
+            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
@@ -4719,7 +4720,11 @@ class BundleCommon(
 class BundleDeleteTest(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
-        self.assert_effect("resource delete B", "<resources/>")
+        self.assert_effect(
+            "resource delete B",
+            "<resources/>",
+            "Deleting bundle 'B'\n"
+        )
 
     def test_with_primitive(self):
         self.fixture_bundle("B")
@@ -4727,7 +4732,10 @@ class BundleDeleteTest(BundleCommon):
         self.assert_effect(
             "resource delete B",
             "<resources/>",
-            "Deleting Resource - R\n",
+            dedent("""\
+                Deleting bundle 'B' and its inner resource 'R'
+                Deleting Resource - R
+            """),
         )
 
     def test_remove_primitive(self):
@@ -4823,30 +4831,26 @@ class BundleCloneMaster(BundleCommon):
 class BundleMiscCommands(BundleCommon):
     def test_resource_enable_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource enable B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource enable B"
         )
 
     def test_resource_disable_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource disable B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource disable B"
         )
 
     def test_resource_manage_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource manage B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource manage B"
         )
 
     def test_resource_unmanage_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource unmanage B",
-            "Error: 'B' is not clone/master/a group/primitive\n"
+        self.assert_pcs_success(
+            "resource unmanage B"
         )
 
     def test_op_add(self):

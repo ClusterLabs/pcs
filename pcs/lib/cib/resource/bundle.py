@@ -9,6 +9,10 @@ from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports, validate
+from pcs.lib.cib.nvpair import (
+    append_new_meta_attributes,
+    arrange_first_meta_attributes,
+)
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
@@ -96,7 +100,7 @@ def validate_new(
 
 def append_new(
     parent_element, id_provider, bundle_id, container_type, container_options,
-    network_options, port_map, storage_map
+    network_options, port_map, storage_map, meta_attributes
 ):
     """
     Create new bundle and add it to the CIB
@@ -109,6 +113,7 @@ def append_new(
     dict network_options -- network options
     list of dict port_map -- list of port mapping options
     list of dict storage_map -- list of storage mapping options
+    dict meta_attributes -- meta attributes
     """
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
     # TODO create the proper element once more container_types are supported
@@ -132,6 +137,8 @@ def append_new(
         _append_storage_map(
             storage_element, id_provider, bundle_id, storage_map_options
         )
+    if meta_attributes:
+        append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
     return bundle_element
 
 def validate_update(
@@ -203,7 +210,8 @@ def validate_update(
 
 def update(
     id_provider, bundle_el, container_options, network_options,
-    port_map_add, port_map_remove, storage_map_add, storage_map_remove
+    port_map_add, port_map_remove, storage_map_add, storage_map_remove,
+    meta_attributes
 ):
     """
     Modify an existing bundle (does not touch encapsulated resources)
@@ -216,6 +224,7 @@ def update(
     list of string port_map_remove -- list of port mapping ids to remove
     list of dict storage_map_add -- list of storage mapping options to add
     list of string storage_map_remove -- list of storage mapping ids to remove
+    dict meta_attributes -- meta attributes to update
     """
     bundle_id = bundle_el.get("id")
     update_attributes_remove_empty(
@@ -253,7 +262,11 @@ def update(
             storage_element, id_provider, bundle_id, storage_map_options
         )
 
+    if meta_attributes:
+        arrange_first_meta_attributes(bundle_el, meta_attributes)
+
     # remove empty elements with no attributes
+    # meta attributes are handled in their own function
     for element in (network_element, storage_element):
         if len(element) < 1 and not element.attrib:
             element.getparent().remove(element)

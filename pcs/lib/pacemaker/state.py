@@ -201,6 +201,25 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
         for role, nodes in roles_with_nodes.items()
     ])
 
+def info_resource_state(cluster_state, resource_id):
+    roles_with_nodes = _get_primitive_roles_with_nodes(
+        _get_primitives_for_state_check(
+            cluster_state,
+            resource_id,
+            expected_running=True
+        )
+    )
+    if not roles_with_nodes:
+        return reports.resource_does_not_run(
+            resource_id,
+            severities.INFO
+        )
+    return reports.resource_running_on_nodes(
+        resource_id,
+        roles_with_nodes,
+        severities.INFO
+    )
+
 def ensure_resource_state(expected_running, cluster_state, resource_id):
     roles_with_nodes = _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
@@ -244,18 +263,25 @@ def is_resource_managed(cluster_state, resource_id):
         for primitive in primitive_list:
             if is_false(primitive.attrib.get("managed", "")):
                 return False
-            clone = find_parent(primitive, ["clone"])
-            if clone is not None and is_false(clone.attrib.get("managed", "")):
+            parent = find_parent(primitive, ["clone", "bundle"])
+            if (
+                parent is not None
+                and
+                is_false(parent.attrib.get("managed", ""))
+            ):
                 return False
         return True
 
-    clone_list = cluster_state.xpath(
-        """.//clone[@id="{0}"]""".format(resource_id)
+    parent_list = cluster_state.xpath("""
+        .//clone[@id="{0}"]
+        |
+        .//bundle[@id="{0}"]
+        """.format(resource_id)
     )
-    for clone in clone_list:
-        if is_false(clone.attrib.get("managed", "")):
+    for parent in parent_list:
+        if is_false(parent.attrib.get("managed", "")):
             return False
-        for primitive in clone.xpath(".//resource"):
+        for primitive in parent.xpath(".//resource"):
             if is_false(primitive.attrib.get("managed", "")):
                 return False
         return True
