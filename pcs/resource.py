@@ -20,7 +20,7 @@ from pcs import (
 )
 from pcs.settings import pacemaker_wait_timeout_status as \
     PACEMAKER_WAIT_TIMEOUT_STATUS
-import pcs.lib.cib.acl as lib_acl
+from pcs.cli.common.console_report import error, warn
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.cli.resource.parse_args import (
@@ -28,16 +28,21 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
-from pcs.lib.errors import LibraryError
+import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import guest_node
-import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs.lib.pacemaker.values import timeout_to_seconds
-import pcs.lib.resource_agent as lib_ra
-from pcs.cli.common.console_report import error, warn
 from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
+from pcs.lib.errors import LibraryError
+import pcs.lib.pacemaker.live as lib_pacemaker
+from pcs.lib.pacemaker.state import (
+    get_cluster_state_dom,
+    _get_primitive_roles_with_nodes,
+    _get_primitives_for_state_check,
+)
+from pcs.lib.pacemaker.values import timeout_to_seconds
+import pcs.lib.resource_agent as lib_ra
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
@@ -1432,6 +1437,18 @@ def resource_master_create(dom, argv, update=False, master_id=None):
     return dom, master_element.getAttribute("id")
 
 def resource_remove(resource_id, output=True, is_remove_remote_context=False):
+    def is_bundle_running(bundle_id):
+        roles_with_nodes = _get_primitive_roles_with_nodes(
+            _get_primitives_for_state_check(
+                get_cluster_state_dom(
+                    lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
+                ),
+                bundle_id,
+                expected_running=True
+            )
+        )
+        return True if roles_with_nodes else False
+
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
@@ -1441,6 +1458,40 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     bundle = utils.dom_get_bundle(dom, resource_id)
     if bundle is not None:
         primitive_el = utils.dom_get_resource_bundle(bundle)
+        if primitive_el is None:
+            print("Deleting bundle '{0}'".format(resource_id))
+        else:
+            print(
+                "Deleting bundle '{0}' and its inner resource '{1}'".format(
+                    resource_id,
+                    primitive_el.getAttribute("id")
+                )
+            )
+
+        if (
+            "--force" not in utils.pcs_options
+            and
+            not utils.usefile
+            and
+            is_bundle_running(resource_id)
+        ):
+            sys.stdout.write("Stopping bundle '{0}'... ".format(resource_id))
+            sys.stdout.flush()
+            lib = utils.get_library_wrapper()
+            lib.resource.disable([resource_id], False)
+            output, retval = utils.run(["crm_resource", "--wait"])
+            # pacemaker which supports bundles supports --wait as well
+            if is_bundle_running(resource_id):
+                msg = [
+                    "Unable to stop: %s before deleting "
+                    "(re-run with --force to force deletion)"
+                    % resource_id
+                ]
+                if retval != 0 and output:
+                    msg.append("\n" + output)
+                utils.err("\n".join(msg).strip())
+            print("Stopped")
+
         if primitive_el is not None:
             resource_remove(primitive_el.getAttribute("id"))
         utils.replace_cib_configuration(
@@ -1498,7 +1549,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
 
-    # now we know resource is not a group, a clone nor a master
+    # now we know resource is not a group, a clone, a master nor a bundle
     # because of the conditions above
     if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
         utils.err("Resource '{0}' does not exist.".format(resource_id))
@@ -1517,7 +1568,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         and
         utils.resource_running_on(resource_id)["is_running"]
     ):
-        sys.stdout.write("Attempting to stop: "+ resource_id + "...")
+        sys.stdout.write("Attempting to stop: "+ resource_id + "... ")
         sys.stdout.flush()
         lib = utils.get_library_wrapper()
         # we are not using wait from disable command, because if wait is not

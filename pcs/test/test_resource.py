@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 import re
 import shutil
+from textwrap import dedent
 
 from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin
@@ -4719,7 +4720,11 @@ class BundleCommon(
 class BundleDeleteTest(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
-        self.assert_effect("resource delete B", "<resources/>")
+        self.assert_effect(
+            "resource delete B",
+            "<resources/>",
+            "Deleting bundle 'B'\n"
+        )
 
     def test_with_primitive(self):
         self.fixture_bundle("B")
@@ -4727,7 +4732,10 @@ class BundleDeleteTest(BundleCommon):
         self.assert_effect(
             "resource delete B",
             "<resources/>",
-            "Deleting Resource - R\n",
+            dedent("""\
+                Deleting bundle 'B' and its inner resource 'R'
+                Deleting Resource - R
+            """),
         )
 
     def test_remove_primitive(self):
