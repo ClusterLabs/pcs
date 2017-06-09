@@ -1080,7 +1080,7 @@ function update_create_cluster_dialog(nodes, version_info) {
     ajax_wrapper({
       type: "POST",
       url: "/manage/newcluster",
-      timeout: pcs_timeout,
+      timeout: 60*1000,
       data: $('#create_new_cluster_form').serialize(),
       success: function(data) {
         if (data) {
@@ -1090,7 +1090,17 @@ function update_create_cluster_dialog(nodes, version_info) {
         Pcs.update();
       },
       error: function (xhr, status, error) {
-        alert(xhr.responseText);
+        var err_msg = "";
+        if ((status == "timeout") || ($.trim(error) == "timeout")) {
+          err_msg = (
+            "Operation takes longer to complete than expected. " +
+            "It may continue running in the background. Later, you can try " +
+            "to add this cluster as existing one."
+          );
+        } else {
+          err_msg = xhr.responseText;
+        }
+        alert(err_msg);
         $("#create_cluster_submit_btn").button("option", "disabled", false);
       }
     });
