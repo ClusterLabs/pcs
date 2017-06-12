@@ -104,6 +104,34 @@ class PlainStonith(ResourceTest):
             </resources>"""
         )
 
+    def test_debug_and_verbose_allowed(self):
+        self.assert_effect(
+            "stonith create S fence_apc login=l ipaddr=i verbose=v debug=d",
+            """<resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug"
+                            name="debug" value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ipaddr"
+                            name="ipaddr" value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login"
+                            name="login" value="l"
+                        />
+                        <nvpair id="S-instance_attributes-verbose"
+                            name="verbose" value="v"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+
 
 class WithMeta(ResourceTest):
     @need_load_xvm_fence_agent

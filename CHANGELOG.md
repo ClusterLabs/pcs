@@ -26,6 +26,8 @@
   unreachable first time ([rhbz#1176018])
 - Fixed "Error: Unable to read /etc/corosync/corosync.conf" when running
   `pcs resource create`([rhbz#1386114])
+- It is now possible to set "debug" and "verbose" parameters of stonith devices
+  ([rhbz#1432283])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
@@ -36,6 +38,7 @@
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
+[rhbz#1432283]: https://bugzilla.redhat.com/show_bug.cgi?id=1432283
 [rhbz#1447910]: https://bugzilla.redhat.com/show_bug.cgi?id=1447910
 
 

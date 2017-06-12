@@ -834,9 +834,7 @@ class StonithAgent(CrmAgent):
         # We don't allow the user to change these options which are only
         # intended to be used interactively on command line.
         remove_parameters = frozenset([
-            "debug",
             "help",
-            "verbose",
             "version",
         ])
         filtered = []
