@@ -888,7 +888,7 @@ class Bundle(ResourceTest):
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
-            "resource bundle create {0} container image=pcs:test".format(
+            "resource bundle create {0} container docker image=pcs:test".format(
                 name
             )
         )

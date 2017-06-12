@@ -29,6 +29,8 @@
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
+- It is now mandatory to specify container type in the "resource bundle create"
+  command
 
 [rhbz#1165821]: https://bugzilla.redhat.com/show_bug.cgi?id=1165821
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018

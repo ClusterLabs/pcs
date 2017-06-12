@@ -41,7 +41,7 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
 
     def test_success(self):
         self.assert_effect(
-            "resource bundle create B1 container image=pcs:test",
+            "resource bundle create B1 container docker image=pcs:test",
             """
                 <resources>
                     <bundle id="B1">
@@ -59,7 +59,7 @@ class BundleCreate(BundleCreateCommon):
 
     def test_minimal(self):
         self.assert_effect(
-            "resource bundle create B1 container image=pcs:test",
+            "resource bundle create B1 container docker image=pcs:test",
             """
                 <resources>
                     <bundle id="B1">
@@ -73,7 +73,8 @@ class BundleCreate(BundleCreateCommon):
         self.assert_effect(
             """
                 resource bundle create B1
-                container replicas=4 replicas-per-host=2 run-command=/bin/true
+                container docker replicas=4 replicas-per-host=2
+                    run-command=/bin/true
                 port-map port=1001
                 meta target-role=Stopped
                 network control-port=12345 host-interface=eth0 host-netmask=24
@@ -171,15 +172,24 @@ class BundleCreate(BundleCreateCommon):
             stdout_start="\nUsage: pcs resource bundle create...\n"
         )
 
-    def test_fail_when_missing_required(self):
+    def test_fail_when_missing_container_type(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1",
+            "Error: '' is not a valid container type value, use docker\n"
+        )
+
+    def test_fail_when_missing_required(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource bundle create B1 container docker",
             "Error: required container option 'image' is missing\n"
         )
 
     def test_fail_on_unknown_option(self):
         self.assert_pcs_fail(
-            "resource bundle create B1 container image=pcs:test extra=option",
+            """
+                resource bundle create B1 container docker image=pcs:test
+                extra=option
+            """,
             "Error: invalid container option 'extra', allowed options are: "
                 "image, masters, network, options, replicas, replicas-per-host,"
                 " run-command, use --force to override\n"
@@ -192,8 +202,8 @@ class BundleCreate(BundleCreateCommon):
         # supported by pacemaker and so the command fails.
         self.assert_pcs_fail(
             """
-                resource bundle create B1 container image=pcs:test extra=option
-                --force
+                resource bundle create B1 container docker image=pcs:test
+                extra=option --force
             """
             ,
             stdout_start="Error: Unable to update cib\n"
@@ -201,7 +211,7 @@ class BundleCreate(BundleCreateCommon):
 
     def test_more_errors(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource bundle create B#1 container replicas=x",
+            "resource bundle create B#1 container docker replicas=x",
             outdent(
                 """\
                 Error: invalid bundle name 'B#1', '#' is not a valid character for a bundle name
@@ -239,25 +249,25 @@ class BundleUpdate(BundleCreateCommon):
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
-            "resource bundle create {0} container image=pcs:test".format(
+            "resource bundle create {0} container docker image=pcs:test".format(
                 name
             )
         )
 
     def fixture_bundle_complex(self, name):
         self.assert_pcs_success(
-            (
-                "resource bundle create {0} "
-                "container image=pcs:test replicas=4 masters=2 "
-                "network control-port=12345 host-interface=eth0 host-netmask=24 "
-                "port-map internal-port=1000 port=2000 "
-                "port-map internal-port=1001 port=2001 "
-                "port-map internal-port=1002 port=2002 "
-                "storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b "
-                "storage-map source-dir=/tmp/docker2a target-dir=/tmp/docker2b "
-                "storage-map source-dir=/tmp/docker3a target-dir=/tmp/docker3b "
-                "meta priority=15 resource-stickiness=100 is-managed=false "
-            ).format(name)
+            ("""
+                resource bundle create {0}
+                container docker image=pcs:test replicas=4 masters=2
+                network control-port=12345 host-interface=eth0 host-netmask=24
+                port-map internal-port=1000 port=2000
+                port-map internal-port=1001 port=2001
+                port-map internal-port=1002 port=2002
+                storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
+                storage-map source-dir=/tmp/docker2a target-dir=/tmp/docker2b
+                storage-map source-dir=/tmp/docker3a target-dir=/tmp/docker3b
+                meta priority=15 resource-stickiness=100 is-managed=false
+            """).format(name)
         )
 
     def test_fail_when_missing_args_1(self):
@@ -415,7 +425,7 @@ class BundleShow(TestCase, AssertPcsMixin):
 
     def test_minimal(self):
         self.assert_pcs_success(
-            "resource bundle create B1 container image=pcs:test"
+            "resource bundle create B1 container docker image=pcs:test"
         )
         self.assert_pcs_success("resource show B1", outdent(
             """\
@@ -428,7 +438,8 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container image=pcs:test masters=2 replicas=4 options='a b c'
+                container docker image=pcs:test masters=2 replicas=4
+                    options='a b c'
             """
         )
         self.assert_pcs_success("resource show B1", outdent(
@@ -442,7 +453,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container image=pcs:test
+                container docker image=pcs:test
                 network host-interface=eth0 host-netmask=24 control-port=12345
             """
         )
@@ -458,7 +469,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container image=pcs:test
+                container docker image=pcs:test
                 port-map id=B1-port-map-1001 internal-port=2002 port=2000
                 port-map range=3000-3300
             """
@@ -477,7 +488,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container image=pcs:test
+                container docker image=pcs:test
                 storage-map source-dir=/tmp/docker1a target-dir=/tmp/docker1b
                 storage-map id=my-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
@@ -494,9 +505,10 @@ class BundleShow(TestCase, AssertPcsMixin):
         ))
 
     def test_meta(self):
-        self.assert_pcs_success(
-            "resource bundle create B1 container image=pcs:test --disabled"
-        )
+        self.assert_pcs_success("""
+            resource bundle create B1 container docker image=pcs:test
+            --disabled
+        """)
         self.assert_pcs_success("resource show B1", outdent(
             # pylint:disable=trailing-whitespace
             """\
@@ -508,7 +520,7 @@ class BundleShow(TestCase, AssertPcsMixin):
 
     def test_resource(self):
         self.assert_pcs_success(
-            "resource bundle create B1 container image=pcs:test"
+            "resource bundle create B1 container docker image=pcs:test"
         )
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
@@ -526,7 +538,8 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container image=pcs:test masters=2 replicas=4 options='a b c'
+                container docker image=pcs:test masters=2 replicas=4
+                    options='a b c'
                 network host-interface=eth0 host-netmask=24 control-port=12345
                 port-map id=B1-port-map-1001 internal-port=2002 port=2000
                 port-map range=3000-3300

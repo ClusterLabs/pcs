@@ -84,7 +84,7 @@ def _parse_bundle_groups(arg_list):
 def parse_bundle_create_options(arg_list):
     groups = _parse_bundle_groups(arg_list)
     container_options = groups.get("container", [])
-    container_type = None
+    container_type = ""
     if container_options and "=" not in container_options[0]:
         container_type = container_options.pop(0)
     parts = {
@@ -101,8 +101,6 @@ def parse_bundle_create_options(arg_list):
         ],
         "meta": prepare_options(groups.get("meta", []))
     }
-    if not parts["container_type"]:
-        parts["container_type"] = "docker"
     return parts
 
 def _split_bundle_map_update_op_and_options(

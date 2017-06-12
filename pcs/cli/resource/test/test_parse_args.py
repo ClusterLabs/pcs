@@ -215,7 +215,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             [],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -229,9 +229,9 @@ class ParseBundleCreateOptions(TestCase):
 
     def test_container_type(self):
         self.assert_produce(
-            ["container", "lxc"],
+            ["container", "docker"],
             {
-                "container_type": "lxc",
+                "container_type": "docker",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -244,7 +244,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["container", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {"a": "b", "c": "d"},
                 "network": {},
                 "port_map": [],
@@ -255,9 +255,9 @@ class ParseBundleCreateOptions(TestCase):
 
     def test_container_type_and_options(self):
         self.assert_produce(
-            ["container", "lxc", "a=b", "c=d"],
+            ["container", "docker", "a=b", "c=d"],
             {
-                "container_type": "lxc",
+                "container_type": "docker",
                 "container": {"a": "b", "c": "d"},
                 "network": {},
                 "port_map": [],
@@ -279,7 +279,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["network", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {"a": "b", "c": "d"},
                 "port_map": [],
@@ -309,7 +309,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["port-map", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}],
@@ -322,7 +322,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["port-map", "a=b", "c=d", "port-map", "e=f"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [{"a": "b", "c": "d"}, {"e": "f"}],
@@ -349,7 +349,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["storage-map", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -362,7 +362,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["storage-map", "a=b", "c=d", "storage-map", "e=f"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -381,7 +381,7 @@ class ParseBundleCreateOptions(TestCase):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
             {
-                "container_type": "docker",
+                "container_type": "",
                 "container": {},
                 "network": {},
                 "port_map": [],
@@ -402,7 +402,7 @@ class ParseBundleCreateOptions(TestCase):
     def test_all(self):
         self.assert_produce(
             [
-                "container", "lxc", "a=b", "c=d",
+                "container", "docker", "a=b", "c=d",
                 "network", "e=f", "g=h",
                 "port-map", "i=j", "k=l",
                 "port-map", "m=n", "o=p",
@@ -411,7 +411,7 @@ class ParseBundleCreateOptions(TestCase):
                 "meta", "y=z", "A=B",
             ],
             {
-                "container_type": "lxc",
+                "container_type": "docker",
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
@@ -427,7 +427,7 @@ class ParseBundleCreateOptions(TestCase):
                 "meta", "y=z",
                 "port-map", "i=j", "k=l",
                 "network", "e=f",
-                "container", "lxc", "a=b",
+                "container", "docker", "a=b",
                 "storage-map", "u=v", "w=x",
                 "port-map", "m=n", "o=p",
                 "meta", "A=B",
@@ -435,7 +435,7 @@ class ParseBundleCreateOptions(TestCase):
                 "container", "c=d",
             ],
             {
-                "container_type": "lxc",
+                "container_type": "docker",
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
                 "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
