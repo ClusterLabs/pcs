@@ -7,10 +7,10 @@ from __future__ import (
 
 from pcs.common import report_codes
 from pcs.lib.commands import resource
-from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
 import pcs.lib.commands.test.resource.fixture as fixture
+from pcs.test.tools.command_env import get_env_tools
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.pcs_unittest import TestCase
 
 
 fixture_primitive_cib_managed = """
@@ -654,373 +654,413 @@ def fixture_report_no_monitors(resource):
         None
     )
 
+class UnmanagePrimitiveNew(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
 
-class UnmanagePrimitive(ResourceWithoutStateTest):
     def test_nonexistent_resource(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_primitive_cib_managed)
-            )
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed)
         )
 
-        assert_raise_library_error(
-            lambda: resource.unmanage(self.env, ["B"]),
-            fixture.report_not_found("B", "resources")
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.unmanage(self.env_assist.get_env(), ["B"]),
+            [
+                fixture.report_not_found("B", "resources")
+            ],
+            expected_in_processor=False
         )
-        self.runner.assert_everything_launched()
 
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_primitive_cib_unmanaged
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed)
+            .cib.push(resources=fixture_primitive_cib_unmanaged)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_unmanaged,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_primitive_cib_unmanaged
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged)
+            .cib.push(resources=fixture_primitive_cib_unmanaged)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
 
-class ManagePrimitive(ResourceWithoutStateTest):
+class ManagePrimitive(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_nonexistent_resource(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(fixture_primitive_cib_unmanaged)
-            )
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged)
         )
 
-        assert_raise_library_error(
-            lambda: resource.manage(self.env, ["B"]),
-            fixture.report_not_found("B", "resources")
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.manage(self.env_assist.get_env(), ["B"]),
+            [
+                fixture.report_not_found("B", "resources")
+            ],
+            expected_in_processor=False
         )
-        self.runner.assert_everything_launched()
 
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_unmanaged,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_primitive_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged)
+            .cib.push(resources=fixture_primitive_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_managed(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_managed,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_primitive_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed)
+            .cib.push(resources=fixture_primitive_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
 
-class UnmanageGroup(ResourceWithoutStateTest):
+class UnmanageGroup(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_group_cib_managed,
-            lambda: resource.unmanage(self.env, ["A1"]),
-            fixture_group_cib_unmanaged_resource
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_managed)
+            .cib.push(resources=fixture_group_cib_unmanaged_resource)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        self.assert_command_effect(
-            fixture_group_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_group_cib_unmanaged_all_resources
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_managed)
+            .cib.push(resources=fixture_group_cib_unmanaged_all_resources)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
 
-class ManageGroup(ResourceWithoutStateTest):
+class ManageGroup(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_group_cib_unmanaged_all_resources,
-            lambda: resource.manage(self.env, ["A2"]),
-            fixture_group_cib_unmanaged_resource
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_unmanaged_all_resources)
+            .cib.push(resources=fixture_group_cib_unmanaged_resource)
         )
+        resource.manage(self.env_assist.get_env(), ["A2"])
 
     def test_primitive_unmanaged_group(self):
-        self.assert_command_effect(
-            fixture_group_cib_unmanaged_resource_and_group,
-            lambda: resource.manage(self.env, ["A1"]),
-            fixture_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_unmanaged_resource_and_group)
+            .cib.push(resources=fixture_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        self.assert_command_effect(
-            fixture_group_cib_unmanaged_all_resources,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_unmanaged_all_resources)
+            .cib.push(resources=fixture_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_group_unmanaged_group(self):
-        self.assert_command_effect(
-            fixture_group_cib_unmanaged_resource_and_group,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_group_cib_unmanaged_resource_and_group)
+            .cib.push(resources=fixture_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
 
-class UnmanageClone(ResourceWithoutStateTest):
+class UnmanageClone(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_clone_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_managed)
+            .cib.push(resources=fixture_clone_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        self.assert_command_effect(
-            fixture_clone_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-clone"]),
-            fixture_clone_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_managed)
+            .cib.push(resources=fixture_clone_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-clone"])
 
 
-class ManageClone(ResourceWithoutStateTest):
+class ManageClone(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_clone,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_clone)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_both)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_clone,
-            lambda: resource.manage(self.env, ["A-clone"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_clone)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A-clone"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_clone_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A-clone"]),
-            fixture_clone_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_unmanaged_both)
+            .cib.push(resources=fixture_clone_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-clone"])
 
 
-class UnmanageMaster(ResourceWithoutStateTest):
+class UnmanageMaster(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_master_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_master_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_managed)
+            .cib.push(resources=fixture_master_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_master(self):
-        self.assert_command_effect(
-            fixture_master_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-master"]),
-            fixture_master_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_managed)
+            .cib.push(resources=fixture_master_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-master"])
 
 
-class ManageMaster(ResourceWithoutStateTest):
+class ManageMaster(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_master(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_master,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_master)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_both)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_master(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_master,
-            lambda: resource.manage(self.env, ["A-master"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_master)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-master"])
 
     def test_master_unmanaged_primitive(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A-master"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-master"])
 
     def test_master_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_master_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A-master"]),
-            fixture_master_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_unmanaged_both)
+            .cib.push(resources=fixture_master_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-master"])
 
 
-class UnmanageClonedGroup(ResourceWithoutStateTest):
+class UnmanageClonedGroup(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed,
-            lambda: resource.unmanage(self.env, ["A1"]),
-            fixture_clone_group_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed)
+            .cib.push(resources=fixture_clone_group_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_clone_group_cib_unmanaged_all_primitives
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed)
+            .cib.push(resources=fixture_clone_group_cib_unmanaged_all_primitives)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-clone"]),
-            fixture_clone_group_cib_unmanaged_all_primitives
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed)
+            .cib.push(resources=fixture_clone_group_cib_unmanaged_all_primitives)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-clone"])
 
 
-class ManageClonedGroup(ResourceWithoutStateTest):
+class ManageClonedGroup(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A1"]),
-            fixture_clone_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_clone_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A1"])
 
     def test_primitive_unmanaged_all(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_everything,
-            lambda: resource.manage(self.env, ["A2"]),
-            fixture_clone_group_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_unmanaged_everything)
+            .cib.push(resources=fixture_clone_group_cib_unmanaged_primitive)
         )
+        resource.manage(self.env_assist.get_env(), ["A2"])
 
     def test_group(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_all_primitives,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_clone_group_cib_managed
+        (self.config.runner
+            .cib.load(
+                resources=fixture_clone_group_cib_unmanaged_all_primitives
+            )
+            .cib.push(resources=fixture_clone_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_group_unmanaged_all(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_everything,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_clone_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_unmanaged_everything)
+            .cib.push(resources=fixture_clone_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_clone,
-            lambda: resource.manage(self.env, ["A-clone"]),
-            fixture_clone_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_unmanaged_clone)
+            .cib.push(resources=fixture_clone_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_all(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_unmanaged_everything,
-            lambda: resource.manage(self.env, ["A-clone"]),
-            fixture_clone_group_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_unmanaged_everything)
+            .cib.push(resources=fixture_clone_group_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-clone"])
 
 
-class UnmanageBundle(ResourceWithoutStateTest):
+class UnmanageBundle(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"]),
-            fixture_bundle_cib_unmanaged_primitive
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_managed)
+            .cib.push(resources=fixture_bundle_cib_unmanaged_primitive)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_bundle(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-bundle"]),
-            fixture_bundle_cib_unmanaged_both
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_managed)
+            .cib.push(resources=fixture_bundle_cib_unmanaged_both)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_empty(self):
-        self.assert_command_effect(
-            fixture_bundle_empty_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-bundle"]),
-            fixture_bundle_empty_cib_unmanaged_bundle
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_empty_cib_managed)
+            .cib.push(resources=fixture_bundle_empty_cib_unmanaged_bundle)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-bundle"])
 
 
-class ManageBundle(ResourceWithoutStateTest):
+class ManageBundle(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_primitive(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_bundle(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_bundle,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_bundle)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_both)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_bundle(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_bundle,
-            lambda: resource.manage(self.env, ["A-bundle"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_bundle)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_unmanaged_primitive(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_primitive,
-            lambda: resource.manage(self.env, ["A-bundle"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_primitive)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_unmanaged_both(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_unmanaged_both,
-            lambda: resource.manage(self.env, ["A-bundle"]),
-            fixture_bundle_cib_managed,
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_unmanaged_both)
+            .cib.push(resources=fixture_bundle_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_empty(self):
-        self.assert_command_effect(
-            fixture_bundle_empty_cib_unmanaged_bundle,
-            lambda: resource.manage(self.env, ["A-bundle"]),
-            fixture_bundle_empty_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_empty_cib_unmanaged_bundle)
+            .cib.push(resources=fixture_bundle_empty_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
 
-class MoreResources(ResourceWithoutStateTest):
+class MoreResources(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     fixture_cib_managed = """
         <resources>
             <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -1073,11 +1113,11 @@ class MoreResources(ResourceWithoutStateTest):
                 </primitive>
             </resources>
         """
-        self.assert_command_effect(
-            self.fixture_cib_managed,
-            lambda: resource.unmanage(self.env, ["A", "C"]),
-            fixture_cib_unmanaged
+        (self.config.runner
+            .cib.load(resources=self.fixture_cib_managed)
+            .cib.push(resources=fixture_cib_unmanaged)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A", "C"])
 
     def test_success_manage(self):
         fixture_cib_managed = """
@@ -1094,153 +1134,174 @@ class MoreResources(ResourceWithoutStateTest):
                 </primitive>
             </resources>
         """
-        self.assert_command_effect(
-            self.fixture_cib_unmanaged,
-            lambda: resource.manage(self.env, ["A", "C"]),
-            fixture_cib_managed
+        (self.config.runner
+            .cib.load(resources=self.fixture_cib_unmanaged)
+            .cib.push(resources=fixture_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A", "C"])
 
     def test_bad_resource_unmanage(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(self.fixture_cib_managed)
-            )
+        (self.config.runner
+            .cib.load(resources=self.fixture_cib_managed)
         )
 
-        assert_raise_library_error(
-            lambda: resource.unmanage(self.env, ["B", "X", "Y", "A"]),
-            fixture.report_not_found("X", "resources"),
-            fixture.report_not_found("Y", "resources"),
+        self.env_assist.assert_raise_library_error(
+            lambda:
+            resource.unmanage(self.env_assist.get_env(), ["B", "X", "Y", "A"]),
+            [
+                fixture.report_not_found("X", "resources"),
+                fixture.report_not_found("Y", "resources"),
+            ],
+            expected_in_processor=False
         )
-        self.runner.assert_everything_launched()
 
     def test_bad_resource_enable(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                fixture.cib_resources(self.fixture_cib_unmanaged)
-            )
+        (self.config.runner
+            .cib.load(resources=self.fixture_cib_unmanaged)
         )
 
-        assert_raise_library_error(
-            lambda: resource.manage(self.env, ["B", "X", "Y", "A"]),
-            fixture.report_not_found("X", "resources"),
-            fixture.report_not_found("Y", "resources"),
+        self.env_assist.assert_raise_library_error(
+            lambda:
+            resource.manage(self.env_assist.get_env(), ["B", "X", "Y", "A"]),
+            [
+                fixture.report_not_found("X", "resources"),
+                fixture.report_not_found("Y", "resources"),
+            ],
+            expected_in_processor=False
         )
-        self.runner.assert_everything_launched()
 
 
-class WithMonitor(ResourceWithoutStateTest):
+class WithMonitor(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_unmanage_noop(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_managed,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_primitive_cib_unmanaged
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed)
+            .cib.push(resources=fixture_primitive_cib_unmanaged)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_manage_noop(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_unmanaged,
-            lambda: resource.manage(self.env, ["A"], True),
-            fixture_primitive_cib_managed
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged)
+            .cib.push(resources=fixture_primitive_cib_managed)
         )
+        resource.manage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_primitive_cib_unmanaged_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed_op_enabled)
+            .cib.push(resources=fixture_primitive_cib_unmanaged_op_disabled)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_manage(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_unmanaged_op_disabled,
-            lambda: resource.manage(self.env, ["A"], True),
-            fixture_primitive_cib_managed_op_enabled
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged_op_disabled)
+            .cib.push(resources=fixture_primitive_cib_managed_op_enabled)
         )
+        resource.manage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_enabled_monitors(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], False),
-            fixture_primitive_cib_unmanaged_op_enabled
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_managed_op_enabled)
+            .cib.push(resources=fixture_primitive_cib_unmanaged_op_enabled)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], False)
 
     def test_manage_disabled_monitors(self):
-        self.assert_command_effect(
-            fixture_primitive_cib_unmanaged_op_disabled,
-            lambda: resource.manage(self.env, ["A"], False),
-            fixture_primitive_cib_managed_op_disabled,
-            [
-                fixture_report_no_monitors("A"),
-            ]
+        (self.config.runner
+            .cib.load(resources=fixture_primitive_cib_unmanaged_op_disabled)
+            .cib.push(resources=fixture_primitive_cib_managed_op_disabled)
         )
+        resource.manage(self.env_assist.get_env(), ["A"], False)
+        self.env_assist.assert_reports([
+            fixture_report_no_monitors("A"),
+        ])
 
     def test_unmanage_clone(self):
-        self.assert_command_effect(
-            fixture_clone_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A-clone"], True),
-            fixture_clone_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_managed_op_enabled)
+            .cib.push(
+                resources=fixture_clone_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-clone"], True)
 
     def test_unmanage_in_clone(self):
-        self.assert_command_effect(
-            fixture_clone_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_clone_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_clone_cib_managed_op_enabled)
+            .cib.push(
+                resources=fixture_clone_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_master(self):
-        self.assert_command_effect(
-            fixture_master_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A-master"], True),
-            fixture_master_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_managed_op_enabled)
+            .cib.push(
+                resources=fixture_master_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-master"], True)
 
     def test_unmanage_in_master(self):
-        self.assert_command_effect(
-            fixture_master_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_master_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_master_cib_managed_op_enabled)
+            .cib.push(
+                resources=fixture_master_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_clone_with_group(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A-clone"], True),
-            fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed_op_enabled)
+            .cib.push(resources=
+                fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-clone"], True)
 
     def test_unmanage_group_in_clone(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed_op_enabled)
+            .cib.push(resources=
+                fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_in_cloned_group(self):
-        self.assert_command_effect(
-            fixture_clone_group_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A1"], True),
-            fixture_clone_group_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_clone_group_cib_managed_op_enabled)
+            .cib.push(resources=
+                fixture_clone_group_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A1"], True)
 
     def test_unmanage_bundle(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A-bundle"], True),
-            fixture_bundle_cib_unmanaged_both_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_managed_op_enabled)
+            .cib.push(resources=fixture_bundle_cib_unmanaged_both_op_disabled)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-bundle"], True)
 
     def test_unmanage_in_bundle(self):
-        self.assert_command_effect(
-            fixture_bundle_cib_managed_op_enabled,
-            lambda: resource.unmanage(self.env, ["A"], True),
-            fixture_bundle_cib_unmanaged_primitive_op_disabled
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_cib_managed_op_enabled)
+            .cib.push(
+                resources=fixture_bundle_cib_unmanaged_primitive_op_disabled
+            )
         )
+        resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_bundle_empty(self):
-        self.assert_command_effect(
-            fixture_bundle_empty_cib_managed,
-            lambda: resource.unmanage(self.env, ["A-bundle"], True),
-            fixture_bundle_empty_cib_unmanaged_bundle
+        (self.config.runner
+            .cib.load(resources=fixture_bundle_empty_cib_managed)
+            .cib.push(resources=fixture_bundle_empty_cib_unmanaged_bundle)
         )
+        resource.unmanage(self.env_assist.get_env(), ["A-bundle"], True)

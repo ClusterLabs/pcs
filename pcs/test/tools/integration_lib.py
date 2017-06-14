@@ -63,6 +63,16 @@ class Call(object):
     def result(self):
         return self.stdout, self.stderr, self.returncode
 
+    def __repr__(self):
+        #the "dict" with name and id is "written" inside string because in
+        #python3 the order is not
+        return str("<{0}.{1} '{2}' returncode='{3}'>").format(
+            self.__module__,
+            self.__class__.__name__,
+            self.command,
+            self.returncode
+        )
+
 
 class Runner(object):
     def __init__(self):

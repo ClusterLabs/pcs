@@ -27,8 +27,12 @@ class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
         if errors and self.raise_on_errors:
             raise LibraryError(*errors)
 
-    def assert_reports(self, report_info_list):
-        assert_report_item_list_equal(self.report_item_list, report_info_list)
+    def assert_reports(self, report_info_list, hint=""):
+        assert_report_item_list_equal(
+            self.report_item_list,
+            report_info_list,
+            hint=hint
+        )
 
 
 class MockCurl(object):
@@ -73,4 +77,3 @@ class MockCurl(object):
         if pycurl.DEBUGFUNCTION in self._opts:
             for msg_type, msg in self._debug_output_list:
                 self._opts[pycurl.DEBUGFUNCTION](msg_type, msg)
-

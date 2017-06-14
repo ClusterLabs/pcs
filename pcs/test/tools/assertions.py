@@ -265,19 +265,28 @@ def assert_report_item_equal(real_report_item, report_item_info):
             )
         )
 
-def assert_report_item_list_equal(real_report_item_list, report_info_list):
+def assert_report_item_list_equal(
+    real_report_item_list, report_info_list, hint=""
+):
     for report_item in real_report_item_list:
         report_info_list.remove(
             __find_report_info(report_info_list, report_item)
         )
     if report_info_list:
-        raise AssertionError(
-            "LibraryError is missing expected ReportItems ("
-            +str(len(report_info_list))+"):\n"
-            + "\n".join(map(repr, report_info_list))
+        def format_items(item_type, item_list):
+            caption = "{0} ReportItems({1})".format(item_type, len(item_list))
+            return "{0}\n{1}\n{2}".format(
+                caption,
+                "-"*len(caption),
+                "\n".join(map(repr, item_list))
+            )
 
-            + "\nreal ReportItems ("+str(len(real_report_item_list))+"):\n"
-            + "\n".join(map(repr, real_report_item_list))
+        raise AssertionError(
+            "\nExpected LibraryError is missing\n{0}\n\n{1}\n\n{2}".format(
+                "{0}\n".format(hint) if hint else "",
+                format_items("expected", report_info_list),
+                format_items("real", real_report_item_list),
+            )
         )
 
 def assert_raise_library_error(callableObj, *report_info_list):

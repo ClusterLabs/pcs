@@ -4,95 +4,114 @@ from __future__ import (
     print_function,
 )
 
+from functools import partial
 from textwrap import dedent
 
+import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.common import report_codes
 from pcs.lib.commands import resource
-from pcs.lib.commands.test.resource.common import ResourceWithoutStateTest
-import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
+from pcs.test.tools.pcs_unittest import TestCase
 
 
-class CommonTest(ResourceWithoutStateTest):
-    fixture_cib_pre = "<resources />"
-    fixture_resources_bundle_simple = """
-        <resources>
-            <bundle id="B1">
-                <docker image="pcs:test" />
-            </bundle>
-        </resources>
-    """
+TIMEOUT=10
 
+get_env_tools = partial(
+    get_env_tools,
+    base_cib_filename="cib-empty-2.8.xml",
+    default_wait_timeout=TIMEOUT
+)
+
+
+def simple_bundle_create(env, wait=TIMEOUT, disabled=False):
+    return resource.bundle_create(
+        env, "B1", "docker",
+        container_options={"image": "pcs:test"},
+        ensure_disabled=disabled,
+        wait=wait,
+    )
+
+fixture_cib_pre = "<resources />"
+fixture_resources_bundle_simple = """
+    <resources>
+        <bundle id="B1">
+            <docker image="pcs:test" />
+        </bundle>
+    </resources>
+"""
+
+class MinimalCreate(TestCase):
     def setUp(self):
-        super(CommonTest, self).setUp()
-        self.cib_base_file = "cib-empty-2.8.xml"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        (self.config.runner
+            .cib.load()
+            .cib.push(
+                resources="""
+                    <resources>
+                        <bundle id="B1">
+                            <docker image="pcs:test" />
+                        </bundle>
+                    </resources>
+                """
+            )
+        )
 
-    def fixture_cib_resources(self, cib):
-        return fixture.cib_resources(cib, cib_base_file=self.cib_base_file)
-
-
-class MinimalCreate(CommonTest):
     def test_success(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={"image": "pcs:test", }
-            ),
-            self.fixture_resources_bundle_simple
-        )
-
-    def test_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
-            lambda: resource.bundle_create(self.env, "B#1", "nonsense"),
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID,
-                {
-                    "invalid_character": "#",
-                    "id": "B#1",
-                    "id_description": "bundle name",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "container type",
-                    "option_value": "nonsense",
-                    "allowed_values": ("docker", ),
-                },
-                None
-            ),
-        )
-        self.runner.assert_everything_launched()
-
-    def test_cib_upgrade(self):
-        self.runner.set_runs(
-            fixture.calls_cib_load_and_upgrade(self.fixture_cib_pre)
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple,
-                cib_base_file=self.cib_base_file
-            )
-        )
-
         resource.bundle_create(
-            self.env, "B1", "docker",
+            self.env_assist.get_env(),
+            "B1", "docker",
             container_options={"image": "pcs:test", }
         )
 
-        self.env.report_processor.assert_reports([
+    def test_errors(self):
+        self.config.runner.remove("push_cib")
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_create(
+                self.env_assist.get_env(), "B#1", "nonsense"
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID,
+                    {
+                        "invalid_character": "#",
+                        "id": "B#1",
+                        "id_description": "bundle name",
+                        "is_first_char": False,
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "container type",
+                        "option_value": "nonsense",
+                        "allowed_values": ("docker", ),
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_cib_upgrade(self):
+        (self.config.runner
+            .cib.load(
+                name="load_cib_old_version",
+                filename="cib-empty.xml",
+                before="load_cib"
+            )
+            .cib.upgrade(before="load_cib")
+        )
+
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={"image": "pcs:test", }
+        )
+
+        self.env_assist.assert_reports([
             (
                 severities.INFO,
                 report_codes.CIB_UPGRADE_SUCCESSFUL,
@@ -101,11 +120,9 @@ class MinimalCreate(CommonTest):
                 None
             ),
         ])
-        self.runner.assert_everything_launched()
 
 
-
-class CreateDocker(CommonTest):
+class CreateDocker(TestCase):
     allowed_options = [
         "image",
         "masters",
@@ -116,32 +133,20 @@ class CreateDocker(CommonTest):
         "run-command",
     ]
 
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
     def test_minimal(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={"image": "pcs:test", }
-            ),
-            self.fixture_resources_bundle_simple
+        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={"image": "pcs:test", }
         )
 
     def test_all_options(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={
-                    "image": "pcs:test",
-                    "masters": "0",
-                    "network": "extra network settings",
-                    "options": "extra options",
-                    "run-command": "/bin/true",
-                    "replicas": "4",
-                    "replicas-per-host": "2",
-                }
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker
@@ -157,16 +162,23 @@ class CreateDocker(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={
+                "image": "pcs:test",
+                "masters": "0",
+                "network": "extra network settings",
+                "options": "extra options",
+                "run-command": "/bin/true",
+                "replicas": "4",
+                "replicas-per-host": "2",
+            }
+        )
 
     def test_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 container_options={
                     "replicas-per-host": "0",
                     "replicas": "0",
@@ -174,136 +186,128 @@ class CreateDocker(CommonTest):
                 },
                 force_options=True
             ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {
-                    "option_type": "container",
-                    "option_names": ["image", ],
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "masters",
-                    "option_value": "-1",
-                    "allowed_values": "a non-negative integer",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "replicas",
-                    "option_value": "0",
-                    "allowed_values": "a positive integer",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "replicas-per-host",
-                    "option_value": "0",
-                    "allowed_values": "a positive integer",
-                },
-                None
-            ),
-        )
-        self.runner.assert_everything_launched()
-
-    def test_empty_image(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={
-                    "image": "",
-                },
-                force_options=True
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "image",
-                    "option_value": "",
-                    "allowed_values": "image name",
-                },
-                None
-            ),
-        )
-        self.runner.assert_everything_launched()
-
-    def test_unknow_option(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={
-                    "image": "pcs:test",
-                    "extra": "option",
-                }
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "container",
-                    "allowed": self.allowed_options,
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-        )
-        self.runner.assert_everything_launched()
-
-    def test_unknow_option_forced(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={
-                    "image": "pcs:test",
-                    "extra": "option",
-                },
-                force_options=True
-            ),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" extra="option" />
-                    </bundle>
-                </resources>
-            """,
             [
                 (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION,
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
                     {
-                        "option_names": ["extra", ],
                         "option_type": "container",
-                        "allowed": self.allowed_options,
+                        "option_names": ["image", ],
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "masters",
+                        "option_value": "-1",
+                        "allowed_values": "a non-negative integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "replicas",
+                        "option_value": "0",
+                        "allowed_values": "a positive integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "replicas-per-host",
+                        "option_value": "0",
+                        "allowed_values": "a positive integer",
                     },
                     None
                 ),
             ]
         )
 
+    def test_empty_image(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_create(
+                self.env_assist.get_env(), "B1", "docker",
+                container_options={
+                    "image": "",
+                },
+                force_options=True
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "image",
+                        "option_value": "",
+                        "allowed_values": "image name",
+                    },
+                    None
+                ),
+            ]
+        )
 
-class CreateWithNetwork(CommonTest):
+    def test_unknow_option(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_create(
+                self.env_assist.get_env(), "B1", "docker",
+                container_options={
+                    "image": "pcs:test",
+                    "extra": "option",
+                }
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["extra", ],
+                        "option_type": "container",
+                        "allowed": self.allowed_options,
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ]
+        )
+
+    def test_unknow_option_forced(self):
+        self.config.runner.cib.push(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" extra="option" />
+                    </bundle>
+                </resources>
+            """
+        )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={
+                "image": "pcs:test",
+                "extra": "option",
+            },
+            force_options=True
+        )
+        self.env_assist.assert_reports([
+            (
+                severities.WARNING,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_names": ["extra", ],
+                    "option_type": "container",
+                    "allowed": self.allowed_options,
+                },
+                None
+            ),
+        ])
+
+
+class CreateWithNetwork(TestCase):
     allowed_options = [
         "control-port",
         "host-interface",
@@ -311,31 +315,22 @@ class CreateWithNetwork(CommonTest):
         "ip-range-start",
     ]
 
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
+
     def test_no_options(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {"image": "pcs:test", },
-                network_options={}
-            ),
-            self.fixture_resources_bundle_simple
+        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {"image": "pcs:test", },
+            network_options={}
         )
 
     def test_all_options(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {"image": "pcs:test", },
-                network_options={
-                    "control-port": "12345",
-                    "host-interface": "eth0",
-                    "host-netmask": "24",
-                    "ip-range-start": "192.168.100.200",
-                }
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -349,16 +344,21 @@ class CreateWithNetwork(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {"image": "pcs:test", },
+            network_options={
+                "control-port": "12345",
+                "host-interface": "eth0",
+                "host-netmask": "24",
+                "ip-range-start": "192.168.100.200",
+            }
+        )
 
     def test_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 {"image": "pcs:test", },
                 network_options={
                     "control-port": "0",
@@ -366,87 +366,88 @@ class CreateWithNetwork(CommonTest):
                     "extra": "option",
                 }
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "control-port",
-                    "option_value": "0",
-                    "allowed_values": "a port number (1-65535)",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "host-netmask",
-                    "option_value": "abc",
-                    "allowed_values": "a number of bits of the mask (1-32)",
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "network",
-                    "allowed": self.allowed_options,
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-        )
-        self.runner.assert_everything_launched()
-
-    def test_options_forced(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {
-                    "image": "pcs:test",
-                },
-                network_options={
-                    "host-netmask": "abc",
-                    "extra": "option",
-                },
-                force_options=True
-            ),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" />
-                        <network host-netmask="abc" extra="option" />
-                    </bundle>
-                </resources>
-            """,
             [
                 (
-                    severities.WARNING,
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "control-port",
+                        "option_value": "0",
+                        "allowed_values": "a port number (1-65535)",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
                     report_codes.INVALID_OPTION_VALUE,
                     {
                         "option_name": "host-netmask",
                         "option_value": "abc",
                         "allowed_values": "a number of bits of the mask (1-32)",
                     },
-                    None
+                    report_codes.FORCE_OPTIONS
                 ),
                 (
-                    severities.WARNING,
+                    severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["extra", ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
                     },
-                    None
+                    report_codes.FORCE_OPTIONS
                 ),
             ]
         )
 
+    def test_options_forced(self):
+        self.config.runner.cib.push(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" />
+                        <network host-netmask="abc" extra="option" />
+                    </bundle>
+                </resources>
+            """
+        )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {
+                "image": "pcs:test",
+            },
+            network_options={
+                "host-netmask": "abc",
+                "extra": "option",
+            },
+            force_options=True
+        )
 
-class CreateWithPortMap(CommonTest):
+        self.env_assist.assert_reports([
+            (
+                severities.WARNING,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "host-netmask",
+                    "option_value": "abc",
+                    "allowed_values": "a number of bits of the mask (1-32)",
+                },
+                None
+            ),
+            (
+                severities.WARNING,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_names": ["extra", ],
+                    "option_type": "network",
+                    "allowed": self.allowed_options,
+                },
+                None
+            ),
+        ])
+
+
+class CreateWithPortMap(TestCase):
     allowed_options = [
         "id",
         "internal-port",
@@ -454,39 +455,21 @@ class CreateWithPortMap(CommonTest):
         "range",
     ]
 
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
     def test_no_options(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {"image": "pcs:test", },
-                port_map=[]
-            ),
-            self.fixture_resources_bundle_simple
+        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {"image": "pcs:test", },
+            port_map=[]
         )
 
     def test_several_mappings_and_handle_their_ids(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {"image": "pcs:test", },
-                port_map=[
-                    {
-                        "port": "1001",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-port-map-1001",
-                        "port": "2000",
-                        "internal-port": "2002",
-                    },
-                    {
-                        "range": "3000-3300",
-                    },
-                ]
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -506,16 +489,29 @@ class CreateWithPortMap(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {"image": "pcs:test", },
+            port_map=[
+                {
+                    "port": "1001",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-port-map-1001",
+                    "port": "2000",
+                    "internal-port": "2002",
+                },
+                {
+                    "range": "3000-3300",
+                },
+            ]
+        )
 
     def test_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 {"image": "pcs:test", },
                 port_map=[
                     {
@@ -537,101 +533,97 @@ class CreateWithPortMap(CommonTest):
                 ],
                 force_options=True
             ),
-            # first
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # second
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID,
-                {
-                    "invalid_character": "#",
-                    "id": "not#valid",
-                    "id_description": "port-map id",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # third
-            (
-                severities.ERROR,
-                report_codes.PREREQUISITE_OPTION_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_name": "internal-port",
-                    "prerequisite_type": "port-map",
-                    "prerequisite_name": "port",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # fourth
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "port",
-                    "option_value": "abc",
-                    "allowed_values": "a port number (1-65535)",
-                },
-                None
-            ),
-            # fifth
-            (
-                severities.ERROR,
-                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                {
-                    "option_names": ["port", "range", ],
-                    "option_type": "port-map",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "internal-port",
-                    "option_value": "def",
-                    "allowed_values": "a port number (1-65535)",
-                },
-                None
-            ),
+            [
+                # first
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None
+                ),
+                # second
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID,
+                    {
+                        "invalid_character": "#",
+                        "id": "not#valid",
+                        "id_description": "port-map id",
+                        "is_first_char": False,
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None
+                ),
+                # third
+                (
+                    severities.ERROR,
+                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_name": "internal-port",
+                        "prerequisite_type": "port-map",
+                        "prerequisite_name": "port",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None
+                ),
+                # fourth
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "port",
+                        "option_value": "abc",
+                        "allowed_values": "a port number (1-65535)",
+                    },
+                    None
+                ),
+                # fifth
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_names": ["port", "range", ],
+                        "option_type": "port-map",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "internal-port",
+                        "option_value": "def",
+                        "allowed_values": "a port number (1-65535)",
+                    },
+                    None
+                ),
+            ]
         )
-        self.runner.assert_everything_launched()
 
     def test_forceable_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 {"image": "pcs:test", },
                 port_map=[
                     {
@@ -640,45 +632,33 @@ class CreateWithPortMap(CommonTest):
                     },
                 ]
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "port-map",
-                    "allowed": self.allowed_options,
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "range",
-                    "option_value": "3000",
-                    "allowed_values": "port-port",
-                },
-                report_codes.FORCE_OPTIONS
-            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["extra", ],
+                        "option_type": "port-map",
+                        "allowed": self.allowed_options,
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "range",
+                        "option_value": "3000",
+                        "allowed_values": "port-port",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ]
         )
 
     def test_forceable_options_errors_forced(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {
-                    "image": "pcs:test",
-                },
-                port_map=[
-                    {
-                        "range": "3000",
-                        "extra": "option",
-                    },
-                ],
-                force_options=True
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -692,32 +672,47 @@ class CreateWithPortMap(CommonTest):
                     </bundle>
                 </resources>
             """,
-            [
-                (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION,
-                    {
-                        "option_names": ["extra", ],
-                        "option_type": "port-map",
-                        "allowed": self.allowed_options,
-                    },
-                    None
-                ),
-                (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "range",
-                        "option_value": "3000",
-                        "allowed_values": "port-port",
-                    },
-                    None
-                ),
-            ]
         )
 
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {
+                "image": "pcs:test",
+            },
+            port_map=[
+                {
+                    "range": "3000",
+                    "extra": "option",
+                },
+            ],
+            force_options=True
+        )
 
-class CreateWithStorageMap(CommonTest):
+        self.env_assist.assert_reports([
+            (
+                severities.WARNING,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_names": ["extra", ],
+                    "option_type": "port-map",
+                    "allowed": self.allowed_options,
+                },
+                None
+            ),
+            (
+                severities.WARNING,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "range",
+                    "option_value": "3000",
+                    "allowed_values": "port-port",
+                },
+                None
+            ),
+        ])
+
+
+class CreateWithStorageMap(TestCase):
     allowed_options = [
         "id",
         "options",
@@ -726,38 +721,14 @@ class CreateWithStorageMap(CommonTest):
         "target-dir",
     ]
 
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
+
     def test_several_mappings_and_handle_their_ids(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {"image": "pcs:test", },
-                storage_map=[
-                    {
-                        "source-dir": "/tmp/docker1a",
-                        "target-dir": "/tmp/docker1b",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-storage-map",
-                        "source-dir": "/tmp/docker2a",
-                        "target-dir": "/tmp/docker2b",
-                        "options": "extra options 1"
-                    },
-                    {
-                        "source-dir-root": "/tmp/docker3a",
-                        "target-dir": "/tmp/docker3b",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-storage-map-2",
-                        "source-dir-root": "/tmp/docker4a",
-                        "target-dir": "/tmp/docker4b",
-                        "options": "extra options 2"
-                    },
-                ]
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -789,16 +760,39 @@ class CreateWithStorageMap(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {"image": "pcs:test", },
+            storage_map=[
+                {
+                    "source-dir": "/tmp/docker1a",
+                    "target-dir": "/tmp/docker1b",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-storage-map",
+                    "source-dir": "/tmp/docker2a",
+                    "target-dir": "/tmp/docker2b",
+                    "options": "extra options 1"
+                },
+                {
+                    "source-dir-root": "/tmp/docker3a",
+                    "target-dir": "/tmp/docker3b",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-storage-map-2",
+                    "source-dir-root": "/tmp/docker4a",
+                    "target-dir": "/tmp/docker4b",
+                    "options": "extra options 2"
+                },
+            ]
+        )
 
     def test_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 {"image": "pcs:test", },
                 storage_map=[
                     {
@@ -812,57 +806,54 @@ class CreateWithStorageMap(CommonTest):
                 ],
                 force_options=True
             ),
-            # first
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["source-dir", "source-dir-root"],
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["target-dir", ],
-                },
-                None
-            ),
-            # second
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID,
-                {
-                    "invalid_character": "#",
-                    "id": "not#valid",
-                    "id_description": "storage-map id",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["source-dir", "source-dir-root"],
-                },
-                None
-            ),
+            [
+                # first
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["source-dir", "source-dir-root"],
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["target-dir", ],
+                    },
+                    None
+                ),
+                # second
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID,
+                    {
+                        "invalid_character": "#",
+                        "id": "not#valid",
+                        "id_description": "storage-map id",
+                        "is_first_char": False,
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["source-dir", "source-dir-root"],
+                    },
+                    None
+                ),
+            ]
         )
 
     def test_forceable_options_errors(self):
-        self.runner.set_runs(
-            fixture.call_cib_load(
-                self.fixture_cib_resources(self.fixture_cib_pre)
-            )
-        )
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env, "B1", "docker",
+                self.env_assist.get_env(), "B1", "docker",
                 {"image": "pcs:test", },
                 storage_map=[
                     {
@@ -872,36 +863,23 @@ class CreateWithStorageMap(CommonTest):
                     },
                 ]
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "storage-map",
-                    "allowed": self.allowed_options,
-                },
-                report_codes.FORCE_OPTIONS
-            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["extra", ],
+                        "option_type": "storage-map",
+                        "allowed": self.allowed_options,
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ]
         )
 
     def test_forceable_options_errors_forced(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                {
-                    "image": "pcs:test",
-                },
-                storage_map=[
-                    {
-                        "source-dir": "/tmp/docker1a",
-                        "target-dir": "/tmp/docker1b",
-                        "extra": "option",
-                    },
-                ],
-                force_options=True
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -916,6 +894,24 @@ class CreateWithStorageMap(CommonTest):
                     </bundle>
                 </resources>
             """,
+        )
+
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {
+                "image": "pcs:test",
+            },
+            storage_map=[
+                {
+                    "source-dir": "/tmp/docker1a",
+                    "target-dir": "/tmp/docker1b",
+                    "extra": "option",
+                },
+            ],
+            force_options=True
+        )
+
+        self.env_assist.assert_reports(
             [
                 (
                     severities.WARNING,
@@ -931,19 +927,14 @@ class CreateWithStorageMap(CommonTest):
         )
 
 
-class CreateWithMeta(CommonTest):
+class CreateWithMeta(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
     def test_success(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={"image": "pcs:test", },
-                meta_attributes={
-                    "target-role": "Stopped",
-                    "is-managed": "false",
-                }
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker image="pcs:test" />
@@ -957,16 +948,18 @@ class CreateWithMeta(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={"image": "pcs:test", },
+            meta_attributes={
+                "target-role": "Stopped",
+                "is-managed": "false",
+            }
+        )
 
     def test_disabled(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={"image": "pcs:test", },
-                ensure_disabled=True
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <meta_attributes id="B1-meta_attributes">
@@ -978,68 +971,20 @@ class CreateWithMeta(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={"image": "pcs:test", },
+            ensure_disabled=True
+        )
 
-class CreateWithAllOptions(CommonTest):
+class CreateWithAllOptions(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(resources=fixture_cib_pre)
+
     def test_success(self):
-        self.assert_command_effect(
-            self.fixture_cib_pre,
-            lambda: resource.bundle_create(
-                self.env, "B1", "docker",
-                container_options={
-                    "image": "pcs:test",
-                    "masters": "0",
-                    "network": "extra network settings",
-                    "options": "extra options",
-                    "run-command": "/bin/true",
-                    "replicas": "4",
-                    "replicas-per-host": "2",
-                },
-                network_options={
-                    "control-port": "12345",
-                    "host-interface": "eth0",
-                    "host-netmask": "24",
-                    "ip-range-start": "192.168.100.200",
-                },
-                port_map=[
-                    {
-                        "port": "1001",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-port-map-1001",
-                        "port": "2000",
-                        "internal-port": "2002",
-                    },
-                    {
-                        "range": "3000-3300",
-                    },
-                ],
-                storage_map=[
-                    {
-                        "source-dir": "/tmp/docker1a",
-                        "target-dir": "/tmp/docker1b",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-storage-map",
-                        "source-dir": "/tmp/docker2a",
-                        "target-dir": "/tmp/docker2b",
-                        "options": "extra options 1"
-                    },
-                    {
-                        "source-dir-root": "/tmp/docker3a",
-                        "target-dir": "/tmp/docker3b",
-                    },
-                    {
-                        # use an autogenerated id of the previous item
-                        "id": "B1-port-map-1001-1",
-                        "source-dir-root": "/tmp/docker4a",
-                        "target-dir": "/tmp/docker4b",
-                        "options": "extra options 2"
-                    },
-                ]
-            ),
-            """
+        self.config.runner.cib.push(
+            resources="""
                 <resources>
                     <bundle id="B1">
                         <docker
@@ -1096,9 +1041,65 @@ class CreateWithAllOptions(CommonTest):
                 </resources>
             """
         )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={
+                "image": "pcs:test",
+                "masters": "0",
+                "network": "extra network settings",
+                "options": "extra options",
+                "run-command": "/bin/true",
+                "replicas": "4",
+                "replicas-per-host": "2",
+            },
+            network_options={
+                "control-port": "12345",
+                "host-interface": "eth0",
+                "host-netmask": "24",
+                "ip-range-start": "192.168.100.200",
+            },
+            port_map=[
+                {
+                    "port": "1001",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-port-map-1001",
+                    "port": "2000",
+                    "internal-port": "2002",
+                },
+                {
+                    "range": "3000-3300",
+                },
+            ],
+            storage_map=[
+                {
+                    "source-dir": "/tmp/docker1a",
+                    "target-dir": "/tmp/docker1b",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-storage-map",
+                    "source-dir": "/tmp/docker2a",
+                    "target-dir": "/tmp/docker2b",
+                    "options": "extra options 1"
+                },
+                {
+                    "source-dir-root": "/tmp/docker3a",
+                    "target-dir": "/tmp/docker3b",
+                },
+                {
+                    # use an autogenerated id of the previous item
+                    "id": "B1-port-map-1001-1",
+                    "source-dir-root": "/tmp/docker4a",
+                    "target-dir": "/tmp/docker4b",
+                    "options": "extra options 2"
+                },
+            ]
+        )
 
 
-class Wait(CommonTest):
+class Wait(TestCase):
     fixture_status_running = """
         <resources>
             <bundle id="B1" managed="true">
@@ -1143,130 +1144,97 @@ class Wait(CommonTest):
 
     timeout = 10
 
-    def simple_bundle_create(self, wait=False, disabled=False):
-        return resource.bundle_create(
-            self.env, "B1", "docker",
-            container_options={"image": "pcs:test"},
-            ensure_disabled=disabled,
-            wait=wait,
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        (self.config.runner
+            .pcmk.can_wait()
+            .cib.load(resources=fixture_cib_pre)
         )
 
     def test_wait_fail(self):
-        fixture_wait_timeout_error = dedent(
+        wait_error_message = dedent(
             """\
             Pending actions:
                     Action 12: B1-node2-stop on node2
             Error performing operation: Timer expired
             """
         )
-        self.runner.set_runs(
-            fixture.call_wait_supported()
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple,
-                cib_base_file=self.cib_base_file,
+
+        (self.config.runner
+            .cib.push(resources=fixture_resources_bundle_simple)
+            .pcmk.wait(
+                stderr=wait_error_message,
             )
-            +
-            fixture.call_wait(self.timeout, 62, fixture_wait_timeout_error)
         )
-        assert_raise_library_error(
-            lambda: self.simple_bundle_create(self.timeout),
-            fixture.report_wait_for_idle_timed_out(
-                fixture_wait_timeout_error
-            ),
+
+        self.env_assist.assert_raise_library_error(
+            lambda: simple_bundle_create(self.env_assist.get_env()),
+            [
+                fixture.report_wait_for_idle_timed_out(wait_error_message)
+            ],
+            expected_in_processor=False
         )
-        self.runner.assert_everything_launched()
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
-        self.runner.set_runs(
-            fixture.call_wait_supported()
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple,
-                cib_base_file=self.cib_base_file,
-            )
-            +
-            fixture.call_wait(self.timeout)
-            +
-            fixture.call_status(fixture.state_complete(
-                self.fixture_status_running
-            ))
+        (self.config.runner
+            .cib.push(resources=fixture_resources_bundle_simple)
+            .pcmk.wait()
+            .pcmk.load_state(resources=self.fixture_status_running)
         )
-        self.simple_bundle_create(self.timeout)
-        self.env.report_processor.assert_reports([
+        simple_bundle_create(self.env_assist.get_env())
+        self.env_assist.assert_reports([
             fixture.report_resource_running(
                 "B1", {"Started": ["node1", "node2"]}
             ),
         ])
-        self.runner.assert_everything_launched()
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
-        self.runner.set_runs(
-            fixture.call_wait_supported()
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple,
-                cib_base_file=self.cib_base_file,
-            )
-            +
-            fixture.call_wait(self.timeout)
-            +
-            fixture.call_status(fixture.state_complete(
-                self.fixture_status_not_running
-            ))
+        (self.config.runner
+            .cib.push(resources=fixture_resources_bundle_simple)
+            .pcmk.wait()
+            .pcmk.load_state(resources=self.fixture_status_not_running)
         )
-        assert_raise_library_error(
-            lambda: self.simple_bundle_create(self.timeout),
-            fixture.report_resource_not_running("B1", severities.ERROR),
+        self.env_assist.assert_raise_library_error(
+            lambda: simple_bundle_create(self.env_assist.get_env()),
+            [
+                fixture.report_resource_not_running("B1", severities.ERROR),
+            ]
         )
-        self.runner.assert_everything_launched()
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_ok(self):
-        self.runner.set_runs(
-            fixture.call_wait_supported()
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple_disabled,
-                cib_base_file=self.cib_base_file,
-            )
-            +
-            fixture.call_wait(self.timeout)
-            +
-            fixture.call_status(fixture.state_complete(
-                self.fixture_status_not_running
-            ))
+        (self.config.runner
+            .cib.push(resources=self.fixture_resources_bundle_simple_disabled)
+            .pcmk.wait()
+            .pcmk.load_state(resources=self.fixture_status_not_running)
         )
-        self.simple_bundle_create(self.timeout, disabled=True)
-        self.runner.assert_everything_launched()
+        simple_bundle_create(self.env_assist.get_env(), disabled=True)
+        self.env_assist.assert_reports([
+            (
+                severities.INFO,
+                report_codes.RESOURCE_DOES_NOT_RUN,
+                {
+                    "resource_id": "B1"
+                },
+                None
+            )
+        ])
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_fail(self):
-        self.runner.set_runs(
-            fixture.call_wait_supported()
-            +
-            fixture.calls_cib(
-                self.fixture_cib_pre,
-                self.fixture_resources_bundle_simple_disabled,
-                cib_base_file=self.cib_base_file,
-            )
-            +
-            fixture.call_wait(self.timeout)
-            +
-            fixture.call_status(fixture.state_complete(
-                self.fixture_status_running
-            ))
+        (self.config.runner
+            .cib.push(resources=self.fixture_resources_bundle_simple_disabled)
+            .pcmk.wait()
+            .pcmk.load_state(resources=self.fixture_status_running)
         )
-        assert_raise_library_error(
-            lambda: self.simple_bundle_create(self.timeout, disabled=True),
-            fixture.report_resource_running(
-                "B1", {"Started": ["node1", "node2"]}, severities.ERROR
-            )
+        self.env_assist.assert_raise_library_error(
+            lambda:
+            simple_bundle_create(self.env_assist.get_env(), disabled=True),
+            [
+                fixture.report_resource_running(
+                    "B1", {"Started": ["node1", "node2"]}, severities.ERROR
+                )
+            ]
         )
-        self.runner.assert_everything_launched()

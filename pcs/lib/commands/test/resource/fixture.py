@@ -4,97 +4,12 @@ from __future__ import (
     print_function,
 )
 
-from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.integration_lib import Call
-from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.xml import etree_to_str
 
 
-def call_cib_load(cib):
-    return [
-        Call("cibadmin --local --query", cib),
-    ]
-
-def call_cib_push(cib):
-    return [
-        Call(
-            "cibadmin --replace --verbose --xml-pipe --scope configuration",
-            check_stdin=Call.create_check_stdin_xml(cib)
-        ),
-    ]
-
-def call_cib_upgrade():
-    return [
-        Call("cibadmin --upgrade --force"),
-    ]
-
-def call_status(status):
-    return [
-        Call("/usr/sbin/crm_mon --one-shot --as-xml --inactive", status),
-    ]
-
-def call_wait_supported():
-    return [
-        Call("crm_resource -?", "--wait"),
-    ]
-
-def call_wait(timeout, retval=0, stderr=""):
-    return [
-        Call(
-            "crm_resource --wait --timeout={0}".format(timeout),
-            stderr=stderr,
-            returncode=retval
-        ),
-    ]
-
-def call_dummy_metadata():
-    return [
-        Call(
-            "crm_resource --show-metadata ocf:heartbeat:Dummy",
-            open(rc("resource_agent_ocf_heartbeat_dummy.xml")).read()
-        ),
-    ]
-
-def calls_cib(cib_pre, cib_post, cib_base_file=None):
-    return (
-        call_cib_load(cib_resources(cib_pre, cib_base_file=cib_base_file))
-        +
-        call_cib_push(cib_resources(cib_post, cib_base_file=cib_base_file))
-    )
-
-def calls_cib_and_status(cib_pre, status, cib_post, cib_base_file=None):
-    return (
-        call_cib_load(cib_resources(cib_pre, cib_base_file=cib_base_file))
-        +
-        call_status(state_complete(status))
-        +
-        call_cib_push(cib_resources(cib_post, cib_base_file=cib_base_file))
-    )
-
-def calls_cib_load_and_upgrade(cib_old_version):
-    return (
-        call_cib_load(cib_resources(cib_old_version))
-        +
-        call_cib_upgrade()
-    )
-
-
-
-def cib_resources(cib_resources_xml, cib_base_file=None):
-    cib_xml = open(rc(cib_base_file or "cib-empty.xml")).read()
-    cib = etree.fromstring(cib_xml)
-    resources_section = cib.find(".//resources")
-    for child in etree.fromstring(cib_resources_xml):
-        resources_section.append(child)
-    return etree_to_str(cib)
-
-
-def state_complete(resource_status_xml):
-    status = etree.parse(rc("crm_mon.minimal.xml")).getroot()
-    resource_status = etree.fromstring(resource_status_xml)
+def complete_state_resources(resource_status):
     for resource in resource_status.xpath(".//resource"):
         _default_element_attributes(
             resource,
@@ -127,14 +42,19 @@ def state_complete(resource_status_xml):
                 "failed": "false",
             }
         )
-    status.append(resource_status)
-    return etree_to_str(status)
+    return resource_status
+
 
 def _default_element_attributes(element, default_attributes):
     for name, value in default_attributes.items():
         if name not in element.attrib:
             element.attrib[name] = value
 
+def error(code, force_code=None, **kwargs):
+    return severities.ERROR, code, kwargs, force_code
+
+def info(code, **kwargs):
+    return severities.INFO, code, kwargs, None
 
 def report_not_found(res_id, context_type=""):
     return (
