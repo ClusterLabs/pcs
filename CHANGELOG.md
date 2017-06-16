@@ -26,12 +26,12 @@
   unreachable first time ([rhbz#1176018])
 - Fixed "Error: Unable to read /etc/corosync/corosync.conf" when running
   `pcs resource create`([rhbz#1386114])
-- It is now possible to set "debug" and "verbose" parameters of stonith devices
+- It is now possible to set `debug` and `verbose` parameters of stonith devices
   ([rhbz#1432283])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
-- It is now mandatory to specify container type in the "resource bundle create"
+- It is now mandatory to specify container type in the `resource bundle create`
   command
 
 [rhbz#1165821]: https://bugzilla.redhat.com/show_bug.cgi?id=1165821
