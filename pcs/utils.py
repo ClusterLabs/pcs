@@ -1950,41 +1950,6 @@ def getClusterStateXml():
         err("error running crm_mon, is pacemaker running?")
     return xml
 
-# Returns true if stonith-enabled is not false/off & no stonith devices exist
-# So if the cluster can't start due to missing stonith devices return true
-def stonithCheck():
-    et = get_cib_etree()
-    cps = et.find("configuration/crm_config/cluster_property_set")
-    if cps != None:
-        for prop in cps.findall(str("nvpair")):
-            if 'name' in prop.attrib and prop.attrib["name"] == "stonith-enabled":
-                if prop.attrib["value"] == "off" or \
-                        prop.attrib["value"] == "false":
-                    return False
-
-    xpath_list = (
-        "configuration/resources/primitive",
-        "configuration/resources/group/primitive",
-        "configuration/resources/clone/primitive",
-        "configuration/resources/clone/group/primitive",
-        "configuration/resources/master/primitive",
-        "configuration/resources/master/group/primitive",
-    )
-    for xpath in xpath_list:
-        for p in et.findall(str(xpath)):
-            if ("class" in p.attrib) and (p.attrib["class"] == "stonith"):
-                return False
-
-    if not usefile:
-        # check if SBD daemon is running
-        try:
-            if is_service_running(cmd_runner(), sbd.get_sbd_service_name()):
-                return False
-        except LibraryError:
-            pass
-
-    return True
-
 def getCorosyncNodesID(allow_failure=False):
     if os.getuid() == 0:
         if is_rhel6():

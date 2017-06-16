@@ -50,7 +50,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
-                "allowed": sorted(["FIRST", "SECOND"]),
+                "allowed": ["SECOND", "FIRST"],
             }
         )
 
@@ -60,7 +60,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
             {
                 "option_names": ["NAME"],
                 "option_type": "",
-                "allowed": sorted(["FIRST", "SECOND"]),
+                "allowed": ["FIRST", "SECOND"],
             }
         )
 
@@ -73,6 +73,17 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "allowed": ["FIRST"],
             }
         )
+
+    def test_no_allowed_options(self):
+        self.assert_message_from_info(
+            "invalid options: 'ANOTHER', 'NAME', there are no options allowed",
+            {
+                "option_names": ["NAME", "ANOTHER"],
+                "option_type": "",
+                "allowed": [],
+            }
+        )
+
 
 class RequiredOptionIsMissing(NameBuildTest):
     code = codes.REQUIRED_OPTION_IS_MISSING
@@ -371,6 +382,35 @@ class InvalidOptionType(NameBuildTest):
                 "allowed_types": ["allowed", "types"],
             }
         )
+
+
+class DeprecatedOption(NameBuildTest):
+    code = codes.DEPRECATED_OPTION
+
+    def test_no_desc_hint_array(self):
+        self.assert_message_from_info(
+            "option 'option name' is deprecated and should not be used,"
+                " use new_a, new_b instead"
+            ,
+            {
+                "option_name": "option name",
+                "option_type": "",
+                "replaced_by": ["new_b", "new_a"],
+            }
+        )
+
+    def test_desc_hint_string(self):
+        self.assert_message_from_info(
+            "option type option 'option name' is deprecated and should not be"
+                " used, use new option instead"
+            ,
+            {
+                "option_name": "option name",
+                "option_type": "option type",
+                "replaced_by": "new option",
+            }
+        )
+
 
 class StonithResourcesDoNotExist(NameBuildTest):
     code = codes.STONITH_RESOURCES_DO_NOT_EXIST

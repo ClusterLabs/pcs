@@ -8,7 +8,11 @@ from __future__ import (
 import logging
 from lxml import etree
 
-from pcs.test.tools.assertions import assert_raise_library_error, start_tag_error_text
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+    start_tag_error_text,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock, TestCase
 
@@ -16,6 +20,7 @@ from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.lib.external import CommandRunner
 
 from pcs.lib.commands import stonith_agent as lib
 
@@ -212,3 +217,109 @@ class TestDescribeAgent(TestCase):
         )
 
         self.assertEqual(len(mock_metadata.mock_calls), 1)
+
+
+class ValidateParameters(TestCase):
+    def setUp(self):
+        self.agent = lib_ra.StonithAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "fence_dummy"
+        )
+        self.metadata = etree.XML("""
+            <resource-agent>
+                <parameters>
+                    <parameter name="test_param" required="0">
+                        <longdesc>Long description</longdesc>
+                        <shortdesc>short description</shortdesc>
+                        <content type="string" default="default_value" />
+                    </parameter>
+                    <parameter name="required_param" required="1">
+                        <content type="boolean" />
+                    </parameter>
+                    <parameter name="action">
+                        <content type="string" default="reboot" />
+                        <shortdesc>Fencing action</shortdesc>
+                    </parameter>
+                </parameters>
+            </resource-agent>
+        """)
+        patcher = mock.patch.object(lib_ra.StonithAgent, "_get_metadata")
+        self.addCleanup(patcher.stop)
+        self.get_metadata = patcher.start()
+        self.get_metadata.return_value = self.metadata
+
+        patcher_stonithd = mock.patch.object(
+            lib_ra.StonithdMetadata, "_get_metadata"
+        )
+        self.addCleanup(patcher_stonithd.stop)
+        self.get_stonithd_metadata = patcher_stonithd.start()
+        self.get_stonithd_metadata.return_value = etree.XML("""
+            <resource-agent>
+                <parameters />
+            </resource-agent>
+        """)
+
+    def test_action_is_deprecated(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "action": "reboot",
+                "required_param": "value",
+            }),
+            [
+                (
+                    severity.ERROR,
+                    report_codes.DEPRECATED_OPTION,
+                    {
+                        "option_name": "action",
+                        "option_type": "stonith",
+                        "replaced_by": [
+                            "pcmk_off_action",
+                            "pcmk_reboot_action"
+                        ],
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ],
+        )
+
+    def test_action_is_deprecated_forced(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "action": "reboot",
+                "required_param": "value",
+            }, allow_invalid=True),
+            [
+                (
+                    severity.WARNING,
+                    report_codes.DEPRECATED_OPTION,
+                    {
+                        "option_name": "action",
+                        "option_type": "stonith",
+                        "replaced_by": [
+                            "pcmk_off_action",
+                            "pcmk_reboot_action"
+                        ],
+                    },
+                    None
+                ),
+            ],
+        )
+
+    def test_action_not_reported_deprecated_when_empty(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "action": "",
+                "required_param": "value",
+            }),
+            [
+            ],
+        )
+
+    def test_required_not_specified_on_update(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "test_param": "value",
+            }, update=True),
+            [
+            ],
+        )

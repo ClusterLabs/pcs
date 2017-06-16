@@ -280,6 +280,30 @@ def invalid_option_value(
         forceable=forceable
     )
 
+def deprecated_option(
+    option_name, replaced_by_options, option_type,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Specified option name is deprecated and has been replaced by other option(s)
+
+    string option_name -- the deprecated option
+    iterable or string replaced_by_options -- new option(s) to be used instead
+    string option_type -- option description
+    string severity -- report item severity
+    string forceable -- a category by which the report is forceable
+    """
+    return ReportItem(
+        report_codes.DEPRECATED_OPTION,
+        severity,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "replaced_by": sorted(replaced_by_options),
+        },
+        forceable=forceable
+    )
+
 def mutually_exclusive_options(option_names, option_type):
     """
     entered options can not coexist

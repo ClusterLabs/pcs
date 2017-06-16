@@ -34,7 +34,7 @@ from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
@@ -314,6 +314,8 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
                 param_desc = param.get("shortdesc", "").replace("\n", " ")
                 if not param_desc:
                     param_desc = "No description available"
+            if param.get("pcs_deprecated_warning"):
+                param_desc += " WARNING: " + param["pcs_deprecated_warning"]
             output_params.append("  {0}: {1}".format(
                 param_title,
                 _format_desc(len(param_title) + 4, param_desc)
@@ -742,37 +744,36 @@ def resource_update(res_id,args, deal_with_guest_change=True):
         instance_attributes = instance_attributes[0]
 
     params = utils.convert_args_to_tuples(ra_values)
-    if "--force" not in utils.pcs_options and (resource.getAttribute("class") == "ocf" or resource.getAttribute("class") == "stonith"):
-        resClass = resource.getAttribute("class")
-        resProvider = resource.getAttribute("provider")
-        resType = resource.getAttribute("type")
-        if resProvider == "":
-            resource_type = resClass + ":" + resType
-        else:
-            resource_type = resClass + ":" + resProvider + ":" + resType
-        bad_opts = []
-        try:
-            if resource_type.startswith("stonith:"):
-                metadata = lib_ra.StonithAgent(
-                    utils.cmd_runner(),
-                    resource_type[len("stonith:"):]
-                )
-            else:
-                metadata = lib_ra.ResourceAgent(
-                    utils.cmd_runner(),
-                    resource_type
-                )
-            bad_opts, _ = metadata.validate_parameters_values(dict(params))
-        except lib_ra.ResourceAgentError as e:
-            utils.process_library_reports(
-                [lib_ra.resource_agent_error_to_report_item(e)]
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-        if len(bad_opts) != 0:
-            utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
-                    % (", ".join(sorted(bad_opts)), utils.getResourceType(resource)))
 
+    resClass = resource.getAttribute("class")
+    resProvider = resource.getAttribute("provider")
+    resType = resource.getAttribute("type")
+    try:
+        if resClass == "stonith":
+            metadata = lib_ra.StonithAgent(utils.cmd_runner(), resType)
+        else:
+            metadata = lib_ra.ResourceAgent(
+                utils.cmd_runner(),
+                lib_ra.ResourceAgentName(
+                    resClass, resProvider, resType
+                ).full_name
+            )
+        report_list = metadata.validate_parameters(
+            dict(params),
+            allow_invalid=("--force" in utils.pcs_options),
+            update=True
+        )
+        utils.process_library_reports(report_list)
+    except lib_ra.ResourceAgentError as e:
+        severity = (
+            ReportItemSeverity.WARNING if "--force" in utils.pcs_options
+            else ReportItemSeverity.ERROR
+        )
+        utils.process_library_reports(
+            [lib_ra.resource_agent_error_to_report_item(e, severity)]
+        )
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
 
     for (key,val) in params:
         ia_found = False

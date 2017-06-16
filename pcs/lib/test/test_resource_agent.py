@@ -791,6 +791,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 }
             ]
         )
@@ -824,6 +825,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "another parameter",
@@ -835,6 +837,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 }
             ]
         )
@@ -862,6 +865,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": True,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
             ]
         )
@@ -1101,6 +1105,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "advanced": False,
                         "deprecated": False,
                         "obsoletes": None,
+                        "pcs_deprecated_warning": "",
                     },
                     {
                         "name": "another parameter",
@@ -1112,6 +1117,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "advanced": False,
                         "deprecated": False,
                         "obsoletes": None,
+                        "pcs_deprecated_warning": "",
                     }
                 ],
                 "actions": [
@@ -1295,7 +1301,7 @@ class AgentMetadataValidateParameters(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["invalid_param"],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                         "allowed": [
                             "another_required_param",
                             "required_param",
@@ -1319,7 +1325,7 @@ class AgentMetadataValidateParameters(TestCase):
                             "required_param",
                             "another_required_param",
                         ],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -1338,7 +1344,7 @@ class AgentMetadataValidateParameters(TestCase):
                             "required_param",
                             "another_required_param",
                         ],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                     },
                 ),
             ]
@@ -1366,7 +1372,7 @@ class AgentMetadataValidateParameters(TestCase):
                         "option_names": [
                             "deprecated",
                         ],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -1395,7 +1401,7 @@ class AgentMetadataValidateParameters(TestCase):
                         "option_names": [
                             "deprecated",
                         ],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -1404,7 +1410,7 @@ class AgentMetadataValidateParameters(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["obsoletes"],
-                        "option_type": "resource agent parameter",
+                        "option_type": "resource",
                         "allowed": [
                             "deprecated",
                         ]
@@ -1412,6 +1418,15 @@ class AgentMetadataValidateParameters(TestCase):
                     report_codes.FORCE_OPTIONS
                 ),
             ]
+        )
+
+    def test_required_not_specified_on_update(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "test_param": "value",
+            }, update=True),
+            [
+            ],
         )
 
 
@@ -1510,6 +1525,7 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "advanced": True,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "another parameter",
@@ -1521,6 +1537,7 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 }
             ]
         )
@@ -1733,6 +1750,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "valid_param",
@@ -1744,6 +1762,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "verbose",
@@ -1755,21 +1774,23 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "action",
                     "longdesc": "",
-                    "shortdesc":
-                        "Fencing Action\nWARNING: specifying 'action' is"
-                        " deprecated and not necessary with current Pacemaker"
-                        " versions."
-                    ,
+                    "shortdesc": "Fencing Action",
                     "type": "string",
                     "required": False,
                     "default": None,
-                    "advanced": False,
+                    "advanced": True,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "Specifying 'action' is"
+                        " deprecated and not necessary with current Pacemaker"
+                        " versions. Use 'pcmk_off_action',"
+                        " 'pcmk_reboot_action' instead."
+                    ,
                 },
                 {
                     "name": "another_param",
@@ -1781,6 +1802,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
                 {
                     "name": "stonithd_param",
@@ -1792,6 +1814,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "advanced": False,
                     "deprecated": False,
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
                 },
             ]
         )

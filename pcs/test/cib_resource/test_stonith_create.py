@@ -132,6 +132,37 @@ class PlainStonith(ResourceTest):
             </resources>"""
         )
 
+    @need_load_xvm_fence_agent
+    def test_error_when_action_specified(self):
+        self.assert_pcs_fail(
+            "stonith create S fence_xvm action=reboot",
+            "Error: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead, use"
+                " --force to override\n"
+        )
+
+    @need_load_xvm_fence_agent
+    def test_warn_when_action_specified_forced(self):
+        self.assert_effect(
+            "stonith create S fence_xvm action=reboot --force",
+            """<resources>
+                <primitive class="stonith" id="S" type="fence_xvm">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-action"
+                            name="action" value="reboot"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            "Warning: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+        )
+
 
 class WithMeta(ResourceTest):
     @need_load_xvm_fence_agent

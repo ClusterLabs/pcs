@@ -848,6 +848,10 @@ Use the 'Add' button to submit the form.">
           value=param.cur_val
           placeholder=param.default
       }}
+      {{#if param.pcs_deprecated_warning}}
+        <br />
+        <span class="status-warning">{{param.pcs_deprecated_warning}}</span>
+      {{/if}}
     </td>
   </script>
 

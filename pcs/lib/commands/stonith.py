@@ -60,12 +60,17 @@ def create(
         ensure_disabled or are_meta_disabled(meta_attributes),
     ) as resources_section:
         stonith_element = resource.primitive.create(
-            env.report_processor, resources_section,
-            stonith_id, stonith_agent,
-            operations, meta_attributes, instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
+            env.report_processor,
+            resources_section,
+            stonith_id,
+            stonith_agent,
+            raw_operation_list=operations,
+            meta_attributes=meta_attributes,
+            instance_attributes=instance_attributes,
+            allow_invalid_operation=allow_invalid_operation,
+            allow_invalid_instance_attributes=allow_invalid_instance_attributes,
+            use_default_operations=use_default_operations,
+            resource_type="stonith"
         )
         if ensure_disabled:
             resource.common.disable(stonith_element)

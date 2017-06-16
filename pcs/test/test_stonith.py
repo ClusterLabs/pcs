@@ -107,28 +107,28 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
-            "Error: required resource options 'ipaddr', 'login' are missing, use --force to override\n"
+            "Error: required stonith options 'ipaddr', 'login' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
             "stonith create test2 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
 
         self.assert_pcs_fail(
             "stonith create test3 fence_apc bad_argument=test",
-            stdout_start="Error: invalid resource option 'bad_argument',"
+            stdout_start="Error: invalid stonith option 'bad_argument',"
                 " allowed options are:"
         )
 
         self.assert_pcs_fail(
             "stonith create test9 fence_apc pcmk_status_action=xxx",
-            "Error: required resource options 'ipaddr', 'login' are missing, use --force to override\n"
+            "Error: required stonith options 'ipaddr', 'login' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
              "stonith create test9 fence_apc pcmk_status_action=xxx --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
@@ -146,12 +146,12 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test3 fence_ilo ipaddr=test",
-            "Error: required resource option 'login' is missing, use --force to override\n"
+            "Error: required stonith option 'login' is missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
              "stonith create test3 fence_ilo ipaddr=test --force",
-            "Warning: required resource option 'login' is missing\n"
+            "Warning: required stonith option 'login' is missing\n"
         )
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
@@ -177,9 +177,13 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Deleting Resource - apc-fencing\n"
         )
 
-        output, returnVal = pcs(temp_cib, "stonith update test3 bad_ipaddr=test")
-        assert returnVal == 1
-        assert output == "Error: resource option(s): 'bad_ipaddr', are not recognized for resource type: 'stonith::fence_ilo' (use --force to override)\n",[output]
+        self.assert_pcs_fail(
+            "stonith update test3 bad_ipaddr=test",
+            stdout_regexp=(
+                "^Error: invalid stonith option 'bad_ipaddr', allowed options"
+                " are: [^\n]+, use --force to override\n$"
+            )
+        )
 
         output, returnVal = pcs(temp_cib, "stonith update test3 login=testA")
         assert returnVal == 0
@@ -203,7 +207,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test-fencing fence_apc 'pcmk_host_list=rhel7-node1 rhel7-node2' op monitor interval=61s --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
 
         self.assert_pcs_success("config show", outdent(
@@ -349,6 +353,103 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
         self.assertEqual(0, returnVal)
 
+    def test_stonith_create_action(self):
+        self.assert_pcs_fail(
+            "stonith create test fence_apc ipaddr=i login=l action=a",
+            "Error: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead,"
+                " use --force to override\n"
+        )
+
+        self.assert_pcs_success(
+            "stonith create test fence_apc ipaddr=i login=l action=a --force",
+            "Warning: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+        )
+
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test (class=stonith type=fence_apc)
+                  Attributes: action=a ipaddr=i login=l
+                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                """
+            )
+        )
+
+    def test_stonith_create_action_empty(self):
+        self.assert_pcs_success(
+            "stonith create test fence_apc ipaddr=i login=l action="
+        )
+
+        self.assert_pcs_success(
+            "stonith show --full",
+            # TODO fix code and test - there should be no action in the attribs
+            outdent(
+                """\
+                 Resource: test (class=stonith type=fence_apc)
+                  Attributes: action= ipaddr=i login=l
+                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                """
+            )
+        )
+
+    def test_stonith_update_action(self):
+        self.assert_pcs_success(
+            "stonith create test fence_apc ipaddr=i login=l"
+        )
+
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test (class=stonith type=fence_apc)
+                  Attributes: ipaddr=i login=l
+                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "stonith update test action=a",
+            "Error: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead,"
+                " use --force to override\n"
+        )
+
+        self.assert_pcs_success(
+            "stonith update test action=a --force",
+            "Warning: stonith option 'action' is deprecated and should not be"
+                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+        )
+
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test (class=stonith type=fence_apc)
+                  Attributes: ipaddr=i login=l action=a
+                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                """
+            )
+        )
+
+        self.assert_pcs_success(
+            "stonith update test action="
+        )
+
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test (class=stonith type=fence_apc)
+                  Attributes: ipaddr=i login=l
+                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                """
+            )
+        )
+
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
         assert returnVal == 1
@@ -361,7 +462,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testPcmkHostList(self):
         self.assert_pcs_success(
             "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
@@ -414,31 +515,31 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-ipmi fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc2 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc1 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc2 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc3 fence_apc --force",
-            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
         self.assert_pcs_success_all([
             "stonith level add 1 rh7-1 n1-ipmi",

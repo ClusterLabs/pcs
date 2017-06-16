@@ -205,7 +205,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.INVALID_OPTION: lambda info:
         (
             "invalid {desc}option{s} {option_names_list},"
-            " allowed option{are} {allowed_values}"
+            +
+            (
+                " allowed option{are} {allowed_values}" if info["allowed"]
+                else " there are no options allowed"
+            )
         ).format(
             desc=format_optional(info["option_type"], "{0} "),
             allowed_values=", ".join(sorted(info["allowed"])),
@@ -245,6 +249,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                     and
                     not is_string(info["allowed_types"])
                 ) else info["allowed_types"]
+            ),
+            **info
+        )
+    ,
+
+    codes.DEPRECATED_OPTION: lambda info:
+        (
+            "{desc}option '{option_name}' is deprecated and should not be "
+            "used, use {hint} instead"
+        ).format(
+            desc=format_optional(info["option_type"], "{0} "),
+            hint=(
+                ", ".join(sorted(info["replaced_by"])) if (
+                    isinstance(info["replaced_by"], Iterable)
+                    and
+                    not is_string(info["replaced_by"])
+                ) else info["replaced_by"]
             ),
             **info
         )

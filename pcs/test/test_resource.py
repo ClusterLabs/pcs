@@ -1800,13 +1800,18 @@ Ticket Constraints:
                 " allowed options are: fake, state, trace_file, trace_ra\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource update D0 test=testA test2=testB")
-        assert returnVal == 1
-        assert output == "Error: resource option(s): 'test, test2', are not recognized for resource type: 'ocf:heartbeat:Dummy' (use --force to override)\n", [output]
+        self.assert_pcs_fail(
+            "resource update D0 test=testA test2=testB",
+            "Error: invalid resource options: 'test', 'test2', allowed options"
+                " are: fake, state, trace_file, trace_ra, use --force to"
+                " override\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "resource update --force D0 test=testB test2=testC test3=testD")
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource update D0 test=testB test2=testC test3=testD --force",
+            "Warning: invalid resource options: 'test', 'test2', 'test3',"
+                " allowed options are: fake, state, trace_file, trace_ra\n"
+        )
 
         self.assert_pcs_success("resource show D0", outdent(
             # pylint:disable=trailing-whitespace
@@ -1817,7 +1822,6 @@ Ticket Constraints:
               Operations: monitor interval=35 (D0-monitor-interval-35)
             """
         ))
-        assert returnVal == 0
 
     def testMetaAttrs(self):
         # see also BundleMiscCommands
@@ -1838,9 +1842,11 @@ Ticket Constraints:
                 " options are: fake, state, trace_file, trace_ra\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=",
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
 
         output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
         assert returnVal == 0
@@ -2470,20 +2476,51 @@ Ticket Constraints:
         ))
 
     def testLSBResource(self):
-        output, returnVal  = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 lsb:network"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D2 lsb:network foo=bar",
+            "Error: invalid resource option 'foo', there are no options"
+                " allowed, use --force to override\n"
         )
-        assert returnVal == 0
-        assert output == "", [output]
 
-        output, returnval = pcs(temp_cib, "resource update D2 blah=blah")
-        assert returnval == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource create --no-default-ops D2 lsb:network foo=bar --force",
+            "Warning: invalid resource option 'foo', there are no options"
+                " allowed\n"
+        )
 
-        output, returnval = pcs(temp_cib, "resource update D2")
-        assert returnval == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: D2 (class=lsb type=network)
+                  Attributes: foo=bar
+                  Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "resource update D2 bar=baz",
+            "Error: invalid resource option 'bar', there are no options"
+                " allowed, use --force to override\n"
+        )
+
+        self.assert_pcs_success(
+            "resource update D2 bar=baz --force",
+            "Warning: invalid resource option 'bar', there are no options"
+                " allowed\n"
+        )
+
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+                """\
+                 Resource: D2 (class=lsb type=network)
+                  Attributes: foo=bar bar=baz
+                  Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
+                """
+            )
+        )
 
     def testResourceMoveBanClear(self):
         # Load nodes into cib so move will work

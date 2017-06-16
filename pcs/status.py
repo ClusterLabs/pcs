@@ -18,6 +18,9 @@ from pcs.quorum import quorum_status_cmd
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.pacemaker.values import is_false
+from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
+from pcs.lib.sbd import get_sbd_service_name
 
 def status_cmd(argv):
     if len(argv) == 0:
@@ -88,8 +91,7 @@ def full_status():
         cluster_name = utils.getClusterName()
         print("Cluster name: %s" % cluster_name)
 
-    if utils.stonithCheck():
-        print("WARNING: no stonith devices and stonith-enabled is not false")
+    status_stonith_check()
 
     if (
         not utils.usefile
@@ -107,6 +109,67 @@ def full_status():
             print_pcsd_daemon_status()
             print()
         utils.serviceStatus("  ")
+
+def status_stonith_check():
+    # We should read the default value from pacemaker. However that may slow
+    # pcs down as we need to run 'pengine metadata' to get it.
+    stonith_enabled = True
+    stonith_devices = []
+    stonith_devices_id_action = []
+    sbd_running = False
+
+    cib = utils.get_cib_dom()
+    for conf in cib.getElementsByTagName("configuration"):
+        for crm_config in conf.getElementsByTagName("crm_config"):
+            for nvpair in crm_config.getElementsByTagName("nvpair"):
+                if (
+                    nvpair.getAttribute("name") == "stonith-enabled"
+                    and
+                    is_false(nvpair.getAttribute("value"))
+                ):
+                    stonith_enabled = False
+                    break
+            if not stonith_enabled:
+                break
+        for resource in conf.getElementsByTagName("primitive"):
+            if resource.getAttribute("class") == "stonith":
+                stonith_devices.append(resource)
+                for attribs in resource.getElementsByTagName(
+                    "instance_attributes"
+                ):
+                    for nvpair in attribs.getElementsByTagName("nvpair"):
+                        if (
+                            nvpair.getAttribute("name") == "action"
+                            and
+                            nvpair.getAttribute("value")
+                        ):
+                            stonith_devices_id_action.append(
+                                resource.getAttribute("id")
+                            )
+
+    if not utils.usefile:
+        # check if SBD daemon is running
+        try:
+            sbd_running = utils.is_service_running(
+                utils.cmd_runner(),
+                get_sbd_service_name()
+            )
+        except LibraryError:
+            pass
+
+    if stonith_enabled and not stonith_devices and not sbd_running:
+        print("WARNING: no stonith devices and stonith-enabled is not false")
+
+    if stonith_devices_id_action:
+        print(
+            "WARNING: following stonith devices have the 'action' attribute"
+            " set, it is recommended to set {0} instead: {1}".format(
+                ", ".join(
+                    ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
+                ),
+                ", ".join(sorted(stonith_devices_id_action))
+            )
+        )
 
 # Parse crm_mon for status
 def nodes_status(argv):

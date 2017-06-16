@@ -32,6 +32,7 @@ def create(
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
+    resource_type="resource"
 ):
     """
     Prepare all parts of primitive resource and append it into cib.
@@ -48,6 +49,7 @@ def create(
         instance_attributes
     bool use_default_operations is flag for completion operations with default
         actions specified in resource agent
+    string resource_type -- describes the resource for reports
     """
     if raw_operation_list is None:
         raw_operation_list = []
@@ -58,7 +60,7 @@ def create(
 
     if does_id_exist(resources_section, resource_id):
         raise LibraryError(reports.id_already_exists(resource_id))
-    validate_id(resource_id, "resource name")
+    validate_id(resource_id, "{0} name".format(resource_type))
 
     operation_list = prepare_operations(
         report_processor,
@@ -73,7 +75,7 @@ def create(
     report_processor.process_list(
         resource_agent.validate_parameters(
             instance_attributes,
-            parameters_type="resource",
+            parameters_type=resource_type,
             allow_invalid=allow_invalid_instance_attributes,
         )
     )

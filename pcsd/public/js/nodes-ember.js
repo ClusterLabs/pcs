@@ -1228,7 +1228,8 @@ Pcs.ResourceAgentParameter = Ember.Object.extend({
     if (longdesc) desc.push(longdesc);
     if (def_val) desc.push("Default value: " + def_val);
     return desc.join("<br /><br />");
-  }.property("longdesc", "shortdesc", "default")
+  }.property("longdesc", "shortdesc", "default"),
+  pcs_deprecated_warning: ""
 });
 
 Pcs.ResourceAgent = Ember.Object.extend({

@@ -8,9 +8,13 @@ from __future__ import (
 import doctest
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
+import re
 
 from pcs.lib.errors import LibraryError
 from pcs.test.tools.misc import prepare_diff
+
+# cover python2 vs. python3 differences
+_re_object_type = type(re.compile(""))
 
 def start_tag_error_text():
     """lxml 3.7+ gives a longer 'start tag expected' error message,
@@ -41,37 +45,61 @@ class AssertPcsMixin(object):
                     ).format(command, pcs_returncode, stdout)
                 )
 
-    def assert_pcs_success(self, command, stdout_full=None, stdout_start=None):
+    def assert_pcs_success(
+        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None
+    ):
         full = stdout_full
-        if stdout_start is None and stdout_full is None:
+        if (
+            stdout_start is None
+            and
+            stdout_full is None
+            and
+            stdout_regexp is None
+        ):
             full = ""
         self.assert_pcs_result(
             command,
             stdout_full=full,
-            stdout_start=stdout_start
+            stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
+            returncode=0
         )
 
-    def assert_pcs_fail(self, command, stdout_full=None, stdout_start=None):
+    def assert_pcs_fail(
+        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None
+    ):
         self.assert_pcs_result(
             command,
             stdout_full=stdout_full,
             stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
             returncode=1
         )
 
     def assert_pcs_fail_regardless_of_force(
-        self, command, stdout_full=None, stdout_start=None
+        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None
     ):
-        self.assert_pcs_fail(command, stdout_full, stdout_start)
-        self.assert_pcs_fail(command+" --force", stdout_full, stdout_start)
+        self.assert_pcs_fail(command, stdout_full, stdout_start, stdout_regexp)
+        self.assert_pcs_fail(
+            command + " --force", stdout_full, stdout_start, stdout_regexp
+        )
 
     def assert_pcs_result(
-        self, command, stdout_full=None, stdout_start=None, returncode=0
+        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None,
+        returncode=0
     ):
-        msg = "Please specify exactly one: stdout_start or stdout_full"
-        if stdout_start is None and stdout_full is None:
+        msg = (
+            "Please specify exactly one: stdout_start or stdout_full or"
+            " stdout_regexp"
+        )
+        specified_stdout = [
+            stdout
+            for stdout in (stdout_full, stdout_start, stdout_regexp)
+            if stdout is not None
+        ]
+        if len(specified_stdout) < 1:
             raise Exception(msg + ", none specified")
-        if stdout_start is not None and stdout_full is not None:
+        elif len(specified_stdout) > 1:
             raise Exception(msg + ", both specified")
 
         stdout, pcs_returncode = self.pcs_runner.run(command)
@@ -91,8 +119,7 @@ class AssertPcsMixin(object):
         if stdout_start:
             expected_start = self.__prepare_output(stdout_start)
             if not stdout.startswith(expected_start):
-                self.assertTrue(
-                    False,
+                self.fail(
                     message_template.format(
                         reason="Stdout does not start as expected",
                         cmd=command,
@@ -100,6 +127,24 @@ class AssertPcsMixin(object):
                             stdout[:len(expected_start)], expected_start
                         ),
                         stdout=stdout
+                    )
+                )
+        elif stdout_regexp:
+            if not isinstance(stdout_regexp, _re_object_type):
+                stdout_regexp = re.compile(stdout_regexp)
+            if not stdout_regexp.search(stdout):
+                self.fail(
+                    (
+                        "Stdout does not match the expected regexp\n"
+                        "command: {cmd}\nregexp:\n{regexp} (flags: {flags})\n"
+                        "\nFull stdout:\n{stdout}"
+                    ).format(
+                        cmd=command,
+                        regexp=stdout_regexp.pattern,
+                        flags=", ".join(
+                            self.__prepare_regexp_flags(stdout_regexp.flags)
+                        ),
+                        stdout=stdout,
                     )
                 )
         else:
@@ -120,6 +165,24 @@ class AssertPcsMixin(object):
         if isinstance(output, list):
             return console_report(*output)
         return output
+
+    def __prepare_regexp_flags(self, flags):
+        # python2 has different flags than python3
+        possible_flags = [
+            "ASCII",
+            "DEBUG",
+            "IGNORECASE",
+            "LOCALE",
+            "MULTILINE",
+            "DOTALL",
+            "UNICODE",
+            "VERBOSE",
+        ]
+        used_flags = [
+            f for f in possible_flags
+            if hasattr(re, f) and (flags & getattr(re, f))
+        ]
+        return sorted(used_flags)
 
 
 class ExtendedAssertionsMixin(object):
@@ -250,4 +313,3 @@ def __report_item_equal(real_report_item, report_item_info):
             )
         )
     )
-

@@ -7,6 +7,8 @@
   ([rhbz#1165821])
 - It is now possible to disable, enable, unmanage and manage bundle resources
   and set their meta attributes ([rhbz#1447910])
+- Pcs now warns against using the `action` option of stonith devices
+  ([rhbz#1421702])
 
 ### Fixed
 - Fixed crash of the `pcs cluster setup` command when the `--force` flag was
@@ -38,6 +40,7 @@
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018
 [rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
+[rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1432283]: https://bugzilla.redhat.com/show_bug.cgi?id=1432283
 [rhbz#1447910]: https://bugzilla.redhat.com/show_bug.cgi?id=1447910
 

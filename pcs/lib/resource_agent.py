@@ -5,11 +5,10 @@ from __future__ import (
     unicode_literals,
 )
 
+from collections import namedtuple
+from lxml import etree
 import os
 import re
-from collections import namedtuple
-
-from lxml import etree
 
 from pcs import settings
 from pcs.common import report_codes
@@ -51,6 +50,8 @@ STANDARD_LIST = [
 DEFAULT_INTERVALS = {
     "monitor": "60s"
 }
+
+_STONITH_ACTION_REPLACED_BY = ("pcmk_off_action", "pcmk_reboot_action")
 
 
 def get_default_interval(operation_name):
@@ -464,7 +465,7 @@ class Agent(object):
             value_type = content_element.get("type", value_type)
             default_value = content_element.get("default", default_value)
 
-        return {
+        return self._create_parameter({
             "name": parameter_element.get("name", ""),
             "longdesc": self._get_text_from_dom_element(
                 parameter_element.find("longdesc")
@@ -478,12 +479,13 @@ class Agent(object):
             "advanced": False,
             "deprecated": is_true(parameter_element.get("deprecated", "0")),
             "obsoletes": parameter_element.get("obsoletes", None),
-        }
+        })
 
     def validate_parameters(
         self, parameters,
-        parameters_type="resource agent parameter",
-        allow_invalid=False
+        parameters_type="resource",
+        allow_invalid=False,
+        update=False
     ):
         forceable = report_codes.FORCE_OPTIONS if not allow_invalid else None
         severity = (
@@ -505,7 +507,7 @@ class Agent(object):
                 forceable=forceable,
             ))
 
-        if missing_req_opts:
+        if not update and missing_req_opts:
             report_list.append(reports.required_option_is_missing(
                 missing_req_opts,
                 parameters_type,
@@ -619,6 +621,22 @@ class Agent(object):
         if element is None or element.text is None:
             return ""
         return element.text.strip()
+
+    def _create_parameter(self, properties):
+        new_param = {
+            "name": "",
+            "longdesc": "",
+            "shortdesc": "",
+            "type": "string",
+            "default": None,
+            "required": False,
+            "advanced": False,
+            "deprecated": False,
+            "obsoletes": None,
+            "pcs_deprecated_warning": "",
+        }
+        new_param.update(properties)
+        return new_param
 
 
 class FakeAgentMetadata(Agent):
@@ -755,7 +773,7 @@ class ResourceAgent(CrmAgent):
                     "Set to 1 to turn on resource agent tracing"
                     " (expect large output)"
                 )
-                parameters.append({
+                parameters.append(self._create_parameter({
                     "name": "trace_ra",
                     "longdesc": (
                         shortdesc
@@ -771,12 +789,12 @@ class ResourceAgent(CrmAgent):
                     "default": 0,
                     "required": False,
                     "advanced": True,
-                })
+                }))
             if not trace_file_found:
                 shortdesc = (
                     "Path to a file to store resource agent tracing log"
                 )
-                parameters.append({
+                parameters.append(self._create_parameter({
                     "name": "trace_file",
                     "longdesc": shortdesc,
                     "shortdesc": shortdesc,
@@ -784,7 +802,7 @@ class ResourceAgent(CrmAgent):
                     "default": "",
                     "required": False,
                     "advanced": True,
-                })
+                }))
 
         return parameters
 
@@ -827,6 +845,33 @@ class StonithAgent(CrmAgent):
             self._get_stonithd_metadata().get_parameters()
         )
 
+    def validate_parameters(
+        self, parameters,
+        parameters_type="stonith",
+        allow_invalid=False,
+        update=False
+    ):
+        report_list = super(StonithAgent, self).validate_parameters(
+            parameters,
+            parameters_type=parameters_type,
+            allow_invalid=allow_invalid,
+            update=update
+        )
+        if parameters.get("action", ""):
+            report_list.append(reports.deprecated_option(
+                "action",
+                _STONITH_ACTION_REPLACED_BY,
+                parameters_type,
+                severity=(
+                    ReportItemSeverity.ERROR if not allow_invalid
+                    else ReportItemSeverity.WARNING
+                ),
+                forceable=(
+                    report_codes.FORCE_OPTIONS if not allow_invalid else None
+                )
+            ))
+        return report_list
+
     def _filter_parameters(self, parameters):
         """
         Remove parameters that should not be available to the user.
@@ -844,15 +889,19 @@ class StonithAgent(CrmAgent):
             elif param["name"] == "action":
                 # However we still need the user to be able to set 'action' due
                 # to backward compatibility reasons. So we just mark it as not
-                # required.
+                # required. We also move it to advanced params to indicate users
+                # should not set it in most cases.
                 new_param = dict(param)
-                new_param["shortdesc"] = "\n".join(filter(None, [
-                    param.get("shortdesc", ""),
-                    "WARNING: specifying 'action' is deprecated and not "
-                        "necessary with current Pacemaker versions."
-                    ,
-                ]))
                 new_param["required"] = False
+                new_param["advanced"] = True
+                new_param["pcs_deprecated_warning"] = (
+                    "Specifying 'action' is deprecated and not necessary with"
+                        " current Pacemaker versions. Use {0} instead."
+                ).format(
+                    ", ".join(
+                        ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
+                    )
+                )
                 filtered.append(new_param)
             else:
                 filtered.append(param)
