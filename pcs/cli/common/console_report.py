@@ -1192,6 +1192,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "This command does not support {forbidden_options}"
         .format(
             forbidden_options=joined_list(info["forbidden_options"], {
+                "BOOTH_CONF": "--booth-conf",
+                "BOOTH_KEY": "--booth-key",
                 "CIB": "-f",
                 "COROSYNC_CONF": "--corosync_conf",
             })

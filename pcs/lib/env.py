@@ -255,11 +255,10 @@ class LibraryEnvironment(object):
         return exists_local_corosync_conf()
 
     def command_expect_live_corosync_env(self):
-        # TODO get rid of cli knowledge
         if not self.is_corosync_conf_live:
-            raise LibraryError(reports.live_environment_required([
-                "--corosync_conf"
-            ]))
+            raise LibraryError(
+                reports.live_environment_required(["COROSYNC_CONF"])
+            )
 
     @property
     def is_corosync_conf_live(self):

@@ -99,8 +99,8 @@ class BoothEnv(object):
     def command_expect_live_env(self):
         if not self.__config.is_live:
             raise LibraryError(common_reports.live_environment_required([
-                "--booth-conf",
-                "--booth-key",
+                "BOOTH_CONF",
+                "BOOTH_KEY",
             ]))
 
     def set_key_path(self, path):
