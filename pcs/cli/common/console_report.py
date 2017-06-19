@@ -46,7 +46,7 @@ def format_fencing_level_target(target_type, target_value):
     return target_value
 
 def service_operation_started(operation, info):
-    return "{operation}{service}{instance_suffix}...".format(
+    return "{operation} {service}{instance_suffix}...".format(
         operation=operation,
         instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
         **info
@@ -63,7 +63,7 @@ def service_operation_error(operation, info):
         **info
     )
 
-def service_opration_success(operation, info):
+def service_operation_success(operation, info):
     return "{node_prefix}{service}{instance_suffix} {operation}".format(
         operation=operation,
         instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
@@ -73,7 +73,7 @@ def service_opration_success(operation, info):
 
 def service_operation_skipped(operation, info):
     return (
-        "{node_prefix}not {operation}{service}{instance_suffix} - {reason}"
+        "{node_prefix}not {operation} {service}{instance_suffix}: {reason}"
     ).format(
         operation=operation,
         instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
@@ -833,18 +833,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.SERVICE_START_STARTED: partial(service_operation_started, "Starting"),
     codes.SERVICE_START_ERROR: partial(service_operation_error, "start"),
-    codes.SERVICE_START_SUCCESS: partial(service_opration_success, "started"),
+    codes.SERVICE_START_SUCCESS: partial(service_operation_success, "started"),
     codes.SERVICE_START_SKIPPED: partial(service_operation_skipped, "starting"),
 
     codes.SERVICE_STOP_STARTED: partial(service_operation_started, "Stopping"),
     codes.SERVICE_STOP_ERROR: partial(service_operation_error, "stop"),
-    codes.SERVICE_STOP_SUCCESS: partial(service_opration_success, "stopped"),
+    codes.SERVICE_STOP_SUCCESS: partial(service_operation_success, "stopped"),
 
     codes.SERVICE_ENABLE_STARTED: partial(
         service_operation_started, "Enabling"
     ),
     codes.SERVICE_ENABLE_ERROR: partial(service_operation_error, "enable"),
-    codes.SERVICE_ENABLE_SUCCESS: partial(service_opration_success, "enabled"),
+    codes.SERVICE_ENABLE_SUCCESS: partial(service_operation_success, "enabled"),
     codes.SERVICE_ENABLE_SKIPPED: partial(
         service_operation_skipped, "enabling"
     ),
@@ -853,7 +853,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         partial(service_operation_started, "Disabling")
      ,
     codes.SERVICE_DISABLE_ERROR: partial(service_operation_error, "disable"),
-    codes.SERVICE_DISABLE_SUCCESS: partial(service_opration_success, "disabled"),
+    codes.SERVICE_DISABLE_SUCCESS: partial(service_operation_success, "disabled"),
 
     codes.SERVICE_KILL_ERROR: lambda info:
         "Unable to kill {service_list}: {reason}"

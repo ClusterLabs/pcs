@@ -1159,3 +1159,541 @@ class NodeToClearIsStillInCluster(NameBuildTest):
                 "node": "node1"
             }
         )
+
+
+class ServiceStartStarted(NameBuildTest):
+    code = codes.SERVICE_START_STARTED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Starting a_service...",
+            {
+                "service": "a_service",
+                "instance": None,
+            }
+        )
+
+    def test_with_instance(self):
+        self.assert_message_from_info(
+            "Starting a_service@an_instance...",
+            {
+                "service": "a_service",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStartError(NameBuildTest):
+    code = codes.SERVICE_START_ERROR
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to start a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: Unable to start a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "Unable to start a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: Unable to start a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStartSuccess(NameBuildTest):
+    code = codes.SERVICE_START_SUCCESS
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "a_service started",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: a_service started",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "a_service@an_instance started",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: a_service@an_instance started",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStartSkipped(NameBuildTest):
+    code = codes.SERVICE_START_SKIPPED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "not starting a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: not starting a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "not starting a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: not starting a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStopStarted(NameBuildTest):
+    code = codes.SERVICE_STOP_STARTED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Stopping a_service...",
+            {
+                "service": "a_service",
+                "instance": None,
+            }
+        )
+
+    def test_with_instance(self):
+        self.assert_message_from_info(
+            "Stopping a_service@an_instance...",
+            {
+                "service": "a_service",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStopError(NameBuildTest):
+    code = codes.SERVICE_STOP_ERROR
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to stop a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: Unable to stop a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "Unable to stop a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: Unable to stop a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceStopSuccess(NameBuildTest):
+    code = codes.SERVICE_STOP_SUCCESS
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "a_service stopped",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: a_service stopped",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "a_service@an_instance stopped",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: a_service@an_instance stopped",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceEnableStarted(NameBuildTest):
+    code = codes.SERVICE_ENABLE_STARTED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Enabling a_service...",
+            {
+                "service": "a_service",
+                "instance": None,
+            }
+        )
+
+    def test_with_instance(self):
+        self.assert_message_from_info(
+            "Enabling a_service@an_instance...",
+            {
+                "service": "a_service",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceEnableError(NameBuildTest):
+    code = codes.SERVICE_ENABLE_ERROR
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to enable a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: Unable to enable a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "Unable to enable a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: Unable to enable a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceEnableSuccess(NameBuildTest):
+    code = codes.SERVICE_ENABLE_SUCCESS
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "a_service enabled",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: a_service enabled",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "a_service@an_instance enabled",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: a_service@an_instance enabled",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceEnableSkipped(NameBuildTest):
+    code = codes.SERVICE_ENABLE_SKIPPED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "not enabling a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: not enabling a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "not enabling a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: not enabling a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceDisableStarted(NameBuildTest):
+    code = codes.SERVICE_DISABLE_STARTED
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Disabling a_service...",
+            {
+                "service": "a_service",
+                "instance": None,
+            }
+        )
+
+    def test_with_instance(self):
+        self.assert_message_from_info(
+            "Disabling a_service@an_instance...",
+            {
+                "service": "a_service",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceDisableError(NameBuildTest):
+    code = codes.SERVICE_DISABLE_ERROR
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to disable a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: Unable to disable a_service: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "Unable to disable a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: Unable to disable a_service@an_instance: a_reason",
+            {
+                "service": "a_service",
+                "reason": "a_reason",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
+
+
+class ServiceDisableSuccess(NameBuildTest):
+    code = codes.SERVICE_DISABLE_SUCCESS
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "a_service disabled",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "a_node: a_service disabled",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": None,
+            }
+        )
+
+    def test_instance(self):
+        self.assert_message_from_info(
+            "a_service@an_instance disabled",
+            {
+                "service": "a_service",
+                "node": None,
+                "instance": "an_instance",
+            }
+        )
+
+    def test_all(self):
+        self.assert_message_from_info(
+            "a_node: a_service@an_instance disabled",
+            {
+                "service": "a_service",
+                "node": "a_node",
+                "instance": "an_instance",
+            }
+        )
