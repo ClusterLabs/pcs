@@ -953,8 +953,23 @@ def resource_operation_add(
     op_properties.sort(key=lambda a:a[0])
     op_properties.insert(0, ("name", op_name))
 
-    op_id = "%s-%s-interval-%s" % (res_id, op_name, interval)
-    op_id = utils.find_unique_id(dom, op_id)
+    generate_id = True
+    for name, value in op_properties:
+        if name == "id":
+            op_id = value
+            generate_id = False
+            id_valid, id_error = utils.validate_xml_id(value, 'operation id')
+            if not id_valid:
+                utils.err(id_error)
+            if utils.does_id_exist(dom, value):
+                utils.err(
+                    "id '%s' is already in use, please specify another one"
+                    % value
+                )
+    if generate_id:
+        op_id = "%s-%s-interval-%s" % (res_id, op_name, interval)
+        op_id = utils.find_unique_id(dom, op_id)
+
     op_el = dom.createElement("op")
     op_el.setAttribute("id", op_id)
     for key, val in op_properties:

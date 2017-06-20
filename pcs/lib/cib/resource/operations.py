@@ -13,7 +13,11 @@ from pcs.common import report_codes
 from pcs.lib import reports, validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
-from pcs.lib.cib.tools import create_subelement_id
+from pcs.lib.cib.tools import (
+    create_subelement_id,
+    does_id_exist,
+)
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     is_true,
     timeout_to_seconds,
@@ -149,6 +153,7 @@ def validate_operation_list(
             code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
             allow_extra_values=allow_invalid,
         ),
+        validate.value_id("id", option_name_for_report="operation id"),
     ]
     report_list = []
     for operation in operation_list:
@@ -308,13 +313,17 @@ def append_new_operation(operations_element, options):
         (key, value) for key, value in options.items()
         if key not in OPERATION_NVPAIR_ATTRIBUTES
     )
-    attribute_map.update({
-        "id": create_id(
-            operations_element.getparent(),
-            options["name"],
-            options["interval"]
-        )
-    })
+    if "id" in attribute_map:
+        if does_id_exist(operations_element, attribute_map["id"]):
+            raise LibraryError(reports.id_already_exists(attribute_map["id"]))
+    else:
+        attribute_map.update({
+            "id": create_id(
+                operations_element.getparent(),
+                options["name"],
+                options["interval"]
+            )
+        })
     op_element = etree.SubElement(
         operations_element,
         "op",

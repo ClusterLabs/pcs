@@ -475,6 +475,20 @@ class SuccessOperations(ResourceTest):
                 " stop, validate-all\n"
         )
 
+    def test_op_id(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy"
+                " op monitor interval=30s id=abcd"
+            ,
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="abcd" interval="30s" name="monitor" />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+
 class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
@@ -1114,17 +1128,46 @@ class FailOrWarn(ResourceTest):
                 " 'IPaddr2')\n"
         )
 
-    def test_fail_on_invalid_id(self):
+    def test_fail_on_invalid_resource_id(self):
         self.assert_pcs_fail(
             "resource create #R ocf:heartbeat:Dummy",
             "Error: invalid resource name '#R',"
                 " '#' is not a valid first character for a resource name\n"
         )
 
-    def test_fail_on_existing_id(self):
+    def test_fail_on_existing_resource_id(self):
         self.assert_pcs_success("resource create R ocf:heartbeat:Dummy")
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy",
+            "Error: 'R' already exists\n"
+        )
+
+    def test_fail_on_invalid_operation_id(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy op monitor interval=30 id=#O",
+            "Error: invalid operation id '#O',"
+                " '#' is not a valid first character for a operation id\n"
+        )
+
+    def test_fail_on_existing_operation_id(self):
+        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy")
+        self.assert_pcs_fail(
+            "resource create S ocf:heartbeat:Dummy op monitor interval=30 id=R",
+            "Error: 'R' already exists\n"
+        )
+
+    def test_fail_on_duplicate_operation_id(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy"
+                " op monitor interval=30 id=O"
+                " op monitor interval=60 id=O"
+            ,
+            "Error: 'O' already exists\n"
+        )
+
+    def test_fail_on_resource_id_same_as_operation_id(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy op monitor interval=30 id=R",
             "Error: 'R' already exists\n"
         )
 

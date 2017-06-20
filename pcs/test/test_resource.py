@@ -661,48 +661,90 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
-
-        line = 'resource update ClusterIP op monitor interval=32s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource update ClusterIP op'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource update ClusterIP op monitor'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
         self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+            """
+        ))
+
+        self.assert_pcs_success(
+            "resource update ClusterIP op monitor interval=32s"
+        )
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=32s (ClusterIP-monitor-interval-32s)
+            """
+        ))
+
+        show_clusterip = outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
               Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)
                           start interval=30s timeout=180s (ClusterIP-start-interval-30s)
             """
+        )
+        self.assert_pcs_success(
+            "resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s"
+        )
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        self.assert_pcs_success(
+            "resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s"
+        )
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        self.assert_pcs_success("resource update ClusterIP op")
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        self.assert_pcs_success("resource update ClusterIP op monitor")
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        # test invalid id
+        self.assert_pcs_fail_regardless_of_force(
+            "resource update ClusterIP op monitor interval=30 id=ab#cd",
+            "Error: invalid operation id 'ab#cd', '#' is not a valid character"
+                " for a operation id\n"
+        )
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        # test existing id
+        self.assert_pcs_fail_regardless_of_force(
+            "resource update ClusterIP op monitor interval=30 id=ClusterIP",
+            "Error: id 'ClusterIP' is already in use, please specify another"
+                " one\n"
+        )
+        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+
+        # test id change
+        # there is a bug:
+        # - first an existing operation is removed
+        # - then a new operation is created at the same place
+        # - therefore options not specified for in the command are removed
+        #    instead of them being kept from the old operation
+        # This needs to be fixed. However it's not my task currently.
+        # Moreover it is documented behavior.
+        self.assert_pcs_success("resource update ClusterIP op monitor id=abcd")
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=60s (abcd)
+                          start interval=30s timeout=180s (ClusterIP-start-interval-30s)
+            """
         ))
 
-        output, returnVal = pcs(
-            temp_cib,
+
+        # test two monitor operations:
+        # - the first one is updated
+        # - operation duplicity detection test
+        self.assert_pcs_success(
             "resource create A ocf:heartbeat:Dummy op monitor interval=10 op monitor interval=20"
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
         self.assert_pcs_success("resource show A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
@@ -739,6 +781,8 @@ monitor interval=20 (A-monitor-interval-20)
                           stop interval=0s timeout=20 (A-stop-interval-0s)
             """
         ))
+
+
 
         output, returnVal = pcs(
             temp_cib,

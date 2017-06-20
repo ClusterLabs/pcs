@@ -30,6 +30,9 @@
   `pcs resource create`([rhbz#1386114])
 - It is now possible to set `debug` and `verbose` parameters of stonith devices
   ([rhbz#1432283])
+- Resource operation ids are now properly validated and no longer ignored in
+  `pcs resource create`, `pcs resource update` and `pcs resource op add`
+  commands ([rhbz#1443418])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
@@ -42,6 +45,7 @@
 [rhbz#1386114]: https://bugzilla.redhat.com/show_bug.cgi?id=1386114
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1432283]: https://bugzilla.redhat.com/show_bug.cgi?id=1432283
+[rhbz#1443418]: https://bugzilla.redhat.com/show_bug.cgi?id=1443418
 [rhbz#1447910]: https://bugzilla.redhat.com/show_bug.cgi?id=1447910
 
 

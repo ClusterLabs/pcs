@@ -318,6 +318,28 @@ class ValidateOperation(TestCase):
             ],
         )
 
+    def test_return_error_on_invalid_id(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitor",
+                "id": "a#b",
+            },
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID,
+                    {
+                        "id": "a#b",
+                        "id_description": "operation id",
+                        "invalid_character": "#",
+                        "is_first_char": False,
+                    },
+                    None
+                ),
+            ],
+        )
+
+
 class GetRemainingDefaults(TestCase):
     @mock.patch("pcs.lib.cib.resource.operations.make_unique_intervals")
     def test_returns_remining_operations(self, make_unique_intervals):

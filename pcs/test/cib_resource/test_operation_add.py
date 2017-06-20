@@ -14,11 +14,13 @@ from pcs.test.tools.pcs_runner import PcsRunner
 from pcs.test.tools.pcs_unittest import TestCase
 
 
-class Success(
+class OperationAdd(
     TestCase,
     get_assert_pcs_effect_mixin(get_cib_resources)
 ):
     temp_cib = rc("temp-cib.xml")
+    empty_cib = rc("cib-empty.xml")
+
     def setUp(self):
         self.prepare_cib_file()
         self.pcs_runner = PcsRunner(self.temp_cib)
@@ -33,7 +35,7 @@ class Success(
         return self.__class__.cib_cache
 
     def fixture_cib(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), self.temp_cib)
+        shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
         self.assert_pcs_success(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
@@ -50,7 +52,7 @@ class Success(
 
         #clean
         self.pcs_runner = None
-        shutil.copy(rc('cib-empty-1.2.xml'), self.temp_cib)
+        shutil.copy(self.empty_cib, self.temp_cib)
 
         return cib_content
 
@@ -132,4 +134,32 @@ class Success(
                     </operations>
                 </primitive>
             </resources>"""
+        )
+
+    def test_id_specified(self):
+        self.assert_effect(
+            "resource op add R start timeout=30 id=abcd",
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                        <op id="abcd" interval="0s" name="start" timeout="30" />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+
+    def test_invalid_id(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource op add R start timeout=30 id=ab#cd",
+            "Error: invalid operation id 'ab#cd', '#' is not a valid"
+                " character for a operation id\n"
+        )
+
+    def test_duplicate_id(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource op add R start timeout=30 id=R",
+            "Error: id 'R' is already in use, please specify another one\n"
         )
