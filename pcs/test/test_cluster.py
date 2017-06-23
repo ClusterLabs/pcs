@@ -508,6 +508,21 @@ logging {
 }
 """)
 
+    def test_cluster_setup_encryption_bad_value(self):
+        if utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=bad"
+            .format(corosync_conf_tmp)
+        )
+        self.assertEqual(
+            "Error: 'bad' is not a valid --encryption value, use 0, 1\n",
+            output
+        )
+        self.assertEqual(1, returnVal)
+
     def test_cluster_setup_2_nodes_no_atb(self):
         # Setup a 2 node cluster and make sure the two node config is set, then
         # add a node and make sure that it's unset, then remove a node and make

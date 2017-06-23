@@ -303,8 +303,17 @@ def cluster_certkey(argv):
 
 def cluster_setup(argv):
     modifiers = utils.get_modificators()
-    if modifiers["encryption"] not in ["0", "1"]:
-        utils.err("Invalid value for option --encryption")
+    allowed_encryption_values = ["0", "1"]
+    if modifiers["encryption"] not in allowed_encryption_values:
+        process_library_reports([
+            lib_reports.invalid_option_value(
+                "--encryption",
+                modifiers["encryption"],
+                allowed_encryption_values,
+                severity=ReportItemSeverity.ERROR,
+                forceable=None
+            )
+        ])
     if len(argv) < 2:
         usage.cluster(["setup"])
         sys.exit(1)
