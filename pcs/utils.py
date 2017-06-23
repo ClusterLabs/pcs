@@ -2844,7 +2844,7 @@ def get_modificators():
         "device": pcs_options.get("--device", []),
         "disabled": "--disabled" in pcs_options,
         "enable": "--enable" in pcs_options,
-        "encryption": pcs_options.get("--encryption", "1"),
+        "encryption": pcs_options.get("--encryption", "0"),
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
         "group": pcs_options.get("--group", None),

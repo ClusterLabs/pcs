@@ -233,6 +233,7 @@ Warning: Unable to resolve hostname: nonexistant-address.invalid
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -291,6 +292,7 @@ Error: {0} already exists, use --force to overwrite
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -417,6 +419,95 @@ Error: {0} already exists, use --force to overwrite
 </cluster>
 """)
 
+    def test_cluster_setup_encryption_enabled(self):
+        if utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=1"
+            .format(corosync_conf_tmp)
+        )
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
+        with open(corosync_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1.localhost
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2.localhost
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
+    to_syslog: yes
+}
+""")
+
+    def test_cluster_setup_encryption_disabled(self):
+        if utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=0"
+            .format(corosync_conf_tmp)
+        )
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
+        with open(corosync_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    cluster_name: cname
+    secauth: off
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1.localhost
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2.localhost
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
+    to_syslog: yes
+}
+""")
+
     def test_cluster_setup_2_nodes_no_atb(self):
         # Setup a 2 node cluster and make sure the two node config is set, then
         # add a node and make sure that it's unset, then remove a node and make
@@ -437,6 +528,7 @@ Error: {0} already exists, use --force to overwrite
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -477,6 +569,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -521,6 +614,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -561,6 +655,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -606,6 +701,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -647,6 +743,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -688,6 +785,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -728,6 +826,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -773,6 +872,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -818,6 +918,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
 }
 
@@ -867,6 +968,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
 }
 
@@ -1267,6 +1369,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
     ip_version: ipv6
 }
@@ -1374,6 +1477,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: passive
 
@@ -1432,6 +1536,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: passive
 
@@ -1490,6 +1595,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: passive
 
@@ -1548,6 +1654,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: passive
 
@@ -1615,6 +1722,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: active
 
@@ -1680,6 +1788,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udp
     rrp_mode: active
 
@@ -1755,6 +1864,7 @@ logging {
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: udpu
     rrp_mode: passive
 }
@@ -1843,6 +1953,7 @@ logging {
 totem {
     version: 2
     cluster_name: test99
+    secauth: off
     transport: udpu
 }
 
@@ -2427,6 +2538,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
 totem {
     version: 2
     cluster_name: test99
+    secauth: off
     transport: udpu
     token: 20000
     token_coefficient: 20005
@@ -2670,6 +2782,7 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 totem {
     version: 2
     cluster_name: cname
+    secauth: off
     transport: unknown
 }
 

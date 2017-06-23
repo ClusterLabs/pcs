@@ -3,8 +3,8 @@
 ## [Unreleased]
 
 ### Added
-- Option to create a cluster with or without corosync encryption enabled
-  ([rhbz#1165821])
+- Option to create a cluster with or without corosync encryption enabled,
+  by default the encryption is disabled ([rhbz#1165821])
 - It is now possible to disable, enable, unmanage and manage bundle resources
   and set their meta attributes ([rhbz#1447910])
 - Pcs now warns against using the `action` option of stonith devices
@@ -38,6 +38,9 @@
 - Binary data are stored in corosync authkey ([rhbz#1165821])
 - It is now mandatory to specify container type in the `resource bundle create`
   command
+- When creating a new cluster, corosync communication encryption is disabled
+  by default (in 0.9.158 it was enabled by default, in 0.9.157 and older it was
+  disabled)
 
 [rhbz#1165821]: https://bugzilla.redhat.com/show_bug.cgi?id=1165821
 [rhbz#1176018]: https://bugzilla.redhat.com/show_bug.cgi?id=1176018

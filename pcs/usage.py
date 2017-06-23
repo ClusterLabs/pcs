@@ -619,7 +619,7 @@ Commands:
             may occur before a new configuration is formed
             (default 2500 failures)
         --encryption 0|1 disables (0) or enables (1) corosync communication
-            encryption (default 1)
+            encryption (default 0)
 
         Configuring Redundant Ring Protocol (RRP)
 
