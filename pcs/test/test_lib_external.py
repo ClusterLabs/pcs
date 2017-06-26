@@ -25,11 +25,7 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     report_codes,
 )
-from pcs.lib import reports
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as severity
-)
+from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.external as lib
 
@@ -1120,126 +1116,6 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             self.assertEqual(e, exc)
         self.assertTrue(raised)
 
-
-class ParallelCommunicationHelperTest(TestCase):
-    def setUp(self):
-        self.mock_reporter = MockLibraryReportProcessor()
-
-    def fixture_raiser(self):
-        def raiser(x, *args, **kwargs):
-            if x == 1:
-                raise lib.NodeConnectionException("node", "command", "reason")
-            elif x == 2:
-                raise LibraryError(
-                    reports.corosync_config_distribution_node_error("node")
-                )
-        return raiser
-
-    def test_success(self):
-        func = mock.MagicMock()
-        lib.parallel_nodes_communication_helper(
-            func,
-            [([x], {"a": x*2,}) for x in range(3)],
-            self.mock_reporter,
-            skip_offline_nodes=False
-        )
-        expected_calls = [
-            mock.call(0, a=0),
-            mock.call(1, a=2),
-            mock.call(2, a=4),
-        ]
-        self.assertEqual(len(expected_calls), len(func.mock_calls))
-        func.assert_has_calls(expected_calls, any_order=True)
-        self.assertEqual(self.mock_reporter.report_item_list, [])
-
-    def test_errors(self):
-        func = self.fixture_raiser()
-        assert_raise_library_error(
-            lambda: lib.parallel_nodes_communication_helper(
-                func,
-                [([x], {"a": x*2,}) for x in range(4)],
-                self.mock_reporter,
-                skip_offline_nodes=False
-            ),
-            (
-                severity.ERROR,
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                {
-                    "node": "node",
-                    "reason": "reason",
-                    "command": "command",
-                },
-                report_codes.SKIP_OFFLINE_NODES
-            ),
-            (
-                severity.ERROR,
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                {
-                    "node": "node",
-                }
-            )
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.ERROR,
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    {
-                        "node": "node",
-                        "reason": "reason",
-                        "command": "command",
-                    },
-                    report_codes.SKIP_OFFLINE_NODES
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                    {
-                        "node": "node",
-                    }
-                )
-            ]
-        )
-
-    def test_errors_skip_offline(self):
-        func = self.fixture_raiser()
-        assert_raise_library_error(
-            lambda: lib.parallel_nodes_communication_helper(
-                func,
-                [([x], {"a": x*2,}) for x in range(4)],
-                self.mock_reporter,
-                skip_offline_nodes=True
-            ),
-            (
-                severity.ERROR,
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                {
-                    "node": "node",
-                }
-            )
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.WARNING,
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    {
-                        "node": "node",
-                        "reason": "reason",
-                        "command": "command",
-                    }
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                    {
-                        "node": "node",
-                    }
-                )
-            ]
-        )
 
 class IsCmanClusterTest(TestCase):
     def template_test(self, version_description, is_cman, corosync_retval=0):

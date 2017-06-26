@@ -15,7 +15,7 @@ except ImportError:
     # python 3
     from urllib.parse import parse_qs as url_decode
 
-from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.pcs_unittest import mock, skip
 from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
     assert_raise_library_error,
@@ -23,6 +23,7 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
+from pcs.common.node_communicator import RequestTarget
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
 from pcs.lib.external import NodeCommunicator, NodeConnectionException
@@ -32,7 +33,7 @@ import pcs.lib.booth.sync as lib
 def to_b64(string):
     return base64.b64encode(string.encode("utf-8")).decode("utf-8")
 
-
+@skip("TODO: rewrite for pcs.lib.communication.booth.BoothSendConfig")
 class SetConfigOnNodeTest(TestCase):
     def setUp(self):
         self.mock_com = mock.MagicMock(spec_set=NodeCommunicator)
@@ -130,7 +131,7 @@ class SetConfigOnNodeTest(TestCase):
         )
         self._assert()
 
-
+@skip("TODO: rewrite for pcs.lib.communication.booth.BoothSaveFiles")
 @mock.patch("pcs.lib.booth.sync.parallel_nodes_communication_helper")
 class SyncConfigInCluster(TestCase):
     def setUp(self):
@@ -254,16 +255,38 @@ class SyncConfigInCluster(TestCase):
             )]
         )
 
-
+@mock.patch("pcs.lib.booth.sync.run_and_raise")
 @mock.patch("pcs.lib.booth.config_structure.get_authfile")
 @mock.patch("pcs.lib.booth.config_parser.parse")
 @mock.patch("pcs.lib.booth.config_files.read_configs")
 @mock.patch("pcs.lib.booth.config_files.read_authfile")
 class SendAllConfigToNodeTest(TestCase):
     def setUp(self):
-        self.mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+        self.mock_com = "communicator"
         self.mock_reporter = MockLibraryReportProcessor()
-        self.node = NodeAddresses("node")
+        self.node = RequestTarget("node")
+        self.file_list = [
+            {
+                "name": "name1.conf",
+                "data": "config1",
+                "is_authfile": False
+            },
+            {
+                "name": "file1.key",
+                "data": to_b64("some key"),
+                "is_authfile": True
+            },
+            {
+                "name": "name2.conf",
+                "data": "config2",
+                "is_authfile": False
+            },
+            {
+                "name": "file2.key",
+                "data": to_b64("another key"),
+                "is_authfile": True
+            }
+        ]
 
     @staticmethod
     def mock_parse_fn(config_content):
@@ -298,7 +321,8 @@ class SendAllConfigToNodeTest(TestCase):
         return _data[authfile_path]
 
     def test_success(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com,
     ):
         mock_parse.side_effect = self.mock_parse_fn
         mock_authfile.side_effect = self.mock_authfile_fn
@@ -307,15 +331,16 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-        {
-            "existing": [],
-            "failed": {},
-            "saved": ["name1.conf", "file1.key", "name2.conf", "file2.key"]
-        }
-        """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": [],
+                "failed": {},
+                "saved": ["name1.conf", "file1.key", "name2.conf", "file2.key"]
+            }
+        )]
         lib.send_all_config_to_node(
-            self.mock_communicator, self.mock_reporter, self.node
+            self.mock_com, self.mock_reporter, self.node
         )
         self.assertEqual(2, mock_parse.call_count)
         mock_parse.assert_has_calls([
@@ -331,42 +356,10 @@ class SendAllConfigToNodeTest(TestCase):
             mock.call(self.mock_reporter, "/path/to/file2.key")
         ])
         mock_read_configs.assert_called_once_with(self.mock_reporter, False)
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertFalse("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name1.conf",
-                    "data": "config1",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file1.key",
-                    "data": to_b64("some key"),
-                    "is_authfile": True
-                },
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(self.file_list, com_cmd._file_list)
+        self.assertFalse(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -389,7 +382,8 @@ class SendAllConfigToNodeTest(TestCase):
         )
 
     def test_do_not_rewrite_existing(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com,
     ):
         mock_parse.side_effect = self.mock_parse_fn
         mock_authfile.side_effect = self.mock_authfile_fn
@@ -398,16 +392,17 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-        {
-            "existing": ["name1.conf", "file1.key"],
-            "failed": {},
-            "saved": ["name2.conf", "file2.key"]
-        }
-        """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": ["name1.conf", "file1.key"],
+                "failed": {},
+                "saved": ["name2.conf", "file2.key"]
+            }
+        )]
         assert_raise_library_error(
             lambda: lib.send_all_config_to_node(
-                self.mock_communicator, self.mock_reporter, self.node
+                self.mock_com, self.mock_reporter, self.node
             ),
             (
                 Severities.ERROR,
@@ -444,42 +439,10 @@ class SendAllConfigToNodeTest(TestCase):
             mock.call(self.mock_reporter, "/path/to/file2.key")
         ])
         mock_read_configs.assert_called_once_with(self.mock_reporter, False)
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertFalse("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name1.conf",
-                    "data": "config1",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file1.key",
-                    "data": to_b64("some key"),
-                    "is_authfile": True
-                },
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(self.file_list, com_cmd._file_list)
+        self.assertFalse(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -512,7 +475,8 @@ class SendAllConfigToNodeTest(TestCase):
         )
 
     def test_rewrite_existing(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com,
     ):
         mock_parse.side_effect = self.mock_parse_fn
         mock_authfile.side_effect = self.mock_authfile_fn
@@ -521,15 +485,16 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-        {
-            "existing": ["name1.conf", "file1.key"],
-            "failed": {},
-            "saved": ["name2.conf", "file2.key"]
-        }
-        """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": ["name1.conf", "file1.key"],
+                "failed": {},
+                "saved": ["name2.conf", "file2.key"]
+            }
+        )]
         lib.send_all_config_to_node(
-            self.mock_communicator,
+            self.mock_com,
             self.mock_reporter,
             self.node,
             rewrite_existing=True
@@ -548,42 +513,10 @@ class SendAllConfigToNodeTest(TestCase):
             mock.call(self.mock_reporter, "/path/to/file1.key"),
             mock.call(self.mock_reporter, "/path/to/file2.key")
         ])
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertTrue("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name1.conf",
-                    "data": "config1",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file1.key",
-                    "data": to_b64("some key"),
-                    "is_authfile": True
-                },
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(self.file_list, com_cmd._file_list)
+        self.assertTrue(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -622,7 +555,8 @@ class SendAllConfigToNodeTest(TestCase):
         )
 
     def test_write_failure(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com,
     ):
         mock_parse.side_effect = self.mock_parse_fn
         mock_authfile.side_effect = self.mock_authfile_fn
@@ -631,19 +565,20 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-        {
-            "existing": [],
-            "failed": {
-                "name1.conf": "Error message",
-                "file1.key": "Another error message"
-            },
-            "saved": ["name2.conf", "file2.key"]
-        }
-        """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": [],
+                "failed": {
+                    "name1.conf": "Error message",
+                    "file1.key": "Another error message"
+                },
+                "saved": ["name2.conf", "file2.key"]
+            }
+        )]
         assert_raise_library_error(
             lambda: lib.send_all_config_to_node(
-                self.mock_communicator, self.mock_reporter, self.node
+                self.mock_com, self.mock_reporter, self.node
             ),
             (
                 Severities.ERROR,
@@ -678,42 +613,10 @@ class SendAllConfigToNodeTest(TestCase):
             mock.call(self.mock_reporter, "/path/to/file2.key")
         ])
         mock_read_configs.assert_called_once_with(self.mock_reporter, False)
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertFalse("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name1.conf",
-                    "data": "config1",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file1.key",
-                    "data": to_b64("some key"),
-                    "is_authfile": True
-                },
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(self.file_list, com_cmd._file_list)
+        self.assertFalse(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -743,6 +646,7 @@ class SendAllConfigToNodeTest(TestCase):
             ]
         )
 
+    @skip("TODO: rewrite for pcs.lib.communication.booth.BoothSaveFiles")
     def test_communication_failure(
         self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
     ):
@@ -821,6 +725,7 @@ class SendAllConfigToNodeTest(TestCase):
             json.loads(data["data_json"][0])
         )
 
+    @skip("TODO: rewrite for pcs.lib.communication.booth.BoothSaveFiles")
     def test_wrong_response_format(
         self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
     ):
@@ -902,6 +807,7 @@ class SendAllConfigToNodeTest(TestCase):
             json.loads(data["data_json"][0])
         )
 
+    @skip("TODO: rewrite for pcs.lib.communication.booth.BoothSaveFiles")
     def test_response_not_json(
         self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
     ):
@@ -974,9 +880,9 @@ class SendAllConfigToNodeTest(TestCase):
             json.loads(data["data_json"][0])
         )
 
-
     def test_configs_without_authfiles(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com
     ):
         def mock_authfile_fn(parsed_config):
             if parsed_config == "config1":
@@ -995,15 +901,16 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-        {
-            "existing": [],
-            "failed": {},
-            "saved": ["name1.conf", "name2.conf", "file2.key"]
-        }
-        """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": [],
+                "failed": {},
+                "saved": ["name1.conf", "name2.conf", "file2.key"]
+            }
+        )]
         lib.send_all_config_to_node(
-            self.mock_communicator, self.mock_reporter, self.node
+            self.mock_com, self.mock_reporter, self.node
         )
         self.assertEqual(2, mock_parse.call_count)
         mock_parse.assert_has_calls([
@@ -1017,37 +924,27 @@ class SendAllConfigToNodeTest(TestCase):
             self.mock_reporter, "/path/to/file2.key"
         )
         mock_read_configs.assert_called_once_with(self.mock_reporter, False)
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertFalse("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name1.conf",
-                    "data": "config1",
-                    "is_authfile": False
-                },
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        expected_file_list = [
+            {
+                "name": "name1.conf",
+                "data": "config1",
+                "is_authfile": False
+            },
+            {
+                "name": "name2.conf",
+                "data": "config2",
+                "is_authfile": False
+            },
+            {
+                "name": "file2.key",
+                "data": to_b64("another key"),
+                "is_authfile": True
+            }
+        ]
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(expected_file_list, com_cmd._file_list)
+        self.assertFalse(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -1068,7 +965,8 @@ class SendAllConfigToNodeTest(TestCase):
         )
 
     def test_unable_to_parse_config(
-        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile
+        self, mock_read_authfile, mock_read_configs, mock_parse, mock_authfile,
+        mock_run_com,
     ):
         def mock_parse_fn(config_data):
             if config_data == "config1":
@@ -1087,15 +985,16 @@ class SendAllConfigToNodeTest(TestCase):
             "name1.conf": "config1",
             "name2.conf": "config2"
         }
-        self.mock_communicator.call_node.return_value = """
-         {
-             "existing": [],
-             "failed": {},
-             "saved": ["name2.conf", "file2.key"]
-         }
-         """
+        mock_run_com.return_value = [(
+            self.node,
+            {
+                "existing": [],
+                "failed": {},
+                "saved": ["name2.conf", "file2.key"]
+            }
+        )]
         lib.send_all_config_to_node(
-            self.mock_communicator, self.mock_reporter, self.node
+            self.mock_com, self.mock_reporter, self.node
         )
         self.assertEqual(2, mock_parse.call_count)
         mock_parse.assert_has_calls([
@@ -1106,32 +1005,22 @@ class SendAllConfigToNodeTest(TestCase):
             self.mock_reporter, "/path/to/file2.key"
         )
         mock_read_configs.assert_called_once_with(self.mock_reporter, False)
-        self.assertEqual(1, self.mock_communicator.call_node.call_count)
-        self.assertEqual(
-            self.node, self.mock_communicator.call_node.call_args[0][0]
-        )
-        self.assertEqual(
-            "remote/booth_save_files",
-            self.mock_communicator.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
-        self.assertFalse("rewrite_existing" in data)
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            [
-                {
-                    "name": "name2.conf",
-                    "data": "config2",
-                    "is_authfile": False
-                },
-                {
-                    "name": "file2.key",
-                    "data": to_b64("another key"),
-                    "is_authfile": True
-                }
-            ],
-            json.loads(data["data_json"][0])
-        )
+        expected_file_list = [
+            {
+                "name": "name2.conf",
+                "data": "config2",
+                "is_authfile": False
+            },
+            {
+                "name": "file2.key",
+                "data": to_b64("another key"),
+                "is_authfile": True
+            }
+        ]
+        communicator, com_cmd = mock_run_com.call_args[0]
+        self.assertEqual(self.mock_com, communicator)
+        self.assertEqual(expected_file_list, com_cmd._file_list)
+        self.assertFalse(com_cmd._rewrite_existing)
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -1158,7 +1047,7 @@ class SendAllConfigToNodeTest(TestCase):
             ]
         )
 
-
+@skip("TODO: rewrite for pcs.lib.communication.booth.BoothGetConfig")
 class PullConfigFromNodeTest(TestCase):
     def setUp(self):
         self.mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)

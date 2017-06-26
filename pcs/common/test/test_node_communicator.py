@@ -18,30 +18,54 @@ from pcs.lib.node import NodeAddresses
 import pcs.common.node_communicator as lib
 
 
+class RequestDataUrlEncodeTest(TestCase):
+    def test_no_data(self):
+        action = "action"
+        data = lib.RequestData(action)
+        self.assertEqual(action, data.action)
+        self.assertEqual(0, len(data.structured_data))
+        self.assertEqual("", data.data)
+
+    def test_with_data(self):
+        action = "action"
+        orig_data = [
+            ("key1", "value1"),
+            ("spacial characters", "+-+/%&?'\";[]()*^$#@!~`{:}<>")
+        ]
+        data = lib.RequestData(action, orig_data)
+        self.assertEqual(action, data.action)
+        self.assertEqual(orig_data, data.structured_data)
+        expected_raw_data = (
+            "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B" +
+            "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E"
+        )
+        self.assertEqual(expected_raw_data, data.data)
+
+
 class RequestTargetConstructorTest(TestCase):
     def test_no_adresses(self):
         label = "label"
         target = lib.RequestTarget(label)
-        self.assertEqual(label, target.host_label)
-        self.assertEqual([label], target.host_address_list)
+        self.assertEqual(label, target.label)
+        self.assertEqual([label], target.address_list)
 
     def test_with_adresses(self):
         label = "label"
         address_list = ["a1", "a2"]
         original_list = list(address_list)
-        target = lib.RequestTarget(label, host_address_list=address_list)
+        target = lib.RequestTarget(label, address_list=address_list)
         address_list.append("a3")
-        self.assertEqual(label, target.host_label)
-        self.assertIsNot(address_list, target.host_address_list)
-        self.assertEqual(original_list, target.host_address_list)
+        self.assertEqual(label, target.label)
+        self.assertIsNot(address_list, target.address_list)
+        self.assertEqual(original_list, target.address_list)
 
 
 class RequestTargetFromNodeAdressesTest(TestCase):
     def test_ring0(self):
         ring0 = "ring0"
         target = lib.RequestTarget.from_node_addresses(NodeAddresses(ring0))
-        self.assertEqual(ring0, target.host_label)
-        self.assertEqual([ring0], target.host_address_list)
+        self.assertEqual(ring0, target.label)
+        self.assertEqual([ring0], target.address_list)
 
     def test_ring1(self):
         ring0 = "ring0"
@@ -49,8 +73,8 @@ class RequestTargetFromNodeAdressesTest(TestCase):
         target = lib.RequestTarget.from_node_addresses(
             NodeAddresses(ring0, ring1)
         )
-        self.assertEqual(ring0, target.host_label)
-        self.assertEqual([ring0, ring1], target.host_address_list)
+        self.assertEqual(ring0, target.label)
+        self.assertEqual([ring0, ring1], target.address_list)
 
     def test_ring0_with_label(self):
         ring0 = "ring0"
@@ -58,8 +82,8 @@ class RequestTargetFromNodeAdressesTest(TestCase):
         target = lib.RequestTarget.from_node_addresses(
             NodeAddresses(ring0, name=label)
         )
-        self.assertEqual(label, target.host_label)
-        self.assertEqual([ring0], target.host_address_list)
+        self.assertEqual(label, target.label)
+        self.assertEqual([ring0], target.address_list)
 
     def test_ring1_with_label(self):
         ring0 = "ring0"
@@ -68,8 +92,8 @@ class RequestTargetFromNodeAdressesTest(TestCase):
         target = lib.RequestTarget.from_node_addresses(
             NodeAddresses(ring0, ring1, name=label)
         )
-        self.assertEqual(label, target.host_label)
-        self.assertEqual([ring0, ring1], target.host_address_list)
+        self.assertEqual(label, target.label)
+        self.assertEqual([ring0, ring1], target.address_list)
 
 
 class RequestUrlTest(TestCase):
@@ -205,7 +229,7 @@ class ResponseTest(TestCase):
         self.assertIsNone(response.response_code)
 
 
-@mock.patch("pcs.lib.communication.pycurl.Curl")
+@mock.patch("pcs.common.node_communicator.pycurl.Curl")
 class CreateRequestHandleTest(TestCase):
     _common_opts = {
         pycurl.PROTOCOLS: pycurl.PROTO_HTTPS,
@@ -226,7 +250,7 @@ class CreateRequestHandleTest(TestCase):
             lib.RequestTarget(
                 "label", ["host1", "host2"], port=123, token="token_val",
             ),
-            lib.RequestData("action", "data")
+            lib.RequestData("action", [("data", "value")])
         )
         cookies = {
             "name1": "val1",
@@ -239,7 +263,7 @@ class CreateRequestHandleTest(TestCase):
             pycurl.COOKIE: "name1=val1;name2=val2;token=token_val".encode(
                 "utf-8"
             ),
-            pycurl.COPYPOSTFIELDS: "data".encode("utf-8"),
+            pycurl.COPYPOSTFIELDS: "data=value".encode("utf-8"),
         }
         expected_opts.update(self._common_opts)
         self.assertLessEqual(
@@ -300,7 +324,7 @@ class CommunicatorBaseTest(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.communication.pycurl.CurlMulti",
+    "pcs.common.node_communicator.pycurl.CurlMulti",
     side_effect=lambda: MockCurlMulti([1])
 )
 @mock.patch("pcs.common.node_communicator._create_request_handle")
@@ -349,7 +373,7 @@ class CommunicatorSimpleTest(CommunicatorBaseTest):
 class CommunicatorMultiTest(CommunicatorBaseTest):
     @mock.patch("pcs.common.node_communicator._create_request_handle")
     @mock.patch(
-        "pcs.lib.communication.pycurl.CurlMulti",
+        "pcs.common.node_communicator.pycurl.CurlMulti",
         side_effect=lambda: MockCurlMulti([1, 1])
     )
     def test_call_start_loop_multiple_times(self, _,  mock_create_handle):
@@ -362,9 +386,9 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
         with self.assertRaises(AssertionError):
             next(com.start_loop())
 
-    @mock.patch("pcs.lib.communication.pycurl.Curl")
+    @mock.patch("pcs.common.node_communicator.pycurl.Curl")
     @mock.patch(
-        "pcs.lib.communication.pycurl.CurlMulti",
+        "pcs.common.node_communicator.pycurl.CurlMulti",
         side_effect=lambda: MockCurlMulti([2, 0, 0, 1, 0, 1, 1])
     )
     def test_multiple(self, _, mock_curl):
@@ -427,7 +451,7 @@ def fixture_logger_request_retry_calls(response, host):
 @mock.patch.object(lib.Response, "connection_failure")
 @mock.patch.object(lib.Response, "connection_successful")
 @mock.patch(
-    "pcs.lib.communication.pycurl.CurlMulti",
+    "pcs.common.node_communicator.pycurl.CurlMulti",
     side_effect=lambda: MockCurlMulti([1, 0, 1, 1, 1])
 )
 @mock.patch("pcs.common.node_communicator._create_request_handle")
@@ -549,17 +573,4 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
         com._multi_handle.assert_no_handle_left()
-
-
-class FormatDataDictTest(TestCase):
-    def test_simple(self):
-        data = [
-            ("key1", "value1"),
-            ("spacial characters", "+-+/%&?'\";[]()*^$#@!~`{:}<>")
-        ]
-        expected = (
-            "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B" +
-            "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E"
-        )
-        self.assertEqual(expected, lib.format_data_dict(data))
 

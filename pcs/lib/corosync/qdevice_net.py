@@ -4,8 +4,6 @@ from __future__ import (
     print_function,
 )
 
-import base64
-import binascii
 import functools
 import os
 import os.path
@@ -328,84 +326,6 @@ def client_import_certificate_and_key(runner, pk12_certificate):
                 join_multilines([stderr, stdout])
             )
         )
-
-def remote_qdevice_get_ca_certificate(node_communicator, host):
-    """
-    connect to a qnetd host and get qnetd CA certificate
-    string host address of the qnetd host
-    """
-    try:
-        return base64.b64decode(
-            node_communicator.call_host(
-                host,
-                "remote/qdevice_net_get_ca_certificate",
-                None
-            )
-        )
-    except (TypeError, binascii.Error):
-        raise LibraryError(reports.invalid_response_format(host))
-
-def remote_client_setup(node_communicator, node, qnetd_ca_certificate):
-    """
-    connect to a remote node and initialize qdevice there
-    NodeAddresses node target node
-    qnetd_ca_certificate qnetd CA certificate
-    """
-    return node_communicator.call_node(
-        node,
-        "remote/qdevice_net_client_init_certificate_storage",
-        external.NodeCommunicator.format_data_dict([
-            ("ca_certificate", base64.b64encode(qnetd_ca_certificate)),
-        ])
-    )
-
-def remote_sign_certificate_request(
-    node_communicator, host, cert_request, cluster_name
-):
-    """
-    connect to a qdevice host and sign node certificate there
-    string host address of the qnetd host
-    cert_request certificate request to be signed
-    string cluster_name name of the cluster to which qdevice is being added
-    """
-    try:
-        return base64.b64decode(
-            node_communicator.call_host(
-                host,
-                "remote/qdevice_net_sign_node_certificate",
-                external.NodeCommunicator.format_data_dict([
-                    ("certificate_request", base64.b64encode(cert_request)),
-                    ("cluster_name", cluster_name),
-                ])
-            )
-        )
-    except (TypeError, binascii.Error):
-        raise LibraryError(reports.invalid_response_format(host))
-
-def remote_client_import_certificate_and_key(node_communicator, node, pk12):
-    """
-    import pk12 certificate on a remote node
-    NodeAddresses node target node
-    pk12 certificate
-    """
-    return node_communicator.call_node(
-        node,
-        "remote/qdevice_net_client_import_certificate",
-        external.NodeCommunicator.format_data_dict([
-            ("certificate", base64.b64encode(pk12)),
-        ])
-    )
-
-def remote_client_destroy(node_communicator, node):
-    """
-    delete qdevice client config files on a remote node
-    NodeAddresses node target node
-    """
-    return node_communicator.call_node(
-        node,
-        "remote/qdevice_net_client_destroy",
-        None
-    )
 
 def _store_to_tmpfile(data, report_func):
     try:

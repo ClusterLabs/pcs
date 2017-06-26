@@ -19,6 +19,7 @@ from pcs.test.tools.command_env.mock_runner import Call
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.node_communicator import RequestTarget
 from pcs.lib.errors import (
     ReportItemSeverity as Severities,
     LibraryError,
@@ -400,8 +401,8 @@ class ValidateWatchdogDictTest(TestCase):
 class ValidateDeviceDictTest(TestCase):
     def test_all_ok(self):
         device_dict = {
-            NodeAddresses("node1"): ["/dev1", "/dev2"],
-            NodeAddresses("node2"): ["/dev1"],
+            "node1": ["/dev1", "/dev2"],
+            "node2": ["/dev1"],
         }
         self.assertEqual([], cmd_sbd._validate_device_dict(device_dict))
 
@@ -410,10 +411,10 @@ class ValidateDeviceDictTest(TestCase):
             "dev" + str(i) for i in range(settings.sbd_max_device_num + 1)
         ]
         device_dict = {
-            NodeAddresses("node1"): [],
-            NodeAddresses("node2"): too_many_devices,
-            NodeAddresses("node3"): ["/dev/vda"],
-            NodeAddresses("node4"): ["/dev/vda1", "../dev/sda2"],
+            "node1": [],
+            "node2": too_many_devices,
+            "node3": ["/dev/vda"],
+            "node4": ["/dev/vda1", "../dev/sda2"],
         }
         assert_report_item_list_equal(
             cmd_sbd._validate_device_dict(device_dict),
@@ -512,41 +513,41 @@ class CheckNodeNamesInClusterTest(TestCase):
         )
 
 
-class GetFullNodeDictTest(TestCase):
+class GetFullTargetDictTest(TestCase):
     def setUp(self):
-        self.node_list = NodeAddressesList([
-            NodeAddresses("node1"),
-            NodeAddresses("node2"),
-            NodeAddresses("node3"),
-        ])
+        self.target_list = [
+            RequestTarget("node{0}".format(i)) for i in range(1, 4)
+        ]
 
     def test_not_using_default(self):
-        node_dict = dict([
+        target_dict = dict([
             ("node" + str(i), "val" + str(i)) for i in range(4)
         ])
         expected = {
-            self.node_list[0]: "val1",
-            self.node_list[1]: "val2",
-            self.node_list[2]: "val3",
+            self.target_list[0].label: "val1",
+            self.target_list[1].label: "val2",
+            self.target_list[2].label: "val3",
         }
         self.assertEqual(
             expected,
-            cmd_sbd._get_full_node_dict(self.node_list, node_dict, None)
+            cmd_sbd._get_full_target_dict(self.target_list, target_dict, None)
         )
 
     def test_using_default(self):
-        node_dict = dict([
+        target_dict = dict([
             ("node" + str(i), "val" + str(i)) for i in range(3)
         ])
         default = "default"
         expected = {
-            self.node_list[0]: "val1",
-            self.node_list[1]: "val2",
-            self.node_list[2]: default,
+            self.target_list[0].label: "val1",
+            self.target_list[1].label: "val2",
+            self.target_list[2].label: default,
         }
         self.assertEqual(
             expected,
-            cmd_sbd._get_full_node_dict(self.node_list, node_dict, default)
+            cmd_sbd._get_full_target_dict(
+                self.target_list, target_dict, default
+            )
         )
 
 

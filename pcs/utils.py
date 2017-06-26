@@ -64,9 +64,13 @@ from pcs.lib.external import (
     _service,
     _systemctl,
 )
+from pcs.lib.communication.nodes import (
+    availability_checker_node,
+    PrecheckNewNode,
+)
+from pcs.lib.communication.tools import run as run_com_cmd
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
-from pcs.lib.nodes_task import check_can_add_node_to_cluster
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -327,7 +331,7 @@ def resumeConfigSyncing(node):
     data = urllib_urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
-def canAddNodeToCluster(node_communicator, node):
+def canAddNodeToCluster(node_communicator, target):
     """
     Return tuple with two parts. The first part is information if the node can
     be added to a cluster. The second part is a relevant explanation for first
@@ -337,7 +341,9 @@ def canAddNodeToCluster(node_communicator, node):
     NodeAddresses node contain destination for request
     """
     report_list = []
-    check_can_add_node_to_cluster(node_communicator, node, report_list)
+    com_cmd = PrecheckNewNode(report_list, availability_checker_node)
+    com_cmd.add_request(target)
+    run_com_cmd(node_communicator, com_cmd)
 
     analyzer = ReportListAnalyzer(report_list)
     if not analyzer.error_list:

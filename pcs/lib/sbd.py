@@ -4,21 +4,14 @@ from __future__ import (
     print_function,
 )
 
-import json
 from os import path
 
 from pcs import settings
-from pcs.common import tools
 from pcs.lib import (
     external,
     reports,
 )
 from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
-from pcs.lib.external import (
-    NodeCommunicator,
-    node_communicator_exception_to_report_item,
-    NodeCommunicationException,
-)
 from pcs.lib.errors import LibraryError
 
 
@@ -28,30 +21,6 @@ DEVICE_INITIALIZATION_OPTIONS_MAPPING = {
     "loop-timeout": "-3",
     "msgwait-timeout": "-4",
 }
-
-
-def _run_parallel_and_raise_lib_error_on_failure(func, param_list):
-    """
-    Run function func in parallel for all specified parameters in arg_list.
-    Raise LibraryError on any failure.
-
-    func -- function to be run
-    param_list -- list of tuples: (*args, **kwargs)
-    """
-    report_list = []
-
-    def _parallel(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except NodeCommunicationException as e:
-            report_list.append(node_communicator_exception_to_report_item(e))
-        except LibraryError as e:
-            report_list.extend(e.args)
-
-    tools.run_parallel(_parallel, param_list)
-
-    if report_list:
-        raise LibraryError(*report_list)
 
 
 def _even_number_of_nodes_and_no_qdevice(
@@ -133,318 +102,15 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
     )
 
 
-def check_sbd(communicator, node, watchdog, device_list):
-    """
-    Check SBD on specified 'node' and existence of specified watchdog and
-    devices.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    watchdog -- watchdog path
-    device_list -- list of strings
-    """
-    return communicator.call_node(
-        node,
-        "remote/check_sbd",
-        NodeCommunicator.format_data_dict([
-            ("watchdog", watchdog),
-            ("device_list", NodeCommunicator.format_data_json(device_list)),
-        ])
-    )
-
-
-def check_sbd_on_node(
-    report_processor, node_communicator, node, watchdog, device_list
-):
-    """
-    Check if SBD can be enabled on specified 'node'.
-    Raises LibraryError if check fails.
-    Raises NodeCommunicationException if there is communication issue.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node -- NodeAddresses
-    watchdog -- watchdog path
-    device_list -- list of strings
-    """
-    report_list = []
-    try:
-        data = json.loads(
-            check_sbd(node_communicator, node, watchdog, device_list)
-        )
-        if not data["sbd"]["installed"]:
-            report_list.append(reports.sbd_not_installed(node.label))
-        if not data["watchdog"]["exist"]:
-            report_list.append(reports.watchdog_not_found(node.label, watchdog))
-        for device in data.get("device_list", []):
-            if not device["exist"]:
-                report_list.append(reports.sbd_device_does_not_exist(
-                    device["path"], node.label
-                ))
-            elif not device["block_device"]:
-                report_list.append(reports.sbd_device_is_not_block_device(
-                    device["path"], node.label
-                ))
-            # TODO maybe we can check whenever device is initialized by sbd (by
-            # running 'sbd -d <dev> dump;')
-    except (ValueError, KeyError, TypeError):
-        raise LibraryError(reports.invalid_response_format(node.label))
-
-    if report_list:
-        raise LibraryError(*report_list)
-    report_processor.process(reports.sbd_check_success(node.label))
-
-
-def check_sbd_on_all_nodes(report_processor, node_communicator, nodes_data):
-    """
-    Checks SBD (if SBD is installed and watchdog exists) on all NodeAddresses
-        defined as keys in nodes_data.
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    nodes_data -- dictionary with NodeAddresses as keys and dict (with keys
-        'watchdog' and 'device_list') as value
-    """
-    report_processor.process(reports.sbd_check_started())
-    data_list = []
-    for node, data in sorted(nodes_data.items()):
-        data_list.append((
-            [
-                report_processor, node_communicator, node, data["watchdog"],
-                data["device_list"]
-            ],
-            {}
-        ))
-
-    _run_parallel_and_raise_lib_error_on_failure(check_sbd_on_node, data_list)
-
-
-def set_sbd_config(communicator, node, config):
-    """
-    Send SBD configuration to 'node'.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    config -- string, SBD configuration file
-    """
-    communicator.call_node(
-        node,
-        "remote/set_sbd_config",
-        NodeCommunicator.format_data_dict([("config", config)])
-    )
-
-
-def set_sbd_config_on_node(
-    report_processor, node_communicator, node, config, watchdog,
-    device_list=None
-):
-    """
-    Send SBD configuration to 'node' with specified watchdog set. Also puts
-    correct node name into SBD_OPTS option (SBD_OPTS="-n <node_name>").
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node -- NodeAddresses
-    config -- dictionary in format: <SBD config option>: <value>
-    watchdog -- path to watchdog device
-    device_list -- list of strings
-    """
-    config = dict(config)
-    config["SBD_OPTS"] = '"-n {node_name}"'.format(node_name=node.label)
+def create_sbd_config(base_config, node_label, watchdog, device_list=None):
+    # TODO: figure out which name/ring has to be in SBD_OPTS
+    config = dict(base_config)
+    config["SBD_OPTS"] = '"-n {node_name}"'.format(node_name=node_label)
     if watchdog:
         config["SBD_WATCHDOG_DEV"] = watchdog
     if device_list:
         config["SBD_DEVICE"] = '"{0}"'.format(";".join(device_list))
-    set_sbd_config(node_communicator, node, dict_to_environment_file(config))
-    report_processor.process(
-        reports.sbd_config_accepted_by_node(node.label)
-    )
-
-
-def set_sbd_config_on_all_nodes(
-    report_processor, node_communicator, node_list, config, watchdog_dict,
-    device_dict
-):
-    """
-    Send SBD configuration 'config' to all nodes in 'node_list'. Option
-        SBD_OPTS="-n <node_name>" is added automatically.
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node_list -- NodeAddressesList
-    config -- dictionary in format: <SBD config option>: <value>
-    watchdog_dict -- dictionary of watchdogs where key is NodeAdresses object
-        and value is path to watchdog
-    device_dict -- distionary with NodeAddresses as keys and lists of devices
-        as values
-    """
-    report_processor.process(reports.sbd_config_distribution_started())
-    _run_parallel_and_raise_lib_error_on_failure(
-        set_sbd_config_on_node,
-        [
-            (
-                [
-                    report_processor, node_communicator, node, config,
-                    watchdog_dict.get(node), device_dict.get(node)
-                ],
-                {}
-            )
-            for node in node_list
-        ]
-    )
-
-
-def enable_sbd_service(communicator, node):
-    """
-    Enable SBD service on 'node'.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    communicator.call_node(node, "remote/sbd_enable", None)
-
-
-def enable_sbd_service_on_node(report_processor, node_communicator, node):
-    """
-    Enable SBD service on 'node'.
-    Returns list of ReportItem if there was any failure. Empty list otherwise.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    enable_sbd_service(node_communicator, node)
-    report_processor.process(reports.service_enable_success("sbd", node.label))
-
-
-def enable_sbd_service_on_all_nodes(
-        report_processor, node_communicator, node_list
-):
-    """
-    Enable SBD service on all nodes in 'node_list'.
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node_list -- NodeAddressesList
-    """
-    report_processor.process(reports.sbd_enabling_started())
-    _run_parallel_and_raise_lib_error_on_failure(
-        enable_sbd_service_on_node,
-        [
-            ([report_processor, node_communicator, node], {})
-            for node in node_list
-        ]
-    )
-
-
-def disable_sbd_service(communicator, node):
-    """
-    Disable SBD service on 'node'.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    communicator.call_node(node, "remote/sbd_disable", None)
-
-
-def disable_sbd_service_on_node(report_processor, node_communicator, node):
-    """
-    Disable SBD service on 'node'.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    disable_sbd_service(node_communicator, node)
-    report_processor.process(reports.service_disable_success("sbd", node.label))
-
-
-def disable_sbd_service_on_all_nodes(
-    report_processor, node_communicator, node_list
-):
-    """
-    Disable SBD service on all nodes in 'node_list'.
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    report_processor --
-    node_communicator -- NodeCommunicator
-    node_list -- NodeAddressesList
-    """
-    report_processor.process(reports.sbd_disabling_started())
-    _run_parallel_and_raise_lib_error_on_failure(
-        disable_sbd_service_on_node,
-        [
-            ([report_processor, node_communicator, node], {})
-            for node in node_list
-        ]
-    )
-
-
-def set_stonith_watchdog_timeout_to_zero(communicator, node):
-    """
-    Set cluster property 'stonith-watchdog-timeout' to value '0' on 'node'.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    communicator.call_node(
-        node, "remote/set_stonith_watchdog_timeout_to_zero", None
-    )
-
-
-def set_stonith_watchdog_timeout_to_zero_on_all_nodes(
-    node_communicator, node_list
-):
-    """
-    Sets cluster property 'stonith-watchdog-timeout' to value '0' an all nodes
-        in 'node_list', even if cluster is not currently running on them (direct
-        editing CIB file).
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    node_communicator -- NodeCommunicator
-    node_list -- NodeAddressesList
-    """
-    report_list = []
-    for node in node_list:
-        try:
-            set_stonith_watchdog_timeout_to_zero(node_communicator, node)
-        except NodeCommunicationException as e:
-            report_list.append(node_communicator_exception_to_report_item(e))
-    if report_list:
-        raise LibraryError(*report_list)
-
-
-def remove_stonith_watchdog_timeout(communicator, node):
-    """
-    Remove cluster property 'stonith-watchdog-timeout' on 'node'.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    communicator.call_node(node, "remote/remove_stonith_watchdog_timeout", None)
-
-
-def remove_stonith_watchdog_timeout_on_all_nodes(node_communicator, node_list):
-    """
-    Removes cluster property 'stonith-watchdog-timeout' from all nodes
-        in 'node_list', even if cluster is not currently running on them (direct
-        editing CIB file).
-    Raises LibraryError with all ReportItems in case of any failure.
-
-    node_communicator -- NodeCommunicator
-    node_list -- NodeAddressesList
-    """
-    report_list = []
-    for node in node_list:
-        try:
-            remove_stonith_watchdog_timeout(node_communicator, node)
-        except NodeCommunicationException as e:
-            report_list.append(node_communicator_exception_to_report_item(e))
-    if report_list:
-        raise LibraryError(*report_list)
+    return dict_to_environment_file(config)
 
 
 def get_default_sbd_config():
@@ -473,17 +139,6 @@ def get_local_sbd_config():
         raise LibraryError(reports.unable_to_get_sbd_config(
             "local node", str(e)
         ))
-
-
-def get_sbd_config(communicator, node):
-    """
-    Get SBD configuration from 'node'.
-    Returns SBD configuration string.
-
-    communicator -- NodeCommunicator
-    node -- NodeAddresses
-    """
-    return communicator.call_node(node, "remote/get_sbd_config", None)
 
 
 def get_sbd_service_name():

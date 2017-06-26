@@ -6,7 +6,6 @@ from __future__ import (
 
 import base64
 import io
-import json
 import re
 from collections import namedtuple
 
@@ -33,56 +32,68 @@ class NodeTargetFactory(object):
     def __init__(self, auth_tokens):
         self._auth_tokens = auth_tokens
 
-    def get_target(self, node_addresses):
-        possible_names = [node_addresses.label, node_addresses.ring0]
-        if node_addresses.ring1:
-            possible_names.append(node_addresses.ring1)
+    def _get_token(self, possible_names):
         token = None
         for name in possible_names:
             token = self._auth_tokens.get(name, None)
             if token is not None:
                 break
+        return token
+
+    def get_target(self, node_addresses):
+        possible_names = [node_addresses.label, node_addresses.ring0]
+        if node_addresses.ring1:
+            possible_names.append(node_addresses.ring1)
         return RequestTarget.from_node_addresses(
-            node_addresses, port="2224", token=token
+            node_addresses, port="2224", token=self._get_token(possible_names)
         )
 
+    def get_target_list(self, node_addresses_list):
+        return [self.get_target(node) for node in node_addresses_list]
 
-class RequestData(namedtuple("RequestData", ["action", "data"])):
+    def get_target_from_hostname(self, hostname):
+        return RequestTarget(hostname, token=self._get_token([hostname]))
+
+
+class RequestData(
+    namedtuple("RequestData", ["action", "structured_data", "data"])
+):
     """
     This class represents action and data asociated with action which will be
     send in request
     """
 
-    def __new__(cls, action, data=""):
+    def __new__(cls, action, structured_data=()):
         """
         string action -- action to perform
-        string data -- data to send with specified action
+        list structured_data -- list of tuples, data to send with specified
+            action
         """
-        return super(RequestData, cls).__new__(cls, action, data)
+        return super(RequestData, cls).__new__(
+            cls, action, structured_data, urllib_urlencode(structured_data)
+        )
 
 
 class RequestTarget(namedtuple(
-    "RequestTarget", ["host_label", "host_address_list", "port", "token"]
+    "RequestTarget", ["label", "address_list", "port", "token"]
 )):
     """
     This class represents target (host) for request to be performed on
     """
 
-    def __new__(
-        cls, host_label, host_address_list=None, port=None, token=None
-    ):
+    def __new__(cls, label, address_list=None, port=None, token=None):
         """
-        string host_label -- label for the host, this is used as only hostname
-            if host_address_list is not defined
-        list host_address_list -- list of all possible hostnames on which the
-            host is reachable
+        string label -- label for the host, this is used as only hostname
+            if address_list is not defined
+        list address_list -- list of all possible hostnames on which the host is
+            reachable
         int port -- target communnication port
         string token -- authentication token
         """
-        if not host_address_list:
-            host_address_list = [host_label]
+        if not address_list:
+            address_list = [label]
         return super(RequestTarget, cls).__new__(
-            cls, host_label, list(host_address_list), port, token
+            cls, label, list(address_list), port, token
         )
 
     @classmethod
@@ -92,7 +103,7 @@ class RequestTarget(namedtuple(
         RequestTarget instance.
 
         NodeAddresses node_addresses -- node which defines target
-        int port -- target communnication port
+        string port -- target communnication port
         string token -- authentication token
         """
         address_list = [node_addresses.ring0]
@@ -100,7 +111,7 @@ class RequestTarget(namedtuple(
             address_list.append(node_addresses.ring1)
         return cls(
             node_addresses.label,
-            host_address_list=address_list, port=port, token=token
+            address_list=address_list, port=port, token=token
         )
 
 
@@ -117,7 +128,7 @@ class Request(object):
         """
         self._target = request_target
         self._data = request_data
-        self._current_host_iterator = iter(request_target.host_address_list)
+        self._current_host_iterator = iter(request_target.address_list)
         self._current_host = None
         self.next_host()
 
@@ -149,7 +160,11 @@ class Request(object):
 
     @property
     def host_label(self):
-        return self._target.host_label
+        return self._target.label
+
+    @property
+    def target(self):
+        return self._target
 
     @property
     def data(self):
@@ -429,20 +444,6 @@ class CommunicatorLoggerInterface(object):
 
     def log_no_more_addresses(self, response):
         raise NotImplementedError()
-
-
-def format_data_dict(data):
-    """
-    Encode data for transport (only plain dict is supported)
-    """
-    return urllib_urlencode(data)
-
-
-def format_data_json(data):
-    """
-    Encode data for transport (more complex data than in format_data_dict)
-    """
-    return json.dumps(data)
 
 
 def _get_auth_cookies(user, group_list):
