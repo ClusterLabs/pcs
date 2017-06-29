@@ -486,6 +486,20 @@ def node_communication_not_connected(node, reason):
         }
     )
 
+
+def node_communication_no_more_addresses(node, request):
+    """
+    request failed and there are no more addresses to try it again
+    """
+    return ReportItem.warning(
+        report_codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES,
+        info={
+            "node": node,
+            "request": request,
+        }
+    )
+
+
 def node_communication_error_not_authorized(
     node, command, reason,
     severity=ReportItemSeverity.ERROR, forceable=None
@@ -625,12 +639,35 @@ def node_communication_error_timed_out(
         forceable=forceable
     )
 
-def node_communication_proxy_is_set():
+def node_communication_proxy_is_set(node=None, address=None):
     """
     Warning when connection failed and there is proxy set in environment
     variables
     """
-    return ReportItem.warning(report_codes.NODE_COMMUNICATION_PROXY_IS_SET)
+    return ReportItem.warning(
+        report_codes.NODE_COMMUNICATION_PROXY_IS_SET,
+        info={
+            "node": node,
+            "address": address,
+        }
+    )
+
+
+def node_communication_retrying(node, failed_address, next_address, request):
+    """
+    Request failed due communication error connecting via specified address,
+    therefore trying another address if there is any.
+    """
+    return ReportItem.warning(
+        report_codes.NODE_COMMUNICATION_RETRYING,
+        info={
+            "node": node,
+            "failed_address": failed_address,
+            "next_address": next_address,
+            "request": request,
+        }
+    )
+
 
 def cannot_add_node_is_in_cluster(node):
     """

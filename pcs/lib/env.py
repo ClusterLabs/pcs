@@ -26,6 +26,7 @@ from pcs.lib.external import (
     CommandRunner,
     NodeCommunicator,
 )
+from pcs.lib.communication import NodeCommunicatorFactory, NodeTargetFactory
 from pcs.lib.errors import LibraryError
 from pcs.lib.nodes_task import (
     distribute_corosync_conf,
@@ -289,6 +290,19 @@ class LibraryEnvironment(object):
             runner_env["CIB_file"] = self._cib_data_tmp_file.name
 
         return CommandRunner(self.logger, self.report_processor, runner_env)
+
+    def get_node_communicator_factory(self):
+        return NodeCommunicatorFactory(
+            self.logger,
+            self.report_processor,
+            self.user_login,
+            self.user_groups,
+            self._request_timeout
+        )
+
+    def get_node_target_factory(self):
+        return NodeTargetFactory(self.__get_auth_tokens())
+
 
     def node_communicator(self):
         return NodeCommunicator(

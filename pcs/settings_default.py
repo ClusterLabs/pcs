@@ -38,6 +38,7 @@ pcsd_tokens_location = "/var/lib/pcsd/tokens"
 pcsd_users_conf_location = "/var/lib/pcsd/pcs_users.conf"
 pcsd_settings_conf_location = "/var/lib/pcsd/pcs_settings.conf"
 pcsd_exec_location = "/usr/lib/pcsd/"
+pcsd_default_port = 2224
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"
