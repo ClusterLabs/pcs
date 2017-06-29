@@ -35,7 +35,6 @@ def node_add_remote(lib, arg_list, modifiers):
 
     parts = parse_resource_create_args(rest_args)
     force = modifiers["force"]
-    skip_offline = modifiers["skip_offline_nodes"]
 
     lib.cluster.node_add_remote(
         node_host,
@@ -43,9 +42,9 @@ def node_add_remote(lib, arg_list, modifiers):
         parts["op"],
         parts["meta"],
         parts["options"],
-        skip_offline_nodes=skip_offline,
-        allow_incomplete_distribution=skip_offline,
-        allow_pacemaker_remote_service_fail=skip_offline,
+        skip_offline_nodes=modifiers["skip_offline_nodes"],
+        allow_incomplete_distribution=force,
+        allow_pacemaker_remote_service_fail=force,
         allow_invalid_operation=force,
         allow_invalid_instance_attributes=force,
         use_default_operations=not modifiers["no-default-ops"],
@@ -61,7 +60,7 @@ def create_node_remove_remote(remove_resource):
             remove_resource,
             skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_remove_multiple_nodes=modifiers["force"],
-            allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
+            allow_pacemaker_remote_service_fail=modifiers["force"],
         )
     return node_remove_remote
 
@@ -74,15 +73,13 @@ def node_add_guest(lib, arg_list, modifiers):
     resource_id = arg_list[1]
     meta_options = prepare_options(arg_list[2:])
 
-    skip_offline = modifiers["skip_offline_nodes"]
-
     lib.cluster.node_add_guest(
         node_name,
         resource_id,
         meta_options,
-        skip_offline_nodes=skip_offline,
-        allow_incomplete_distribution=skip_offline,
-        allow_pacemaker_remote_service_fail=skip_offline,
+        skip_offline_nodes=modifiers["skip_offline_nodes"],
+        allow_incomplete_distribution=modifiers["force"],
+        allow_pacemaker_remote_service_fail=modifiers["force"],
         wait=modifiers["wait"],
     )
 
@@ -94,7 +91,7 @@ def node_remove_guest(lib, arg_list, modifiers):
         arg_list[0],
         skip_offline_nodes=modifiers["skip_offline_nodes"],
         allow_remove_multiple_nodes=modifiers["force"],
-        allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
+        allow_pacemaker_remote_service_fail=modifiers["force"],
         wait=modifiers["wait"],
     )
 

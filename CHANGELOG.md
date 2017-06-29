@@ -33,6 +33,9 @@
 - Resource operation ids are now properly validated and no longer ignored in
   `pcs resource create`, `pcs resource update` and `pcs resource op add`
   commands ([rhbz#1443418])
+- Flag `--force` works correctly when an operation is not successful on some
+  nodes durrng `pcs cluster node add-remote` or `pcs cluster node add-guest`
+  ([rhbz#1464781])
 
 ### Changed
 - Binary data are stored in corosync authkey ([rhbz#1165821])
@@ -50,6 +53,7 @@
 [rhbz#1432283]: https://bugzilla.redhat.com/show_bug.cgi?id=1432283
 [rhbz#1443418]: https://bugzilla.redhat.com/show_bug.cgi?id=1443418
 [rhbz#1447910]: https://bugzilla.redhat.com/show_bug.cgi?id=1447910
+[rhbz#1464781]: https://bugzilla.redhat.com/show_bug.cgi?id=1464781
 
 
 ## [0.9.158] - 2017-05-23

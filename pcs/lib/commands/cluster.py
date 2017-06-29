@@ -100,7 +100,7 @@ def _prepare_pacemaker_remote_environment(
     _ensure_can_add_node_to_remote_cluster(
         env,
         candidate_node,
-        allow_incomplete_distribution
+        skip_offline_nodes
     )
     _share_authkey(
         env,
