@@ -483,6 +483,7 @@ def cluster_setup(argv):
                 NodeAddressesList(
                     [NodeAddresses(node) for node in primary_addr_list]
                 ),
+                skip_offline_nodes=modifiers["skip_offline_nodes"],
                 allow_incomplete_distribution="--force" in utils.pcs_options
             )
         except LibraryError as e: #Theoretically, this should not happen
@@ -1787,6 +1788,7 @@ def node_add(lib_env, node0, node1, modifiers):
             lib_env,
             get_nodes(lib_env.get_corosync_conf()),
             node_addr,
+            skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_incomplete_distribution=modifiers["skip_offline_nodes"]
         )
 
@@ -2155,6 +2157,7 @@ def cluster_destroy(argv):
                     _destroy_pcmk_remote_env(
                         lib_env,
                         all_remote_nodes,
+                        skip_offline_nodes=True,
                         allow_fails=True
                     )
             except LibraryError as e:

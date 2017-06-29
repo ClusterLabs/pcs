@@ -369,6 +369,7 @@ def _run_actions_on_multiple_nodes(
     node_communicator, url, response_key, report_processor, create_start_report,
     actions, node_addresses_list, is_success,
     create_success_report, create_error_report, force_code, format_result,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False, description=""
 ):
     error_map = defaultdict(dict)
@@ -380,7 +381,7 @@ def _run_actions_on_multiple_nodes(
             report_processor,
             node_addresses,
             actions,
-            warn_on_communication_exception=allow_incomplete_distribution,
+            warn_on_communication_exception=skip_offline_nodes,
         )
         #If there was a communication error and --skip-offline is in effect, no
         #exception was raised. If there is no result cannot process it.
@@ -427,6 +428,7 @@ def _run_actions_on_multiple_nodes(
 
 def distribute_files(
     node_communicator, report_processor, file_definitions, node_addresses_list,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False, description=""
 ):
     """
@@ -464,12 +466,14 @@ def distribute_files(
         node_communication_format.get_format_result({
             "conflict": "File already exists",
         }),
+        skip_offline_nodes,
         allow_incomplete_distribution,
         description,
     )
 
 def remove_files(
     node_communicator, report_processor, file_definitions, node_addresses_list,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False, description=""
 ):
     _run_actions_on_multiple_nodes(
@@ -485,13 +489,16 @@ def remove_files(
         reports.file_remove_from_node_error,
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
         node_communication_format.get_format_result({}),
+        skip_offline_nodes,
         allow_incomplete_distribution,
         description,
     )
 
 def run_actions_on_multiple_nodes(
     node_communicator, report_processor, action_definitions, is_success,
-    node_addresses_list, allow_fails=False, description=""
+    node_addresses_list,
+    skip_offline_nodes=False,
+    allow_fails=False, description=""
 ):
     _run_actions_on_multiple_nodes(
         node_communicator,
@@ -508,6 +515,7 @@ def run_actions_on_multiple_nodes(
         node_communication_format.get_format_result({
             "fail": "Operation failed.",
         }),
+        skip_offline_nodes,
         allow_fails,
         description,
     )

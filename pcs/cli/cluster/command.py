@@ -43,6 +43,7 @@ def node_add_remote(lib, arg_list, modifiers):
         parts["op"],
         parts["meta"],
         parts["options"],
+        skip_offline_nodes=skip_offline,
         allow_incomplete_distribution=skip_offline,
         allow_pacemaker_remote_service_fail=skip_offline,
         allow_invalid_operation=force,
@@ -58,6 +59,7 @@ def create_node_remove_remote(remove_resource):
         lib.cluster.node_remove_remote(
             arg_list[0],
             remove_resource,
+            skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_remove_multiple_nodes=modifiers["force"],
             allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
         )
@@ -78,6 +80,7 @@ def node_add_guest(lib, arg_list, modifiers):
         node_name,
         resource_id,
         meta_options,
+        skip_offline_nodes=skip_offline,
         allow_incomplete_distribution=skip_offline,
         allow_pacemaker_remote_service_fail=skip_offline,
         wait=modifiers["wait"],
@@ -89,6 +92,7 @@ def node_remove_guest(lib, arg_list, modifiers):
 
     lib.cluster.node_remove_guest(
         arg_list[0],
+        skip_offline_nodes=modifiers["skip_offline_nodes"],
         allow_remove_multiple_nodes=modifiers["force"],
         allow_pacemaker_remote_service_fail=modifiers["skip_offline_nodes"],
         wait=modifiers["wait"],

@@ -36,6 +36,7 @@ def _ensure_can_add_node_to_remote_cluster(
 
 def _share_authkey(
     env, current_nodes, candidate_node_addresses,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False
 ):
     if env.pacemaker.has_authkey:
@@ -50,11 +51,14 @@ def _share_authkey(
         env.report_processor,
         node_communication_format.pcmk_authkey_file(authkey_content),
         node_addresses_list,
+        skip_offline_nodes,
         allow_incomplete_distribution,
         description="remote node configuration files"
     )
 
-def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
+def _start_and_enable_pacemaker_remote(
+    env, node_list, skip_offline_nodes=False, allow_fails=False
+):
     nodes_task.run_actions_on_multiple_nodes(
         env.node_communicator(),
         env.report_processor,
@@ -64,12 +68,14 @@ def _start_and_enable_pacemaker_remote(env, node_list, allow_fails=False):
         ]),
         lambda key, response: response.code == "success",
         node_list,
+        skip_offline_nodes,
         allow_fails,
         description="start of service pacemaker_remote"
     )
 
 def _prepare_pacemaker_remote_environment(
-    env, current_nodes, node_host, allow_incomplete_distribution, allow_fails
+    env, current_nodes, node_host, skip_offline_nodes,
+    allow_incomplete_distribution, allow_fails
 ):
     if not env.is_corosync_conf_live:
         env.report_processor.process_list([
@@ -100,9 +106,15 @@ def _prepare_pacemaker_remote_environment(
         env,
         current_nodes,
         candidate_node,
+        skip_offline_nodes,
         allow_incomplete_distribution
     )
-    _start_and_enable_pacemaker_remote(env, [candidate_node], allow_fails)
+    _start_and_enable_pacemaker_remote(
+        env,
+        [candidate_node],
+        skip_offline_nodes,
+        allow_fails
+    )
 
 def _ensure_resource_running(env, resource_id):
     env.report_processor.process(
@@ -124,6 +136,7 @@ def _ensure_consistently_live_env(env):
 
 def node_add_remote(
     env, host, node_name, operations, meta_attributes, instance_attributes,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False,
     allow_invalid_operation=False,
@@ -139,6 +152,7 @@ def node_add_remote(
     dict meta_attributes contains attributes for primitive/meta_attributes
     dict instance_attributes contains attributes for
         primitive/instance_attributes
+    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_incomplete_distribution -- is a flag for allowing successfully
         finish this command even if is file distribution not succeeded
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
@@ -207,6 +221,7 @@ def node_add_remote(
         env,
         current_nodes,
         host,
+        skip_offline_nodes,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
@@ -216,6 +231,7 @@ def node_add_remote(
 
 def node_add_guest(
     env, node_name, resource_id, options,
+    skip_offline_nodes=False,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
@@ -227,6 +243,7 @@ def node_add_guest(
     string resource_id -- specifies resource that should be guest node
     dict options could contain keys remote-node, remote-port, remote-addr,
         remote-connect-timeout
+    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_incomplete_distribution -- is a flag for allowing successfully
         finish this command even if is file distribution not succeeded
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
@@ -270,6 +287,7 @@ def node_add_guest(
         env,
         current_nodes,
         guest_node.get_host_from_options(node_name, options),
+        skip_offline_nodes,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
@@ -312,7 +330,9 @@ def _get_node_addresses_from_resources(nodes, resource_element_list, get_host):
                 node_addresses_set.add(node)
     return sorted(node_addresses_set, key=lambda node: node.ring0)
 
-def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
+def _destroy_pcmk_remote_env(
+    env, node_addresses_list, skip_offline_nodes, allow_fails
+):
     actions = node_communication_format.create_pcmk_remote_actions([
         "stop",
         "disable",
@@ -327,6 +347,7 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         actions,
         lambda key, response: response.code == "success",
         node_addresses_list,
+        skip_offline_nodes,
         allow_fails,
         description="stop of service pacemaker_remote"
     )
@@ -336,6 +357,7 @@ def _destroy_pcmk_remote_env(env, node_addresses_list, allow_fails):
         env.report_processor,
         files,
         node_addresses_list,
+        skip_offline_nodes,
         allow_fails,
         description="remote node files"
     )
@@ -359,6 +381,7 @@ def _report_skip_live_parts_in_remove(node_addresses_list):
 
 def node_remove_remote(
     env, node_identifier, remove_resource,
+    skip_offline_nodes=False,
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False
 ):
@@ -368,6 +391,7 @@ def node_remove_remote(
     LibraryEnvironment env provides all for communication with externals
     string node_identifier -- node name or hostname
     callable remove_resource -- function for remove resource
+    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_remove_multiple_nodes -- is a flag for allowing
         remove unexpected multiple occurence of remote node for node_identifier
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
@@ -400,6 +424,7 @@ def node_remove_remote(
         _destroy_pcmk_remote_env(
             env,
             node_addresses_list,
+            skip_offline_nodes,
             allow_pacemaker_remote_service_fail
         )
 
@@ -413,6 +438,7 @@ def node_remove_remote(
 
 def node_remove_guest(
     env, node_identifier,
+    skip_offline_nodes=False,
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False,
     wait=False,
@@ -422,6 +448,7 @@ def node_remove_guest(
 
     LibraryEnvironment env provides all for communication with externals
     string node_identifier -- node name, hostname or resource id
+    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_remove_multiple_nodes -- is a flag for allowing
         remove unexpected multiple occurence of remote node for node_identifier
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
@@ -455,6 +482,7 @@ def node_remove_guest(
         _destroy_pcmk_remote_env(
             env,
             node_addresses_list,
+            skip_offline_nodes,
             allow_pacemaker_remote_service_fail
         )
 
