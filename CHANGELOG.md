@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.159] - 2017-06-30
 
 ### Added
 - Option to create a cluster with or without corosync encryption enabled,
