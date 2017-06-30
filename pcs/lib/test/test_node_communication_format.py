@@ -2,7 +2,6 @@ from __future__ import (
     absolute_import,
     division,
     print_function,
-    unicode_literals,
 )
 
 from pcs.test.tools.assertions import assert_raise_library_error

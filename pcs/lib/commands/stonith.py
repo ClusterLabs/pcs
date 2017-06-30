@@ -2,7 +2,6 @@ from __future__ import (
     absolute_import,
     division,
     print_function,
-    unicode_literals,
 )
 
 from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent

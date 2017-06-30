@@ -2,7 +2,6 @@ from __future__ import (
     absolute_import,
     division,
     print_function,
-    unicode_literals,
 )
 
 from pcs.test.tools import pcs_unittest as unittest

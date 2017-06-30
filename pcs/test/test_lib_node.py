@@ -2,16 +2,9 @@ from __future__ import (
     absolute_import,
     division,
     print_function,
-    unicode_literals,
 )
 
-import sys
-
-from pcs.test.tools.pcs_unittest import TestCase, skipUnless
-
-#python 2.6 does not support sys.version_info.major
-need_python3 = skipUnless(sys.version_info[0] == 3, "test requires python3")
-need_python2 = skipUnless(sys.version_info[0] == 2, "test requires python2")
+from pcs.test.tools.pcs_unittest import TestCase
 
 import pcs.lib.node as lib
 
@@ -115,7 +108,6 @@ class NodeAddressesTest(TestCase):
         self.assertTrue(node0 < node1)
         self.assertFalse(node1 < node0)
 
-@need_python3
 class NodeAddressesRepr(TestCase):
     def test_host_only_specified(self):
         self.assertEqual(repr(lib.NodeAddresses("node0")), str(
@@ -143,37 +135,6 @@ class NodeAddressesRepr(TestCase):
             str(
                 "<pcs.lib.node.NodeAddresses ['node0', 'node0-1'],"
                 " {'name': 'name0', 'id': 'id0'}>"
-            )
-        )
-
-@need_python2
-class NodeAddressesRepr_python2(TestCase):
-    def test_host_only_specified(self):
-        self.assertEqual(repr(lib.NodeAddresses("node0")), str(
-            "<pcs.lib.node.NodeAddresses [u'node0'], {'name': None, 'id': None}>"
-        ))
-
-    def test_host_and_name_specified(self):
-        self.assertEqual(repr(lib.NodeAddresses("node0", name="name0")), str(
-            "<pcs.lib.node.NodeAddresses [u'node0'],"
-            " {'name': u'name0', 'id': None}>"
-        ))
-
-    def test_host_name_and_id_specified(self):
-        self.assertEqual(
-            repr(lib.NodeAddresses("node0", name="name0", id="id0")),
-            str(
-                "<pcs.lib.node.NodeAddresses [u'node0'],"
-                " {'name': u'name0', 'id': u'id0'}>"
-            )
-        )
-
-    def test_host_ring1_name_and_id_specified(self):
-        self.assertEqual(
-            repr(lib.NodeAddresses("node0", "node0-1", name="name0", id="id0")),
-            str(
-                "<pcs.lib.node.NodeAddresses [u'node0', u'node0-1'],"
-                " {'name': u'name0', 'id': u'id0'}>"
             )
         )
 
