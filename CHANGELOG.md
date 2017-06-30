@@ -22,7 +22,7 @@
 - Fixed a crash in the `pcs cluster node add-remote` command when an id
   conflict occurs ([rhbz#1386114])
 - Fixed creating a new cluster from the web UI ([rhbz#1284404])
-- `pcs cluster node add-guest` now works with the flag `--skipp-offline`
+- `pcs cluster node add-guest` now works with the flag `--skip-offline`
   ([rhbz#1176018])
 - `pcs cluster node remove-guest` can be run again when the guest node was
   unreachable first time ([rhbz#1176018])
@@ -34,7 +34,7 @@
   `pcs resource create`, `pcs resource update` and `pcs resource op add`
   commands ([rhbz#1443418])
 - Flag `--force` works correctly when an operation is not successful on some
-  nodes durrng `pcs cluster node add-remote` or `pcs cluster node add-guest`
+  nodes during `pcs cluster node add-remote` or `pcs cluster node add-guest`
   ([rhbz#1464781])
 
 ### Changed
