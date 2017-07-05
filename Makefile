@@ -100,7 +100,7 @@ pcsd_fonts = \
 
 install:
 	# make Python interpreter execution sane (via -Es flags)
-	echo -e "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
+	printf "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	# fix excessive script interpreting "executable" quoting with old setuptools:
 	# https://github.com/pypa/setuptools/issues/188
