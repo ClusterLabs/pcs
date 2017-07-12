@@ -5,7 +5,7 @@ IS_DEBIAN=false
 DISTRO_DEBIAN_VER_8=false
 
 ifndef PYTHON
-	PYTHON := $(shell which python)
+	PYTHON := $(shell which python3 || which python2 || which python)
 endif
 
 ifeq ($(UNAME_OS_GNU),true)
