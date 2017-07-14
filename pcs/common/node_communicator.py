@@ -181,6 +181,9 @@ class Request(object):
             cookies["token"] = self._target.token
         return cookies
 
+    def __repr__(self):
+        return str("Request({0}, {1})").format(self._target, self._data)
+
 
 class Response(object):
     """
@@ -254,6 +257,18 @@ class Response(object):
             return None
         return self._handle.getinfo(pycurl.RESPONSE_CODE)
 
+    def __repr__(self):
+        return str(
+            "Response({0} data='{1}' was_connected={2}) errno='{3}'"
+            " error_msg='{4}' response_code='{5}')"
+        ).format(
+            self.request,
+            self.data,
+            self.was_connected,
+            self.errno,
+            self.error_msg,
+            self.response_code,
+        )
 
 class NodeCommunicatorFactory(object):
     def __init__(self, communicator_logger, user, groups, request_timeout):
@@ -529,4 +544,3 @@ def _dict_to_cookies(cookies_dict):
         "{0}={1}".format(key, value)
         for key, value in sorted(cookies_dict.items())
     ])
-

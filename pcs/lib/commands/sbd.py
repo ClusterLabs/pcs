@@ -371,8 +371,7 @@ def get_local_sbd_config(lib_env):
 def _get_cluster_nodes(lib_env):
     if lib_env.is_cman_cluster:
         return lib_env.get_cluster_conf().get_nodes()
-    else:
-        return lib_env.get_corosync_conf().get_nodes()
+    return lib_env.get_corosync_conf().get_nodes()
 
 
 def initialize_block_devices(lib_env, device_list, option_dict):
@@ -474,4 +473,3 @@ def set_message(lib_env, device, node_name, message):
         )
     lib_env.report_processor.process_list(report_item_list)
     sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
-

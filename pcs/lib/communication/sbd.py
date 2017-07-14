@@ -266,4 +266,3 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
 
     def before(self):
         self._report(reports.sbd_check_started())
-

@@ -6,7 +6,9 @@ from __future__ import (
 
 from pcs.test.tools.command_env.calls import CallListBuilder
 from pcs.test.tools.command_env.config_env import EnvConfig
+from pcs.test.tools.command_env.config_corosync_conf import CorosyncConf
 from pcs.test.tools.command_env.config_runner import RunnerConfig
+from pcs.test.tools.command_env.config_http import HttpConfig
 
 
 class Config(object):
@@ -19,6 +21,8 @@ class Config(object):
             )
         )
         self.env = self.__wrap_helper(EnvConfig(self.__calls))
+        self.http = self.__wrap_helper(HttpConfig(self.__calls))
+        self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
 
     @property
     def calls(self):

@@ -39,6 +39,7 @@ COMMAND_COMPLETIONS = {
     "cibadmin": path.join(settings.pacemaker_binaries, "cibadmin"),
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "sbd": settings.sbd_binary,
+    "corosync": path.join(settings.corosync_binaries, "corosync"),
 }
 
 def complete_command(command):

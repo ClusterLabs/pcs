@@ -16,25 +16,35 @@ class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
     def __init__(self, debug=False, raise_on_errors=True):
         super(MockLibraryReportProcessor, self).__init__(debug)
         self.raise_on_errors = raise_on_errors
+        self.direct_sent_items = []
 
     @property
     def report_item_list(self):
         return self.items
 
+    def report_list(self, report_item_list):
+        self.direct_sent_items.extend(report_item_list)
+        return self._send(report_item_list)
+
     def send(self):
-        errors = []
-        for report_item in self.items:
-            if report_item.severity == ReportItemSeverity.ERROR:
-                errors.append(report_item)
+        errors = self._send(self.items, print_errors=False)
         if errors and self.raise_on_errors:
             raise LibraryError(*errors)
 
-    def assert_reports(self, report_info_list, hint=""):
+    def assert_reports(self, expected_report_info_list, hint=""):
         assert_report_item_list_equal(
-            self.report_item_list,
-            report_info_list,
+            self.report_item_list + self.direct_sent_items,
+            expected_report_info_list,
             hint=hint
         )
+
+    def _send(self, report_item_list, print_errors=True):
+        errors = []
+        for report_item in report_item_list:
+            if report_item.severity == ReportItemSeverity.ERROR:
+                errors.append(report_item)
+        return errors
+
 
 
 class MockCurl(object):

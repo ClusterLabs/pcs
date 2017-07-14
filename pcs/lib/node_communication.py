@@ -175,5 +175,3 @@ def is_proxy_set(env_dict):
         if env_dict.get(var, "") != "":
             return True
     return False
-
-

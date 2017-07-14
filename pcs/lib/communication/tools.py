@@ -24,7 +24,9 @@ def run(communicator, cmd):
     cmd.before()
     communicator.add_requests(cmd.get_initial_request_list())
     for response in communicator.start_loop():
-        communicator.add_requests(cmd.on_response(response))
+        extra_requests = cmd.on_response(response)
+        if extra_requests:
+            communicator.add_requests(extra_requests)
     return cmd.on_complete()
 
 

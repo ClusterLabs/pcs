@@ -15,17 +15,24 @@ from pcs.test.tools.command_env.mock_push_cib import(
     is_push_cib_call_in,
 )
 from pcs.test.tools.command_env.mock_runner import Runner
+from pcs.test.tools.command_env.mock_get_local_corosync_conf import(
+    get_get_local_corosync_conf
+)
+from pcs.test.tools.command_env.mock_node_communicator import (
+    NodeCommunicator,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc
+# from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import mock
 
 
-def patch_env(call_queue):
+def patch_env(call_queue, config=None):
     #It is mandatory to patch some env objects/methods. It is ok when command
     #does not use this objects/methods and specify no call for it. But it would
     #be a problem when the test succeded because the live call respond correctly
     #by accident. Such test would fails on different machine (with another live
     #environment)
+
     patchers = {
         "cmd_runner": mock.patch.object(
             LibraryEnvironment,
@@ -33,10 +40,16 @@ def patch_env(call_queue):
             lambda env: Runner(call_queue)
         ),
 
-        "get_corosync_conf_data": mock.patch.object(
+        "get_local_corosync_conf": mock.patch(
+            "pcs.lib.env.get_local_corosync_conf",
+            get_get_local_corosync_conf(call_queue)
+        ),
+
+        "get_node_communicator": mock.patch.object(
             LibraryEnvironment,
-            "get_corosync_conf_data",
-            lambda env: open(rc("corosync.conf")).read()
+            "get_node_communicator",
+
+            lambda env: NodeCommunicator(call_queue)
         )
     }
 
@@ -71,11 +84,6 @@ class EnvAssistant(object):
         self.__reports_asserted = False
         self.__extra_reports = []
 
-        self.__env = LibraryEnvironment(
-            mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
-        )
-
         self.__unpatch = None
 
         if test_case:
@@ -90,7 +98,8 @@ class EnvAssistant(object):
             self.__unpatch()
 
         if not self.__reports_asserted:
-            self.__env.report_processor.assert_reports(
+            self.__assert_environment_created()
+            self._env.report_processor.assert_reports(
                 self.__extra_reports,
                 hint="EnvAssistant.cleanup - is param 'expected_in_processor'"
                 " in the method 'assert_raise_library_error' set correctly?"
@@ -106,12 +115,18 @@ class EnvAssistant(object):
 
     def get_env(self):
         self.__call_queue = CallQueue(self.__config.calls)
-        self.__unpatch = patch_env(self.__call_queue)
-        return self.__env
+        self.__unpatch = patch_env(self.__call_queue, self.__config)
+        #pylint: disable=attribute-defined-outside-init
+        self._env =  LibraryEnvironment(
+            mock.MagicMock(logging.Logger),
+            MockLibraryReportProcessor()
+        )
+        return self._env
 
     def assert_reports(self, reports):
         self.__reports_asserted = True
-        self.__env.report_processor.assert_reports(
+        self.__assert_environment_created()
+        self._env.report_processor.assert_reports(
             reports + self.__extra_reports
         )
 
@@ -124,6 +139,13 @@ class EnvAssistant(object):
         assert_raise_library_error(command, *reports)
         if expected_in_processor:
             self.__extra_reports = reports
+
+    def __assert_environment_created(self):
+        if not hasattr(self, "_env"):
+            raise AssertionError(
+                "LibraryEnvironment was not created in EnvAssitant."
+                " Have you been called method get_env?"
+            )
 
     def __list_of_reports_expected(self, reports):
         return AssertionError(
