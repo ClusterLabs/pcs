@@ -20,17 +20,11 @@ class CallCollection(object):
         self.__call_list = []
         self.__name_list = []
 
-    def __contains__(self, key):
-        """
-        Overriding of operator "in"
-        """
-        return key in self.__name_list
-
     @property
     def calls(self):
         return list(self.__call_list)
 
-    def set(self, instead_name, name, call):
+    def __set(self, instead_name, name, call):
         """
         Replace call that has key instead_name with new call that has key name
 
@@ -47,8 +41,9 @@ class CallCollection(object):
                 self.__call_list[i] = call
                 #yes we change the name as well
                 self.__name_list[i] = name
+                return
 
-    def append(self, name, call):
+    def __append(self, name, call):
         """
         Append call.
 
@@ -58,7 +53,7 @@ class CallCollection(object):
         self.__name_list.append(name)
         self.__call_list.append(call)
 
-    def insert(self, before_name, name, call):
+    def __insert(self, before_name, name, call):
         """
         Insert call before call with before_name.
 
@@ -78,9 +73,12 @@ class CallCollection(object):
         """
         Remove call under key name.
         """
-        index = self.__name_list.index(name)
-        del self.__call_list[index]
-        del self.__name_list[index]
+        try:
+            index = self.__name_list.index(name)
+            del self.__call_list[index]
+            del self.__name_list[index]
+        except ValueError:
+            raise self.__name_not_exists(name)
 
     def get(self, name):
         """
@@ -88,9 +86,10 @@ class CallCollection(object):
 
         string name -- key of the call
         """
-        if name not in self.__name_list:
+        try:
+            return self.__call_list[self.__name_list.index(name)]
+        except ValueError:
             raise self.__name_not_exists(name)
-        return self.__call_list[self.__name_list.index(name)]
 
     def place(self, name, call, before=None, instead=None):
         """
@@ -102,18 +101,18 @@ class CallCollection(object):
         string instead -- key of call instead of which this new call is to be
             placed
         """
-        if name and name in self and instead != name:
+        if name and name in self.__name_list and instead != name:
             raise self.__name_exists_already(name)
 
         if before and instead:
             raise self.__cannot_use_before_and_instead(name, call)
 
         if before:
-            self.insert(before, name, call)
+            self.__insert(before, name, call)
         elif instead:
-            self.set(instead, name, call)
+            self.__set(instead, name, call)
         else:
-            self.append(name, call)
+            self.__append(name, call)
 
     def __name_not_exists(self, name):
         return AssertionError(

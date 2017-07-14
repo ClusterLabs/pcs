@@ -8,7 +8,7 @@ from pcs.test.tools.command_env.assistant import EnvAssistant
 from pcs.test.tools.command_env.config_runner_cib import CIB_FILENAME
 from pcs.test.tools.command_env.config_runner_pcmk import (
     DEFAULT_WAIT_TIMEOUT,
-    DEFAULT_WAIT_ERROR_RETURNCODE,
+    WAIT_TIMEOUT_EXPIRED_RETURNCODE,
 )
 
 
@@ -16,7 +16,7 @@ def get_env_tools(
     test_case,
     base_cib_filename=CIB_FILENAME,
     default_wait_timeout=DEFAULT_WAIT_TIMEOUT,
-    default_wait_error_returncode=DEFAULT_WAIT_ERROR_RETURNCODE,
+    default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
 ):
     """
     Shortcut for preparing EnvAssistant and Config

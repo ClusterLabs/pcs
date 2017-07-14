@@ -5,7 +5,6 @@ from __future__ import (
 )
 
 from lxml import etree
-from lxml.doctestcompare import LXMLOutputChecker
 
 from pcs.test.tools.xml import etree_to_str
 
@@ -17,6 +16,8 @@ def replace_element(element_xpath, new_content):
 
     string element_xpath -- its destination must be one element: replacement
         is applied only on the first occurence
+    string new_content -- contains a content that have to be placed instead of
+        a element found by element_xpath
     """
     def replace(cib_tree):
         element_to_replace = cib_tree.find(element_xpath)
@@ -27,23 +28,20 @@ def replace_element(element_xpath, new_content):
                     etree_to_str(cib_tree)
                 )
             )
-        element_to_replace_xml = etree_to_str(element_to_replace)
-        parent = element_to_replace.getparent()
 
         try:
             new_element = etree.fromstring(new_content)
         except etree.XMLSyntaxError:
             raise AssertionError(
-                "Cannot put to the cib non-xml fragment:\n'{0}'"
+                "Cannot put to the cib a non-xml fragment:\n'{0}'"
                 .format(new_content)
             )
 
-        check = LXMLOutputChecker().check_output
+        parent = element_to_replace.getparent()
         for child in parent:
-            if check(element_to_replace_xml, etree_to_str(child), 0):
+            if element_to_replace == child:
                 index = list(parent).index(child)
                 parent.remove(child)
                 parent.insert(index, new_element)
                 return
-
     return replace

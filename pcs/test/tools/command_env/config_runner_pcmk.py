@@ -13,13 +13,13 @@ from pcs.test.tools.xml import etree_to_str
 
 
 DEFAULT_WAIT_TIMEOUT = 10
-DEFAULT_WAIT_ERROR_RETURNCODE = 62
+WAIT_TIMEOUT_EXPIRED_RETURNCODE = 62
 
 class PcmkShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
         self.default_wait_timeout = DEFAULT_WAIT_TIMEOUT
-        self.default_wait_error_returncode = DEFAULT_WAIT_ERROR_RETURNCODE
+        self.default_wait_error_returncode = WAIT_TIMEOUT_EXPIRED_RETURNCODE
 
     def load_state(
         self, name="load_state", filename="crm_mon.minimal.xml", resources=None

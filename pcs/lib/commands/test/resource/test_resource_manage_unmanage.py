@@ -653,7 +653,7 @@ def fixture_report_no_monitors(resource):
         None
     )
 
-class UnmanagePrimitiveNew(TestCase):
+class UnmanagePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 

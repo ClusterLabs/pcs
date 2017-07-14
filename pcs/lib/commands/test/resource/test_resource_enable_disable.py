@@ -1081,7 +1081,7 @@ class DisableGroup(TestCase):
             fixture_report_unmanaged("A"),
         ])
 
-class EnableGroupNew(TestCase):
+class EnableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 

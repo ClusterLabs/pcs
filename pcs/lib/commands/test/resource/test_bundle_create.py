@@ -47,23 +47,11 @@ class MinimalCreate(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (self.config.runner
             .cib.load()
-            .cib.push(
-                resources="""
-                    <resources>
-                        <bundle id="B1">
-                            <docker image="pcs:test" />
-                        </bundle>
-                    </resources>
-                """
-            )
+            .cib.push(resources=fixture_resources_bundle_simple)
         )
 
     def test_success(self):
-        resource.bundle_create(
-            self.env_assist.get_env(),
-            "B1", "docker",
-            container_options={"image": "pcs:test", }
-        )
+        simple_bundle_create(self.env_assist.get_env(), wait=False)
 
     def test_errors(self):
         self.config.runner.remove("push_cib")
@@ -106,10 +94,7 @@ class MinimalCreate(TestCase):
             .cib.upgrade(before="load_cib")
         )
 
-        resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
-            container_options={"image": "pcs:test", }
-        )
+        simple_bundle_create(self.env_assist.get_env(), wait=False)
 
         self.env_assist.assert_reports([
             (
@@ -139,10 +124,7 @@ class CreateDocker(TestCase):
 
     def test_minimal(self):
         self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
-        resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
-            container_options={"image": "pcs:test", }
-        )
+        simple_bundle_create(self.env_assist.get_env(), wait=False)
 
     def test_all_options(self):
         self.config.runner.cib.push(
@@ -1141,8 +1123,6 @@ class Wait(TestCase):
             </bundle>
         </resources>
     """
-
-    timeout = 10
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
