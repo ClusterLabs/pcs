@@ -4,16 +4,24 @@ from __future__ import (
     print_function,
 )
 
+import difflib
 import doctest
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
 import re
 
 from pcs.lib.errors import LibraryError
-from pcs.test.tools.misc import prepare_diff
 
 # cover python2 vs. python3 differences
 _re_object_type = type(re.compile(""))
+
+def prepare_diff(first, second):
+    """
+    Return a string containing a diff of first and second
+    """
+    return "".join(
+        difflib.Differ().compare(first.splitlines(1), second.splitlines(1))
+    )
 
 def start_tag_error_text():
     """lxml 3.7+ gives a longer 'start tag expected' error message,

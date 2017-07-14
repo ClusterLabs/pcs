@@ -4,7 +4,6 @@ from __future__ import (
     print_function,
 )
 
-import difflib
 import logging
 import os
 import re
@@ -12,6 +11,8 @@ import re
 # from pcs import utils
 from pcs.common.tools import is_string
 from pcs.lib.external import CommandRunner
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.assertions import  prepare_diff
 from pcs.test.tools.pcs_unittest import (
     mock,
     skipUnless,
@@ -22,17 +23,9 @@ testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 runner = CommandRunner(
     mock.MagicMock(logging.Logger),
-    mock.MagicMock(),
+    MockLibraryReportProcessor(),
     os.environ
 )
-
-def prepare_diff(first, second):
-    """
-    Return a string containing a diff of first and second
-    """
-    return "".join(
-        difflib.Differ().compare(first.splitlines(1), second.splitlines(1))
-    )
 
 def ac(a,b):
     """
