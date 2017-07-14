@@ -5,11 +5,13 @@ from __future__ import (
 )
 
 import difflib
-import os.path
+import logging
+import os
 import re
 
-from pcs import utils
+# from pcs import utils
 from pcs.common.tools import is_string
+from pcs.lib.external import CommandRunner
 from pcs.test.tools.pcs_unittest import (
     mock,
     skipUnless,
@@ -17,6 +19,12 @@ from pcs.test.tools.pcs_unittest import (
 
 
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+runner = CommandRunner(
+    mock.MagicMock(logging.Logger),
+    mock.MagicMock(),
+    os.environ
+)
 
 def prepare_diff(first, second):
     """
@@ -52,7 +60,7 @@ def compare_version(a, b):
     return cmp3(a[0], b[0])
 
 def is_minimum_pacemaker_version(cmajor, cminor, crev):
-    output, dummy_retval = utils.run(["crm_mon", "--version"])
+    output, dummy_stderr, dummy_retval = runner.run(["crm_mon", "--version"])
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)
@@ -62,7 +70,9 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
     return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
-    output, dummy_retval = utils.run(["pacemakerd", "--features"])
+    output, dummy_stderr, dummy_retval = runner.run(
+        ["pacemakerd", "--features"]
+    )
     features_version = output.split("\n")[1]
     r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
     m = r.search(features_version)
@@ -97,7 +107,9 @@ skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
 )
 
 def skip_unless_pacemaker_supports_systemd():
-    output, dummy_retval = utils.run(["pacemakerd", "--features"])
+    output, dummy_stderr, dummy_retval = runner.run(
+        ["pacemakerd", "--features"]
+    )
     return skipUnless(
         "systemd" in output,
         "Pacemaker does not support systemd resources"
