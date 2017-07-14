@@ -4,12 +4,11 @@ from __future__ import (
     print_function,
 )
 
-
 from pcs.common import report_codes
 from pcs.lib.commands import resource
-import pcs.lib.commands.test.resource.fixture as fixture
-from pcs.test.tools.command_env import get_env_tools
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.test.tools import fixture
+from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.pcs_unittest import TestCase
 
 

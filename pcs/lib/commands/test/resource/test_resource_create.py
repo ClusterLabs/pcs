@@ -6,9 +6,9 @@ from __future__ import (
 
 from functools import partial
 
-import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.common import report_codes
 from pcs.lib.commands import resource
+from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import (
     outdent,

@@ -6,10 +6,11 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools import fixture
 from pcs.test.tools.integration_lib import Call
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import etree_to_str
-import pcs.lib.commands.test.resource.fixture as fixture
+
 
 DEFAULT_WAIT_TIMEOUT = 10
 DEFAULT_WAIT_ERROR_RETURNCODE = 62

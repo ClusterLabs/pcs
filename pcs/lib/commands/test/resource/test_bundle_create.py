@@ -7,10 +7,10 @@ from __future__ import (
 from functools import partial
 from textwrap import dedent
 
-import pcs.lib.commands.test.resource.fixture as fixture
 from pcs.common import report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
 from pcs.test.tools.pcs_unittest import TestCase
