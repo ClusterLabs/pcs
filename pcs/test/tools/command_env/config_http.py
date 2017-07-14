@@ -21,7 +21,6 @@ from pcs.test.tools.custom_mock import MockCurlSimple
 class HttpConfig(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
-        self.auth_tokens = {}
 
     def __communication_to_response(
         self, label, address_list, action, param_list, port, token,
