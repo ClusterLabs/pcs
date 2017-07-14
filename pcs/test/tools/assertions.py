@@ -23,6 +23,15 @@ def prepare_diff(first, second):
         difflib.Differ().compare(first.splitlines(1), second.splitlines(1))
     )
 
+def ac(a,b):
+    """
+    Compare the actual output 'a' and an expected output 'b', print diff b a
+    """
+    if a != b:
+        raise AssertionError(
+            "strings not equal:\n{0}".format(prepare_diff(b, a))
+        )
+
 def start_tag_error_text():
     """lxml 3.7+ gives a longer 'start tag expected' error message,
     handle it here so multiple tests can just get the appropriate

@@ -10,11 +10,13 @@ import shutil
 from textwrap import dedent
 
 from pcs.test.tools import pcs_unittest as unittest
-from pcs.test.tools.assertions import AssertPcsMixin
+from pcs.test.tools.assertions import (
+    ac,
+    AssertPcsMixin,
+)
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import (
-    ac,
     get_test_resource as rc,
     outdent,
     skip_unless_pacemaker_supports_bundle,

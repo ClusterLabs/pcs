@@ -7,11 +7,11 @@ from __future__ import (
 import shutil
 from pcs.test.tools import pcs_unittest as unittest
 
-from pcs.test.tools.assertions import AssertPcsMixin
-from pcs.test.tools.misc import (
+from pcs.test.tools.assertions import (
     ac,
-    get_test_resource as rc,
+    AssertPcsMixin,
 )
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
@@ -886,4 +886,3 @@ Role: role4
             "acl role unassign role1 from group group1",
             "Error: Role 'role1' is not assigned to 'group1'\n"
         )
-

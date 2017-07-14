@@ -9,10 +9,13 @@ import os
 import shutil
 from pcs.test.tools import pcs_unittest as unittest
 
-from pcs.test.tools.assertions import AssertPcsMixin, console_report
+from pcs.test.tools.assertions import (
+    ac,
+    AssertPcsMixin,
+    console_report,
+)
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
-    ac,
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_version,

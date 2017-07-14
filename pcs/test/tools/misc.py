@@ -12,7 +12,6 @@ import re
 from pcs.common.tools import is_string
 from pcs.lib.external import CommandRunner
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.assertions import  prepare_diff
 from pcs.test.tools.pcs_unittest import (
     mock,
     skipUnless,
@@ -26,15 +25,6 @@ runner = CommandRunner(
     MockLibraryReportProcessor(),
     os.environ
 )
-
-def ac(a,b):
-    """
-    Compare the actual output 'a' and an expected output 'b', print diff b a
-    """
-    if a != b:
-        raise AssertionError(
-            "strings not equal:\n{0}".format(prepare_diff(b, a))
-        )
 
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""

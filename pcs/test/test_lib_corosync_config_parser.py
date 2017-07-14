@@ -6,7 +6,7 @@ from __future__ import (
 
 from pcs.test.tools import pcs_unittest as unittest
 
-from pcs.test.tools.misc import ac
+from pcs.test.tools.assertions import ac
 
 from pcs.lib.corosync import config_parser
 

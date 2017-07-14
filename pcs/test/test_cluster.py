@@ -9,9 +9,11 @@ import shutil
 import socket
 from pcs.test.tools import pcs_unittest as unittest
 
-from pcs.test.tools.assertions import AssertPcsMixin
-from pcs.test.tools.misc import (
+from pcs.test.tools.assertions import (
     ac,
+    AssertPcsMixin,
+)
+from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_version,
     outdent,

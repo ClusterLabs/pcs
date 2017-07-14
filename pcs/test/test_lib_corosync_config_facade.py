@@ -8,14 +8,12 @@ from pcs.test.tools.pcs_unittest import TestCase
 import re
 
 from pcs.test.tools.assertions import (
+    ac,
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import (
-    ac,
-    get_test_resource as rc,
-)
+from pcs.test.tools.misc import get_test_resource as rc
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity

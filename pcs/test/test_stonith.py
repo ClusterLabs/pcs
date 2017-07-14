@@ -8,9 +8,11 @@ import shutil
 
 from pcs import utils
 from pcs.cli.common.console_report import indent
-from pcs.test.tools.assertions import AssertPcsMixin
-from pcs.test.tools.misc import (
+from pcs.test.tools.assertions import (
     ac,
+    AssertPcsMixin,
+)
+from pcs.test.tools.misc import (
     get_test_resource as rc,
     is_minimum_pacemaker_version,
     skip_unless_pacemaker_version,

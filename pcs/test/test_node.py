@@ -7,9 +7,11 @@ from __future__ import (
 import shutil
 
 from pcs import node
-from pcs.test.tools.assertions import AssertPcsMixin
-from pcs.test.tools.misc import (
+from pcs.test.tools.assertions import (
     ac,
+    AssertPcsMixin,
+)
+from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
 )
