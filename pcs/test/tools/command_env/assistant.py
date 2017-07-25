@@ -10,33 +10,32 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.command_env.config import Config
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.integration_lib import Runner
+from pcs.test.tools.integration_lib import Runner, EffectQueue
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import mock
 
 
-class EnvPatcher(object):
-    def __init__(self, runner):
-        self.patchers = {
-            "cmd_runner": mock.patch.object(
-                LibraryEnvironment,
-                "cmd_runner",
-                lambda env: runner
-            ),
-            "get_corosync_conf_data": mock.patch.object(
-                LibraryEnvironment,
-                "get_corosync_conf_data",
-                lambda env: open(rc("corosync.conf")).read()
-            )
-        }
+def patch_env(effect_queue):
+    patchers = {
+        "cmd_runner": mock.patch.object(
+            LibraryEnvironment,
+            "cmd_runner",
+            lambda env: Runner(effect_queue)
+        ),
+        "get_corosync_conf_data": mock.patch.object(
+            LibraryEnvironment,
+            "get_corosync_conf_data",
+            lambda env: open(rc("corosync.conf")).read()
+        )
+    }
+    for key in patchers:
+        patchers[key].start()
 
-    def patch(self):
-        for key in self.patchers:
-            self.patchers[key].start()
+    def unpatch():
+        for key in patchers:
+            patchers[key].stop()
 
-    def unpatch(self):
-        for key in self.patchers:
-            self.patchers[key].stop()
+    return unpatch
 
 class EnvAssistant(object):
     def __init__(self, config=None, test_case=None):
@@ -44,9 +43,8 @@ class EnvAssistant(object):
         TestCase test_case -- cleanup callback is registered to test_case if is
             provided
         """
-        self.__runner = Runner()
+        self.__effect_queue = None
         self.__config = config if config else Config()
-        self.__patcher = EnvPatcher(self.__runner)
         self.__reports_asserted = False
         self.__extra_reports = []
 
@@ -55,7 +53,7 @@ class EnvAssistant(object):
             MockLibraryReportProcessor()
         )
 
-        self.__patcher.patch()
+        self.__unpatch = None
 
         if test_case:
             test_case.addCleanup(self.cleanup)
@@ -72,11 +70,20 @@ class EnvAssistant(object):
                 " in the method 'assert_raise_library_error' set correctly?"
             )
 
-        self.__runner.assert_everything_launched()
-        self.__patcher.unpatch()
+        if self.__effect_queue and self.__effect_queue.remaining:
+            raise AssertionError(
+                "There are remaining expected commands: \n    '{0}'"
+                .format("'\n    '".join([
+                    call.command
+                    for call in self.__effect_queue.remaining
+                ]))
+            )
+        if self.__unpatch:
+            self.__unpatch()
 
     def get_env(self):
-        self.__runner.set_runs(self.__config.runner_calls)
+        self.__effect_queue = EffectQueue(self.__config.runner_calls)
+        self.__unpatch = patch_env(self.__effect_queue)
         return self.__env
 
     def assert_reports(self, reports):
