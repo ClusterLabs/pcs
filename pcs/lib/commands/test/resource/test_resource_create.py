@@ -312,9 +312,9 @@ def fixture_state_resources_xml(role="Started", failed="false"):
 class Create(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load()
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load()
         )
 
     def test_simplest_resource(self):
@@ -356,11 +356,13 @@ class Create(TestCase):
 class CreateWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load()
-            .cib.push(resources=fixture_cib_resources_xml_primitive_simplest)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load()
+            .runner.cib.push(
+                resources=fixture_cib_resources_xml_primitive_simplest
+            )
         )
 
     def test_fail_wait(self):
@@ -374,9 +376,9 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(failed="true")
             )
         )
@@ -392,9 +394,9 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(resources=fixture_state_resources_xml())
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=fixture_state_resources_xml())
         )
         create(self.env_assist.get_env(), wait="10")
         self.env_assist.assert_reports([
@@ -406,10 +408,10 @@ class CreateWait(TestCase):
         ])
 
     def test_wait_ok_disable_fail(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(resources=fixture_state_resources_xml())
-            .cib.push(
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=fixture_state_resources_xml())
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 instead="push_cib"
             )
@@ -431,12 +433,12 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_disable_ok(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
-            .cib.push(
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 instead="push_cib"
             )
@@ -451,12 +453,12 @@ class CreateWait(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
-            .cib.push(
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 instead="push_cib"
             )
@@ -477,23 +479,27 @@ class CreateWait(TestCase):
 class CreateAsMaster(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load()
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load()
         )
 
     def test_simplest_resource(self):
-        (self.config.runner
+        (self.config
             .remove(name="can_wait")
-            .cib.push(resources=fixture_cib_resources_xml_master_simplest)
+            .runner.cib.push(
+                resources=fixture_cib_resources_xml_master_simplest
+            )
         )
         create_master(self.env_assist.get_env(), wait=False)
 
     def test_fail_wait(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_master_simplest)
-            .pcmk.wait(stderr=wait_error_message)
+        (self.config
+            .runner.cib.push(
+                resources=fixture_cib_resources_xml_master_simplest
+            )
+            .runner.pcmk.wait(stderr=wait_error_message)
         )
 
         self.env_assist.assert_raise_library_error(
@@ -505,10 +511,12 @@ class CreateAsMaster(TestCase):
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_master_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(
+                resources=fixture_cib_resources_xml_master_simplest
+            )
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(failed="true")
             )
         )
@@ -523,10 +531,12 @@ class CreateAsMaster(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_master_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(
+                resources=fixture_cib_resources_xml_master_simplest
+            )
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -540,12 +550,12 @@ class CreateAsMaster(TestCase):
         ])
 
     def test_wait_ok_disable_fail(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_master_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -562,12 +572,12 @@ class CreateAsMaster(TestCase):
         )
 
     def test_wait_ok_disable_ok(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_master_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -580,8 +590,8 @@ class CreateAsMaster(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <master id="A-master">
@@ -609,8 +619,8 @@ class CreateAsMaster(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -626,12 +636,12 @@ class CreateAsMaster(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role_in_master(self):
-        (self.config.runner
-            .cib.push(resources
+        (self.config
+            .runner.cib.push(resources
                 =fixture_cib_resources_xml_master_simplest_disabled_meta_after
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -647,8 +657,8 @@ class CreateAsMaster(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_clone_max(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <master id="A-master">
@@ -677,8 +687,8 @@ class CreateAsMaster(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -694,8 +704,8 @@ class CreateAsMaster(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_clone_node_max(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <master id="A-master">
@@ -725,8 +735,8 @@ class CreateAsMaster(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -744,16 +754,16 @@ class CreateAsMaster(TestCase):
 class CreateInGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load()
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load()
         )
 
     def test_simplest_resource(self):
-        (self.config.runner
+        (self.config
             .remove(name="can_wait")
-            .cib.push(
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <group id="G">
@@ -781,9 +791,9 @@ class CreateInGroup(TestCase):
         create_group(self.env_assist.get_env(), wait=False)
 
     def test_fail_wait(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_group_simplest)
-            .pcmk.wait(stderr=wait_error_message)
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_group_simplest)
+            .runner.pcmk.wait(stderr=wait_error_message)
         )
 
         self.env_assist.assert_raise_library_error(
@@ -795,10 +805,10 @@ class CreateInGroup(TestCase):
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_group_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_group_simplest)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(failed="true")
             )
         )
@@ -813,10 +823,10 @@ class CreateInGroup(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_group_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_group_simplest)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -830,12 +840,12 @@ class CreateInGroup(TestCase):
         ])
 
     def test_wait_ok_disable_fail(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_group_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -852,12 +862,12 @@ class CreateInGroup(TestCase):
         )
 
     def test_wait_ok_disable_ok(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_group_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -870,12 +880,12 @@ class CreateInGroup(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_group_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -893,23 +903,23 @@ class CreateInGroup(TestCase):
 class CreateAsClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load()
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load()
         )
 
     def test_simplest_resource(self):
-        (self.config.runner
+        (self.config
             .remove(name="can_wait")
-            .cib.push(resources=fixture_cib_resources_xml_clone_simplest)
+            .runner.cib.push(resources=fixture_cib_resources_xml_clone_simplest)
         )
         create_clone(self.env_assist.get_env(), wait=False)
 
     def test_fail_wait(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_clone_simplest)
-            .pcmk.wait(stderr=wait_error_message)
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_clone_simplest)
+            .runner.pcmk.wait(stderr=wait_error_message)
         )
 
         self.env_assist.assert_raise_library_error(
@@ -921,10 +931,10 @@ class CreateAsClone(TestCase):
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_clone_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_clone_simplest)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(failed="true")
             )
         )
@@ -939,10 +949,10 @@ class CreateAsClone(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .cib.push(resources=fixture_cib_resources_xml_clone_simplest)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.cib.push(resources=fixture_cib_resources_xml_clone_simplest)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -956,12 +966,12 @@ class CreateAsClone(TestCase):
         ])
 
     def test_wait_ok_disable_fail(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml()
             )
         )
@@ -978,12 +988,12 @@ class CreateAsClone(TestCase):
         )
 
     def test_wait_ok_disable_ok(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -996,8 +1006,8 @@ class CreateAsClone(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1026,8 +1036,8 @@ class CreateAsClone(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -1043,8 +1053,8 @@ class CreateAsClone(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1073,8 +1083,8 @@ class CreateAsClone(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -1090,8 +1100,8 @@ class CreateAsClone(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_clone_max(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1120,8 +1130,8 @@ class CreateAsClone(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -1137,8 +1147,8 @@ class CreateAsClone(TestCase):
         ])
 
     def test_wait_ok_disable_ok_by_clone_node_max(self):
-        (self.config.runner
-            .cib.push(
+        (self.config
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1168,8 +1178,8 @@ class CreateAsClone(TestCase):
                     </resources>
                 """
             )
-            .pcmk.wait()
-            .pcmk.load_state(
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=fixture_state_resources_xml(role="Stopped")
             )
         )
@@ -1295,12 +1305,15 @@ class CreateInToBundle(TestCase):
         )
 
     def test_upgrade_cib(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load(filename="cib-empty.xml", name="load_cib_old_version")
-            .cib.upgrade()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_simple)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(
+                filename="cib-empty.xml",
+                name="load_cib_old_version"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_simple)
         )
         create_bundle(self.env_assist.get_env(), wait=False)
         self.env_assist.assert_reports([
@@ -1308,17 +1321,17 @@ class CreateInToBundle(TestCase):
         ])
 
     def test_simplest_resource(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_simple)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_simple)
         )
         create_bundle(self.env_assist.get_env(), wait=False)
 
     def test_bundle_doesnt_exist(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load(resources=self.fixture_empty_resources)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(resources=self.fixture_empty_resources)
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
@@ -1335,9 +1348,9 @@ class CreateInToBundle(TestCase):
         )
 
     def test_id_not_bundle(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <primitive id="B"/>
@@ -1360,9 +1373,9 @@ class CreateInToBundle(TestCase):
         )
 
     def test_bundle_not_empty(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .cib.load(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B">
@@ -1385,12 +1398,12 @@ class CreateInToBundle(TestCase):
         )
 
     def test_wait_fail(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_simple)
-            .pcmk.wait(stderr=self.fixture_wait_timeout_error)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_simple)
+            .runner.pcmk.wait(stderr=self.fixture_wait_timeout_error)
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env()),
@@ -1404,13 +1417,13 @@ class CreateInToBundle(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_simple)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_simple)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=self.fixture_status_running_with_primitive
             )
         )
@@ -1421,13 +1434,13 @@ class CreateInToBundle(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_simple)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_simple)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=self.fixture_status_primitive_not_running
             )
         )
@@ -1443,13 +1456,13 @@ class CreateInToBundle(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_not_running(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_disabled)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_disabled)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=self.fixture_status_primitive_not_running
             )
         )
@@ -1460,13 +1473,13 @@ class CreateInToBundle(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_running(self):
-        (self.config.runner
-            .pcmk.load_agent()
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_resources_pre)
-            .cib.push(resources=self.fixture_resources_post_disabled)
-            .pcmk.wait()
-            .pcmk.load_state(
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_resources_pre)
+            .runner.cib.push(resources=self.fixture_resources_post_disabled)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(
                 resources=self.fixture_status_running_with_primitive
             )
         )

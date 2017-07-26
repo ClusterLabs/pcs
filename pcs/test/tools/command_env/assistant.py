@@ -82,7 +82,7 @@ class EnvAssistant(object):
             self.__unpatch()
 
     def get_env(self):
-        self.__effect_queue = EffectQueue(self.__config.runner_calls)
+        self.__effect_queue = EffectQueue(self.__config.calls)
         self.__unpatch = patch_env(self.__effect_queue)
         return self.__env
 

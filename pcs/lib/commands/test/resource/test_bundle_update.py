@@ -86,8 +86,8 @@ class Basics(TestCase):
         )
 
     def test_no_updates(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -96,16 +96,19 @@ class Basics(TestCase):
                     </resources>
                 """
             )
-            .cib.push()
+            .runner.cib.push()
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
 
 
     def test_cib_upgrade(self):
-        (self.config.runner
-            .cib.load(filename="cib-empty.xml", name="load_cib_old_version")
-            .cib.upgrade()
-            .cib.load(
+        (self.config
+            .runner.cib.load(
+                filename="cib-empty.xml",
+                name="load_cib_old_version"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -114,7 +117,7 @@ class Basics(TestCase):
                     </resources>
                 """
             )
-            .cib.push()
+            .runner.cib.push()
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
         self.env_assist.assert_reports([
@@ -150,8 +153,8 @@ class ContainerDocker(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_success(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -160,7 +163,7 @@ class ContainerDocker(TestCase):
                     </resources>
                 """
             )
-            .cib.push(
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -232,9 +235,9 @@ class ContainerDocker(TestCase):
         )
 
     def test_unknow_option_forced(self):
-        (self.config.runner
-            .cib.load(resources=fixture_resources_minimal)
-            .cib.push(resources=self.fixture_cib_extra_option)
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.push(resources=self.fixture_cib_extra_option)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -259,9 +262,9 @@ class ContainerDocker(TestCase):
         ])
 
     def test_unknown_option_remove(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_extra_option)
-            .cib.push(resources=fixture_resources_minimal)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_extra_option)
+            .runner.cib.push(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -303,9 +306,9 @@ class Network(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_add_network(self):
-        (self.config.runner
-            .cib.load(resources=fixture_resources_minimal)
-            .cib.push(resources=self.fixture_cib_interface)
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.push(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -316,9 +319,9 @@ class Network(TestCase):
         )
 
     def test_remove_network(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_interface)
-            .cib.push(resources=fixture_resources_minimal)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_interface)
+            .runner.cib.push(resources=fixture_resources_minimal)
         )
 
         resource.bundle_update(
@@ -330,8 +333,8 @@ class Network(TestCase):
         )
 
     def test_keep_network_when_port_map_set(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -343,7 +346,7 @@ class Network(TestCase):
                     </resources>
                 """
             )
-            .cib.push(
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -366,8 +369,8 @@ class Network(TestCase):
         )
 
     def test_success(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -378,7 +381,7 @@ class Network(TestCase):
                     </resources>
                 """
             )
-            .cib.push(
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -423,9 +426,9 @@ class Network(TestCase):
         )
 
     def test_unknow_option_forced(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_interface)
-            .cib.push(resources=self.fixture_cib_extra_option)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_interface)
+            .runner.cib.push(resources=self.fixture_cib_extra_option)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -451,9 +454,9 @@ class Network(TestCase):
         )
 
     def test_unknown_option_remove(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_extra_option)
-            .cib.push(resources=self.fixture_cib_interface)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_extra_option)
+            .runner.cib.push(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -498,9 +501,9 @@ class PortMap(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_add_network(self):
-        (self.config.runner
-            .cib.load(resources=fixture_resources_minimal)
-            .cib.push(resources=self.fixture_cib_port_80)
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.push(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -513,9 +516,9 @@ class PortMap(TestCase):
         )
 
     def test_remove_network(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_port_80)
-            .cib.push(resources=fixture_resources_minimal)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_port_80)
+            .runner.cib.push(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -526,8 +529,8 @@ class PortMap(TestCase):
         )
 
     def test_keep_network_when_options_set(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -539,7 +542,7 @@ class PortMap(TestCase):
                     </resources>
                 """
             )
-            .cib.push(
+            .runner.cib.push(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -559,9 +562,9 @@ class PortMap(TestCase):
         )
 
     def test_add(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_port_80)
-            .cib.push(resources=self.fixture_cib_port_80_8080)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_port_80)
+            .runner.cib.push(resources=self.fixture_cib_port_80_8080)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -574,9 +577,9 @@ class PortMap(TestCase):
         )
 
     def test_remove(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_port_80_8080)
-            .cib.push(resources=self.fixture_cib_port_80)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_port_80_8080)
+            .runner.cib.push(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -661,9 +664,9 @@ class StorageMap(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_add_storage(self):
-        (self.config.runner
-            .cib.load(resources=fixture_resources_minimal)
-            .cib.push(resources=self.fixture_cib_storage_1)
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.push(resources=self.fixture_cib_storage_1)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -677,9 +680,9 @@ class StorageMap(TestCase):
         )
 
     def test_remove_storage(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_storage_1)
-            .cib.push(resources=fixture_resources_minimal)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_storage_1)
+            .runner.cib.push(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -690,9 +693,9 @@ class StorageMap(TestCase):
         )
 
     def test_add(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_storage_1)
-            .cib.push(resources=self.fixture_cib_storage_1_2)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_storage_1)
+            .runner.cib.push(resources=self.fixture_cib_storage_1_2)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -706,9 +709,9 @@ class StorageMap(TestCase):
         )
 
     def test_remove(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_storage_1_2)
-            .cib.push(resources=self.fixture_cib_storage_1)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_storage_1_2)
+            .runner.cib.push(resources=self.fixture_cib_storage_1)
         )
 
         resource.bundle_update(
@@ -720,8 +723,8 @@ class StorageMap(TestCase):
         )
 
     def test_remove_missing(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_cib_storage_1)
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_storage_1)
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
@@ -770,9 +773,9 @@ class Meta(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_add_meta_element(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_no_meta)
-            .cib.push(resources=self.fixture_meta_stopped)
+        (self.config
+            .runner.cib.load(resources=self.fixture_no_meta)
+            .runner.cib.push(resources=self.fixture_meta_stopped)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -783,9 +786,9 @@ class Meta(TestCase):
         )
 
     def test_remove_meta_element(self):
-        (self.config.runner
-            .cib.load(resources=self.fixture_meta_stopped)
-            .cib.push(resources=self.fixture_no_meta)
+        (self.config
+            .runner.cib.load(resources=self.fixture_meta_stopped)
+            .runner.cib.push(resources=self.fixture_no_meta)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -826,9 +829,9 @@ class Meta(TestCase):
                 </bundle>
             </resources>
         """
-        (self.config.runner
-            .cib.load(resources=fixture_cib_pre)
-            .cib.push(resources=fixture_cib_post)
+        (self.config
+            .runner.cib.load(resources=fixture_cib_pre)
+            .runner.cib.push(resources=fixture_cib_post)
         )
         resource.bundle_update(
             self.env_assist.get_env(), "B1",
@@ -890,10 +893,10 @@ class Wait(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.can_wait()
-            .cib.load(resources=self.fixture_cib_pre)
-            .cib.push(resources=self.fixture_resources_bundle_simple)
+        (self.config
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=self.fixture_cib_pre)
+            .runner.cib.push(resources=self.fixture_resources_bundle_simple)
         )
 
     def test_wait_fail(self):
@@ -916,9 +919,9 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_running(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_running)
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         simple_bundle_update(self.env_assist.get_env())
         self.env_assist.assert_reports([
@@ -929,9 +932,9 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_not_running(self):
-        (self.config.runner
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_not_running)
+        (self.config
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         simple_bundle_update(self.env_assist.get_env())
         self.env_assist.assert_reports([

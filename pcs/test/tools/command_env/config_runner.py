@@ -10,11 +10,11 @@ from pcs.test.tools.integration_lib import Call
 
 
 class RunnerConfig(object):
-    def __init__(self, call_collection):
+    def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
-        self.cib = self.__wrap_helper(CibShortcuts(self.__calls))
-        self.pcmk = self.__wrap_helper(PcmkShortcuts(self.__calls))
+        self.cib = wrap_helper(CibShortcuts(self.__calls))
+        self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
 
     def place(
         self, command,
@@ -37,40 +37,3 @@ class RunnerConfig(object):
         call = Call(command, stdout, stderr, returncode, check_stdin)
         self.__calls.place(name, call, before, instead)
         return self
-
-    def remove(self, name):
-        """
-        Remove call with specified name from list.
-        """
-        self.__calls.remove(name)
-        return self
-
-    def get(self, name):
-        """
-        Get first call with name.
-        """
-        return self.__calls.get(name)
-
-    def __wrap_method(self, helper, name, method):
-        """
-        Wrap method in helper to return self of this object
-
-        object helper -- helper for creatig call configuration
-        string name -- name of method in helper
-        callable method
-        """
-        def wrapped_method(*args, **kwargs):
-            method(helper, *args, **kwargs)
-            return self
-        setattr(helper, name, wrapped_method)
-
-    def __wrap_helper(self, helper):
-        """
-        Wrap every public method in helper to return self of this object
-
-        object helper -- helper for creatig call configuration
-        """
-        for name, attr in helper.__class__.__dict__.items():
-            if not name.startswith("_") and hasattr(attr, "__call__"):
-                self.__wrap_method(helper, name, attr)
-        return helper

@@ -45,16 +45,16 @@ fixture_resources_bundle_simple = """
 class MinimalCreate(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .cib.load()
-            .cib.push(resources=fixture_resources_bundle_simple)
+        (self.config
+            .runner.cib.load()
+            .runner.cib.push(resources=fixture_resources_bundle_simple)
         )
 
     def test_success(self):
         simple_bundle_create(self.env_assist.get_env(), wait=False)
 
     def test_errors(self):
-        self.config.runner.remove("push_cib")
+        self.config.remove("push_cib")
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
                 self.env_assist.get_env(), "B#1", "nonsense"
@@ -85,13 +85,13 @@ class MinimalCreate(TestCase):
         )
 
     def test_cib_upgrade(self):
-        (self.config.runner
-            .cib.load(
+        (self.config
+            .runner.cib.load(
                 name="load_cib_old_version",
                 filename="cib-empty.xml",
                 before="load_cib"
             )
-            .cib.upgrade(before="load_cib")
+            .runner.cib.upgrade(before="load_cib")
         )
 
         simple_bundle_create(self.env_assist.get_env(), wait=False)
@@ -1126,9 +1126,9 @@ class Wait(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner
-            .pcmk.can_wait()
-            .cib.load(resources=fixture_cib_pre)
+        (self.config
+            .runner.pcmk.can_wait()
+            .runner.cib.load(resources=fixture_cib_pre)
         )
 
     def test_wait_fail(self):
@@ -1140,9 +1140,9 @@ class Wait(TestCase):
             """
         )
 
-        (self.config.runner
-            .cib.push(resources=fixture_resources_bundle_simple)
-            .pcmk.wait(
+        (self.config
+            .runner.cib.push(resources=fixture_resources_bundle_simple)
+            .runner.pcmk.wait(
                 stderr=wait_error_message,
             )
         )
@@ -1157,10 +1157,10 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
-        (self.config.runner
-            .cib.push(resources=fixture_resources_bundle_simple)
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_running)
+        (self.config
+            .runner.cib.push(resources=fixture_resources_bundle_simple)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         simple_bundle_create(self.env_assist.get_env())
         self.env_assist.assert_reports([
@@ -1171,10 +1171,10 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
-        (self.config.runner
-            .cib.push(resources=fixture_resources_bundle_simple)
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_not_running)
+        (self.config
+            .runner.cib.push(resources=fixture_resources_bundle_simple)
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         self.env_assist.assert_raise_library_error(
             lambda: simple_bundle_create(self.env_assist.get_env()),
@@ -1185,10 +1185,12 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_ok(self):
-        (self.config.runner
-            .cib.push(resources=self.fixture_resources_bundle_simple_disabled)
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_not_running)
+        (self.config
+            .runner.cib.push(
+                resources=self.fixture_resources_bundle_simple_disabled
+            )
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         simple_bundle_create(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports([
@@ -1204,10 +1206,12 @@ class Wait(TestCase):
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_fail(self):
-        (self.config.runner
-            .cib.push(resources=self.fixture_resources_bundle_simple_disabled)
-            .pcmk.wait()
-            .pcmk.load_state(resources=self.fixture_status_running)
+        (self.config
+            .runner.cib.push(
+                resources=self.fixture_resources_bundle_simple_disabled
+            )
+            .runner.pcmk.wait()
+            .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         self.env_assist.assert_raise_library_error(
             lambda:
