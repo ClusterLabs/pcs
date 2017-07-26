@@ -6,8 +6,8 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.test.tools import fixture
-from pcs.test.tools.integration_lib import Call
+from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs.test.tools.fixture import complete_state_resources
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import etree_to_str
 
@@ -33,13 +33,11 @@ class PcmkShortcuts(object):
         """
         state = etree.fromstring(open(rc(filename)).read())
         if resources:
-            state.append(
-                fixture.complete_state_resources(etree.fromstring(resources))
-            )
+            state.append(complete_state_resources(etree.fromstring(resources)))
 
         self.__calls.place(
             name,
-            Call(
+            RunnerCall(
                 "crm_mon --one-shot --as-xml --inactive",
                 stdout=etree_to_str(state),
             )
@@ -61,7 +59,7 @@ class PcmkShortcuts(object):
         """
         self.__calls.place(
             name,
-            Call(
+            RunnerCall(
                 "crm_resource --show-metadata {0}".format(agent_name),
                 stdout=open(rc(agent_filename)).read()
             )
@@ -83,7 +81,7 @@ class PcmkShortcuts(object):
 
         self.__calls.place(
             name,
-            Call(
+            RunnerCall(
                 "crm_resource --wait --timeout={0}".format(
                     timeout if timeout else self.default_wait_timeout
                 ),
@@ -101,6 +99,6 @@ class PcmkShortcuts(object):
         """
         self.__calls.place(
             name,
-            Call("crm_resource -?", stdout="--wait"),
+            RunnerCall("crm_resource -?", stdout="--wait"),
             before=before
         )

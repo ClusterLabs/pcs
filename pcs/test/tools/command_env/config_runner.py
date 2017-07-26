@@ -6,7 +6,7 @@ from __future__ import (
 
 from pcs.test.tools.command_env.config_runner_cib import CibShortcuts
 from pcs.test.tools.command_env.config_runner_pcmk import PcmkShortcuts
-from pcs.test.tools.integration_lib import Call
+from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
 
 
 class RunnerConfig(object):
@@ -34,6 +34,6 @@ class RunnerConfig(object):
         string before -- name of another call to insert this call before it
         string instead -- name of another call to replace it by this call
         """
-        call = Call(command, stdout, stderr, returncode, check_stdin)
+        call = RunnerCall(command, stdout, stderr, returncode, check_stdin)
         self.__calls.place(name, call, before, instead)
         return self

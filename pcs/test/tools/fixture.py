@@ -4,9 +4,71 @@ from __future__ import (
     print_function,
 )
 
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.test.tools.xml import etree_to_str
+
+
+def replace_element(element_xpath, new_content):
+    """
+    Return function that replace element (defined by element_xpath) in the
+    cib_tree with new_content.
+
+    string element_xpath -- its destination must be one element: replacement
+        is applied only on the first occurence
+    string new_content -- contains a content that have to be placed instead of
+        a element found by element_xpath
+    """
+    def replace(cib_tree):
+        element_to_replace = cib_tree.find(element_xpath)
+        if element_to_replace is None:
+            raise AssertionError(
+                "Cannot find '{0}' in given cib:\n{1}".format(
+                    element_xpath,
+                    etree_to_str(cib_tree)
+                )
+            )
+
+        try:
+            new_element = etree.fromstring(new_content)
+        except etree.XMLSyntaxError:
+            raise AssertionError(
+                "Cannot put to the cib a non-xml fragment:\n'{0}'"
+                .format(new_content)
+            )
+
+        parent = element_to_replace.getparent()
+        for child in parent:
+            if element_to_replace == child:
+                index = list(parent).index(child)
+                parent.remove(child)
+                parent.insert(index, new_element)
+                return
+    return replace
+
+def modify_cib(cib_xml, modifiers=None, resources=None):
+    """
+    Apply modifiers to cib_xml and return the result cib_xml
+
+    string cib_xml -- initial cib
+    list of callable modifiers -- each takes cib (etree.Element)
+    string resources -- xml - resources section, current resources section will
+        be replaced by this
+    """
+    modifiers = modifiers if modifiers else []
+    if resources:
+        modifiers.append(replace_element(".//resources", resources))
+
+    if not modifiers:
+        return cib_xml
+
+    cib_tree = etree.fromstring(cib_xml)
+    for modify in modifiers:
+        modify(cib_tree)
+
+    return etree_to_str(cib_tree)
 
 
 def complete_state_resources(resource_status):

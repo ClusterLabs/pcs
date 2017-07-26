@@ -14,7 +14,8 @@ from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.integration_lib import HeavyRunner, Call
+from pcs.test.tools.integration_lib import Runner
+from pcs.test.tools.command_env.mock_runner import Call
 
 from pcs import settings
 from pcs.common import report_codes
@@ -36,7 +37,7 @@ from pcs.lib.external import (
 import pcs.lib.commands.sbd as cmd_sbd
 
 
-runner = HeavyRunner()
+runner = Runner()
 
 
 def _assert_equal_list_of_dictionaries_without_order(expected, actual):

@@ -1,3 +1,78 @@
+"""
+This is the set of tools for testing commands (pcs.lib.commands).
+
+The principle is to patch some parts of the library environment object
+(pcs.lib.env.LibraryEnvironment) that is passed as first argument to each
+command.
+
+Important parts:
+================
+CallListBuilder + (Call)Queue
+-----------------------------
+Both objects stores list of calls (messages to the mocked parts of environment).
+CallListBuilder is used in configuration phase (before command run) to build
+the call list.
+Queue is used in run phase (during command run) to check that everything is done
+as expected.
+
+Mocks (Runner, push_cib, ...)
+-----------------------------
+Mocks replaces real environment parts. Every Mock has an access to Queue.
+Everytime when the mock obtain a message from tested command it takes expected
+message from Queue. Then the mock compares expected and real message. When the
+messages match each other then the Mock returns expected result. Otherwise Mock
+call fails.
+
+With each Mock commes Call that represent message appropriate for the concrete
+Mock.
+
+Config (with RunnerConfig, CibShortcuts, EnvConfig, ...)
+--------------------------------------------------------
+The tests use the Config for building list of expected calls (messages to
+the mocked parts). Config stores list of calls in CallListBuilder.
+
+EnvAssitant
+-----------
+EnvAssitant provides CallListBuilder to Config. When test requests an
+environment (from the EnvAssitant) then the EnvAssitant:
+* takes calls from Config and prepares the Queue (of calls)
+* creates appropriate mock and provide them the Queue
+* patches environment by appropriate mocks
+* returns patched environment
+
+When the test is done the EnvAssitant unpatches the environment and do requeired
+checks (that whole Queue is consumed, that there was no extra reports, ...)
+
+Example:
+========
+from pcs.lib.commands import resource
+from pcs.test.tools.command_env import get_env_tools
+from pcs.test.tools.pcs_unittest import TestCase
+
+class ExampleTest(TestCase):
+    def test_success(self):
+        env_assist, config = get_env_tools(test_case=self)
+        (config
+            .runner.cib.load()
+            .runner.cib.push(
+                resources='''
+                    <resources>
+                        <bundle id="B1">
+                            <docker image="pcs:test" />
+                        </bundle>
+                    </resources>
+                '''
+            )
+        )
+        resource.bundle_create(
+            self.env_assist.get_env(),
+            "B1",
+            "docker",
+            container_options={"image": "pcs:test"},
+            ensure_disabled=disabled,
+            wait=False,
+        )
+"""
 from __future__ import (
     absolute_import,
     division,

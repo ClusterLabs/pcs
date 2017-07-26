@@ -4,39 +4,16 @@ from __future__ import (
     print_function,
 )
 
-from lxml import etree
-
-from pcs.test.tools import cib_modify
-from pcs.test.tools.integration_lib import Call
+from pcs.test.tools.command_env.mock_runner import(
+    Call as RunnerCall,
+    create_check_stdin_xml,
+)
+from pcs.test.tools.fixture import modify_cib
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.xml import etree_to_str
 
 
 CIB_FILENAME = "cib-empty.xml"
 
-def modify_cib(cib_xml, modifiers=None, resources=None):
-    """
-    Apply modifiers to cib_xml and return the result cib_xml
-
-    string cib_xml -- initial cib
-    list of callable modifiers -- each takes cib (etree.Element)
-    string resources -- xml - resources section, current resources section will
-        be replaced by this
-    """
-    modifiers = modifiers if modifiers else []
-    if resources:
-        modifiers.append(
-            cib_modify.replace_element(".//resources", resources)
-        )
-
-    if not modifiers:
-        return cib_xml
-
-    cib_tree = etree.fromstring(cib_xml)
-    for modify in modifiers:
-        modify(cib_tree)
-
-    return etree_to_str(cib_tree)
 
 class CibShortcuts(object):
     def __init__(self, calls):
@@ -69,7 +46,7 @@ class CibShortcuts(object):
         cib = modify_cib(open(rc(filename)).read(), modifiers, resources)
         self.__calls.place(
             name,
-            Call("cibadmin --local --query", stdout=cib),
+            RunnerCall("cibadmin --local --query", stdout=cib),
             before=before,
         )
 
@@ -101,9 +78,9 @@ class CibShortcuts(object):
         )
         self.__calls.place(
             name,
-            Call(
+            RunnerCall(
                 "cibadmin --replace --verbose --xml-pipe --scope configuration",
-                check_stdin=Call.create_check_stdin_xml(cib),
+                check_stdin=create_check_stdin_xml(cib),
             ),
             instead=instead,
         )
@@ -117,6 +94,6 @@ class CibShortcuts(object):
         """
         self.__calls.place(
             name,
-            Call("cibadmin --upgrade --force"),
+            RunnerCall("cibadmin --upgrade --force"),
             before=before
         )

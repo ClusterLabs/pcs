@@ -107,6 +107,20 @@ class MinimalCreate(TestCase):
         ])
 
 
+class MinimalCreateWithPatchCibPushMethod(TestCase):
+    def test_success(self):
+        """
+        This is an example of different approach. There is not only mocked the
+        runner call but there is mocked whole "push_cib" method of env.
+        """
+        env_assist, config = get_env_tools(test_case=self)
+        (config
+            .runner.cib.load()
+            .env.push_cib(resources=fixture_resources_bundle_simple)
+        )
+        simple_bundle_create(env_assist.get_env(), wait=False)
+
+
 class CreateDocker(TestCase):
     allowed_options = [
         "image",
