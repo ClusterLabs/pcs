@@ -1815,14 +1815,14 @@ def node_add(lib_env, node0, node1, modifiers):
         # 1. add the new node to corosync.conf
         # 2. reload  corosync.conf before the new node is started
         # 3. start the new node
-        # If done otherwise, membership gets broken a qdevice hangs. Cluster
+        # If done otherwise, membership gets broken and qdevice hangs. Cluster
         # will recover after a minute or so but still it's a wrong way.
         # When corosync 1 is in use, the procedure for adding a node is:
         # 1. add the new node to cluster.conf
         # 2. start the new node
         # Starting the node will automaticall reload cluster.conf on all
         # nodes. If the config is reloaded before the new node is started,
-        # the new node gets fenced by the cluster,
+        # the new node gets fenced by the cluster.
         output, retval = utils.reloadCorosync()
     if corosync_conf != None:
         # send local cluster pcsd configs to the new node
