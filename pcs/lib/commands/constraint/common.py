@@ -67,7 +67,7 @@ def create_with_set(
         duplication_alowed=duplication_alowed,
     )
 
-    env.push_cib(cib)
+    env.push_cib()
 
 def show(tag_name, is_plain, env):
     """

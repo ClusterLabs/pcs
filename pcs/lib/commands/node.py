@@ -20,14 +20,13 @@ from pcs.lib.pacemaker.state import ClusterState
 def cib_runner_nodes(lib_env, wait):
     lib_env.ensure_wait_satisfiable(wait)
     runner = lib_env.cmd_runner()
-    cib = lib_env.get_cib()
 
     state_nodes = ClusterState(
         get_cluster_status_xml(runner)
     ).node_section.nodes
 
-    yield (cib, runner, state_nodes)
-    lib_env.push_cib(cib, wait)
+    yield (lib_env.get_cib(), runner, state_nodes)
+    lib_env.push_cib(wait=wait)
 
 
 def standby_unstandby_local(lib_env, standby, wait=False):

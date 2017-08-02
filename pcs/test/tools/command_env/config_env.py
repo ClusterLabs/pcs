@@ -22,3 +22,9 @@ class EnvConfig(object):
             resources,
         )
         self.__calls.place(name, PushCibCall(cib_xml, wait=False))
+
+    def push_cib_custom(self, name="env.push_cib", custom_cib=None, wait=False):
+        self.__calls.place(
+            name,
+            PushCibCall(custom_cib, custom_cib=True, wait=False)
+        )

@@ -90,7 +90,7 @@ class PcmkShortcuts(object):
             )
         )
 
-    def can_wait(self, name="can_wait", before=None):
+    def can_wait(self, name="can_wait", before=None, stdout="--wait"):
         """
         Create call that checks that wait for idle is supported
 
@@ -99,6 +99,6 @@ class PcmkShortcuts(object):
         """
         self.__calls.place(
             name,
-            RunnerCall("crm_resource -?", stdout="--wait"),
+            RunnerCall("crm_resource -?", stdout=stdout),
             before=before
         )

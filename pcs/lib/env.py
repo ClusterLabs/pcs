@@ -89,9 +89,11 @@ class LibraryEnvironment(object):
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
         self._auth_tokens_getter = auth_tokens_getter
+
         self._auth_tokens = None
         self._cib_upgraded = False
         self._cib_data_tmp_file = None
+        self._loaded_cib = None
         self._communicator_factory = NodeCommunicatorFactory(
             LibCommunicatorLogger(self.logger, self.report_processor),
             self.user_login,
@@ -133,6 +135,8 @@ class LibraryEnvironment(object):
         return self._cib_data
 
     def get_cib(self, minimal_version=None):
+        if self._loaded_cib is not None:
+            raise AssertionError("CIB has already been loaded")
         cib = get_cib(self._get_cib_xml())
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
@@ -147,7 +151,14 @@ class LibraryEnvironment(object):
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgraded = True
-        return cib
+        self._loaded_cib = cib
+        return self._loaded_cib
+
+    @property
+    def cib(self):
+        if self._loaded_cib is None:
+            raise AssertionError("CIB has not been loaded")
+        return self._loaded_cib
 
     def get_cluster_state(self):
         return get_cluster_state_dom(get_cluster_status_xml(self.cmd_runner()))
@@ -179,13 +190,23 @@ class LibraryEnvironment(object):
         """
         self._get_wait_timeout(wait)
 
-    def push_cib(self, cib, wait=False):
+    def push_cib(self, custom_cib=None, wait=False):
+        if custom_cib is None and self._loaded_cib is None:
+            raise AssertionError("CIB has not been loaded")
+        if custom_cib is not None and self._loaded_cib is not None:
+            raise AssertionError("CIB has been loaded, cannot push custom CIB")
+
         timeout = self._get_wait_timeout(wait)
         #etree returns bytes: b'xml'
         #python 3 removed .encode() from bytes
         #run(...) calls subprocess.Popen.communicate which calls encode...
         #so here is bytes to str conversion
-        self._push_cib_xml(etree.tostring(cib).decode())
+        self._push_cib_xml(
+            etree.tostring(
+                self._loaded_cib if custom_cib is None else custom_cib
+            ).decode()
+        )
+        self._loaded_cib = None
 
         if timeout is not False:
             wait_for_idle(self.cmd_runner(), timeout)

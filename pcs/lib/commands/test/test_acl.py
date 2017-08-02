@@ -26,7 +26,7 @@ class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
         self.mock_env.get_cib.assert_called_once_with(REQUIRED_CIB_VERSION)
 
     def assert_same_cib_pushed(self):
-        self.mock_env.push_cib.assert_called_once_with(self.cib)
+        self.mock_env.push_cib.assert_called_once_with()
 
     def assert_cib_not_pushed(self):
         self.assertEqual(0, self.mock_env.push_cib.call_count)
@@ -39,7 +39,7 @@ class CibAclSection(TestCase):
         with cmd_acl.cib_acl_section(env):
             pass
         env.get_cib.assert_called_once_with(cmd_acl.REQUIRED_CIB_VERSION)
-        env.push_cib.assert_called_once_with("cib")
+        env.push_cib.assert_called_once_with()
 
     def test_does_not_push_cib_on_exception(self):
         env = mock.MagicMock()

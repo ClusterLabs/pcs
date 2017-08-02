@@ -85,6 +85,30 @@ class CibShortcuts(object):
             instead=instead,
         )
 
+    def push_independent(
+        self,
+        cib,
+        name="push_cib",
+        instead=None,
+    ):
+        """
+        Create call for pushing cib.
+        Cib is specified as an argument.
+
+        string name -- key of the call
+        string cib -- whole cib to push
+        string instead -- key of call instead of which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                check_stdin=create_check_stdin_xml(cib),
+            ),
+            instead=instead,
+        )
+
     def upgrade(self, name="upgrade_cib", before=None):
         """
         Create call for upgrading cib.

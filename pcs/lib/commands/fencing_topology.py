@@ -53,7 +53,7 @@ def add_level(
         force_node
     )
     lib_env.report_processor.send()
-    lib_env.push_cib(cib)
+    lib_env.push_cib()
 
 def get_config(lib_env):
     """
@@ -72,9 +72,10 @@ def remove_all_levels(lib_env):
     Remove all fencing levels
     LibraryError lib_env -- environment
     """
-    cib = lib_env.get_cib()
-    cib_fencing_topology.remove_all_levels(get_fencing_topology(cib))
-    lib_env.push_cib(cib)
+    cib_fencing_topology.remove_all_levels(
+        get_fencing_topology(lib_env.get_cib())
+    )
+    lib_env.push_cib()
 
 def remove_levels_by_params(
     lib_env, level=None, target_type=None, target_value=None, devices=None,
@@ -90,10 +91,9 @@ def remove_levels_by_params(
     Iterable devices -- list of stonith devices for the new fencing level
     bool ignore_if_missing -- when True, do not report if level not found
     """
-    cib = lib_env.get_cib()
     cib_fencing_topology.remove_levels_by_params(
         lib_env.report_processor,
-        get_fencing_topology(cib),
+        get_fencing_topology(lib_env.get_cib()),
         level,
         target_type,
         target_value,
@@ -101,7 +101,7 @@ def remove_levels_by_params(
         ignore_if_missing
     )
     lib_env.report_processor.send()
-    lib_env.push_cib(cib)
+    lib_env.push_cib()
 
 def verify(lib_env):
     """

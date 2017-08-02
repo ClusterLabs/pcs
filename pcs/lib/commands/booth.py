@@ -161,8 +161,7 @@ def create_in_cluster(env, name, ip, allow_absent_resource_agent=False):
     bool allow_absent_resource_agent is flag allowing create booth resource even
         if its agent is not installed
     """
-    cib = env.get_cib()
-    resources_section = get_resources(cib)
+    resources_section = get_resources(env.get_cib())
 
     booth_config_file_path = get_config_file_name(name)
     if resource.find_for_config(resources_section, booth_config_file_path):
@@ -200,7 +199,7 @@ def create_in_cluster(env, name, ip, allow_absent_resource_agent=False):
         instance_attributes={"config": booth_config_file_path},
     ))
 
-    env.push_cib(cib)
+    env.push_cib()
 
 def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to

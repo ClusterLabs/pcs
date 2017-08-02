@@ -17,6 +17,7 @@ def get_env_tools(
     base_cib_filename=CIB_FILENAME,
     default_wait_timeout=DEFAULT_WAIT_TIMEOUT,
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
+    cib_data=None,
     corosync_conf_data=None,
 ):
     """
@@ -27,7 +28,9 @@ def get_env_tools(
     """
 
     env_assistant = EnvAssistant(
-        test_case=test_case, corosync_conf_data=corosync_conf_data,
+        test_case=test_case,
+        cib_data=cib_data,
+        corosync_conf_data=corosync_conf_data,
     )
 
     runner = env_assistant.config.runner

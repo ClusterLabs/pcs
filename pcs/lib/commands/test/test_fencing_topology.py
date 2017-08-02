@@ -57,7 +57,7 @@ class AddLevel(TestCase):
         mock_status.assert_called_once_with("mock get_cluster_status_xml")
         mock_get_topology.assert_called_once_with("mocked cib")
         mock_get_resources.assert_called_once_with("mocked cib")
-        mock_push_cib.assert_called_once_with("mocked cib")
+        mock_push_cib.assert_called_once_with()
 
     def test_success(
         self, mock_get_cib, mock_status_xml, mock_status, mock_push_cib,
@@ -191,7 +191,7 @@ class RemoveAllLevels(TestCase):
 
         mock_remove.assert_called_once_with("topology el")
         mock_get_topology.assert_called_once_with("mocked cib")
-        mock_push_cib.assert_called_once_with("mocked cib")
+        mock_push_cib.assert_called_once_with()
 
 
 @patch_command("cib_fencing_topology.remove_levels_by_params")
@@ -217,7 +217,7 @@ class RemoveLevelsByParams(TestCase):
             "ignore"
         )
         mock_get_topology.assert_called_once_with("mocked cib")
-        mock_push_cib.assert_called_once_with("mocked cib")
+        mock_push_cib.assert_called_once_with()
 
 
 @patch_command("cib_fencing_topology.verify")

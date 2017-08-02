@@ -38,9 +38,8 @@ def resource_environment(
     required_cib_version=None
 ):
     env.ensure_wait_satisfiable(wait)
-    cib = env.get_cib(required_cib_version)
-    yield get_resources(cib)
-    env.push_cib(cib, wait)
+    yield get_resources(env.get_cib(required_cib_version))
+    env.push_cib(wait=wait)
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
         env.report_processor.process_list([
