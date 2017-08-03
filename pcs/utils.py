@@ -120,9 +120,8 @@ def checkAndUpgradeCIB(major,minor,rev):
     cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
     if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
         return False
-    else:
-        cluster_upgrade()
-        return True
+    cluster_upgrade()
+    return True
 
 def cluster_upgrade():
     output, retval = run(["cibadmin", "--upgrade", "--force"])
@@ -388,8 +387,7 @@ def addLocalNode(node, node_to_add, ring1_addr=None):
         except ValueError:
             return 1, output
         return retval2, output
-    else:
-        return 1, output
+    return 1, output
 
 def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
     data = urllib_urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
@@ -400,8 +398,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
         except ValueError:
             return 1,output
         return 0, myout
-    else:
-        return 1, output
+    return 1, output
 
 
 # Send an HTTP request to a node return a tuple with status, data
@@ -1925,8 +1922,7 @@ def get_terminal_input(message=None):
     try:
         if PYTHON2:
             return raw_input("")
-        else:
-            return input("")
+        return input("")
     except EOFError:
         return ""
     except KeyboardInterrupt:
@@ -2636,14 +2632,13 @@ def is_valid_cib_value(type, value, enum_options=[]):
     type = type.lower()
     if type == "enum":
         return value in enum_options
-    elif type == "boolean":
+    if type == "boolean":
         return is_boolean(value)
-    elif type == "integer":
+    if type == "integer":
         return is_score(value)
-    elif type == "time":
+    if type == "time":
         return get_timeout_seconds(value) is not None
-    else:
-        return True
+    return True
 
 
 def get_cluster_property_default(prop_def_dict, prop):

@@ -130,8 +130,7 @@ class LibraryEnvironment(object):
     def _get_cib_xml(self):
         if self.is_cib_live:
             return get_cib_xml(self.cmd_runner())
-        else:
-            return self._cib_data
+        return self._cib_data
 
     def get_cib(self, minimal_version=None):
         cib = get_cib(self._get_cib_xml())
@@ -198,8 +197,7 @@ class LibraryEnvironment(object):
     def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
             return get_local_corosync_conf()
-        else:
-            return self._corosync_conf_data
+        return self._corosync_conf_data
 
     def get_corosync_conf(self):
         return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
@@ -261,8 +259,7 @@ class LibraryEnvironment(object):
     def get_cluster_conf_data(self):
         if self.is_cluster_conf_live:
             return get_local_cluster_conf()
-        else:
-            return self._cluster_conf_data
+        return self._cluster_conf_data
 
 
     def get_cluster_conf(self):
