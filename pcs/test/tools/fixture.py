@@ -22,31 +22,71 @@ def replace_element(element_xpath, new_content):
         a element found by element_xpath
     """
     def replace(cib_tree):
-        element_to_replace = cib_tree.find(element_xpath)
-        if element_to_replace is None:
+        _replace_element_in_parent(
+            _find_element(cib_tree, element_xpath),
+            _xml_to_element(new_content)
+        )
+    return replace
+
+def replace_optional_element(element_place_xpath, element_name, new_content):
+    def replace_optional(cib_tree):
+        element_parent = _find_element(cib_tree, element_place_xpath)
+        elements_to_replace = element_parent.findall(element_name)
+        if len(elements_to_replace) == 0:
+            new_element = etree.SubElement(element_parent, element_name)
+            elements_to_replace.append(new_element)
+        elif len(elements_to_replace) > 1:
             raise AssertionError(
-                "Cannot find '{0}' in given cib:\n{1}".format(
-                    element_xpath,
-                    etree_to_str(cib_tree)
+                (
+                    "Cannot replace '{element}' in '{parent}' because '{parent}'"
+                    " contains more than one '{element}' in given cib:\n{cib}"
+                ).format(
+                    element=element_name,
+                    parent=element_place_xpath,
+                    cib=etree_to_str(cib_tree)
                 )
             )
+        _replace_element_in_parent(
+            elements_to_replace[0],
+            _xml_to_element(new_content)
+        )
+    return replace_optional
 
-        try:
-            new_element = etree.fromstring(new_content)
-        except etree.XMLSyntaxError:
-            raise AssertionError(
-                "Cannot put to the cib a non-xml fragment:\n'{0}'"
-                .format(new_content)
+def remove_element(element_xpath):
+    def remove(cib_tree):
+        element_to_remove = _find_element(cib_tree, element_xpath)
+        element_to_remove.getparent().remove(element_to_remove)
+    return remove
+
+def _find_element(cib_tree, element_xpath):
+    element = cib_tree.find(element_xpath)
+    if element is None:
+        raise AssertionError(
+            "Cannot find '{0}' in given cib:\n{1}".format(
+                element_xpath,
+                etree_to_str(cib_tree)
             )
+        )
+    return element
 
-        parent = element_to_replace.getparent()
-        for child in parent:
-            if element_to_replace == child:
-                index = list(parent).index(child)
-                parent.remove(child)
-                parent.insert(index, new_element)
-                return
-    return replace
+def _xml_to_element(xml):
+    try:
+        new_element = etree.fromstring(xml)
+    except etree.XMLSyntaxError:
+        raise AssertionError(
+            "Cannot put to the cib a non-xml fragment:\n'{0}'"
+            .format(xml)
+        )
+    return new_element
+
+def _replace_element_in_parent(element_to_replace, new_element):
+    parent = element_to_replace.getparent()
+    for child in parent:
+        if element_to_replace == child:
+            index = list(parent).index(child)
+            parent.remove(child)
+            parent.insert(index, new_element)
+            return
 
 def modify_cib(cib_xml, modifiers=None, resources=None):
     """

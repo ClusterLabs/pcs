@@ -1325,6 +1325,22 @@ def cib_save_tmp_error(reason):
         }
     )
 
+def cib_diff_error(reason, cib_old, cib_new):
+    """
+    cannot obtain a diff of CIBs
+    string reason -- error description
+    string old_cib -- the CIB to be diffed against
+    string new_cib -- the CIB diffed against the old cib
+    """
+    return ReportItem.error(
+        report_codes.CIB_DIFF_ERROR,
+        info={
+            "reason": reason,
+            "cib_old": cib_old,
+            "cib_new": cib_new,
+        }
+    )
+
 def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code

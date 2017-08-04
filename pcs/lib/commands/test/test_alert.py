@@ -4,68 +4,96 @@ from __future__ import (
     print_function,
 )
 
+from functools import partial
 import logging
-from lxml import etree
-
-from pcs.test.tools.pcs_unittest import TestCase
-
-from pcs.test.tools.pcs_unittest import mock
-from pcs.test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
-    assert_report_item_list_equal,
-)
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs.test.tools.command_env import get_env_tools
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.fixture import (
+    remove_element,
+    replace_element,
+    replace_optional_element,
+)
+from pcs.test.tools.pcs_unittest import mock, TestCase
 
 import pcs.lib.commands.alert as cmd_alert
 
 
-@mock.patch("pcs.lib.env.ensure_cib_version")
+get_env_tools = partial(
+    get_env_tools,
+    base_cib_filename="cib-empty-2.5.xml"
+)
+
 class CreateAlertTest(TestCase):
+    fixture_final_alerts = """
+        <alerts>
+            <alert id="my-alert" path="/my/path" description="my description">
+                <meta_attributes id="my-alert-meta_attributes">
+                    <nvpair
+                        id="my-alert-meta_attributes-meta1"
+                        name="meta1"
+                        value="val1"
+                    />
+                </meta_attributes>
+                <instance_attributes id="my-alert-instance_attributes">
+                    <nvpair
+                        id="my-alert-instance_attributes-another"
+                        name="another"
+                        value="val"
+                    />
+                    <nvpair
+                        id="my-alert-instance_attributes-instance"
+                        name="instance"
+                        value="value"
+                    />
+                </instance_attributes>
+            </alert>
+        </alerts>
+    """
+
     def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data="<cib/>"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_no_path(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_alert.create_alert(
+                self.env_assist.get_env(), None, None, None, None
+            ),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {"option_names": ["path"]},
+                    None
+                ),
+            ],
+            expected_in_processor=False
         )
 
-    def test_no_path(self, mock_ensure_cib_version):
-        assert_raise_library_error(
-            lambda: cmd_alert.create_alert(
-                self.mock_env, None, None, None, None
-            ),
-            (
-                Severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["path"]}
+    def test_create_no_upgrade(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.push(
+                modifiers=[
+                    replace_optional_element(
+                        "./configuration",
+                        "alerts",
+                        self.fixture_final_alerts
+                    )
+                ]
             )
         )
-        mock_ensure_cib_version.assert_not_called()
-
-    def test_upgrade_needed(self, mock_ensure_cib_version):
-        original_cib_xml = """
-            <cib validate-with="pacemaker-2.4.1">
-                <configuration>
-                </configuration>
-            </cib>
-        """
-        self.mock_env._push_cib_xml(original_cib_xml)
-        mock_ensure_cib_version.return_value = etree.XML(
-            """
-            <cib validate-with="pacemaker-2.5.0">
-                <configuration>
-                </configuration>
-            </cib>
-            """
-        )
         cmd_alert.create_alert(
-            self.mock_env,
+            self.env_assist.get_env(),
             "my-alert",
             "/my/path",
             {
@@ -75,55 +103,48 @@ class CreateAlertTest(TestCase):
             {"meta1": "val1"},
             "my description"
         )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5.0">
-    <configuration>
-        <alerts>
-            <alert id="my-alert" path="/my/path" description="my description">
-                <meta_attributes id="my-alert-meta_attributes">
-                    <nvpair
-                        id="my-alert-meta_attributes-meta1"
-                        name="meta1"
-                        value="val1"
-                    />
-                </meta_attributes>
-                <instance_attributes id="my-alert-instance_attributes">
-                    <nvpair
-                        id="my-alert-instance_attributes-another"
-                        name="another"
-                        value="val"
-                    />
-                    <nvpair
-                        id="my-alert-instance_attributes-instance"
-                        name="instance"
-                        value="value"
-                    />
-                </instance_attributes>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
+
+    def test_create_upgrade(self):
+        (self.config
+            .runner.cib.load(
+                filename="cib-empty.xml",
+                name="load_cib_old_version"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load()
+            .runner.cib.push(
+                modifiers=[
+                    replace_optional_element(
+                        "./configuration",
+                        "alerts",
+                        self.fixture_final_alerts
+                    )
+                ]
+            )
         )
-        self.assertEqual(1, mock_ensure_cib_version.call_count)
+        cmd_alert.create_alert(
+            self.env_assist.get_env(),
+            "my-alert",
+            "/my/path",
+            {
+                "instance": "value",
+                "another": "val"
+            },
+            {"meta1": "val1"},
+            "my description"
+        )
+        self.env_assist.assert_reports([
+            (
+                Severities.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {},
+                None
+            ),
+        ])
 
 
 class UpdateAlertTest(TestCase):
-    def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data="<cib/>"
-        )
-
-    def test_update_all(self):
-        self.mock_env._push_cib_xml(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
+    fixture_initial_alerts = """
         <alerts>
             <alert id="my-alert" path="/my/path" description="my description">
                 <instance_attributes id="my-alert-instance_attributes">
@@ -147,25 +168,12 @@ class UpdateAlertTest(TestCase):
                 </meta_attributes>
             </alert>
         </alerts>
-    </configuration>
-</cib>
-            """
-        )
-        cmd_alert.update_alert(
-            self.mock_env,
-            "my-alert",
-            "/another/one",
-            {
-                "instance": "",
-                "my-attr": "its_val"
-            },
-            {"meta1": "val2"},
-            ""
-        )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
+    """
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_update_all(self):
+        fixture_final_alerts = """
         <alerts>
             <alert id="my-alert" path="/another/one">
                 <instance_attributes id="my-alert-instance_attributes">
@@ -189,180 +197,196 @@ class UpdateAlertTest(TestCase):
                 </meta_attributes>
             </alert>
         </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
+        """
+        (self.config
+            .runner.cib.load(
+                modifiers=[
+                    replace_optional_element(
+                        "./configuration",
+                        "alerts",
+                        self.fixture_initial_alerts
+                    )
+                ]
+            )
+            .runner.cib.push(
+                modifiers=[
+                    replace_element(
+                        "./configuration/alerts",
+                        fixture_final_alerts
+                    )
+                ]
+            )
+        )
+        cmd_alert.update_alert(
+            self.env_assist.get_env(),
+            "my-alert",
+            "/another/one",
+            {
+                "instance": "",
+                "my-attr": "its_val"
+            },
+            {"meta1": "val2"},
+            ""
         )
 
     def test_update_instance_attribute(self):
-        self.mock_env._push_cib_xml(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="my-alert" path="/my/path" description="my description">
-                <instance_attributes id="my-alert-instance_attributes">
-                    <nvpair
-                        id="my-alert-instance_attributes-instance"
-                        name="instance"
-                        value="value"
-                    />
-                </instance_attributes>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """
+        (self.config
+            .runner.cib.load(
+                modifiers=[
+                    replace_optional_element(
+                        "./configuration",
+                        "alerts",
+                        self.fixture_initial_alerts
+                    )
+                ]
+            )
+            .runner.cib.push(
+                modifiers=[
+                    replace_element(
+                        (
+                            './configuration/alerts/alert[@id="my-alert"]/'
+                            +
+                            'instance_attributes/nvpair[@name="instance"]'
+                        ),
+                        """
+                            <nvpair
+                                id="my-alert-instance_attributes-instance"
+                                name="instance"
+                                value="new_val"
+                            />
+                        """
+                    )
+                ]
+            )
         )
         cmd_alert.update_alert(
-            self.mock_env,
+            self.env_assist.get_env(),
             "my-alert",
             None,
             {"instance": "new_val"},
             {},
             None
         )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="my-alert" path="/my/path" description="my description">
-                <instance_attributes id="my-alert-instance_attributes">
-                    <nvpair
-                        id="my-alert-instance_attributes-instance"
-                        name="instance"
-                        value="new_val"
-                    />
-                </instance_attributes>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
-        )
 
     def test_alert_doesnt_exist(self):
-        self.mock_env._push_cib_xml(
-            """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path"/>
-                    </alerts>
-                </configuration>
-            </cib>
-            """
-        )
-        assert_raise_library_error(
-            lambda: cmd_alert.update_alert(
-                self.mock_env, "unknown", "test", {}, {}, None
-            ),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {"id": "unknown"}
+        (self.config
+            .runner.cib.load(
+                modifiers=[
+                    replace_optional_element(
+                        "./configuration",
+                        "alerts",
+                        """
+                            <alerts>
+                                <alert id="alert" path="path"/>
+                            </alerts>
+                        """
+                    )
+                ]
             )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_alert.update_alert(
+                self.env_assist.get_env(), "unknown", "test", {}, {}, None
+            ),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {
+                        "context_type": "alerts",
+                        "context_id": "",
+                        "id": "unknown",
+                        "id_description": "alert",
+                    },
+                    None
+                ),
+            ],
+            expected_in_processor=False
         )
 
 
 class RemoveAlertTest(TestCase):
     def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        cib = """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert1" path="path"/>
-                        <alert id="alert2" path="/path"/>
-                        <alert id="alert3" path="/path"/>
-                        <alert id="alert4" path="/path"/>
-                    </alerts>
-                </configuration>
-            </cib>
-        """
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data=cib
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(
+            modifiers=[
+                replace_optional_element(
+                    "./configuration",
+                    "alerts",
+                    """
+                        <alerts>
+                            <alert id="alert1" path="path"/>
+                            <alert id="alert2" path="/path"/>
+                            <alert id="alert3" path="/path"/>
+                            <alert id="alert4" path="/path"/>
+                        </alerts>
+                    """
+                )
+            ]
         )
 
     def test_one_alert(self):
-        cmd_alert.remove_alert(self.mock_env, ["alert2"])
-        assert_xml_equal(
-            """
-                <cib validate-with="pacemaker-2.5">
-                    <configuration>
-                        <alerts>
-                            <alert id="alert1" path="path"/>
-                            <alert id="alert3" path="/path"/>
-                            <alert id="alert4" path="/path"/>
-                        </alerts>
-                    </configuration>
-                </cib>
-            """,
-            self.mock_env._get_cib_xml()
+        self.config.runner.cib.push(
+            modifiers=[
+                remove_element("./configuration/alerts/alert[@id='alert2']")
+            ]
         )
-        self.assertEqual([], self.mock_rep.report_item_list)
+        cmd_alert.remove_alert(
+            self.env_assist.get_env(),
+            ["alert2"]
+        )
 
     def test_multiple_alerts(self):
-        cmd_alert.remove_alert(self.mock_env, ["alert1", "alert3", "alert4"])
-        assert_xml_equal(
-            """
-                <cib validate-with="pacemaker-2.5">
-                    <configuration>
-                        <alerts>
-                            <alert id="alert2" path="/path"/>
-                        </alerts>
-                    </configuration>
-                </cib>
-            """,
-            self.mock_env._get_cib_xml()
+        self.config.runner.cib.push(
+            modifiers=[
+                remove_element("./configuration/alerts/alert[@id='alert1']"),
+                remove_element("./configuration/alerts/alert[@id='alert3']"),
+                remove_element("./configuration/alerts/alert[@id='alert4']"),
+            ]
         )
-        self.assertEqual([], self.mock_rep.report_item_list)
+        cmd_alert.remove_alert(
+            self.env_assist.get_env(),
+            ["alert1", "alert3", "alert4"]
+        )
 
     def test_no_alert(self):
-        cmd_alert.remove_alert(self.mock_env, [])
-        assert_xml_equal(
-            """
-                <cib validate-with="pacemaker-2.5">
-                    <configuration>
-                        <alerts>
-                            <alert id="alert1" path="path"/>
-                            <alert id="alert2" path="/path"/>
-                            <alert id="alert3" path="/path"/>
-                            <alert id="alert4" path="/path"/>
-                        </alerts>
-                    </configuration>
-                </cib>
-            """,
-            self.mock_env._get_cib_xml()
+        self.config.runner.cib.push()
+        cmd_alert.remove_alert(
+            self.env_assist.get_env(),
+            []
         )
-        self.assertEqual([], self.mock_rep.report_item_list)
 
-    def test_failure(self):
-        report_list = [
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {"id": "unknown"}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {"id": "unknown2"}
-            )
-        ]
-        assert_raise_library_error(
+    def test_alerts_dont_exist(self):
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.remove_alert(
-                self.mock_env, ["unknown", "alert1", "unknown2", "alert2"]
+                self.env_assist.get_env(),
+                ["unknown1", "alert1", "unknown2", "alert2"]
             ),
-            *report_list
-        )
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list, report_list
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {
+                        "context_type": "alerts",
+                        "context_id": "",
+                        "id": "unknown1",
+                        "id_description": "alert",
+                    },
+                    None
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {
+                        "context_type": "alerts",
+                        "context_id": "",
+                        "id": "unknown2",
+                        "id_description": "alert",
+                    },
+                    None
+                ),
+            ],
+            expected_in_processor=True
         )
 
 

@@ -35,9 +35,10 @@ def check_no_stdin(stdin, command, order_num):
         )
 
 COMMAND_COMPLETIONS = {
-    "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
     "cibadmin": path.join(settings.pacemaker_binaries, "cibadmin"),
+    "crm_diff": path.join(settings.pacemaker_binaries, "crm_diff"),
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
+    "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
     "sbd": settings.sbd_binary,
     "corosync": path.join(settings.corosync_binaries, "corosync"),
     "corosync-cfgtool": path.join(

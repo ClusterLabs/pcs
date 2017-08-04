@@ -202,7 +202,7 @@ class CmdRunner(TestCase):
             }
         )
 
-    @patch_env("tempfile.NamedTemporaryFile")
+    @patch_env("write_tmpfile")
     def test_dump_cib_file(self, mock_tmpfile, mock_runner):
         expected_runner = mock.MagicMock()
         mock_runner.return_value = expected_runner
@@ -224,7 +224,7 @@ class CmdRunner(TestCase):
                 "CIB_file": rc("file.tmp"),
             }
         )
-        mock_instance.write.assert_called_once_with("<cib />")
+        mock_tmpfile.assert_called_once_with("<cib />")
 
 
 @patch_env_object("cmd_runner", lambda self: "runner")
@@ -935,7 +935,44 @@ class GetCorosyncConfLive(TestCase):
         )
 
 
-class CibBase(TestCase):
+@patch_env_object("push_cib_diff")
+@patch_env_object("push_cib_full")
+class CibPushProxy(TestCase):
+    def setUp(self):
+        self.env = LibraryEnvironment(
+            mock.MagicMock(logging.Logger),
+            MockLibraryReportProcessor()
+        )
+
+    def test_push_loaded(self, mock_push_full, mock_push_diff):
+        self.env.get_cib()
+        self.env.push_cib()
+        mock_push_full.assert_called_once_with(None, False)
+        mock_push_diff.assert_not_called()
+
+    def test_push_loaded_wait(self, mock_push_full, mock_push_diff):
+        self.env.get_cib()
+        self.env.push_cib(wait=10)
+        mock_push_full.assert_called_once_with(None, 10)
+        mock_push_diff.assert_not_called()
+
+    def test_push_custom(self, mock_push_full, mock_push_diff):
+        self.env.get_cib()
+        self.env.push_cib(custom_cib="<cib />")
+        mock_push_full.assert_called_once_with("<cib />", False)
+        mock_push_diff.assert_not_called()
+
+    def test_push_custom_wait(self, mock_push_full, mock_push_diff):
+        self.env.get_cib()
+        self.env.push_cib(custom_cib="<cib />", wait=10)
+        mock_push_full.assert_called_once_with("<cib />", 10)
+        mock_push_diff.assert_not_called()
+
+
+class CibBase(object):
+    def place_load_calls(self, name="load_cib"):
+        return NotImplementedError
+
     def assertion_error(self, callable_obj, message):
         try:
             callable_obj()
@@ -954,83 +991,78 @@ class CibBase(TestCase):
             "CIB has been loaded, cannot push custom CIB"
         )
 
-
-class CibLive(CibBase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-
-    def test_is_live(self):
+    def test_get_and_property(self):
+        self.place_load_calls()
         env = self.env_assist.get_env()
-        self.assertTrue(env.is_cib_live)
-
-    def test_get_and_push(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.push()
-        )
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.assertFalse(env.cib_upgraded)
-        env.push_cib()
-        self.assertFalse(env.cib_upgraded)
+        self.assertEqual(env.get_cib(), env.cib)
 
     def test_property_without_get(self):
         env = self.env_assist.get_env()
         # need to use lambda because env.cib is a property
         self.assert_not_loaded(lambda: env.cib)
 
-    def test_get_and_property(self):
-        self.config.runner.cib.load()
-        env = self.env_assist.get_env()
-        self.assertEqual(env.get_cib(), env.cib)
-
     def test_double_get(self):
-        self.config.runner.cib.load()
+        self.place_load_calls()
         env = self.env_assist.get_env()
         env.get_cib()
         self.assert_already_loaded(env.get_cib)
 
     def test_push_without_get(self):
         env = self.env_assist.get_env()
-        self.assert_not_loaded(env.push_cib)
+        self.assert_not_loaded(self.push_function(env))
 
     def test_can_get_after_push(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.push()
-            .runner.cib.load(name="load_cib_2")
-        )
+        self.place_load_calls()
+        self.place_push_calls()
+        self.place_load_calls(name="load_cib_2")
+
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib()
+        self.push_function(env)()
         # need to use lambda because env.cib is a property
         self.assert_not_loaded(lambda: env.cib)
         env.get_cib()
 
-    def test_push_custom_without_get(self):
-        custom_cib = "<custom_cib />"
-        self.config.runner.cib.push_independent(custom_cib)
-        env = self.env_assist.get_env()
-        env.push_cib(etree.XML(custom_cib))
 
-    def test_push_custom_after_get(self):
+class CibLive(CibBase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def push_function(self, env):
+        return NotImplementedError
+
+    def place_push_calls(self):
+        return NotImplementedError
+
+    def place_load_calls(self, name="load_cib"):
+        self.config.runner.cib.load(name=name)
+
+    def test_is_live(self):
+        env = self.env_assist.get_env()
+        self.assertTrue(env.is_cib_live)
+
+    def test_get_and_push(self):
         self.config.runner.cib.load()
+        self.place_push_calls()
+
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assert_cannot_push_custom(lambda: env.push_cib("custom cib"))
+        self.assertFalse(env.cib_upgraded)
+        self.push_function(env)()
+        self.assertFalse(env.cib_upgraded)
 
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
             .runner.cib.load(filename="cib-empty-2.6.xml", name="load_cib_old")
             .runner.cib.upgrade()
             .runner.cib.load(filename="cib-empty-2.8.xml")
-            .runner.cib.push()
         )
+        self.place_push_calls()
         env = self.env_assist.get_env()
 
         env.get_cib((2, 8, 0))
         self.assertTrue(env.cib_upgraded)
-        env.push_cib()
+        self.push_function(env)()
         self.assertFalse(env.cib_upgraded)
 
         self.env_assist.assert_reports([
@@ -1044,15 +1076,13 @@ class CibLive(CibBase):
         ])
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
-        (self.config
-            .runner.cib.load(filename="cib-empty-2.6.xml")
-            .runner.cib.push()
-        )
+        self.config.runner.cib.load(filename="cib-empty-2.6.xml")
+        self.place_push_calls()
         env = self.env_assist.get_env()
 
         env.get_cib((2, 5, 0))
         self.assertFalse(env.cib_upgraded)
-        env.push_cib()
+        self.push_function(env)()
         self.assertFalse(env.cib_upgraded)
 
     def test_push_wait(self):
@@ -1060,12 +1090,13 @@ class CibLive(CibBase):
         (self.config
             .runner.cib.load()
             .runner.pcmk.can_wait()
-            .runner.cib.push()
-            .runner.pcmk.wait(timeout=wait_timeout)
         )
+        self.place_push_calls()
+        self.config.runner.pcmk.wait(timeout=wait_timeout)
+
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib(wait=wait_timeout)
+        self.push_function(env)(wait=wait_timeout)
 
     def test_push_wait_invalid_timeout(self):
         (self.config
@@ -1075,7 +1106,7 @@ class CibLive(CibBase):
         env = self.env_assist.get_env()
         env.get_cib()
         assert_raise_library_error(
-            lambda: env.push_cib(wait="abc"),
+            lambda: self.push_function(env)(wait="abc"),
             (
                 severity.ERROR,
                 report_codes.INVALID_TIMEOUT_VALUE,
@@ -1094,7 +1125,7 @@ class CibLive(CibBase):
         env = self.env_assist.get_env()
         env.get_cib()
         assert_raise_library_error(
-            lambda: env.push_cib(wait="abc"),
+            lambda: self.push_function(env)(wait=10),
             (
                 severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED,
@@ -1105,6 +1136,150 @@ class CibLive(CibBase):
         )
 
 
+class CibLivePushFull(CibLive, TestCase):
+    def push_function(self, env):
+        return env.push_cib_full
+
+    def place_push_calls(self):
+        self.config.runner.cib.push()
+
+    def test_push_fails(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.push(stderr="invalid cib")
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_raise_library_error(
+            env.push_cib_full,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CIB_PUSH_ERROR,
+                    {
+                        "reason": "invalid cib",
+                    },
+                    None
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_push_custom_without_get(self):
+        custom_cib = "<custom_cib />"
+        self.config.runner.cib.push_independent(custom_cib)
+        env = self.env_assist.get_env()
+        env.push_cib_full(etree.XML(custom_cib))
+
+    def test_push_custom_after_get(self):
+        self.config.runner.cib.load()
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assert_cannot_push_custom(lambda: env.push_cib_full("custom cib"))
+
+
+class CibLivePushDiff(CibLive, TestCase):
+    def setUp(self):
+        tmpfile_patcher = mock.patch(
+            "pcs.lib.pacemaker.live.write_tmpfile"
+        )
+        self.addCleanup(tmpfile_patcher.stop)
+        self.mock_write_tmpfile = tmpfile_patcher.start()
+        self.tmpfile_old = self.mock_tmpfile("old.cib")
+        self.tmpfile_new = self.mock_tmpfile("new.cib")
+        self.mock_write_tmpfile.side_effect = [
+            self.tmpfile_old, self.tmpfile_new
+        ]
+
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def mock_tmpfile(self, filename):
+        mock_file = mock.MagicMock()
+        mock_file.name = rc(filename)
+        return mock_file
+
+    def push_function(self, env):
+        return env.push_cib_diff
+
+    def place_push_calls(self):
+        (self.config
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff()
+        )
+
+    def test_tmpfile_fails(self):
+        self.config.runner.cib.load()
+        self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_raise_library_error(
+            env.push_cib_diff,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CIB_SAVE_TMP_ERROR,
+                    {
+                        "reason": "test error",
+                    },
+                    None
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_diff_fails(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.diff(
+                self.tmpfile_old.name, self.tmpfile_new.name,
+                stderr="invalid cib", returncode=1
+             )
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_raise_library_error(
+            env.push_cib_diff,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CIB_DIFF_ERROR,
+                    {
+                        "reason": "invalid cib",
+                    },
+                    None
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_push_fails(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff(stderr="invalid cib", returncode=1)
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_raise_library_error(
+            env.push_cib_diff,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.CIB_PUSH_ERROR,
+                    {
+                        "reason": "invalid cib",
+                    },
+                    None
+                )
+            ],
+            expected_in_processor=False
+        )
+
+
 class CibFile(CibBase):
     def setUp(self):
         self.cib_data = open(rc("cib-empty-2.6.xml")).read()
@@ -1112,6 +1287,15 @@ class CibFile(CibBase):
             test_case=self,
             cib_data=self.cib_data
         )
+
+    def push_function(self, env):
+        return NotImplementedError
+
+    def place_load_calls(self, name="load_cib"):
+        pass # no calls when the CIB is not live
+
+    def place_push_calls(self):
+        pass # no calls when the CIB is not live
 
     def test_is_live(self):
         env = self.env_assist.get_env()
@@ -1124,52 +1308,12 @@ class CibFile(CibBase):
             etree_to_str(env.get_cib())
         )
         self.assertFalse(env.cib_upgraded)
-        env.push_cib()
+        self.push_function(env)()
         assert_xml_equal(
             self.cib_data,
             env._get_cib_xml()
         )
         self.assertFalse(env.cib_upgraded)
-
-    def test_property_without_get(self):
-        env = self.env_assist.get_env()
-        # need to use lambda because env.cib is a property
-        self.assert_not_loaded(lambda: env.cib)
-
-    def test_get_and_property(self):
-        env = self.env_assist.get_env()
-        self.assertEqual(env.get_cib(), env.cib)
-
-    def test_double_get(self):
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.assert_already_loaded(env.get_cib)
-
-    def test_push_without_get(self):
-        env = self.env_assist.get_env()
-        self.assert_not_loaded(env.push_cib)
-
-    def test_can_get_after_push(self):
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib()
-        # need to use lambda because env.cib is a property
-        self.assert_not_loaded(lambda: env.cib)
-        env.get_cib()
-
-    def test_push_custom_without_get(self):
-        custom_cib = "<custom_cib />"
-        env = self.env_assist.get_env()
-        env.push_cib(etree.XML(custom_cib))
-        assert_xml_equal(
-            custom_cib,
-            env._get_cib_xml()
-        )
-
-    def test_push_custom_after_get(self):
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.assert_cannot_push_custom(lambda: env.push_cib("custom cib"))
 
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
@@ -1180,7 +1324,7 @@ class CibFile(CibBase):
 
         env.get_cib((2, 8, 0))
         self.assertTrue(env.cib_upgraded)
-        env.push_cib()
+        self.push_function(env)()
         self.assertTrue(env.cib_upgraded)
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
@@ -1188,14 +1332,14 @@ class CibFile(CibBase):
 
         env.get_cib((2, 5, 0))
         self.assertFalse(env.cib_upgraded)
-        env.push_cib()
+        self.push_function(env)()
         self.assertFalse(env.cib_upgraded)
 
     def test_push_wait(self):
         env = self.env_assist.get_env()
         env.get_cib()
         assert_raise_library_error(
-            lambda: env.push_cib(wait=10),
+            lambda: self.push_function(env)(wait=10),
             (
                 severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
@@ -1203,3 +1347,27 @@ class CibFile(CibBase):
                 None
             )
         )
+
+
+class CibFilePushFull(CibFile, TestCase):
+    def push_function(self, env):
+        return env.push_cib_full
+
+    def test_push_custom_without_get(self):
+        custom_cib = "<custom_cib />"
+        env = self.env_assist.get_env()
+        env.push_cib_full(etree.XML(custom_cib))
+        assert_xml_equal(
+            custom_cib,
+            env._get_cib_xml()
+        )
+
+    def test_push_custom_after_get(self):
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.assert_cannot_push_custom(lambda: env.push_cib_full("custom cib"))
+
+
+class CibFilePushDiff(CibFile, TestCase):
+    def push_function(self, env):
+        return env.push_cib_diff
