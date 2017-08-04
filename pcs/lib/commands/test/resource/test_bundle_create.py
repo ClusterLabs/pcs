@@ -8,8 +8,12 @@ from functools import partial
 from textwrap import dedent
 
 from pcs.common import report_codes
+from pcs.lib import reports
 from pcs.lib.commands import resource
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity as severities,
+)
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
@@ -20,8 +24,7 @@ TIMEOUT=10
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.8.xml",
-    default_wait_timeout=TIMEOUT
+    base_cib_filename="cib-empty-2.8.xml"
 )
 
 
@@ -47,14 +50,14 @@ class MinimalCreate(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (self.config
             .runner.cib.load()
-            .runner.cib.push(resources=fixture_resources_bundle_simple)
+            .env.push_cib(resources=fixture_resources_bundle_simple)
         )
 
     def test_success(self):
         simple_bundle_create(self.env_assist.get_env(), wait=False)
 
     def test_errors(self):
-        self.config.remove("push_cib")
+        self.config.remove("env.push_cib")
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
                 self.env_assist.get_env(), "B#1", "nonsense"
@@ -107,20 +110,6 @@ class MinimalCreate(TestCase):
         ])
 
 
-class MinimalCreateWithPatchCibPushMethod(TestCase):
-    def test_success(self):
-        """
-        This is an example of different approach. There is not only mocked the
-        runner call but there is mocked whole "push_cib" method of env.
-        """
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load()
-            .env.push_cib(resources=fixture_resources_bundle_simple)
-        )
-        simple_bundle_create(env_assist.get_env(), wait=False)
-
-
 class CreateDocker(TestCase):
     allowed_options = [
         "image",
@@ -137,11 +126,11 @@ class CreateDocker(TestCase):
         self.config.runner.cib.load(resources=fixture_cib_pre)
 
     def test_minimal(self):
-        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
         simple_bundle_create(self.env_assist.get_env(), wait=False)
 
     def test_all_options(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -272,7 +261,7 @@ class CreateDocker(TestCase):
         )
 
     def test_unknow_option_forced(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -317,7 +306,7 @@ class CreateWithNetwork(TestCase):
 
 
     def test_no_options(self):
-        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
         resource.bundle_create(
             self.env_assist.get_env(), "B1", "docker",
             {"image": "pcs:test", },
@@ -325,7 +314,7 @@ class CreateWithNetwork(TestCase):
         )
 
     def test_all_options(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -397,7 +386,7 @@ class CreateWithNetwork(TestCase):
         )
 
     def test_options_forced(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -456,7 +445,7 @@ class CreateWithPortMap(TestCase):
         self.config.runner.cib.load(resources=fixture_cib_pre)
 
     def test_no_options(self):
-        self.config.runner.cib.push(resources=fixture_resources_bundle_simple)
+        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
         resource.bundle_create(
             self.env_assist.get_env(), "B1", "docker",
             {"image": "pcs:test", },
@@ -464,7 +453,7 @@ class CreateWithPortMap(TestCase):
         )
 
     def test_several_mappings_and_handle_their_ids(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -653,7 +642,7 @@ class CreateWithPortMap(TestCase):
         )
 
     def test_forceable_options_errors_forced(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -723,7 +712,7 @@ class CreateWithStorageMap(TestCase):
 
 
     def test_several_mappings_and_handle_their_ids(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -874,7 +863,7 @@ class CreateWithStorageMap(TestCase):
         )
 
     def test_forceable_options_errors_forced(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -929,7 +918,7 @@ class CreateWithMeta(TestCase):
         self.config.runner.cib.load(resources=fixture_cib_pre)
 
     def test_success(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -954,7 +943,7 @@ class CreateWithMeta(TestCase):
         )
 
     def test_disabled(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -979,7 +968,7 @@ class CreateWithAllOptions(TestCase):
         self.config.runner.cib.load(resources=fixture_cib_pre)
 
     def test_success(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
@@ -1152,15 +1141,14 @@ class Wait(TestCase):
                     Action 12: B1-node2-stop on node2
             Error performing operation: Timer expired
             """
-        )
-
-        (self.config
-            .runner.cib.push(resources=fixture_resources_bundle_simple)
-            .runner.pcmk.wait(
-                stderr=wait_error_message,
+        ).strip()
+        self.config.env.push_cib(
+            resources=fixture_resources_bundle_simple,
+            wait=TIMEOUT,
+            exception=LibraryError(
+                reports.wait_for_idle_timed_out(wait_error_message)
             )
         )
-
         self.env_assist.assert_raise_library_error(
             lambda: simple_bundle_create(self.env_assist.get_env()),
             [
@@ -1172,8 +1160,10 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
         (self.config
-            .runner.cib.push(resources=fixture_resources_bundle_simple)
-            .runner.pcmk.wait()
+            .env.push_cib(
+                resources=fixture_resources_bundle_simple,
+                wait=TIMEOUT
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         simple_bundle_create(self.env_assist.get_env())
@@ -1186,8 +1176,10 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
         (self.config
-            .runner.cib.push(resources=fixture_resources_bundle_simple)
-            .runner.pcmk.wait()
+            .env.push_cib(
+                resources=fixture_resources_bundle_simple,
+                wait=TIMEOUT
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         self.env_assist.assert_raise_library_error(
@@ -1200,10 +1192,10 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_ok(self):
         (self.config
-            .runner.cib.push(
-                resources=self.fixture_resources_bundle_simple_disabled
+            .env.push_cib(
+                resources=self.fixture_resources_bundle_simple_disabled,
+                wait=TIMEOUT
             )
-            .runner.pcmk.wait()
             .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         simple_bundle_create(self.env_assist.get_env(), disabled=True)
@@ -1221,10 +1213,10 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_fail(self):
         (self.config
-            .runner.cib.push(
-                resources=self.fixture_resources_bundle_simple_disabled
+            .env.push_cib(
+                resources=self.fixture_resources_bundle_simple_disabled,
+                wait=TIMEOUT
             )
-            .runner.pcmk.wait()
             .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         self.env_assist.assert_raise_library_error(

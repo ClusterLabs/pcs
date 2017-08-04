@@ -82,7 +82,7 @@ class CreateAlertTest(TestCase):
     def test_create_no_upgrade(self):
         (self.config
             .runner.cib.load()
-            .runner.cib.push(
+            .env.push_cib(
                 modifiers=[
                     replace_optional_element(
                         "./configuration",
@@ -112,7 +112,7 @@ class CreateAlertTest(TestCase):
             )
             .runner.cib.upgrade()
             .runner.cib.load()
-            .runner.cib.push(
+            .env.push_cib(
                 modifiers=[
                     replace_optional_element(
                         "./configuration",
@@ -208,7 +208,7 @@ class UpdateAlertTest(TestCase):
                     )
                 ]
             )
-            .runner.cib.push(
+            .env.push_cib(
                 modifiers=[
                     replace_element(
                         "./configuration/alerts",
@@ -240,7 +240,7 @@ class UpdateAlertTest(TestCase):
                     )
                 ]
             )
-            .runner.cib.push(
+            .env.push_cib(
                 modifiers=[
                     replace_element(
                         (
@@ -326,7 +326,7 @@ class RemoveAlertTest(TestCase):
         )
 
     def test_one_alert(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             modifiers=[
                 remove_element("./configuration/alerts/alert[@id='alert2']")
             ]
@@ -337,7 +337,7 @@ class RemoveAlertTest(TestCase):
         )
 
     def test_multiple_alerts(self):
-        self.config.runner.cib.push(
+        self.config.env.push_cib(
             modifiers=[
                 remove_element("./configuration/alerts/alert[@id='alert1']"),
                 remove_element("./configuration/alerts/alert[@id='alert3']"),
@@ -350,7 +350,7 @@ class RemoveAlertTest(TestCase):
         )
 
     def test_no_alert(self):
-        self.config.runner.cib.push()
+        self.config.env.push_cib()
         cmd_alert.remove_alert(
             self.env_assist.get_env(),
             []

@@ -190,8 +190,7 @@ class LibraryEnvironment(object):
         self._get_wait_timeout(wait)
 
     def push_cib(self, custom_cib=None, wait=False):
-        # TODO
-        if True or custom_cib is not None:
+        if custom_cib is not None:
             return self.push_cib_full(custom_cib, wait)
         return self.push_cib_diff(wait)
 

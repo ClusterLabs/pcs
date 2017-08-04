@@ -12,10 +12,11 @@ CALL_TYPE_PUSH_CIB = "CALL_TYPE_PUSH_CIB"
 class Call(object):
     type = CALL_TYPE_PUSH_CIB
 
-    def __init__(self, cib_xml, custom_cib=False, wait=False):
+    def __init__(self, cib_xml, custom_cib=False, wait=False, exception=None):
         self.cib_xml = cib_xml
         self.custom_cib = custom_cib
         self.wait = wait
+        self.exception = exception
 
     def __repr__(self):
         return str("<CibPush wait='{0}'>").format(self.wait)
@@ -56,6 +57,9 @@ def get_push_cib(call_queue):
                     " but expected was 'wait' == {2}"
                 ).format(i, wait, expected_call.wait)
             )
+
+        if expected_call.exception:
+            raise expected_call.exception
     return push_cib
 
 def is_push_cib_call_in(call_queue):

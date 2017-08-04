@@ -947,14 +947,14 @@ class CibPushProxy(TestCase):
     def test_push_loaded(self, mock_push_full, mock_push_diff):
         self.env.get_cib()
         self.env.push_cib()
-        mock_push_full.assert_called_once_with(None, False)
-        mock_push_diff.assert_not_called()
+        mock_push_full.assert_not_called()
+        mock_push_diff.assert_called_once_with(False)
 
     def test_push_loaded_wait(self, mock_push_full, mock_push_diff):
         self.env.get_cib()
         self.env.push_cib(wait=10)
-        mock_push_full.assert_called_once_with(None, 10)
-        mock_push_diff.assert_not_called()
+        mock_push_full.assert_not_called()
+        mock_push_diff.assert_called_once_with(10)
 
     def test_push_custom(self, mock_push_full, mock_push_diff):
         self.env.get_cib()
