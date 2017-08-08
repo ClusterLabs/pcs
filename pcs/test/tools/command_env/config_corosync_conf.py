@@ -13,8 +13,12 @@ class CorosyncConf(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
 
-    def load(self, node_name_list=None, name="corosync_conf.load"):
+    def load(
+        self, node_name_list=None, name="corosync_conf.load",
+        auto_tie_breaker=None
+    ):
         content = open(rc("corosync.conf")).read()
+        corosync_conf = None
         if node_name_list:
             corosync_conf = ConfigFacade.from_string(content).config
             for nodelist in corosync_conf.get_sections(name="nodelist"):
@@ -28,6 +32,19 @@ class CorosyncConf(object):
                 node_section.add_attribute("nodeid", i)
                 nodelist_section.add_section(node_section)
 
+
+        if auto_tie_breaker is not None:
+            corosync_conf = (
+                corosync_conf if corosync_conf
+                else ConfigFacade.from_string(content).config
+            )
+            for quorum in corosync_conf.get_sections(name="quorum"):
+                quorum.set_attribute(
+                    "auto_tie_breaker",
+                    "1" if auto_tie_breaker else  "0"
+                )
+
+        if corosync_conf:
             content = corosync_conf.export()
 
         self.__calls.place(name, Call(content))

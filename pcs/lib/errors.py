@@ -53,10 +53,11 @@ class ReportItem(object):
         self.info = info if info else dict()
 
     def __repr__(self):
-        return "{severity} {code}: {info}".format(
+        return "{severity} {code}: {info} forceable: {forceable}".format(
             severity=self.severity,
             code=self.code,
-            info=self.info
+            info=self.info,
+            forceable=self.forceable,
         )
 
 class ReportListAnalyzer(object):

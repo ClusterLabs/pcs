@@ -4,6 +4,13 @@ from __future__ import (
     print_function,
 )
 
+try:
+    # python 2
+    from urlparse import parse_qs
+except ImportError:
+    # python 3
+    from urllib.parse import parse_qs
+
 from pcs.lib.corosync.live import(
     get_local_corosync_conf as original_get_local_corosync_conf
 )
@@ -48,6 +55,7 @@ class NodeCommunicator(object):
         print_call(self, "add_requests")
         for request in request_list:
             print_line(request)
+            print_line(parse_qs(request.data))
         return self.__communicator.add_requests(request_list)
 
     def start_loop(self):

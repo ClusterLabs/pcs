@@ -184,4 +184,3 @@ class MockCurlMulti(object):
                 err_list.append((handle, errno, msg))
             self._proccessed_list.append(handle)
         return (0, ok_list, err_list)
-

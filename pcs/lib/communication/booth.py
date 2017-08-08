@@ -111,4 +111,3 @@ class BoothSaveFiles(
         if self._rewrite_existing:
             data.append(("rewrite_existing", "1"))
         return RequestData("remote/booth_save_files", data)
-
