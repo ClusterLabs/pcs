@@ -10,7 +10,7 @@ import re
 
 # from pcs import utils
 from pcs.common.tools import is_string
-from pcs.lib.external import CommandRunner
+from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import (
     mock,
@@ -96,6 +96,12 @@ def skip_unless_pacemaker_supports_systemd():
     return skipUnless(
         "systemd" in output,
         "Pacemaker does not support systemd resources"
+    )
+
+def skip_if_service_enabled(service_name):
+    return skipUnless(
+        not is_service_enabled(runner, service_name),
+        "Service {0} must be disabled".format(service_name),
     )
 
 def create_patcher(target_prefix_or_module):

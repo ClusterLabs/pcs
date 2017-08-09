@@ -16,6 +16,7 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_version,
+    skip_if_service_enabled,
     outdent,
 )
 from pcs.test.tools.pcs_runner import (
@@ -524,6 +525,7 @@ logging {
         )
         self.assertEqual(1, returnVal)
 
+    @skip_if_service_enabled("sbd")
     def test_cluster_setup_2_nodes_no_atb(self):
         # Setup a 2 node cluster and make sure the two node config is set, then
         # add a node and make sure that it's unset, then remove a node and make
