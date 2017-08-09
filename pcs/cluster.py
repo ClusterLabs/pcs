@@ -2268,33 +2268,76 @@ def cluster_destroy(argv):
             # we do not want to fail if qdevice was not set up
             pass
 
+def _cluster_verify_deal_with_filename(filename):
+    if not filename:
+        return utils.filename if utils.usefile else None
+
+    if not utils.usefile:
+        #We must operate on given cib everywhere.
+        utils.usefile = True
+        utils.filename = filename
+        return filename
+
+    if os.path.abspath(filename) != os.path.abspath(utils.filename):
+        raise error(
+            "Ambiguous cib filename specification: '{0}' vs  -f '{1}'"
+            .format(filename, utils.filename)
+        )
+
+    warn("File '{0}' specified twice".format(os.path.abspath(filename)))
+    return filename
+
 def cluster_verify(argv):
-    nofilename = True
-    if len(argv) == 1:
-        filename = argv.pop(0)
-        nofilename = False
-    elif len(argv) > 1:
+    if len(argv) > 1:
         usage.cluster("verify")
 
-    options = []
-    if "-V" in utils.pcs_options:
-        options.append("-V")
-    if nofilename:
-        options.append("--live-check")
+    crm_verify_command = [settings.crm_verify]
+
+    #filename can come in argv or with -f flag.
+    #Function_cluster_verify_deal_with_filename normalizes the environment.
+    filename = _cluster_verify_deal_with_filename(argv[0] if argv else None)
+
+    #`crm_verify --xml-file filename` (without -V) has more appropriate output
+    #than `CIB_file=filename crm_verify --live-check` (without -V) so we have to
+    #deal with filename by this specific way (unlike e.g. cibadmin).
+    if filename is None:
+        crm_verify_command.append("--live-check")
     else:
-        options.append("--xml-file")
-        options.append(filename)
-    output, retval = utils.run([settings.crm_verify] + options)
+        crm_verify_command.extend(["--xml-file", filename])
+
+    if "-V" in utils.pcs_options:
+        crm_verify_command.append("-V")
+
+    output, retval = utils.run(crm_verify_command)
     if output != "":
         print(output)
+    if retval > 0:
+        #crm_verify could fail (returncode 55) when cib is invalid for example
+        #due the id duplication. Or it could fail when cib is invalid for
+        #example due the invalid fencing topology (output is then something like
+        #"Warnings found during check: config may not be valid").
+        #
+        #Loading cib (via `cibadmin -l -Q`) with the id duplication fails. But
+        #it is possible to load cib with an invalid fencing topology.
+        #
+        #Loading cib is done deep in the call utils.get_library_wrapper() (it is
+        #done in utils.get_cib() in the fact) and it is overcomplicated to deal
+        #with this error here (it means `except SystemExit:` and remove the
+        #message "Error: unable to get cib" that is already sent to stderr).
+        #So here we detect the loading cib possibility and fail here if it is
+        #not possible to load cib.
+        #
+        #When it is possible to load cib we will give chance to the
+        #lib.fencing_topology.verify for more detailed explanation.
+        dummy_stdout, returncode = utils.run(["cibadmin", "--local", "--query"])
+        if returncode != 0:
+            raise SystemExit(1)
 
     lib = utils.get_library_wrapper()
     try:
         lib.fencing_topology.verify()
     except LibraryError as e:
         utils.process_library_reports(e.args)
-
-    return retval
 
 def cluster_report(argv):
     if len(argv) != 1:
