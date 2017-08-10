@@ -2263,12 +2263,8 @@ def set_default(def_type, argv):
         "Defaults do not apply to resources which override them with their "
         "own defined values"
     )
-    for arg in argv:
-        args = arg.split('=')
-        if (len(args) != 2):
-            print("Invalid Property: " + arg)
-            continue
-        utils.setAttribute(def_type, args[0], args[1], exit_on_error=True)
+    for name, value in prepare_options(argv).items():
+        utils.setAttribute(def_type, name, value, exit_on_error=True)
 
 def print_node(node, tab = 0):
     spaces = " " * tab
