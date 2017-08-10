@@ -16,6 +16,7 @@ from pcs.lib.node import (
     node_addresses_contain_host,
     node_addresses_contain_name,
 )
+from pcs.lib.xml_tools import remove_when_pointless
 
 
 #TODO pcs currently does not care about multiple meta_attributes and here
@@ -143,8 +144,7 @@ def unset_guest(resource_element):
     for nvpair in guest_nvpair_list:
         meta_attributes = nvpair.getparent()
         meta_attributes.remove(nvpair)
-        if not len(meta_attributes):
-            meta_attributes.getparent().remove(meta_attributes)
+        remove_when_pointless(meta_attributes)
 
 def get_node(meta_attributes):
     """

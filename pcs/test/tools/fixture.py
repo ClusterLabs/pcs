@@ -32,7 +32,7 @@ def replace_optional_element(element_place_xpath, element_name, new_content):
     def replace_optional(cib_tree):
         element_parent = _find_element(cib_tree, element_place_xpath)
         elements_to_replace = element_parent.findall(element_name)
-        if len(elements_to_replace) == 0:
+        if not elements_to_replace:
             new_element = etree.SubElement(element_parent, element_name)
             elements_to_replace.append(new_element)
         elif len(elements_to_replace) > 1:
@@ -88,7 +88,9 @@ def _replace_element_in_parent(element_to_replace, new_element):
             parent.insert(index, new_element)
             return
 
-def modify_cib(cib_xml, modifiers=None, resources=None):
+def modify_cib(
+    cib_xml, modifiers=None, resources=None, optional_in_conf=None, remove=None
+):
     """
     Apply modifiers to cib_xml and return the result cib_xml
 
@@ -100,6 +102,18 @@ def modify_cib(cib_xml, modifiers=None, resources=None):
     modifiers = modifiers if modifiers else []
     if resources:
         modifiers.append(replace_element(".//resources", resources))
+
+    if optional_in_conf:
+        modifiers.append(
+            replace_optional_element(
+                "./configuration",
+                etree.fromstring(optional_in_conf).tag,
+                optional_in_conf,
+            )
+        )
+
+    if remove:
+        modifiers.append(remove_element(remove))
 
     if not modifiers:
         return cib_xml
@@ -160,6 +174,9 @@ def warn(code, force_code=None, **kwargs):
 
 def error(code, force_code=None, **kwargs):
     return severities.ERROR, code, kwargs, force_code
+
+def warn(code, force_code=None, **kwargs):
+    return severities.WARNING, code, kwargs, force_code
 
 def info(code, **kwargs):
     return severities.INFO, code, kwargs, None

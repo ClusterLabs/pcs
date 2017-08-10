@@ -22,6 +22,7 @@ from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
     get_sub_element,
     update_attributes_remove_empty,
+    remove_when_pointless,
 )
 
 TAG = "bundle"
@@ -266,9 +267,8 @@ def update(
 
     # remove empty elements with no attributes
     # meta attributes are handled in their own function
-    for element in (network_element, storage_element):
-        if len(element) < 1 and not element.attrib:
-            element.getparent().remove(element)
+    remove_when_pointless(network_element, attribs_important=True)
+    remove_when_pointless(storage_element, attribs_important=True)
 
 def add_resource(bundle_element, primitive_element):
     """

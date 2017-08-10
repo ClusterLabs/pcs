@@ -8,7 +8,10 @@ from lxml import etree
 from functools import partial
 
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.xml_tools import get_sub_element
+from pcs.lib.xml_tools import(
+    get_sub_element,
+    remove_when_pointless,
+)
 
 def _append_new_nvpair(nvset_element, name, value, id_provider=None):
     """
@@ -46,7 +49,7 @@ def set_nvpair_in_nvset(nvset_element, name, value):
         else:
             nvset_element.remove(nvpair)
 
-def arrange_first_nvset(tag_name, context_element, nvpair_dict):
+def arrange_first_nvset(tag_name, context_element, nvpair_dict, new_id=None):
     """
     Put nvpairs to the first tag_name nvset in the context_element.
 
@@ -67,7 +70,7 @@ def arrange_first_nvset(tag_name, context_element, nvpair_dict):
     nvset_element = get_sub_element(
         context_element,
         tag_name,
-        create_subelement_id(context_element, tag_name),
+        new_id if new_id else create_subelement_id(context_element, tag_name),
         new_index=0
     )
 
@@ -110,9 +113,7 @@ def update_nvset(nvset_element, nvpair_dict):
     """
     for name, value in sorted(nvpair_dict.items()):
         set_nvpair_in_nvset(nvset_element, name, value)
-    # remove an empty nvset
-    if not list(nvset_element):
-        nvset_element.getparent().remove(nvset_element)
+    remove_when_pointless(nvset_element)
 
 def get_nvset(nvset):
     """

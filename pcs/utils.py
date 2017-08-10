@@ -1906,20 +1906,6 @@ def set_cib_property(prop, value, cib_dom=None):
     if update_cib:
         replace_cib_configuration(crm_config)
 
-def setAttribute(a_type, a_name, a_value, exit_on_error=False):
-    args = ["crm_attribute", "--type", a_type, "--attr-name", a_name,
-            "--attr-value", a_value]
-
-    if a_value == "":
-        args.append("-D")
-
-    output, retval = run(args)
-    if retval != 0:
-        if exit_on_error:
-            err(output)
-        else:
-            print(output)
-
 def getTerminalSize(fd=1):
     """
     Returns height and width of current terminal. First tries to get

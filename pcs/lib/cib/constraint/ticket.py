@@ -12,6 +12,7 @@ from pcs.lib import reports
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
+from pcs.lib.xml_tools import remove_when_pointless
 
 TAG_NAME = 'rsc_ticket'
 DESCRIPTION = "constraint id"
@@ -126,8 +127,7 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
         if not len(set_element):
             ticket_element = set_element.getparent()
             ticket_element.remove(set_element)
-            if not len(ticket_element):
-                ticket_element.getparent().remove(ticket_element)
+            remove_when_pointless(ticket_element)
 
     return len(ref_element_list) > 0
 

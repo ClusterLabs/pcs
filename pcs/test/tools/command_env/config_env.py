@@ -14,12 +14,15 @@ class EnvConfig(object):
 
     def push_cib(
         self, modifiers=None, resources=None, name="env.push_cib",
-        load_key="load_cib", wait=False, exception=None, instead=None
+        load_key="load_cib", wait=False, exception=None, instead=None,
+        optional_in_conf=None, remove=None
     ):
         cib_xml = modify_cib(
             self.__calls.get(load_key).stdout,
             modifiers,
-            resources,
+            resources=resources,
+            optional_in_conf=optional_in_conf,
+            remove=remove,
         )
         self.__calls.place(
             name,

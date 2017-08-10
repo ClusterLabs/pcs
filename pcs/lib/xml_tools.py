@@ -94,3 +94,8 @@ def etree_to_str(tree):
     #run(...) calls subprocess.Popen.communicate which calls encode...
     #so there is bytes to str conversion
     return etree.tostring(tree).decode()
+
+def remove_when_pointless(element, attribs_important=False):
+    is_element_useful = len(element) or (attribs_important and element.attrib)
+    if not is_element_useful:
+        element.getparent().remove(element)

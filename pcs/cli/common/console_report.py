@@ -442,6 +442,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.DEFAULTS_CAN_BE_OVERRIDEN:
+        "Defaults do not apply to resources which override them with their "
+        "own defined values"
+    ,
+
     codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED:
         "Sending updated corosync.conf to nodes..."
     ,

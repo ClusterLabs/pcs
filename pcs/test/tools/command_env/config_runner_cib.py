@@ -29,7 +29,9 @@ class CibShortcuts(object):
         name="load_cib",
         filename=None,
         before=None,
-        resources=None
+        resources=None,
+        optional_in_conf=None,
+        remove=None,
     ):
         """
         Create call for loading cib.
@@ -43,7 +45,13 @@ class CibShortcuts(object):
         string before -- key of call before which this new call is to be placed
         """
         filename = filename if filename else self.cib_filename
-        cib = modify_cib(open(rc(filename)).read(), modifiers, resources)
+        cib = modify_cib(
+            open(rc(filename)).read(),
+            modifiers,
+            resources=resources,
+            optional_in_conf=optional_in_conf,
+            remove=remove,
+        )
         self.__calls.place(
             name,
             RunnerCall("cibadmin --local --query", stdout=cib),
@@ -58,7 +66,9 @@ class CibShortcuts(object):
         resources=None,
         instead=None,
         stderr="",
-        returncode=0
+        returncode=0,
+        optional_in_conf=None,
+        remove=None,
     ):
         """
         Create call for pushing cib.
@@ -77,6 +87,8 @@ class CibShortcuts(object):
             self.__calls.get(load_key).stdout,
             modifiers,
             resources,
+            optional_in_conf=optional_in_conf,
+            remove=remove,
         )
         self.__calls.place(
             name,
