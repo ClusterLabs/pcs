@@ -2419,8 +2419,7 @@ def get_attrs(node, prepend_string = "", append_string = ""):
         output += attr + "=" + val + " "
     if output != "":
         return prepend_string + output.rstrip() + append_string
-    else:
-        return output.rstrip()
+    return output.rstrip()
 
 def resource_cleanup(argv):
     resource = None

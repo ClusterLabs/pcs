@@ -820,9 +820,9 @@ def addNodeToClusterConf(node):
 
     return True
 
-def removeNodeFromCorosync(node):
+def removeNodeFromCorosync(node_expression):
     removed_node = False
-    node0, node1 = parse_multiring_node(node)
+    node0, node1 = parse_multiring_node(node_expression)
 
     corosync_conf = getCorosyncConfParsed()
     for nodelist in corosync_conf.get_sections("nodelist"):
