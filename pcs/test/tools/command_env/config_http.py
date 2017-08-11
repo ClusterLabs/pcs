@@ -44,7 +44,7 @@ class HttpConfig(object):
 
     def add_communication(
         self, name, communication_list,
-        action="", param_list=None, port="2224", token=None,
+        action="", param_list=None, port=None, token=None,
         response_code=None, output="", debug_output="", was_connected=True,
         errno=0, error_msg_template=None
     ):

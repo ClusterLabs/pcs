@@ -1347,16 +1347,16 @@ end
 def auth(params, request, auth_user)
   token = PCSAuth.validUser(params['username'],params['password'], true)
   # If we authorized to this machine, attempt to authorize everywhere
-  node_list = []
+  nodes = {}
   if token and params["bidirectional"]
     params.each { |k,v|
       if k.start_with?("node-")
-        node_list.push(v)
+        nodes[v] = params["port-#{v}"]
       end
     }
-    if node_list.length > 0
+    if nodes.length > 0
       pcs_auth(
-        auth_user, node_list, params['username'], params['password'],
+        auth_user, nodes, params['username'], params['password'],
         params["force"] == "1"
       )
     end

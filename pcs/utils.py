@@ -232,11 +232,17 @@ def remove_uid_gid_file(uid,gid):
     return file_removed
 # Returns a dictionary {'nodeA':'tokenA'}
 def readTokens():
-    tokens = {}
+    return read_token_file()["tokens"]
+
+def read_token_file():
+    data = {
+        "tokens": {},
+        "ports": {},
+    }
     output, retval = run_pcsdcli("read_tokens")
     if retval == 0 and output['status'] == 'ok' and output['data']:
-        tokens = output['data']
-    return tokens
+        data = output['data']
+    return data
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
     def repeater(node, *args, **kwargs):
@@ -419,7 +425,13 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
-    url = "https://{host}:2224/{request}".format(host=host, request=request)
+    token_file = read_token_file()
+    port = token_file["ports"].get(host)
+    if port is None:
+        port = settings.pcsd_default_port
+    url = "https://{host}:{port}/{request}".format(
+        host=host, request=request, port=port
+    )
     if "--debug" in pcs_options:
         print("Sending HTTP Request to: " + url)
         print("Data: {0}".format(data))
@@ -440,7 +452,7 @@ def sendHTTPRequest(
 
     output = BytesIO()
     debug_output = BytesIO()
-    cookies = __get_cookie_list(host, readTokens())
+    cookies = __get_cookie_list(host, token_file["tokens"])
     if not timeout:
         timeout = settings.default_request_timeout
     if "--request-timeout" in pcs_options:
@@ -1085,7 +1097,7 @@ def run_pcsdcli(command, data=None):
 
 def auth_nodes_do(nodes, username, password, force, local):
     pcsd_data = {
-        'nodes': list(set(nodes)),
+        'nodes': nodes,
         'username': username,
         'password': password,
         'force': force,
@@ -1158,7 +1170,14 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
         print('Please authenticate yourself to the local pcsd')
         username = get_terminal_input('Username: ')
         password = get_terminal_password()
-        auth_nodes_do(["localhost"], username, password, True, True)
+        port = get_terminal_input(
+            'Port (default: {0}): '.format(settings.pcsd_default_port)
+            # default port is not completely correct, because default port from
+            # pcsd will be used
+        )
+        if not port:
+            port = None
+        auth_nodes_do({"localhost": port}, username, password, True, True)
         print()
         code, output = sendHTTPRequest(
             "localhost", "run_pcs", data_send, False, False
@@ -2788,7 +2807,7 @@ def get_lib_env():
         groups,
         cib_data,
         corosync_conf_data,
-        auth_tokens_getter=readTokens,
+        token_file_data_getter=read_token_file,
         request_timeout=pcs_options.get("--request-timeout"),
     )
 
@@ -2807,7 +2826,7 @@ def get_cli_env():
     env = Env()
     env.user = user
     env.groups = groups
-    env.auth_tokens_getter = readTokens
+    env.token_file_data_getter = read_token_file
     env.debug = "--debug" in pcs_options
     env.request_timeout = pcs_options.get("--request-timeout")
     return env

@@ -68,7 +68,7 @@ class LibraryEnvironment(object):
         corosync_conf_data=None,
         booth=None,
         pacemaker=None,
-        auth_tokens_getter=None,
+        token_file_data_getter=None,
         cluster_conf_data=None,
         request_timeout=None,
     ):
@@ -90,9 +90,8 @@ class LibraryEnvironment(object):
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
-        self._auth_tokens_getter = auth_tokens_getter
-
-        self._auth_tokens = None
+        self._token_file_data_getter = token_file_data_getter
+        self._token_file = None
         self._cib_upgraded = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
@@ -382,7 +381,8 @@ class LibraryEnvironment(object):
         return self.communicator_factory.get_communicator()
 
     def get_node_target_factory(self):
-        return NodeTargetFactory(self.__get_auth_tokens())
+        token_file = self.__get_token_file()
+        return NodeTargetFactory(token_file["tokens"], token_file["ports"])
 
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):
@@ -395,13 +395,16 @@ class LibraryEnvironment(object):
             self._request_timeout
         )
 
-    def __get_auth_tokens(self):
-        if self._auth_tokens is None:
-            if self._auth_tokens_getter:
-                self._auth_tokens = self._auth_tokens_getter()
+    def __get_token_file(self):
+        if self._token_file is None:
+            if self._token_file_data_getter:
+                self._token_file = self._token_file_data_getter()
             else:
-                self._auth_tokens = {}
-        return self._auth_tokens
+                self._token_file = {
+                    "tokens": {},
+                    "ports": {},
+                }
+        return self._token_file
 
     @property
     def booth(self):

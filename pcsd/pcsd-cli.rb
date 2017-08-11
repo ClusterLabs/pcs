@@ -66,7 +66,13 @@ allowed_commands = {
     # returns tokens of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,
     'permissions' => nil,
-    'call' => lambda { |params, auth_user_| read_tokens() },
+    'call' => lambda { |params, auth_user_|
+      token_cfg = read_token_file()
+      return {
+        :tokens => token_cfg.tokens,
+        :ports => token_cfg.ports,
+      }
+    },
   },
   'auth' => {
     'only_superuser' => false,

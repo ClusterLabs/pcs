@@ -181,15 +181,21 @@ class PCSConfig
   end
 end
 
+def hash_to_ordered_hash(hash)
+  new_hash = OrderedHash.new
+  hash.keys.sort.each { |key| new_hash[key] = hash[key] }
+  return new_hash
+end
 
 class PCSTokens
-  CURRENT_FORMAT = 2
-  attr_accessor :tokens, :format_version, :data_version
+  CURRENT_FORMAT = 3
+  attr_accessor :tokens, :format_version, :data_version, :ports
 
   def initialize(cfg_text)
     @format_version = 0
     @data_version = 0
     @tokens = {}
+    @ports = {}
 
     # set a reasonable parseable default if got empty text
     if cfg_text.nil? or cfg_text.strip.empty?
@@ -212,6 +218,9 @@ class PCSTokens
         )
       end
 
+      if @format_version >= 3
+        @ports = json['ports'] || {}
+      end
       if @format_version >= 2
         @data_version = json['data_version'] || 0
         @tokens = json['tokens'] || {}
@@ -226,13 +235,11 @@ class PCSTokens
   end
 
   def text()
-    tokens_hash = OrderedHash.new
-    @tokens.keys.sort.each { |key| tokens_hash[key] = @tokens[key] }
-
     out_hash = OrderedHash.new
     out_hash['format_version'] = CURRENT_FORMAT
     out_hash['data_version'] = @data_version
-    out_hash['tokens'] = tokens_hash
+    out_hash['tokens'] = hash_to_ordered_hash(@tokens)
+    out_hash['ports'] = hash_to_ordered_hash(@ports)
 
     return JSON.pretty_generate(out_hash)
   end

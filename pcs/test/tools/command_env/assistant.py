@@ -130,10 +130,11 @@ class EnvAssistant(object):
             MockLibraryReportProcessor(),
             cib_data=self.__cib_data,
             corosync_conf_data=self.__corosync_conf_data,
-            auth_tokens_getter=(
-                (lambda: self.__config.spy.auth_tokens)
-                    if self.__config.spy
-                    else None
+            token_file_data_getter=(
+                (lambda: {
+                    "tokens": self.__config.spy.auth_tokens,
+                    "ports": self.__config.spy.ports or {},
+                }) if self.__config.spy else None
             )
         )
         self.__unpatch = patch_env(self.__call_queue, self.__config, self._env)

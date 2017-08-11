@@ -1,6 +1,7 @@
 PCS_EXEC = '/usr/sbin/pcs'
 PCSD_EXEC_LOCATION = '/usr/lib/pcsd/'
 PCSD_VAR_LOCATION = '/var/lib/pcsd/'
+PCSD_DEFAULT_PORT = 2224
 
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'

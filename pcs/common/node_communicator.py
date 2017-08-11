@@ -28,31 +28,43 @@ from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 
 
+def _find_value_for_possible_keys(value_dict, possible_key_list):
+    for key in possible_key_list:
+        if key in value_dict:
+            return value_dict[key]
+    return None
+
+
 class NodeTargetFactory(object):
-    def __init__(self, auth_tokens):
+    def __init__(self, auth_tokens, ports):
         self._auth_tokens = auth_tokens
+        self._ports = ports
 
     def _get_token(self, possible_names):
-        token = None
-        for name in possible_names:
-            token = self._auth_tokens.get(name, None)
-            if token is not None:
-                break
-        return token
+        return _find_value_for_possible_keys(self._auth_tokens, possible_names)
+
+    def _get_port(self, possible_names):
+        return _find_value_for_possible_keys(self._ports, possible_names)
 
     def get_target(self, node_addresses):
         possible_names = [node_addresses.label, node_addresses.ring0]
         if node_addresses.ring1:
             possible_names.append(node_addresses.ring1)
         return RequestTarget.from_node_addresses(
-            node_addresses, port="2224", token=self._get_token(possible_names)
+            node_addresses,
+            token=self._get_token(possible_names),
+            port=self._get_port(possible_names),
         )
 
     def get_target_list(self, node_addresses_list):
         return [self.get_target(node) for node in node_addresses_list]
 
     def get_target_from_hostname(self, hostname):
-        return RequestTarget(hostname, token=self._get_token([hostname]))
+        return RequestTarget(
+            hostname,
+            token=self._get_token([hostname]),
+            port=self._get_port([hostname]),
+        )
 
 
 class RequestData(

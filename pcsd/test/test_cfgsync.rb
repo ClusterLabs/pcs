@@ -229,41 +229,49 @@ class TestPcsdTokens < Test::Unit::TestCase
     assert_equal('tokens', Cfgsync::PcsdTokens.name)
     text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 3,
   "tokens": {
     "rh7-1": "token-rh7-1",
     "rh7-2": "token-rh7-2"
+  },
+  "ports": {
+    "rh7-1": "1234",
+    "rh7-2": null
   }
 }'
 
     cfg = Cfgsync::PcsdTokens.from_text(text)
     assert_equal(text, cfg.text)
     assert_equal(3, cfg.version)
-    assert_equal('c362c4354ceb0b0425c71ed955d43f89c3d4304a', cfg.hash)
+    assert_equal('aedd225c15fb8cc41c1a34a5dd42b9f403ebc0de', cfg.hash)
 
     cfg.version = 4
     assert_equal(4, cfg.version)
-    assert_equal('9586d6ce66f6fc649618f7f55005d8ddfe54db9b', cfg.hash)
+    assert_equal('365d26bdf61966f8372ec23cdefd2a7cb235de02', cfg.hash)
 
     cfg.text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 4,
   "tokens": {
     "rh7-1": "token-rh7-1",
     "rh7-2": "token-rh7-2"
+  },
+  "ports": {
+    "rh7-1": "1234",
+    "rh7-2": null
   }
 }'
     assert_equal(4, cfg.version)
-    assert_equal('9586d6ce66f6fc649618f7f55005d8ddfe54db9b', cfg.hash)
+    assert_equal('365d26bdf61966f8372ec23cdefd2a7cb235de02', cfg.hash)
   end
 
   def test_file()
     FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
     cfg = Cfgsync::PcsdTokens.from_file()
     assert_equal(9, cfg.version)
-    assert_equal('571afb6abc603f527462818e7dfe278a8a1f64a7', cfg.hash)
+    assert_equal('1ddfeb1a7ada600356945344bd3c137c09cf5845', cfg.hash)
   end
 
   def test_file_missing()
@@ -698,34 +706,49 @@ class TestMergeTokens < Test::Unit::TestCase
 
   def test_nothing_to_merge()
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {})
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {}, {})
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {'rh7-4' => 'token4'})
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, nil, {'rh7-4' => 'token4'}, {'rh7-4' => '4321'}
+    )
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 9,
   "tokens": {
     "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4"
+  },
+  "ports": {
+    "rh7-1": null,
+    "rh7-2": "2224",
+    "rh7-3": "1234",
+    "rh7-4": "4321"
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {'rh7-3' => 'token3'})
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, nil, {'rh7-3' => 'token3'}, {}
+    )
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 9,
   "tokens": {
     "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "token3"
+  },
+  "ports": {
+    "rh7-1": null,
+    "rh7-2": "2224",
+    "rh7-3": "1234"
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
@@ -735,45 +758,64 @@ class TestMergeTokens < Test::Unit::TestCase
     to_merge = [
       Cfgsync::PcsdTokens.from_text(
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 1,
   "tokens": {
     "rh7-1": "token1",
     "rh7-4": "token4a"
+  },
+  "ports": {
+    "rh7-1": null,
+    "rh7-4": "2224"
   }
 }'
       )
     ]
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {})
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {}, {})
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'})
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, to_merge, {'rh7-4' => 'token4'}, {'rh7-4' => '4321'}
+    )
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 9,
   "tokens": {
     "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4"
+  },
+  "ports": {
+    "rh7-1": null,
+    "rh7-2": "2224",
+    "rh7-3": "1234",
+    "rh7-4": "4321"
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'})
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, to_merge, {'rh7-3' => 'token3'}, {}
+    )
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 9,
   "tokens": {
     "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "token3"
+  },
+  "ports": {
+    "rh7-1": null,
+    "rh7-2": "2224",
+    "rh7-3": "1234"
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
@@ -783,57 +825,79 @@ class TestMergeTokens < Test::Unit::TestCase
     to_merge = [
       Cfgsync::PcsdTokens.from_text(
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 11,
   "tokens": {
     "rh7-1": "token1",
     "rh7-4": "token4a"
+  },
+  "ports": {
+    "rh7-1": "4321",
+    "rh7-4": null
   }
 }'
       )
     ]
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {})
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {}, {})
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 11,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4a"
+  },
+  "ports": {
+    "rh7-1": "4321",
+    "rh7-2": "2224",
+    "rh7-3": "1234",
+    "rh7-4": null
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'})
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'}, {'rh7-4' => '12345'})
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 11,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4"
+  },
+  "ports": {
+    "rh7-1": "4321",
+    "rh7-2": "2224",
+    "rh7-3": "1234",
+    "rh7-4": "12345"
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'})
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'}, {})
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 11,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
     "rh7-3": "token3",
     "rh7-4": "token4a"
+  },
+  "ports": {
+    "rh7-1": "4321",
+    "rh7-2": "2224",
+    "rh7-3": "1234",
+    "rh7-4": null
   }
 }'
     assert_equal(new_cfg_text, new_cfg.text.strip)
@@ -842,88 +906,116 @@ class TestMergeTokens < Test::Unit::TestCase
   def test_more_to_merge()
     to_merge_12 = Cfgsync::PcsdTokens.from_text(
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 12,
   "tokens": {
     "rh7-2": "token2",
     "rh7-4": "token4b"
+  },
+  "ports": {
+    "rh7-2": "port2",
+    "rh7-4": "port4b"
   }
 }'
     )
     to_merge_11 = Cfgsync::PcsdTokens.from_text(
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 11,
   "tokens": {
     "rh7-1": "token1",
     "rh7-4": "token4a"
+  },
+  "ports": {
+    "rh7-1": "port1",
+    "rh7-4": "port4a"
   }
 }'
     )
 
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 12,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "token2",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4b"
+  },
+  "ports": {
+    "rh7-1": "port1",
+    "rh7-2": "port2",
+    "rh7-3": "1234",
+    "rh7-4": "port4b"
   }
 }'
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {}
+      old_cfg, [to_merge_11, to_merge_12], {}, {}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {}
+      old_cfg, [to_merge_12, to_merge_11], {}, {}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 12,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "token2",
     "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
     "rh7-4": "token4"
+  },
+  "ports": {
+    "rh7-1": "port1",
+    "rh7-2": "port2",
+    "rh7-3": "1234",
+    "rh7-4": "port4"
   }
 }'
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {'rh7-4' => 'token4'}
+      old_cfg, [to_merge_11, to_merge_12], {'rh7-4' => 'token4'},
+      {'rh7-4' => 'port4'}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {'rh7-4' => 'token4'}
+      old_cfg, [to_merge_12, to_merge_11], {'rh7-4' => 'token4'},
+      {'rh7-4' => 'port4'}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
 
     new_cfg_text =
 '{
-  "format_version": 2,
+  "format_version": 3,
   "data_version": 12,
   "tokens": {
     "rh7-1": "token1",
     "rh7-2": "token2",
     "rh7-3": "token3",
     "rh7-4": "token4b"
+  },
+  "ports": {
+    "rh7-1": "port1",
+    "rh7-2": "port2",
+    "rh7-3": "1234",
+    "rh7-4": "port4b"
   }
 }'
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {'rh7-3' => 'token3'}
+      old_cfg, [to_merge_11, to_merge_12], {'rh7-3' => 'token3'}, {}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {'rh7-3' => 'token3'}
+      old_cfg, [to_merge_12, to_merge_11], {'rh7-3' => 'token3'}, {}
     )
     assert_equal(new_cfg_text, new_cfg.text.strip)
   end

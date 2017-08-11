@@ -560,7 +560,8 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    auth [node] [...] [-u username] [-p password] [--force] [--local]
+    auth [<node>[:<port>]] [...] [-u <username>] [-p <password>] [--force]
+            [--local]
         Authenticate pcs to pcsd on nodes specified, or on all nodes
         configured in the local cluster if no nodes are specified (authorization
         tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).

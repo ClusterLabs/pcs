@@ -401,18 +401,24 @@ def send_nodes_request_with_token(auth_user, nodes, request, post=false, data={}
   return code, out
 end
 
-def send_request_with_token(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=nil, additional_tokens={})
-  token = additional_tokens[node] || get_node_token(node)
+def send_request_with_token(
+  auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
+  timeout=nil, additional_tokens={}, additional_ports={}
+)
+  token_file_data = read_token_file()
+  token = additional_tokens[node] || token_file_data.tokens[node]
   $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
     $logger.error "Unable to connect to node #{node}, no token available"
     return 400,'{"notoken":true}'
   end
+  port = additional_ports[node] || token_file_data.ports[node]
   cookies_data = {
     'token' => token,
   }
   return send_request(
-    auth_user, node, request, post, data, remote, raw_data, timeout, cookies_data
+    auth_user, node, request, post, data, remote, raw_data, timeout,
+    cookies_data, port
   )
 end
 
@@ -455,7 +461,7 @@ end
 
 def send_request(
   auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
-  timeout=nil, cookies_data=nil
+  timeout=nil, cookies_data=nil, port=nil
 )
   cookies_data = {} if not cookies_data
   if request.start_with?("/")
@@ -467,10 +473,12 @@ def send_request(
     node6 = "[#{node}]"
   end
 
+  port ||= PCSD_DEFAULT_PORT
+
   if remote
-    url = "https://#{node6}:2224/remote/#{request}"
+    url = "https://#{node6}:#{port}/remote/#{request}"
   else
-    url = "https://#{node6}:2224/#{request}"
+    url = "https://#{node6}:#{port}/#{request}"
   end
 
   data = _transform_data(data)
@@ -1103,13 +1111,21 @@ def is_cib_true(var)
   return ['true', 'on', 'yes', 'y', '1'].include?(var.downcase)
 end
 
+def read_token_file()
+  return PCSTokens.new(Cfgsync::PcsdTokens.from_file().text())
+end
+
 def read_tokens()
-  return PCSTokens.new(Cfgsync::PcsdTokens.from_file().text()).tokens
+  return read_token_file().tokens
+end
+
+def get_nodes_ports()
+  return read_token_file().ports
 end
 
 def write_tokens(tokens)
   begin
-    cfg = PCSTokens.new(Cfgsync::PcsdTokens.from_file().text())
+    cfg = read_token_file()
     cfg.tokens = tokens
     Cfgsync::PcsdTokens.from_text(cfg.text()).save()
   rescue
@@ -1196,6 +1212,7 @@ def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=1
 end
 
 def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
+  # nodes is hash, (nodename -> port)
   # if no sync is needed, do not report a sync error
   sync_successful = true
   sync_failed_nodes = []
@@ -1203,7 +1220,7 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   # check for already authorized nodes
   if not force
     online, offline, not_authenticated = check_gui_status_of_nodes(
-      auth_user, nodes, true
+      auth_user, nodes.keys, true
     )
     if not_authenticated.length < 1
       result = {}
@@ -1220,8 +1237,12 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
 
   # get the tokens and sync them within the local cluster
   new_tokens = {}
+  ports = {}
   auth_responses.each { |node, response|
-    new_tokens[node] = response['token'] if 'ok' == response['status']
+    if 'ok' == response['status']
+      new_tokens[node] = response['token']
+      ports[node] = nodes[node]
+    end
   }
   if not new_tokens.empty?
     cluster_nodes = get_corosync_nodes()
@@ -1231,12 +1252,12 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
     if Process.uid != 0
       # other tokens just need to be stored localy for the user
       sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-        tokens_cfg, new_tokens, [], nil
+        tokens_cfg, new_tokens, [], nil, ports
       )
       return auth_responses, sync_successful, sync_failed_nodes, sync_responses
     end
     sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-      tokens_cfg, new_tokens, cluster_nodes, $cluster_name
+      tokens_cfg, new_tokens, cluster_nodes, $cluster_name, ports
     )
     sync_failed_nodes = []
     sync_not_supported_nodes = []
@@ -1257,10 +1278,10 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
     if not local
       # authorize nodes outside of the local cluster and nodes not supporting
       # the tokens file synchronization in the other direction
-      nodes_to_auth = []
-      nodes.each { |node|
-        nodes_to_auth << node if sync_not_supported_nodes.include?(node)
-        nodes_to_auth << node if not cluster_nodes.include?(node)
+      nodes_to_auth = {}
+      nodes.each { |node, port|
+        nodes_to_auth[node] = port if sync_not_supported_nodes.include?(node)
+        nodes_to_auth[node] = port if not cluster_nodes.include?(node)
       }
       auth_responses2 = run_auth_requests(
         auth_user, nodes_to_auth, nodes, username, password, force, false
@@ -1274,8 +1295,11 @@ end
 
 def run_auth_requests(auth_user, nodes_to_send, nodes_to_auth, username, password, force=false, local=true)
   data = {}
-  nodes_to_auth.each_with_index { |node, index|
+  index = 0
+  nodes_to_auth.each { |node, port|
     data["node-#{index}"] = node
+    data["port-#{node}"] = port if port
+    index += 1
   }
   data['username'] = username
   data['password'] = password
@@ -1284,9 +1308,11 @@ def run_auth_requests(auth_user, nodes_to_send, nodes_to_auth, username, passwor
 
   auth_responses = {}
   threads = []
-  nodes_to_send.each { |node|
+  nodes_to_send.each { |node, port|
     threads << Thread.new {
-      code, response = send_request(auth_user, node, 'auth', true, data)
+      code, response = send_request(
+        auth_user, node, 'auth', true, data, true, nil, nil, nil, port
+      )
       if 200 == code
         token = response.strip
         if '' == token
