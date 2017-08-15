@@ -34,14 +34,12 @@ def patch_env(call_queue, config, init_env):
     #by accident. Such test would fails on different machine (with another live
     #environment)
 
-    original_runner = init_env.cmd_runner()
-    original_node_communicator = init_env.get_node_communicator()
     patcher_list = [
         patch_lib_env(
             "cmd_runner",
             lambda env:
                 Runner(call_queue) if not config.spy
-                else spy.Runner(original_runner)
+                else spy.Runner(init_env.cmd_runner())
         ),
 
         mock.patch(
@@ -54,7 +52,7 @@ def patch_env(call_queue, config, init_env):
             "get_node_communicator",
             lambda env:
                 NodeCommunicator(call_queue) if not config.spy
-                else spy.NodeCommunicator(original_node_communicator)
+                else spy.NodeCommunicator(init_env.get_node_communicator())
         )
     ]
 

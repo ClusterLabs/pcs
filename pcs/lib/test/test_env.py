@@ -970,8 +970,11 @@ class CibPushProxy(TestCase):
 
 
 class CibBase(object):
-    def place_load_calls(self, name="load_cib"):
+    def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
         return NotImplementedError
+
+    def push_reports(self, strip_old=False):
+        return []
 
     def assertion_error(self, callable_obj, message):
         try:
@@ -1023,10 +1026,13 @@ class CibBase(object):
         self.assert_not_loaded(lambda: env.cib)
         env.get_cib()
 
+        self.env_assist.assert_reports(self.push_reports())
+
 
 class CibLive(CibBase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
+        self.loaded_cib = ""
 
     def push_function(self, env):
         return NotImplementedError
@@ -1034,15 +1040,16 @@ class CibLive(CibBase):
     def place_push_calls(self):
         return NotImplementedError
 
-    def place_load_calls(self, name="load_cib"):
-        self.config.runner.cib.load(name=name)
+    def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
+        self.config.runner.cib.load(filename=filename, name=name)
+        self.loaded_cib = self.config.calls.get(name).stdout
 
     def test_is_live(self):
         env = self.env_assist.get_env()
         self.assertTrue(env.is_cib_live)
 
     def test_get_and_push(self):
-        self.config.runner.cib.load()
+        self.place_load_calls()
         self.place_push_calls()
 
         env = self.env_assist.get_env()
@@ -1050,13 +1057,12 @@ class CibLive(CibBase):
         self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
         self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_get_and_push_cib_version_upgrade_needed(self):
-        (self.config
-            .runner.cib.load(filename="cib-empty-2.6.xml", name="load_cib_old")
-            .runner.cib.upgrade()
-            .runner.cib.load(filename="cib-empty-2.8.xml")
-        )
+        self.place_load_calls(filename="cib-empty-2.6.xml", name="load_cib_old")
+        self.config.runner.cib.upgrade()
+        self.place_load_calls(filename="cib-empty-2.8.xml")
         self.place_push_calls()
         env = self.env_assist.get_env()
 
@@ -1073,10 +1079,10 @@ class CibLive(CibBase):
                 },
                 None
             ),
-        ])
+        ] + self.push_reports(strip_old=True))
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
-        self.config.runner.cib.load(filename="cib-empty-2.6.xml")
+        self.place_load_calls(filename="cib-empty-2.6.xml")
         self.place_push_calls()
         env = self.env_assist.get_env()
 
@@ -1084,19 +1090,20 @@ class CibLive(CibBase):
         self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
         self.assertFalse(env.cib_upgraded)
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_push_wait(self):
         wait_timeout = 10
-        (self.config
-            .runner.cib.load()
-            .runner.pcmk.can_wait()
-        )
+        self.place_load_calls()
+        self.config.runner.pcmk.can_wait()
         self.place_push_calls()
         self.config.runner.pcmk.wait(timeout=wait_timeout)
 
         env = self.env_assist.get_env()
         env.get_cib()
         self.push_function(env)(wait=wait_timeout)
+
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_push_wait_invalid_timeout(self):
         (self.config
@@ -1208,8 +1215,35 @@ class CibLivePushDiff(CibLive, TestCase):
             .runner.cib.push_diff()
         )
 
+    def push_reports(self, strip_old=False):
+        # No test changes the CIB between load and push. The point is to test
+        # loading and pushing, not editing the CIB.
+        return [
+            (
+                severity.DEBUG,
+                report_codes.TMP_FILE_WRITE,
+                {
+                    "file_path": self.tmpfile_old.name,
+                    "content": (
+                        self.loaded_cib.strip() if strip_old
+                        else self.loaded_cib
+                    ),
+                },
+                None
+            ),
+            (
+                severity.DEBUG,
+                report_codes.TMP_FILE_WRITE,
+                {
+                    "file_path": self.tmpfile_new.name,
+                    "content": self.loaded_cib.strip(),
+                },
+                None
+            ),
+        ]
+
     def test_tmpfile_fails(self):
-        self.config.runner.cib.load()
+        self.place_load_calls()
         self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
         env = self.env_assist.get_env()
         env.get_cib()
@@ -1230,12 +1264,12 @@ class CibLivePushDiff(CibLive, TestCase):
         )
 
     def test_diff_fails(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.diff(
-                self.tmpfile_old.name, self.tmpfile_new.name,
-                stderr="invalid cib", returncode=1
-             )
+        self.place_load_calls()
+        self.config.runner.cib.diff(
+            self.tmpfile_old.name,
+            self.tmpfile_new.name,
+            stderr="invalid cib",
+            returncode=1
         )
         env = self.env_assist.get_env()
         env.get_cib()
@@ -1254,10 +1288,11 @@ class CibLivePushDiff(CibLive, TestCase):
             ],
             expected_in_processor=False
         )
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_push_fails(self):
+        self.place_load_calls()
         (self.config
-            .runner.cib.load()
             .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
             .runner.cib.push_diff(stderr="invalid cib", returncode=1)
         )
@@ -1278,6 +1313,7 @@ class CibLivePushDiff(CibLive, TestCase):
             ],
             expected_in_processor=False
         )
+        self.env_assist.assert_reports(self.push_reports())
 
 
 class CibFile(CibBase):
@@ -1291,7 +1327,7 @@ class CibFile(CibBase):
     def push_function(self, env):
         return NotImplementedError
 
-    def place_load_calls(self, name="load_cib"):
+    def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
         pass # no calls when the CIB is not live
 
     def place_push_calls(self):

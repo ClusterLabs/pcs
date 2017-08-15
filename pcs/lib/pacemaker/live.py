@@ -97,7 +97,7 @@ def push_cib_diff_xml(runner, cib_diff_xml):
     if retval != 0:
         raise LibraryError(reports.cib_push_error(stderr, stdout))
 
-def diff_cibs_xml(runner, cib_old_xml, cib_new_xml):
+def diff_cibs_xml(runner, reporter, cib_old_xml, cib_new_xml):
     """
     Return xml diff of two CIBs
     CommandRunner runner
@@ -106,7 +106,13 @@ def diff_cibs_xml(runner, cib_old_xml, cib_new_xml):
     """
     try:
         cib_old_tmp_file = write_tmpfile(cib_old_xml)
+        reporter.process(
+            reports.tmp_file_write(cib_old_tmp_file.name, cib_old_xml)
+        )
         cib_new_tmp_file = write_tmpfile(cib_new_xml)
+        reporter.process(
+            reports.tmp_file_write(cib_new_tmp_file.name, cib_new_xml)
+        )
     except EnvironmentError as e:
         raise LibraryError(reports.cib_save_tmp_error(str(e)))
     command = [

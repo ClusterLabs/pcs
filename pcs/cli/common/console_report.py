@@ -1297,4 +1297,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             " 'pcs cluster node remove-guest'"
         )
     ,
+
+    codes.TMP_FILE_WRITE: lambda info:
+        (
+            "Writing to a temporary file {file_path}:\n"
+            "--Debug Content Start--\n{content}\n--Debug Content End--\n"
+        ).format(**info)
+    ,
 }

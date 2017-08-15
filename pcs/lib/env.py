@@ -222,6 +222,7 @@ class LibraryEnvironment(object):
                 cmd_runner,
                 diff_cibs_xml(
                     cmd_runner,
+                    self.report_processor,
                     self.__loaded_cib_diff_source,
                     etree_to_str(self.__loaded_cib_to_modify)
                 )
@@ -358,7 +359,14 @@ class LibraryEnvironment(object):
             # don't need to take care of it every time the runner is called.
             if not self._cib_data_tmp_file:
                 try:
-                    self._cib_data_tmp_file = write_tmpfile(self._get_cib_xml())
+                    cib_data = self._get_cib_xml()
+                    self._cib_data_tmp_file = write_tmpfile(cib_data)
+                    self.report_processor.process(
+                        reports.tmp_file_write(
+                            self._cib_data_tmp_file.name,
+                            cib_data
+                        )
+                    )
                 except EnvironmentError as e:
                     raise LibraryError(reports.cib_save_tmp_error(str(e)))
             runner_env["CIB_file"] = self._cib_data_tmp_file.name

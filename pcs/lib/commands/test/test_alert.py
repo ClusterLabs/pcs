@@ -13,7 +13,6 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
-    assert_report_item_list_equal,
     assert_xml_equal,
 )
 from pcs.test.tools.command_env import get_env_tools
@@ -669,120 +668,92 @@ class UpdateRecipientTest(TestCase):
 
 
 class RemoveRecipientTest(TestCase):
+    fixture_initial_alerts = """
+        <alerts>
+            <alert id="alert" path="path">
+                <recipient id="alert-recip1" value="value1"/>
+                <recipient id="alert-recip2" value="value2"/>
+            </alert>
+            <alert id="alert2" path="path">
+                <recipient id="alert2-recip3" value="value3"/>
+                <recipient id="alert2-recip4" value="value4"/>
+            </alert>
+        </alerts>
+    """
+
     def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        cib = """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path">
-                            <recipient id="alert-recipient1" value="value1"/>
-                            <recipient id="alert-recipient2" value="value2"/>
-                        </alert>
-                        <alert id="alert2" path="path">
-                            <recipient id="alert2-recipient3" value="value3"/>
-                            <recipient id="alert2-recipient4" value="value4"/>
-                        </alert>
-                    </alerts>
-                </configuration>
-            </cib>
-        """
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data=cib
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(
+            modifiers=[
+                replace_optional_element(
+                    "./configuration",
+                    "alerts",
+                    self.fixture_initial_alerts
+                )
+            ]
         )
 
     def test_recipient_not_found(self):
-        report_list = [
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {"id": "recipient"}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {"id": "alert2-recipient1"}
-            )
-        ]
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.remove_recipient(
-                self.mock_env,
-                ["recipient", "alert-recipient1", "alert2-recipient1"]
+                self.env_assist.get_env(),
+                ["recipient", "alert-recip1", "alert2-recip1"]
             ),
-            *report_list
-        )
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list, report_list
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {"id": "recipient"},
+                    None
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {"id": "alert2-recip1"},
+                    None
+                )
+            ],
+            expected_in_processor=True
         )
 
     def test_one_recipient(self):
-        cmd_alert.remove_recipient(self.mock_env, ["alert-recipient1"])
-        assert_xml_equal(
-            """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path">
-                            <recipient id="alert-recipient2" value="value2"/>
-                        </alert>
-                        <alert id="alert2" path="path">
-                            <recipient id="alert2-recipient3" value="value3"/>
-                            <recipient id="alert2-recipient4" value="value4"/>
-                        </alert>
-                    </alerts>
-                </configuration>
-            </cib>
-            """,
-            self.mock_env._get_cib_xml()
+        self.config.env.push_cib(
+            modifiers=[
+                remove_element(
+                    "./configuration/alerts/alert/recipient[@id='alert-recip1']"
+                )
+            ]
         )
-        self.assertEqual([], self.mock_rep.report_item_list)
+        cmd_alert.remove_recipient(
+            self.env_assist.get_env(),
+            ["alert-recip1"]
+        )
 
     def test_multiple_recipients(self):
+        self.config.env.push_cib(
+            modifiers=[
+                remove_element(
+                    "./configuration/alerts/alert/recipient[@id='alert-recip1']"
+                ),
+                remove_element(
+                    "./configuration/alerts/alert/recipient[@id='alert-recip2']"
+                ),
+                remove_element(
+                    "./configuration/alerts/alert/recipient[@id='alert2-recip4']"
+                ),
+            ]
+        )
         cmd_alert.remove_recipient(
-            self.mock_env,
-            ["alert-recipient1", "alert-recipient2", "alert2-recipient4"]
+            self.env_assist.get_env(),
+            ["alert-recip1", "alert-recip2", "alert2-recip4"]
         )
-        assert_xml_equal(
-            """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path"/>
-                        <alert id="alert2" path="path">
-                            <recipient id="alert2-recipient3" value="value3"/>
-                        </alert>
-                    </alerts>
-                </configuration>
-            </cib>
-            """,
-            self.mock_env._get_cib_xml()
-        )
-        self.assertEqual([], self.mock_rep.report_item_list)
 
     def test_no_recipient(self):
-        cmd_alert.remove_recipient(self.mock_env, [])
-        assert_xml_equal(
-            """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path">
-                            <recipient id="alert-recipient1" value="value1"/>
-                            <recipient id="alert-recipient2" value="value2"/>
-                        </alert>
-                        <alert id="alert2" path="path">
-                            <recipient id="alert2-recipient3" value="value3"/>
-                            <recipient id="alert2-recipient4" value="value4"/>
-                        </alert>
-                    </alerts>
-                </configuration>
-            </cib>
-            """,
-            self.mock_env._get_cib_xml()
+        self.config.env.push_cib()
+        cmd_alert.remove_recipient(
+            self.env_assist.get_env(),
+            []
         )
-        self.assertEqual([], self.mock_rep.report_item_list)
 
 
 @mock.patch("pcs.lib.cib.alert.get_all_alerts")

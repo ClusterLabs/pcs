@@ -2743,3 +2743,17 @@ def use_command_node_remove_guest(
         info={},
         forceable=forceable
     )
+
+def tmp_file_write(file_path, content):
+    """
+    It has been written into a temporary file
+    string file_path -- the file path
+    string content -- content which has been written
+    """
+    return ReportItem.debug(
+        report_codes.TMP_FILE_WRITE,
+        info={
+            "file_path": file_path,
+            "content": content,
+        }
+    )
