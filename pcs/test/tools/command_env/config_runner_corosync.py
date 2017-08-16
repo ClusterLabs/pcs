@@ -24,3 +24,17 @@ class CorosyncShortcuts(object):
                 )
             )
         )
+
+    def reload(self, name="corosync_reload"):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "corosync-cfgtool -R",
+                stdout=outdent(
+                    """\
+                    Reloading corosync.conf...
+                    Done
+                    """
+                )
+            )
+        )

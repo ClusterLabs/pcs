@@ -290,11 +290,6 @@ def assert_report_item_list_equal(
         )
 
 def assert_raise_library_error(callableObj, *report_info_list):
-    if not report_info_list:
-        raise AssertionError(
-            "Raising LibraryError expected, but no report item specified."
-            + " Please specify report items, that you expect in LibraryError"
-        )
     try:
         callableObj()
         raise AssertionError("LibraryError not raised")

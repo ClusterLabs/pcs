@@ -78,7 +78,7 @@ class DistributeCorosyncConf(
         else:
             self._report_list([
                 report,
-                reports.corosync_not_running_check_node_error(
+                reports.corosync_config_distribution_node_error(
                     node_label,
                     self._failure_severity,
                     self._failure_forceable,
@@ -87,4 +87,3 @@ class DistributeCorosyncConf(
 
     def before(self):
         self._report(reports.corosync_config_distribution_started())
-

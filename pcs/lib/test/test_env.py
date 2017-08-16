@@ -9,6 +9,7 @@ import logging
 from functools import partial
 from lxml import etree
 
+from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
@@ -17,16 +18,14 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc, create_patcher
 from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.command_env import get_env_tools
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes
-from pcs.lib import reports
+from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as severity,
-)
+from pcs.lib.errors import ReportItemSeverity as severity
 
 
 patch_env = create_patcher("pcs.lib.env")
@@ -243,312 +242,6 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertFalse(env.cib_upgraded)
 
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("check_corosync_offline_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "cmd_runner",
-        lambda self: "mock cmd runner"
-    )
-    def test_corosync_conf_set(
-        self, mock_get_corosync, mock_distribute, mock_reload,
-        mock_check_offline, mock_qdevice_reload
-    ):
-        corosync_data = "totem {\n    version: 2\n}\n"
-        new_corosync_data = "totem {\n    version: 3\n}\n"
-        env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            corosync_conf_data=corosync_data
-        )
-
-        self.assertFalse(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(0, mock_get_corosync.call_count)
-
-        env.push_corosync_conf(
-            CorosyncConfigFacade.from_string(new_corosync_data)
-        )
-        self.assertEqual(0, mock_distribute.call_count)
-
-        self.assertEqual(new_corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(0, mock_get_corosync.call_count)
-        mock_check_offline.assert_not_called()
-        mock_reload.assert_not_called()
-        mock_qdevice_reload.assert_not_called()
-
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("is_service_running")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        CorosyncConfigFacade,
-        "get_nodes",
-        lambda self: "mock node list"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "cmd_runner",
-        lambda self: "mock cmd runner"
-    )
-    def test_corosync_conf_not_set_online(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
-        mock_qdevice_reload
-    ):
-        corosync_data = open(rc("corosync.conf")).read()
-        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
-        mock_get_corosync.return_value = corosync_data
-        mock_is_running.return_value = True
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        self.assertTrue(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(2, mock_get_corosync.call_count)
-
-        env.push_corosync_conf(
-            CorosyncConfigFacade.from_string(new_corosync_data)
-        )
-        mock_distribute.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            new_corosync_data,
-            False
-        )
-        mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
-        mock_reload.assert_called_once_with("mock cmd runner")
-        mock_qdevice_reload.assert_not_called()
-
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("is_service_running")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        CorosyncConfigFacade,
-        "get_nodes",
-        lambda self: "mock node list"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "cmd_runner",
-        lambda self: "mock cmd runner"
-    )
-    def test_corosync_conf_not_set_offline(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
-        mock_qdevice_reload
-    ):
-        corosync_data = open(rc("corosync.conf")).read()
-        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
-        mock_get_corosync.return_value = corosync_data
-        mock_is_running.return_value = False
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        self.assertTrue(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(2, mock_get_corosync.call_count)
-
-        env.push_corosync_conf(
-            CorosyncConfigFacade.from_string(new_corosync_data)
-        )
-        mock_distribute.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            new_corosync_data,
-            False
-        )
-        mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
-        mock_reload.assert_not_called()
-        mock_qdevice_reload.assert_not_called()
-
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("check_corosync_offline_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("is_service_running")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        CorosyncConfigFacade,
-        "get_nodes",
-        lambda self: "mock node list"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "cmd_runner",
-        lambda self: "mock cmd runner"
-    )
-    def test_corosync_conf_not_set_need_qdevice_reload_success(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
-        mock_check_offline, mock_qdevice_reload
-    ):
-        corosync_data = open(rc("corosync.conf")).read()
-        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
-        mock_get_corosync.return_value = corosync_data
-        mock_is_running.return_value = True
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        self.assertTrue(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(2, mock_get_corosync.call_count)
-
-        conf_facade = CorosyncConfigFacade.from_string(new_corosync_data)
-        conf_facade._need_qdevice_reload = True
-        env.push_corosync_conf(conf_facade)
-        mock_check_offline.assert_not_called()
-        mock_distribute.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            new_corosync_data,
-            False
-        )
-        mock_reload.assert_called_once_with("mock cmd runner")
-        mock_qdevice_reload.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            False
-        )
-
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("check_corosync_offline_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("is_service_running")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        CorosyncConfigFacade,
-        "get_nodes",
-        lambda self: "mock node list"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    def test_corosync_conf_not_set_need_offline_success(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
-        mock_check_offline, mock_qdevice_reload
-    ):
-        corosync_data = open(rc("corosync.conf")).read()
-        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
-        mock_get_corosync.return_value = corosync_data
-        mock_is_running.return_value = False
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        self.assertTrue(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(2, mock_get_corosync.call_count)
-
-        conf_facade = CorosyncConfigFacade.from_string(new_corosync_data)
-        conf_facade._need_stopped_cluster = True
-        env.push_corosync_conf(conf_facade)
-        mock_check_offline.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            False
-        )
-        mock_distribute.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            new_corosync_data,
-            False
-        )
-        mock_reload.assert_not_called()
-        mock_qdevice_reload.assert_not_called()
-
-    @patch_env("qdevice_reload_on_nodes")
-    @patch_env("check_corosync_offline_on_nodes")
-    @patch_env("reload_corosync_config")
-    @patch_env("distribute_corosync_conf")
-    @patch_env("get_local_corosync_conf")
-    @mock.patch.object(
-        CorosyncConfigFacade,
-        "get_nodes",
-        lambda self: "mock node list"
-    )
-    @mock.patch.object(
-        LibraryEnvironment,
-        "node_communicator",
-        lambda self: "mock node communicator"
-    )
-    def test_corosync_conf_not_set_need_offline_fail(
-        self, mock_get_corosync, mock_distribute, mock_reload,
-        mock_check_offline, mock_qdevice_reload
-    ):
-        corosync_data = open(rc("corosync.conf")).read()
-        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
-        mock_get_corosync.return_value = corosync_data
-        def raiser(dummy_communicator, dummy_reporter, dummy_nodes, dummy_force):
-            raise LibraryError(
-                reports.corosync_not_running_check_node_error("test node")
-            )
-        mock_check_offline.side_effect = raiser
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        self.assertTrue(env.is_corosync_conf_live)
-
-        self.assertEqual(corosync_data, env.get_corosync_conf_data())
-        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
-        self.assertEqual(2, mock_get_corosync.call_count)
-
-        conf_facade = CorosyncConfigFacade.from_string(new_corosync_data)
-        conf_facade._need_stopped_cluster = True
-        assert_raise_library_error(
-            lambda: env.push_corosync_conf(conf_facade),
-            (
-                severity.ERROR,
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                {"node": "test node"}
-            )
-        )
-        mock_check_offline.assert_called_once_with(
-            "mock node communicator",
-            self.mock_reporter,
-            "mock node list",
-            False
-        )
-        mock_distribute.assert_not_called()
-        mock_reload.assert_not_called()
-        mock_qdevice_reload.assert_not_called()
-
     @patch_env("NodeCommunicator")
     def test_node_communicator_no_options(self, mock_comm):
         expected_comm = mock.MagicMock()
@@ -758,3 +451,669 @@ class PushCib(TestCase):
         self.env.push_cib(etree.fromstring("<cib/>"), 10)
         push_cib_xml.assert_called_once_with("<cib/>")
         wait_for_idle.assert_called_once_with(self.env.cmd_runner(), 10)
+
+
+class PushCorosyncConfLiveBase(TestCase):
+    def setUp(self):
+        self.env_assistant, self.config = get_env_tools(self)
+        self.corosync_conf_facade = mock.MagicMock(CorosyncConfigFacade)
+        self.corosync_conf_text = "corosync conf"
+        self.corosync_conf_facade.config.export.return_value = (
+            self.corosync_conf_text
+        )
+        self.corosync_conf_facade.get_nodes.return_value = NodeAddressesList([
+            NodeAddresses("node-1"),
+            NodeAddresses("node-2"),
+        ])
+        self.corosync_conf_facade.need_stopped_cluster = False
+        self.corosync_conf_facade.need_qdevice_reload = False
+        self.node_label_list = [
+            dict(label="node-1"),
+            dict(label="node-2"),
+        ]
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
+    def test_dont_need_stopped_cluster(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        (self.config
+            .http.add_communication(
+                "distribute_corosync_conf",
+                self.node_label_list,
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+                response_code=200,
+                output="Succeeded",
+            )
+            .runner.systemctl.is_active("corosync")
+            .runner.corosync.reload()
+        )
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-2",
+            ),
+            fixture.info(report_codes.COROSYNC_CONFIG_RELOADED)
+        ])
+
+    def test_need_stopped_cluster(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_stopped_cluster = True
+        (self.config
+            .http.add_communication(
+                "status",
+                self.node_label_list,
+                action="remote/status",
+                response_code=200,
+                output="""
+{"uptime":"0 days, 05:07:39","corosync":false,"pacemaker":false,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
+"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
+"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
+"resources":[],"groups":[],"constraints":{},"cluster_settings":{"error":\
+"Unable to get configuration settings"},"node_id":"","node_attr":{},\
+"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
+false,"acls":{},"username":"hacluster"}
+                """,
+            )
+            .http.add_communication(
+                "set_corosync_conf",
+                self.node_label_list,
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+                response_code=200,
+                output="Succeeded",
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+        )
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                node="node-2",
+            ),
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-2",
+            ),
+        ])
+
+    def test_need_stopped_cluster_not_stopped(self, mock_is_systemctl):
+        self.corosync_conf_facade.need_stopped_cluster = True
+        mock_is_systemctl.return_value = True
+        (self.config
+            .http.add_communication(
+                "status",
+                self.node_label_list,
+                action="remote/status",
+                response_code=200,
+                output="""
+{"uptime":"0 days, 06:29:36","corosync":true,"pacemaker":true,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":\
+["node-1","node-2"],"corosync_offline":[],"pacemaker_online":["node-1",\
+"node-2"],"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":\
+"cluster_name","resources":[],"groups":[],"constraints":{},"cluster_settings":\
+{"have-watchdog":"false","dc-version":"1.1.16-11.el7-94ff4df",\
+"cluster-infrastructure":"corosync","cluster-name":"cluster_name"},\
+"node_id":"1","node_attr":{},"fence_levels":{},"need_ring1_address":false,\
+"is_cman_with_udpu_transport":false,"acls":{"role":{},"group":{},"user":{},\
+"target":{}},"username":"hacluster"}
+                """,
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(self.corosync_conf_facade),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.error(
+                report_codes.COROSYNC_RUNNING_ON_NODE,
+                node="node-1",
+            ),
+            fixture.error(
+                report_codes.COROSYNC_RUNNING_ON_NODE,
+                node="node-2",
+            ),
+        ])
+
+    def test_need_stopped_cluster_not_stopped_skip_offline(
+        self, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_stopped_cluster = True
+        (self.config
+            .http.add_communication(
+                "status",
+                [
+                    dict(
+                        label="node-1",
+                        output="""\
+{"uptime":"0 days, 06:36:00","corosync":true,"pacemaker":true,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":\
+["node-1"],"corosync_offline":["node-2"],"pacemaker_online":["node-1"],\
+"pacemaker_offline":["node-2"],"pacemaker_standby":[],"cluster_name":\
+"cluster_name","resources":[],"groups":[],"constraints":{},"cluster_settings":\
+{"have-watchdog":"false","dc-version":"1.1.16-11.el7-94ff4df",\
+"cluster-infrastructure":"corosync","cluster-name":"cluster_name"},\
+"node_id":"1","node_attr":{},"fence_levels":{},"need_ring1_address":false,\
+"is_cman_with_udpu_transport":false,"acls":{"role":{},"group":{},"user":{},\
+"target":{}},"username":"hacluster"}
+                        """,
+                    ),
+                    dict(
+                        label="node-2",
+                        output="""\
+{"uptime":"0 days, 06:35:58","corosync":false,"pacemaker":false,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
+"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
+"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
+"resources":[],"groups":[],"constraints":{},"cluster_settings":\
+{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
+"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
+false,"acls":{},"username":"hacluster"}
+                        """,
+                    ),
+                ],
+                action="remote/status",
+                response_code=200,
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(
+                self.corosync_conf_facade, skip_offline_nodes=True
+            ),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.error(
+                report_codes.COROSYNC_RUNNING_ON_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                node="node-2",
+            )
+        ])
+
+    def test_need_stopped_cluster_comunnication_failure(
+        self, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_stopped_cluster = True
+        (self.config
+            .http.add_communication(
+                "status",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="""\
+{"uptime":"0 days, 00:11:52","corosync":false,"pacemaker":false,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
+"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
+"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
+"resources":[],"groups":[],"constraints":{},"cluster_settings":\
+{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
+"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
+false,"acls":{},"username":"hacluster"}
+                        """,
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=401,
+                        output="""{"notauthorized":"true"}"""
+                    ),
+                ],
+                action="remote/status",
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(self.corosync_conf_facade),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                node="node-1",
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+            ),
+            fixture.error(
+                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+            ),
+        ])
+
+    def test_need_stopped_cluster_comunnication_failure_skip_offline(
+        self, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_stopped_cluster = True
+        (self.config
+            .http.add_communication(
+                "status",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="""\
+{"uptime":"0 days, 00:11:52","corosync":false,"pacemaker":false,"cman":false,\
+"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
+"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
+"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
+"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
+"resources":[],"groups":[],"constraints":{},"cluster_settings":\
+{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
+"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
+false,"acls":{},"username":"hacluster"}
+                        """,
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=401,
+                        output="""{"notauthorized":"true"}"""
+                    ),
+                ],
+                action="remote/status",
+            )
+            .http.add_communication(
+                "set_corosync_conf",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="Succeeded",
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=401,
+                        output="""{"notauthorized":"true"}""",
+                    )
+                ],
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+        )
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade, skip_offline_nodes=True
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                node="node-1",
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                node="node-2",
+                reason="HTTP error: 401",
+                command="remote/status",
+            ),
+            fixture.warn(
+                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                node="node-2",
+            ),
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                node="node-2",
+                reason="HTTP error: 401",
+                command="remote/set_corosync_conf",
+            ),
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                node="node-2",
+            ),
+        ])
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
+    def test_qdevice_reload(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_qdevice_reload = True
+        (self.config
+            .http.add_communication(
+                "set_corosync_conf",
+                self.node_label_list,
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+                response_code=200,
+                output="Succeeded",
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+            .http.add_communication(
+                "qdevice_client_stop",
+                self.node_label_list,
+                action="remote/qdevice_client_stop",
+                response_code=200,
+                output="corosync-qdevice stopped",
+            )
+            .http.add_communication(
+                "qdevice_client_start",
+                self.node_label_list,
+                action="remote/qdevice_client_start",
+                response_code=200,
+                output="corosync-qdevice started",
+            )
+        )
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-2",
+            ),
+            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SUCCESS,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SUCCESS,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+        ])
+
+    def test_qdevice_reload_failures(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_qdevice_reload = True
+        (self.config
+            .http.add_communication(
+                "set_corosync_conf",
+                self.node_label_list,
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+                response_code=200,
+                output="Succeeded",
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+            .http.add_communication(
+                "qdevice_client_stop",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="corosync-qdevice stopped",
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=400,
+                        output="error",
+                    ),
+                ],
+                action="remote/qdevice_client_stop",
+            )
+            .http.add_communication(
+                "qdevice_client_start",
+                [
+                    dict(
+                        label="node-1",
+                        errno=8,
+                        error_msg="failure",
+                        was_connected=False,
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=200,
+                        output="corosync-qdevice started",
+                    ),
+                ],
+                action="remote/qdevice_client_start",
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(self.corosync_conf_facade),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-2",
+            ),
+            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+                reason="error",
+                command="remote/qdevice_client_stop",
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-1",
+                reason="failure",
+                command="remote/qdevice_client_start",
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SUCCESS,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+        ])
+
+    def test_qdevice_reload_failures_skip_offline(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.corosync_conf_facade.need_qdevice_reload = True
+        (self.config
+            .http.add_communication(
+                "set_corosync_conf",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="Succeeded",
+                    ),
+                    dict(
+                        label="node-2",
+                        errno=8,
+                        error_msg="failure",
+                        was_connected=False,
+                    ),
+                ],
+                action="remote/set_corosync_conf",
+                param_list=[("corosync_conf", self.corosync_conf_text)],
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+            .http.add_communication(
+                "qdevice_client_stop",
+                [
+                    dict(
+                        label="node-1",
+                        response_code=200,
+                        output="corosync-qdevice stopped",
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=400,
+                        output="error",
+                    ),
+                ],
+                action="remote/qdevice_client_stop",
+            )
+            .http.add_communication(
+                "qdevice_client_start",
+                [
+                    dict(
+                        label="node-1",
+                        errno=8,
+                        error_msg="failure",
+                        was_connected=False,
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=200,
+                        output="corosync-qdevice started",
+                    ),
+                ],
+                action="remote/qdevice_client_start",
+            )
+        )
+        env = self.env_assistant.get_env()
+        env.push_corosync_conf(
+            self.corosync_conf_facade, skip_offline_nodes=True
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                node="node-2",
+                reason="failure",
+                command="remote/set_corosync_conf",
+            ),
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                node="node-2",
+            ),
+            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                node="node-2",
+                reason="error",
+                command="remote/qdevice_client_stop",
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                node="node-1",
+                reason="failure",
+                command="remote/qdevice_client_start",
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SUCCESS,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+        ])
+
+
+class PushCorosyncConfFile(TestCase):
+    def setUp(self):
+        self.env_assistant, self.config = get_env_tools(
+            self, corosync_conf_data="totem {\n    version: 2\n}\n",
+        )
+
+    def test_success(self):
+        env = self.env_assistant.get_env()
+        new_corosync_conf_data = "totem {\n    version: 3\n}\n"
+        env.push_corosync_conf(
+            CorosyncConfigFacade.from_string(new_corosync_conf_data)
+        )
+        self.assertEqual(new_corosync_conf_data, env.get_corosync_conf_data())
+
+
+class GetCorosyncConfFile(TestCase):
+    def setUp(self):
+        self.corosync_conf_data = "totem {\n    version: 2\n}\n"
+        self.env_assistant, self.config = get_env_tools(
+            self, corosync_conf_data=self.corosync_conf_data,
+        )
+
+    def test_success(self):
+        env = self.env_assistant.get_env()
+        self.assertFalse(env.is_corosync_conf_live)
+        self.assertEqual(self.corosync_conf_data, env.get_corosync_conf_data())
+        self.assertEqual(
+            self.corosync_conf_data, env.get_corosync_conf().config.export()
+        )
+
+
+class GetCorosyncConfLive(TestCase):
+    def setUp(self):
+        self.env_assistant, self.config = get_env_tools(self)
+
+    def test_success(self):
+        corosync_conf_data = "totem {\n    version: 2\n}\n"
+        self.config.corosync_conf.load_content(corosync_conf_data)
+        env = self.env_assistant.get_env()
+        self.assertTrue(env.is_corosync_conf_live)
+        self.assertEqual(
+            corosync_conf_data, env.get_corosync_conf().config.export()
+        )

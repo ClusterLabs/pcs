@@ -80,7 +80,7 @@ def patch_env(call_queue, config, init_env):
     return unpatch
 
 class EnvAssistant(object):
-    def __init__(self, config=None, test_case=None):
+    def __init__(self, config=None, test_case=None, corosync_conf_data=None):
         """
         TestCase test_case -- cleanup callback is registered to test_case if is
             provided
@@ -89,6 +89,7 @@ class EnvAssistant(object):
         self.__config = config if config else Config()
         self.__reports_asserted = False
         self.__extra_reports = []
+        self.__corosync_conf_data = corosync_conf_data
 
         self.__unpatch = None
 
@@ -128,6 +129,7 @@ class EnvAssistant(object):
         self._env =  LibraryEnvironment(
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor(),
+            corosync_conf_data=self.__corosync_conf_data,
             auth_tokens_getter=(
                 (lambda: self.__config.spy.auth_tokens)
                     if self.__config.spy

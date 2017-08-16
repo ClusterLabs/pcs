@@ -252,9 +252,7 @@ class LibraryEnvironment(object):
             run(self.get_node_communicator(), com_cmd)
             report_list += com_cmd.error_list
             if report_list:
-                raise LibraryError(
-                    reports.unable_to_continue_due_to_errors(report_list)
-                )
+                raise LibraryError()
 
     def get_cluster_conf_data(self):
         if self.is_cluster_conf_live:

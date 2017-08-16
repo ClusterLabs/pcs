@@ -13,6 +13,9 @@ class CorosyncConf(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
 
+    def load_content(self, content, name="corosync_conf.load"):
+        self.__calls.place(name, Call(content))
+
     def load(
         self, node_name_list=None, name="corosync_conf.load",
         auto_tie_breaker=None
@@ -47,4 +50,4 @@ class CorosyncConf(object):
         if corosync_conf:
             content = corosync_conf.export()
 
-        self.__calls.place(name, Call(content))
+        self.load_content(content, name)
