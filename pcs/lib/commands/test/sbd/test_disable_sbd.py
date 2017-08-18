@@ -44,10 +44,7 @@ class DisableSbd(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: disable_sbd(self.env_assist.get_env()),
-            [
-                fixture.error(report_codes.UNABLE_TO_CONTINUE_DUE_TO_ERRORS),
-            ],
-            expected_in_processor=False,
+            [],
         )
 
         self.env_assist.assert_reports([

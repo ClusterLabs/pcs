@@ -52,15 +52,7 @@ class EnableSbd(TestCase):
                 watchdog_dict={},
                 sbd_options={},
             ),
-            [
-                fixture.error(
-                    report_codes.UNABLE_TO_CONTINUE_DUE_TO_ERRORS,
-                    #TODO assert_raise_library_error is not prepared to check
-                    #nested reports
-                    #report_items=,
-                ),
-            ],
-            expected_in_processor=False
+            [],
         )
         self.env_assist.assert_reports([
             fixture.error(
