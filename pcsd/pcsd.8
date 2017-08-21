@@ -12,6 +12,9 @@ Daemon for controlling and configuring pacakamer/corosync clusters via pcs.
 .B PCSD_BIND_ADDR=<string>
 List of IP addresses pcsd should bind to delimited by ',' character.
 .TP
+.B PCSD_PORT=<string>
+Port on which pcsd should be available.
+.TP
 .B PCSD_SSL_OPTIONS=<string>
 SSL/TLS options delimited by ',' character. This is usually used to set SSL/TLS protocols accepted by pcsd. List of valid options can be obtained by running: ruby -e 'require "openssl"; puts OpenSSL::SSL.constants.grep /^OP_/'
 .TP
