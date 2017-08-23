@@ -13,7 +13,7 @@ from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import outdent
 
-class GetClusterSbdStatus(TestCase):
+class EnableSbd(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config

@@ -27,8 +27,8 @@ from pcs.test.tools.command_env import spy
 
 patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
-def patch_env(call_queue, config=None, init_env=None):
-    #It is mandatory to patcher some env objects/methods. It is ok when command
+def patch_env(call_queue, config, init_env):
+    #It is mandatory to patch some env objects/methods. It is ok when command
     #does not use this objects/methods and specify no call for it. But it would
     #be a problem when the test succeded because the live call respond correctly
     #by accident. Such test would fails on different machine (with another live
@@ -58,8 +58,8 @@ def patch_env(call_queue, config=None, init_env=None):
         )
     ]
 
-    #It is not always desirable to patcher the method push_cib. Some tests can
-    #patcher only the internals (runner...). So push_cib is patched only when it
+    #It is not always desirable to patch the method push_cib. Some tests can
+    #patch only the internals (runner...). So push_cib is patched only when it
     #is explicitly configured
     if is_push_cib_call_in(call_queue):
         push_cib = get_push_cib(call_queue)
@@ -158,7 +158,7 @@ class EnvAssistant(object):
         if not hasattr(self, "_env"):
             raise AssertionError(
                 "LibraryEnvironment was not created in EnvAssitant."
-                " Have you been called method get_env?"
+                " Have you called method get_env?"
             )
 
     def __list_of_reports_expected(self, reports):

@@ -89,7 +89,7 @@ class HttpConfig(object):
             output=output,
             debug_output=debug_output,
             was_connected=was_connected,
-            errno=0,
+            errno=errno,
         )
         for communication in communication_list:
             if "address_list" not in communication:
