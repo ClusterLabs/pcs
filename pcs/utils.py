@@ -64,9 +64,13 @@ from pcs.lib.external import (
     _service,
     _systemctl,
 )
+from pcs.lib.communication.nodes import (
+    availability_checker_node,
+    PrecheckNewNode,
+)
+from pcs.lib.communication.tools import run as run_com_cmd
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
-from pcs.lib.nodes_task import check_can_add_node_to_cluster
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -116,9 +120,8 @@ def checkAndUpgradeCIB(major,minor,rev):
     cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
     if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
         return False
-    else:
-        cluster_upgrade()
-        return True
+    cluster_upgrade()
+    return True
 
 def cluster_upgrade():
     output, retval = run(["cibadmin", "--upgrade", "--force"])
@@ -327,7 +330,7 @@ def resumeConfigSyncing(node):
     data = urllib_urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
-def canAddNodeToCluster(node_communicator, node):
+def canAddNodeToCluster(node_communicator, target):
     """
     Return tuple with two parts. The first part is information if the node can
     be added to a cluster. The second part is a relevant explanation for first
@@ -337,7 +340,9 @@ def canAddNodeToCluster(node_communicator, node):
     NodeAddresses node contain destination for request
     """
     report_list = []
-    check_can_add_node_to_cluster(node_communicator, node, report_list)
+    com_cmd = PrecheckNewNode(report_list, availability_checker_node)
+    com_cmd.add_request(target)
+    run_com_cmd(node_communicator, com_cmd)
 
     analyzer = ReportListAnalyzer(report_list)
     if not analyzer.error_list:
@@ -382,8 +387,7 @@ def addLocalNode(node, node_to_add, ring1_addr=None):
         except ValueError:
             return 1, output
         return retval2, output
-    else:
-        return 1, output
+    return 1, output
 
 def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
     data = urllib_urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
@@ -394,8 +398,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
         except ValueError:
             return 1,output
         return 0, myout
-    else:
-        return 1, output
+    return 1, output
 
 
 # Send an HTTP request to a node return a tuple with status, data
@@ -1919,8 +1922,7 @@ def get_terminal_input(message=None):
     try:
         if PYTHON2:
             return raw_input("")
-        else:
-            return input("")
+        return input("")
     except EOFError:
         return ""
     except KeyboardInterrupt:
@@ -2630,14 +2632,13 @@ def is_valid_cib_value(type, value, enum_options=[]):
     type = type.lower()
     if type == "enum":
         return value in enum_options
-    elif type == "boolean":
+    if type == "boolean":
         return is_boolean(value)
-    elif type == "integer":
+    if type == "integer":
         return is_score(value)
-    elif type == "time":
+    if type == "time":
         return get_timeout_seconds(value) is not None
-    else:
-        return True
+    return True
 
 
 def get_cluster_property_default(prop_def_dict, prop):

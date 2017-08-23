@@ -47,6 +47,15 @@ from pcs.lib import (
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.commands.cluster import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
+from pcs.lib.communication.corosync import CheckCorosyncOffline
+from pcs.lib.communication.nodes import DistributeFiles
+from pcs.lib.communication.sbd import (
+    CheckSbd,
+    SetSbdConfig,
+    EnableSbdService,
+    DisableSbdService,
+)
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
     qdevice_net,
@@ -65,8 +74,7 @@ from pcs.lib.external import (
     node_communicator_exception_to_report_item,
 )
 from pcs.lib.env_tools import get_nodes
-from pcs.lib.node import NodeAddresses, NodeAddressesList
-from pcs.lib.nodes_task import check_corosync_offline_on_nodes, distribute_files
+from pcs.lib.node import NodeAddresses
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import (
@@ -379,7 +387,8 @@ def cluster_setup(argv):
         )
     if udpu_rrp and "rrp_mode" not in options["transport_options"]:
         options["transport_options"]["rrp_mode"] = "passive"
-    process_library_reports(messages)
+    if messages:
+        process_library_reports(messages)
 
     # prepare config file
     if is_rhel6:
@@ -398,7 +407,8 @@ def cluster_setup(argv):
             options["quorum_options"],
             modifiers["encryption"] == "1"
         )
-    process_library_reports(messages)
+    if messages:
+        process_library_reports(messages)
 
     # setup on the local node
     if "--local" in utils.pcs_options:
@@ -446,8 +456,10 @@ def cluster_setup(argv):
             all_nodes_available = True
             for node in primary_addr_list:
                 available, message = utils.canAddNodeToCluster(
-                    lib_env.node_communicator(),
-                    NodeAddresses(node)
+                    lib_env.get_node_communicator(),
+                    lib_env.get_node_target_factory().get_target(
+                        NodeAddresses(node)
+                    )
                 )
                 if not available:
                     all_nodes_available = False
@@ -474,17 +486,18 @@ def cluster_setup(argv):
                         generate_binary_key(random_bytes_count=128)
                     )
                 )
-
-            distribute_files(
-                lib_env.node_communicator(),
+            com_cmd = DistributeFiles(
                 lib_env.report_processor,
                 file_definitions,
-                NodeAddressesList(
-                    [NodeAddresses(node) for node in primary_addr_list]
-                ),
-                skip_offline_nodes=modifiers["skip_offline_nodes"],
-                allow_incomplete_distribution="--force" in utils.pcs_options
+                skip_offline_targets=modifiers["skip_offline_nodes"],
+                allow_fails=modifiers["force"],
             )
+            com_cmd.set_targets(
+                lib_env.get_node_target_factory().get_target_list(
+                    [NodeAddresses(node) for node in primary_addr_list]
+                )
+            )
+            run_and_raise(lib_env.get_node_communicator(), com_cmd)
         except LibraryError as e: #Theoretically, this should not happen
             utils.process_library_reports(e.args)
 
@@ -1551,12 +1564,15 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
                 "make SBD fencing effecive after this change. Cluster has to "
                 "be offline to be able to make this change."
             )
-            check_corosync_offline_on_nodes(
-                lib_env.node_communicator(),
-                lib_env.report_processor,
-                corosync_conf.get_nodes(),
-                skip_offline_nodes
+            com_cmd = CheckCorosyncOffline(
+                lib_env.report_processor, skip_offline_nodes
             )
+            com_cmd.set_targets(
+                lib_env.get_node_target_factory().get_target_list(
+                    corosync_conf.get_nodes()
+                )
+            )
+            run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 
 def cluster_node(argv):
@@ -1671,13 +1687,16 @@ def node_add(lib_env, node0, node1, modifiers):
             "you must not specify ring 1 address for the node"
         )
     node_addr = NodeAddresses(node0, node1)
-    node_communicator = lib_env.node_communicator()
-    (canAdd, error) =  utils.canAddNodeToCluster(node_communicator, node_addr)
+    (canAdd, error) =  utils.canAddNodeToCluster(
+        lib_env.get_node_communicator(),
+        lib_env.get_node_target_factory().get_target(node_addr)
+    )
 
     if not canAdd:
         utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
     report_processor = lib_env.report_processor
+    com_factory = lib_env.get_communicator_factory()
 
     # First set up everything else than corosync. Once the new node is
     # present in corosync.conf / cluster.conf, it's considered part of a
@@ -1701,6 +1720,9 @@ def node_add(lib_env, node0, node1, modifiers):
                 )
 
         # sbd setup
+        new_node_target = lib_env.get_node_target_factory().get_target(
+            node_addr
+        )
         if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
             if "--watchdog" not in utils.pcs_options:
                 watchdog = settings.sbd_watchdog_default
@@ -1735,50 +1757,51 @@ def node_add(lib_env, node0, node1, modifiers):
                     "therefore --device should not be specified"
                 )
 
-            lib_sbd.check_sbd_on_node(
-                report_processor, node_communicator, node_addr, watchdog,
-                device_list
-            )
+            com_cmd = CheckSbd(lib_env.report_processor)
+            com_cmd.add_request(new_node_target, watchdog, device_list)
+            run_and_raise(com_factory.get_communicator(), com_cmd)
 
-            report_processor.process(
-                lib_reports.sbd_config_distribution_started()
+            com_cmd = SetSbdConfig(lib_env.report_processor)
+            com_cmd.add_request(
+                new_node_target,
+                lib_sbd.create_sbd_config(
+                    sbd_cfg, new_node_target.label, watchdog, device_list
+                )
             )
-            lib_sbd.set_sbd_config_on_node(
-                report_processor,
-                node_communicator,
-                node_addr,
-                sbd_cfg,
-                watchdog,
-                device_list,
-            )
-            report_processor.process(lib_reports.sbd_enabling_started())
-            lib_sbd.enable_sbd_service_on_node(
-                report_processor, node_communicator, node_addr
-            )
+            run_and_raise(com_factory.get_communicator(), com_cmd)
+
+            com_cmd = EnableSbdService(lib_env.report_processor)
+            com_cmd.add_request(new_node_target)
+            run_and_raise(com_factory.get_communicator(), com_cmd)
         else:
-            report_processor.process(lib_reports.sbd_disabling_started())
-            lib_sbd.disable_sbd_service_on_node(
-                report_processor, node_communicator, node_addr
-            )
+            com_cmd = DisableSbdService(lib_env.report_processor)
+            com_cmd.add_request(new_node_target)
+            run_and_raise(com_factory.get_communicator(), com_cmd)
 
         # booth setup
         booth_sync.send_all_config_to_node(
-            node_communicator,
+            com_factory.get_communicator(),
             report_processor,
-            node_addr,
+            new_node_target,
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
 
         if os.path.isfile(settings.corosync_authkey_file):
-            distribute_files(
-                lib_env.node_communicator(),
+            com_cmd = DistributeFiles(
                 lib_env.report_processor,
                 node_communication_format.corosync_authkey_file(
                     open(settings.corosync_authkey_file).read()
                 ),
-                NodeAddressesList([node_addr]),
+                # added force, it was missing before
+                # but it doesn't make sence here
+                skip_offline_targets=modifiers["skip_offline_nodes"],
+                allow_fails=modifiers["force"],
             )
+            com_cmd.set_targets(
+                lib_env.get_node_target_factory().get_target_list([node_addr])
+            )
+            run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
         # do not send pcmk authkey to guest and remote nodes, they either have
         # it or are not working anyway

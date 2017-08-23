@@ -112,6 +112,12 @@ def _default_element_attributes(element, default_attributes):
         if name not in element.attrib:
             element.attrib[name] = value
 
+def debug(code, force_code=None, **kwargs):
+    return severities.DEBUG, code, kwargs, None
+
+def warn(code, force_code=None, **kwargs):
+    return severities.WARNING, code, kwargs, None
+
 def error(code, force_code=None, **kwargs):
     return severities.ERROR, code, kwargs, force_code
 

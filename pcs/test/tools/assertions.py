@@ -266,13 +266,13 @@ def assert_report_item_equal(real_report_item, report_item_info):
         )
 
 def assert_report_item_list_equal(
-    real_report_item_list, report_info_list, hint=""
+    real_report_item_list, expected_report_info_list, hint=""
 ):
-    for report_item in real_report_item_list:
-        report_info_list.remove(
-            __find_report_info(report_info_list, report_item)
+    for real_report_item in real_report_item_list:
+        expected_report_info_list.remove(
+            __find_report_info(expected_report_info_list, real_report_item)
         )
-    if report_info_list:
+    if expected_report_info_list:
         def format_items(item_type, item_list):
             caption = "{0} ReportItems({1})".format(item_type, len(item_list))
             return "{0}\n{1}\n{2}".format(
@@ -284,38 +284,34 @@ def assert_report_item_list_equal(
         raise AssertionError(
             "\nExpected LibraryError is missing\n{0}\n\n{1}\n\n{2}".format(
                 "{0}\n".format(hint) if hint else "",
-                format_items("expected", report_info_list),
+                format_items("expected", expected_report_info_list),
                 format_items("real", real_report_item_list),
             )
         )
 
 def assert_raise_library_error(callableObj, *report_info_list):
-    if not report_info_list:
-        raise AssertionError(
-            "Raising LibraryError expected, but no report item specified."
-            + " Please specify report items, that you expect in LibraryError"
-        )
     try:
         callableObj()
         raise AssertionError("LibraryError not raised")
     except LibraryError as e:
         assert_report_item_list_equal(e.args, list(report_info_list))
 
-def __find_report_info(report_info_list, report_item):
-    for report_info in report_info_list:
-        if __report_item_equal(report_item, report_info):
+def __find_report_info(expected_report_info_list, real_report_item):
+    for report_info in expected_report_info_list:
+        if __report_item_equal(real_report_item, report_info):
             return report_info
     raise AssertionError(
         "Unexpected report given: \n{0} \nexpected reports are: \n{1}"
         .format(
             repr((
-                report_item.severity,
-                report_item.code,
-                report_item.info,
-                report_item.forceable
+                real_report_item.severity,
+                real_report_item.code,
+                real_report_item.info,
+                real_report_item.forceable
             )),
-            "\n".join(map(repr, report_info_list)) if report_info_list
-                else "  No report is expected!"
+            "\n".join(map(repr, expected_report_info_list))
+                if expected_report_info_list
+                else "  No other report is expected!"
         )
     )
 

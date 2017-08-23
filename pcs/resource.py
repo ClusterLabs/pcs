@@ -762,7 +762,8 @@ def resource_update(res_id,args, deal_with_guest_change=True):
             allow_invalid=("--force" in utils.pcs_options),
             update=True
         )
-        utils.process_library_reports(report_list)
+        if report_list:
+            utils.process_library_reports(report_list)
     except lib_ra.ResourceAgentError as e:
         severity = (
             ReportItemSeverity.WARNING if "--force" in utils.pcs_options

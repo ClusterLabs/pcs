@@ -19,13 +19,16 @@ from pcs.lib.booth import (
     reports as booth_reports,
     resource,
     status,
-    sync,
 )
 from pcs.lib.booth.config_parser import parse, build
 from pcs.lib.booth.env import get_config_file_name
 from pcs.lib.cib.tools import get_resources
+from pcs.lib.communication.booth import (
+    BoothGetConfig,
+    BoothSendConfig,
+)
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.lib.node import NodeAddresses
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 
@@ -111,9 +114,11 @@ def config_text(env, name, node_name=None):
         # TODO add name support
         return env.booth.get_config_content()
 
-    remote_data = sync.pull_config_from_node(
-        env.node_communicator(), NodeAddresses(node_name), name
-    )
+    com_cmd = BoothGetConfig(env.report_processor, name)
+    com_cmd.set_targets([
+        env.get_node_target_factory().get_target_from_hostname(node_name)
+    ])
+    remote_data = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         return remote_data["config"]["data"]
     except KeyError:
@@ -256,17 +261,20 @@ def config_sync(env, name, skip_offline_nodes=False):
     authfile_content = config_files.read_authfile(
         env.report_processor, authfile_path
     )
-
-    sync.send_config_to_all_nodes(
-        env.node_communicator(),
+    com_cmd = BoothSendConfig(
         env.report_processor,
-        env.get_corosync_conf().get_nodes(),
         name,
         config,
         authfile=authfile_path,
         authfile_data=authfile_content,
-        skip_offline=skip_offline_nodes
+        skip_offline_targets=skip_offline_nodes
     )
+    com_cmd.set_targets(
+        env.get_node_target_factory().get_target_list(
+            env.get_corosync_conf().get_nodes()
+        )
+    )
+    run_and_raise(env.get_node_communicator(), com_cmd)
 
 
 def enable_booth(env, name=None):
@@ -362,9 +370,11 @@ def pull_config(env, node_name, name):
     env.report_processor.process(
         booth_reports.booth_fetching_config_from_node_started(node_name, name)
     )
-    output = sync.pull_config_from_node(
-        env.node_communicator(), NodeAddresses(node_name), name
-    )
+    com_cmd = BoothGetConfig(env.report_processor, name)
+    com_cmd.set_targets([
+        env.get_node_target_factory().get_target_from_hostname(node_name)
+    ])
+    output = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         env.booth.create_config(output["config"]["data"], True)
         if (

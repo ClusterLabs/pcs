@@ -11,7 +11,11 @@ from functools import partial
 from pcs.cli.booth.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
 )
-from pcs.cli.common.console_report import CODE_TO_MESSAGE_BUILDER_MAP
+from pcs.cli.common.console_report import (
+    CODE_TO_MESSAGE_BUILDER_MAP,
+    error,
+    warn,
+)
 from pcs.cli.constraint_all.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
 )
@@ -82,6 +86,12 @@ class LibraryReportProcessorToConsole(object):
             if item.severity == ReportItemSeverity.ERROR
         ])
 
+    def report(self, report_item):
+        return self.report_list([report_item])
+
+    def report_list(self, report_item_list):
+        return self._send(report_item_list)
+
     def process(self, report_item):
         self.append(report_item)
         self.send()
@@ -90,15 +100,21 @@ class LibraryReportProcessorToConsole(object):
         self.extend(report_item_list)
         self.send()
 
-    def send(self):
+    def _send(self, report_item_list, print_errors=True):
         errors = []
-        for report_item in self.items:
+        for report_item in report_item_list:
             if report_item.severity == ReportItemSeverity.ERROR:
+                if print_errors:
+                    error(build_report_message(report_item))
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
-                print("Warning: " + build_report_message(report_item))
+                warn(build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
                 print(build_report_message(report_item))
+        return errors
+
+    def send(self):
+        errors = self._send(self.items, print_errors=False)
         self.items = []
         if errors:
             raise LibraryError(*errors)
@@ -113,6 +129,9 @@ def process_library_reports(report_item_list):
     """
     report_item_list list of ReportItem
     """
+    if not report_item_list:
+        error("Errors have occurred, therefore pcs is unable to continue")
+
     critical_error = False
     for report_item in report_item_list:
         if report_item.severity == ReportItemSeverity.WARNING:

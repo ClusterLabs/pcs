@@ -7,15 +7,15 @@ from __future__ import (
 from pcs.common import report_codes
 from pcs.lib import reports, sbd
 from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.communication import (
+    qdevice as qdevice_com,
+    qdevice_net as qdevice_net_com,
+)
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
     qdevice_client
-)
-from pcs.lib.external import (
-    NodeCommunicationException,
-    node_communicator_exception_to_report_item,
-    parallel_nodes_communication_helper,
 )
 
 
@@ -126,6 +126,9 @@ def add_device(
         force_model,
         force_options
     )
+    target_list = lib_env.get_node_target_factory().get_target_list(
+        cfg.get_nodes()
+    )
 
     # First setup certificates for qdevice, then send corosync.conf to nodes.
     # If anything fails, nodes will not have corosync.conf with qdevice in it,
@@ -147,16 +150,11 @@ def add_device(
         lib_env.report_processor.process(
             reports.service_enable_started("corosync-qdevice")
         )
-        communicator = lib_env.node_communicator()
-        parallel_nodes_communication_helper(
-            qdevice_client.remote_client_enable,
-            [
-                [(lib_env.report_processor, communicator, node), {}]
-                for node in cfg.get_nodes()
-            ],
-            lib_env.report_processor,
-            skip_offline_nodes
+        com_cmd = qdevice_com.Enable(
+            lib_env.report_processor, skip_offline_nodes
         )
+        com_cmd.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # everything set up, it's safe to tell the nodes to use qdevice
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
@@ -166,16 +164,11 @@ def add_device(
         lib_env.report_processor.process(
             reports.service_start_started("corosync-qdevice")
         )
-        communicator = lib_env.node_communicator()
-        parallel_nodes_communication_helper(
-            qdevice_client.remote_client_start,
-            [
-                [(lib_env.report_processor, communicator, node), {}]
-                for node in cfg.get_nodes()
-            ],
-            lib_env.report_processor,
-            skip_offline_nodes
+        com_cmd = qdevice_com.Start(
+            lib_env.report_processor, skip_offline_nodes
         )
+        com_cmd.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def _add_device_model_net(
     lib_env, qnetd_host, cluster_name, cluster_nodes, skip_offline_nodes
@@ -187,69 +180,46 @@ def _add_device_model_net(
     NodeAddressesList cluster_nodes list of cluster nodes addresses
     bool skip_offline_nodes continue even if not all nodes are accessible
     """
-    communicator = lib_env.node_communicator()
     runner = lib_env.cmd_runner()
     reporter = lib_env.report_processor
+    target_factory = lib_env.get_node_target_factory()
+    qnetd_target = target_factory.get_target_from_hostname(qnetd_host)
+    target_list = target_factory.get_target_list(cluster_nodes)
 
     reporter.process(
         reports.qdevice_certificate_distribution_started()
     )
     # get qnetd CA certificate
-    try:
-        qnetd_ca_cert = qdevice_net.remote_qdevice_get_ca_certificate(
-            communicator,
-            qnetd_host
-        )
-    except NodeCommunicationException as e:
-        raise LibraryError(
-            node_communicator_exception_to_report_item(e)
-        )
+    com_cmd = qdevice_net_com.GetCaCert(reporter)
+    com_cmd.set_targets([qnetd_target])
+    qnetd_ca_cert = run_and_raise(
+        lib_env.get_node_communicator(), com_cmd
+    )[0][1]
     # init certificate storage on all nodes
-    parallel_nodes_communication_helper(
-        qdevice_net.remote_client_setup,
-        [
-            ((communicator, node, qnetd_ca_cert), {})
-            for node in cluster_nodes
-        ],
-        reporter,
-        skip_offline_nodes
+    com_cmd = qdevice_net_com.ClientSetup(
+        reporter, qnetd_ca_cert, skip_offline_nodes
     )
+    com_cmd.set_targets(target_list)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
     # create client certificate request
     cert_request = qdevice_net.client_generate_certificate_request(
         runner,
         cluster_name
     )
     # sign the request on qnetd host
-    try:
-        signed_certificate = qdevice_net.remote_sign_certificate_request(
-            communicator,
-            qnetd_host,
-            cert_request,
-            cluster_name
-        )
-    except NodeCommunicationException as e:
-        raise LibraryError(
-            node_communicator_exception_to_report_item(e)
-        )
+    com_cmd = qdevice_net_com.SignCertificate(reporter)
+    com_cmd.add_request(qnetd_target, cert_request, cluster_name)
+    signed_certificate = run_and_raise(
+        lib_env.get_node_communicator(), com_cmd
+    )[0][1]
     # transform the signed certificate to pk12 format which can sent to nodes
     pk12 = qdevice_net.client_cert_request_to_pk12(runner, signed_certificate)
     # distribute final certificate to nodes
-    def do_and_report(reporter, communicator, node, pk12):
-        qdevice_net.remote_client_import_certificate_and_key(
-            communicator, node, pk12
-        )
-        reporter.process(
-            reports.qdevice_certificate_accepted_by_node(node.label)
-        )
-    parallel_nodes_communication_helper(
-        do_and_report,
-        [
-            ((reporter, communicator, node, pk12), {})
-            for node in cluster_nodes
-        ],
-        reporter,
-        skip_offline_nodes
+    com_cmd = qdevice_net_com.ClientImportCertificateAndKey(
+        reporter, pk12, skip_offline_nodes
     )
+    com_cmd.set_targets(target_list)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def update_device(
     lib_env, model_options, generic_options, force_options=False,
@@ -284,7 +254,9 @@ def remove_device(lib_env, skip_offline_nodes=False):
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:
-        communicator = lib_env.node_communicator()
+        target_list = lib_env.get_node_target_factory().get_target_list(
+            cfg.get_nodes()
+        )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
             lib_env.report_processor.process(reports.sbd_requires_atb())
@@ -296,28 +268,20 @@ def remove_device(lib_env, skip_offline_nodes=False):
         lib_env.report_processor.process(
             reports.service_disable_started("corosync-qdevice")
         )
-        parallel_nodes_communication_helper(
-            qdevice_client.remote_client_disable,
-            [
-                [(lib_env.report_processor, communicator, node), {}]
-                for node in cfg.get_nodes()
-            ],
-            lib_env.report_processor,
-            skip_offline_nodes
+        com_cmd = qdevice_com.Disable(
+            lib_env.report_processor, skip_offline_nodes
         )
+        com_cmd.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
         # stop qdevice
         lib_env.report_processor.process(
             reports.service_stop_started("corosync-qdevice")
         )
-        parallel_nodes_communication_helper(
-            qdevice_client.remote_client_stop,
-            [
-                [(lib_env.report_processor, communicator, node), {}]
-                for node in cfg.get_nodes()
-            ],
-            lib_env.report_processor,
-            skip_offline_nodes
+        com_cmd = qdevice_com.Stop(
+            lib_env.report_processor, skip_offline_nodes
         )
+        com_cmd.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
         # handle model specific configuration
         if model == "net":
             _remove_device_model_net(
@@ -335,25 +299,15 @@ def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
     bool skip_offline_nodes continue even if not all nodes are accessible
     """
     reporter = lib_env.report_processor
-    communicator = lib_env.node_communicator()
 
     reporter.process(
         reports.qdevice_certificate_removal_started()
     )
-    def do_and_report(reporter, communicator, node):
-        qdevice_net.remote_client_destroy(communicator, node)
-        reporter.process(
-            reports.qdevice_certificate_removed_from_node(node.label)
-        )
-    parallel_nodes_communication_helper(
-        do_and_report,
-        [
-            [(reporter, communicator, node), {}]
-            for node in cluster_nodes
-        ],
-        lib_env.report_processor,
-        skip_offline_nodes
+    com_cmd = qdevice_net_com.ClientDestroy(reporter)
+    com_cmd.set_targets(
+        lib_env.get_node_target_factory().get_target_list(cluster_nodes)
     )
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def set_expected_votes_live(lib_env, expected_votes):
     """

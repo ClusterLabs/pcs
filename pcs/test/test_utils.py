@@ -2674,22 +2674,22 @@ class IsNodeStopCauseQuorumLossTest(unittest.TestCase):
                 quorum_info, False, ["rh70-node2", "rh70-node3"]
             )
         )
+
 class CanAddNodeToCluster(unittest.TestCase):
     def setUp(self):
-        patcher = mock.patch("pcs.utils.check_can_add_node_to_cluster")
+        patcher = mock.patch("pcs.utils.run_com_cmd")
         self.addCleanup(patcher.stop)
         self.check_can_add = patcher.start()
 
     def assert_report_list_cause_result(self, report_list, can_add, message):
-        def side_effect(node_communicator, node, report_items):
-            report_items.extend(
+        def side_effect(node_communicator, com_cmd):
+            com_cmd._report_items.extend(
                 report_list if isinstance(report_list, list) else [report_list]
             )
         self.check_can_add.side_effect = side_effect
 
         result_can_add, result_message = utils.canAddNodeToCluster(
-            node_communicator = None,
-            node="node1"
+            None, "node1"
         )
 
         self.assertEqual((result_can_add, result_message), (can_add, message))

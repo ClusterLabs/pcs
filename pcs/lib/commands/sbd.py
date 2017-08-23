@@ -5,33 +5,35 @@ from __future__ import (
 )
 
 import os
-import json
 
 from pcs import settings
-from pcs.common import (
-    tools,
-    report_codes,
+from pcs.common import report_codes
+from pcs.lib.communication.sbd import (
+    CheckSbd,
+    DisableSbdService,
+    EnableSbdService,
+    GetSbdConfig,
+    GetSbdStatus,
+    RemoveStonithWatchdogTimeout,
+    SetSbdConfig,
+    SetStonithWatchdogTimeoutToZero,
+)
+from pcs.lib.communication.nodes import GetOnlineTargets
+from pcs.lib.communication.corosync import CheckCorosyncOffline
+from pcs.lib.communication.tools import (
+    run as run_com,
+    run_and_raise,
 )
 from pcs.lib import (
     sbd,
     reports,
-    nodes_task,
 )
 from pcs.lib.tools import environment_file_to_dict
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as Severities
 )
-from pcs.lib.external import (
-    node_communicator_exception_to_report_item,
-    NodeCommunicationException,
-    NodeConnectionException,
-    NodeCommandUnsuccessfulException,
-)
-from pcs.lib.node import (
-    NodeAddressesList,
-    NodeNotFound
-)
+from pcs.lib.node import NodeNotFound
 from pcs.lib.validate import (
     names_in,
     run_collection_of_option_validators,
@@ -109,21 +111,21 @@ def _validate_device_dict(node_device_dict):
         devices as values
     """
     report_item_list = []
-    for node, device_list in node_device_dict.items():
+    for node_label, device_list in node_device_dict.items():
         if not device_list:
             report_item_list.append(
-                reports.sbd_no_device_for_node(node.label)
+                reports.sbd_no_device_for_node(node_label)
             )
             continue
         elif len(device_list) > settings.sbd_max_device_num:
             report_item_list.append(reports.sbd_too_many_devices_for_node(
-                node.label, device_list, settings.sbd_max_device_num
+                node_label, device_list, settings.sbd_max_device_num
             ))
             continue
         for device in device_list:
             if not device or not os.path.isabs(device):
                 report_item_list.append(
-                    reports.sbd_device_path_not_absolute(device, node.label)
+                    reports.sbd_device_path_not_absolute(device, node_label)
                 )
 
     return report_item_list
@@ -147,19 +149,19 @@ def _check_node_names_in_cluster(node_list, node_name_list):
     return [reports.node_not_found(node) for node in not_existing_node_set]
 
 
-def _get_full_node_dict(node_list, node_value_dict, default_value):
+def _get_full_target_dict(target_list, node_value_dict, default_value):
     """
-    Returns dictionary where keys NodeAdressesof all nodes in cluster and value
-    is obtained from node_value_dict for node name, or default+value if node
-    nade is not specified in node_value_dict.
+    Returns dictionary where keys are labels of all nodes in cluster and value
+    is obtained from node_value_dict for node name, or default value if node
+    is not specified in node_value_dict.
 
-    node_list -- NodeAddressesList
+    list node_list -- list of cluster nodes (RequestTarget object)
     node_value_dict -- dictionary, keys: node names, values: some velue
     default_value -- some default value
      """
     return dict([
-        (node, node_value_dict.get(node.label, default_value))
-        for node in node_list
+        (target.label, node_value_dict.get(target.label, default_value))
+        for target in target_list
     ])
 
 
@@ -184,6 +186,7 @@ def enable_sbd(
     ignore_offline_nodes -- if True, omit offline nodes
     """
     node_list = _get_cluster_nodes(lib_env)
+    target_list = lib_env.get_node_target_factory().get_target_list(node_list)
     using_devices = not (
         default_device_list is None and node_device_dict is None
     )
@@ -195,11 +198,11 @@ def enable_sbd(
         default_watchdog = settings.sbd_watchdog_default
     sbd_options = dict([(opt.upper(), val) for opt, val in sbd_options.items()])
 
-    full_watchdog_dict = _get_full_node_dict(
-        node_list, watchdog_dict, default_watchdog
+    full_watchdog_dict = _get_full_target_dict(
+        target_list, watchdog_dict, default_watchdog
     )
-    full_device_dict = _get_full_node_dict(
-        node_list, node_device_dict, default_device_list
+    full_device_dict = _get_full_target_dict(
+        target_list, node_device_dict, default_device_list
     )
 
     lib_env.report_processor.process_list(
@@ -214,23 +217,23 @@ def enable_sbd(
         _validate_sbd_options(sbd_options, allow_unknown_opts)
     )
 
-    online_nodes = _get_online_nodes(lib_env, node_list, ignore_offline_nodes)
-
-    node_data_dict = {}
-    for node in online_nodes:
-        node_data_dict[node] = {
-            "watchdog": full_watchdog_dict[node],
-            "device_list": full_device_dict[node] if using_devices else [],
-        }
+    com_cmd = GetOnlineTargets(
+        lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
+    )
+    com_cmd.set_targets(target_list)
+    online_targets = run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # check if SBD can be enabled
-    sbd.check_sbd_on_all_nodes(
-        lib_env.report_processor,
-        lib_env.node_communicator(),
-        node_data_dict,
-    )
+    com_cmd = CheckSbd(lib_env.report_processor)
+    for target in online_targets:
+        com_cmd.add_request(
+            target,
+            full_watchdog_dict[target.label],
+            full_device_dict[target.label] if using_devices else [],
+        )
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    # enable ATB if needed
+    # enable ATB if neede
     if not lib_env.is_cman_cluster and not using_devices:
         corosync_conf = lib_env.get_corosync_conf()
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
@@ -243,24 +246,28 @@ def enable_sbd(
     # distribute SBD configuration
     config = sbd.get_default_sbd_config()
     config.update(sbd_options)
-    sbd.set_sbd_config_on_all_nodes(
-        lib_env.report_processor,
-        lib_env.node_communicator(),
-        online_nodes,
-        config,
-        full_watchdog_dict,
-        full_device_dict,
-    )
+    com_cmd = SetSbdConfig(lib_env.report_processor)
+    for target in online_targets:
+        com_cmd.add_request(
+            target,
+            sbd.create_sbd_config(
+                config,
+                target.label,
+                full_watchdog_dict[target.label],
+                full_device_dict[target.label]
+            )
+        )
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # remove cluster prop 'stonith_watchdog_timeout'
-    sbd.remove_stonith_watchdog_timeout_on_all_nodes(
-        lib_env.node_communicator(), online_nodes
-    )
+    com_cmd = RemoveStonithWatchdogTimeout(lib_env.report_processor)
+    com_cmd.set_targets(online_targets)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # enable SBD service an all nodes
-    sbd.enable_sbd_service_on_all_nodes(
-        lib_env.report_processor, lib_env.node_communicator(), online_nodes
-    )
+    com_cmd = EnableSbdService(lib_env.report_processor)
+    com_cmd.set_targets(online_targets)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.report_processor.process(
         reports.cluster_restart_required_to_apply_changes()
@@ -274,64 +281,35 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     lib_env -- LibraryEnvironment
     ignore_offline_nodes -- if True, omit offline nodes
     """
-    node_list = _get_online_nodes(
-        lib_env, _get_cluster_nodes(lib_env), ignore_offline_nodes
+    com_cmd = GetOnlineTargets(
+        lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
     )
+    com_cmd.set_targets(
+        lib_env.get_node_target_factory().get_target_list(
+            _get_cluster_nodes(lib_env)
+        )
+    )
+    online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     if lib_env.is_cman_cluster:
-        nodes_task.check_corosync_offline_on_nodes(
-            lib_env.node_communicator(),
-            lib_env.report_processor,
-            node_list,
-            ignore_offline_nodes
+        com_cmd = CheckCorosyncOffline(
+            lib_env.report_processor, skip_offline_targets=ignore_offline_nodes,
         )
+        com_cmd.set_targets(online_nodes)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    sbd.set_stonith_watchdog_timeout_to_zero_on_all_nodes(
-        lib_env.node_communicator(), node_list
-    )
-    sbd.disable_sbd_service_on_all_nodes(
-        lib_env.report_processor,
-        lib_env.node_communicator(),
-        node_list
-    )
+    com_cmd = SetStonithWatchdogTimeoutToZero(lib_env.report_processor)
+    com_cmd.set_targets(online_nodes)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+
+    com_cmd = DisableSbdService(lib_env.report_processor)
+    com_cmd.set_targets(online_nodes)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     if not lib_env.is_cman_cluster:
         lib_env.report_processor.process(
             reports.cluster_restart_required_to_apply_changes()
         )
-
-
-def _get_online_nodes(lib_env, node_list, ignore_offline_nodes=False):
-    """
-    Returns NodeAddressesList of online nodes.
-    Raises LibraryError on any failure.
-
-    lib_env -- LibraryEnvironment
-    node_list -- NodeAddressesList
-    ignore_offline_nodes -- if True offline nodes are just omitted from
-        returned list.
-    """
-    to_raise = []
-    online_node_list = NodeAddressesList()
-
-    def is_node_online(node):
-        try:
-            nodes_task.node_check_auth(lib_env.node_communicator(), node)
-            online_node_list.append(node)
-        except NodeConnectionException as e:
-            if ignore_offline_nodes:
-                to_raise.append(reports.omitting_node(node.label))
-            else:
-                to_raise.append(node_communicator_exception_to_report_item(
-                    e, Severities.ERROR, report_codes.SKIP_OFFLINE_NODES
-                ))
-        except NodeCommunicationException as e:
-            to_raise.append(node_communicator_exception_to_report_item(e))
-
-    tools.run_parallel(is_node_online, [([node], {}) for node in node_list])
-
-    lib_env.report_processor.process_list(to_raise)
-    return online_node_list
 
 
 def get_cluster_sbd_status(lib_env):
@@ -348,51 +326,13 @@ def get_cluster_sbd_status(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    node_list = _get_cluster_nodes(lib_env)
-    report_item_list = []
-    successful_node_list = []
-    status_list = []
-
-    def get_sbd_status(node):
-        try:
-            status_list.append({
-                "node": node.label,
-                "status": json.loads(
-                    # here we just need info about sbd service,
-                    # therefore watchdog and device list is empty
-                    sbd.check_sbd(lib_env.node_communicator(), node, "", [])
-                )["sbd"]
-            })
-            successful_node_list.append(node)
-        except NodeCommunicationException as e:
-            report_item_list.append(node_communicator_exception_to_report_item(
-                e,
-                severity=Severities.WARNING
-            ))
-            report_item_list.append(reports.unable_to_get_sbd_status(
-                node.label,
-                "", #reason is in previous report item
-                #warning is there implicit
-            ))
-        except (ValueError, KeyError) as e:
-            report_item_list.append(reports.unable_to_get_sbd_status(
-                node.label, str(e)
-            ))
-
-    tools.run_parallel(get_sbd_status, [([node], {}) for node in node_list])
-    lib_env.report_processor.process_list(report_item_list)
-
-    for node in node_list:
-        if node not in successful_node_list:
-            status_list.append({
-                "node": node.label,
-                "status": {
-                    "installed": None,
-                    "enabled": None,
-                    "running": None
-                }
-            })
-    return status_list
+    com_cmd = GetSbdStatus(lib_env.report_processor)
+    com_cmd.set_targets(
+        lib_env.get_node_target_factory().get_target_list(
+            _get_cluster_nodes(lib_env)
+        )
+    )
+    return run_com(lib_env.get_node_communicator(), com_cmd)
 
 
 def get_cluster_sbd_config(lib_env):
@@ -411,51 +351,13 @@ def get_cluster_sbd_config(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    node_list = _get_cluster_nodes(lib_env)
-    config_list = []
-    successful_node_list = []
-    report_item_list = []
-
-    def get_sbd_config(node):
-        try:
-            config_list.append({
-                "node": node.label,
-                "config": environment_file_to_dict(
-                    sbd.get_sbd_config(lib_env.node_communicator(), node)
-                )
-            })
-            successful_node_list.append(node)
-        except NodeCommandUnsuccessfulException as e:
-            report_item_list.append(reports.unable_to_get_sbd_config(
-                node.label,
-                e.reason,
-                Severities.WARNING
-            ))
-        except NodeCommunicationException as e:
-            report_item_list.append(node_communicator_exception_to_report_item(
-                e,
-                severity=Severities.WARNING
-            ))
-            report_item_list.append(reports.unable_to_get_sbd_config(
-                node.label,
-                "", #reason is in previous report item
-                Severities.WARNING
-            ))
-
-    tools.run_parallel(get_sbd_config, [([node], {}) for node in node_list])
-    lib_env.report_processor.process_list(report_item_list)
-
-    if not len(config_list):
-        return []
-
-    for node in node_list:
-        if node not in successful_node_list:
-            config_list.append({
-                "node": node.label,
-                "config": None
-            })
-    return config_list
-
+    com_cmd = GetSbdConfig(lib_env.report_processor)
+    com_cmd.set_targets(
+        lib_env.get_node_target_factory().get_target_list(
+            _get_cluster_nodes(lib_env)
+        )
+    )
+    return run_com(lib_env.get_node_communicator(), com_cmd)
 
 def get_local_sbd_config(lib_env):
     """
@@ -469,8 +371,7 @@ def get_local_sbd_config(lib_env):
 def _get_cluster_nodes(lib_env):
     if lib_env.is_cman_cluster:
         return lib_env.get_cluster_conf().get_nodes()
-    else:
-        return lib_env.get_corosync_conf().get_nodes()
+    return lib_env.get_corosync_conf().get_nodes()
 
 
 def initialize_block_devices(lib_env, device_list, option_dict):
@@ -572,4 +473,3 @@ def set_message(lib_env, device, node_name, message):
         )
     lib_env.report_processor.process_list(report_item_list)
     sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
-

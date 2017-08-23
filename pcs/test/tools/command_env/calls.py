@@ -4,10 +4,15 @@ from __future__ import (
     print_function,
 )
 
-def show_calls(names, calls):
+def format_call(call):
+    if hasattr(call, "format"):
+        return call.format()
+    return call
+
+def show_calls(name_list, call_list):
     return "\n".join([
-        "  '{0}': {1}".format(pair[0], pair[1])
-        for pair in zip(names, calls)
+        "  {0}. '{1}': {2}".format(i, x[0], format_call(x[1]))
+        for i, x in enumerate(zip(name_list, call_list))
     ])
 
 
@@ -23,7 +28,7 @@ class Queue(object):
 
     def take(self, type_of_call, real_call_info=None):
         if self.__index >= len(self.__call_list):
-            raise self.__extra_call(real_call_info)
+            raise self.__extra_call(type_of_call, real_call_info)
 
         call = self.__call_list[self.__index]
 
@@ -71,10 +76,10 @@ class Queue(object):
             )
         )
 
-    def __extra_call(self, real_call_info):
+    def __extra_call(self, type_of_call, real_call_info):
         return self.error_with_context(
-            "No next call expected, but was:\n    '{0}'"
-            .format(real_call_info)
+            "No next call expected, but was ({0}):\n    '{1}'"
+            .format(type_of_call, real_call_info)
         )
 
 class CallListBuilder(object):

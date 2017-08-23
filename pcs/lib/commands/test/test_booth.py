@@ -7,7 +7,7 @@ from __future__ import (
 import os
 import base64
 
-from pcs.test.tools.pcs_unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase, skip
 
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
@@ -138,6 +138,7 @@ class ConfigDestroyTest(TestCase):
             )
         ])
 
+@skip("TODO: rewrite using new testing fremework")
 @mock.patch("pcs.lib.commands.booth.config_structure.get_authfile")
 @mock.patch("pcs.lib.commands.booth.parse")
 @mock.patch("pcs.lib.booth.config_files.read_authfile")
@@ -380,6 +381,7 @@ class StopBoothTest(TestCase):
         mock_is_systemctl.assert_called_once_with()
 
 
+@skip("TODO: rewrite using new testing fremework")
 @mock.patch("pcs.lib.booth.sync.pull_config_from_node")
 class PullConfigTest(TestCase):
     def setUp(self):

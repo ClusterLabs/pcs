@@ -9,10 +9,23 @@ import os.path
 import tempfile
 
 from pcs import settings
+from pcs.common.node_communicator import (
+    NodeCommunicatorFactory,
+    NodeTargetFactory
+)
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
+from pcs.lib.communication import qdevice
+from pcs.lib.communication.corosync import (
+    CheckCorosyncOffline,
+    DistributeCorosyncConf,
+)
+from pcs.lib.communication.tools import (
+    run,
+    run_and_raise,
+)
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
     exists_local_corosync_conf,
@@ -27,11 +40,7 @@ from pcs.lib.external import (
     NodeCommunicator,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.nodes_task import (
-    distribute_corosync_conf,
-    check_corosync_offline_on_nodes,
-    qdevice_reload_on_nodes,
-)
+from pcs.lib.node_communication import LibCommunicatorLogger
 from pcs.lib.pacemaker.live import (
     ensure_wait_for_idle_support,
     ensure_cib_version,
@@ -83,6 +92,12 @@ class LibraryEnvironment(object):
         self._auth_tokens = None
         self._cib_upgraded = False
         self._cib_data_tmp_file = None
+        self._communicator_factory = NodeCommunicatorFactory(
+            LibCommunicatorLogger(self.logger, self.report_processor),
+            self.user_login,
+            self.user_groups,
+            self._request_timeout
+        )
 
         self.__timeout_cache = {}
 
@@ -115,8 +130,7 @@ class LibraryEnvironment(object):
     def _get_cib_xml(self):
         if self.is_cib_live:
             return get_cib_xml(self.cmd_runner())
-        else:
-            return self._cib_data
+        return self._cib_data
 
     def get_cib(self, minimal_version=None):
         cib = get_cib(self._get_cib_xml())
@@ -183,8 +197,7 @@ class LibraryEnvironment(object):
     def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
             return get_local_corosync_conf()
-        else:
-            return self._corosync_conf_data
+        return self._corosync_conf_data
 
     def get_corosync_conf(self):
         return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
@@ -194,42 +207,57 @@ class LibraryEnvironment(object):
     ):
         corosync_conf_data = corosync_conf_facade.config.export()
         if self.is_corosync_conf_live:
-            node_list = corosync_conf_facade.get_nodes()
-            if corosync_conf_facade.need_stopped_cluster:
-                check_corosync_offline_on_nodes(
-                    self.node_communicator(),
-                    self.report_processor,
-                    node_list,
-                    skip_offline_nodes
-                )
-            distribute_corosync_conf(
-                self.node_communicator(),
-                self.report_processor,
-                node_list,
+            self._push_corosync_conf_live(
+                self.get_node_target_factory().get_target_list(
+                    corosync_conf_facade.get_nodes()
+                ),
                 corosync_conf_data,
-                skip_offline_nodes
+                corosync_conf_facade.need_stopped_cluster,
+                corosync_conf_facade.need_qdevice_reload,
+                skip_offline_nodes,
             )
-            if is_service_running(self.cmd_runner(), "corosync"):
-                reload_corosync_config(self.cmd_runner())
-                self.report_processor.process(
-                    reports.corosync_config_reloaded()
-                )
-            if corosync_conf_facade.need_qdevice_reload:
-                qdevice_reload_on_nodes(
-                    self.node_communicator(),
-                    self.report_processor,
-                    node_list,
-                    skip_offline_nodes
-                )
         else:
             self._corosync_conf_data = corosync_conf_data
 
+    def _push_corosync_conf_live(
+        self, target_list, corosync_conf_data, need_stopped_cluster,
+        need_qdevice_reload, skip_offline_nodes
+    ):
+        if need_stopped_cluster:
+            com_cmd = CheckCorosyncOffline(
+                self.report_processor, skip_offline_nodes
+            )
+            com_cmd.set_targets(target_list)
+            run_and_raise(self.get_node_communicator(), com_cmd)
+        com_cmd = DistributeCorosyncConf(
+            self.report_processor, corosync_conf_data, skip_offline_nodes
+        )
+        com_cmd.set_targets(target_list)
+        run_and_raise(self.get_node_communicator(), com_cmd)
+        if is_service_running(self.cmd_runner(), "corosync"):
+            reload_corosync_config(self.cmd_runner())
+            self.report_processor.process(
+                reports.corosync_config_reloaded()
+            )
+        if need_qdevice_reload:
+            self.report_processor.process(
+                reports.qdevice_client_reload_started()
+            )
+            com_cmd = qdevice.Stop(self.report_processor, skip_offline_nodes)
+            com_cmd.set_targets(target_list)
+            run(self.get_node_communicator(), com_cmd)
+            report_list = com_cmd.error_list
+            com_cmd = qdevice.Start(self.report_processor, skip_offline_nodes)
+            com_cmd.set_targets(target_list)
+            run(self.get_node_communicator(), com_cmd)
+            report_list += com_cmd.error_list
+            if report_list:
+                raise LibraryError()
 
     def get_cluster_conf_data(self):
         if self.is_cluster_conf_live:
             return get_local_cluster_conf()
-        else:
-            return self._cluster_conf_data
+        return self._cluster_conf_data
 
 
     def get_cluster_conf(self):
@@ -290,6 +318,17 @@ class LibraryEnvironment(object):
 
         return CommandRunner(self.logger, self.report_processor, runner_env)
 
+    @property
+    def communicator_factory(self):
+        return self._communicator_factory
+
+    def get_node_communicator(self):
+        return self.communicator_factory.get_communicator()
+
+    def get_node_target_factory(self):
+        return NodeTargetFactory(self.__get_auth_tokens())
+
+    # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):
         return NodeCommunicator(
             self.logger,

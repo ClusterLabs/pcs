@@ -5,7 +5,7 @@ from __future__ import (
 )
 
 from pcs.common import report_codes
-from pcs.lib import reports, nodes_task, node_communication_format
+from pcs.lib import reports, node_communication_format
 from pcs.lib.node import(
     NodeAddresses,
     NodeAddressesList,
@@ -15,6 +15,14 @@ from pcs.lib.node import(
 from pcs.lib.tools import generate_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
+from pcs.lib.communication.nodes import (
+    availability_checker_remote_node,
+    DistributeFiles,
+    PrecheckNewNode,
+    RemoveFiles,
+    ServiceAction,
+)
+from pcs.lib.communication.tools import run, run_and_raise
 from pcs.lib.env_tools import get_nodes, get_nodes_remote, get_nodes_guest
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
@@ -24,13 +32,15 @@ def _ensure_can_add_node_to_remote_cluster(
     env, node_addresses, warn_on_communication_exception=False
 ):
     report_items = []
-    nodes_task.check_can_add_node_to_cluster(
-        env.node_communicator(),
-        node_addresses,
+    com_cmd = PrecheckNewNode(
         report_items,
-        check_response=nodes_task.availability_checker_remote_node,
-        warn_on_communication_exception=warn_on_communication_exception,
+        availability_checker_remote_node,
+        skip_offline_targets=warn_on_communication_exception,
     )
+    com_cmd.add_request(
+        env.get_node_target_factory().get_target(node_addresses)
+    )
+    run(env.get_node_communicator(), com_cmd)
     env.report_processor.process_list(report_items)
 
 def _share_authkey(
@@ -45,32 +55,35 @@ def _share_authkey(
         authkey_content = generate_key()
         node_addresses_list = current_nodes + [candidate_node_addresses]
 
-    nodes_task.distribute_files(
-        env.node_communicator(),
+    com_cmd = DistributeFiles(
         env.report_processor,
         node_communication_format.pcmk_authkey_file(authkey_content),
-        node_addresses_list,
-        skip_offline_nodes,
-        allow_incomplete_distribution,
-        description="remote node configuration files"
+        skip_offline_targets=skip_offline_nodes,
+        allow_fails=allow_incomplete_distribution,
+        description="remote node configuration files",
     )
+    com_cmd.set_targets(
+        env.get_node_target_factory().get_target_list(node_addresses_list)
+    )
+    run_and_raise(env.get_node_communicator(), com_cmd)
 
 def _start_and_enable_pacemaker_remote(
     env, node_list, skip_offline_nodes=False, allow_fails=False
 ):
-    nodes_task.run_actions_on_multiple_nodes(
-        env.node_communicator(),
+    com_cmd = ServiceAction(
         env.report_processor,
         node_communication_format.create_pcmk_remote_actions([
             "start",
             "enable",
         ]),
-        lambda key, response: response.code == "success",
-        node_list,
-        skip_offline_nodes,
-        allow_fails,
+        skip_offline_targets=skip_offline_nodes,
+        allow_fails=allow_fails,
         description="start of service pacemaker_remote"
     )
+    com_cmd.set_targets(
+        env.get_node_target_factory().get_target_list(node_list)
+    )
+    run_and_raise(env.get_node_communicator(), com_cmd)
 
 def _prepare_pacemaker_remote_environment(
     env, current_nodes, node_host, skip_offline_nodes,
@@ -339,27 +352,30 @@ def _destroy_pcmk_remote_env(
     files = {
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
+    target_list = env.get_node_target_factory().get_target_list(
+        node_addresses_list
+    )
 
-    nodes_task.run_actions_on_multiple_nodes(
-        env.node_communicator(),
+    com_cmd = ServiceAction(
         env.report_processor,
         actions,
-        lambda key, response: response.code == "success",
-        node_addresses_list,
-        skip_offline_nodes,
-        allow_fails,
-        description="stop of service pacemaker_remote"
+        skip_offline_targets=skip_offline_nodes,
+        allow_fails=allow_fails,
+        description="stop of service pacemaker_remote",
     )
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
 
-    nodes_task.remove_files(
-        env.node_communicator(),
+    com_cmd = RemoveFiles(
         env.report_processor,
         files,
-        node_addresses_list,
-        skip_offline_nodes,
-        allow_fails,
-        description="remote node files"
+        skip_offline_targets=skip_offline_nodes,
+        allow_fails=allow_fails,
+        description="remote node files",
     )
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
 
 def _report_skip_live_parts_in_remove(node_addresses_list):
     #remote nodes uses ring0 only

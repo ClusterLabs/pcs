@@ -396,9 +396,9 @@ class ConfigTest(unittest.TestCase, BoothMixin):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
             "booth config",
-            "Error: Booth config file '{0}' does not exist\n".format(
-                BOOTH_CONFIG_FILE
-            )
+            "Error: Booth config file '{0}' does not exist\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                .format(BOOTH_CONFIG_FILE)
         )
 
     def test_too_much_args(self):

@@ -10,7 +10,6 @@ from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import NodeCommunicator
 
 def get_local_corosync_conf():
     """
@@ -36,18 +35,6 @@ def get_local_cluster_conf():
 
 def exists_local_corosync_conf():
     return os.path.exists(settings.corosync_conf_file)
-
-def set_remote_corosync_conf(node_communicator, node_addr, config_text):
-    """
-    Send corosync.conf to a node
-    node_addr instance of NodeAddresses
-    config_text corosync.conf text
-    """
-    dummy_response = node_communicator.call_node(
-        node_addr,
-        "remote/set_corosync_conf",
-        NodeCommunicator.format_data_dict({'corosync_conf': config_text})
-    )
 
 def reload_config(runner):
     """

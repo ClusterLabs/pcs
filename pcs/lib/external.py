@@ -27,14 +27,10 @@ except ImportError:
     from urllib.parse import urlencode as urllib_urlencode
 
 from pcs import settings
-from pcs.common import (
-    pcs_pycurl as pycurl,
-    report_codes,
-)
+from pcs.common import pcs_pycurl as pycurl
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
-    run_parallel as tools_run_parallel,
 )
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
@@ -441,6 +437,7 @@ class CommandRunner(object):
         return out_std, out_err, retval
 
 
+# deprecated
 class NodeCommunicationException(Exception):
     # pylint: disable=super-init-not-called
     def __init__(self, node, command, reason):
@@ -449,28 +446,35 @@ class NodeCommunicationException(Exception):
         self.reason = reason
 
 
+# deprecated
 class NodeConnectionException(NodeCommunicationException):
     pass
 
 
+# deprecated
 class NodeAuthenticationException(NodeCommunicationException):
     pass
 
 
+# deprecated
 class NodePermissionDeniedException(NodeCommunicationException):
     pass
 
+# deprecated
 class NodeCommandUnsuccessfulException(NodeCommunicationException):
     pass
 
+# deprecated
 class NodeUnsupportedCommandException(NodeCommunicationException):
     pass
 
 
+# deprecated
 class NodeConnectionTimedOutException(NodeCommunicationException):
     pass
 
 
+# deprecated
 def node_communicator_exception_to_report_item(
     e, severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -507,6 +511,7 @@ def node_communicator_exception_to_report_item(
         )
     raise e
 
+# deprecated, use pcs.common.node_communicator.Communicator
 class NodeCommunicator(object):
     """
     Sends requests to nodes
@@ -711,39 +716,3 @@ class NodeCommunicator(object):
                 ).decode("utf-8")
             ))
         return cookies
-
-
-def parallel_nodes_communication_helper(
-    func, func_args_kwargs, reporter, skip_offline_nodes=False
-):
-    """
-    Help running node calls in parallel and handle communication exceptions.
-    Raise LibraryError on any failure.
-
-    function func function to be run, should be a function calling a node
-    iterable func_args_kwargs list of tuples: (*args, **kwargs)
-    bool skip_offline_nodes do not raise LibraryError if a node is unreachable
-    """
-    failure_severity = ReportItemSeverity.ERROR
-    failure_forceable = report_codes.SKIP_OFFLINE_NODES
-    if skip_offline_nodes:
-        failure_severity = ReportItemSeverity.WARNING
-        failure_forceable = None
-    report_items = []
-
-    def _parallel(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except NodeCommunicationException as e:
-            report_items.append(
-                node_communicator_exception_to_report_item(
-                    e,
-                    failure_severity,
-                    failure_forceable
-                )
-            )
-        except LibraryError as e:
-            report_items.extend(e.args)
-
-    tools_run_parallel(_parallel, func_args_kwargs)
-    reporter.process_list(report_items)

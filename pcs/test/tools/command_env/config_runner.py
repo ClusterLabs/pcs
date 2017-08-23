@@ -6,6 +6,8 @@ from __future__ import (
 
 from pcs.test.tools.command_env.config_runner_cib import CibShortcuts
 from pcs.test.tools.command_env.config_runner_pcmk import PcmkShortcuts
+from pcs.test.tools.command_env.config_runner_corosync import CorosyncShortcuts
+from pcs.test.tools.command_env.config_runner_systemctl import SystemctlShortcuts
 from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
 
 
@@ -15,6 +17,8 @@ class RunnerConfig(object):
 
         self.cib = wrap_helper(CibShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
+        self.corosync = wrap_helper(CorosyncShortcuts(self.__calls))
+        self.systemctl = wrap_helper(SystemctlShortcuts(self.__calls))
 
     def place(
         self, command,
