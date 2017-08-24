@@ -21,7 +21,9 @@ from pcs.lib.external import NodeCommunicator, NodeAuthenticationException
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.errors import ReportItemSeverity as severity
 
-import pcs.lib.nodes_task as lib
+# import pcs.lib.nodes_task as lib
+lib = mock.Mock()
+lib.__name__ = "nodes_task"
 
 patch_nodes_task = create_patcher(lib)
 
