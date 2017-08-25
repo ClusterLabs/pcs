@@ -94,14 +94,12 @@ def is_systemctl():
     Check whenever is local system running on systemd.
     Returns True if current system is systemctl compatible, False otherwise.
     """
-    systemctl_paths = [
-        '/usr/bin/systemctl',
-        '/bin/systemctl',
-        '/var/run/systemd/system',
+    systemd_paths = [
         '/run/systemd/system',
+        '/var/run/systemd/system',
     ]
-    for path in systemctl_paths:
-        if os.path.exists(path):
+    for path in systemd_paths:
+        if os.path.isdir(path):
             return True
     return False
 
