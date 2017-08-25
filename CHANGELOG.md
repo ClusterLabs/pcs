@@ -5,7 +5,9 @@
 ### Fixed
 - Fixed some crashes when pcs encounters a non-ascii character in environment
   variables, command line arguments and so on ([rhbz#1435697])
+- Fixed detecting if systemd is in use ([ghissue#118])
 
+[ghissue#118]: https://github.com/ClusterLabs/pcs/issues/118
 [rhbz#1435697]: https://bugzilla.redhat.com/show_bug.cgi?id=1435697
 
 

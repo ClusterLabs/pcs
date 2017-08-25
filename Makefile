@@ -29,23 +29,14 @@ ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
 
-# Check for systemd presence, add compatibility with Debian based distros
-IS_SYSTEMCTL=false
-
-ifeq ($(IS_DEBIAN),true)
-  IS_SYSTEMCTL = $(shell if [ -d /var/run/systemd/system ] ; then echo true ; else echo false; fi)
-  ifeq ($(IS_SYSTEMCTL),false)
-    ifeq ($(SYSTEMCTL_OVERRIDE),true)
-      IS_SYSTEMCTL=true
-    endif
-  endif
+# Check for systemd presence
+ifeq ($(SYSTEMCTL_OVERRIDE),true)
+  IS_SYSTEMCTL=true
 else
-  ifeq ("$(wildcard /usr/bin/systemctl)","/usr/bin/systemctl")
-    IS_SYSTEMCTL=true
+  ifeq ($(SYSTEMCTL_OVERRIDE),false)
+    IS_SYSTEMCTL=false
   else
-    ifeq ("$(wildcard /bin/systemctl)","/usr/bin/systemctl")
-      IS_SYSTEMCTL=true
-    endif
+    IS_SYSTEMCTL = $(shell if [ -d /run/systemd/system ] || [ -d /var/run/systemd/system ] ; then echo true ; else echo false; fi)
   endif
 endif
 

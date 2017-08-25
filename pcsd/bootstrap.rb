@@ -25,13 +25,11 @@ end
 
 def is_systemctl()
   systemctl_paths = [
-      '/usr/bin/systemctl',
-      '/bin/systemctl',
-      '/var/run/systemd/system',
       '/run/systemd/system',
+      '/var/run/systemd/system',
   ]
   systemctl_paths.each { |path|
-    return true if File.exist?(path)
+    return true if File.directory?(path)
   }
   return false
 end
@@ -77,6 +75,12 @@ def configure_logger(log_device)
     logger.debug "Detected RHEL 6"
   else
     logger.debug "Did not detect RHEL 6"
+  end
+
+  if ISSYSTEMCTL
+    logger.debug "Detected systemd is in use"
+  else
+    logger.debug "Detected systemd is not in use"
   end
   return logger
 end
