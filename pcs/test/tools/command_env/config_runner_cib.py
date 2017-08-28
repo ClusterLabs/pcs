@@ -57,6 +57,8 @@ class CibShortcuts(object):
         load_key="load_cib",
         resources=None,
         instead=None,
+        stderr="",
+        returncode=0
     ):
         """
         Create call for pushing cib.
@@ -80,9 +82,89 @@ class CibShortcuts(object):
             name,
             RunnerCall(
                 "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                stderr=stderr,
+                returncode=returncode,
                 check_stdin=create_check_stdin_xml(cib),
             ),
             instead=instead,
+        )
+
+    def push_independent(
+        self,
+        cib,
+        name="push_cib",
+        instead=None,
+    ):
+        """
+        Create call for pushing cib.
+        Cib is specified as an argument.
+
+        string name -- key of the call
+        string cib -- whole cib to push
+        string instead -- key of call instead of which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                check_stdin=create_check_stdin_xml(cib),
+            ),
+            instead=instead,
+        )
+
+    def diff(
+        self,
+        cib_old_file,
+        cib_new_file,
+        name="diff_cib",
+        stdout="resulting diff",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for diffing two CIBs stored in two files
+        string cib_old_file -- path to a file with an old CIB
+        string cib_new_file -- path to a file with a new CIB
+        string name -- key of the call
+        string stdout -- resulting diff
+        string stderr -- error returned from the diff process
+        int returncode -- exit code of the diff process
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "crm_diff --original {old} --new {new} --no-version".format(
+                    old=cib_old_file, new=cib_new_file
+                ),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def push_diff(
+        self,
+        name="push_cib_diff",
+        cib_diff="resulting diff",
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for pushing a diff of CIBs
+        string name -- key of the call
+        string cib_diff -- the diff of CIBs
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "cibadmin --patch --verbose --xml-pipe",
+                check_stdin=create_check_stdin_xml(cib_diff),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
         )
 
     def upgrade(self, name="upgrade_cib", before=None):

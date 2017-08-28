@@ -34,14 +34,12 @@ def patch_env(call_queue, config, init_env):
     #by accident. Such test would fails on different machine (with another live
     #environment)
 
-    original_runner = init_env.cmd_runner()
-    original_node_communicator = init_env.get_node_communicator()
     patcher_list = [
         patch_lib_env(
             "cmd_runner",
             lambda env:
                 Runner(call_queue) if not config.spy
-                else spy.Runner(original_runner)
+                else spy.Runner(init_env.cmd_runner())
         ),
 
         mock.patch(
@@ -54,7 +52,7 @@ def patch_env(call_queue, config, init_env):
             "get_node_communicator",
             lambda env:
                 NodeCommunicator(call_queue) if not config.spy
-                else spy.NodeCommunicator(original_node_communicator)
+                else spy.NodeCommunicator(init_env.get_node_communicator())
         )
     ]
 
@@ -62,12 +60,8 @@ def patch_env(call_queue, config, init_env):
     #patch only the internals (runner...). So push_cib is patched only when it
     #is explicitly configured
     if is_push_cib_call_in(call_queue):
-        push_cib = get_push_cib(call_queue)
         patcher_list.append(
-            patch_lib_env(
-                "push_cib",
-                lambda env, cib, wait=False: push_cib(cib, wait)
-            )
+            patch_lib_env("push_cib", get_push_cib(call_queue))
         )
 
     for patcher in patcher_list:
@@ -80,7 +74,11 @@ def patch_env(call_queue, config, init_env):
     return unpatch
 
 class EnvAssistant(object):
-    def __init__(self, config=None, test_case=None, corosync_conf_data=None):
+    # pylint: disable=too-many-instance-attributes
+    def __init__(
+        self, config=None, test_case=None, cib_data=None,
+        corosync_conf_data=None
+    ):
         """
         TestCase test_case -- cleanup callback is registered to test_case if is
             provided
@@ -89,6 +87,7 @@ class EnvAssistant(object):
         self.__config = config if config else Config()
         self.__reports_asserted = False
         self.__extra_reports = []
+        self.__cib_data = cib_data
         self.__corosync_conf_data = corosync_conf_data
 
         self.__unpatch = None
@@ -129,6 +128,7 @@ class EnvAssistant(object):
         self._env =  LibraryEnvironment(
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor(),
+            cib_data=self.__cib_data,
             corosync_conf_data=self.__corosync_conf_data,
             auth_tokens_getter=(
                 (lambda: self.__config.spy.auth_tokens)

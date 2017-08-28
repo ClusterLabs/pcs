@@ -66,7 +66,7 @@ def create(
         duplication_alowed=duplication_alowed,
     )
 
-    env.push_cib(cib)
+    env.push_cib()
 
 def remove(env, ticket_key, resource_id):
     """
@@ -74,8 +74,7 @@ def remove(env, ticket_key, resource_id):
     If resource is in resource set with another resources then only resource ref
     is removed. If resource is alone in resource set whole constraint is removed.
     """
-    cib = env.get_cib()
-    constraint_section = get_constraints(cib)
+    constraint_section = get_constraints(env.get_cib())
     any_plain_removed = ticket.remove_plain(
         constraint_section,
         ticket_key,
@@ -87,6 +86,6 @@ def remove(env, ticket_key, resource_id):
         resource_id
     )
 
-    env.push_cib(cib)
+    env.push_cib()
 
     return any_plain_removed or any_with_resource_set_removed

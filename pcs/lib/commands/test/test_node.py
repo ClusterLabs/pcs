@@ -282,7 +282,7 @@ class CibRunnerNodes(TestCase):
             get_cluster_status_xml.assert_called_once_with("mocked cmd_runner")
             ClusterState.assert_called_once_with("mock get_cluster_status_xml")
 
-        push_cib.assert_called_once_with("mocked cib", wait)
+        push_cib.assert_called_once_with(wait=wait)
 
     @patch_env("ensure_wait_satisfiable", mock.Mock(side_effect=LibraryError))
     def test_raises_when_wait_is_not_satisfiable(self, push_cib):

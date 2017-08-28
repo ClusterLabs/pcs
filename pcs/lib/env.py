@@ -4,9 +4,7 @@ from __future__ import (
     print_function,
 )
 
-from lxml import etree
 import os.path
-import tempfile
 
 from pcs import settings
 from pcs.common.node_communicator import (
@@ -42,16 +40,20 @@ from pcs.lib.external import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.node_communication import LibCommunicatorLogger
 from pcs.lib.pacemaker.live import (
-    ensure_wait_for_idle_support,
+    diff_cibs_xml,
     ensure_cib_version,
+    ensure_wait_for_idle_support,
     get_cib,
     get_cib_xml,
-    replace_cib_configuration_xml,
-    wait_for_idle,
     get_cluster_status_xml,
+    push_cib_diff_xml,
+    replace_cib_configuration,
+    wait_for_idle,
 )
 from pcs.lib.pacemaker.state import get_cluster_state_dom
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
+from pcs.lib.tools import write_tmpfile
+from pcs.lib.xml_tools import etree_to_str
 
 class LibraryEnvironment(object):
     # pylint: disable=too-many-instance-attributes
@@ -89,9 +91,12 @@ class LibraryEnvironment(object):
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
         self._auth_tokens_getter = auth_tokens_getter
+
         self._auth_tokens = None
         self._cib_upgraded = False
         self._cib_data_tmp_file = None
+        self.__loaded_cib_diff_source = None
+        self.__loaded_cib_to_modify = None
         self._communicator_factory = NodeCommunicatorFactory(
             LibCommunicatorLogger(self.logger, self.report_processor),
             self.user_login,
@@ -133,31 +138,34 @@ class LibraryEnvironment(object):
         return self._cib_data
 
     def get_cib(self, minimal_version=None):
-        cib = get_cib(self._get_cib_xml())
+        if self.__loaded_cib_diff_source is not None:
+            raise AssertionError("CIB has already been loaded")
+        self.__loaded_cib_diff_source = self._get_cib_xml()
+        self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
                 self.cmd_runner(),
-                cib,
+                self.__loaded_cib_to_modify,
                 minimal_version
             )
             if upgraded_cib is not None:
-                cib = upgraded_cib
+                self.__loaded_cib_to_modify = upgraded_cib
+                self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if self.is_cib_live and not self._cib_upgraded:
                     self.report_processor.process(
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgraded = True
-        return cib
+        return self.__loaded_cib_to_modify
+
+    @property
+    def cib(self):
+        if self.__loaded_cib_diff_source is None:
+            raise AssertionError("CIB has not been loaded")
+        return self.__loaded_cib_to_modify
 
     def get_cluster_state(self):
         return get_cluster_state_dom(get_cluster_status_xml(self.cmd_runner()))
-
-    def _push_cib_xml(self, cib_data):
-        if self.is_cib_live:
-            replace_cib_configuration_xml(self.cmd_runner(), cib_data)
-            self._cib_upgraded = False
-        else:
-            self._cib_data = cib_data
 
     def _get_wait_timeout(self, wait):
         if wait is False:
@@ -179,16 +187,59 @@ class LibraryEnvironment(object):
         """
         self._get_wait_timeout(wait)
 
-    def push_cib(self, cib, wait=False):
-        timeout = self._get_wait_timeout(wait)
-        #etree returns bytes: b'xml'
-        #python 3 removed .encode() from bytes
-        #run(...) calls subprocess.Popen.communicate which calls encode...
-        #so here is bytes to str conversion
-        self._push_cib_xml(etree.tostring(cib).decode())
+    def push_cib(self, custom_cib=None, wait=False):
+        if custom_cib is not None:
+            return self.push_cib_full(custom_cib, wait)
+        return self.push_cib_diff(wait)
 
-        if timeout is not False:
-            wait_for_idle(self.cmd_runner(), timeout)
+    def push_cib_full(self, custom_cib=None, wait=False):
+        if custom_cib is None and self.__loaded_cib_diff_source is None:
+            raise AssertionError("CIB has not been loaded")
+        if custom_cib is not None and self.__loaded_cib_diff_source is not None:
+            raise AssertionError("CIB has been loaded, cannot push custom CIB")
+
+        cmd_runner = self.cmd_runner()
+        cib_to_push = (
+            self.__loaded_cib_to_modify if custom_cib is None else custom_cib
+        )
+        self.__do_push_cib(
+            cmd_runner,
+            lambda: replace_cib_configuration(cmd_runner, cib_to_push),
+            cib_to_push,
+            wait
+        )
+
+    def push_cib_diff(self, wait=False):
+        if self.__loaded_cib_diff_source is None:
+            raise AssertionError("CIB has not been loaded")
+
+        cmd_runner = self.cmd_runner()
+        self.__do_push_cib(
+            cmd_runner,
+            lambda: push_cib_diff_xml(
+                cmd_runner,
+                diff_cibs_xml(
+                    cmd_runner,
+                    self.report_processor,
+                    self.__loaded_cib_diff_source,
+                    etree_to_str(self.__loaded_cib_to_modify)
+                )
+            ),
+            self.__loaded_cib_to_modify,
+            wait
+        )
+
+    def __do_push_cib(self, cmd_runner, live_push_strategy, not_live_cib, wait):
+        timeout = self._get_wait_timeout(wait)
+        if self.is_cib_live:
+            live_push_strategy()
+            self._cib_upgraded = False
+        else:
+            self._cib_data = etree_to_str(not_live_cib)
+        self.__loaded_cib_diff_source = None
+        self.__loaded_cib_to_modify = None
+        if self.is_cib_live and timeout is not False:
+            wait_for_idle(cmd_runner, timeout)
 
     @property
     def is_cib_live(self):
@@ -306,12 +357,14 @@ class LibraryEnvironment(object):
             # don't need to take care of it every time the runner is called.
             if not self._cib_data_tmp_file:
                 try:
-                    self._cib_data_tmp_file = tempfile.NamedTemporaryFile(
-                        "w+",
-                        suffix=".pcs"
+                    cib_data = self._get_cib_xml()
+                    self._cib_data_tmp_file = write_tmpfile(cib_data)
+                    self.report_processor.process(
+                        reports.tmp_file_write(
+                            self._cib_data_tmp_file.name,
+                            cib_data
+                        )
                     )
-                    self._cib_data_tmp_file.write(self._get_cib_xml())
-                    self._cib_data_tmp_file.flush()
                 except EnvironmentError as e:
                     raise LibraryError(reports.cib_save_tmp_error(str(e)))
             runner_env["CIB_file"] = self._cib_data_tmp_file.name

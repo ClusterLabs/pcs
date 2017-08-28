@@ -8,8 +8,12 @@ from functools import partial
 from textwrap import dedent
 
 from pcs.common import report_codes
+from pcs.lib import reports
 from pcs.lib.commands import resource
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity as severities,
+)
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
@@ -20,8 +24,7 @@ TIMEOUT=10
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.8.xml",
-    default_wait_timeout=TIMEOUT
+    base_cib_filename="cib-empty-2.8.xml"
 )
 
 def simple_bundle_update(env, wait=TIMEOUT):
@@ -96,7 +99,7 @@ class Basics(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push()
+            .env.push_cib()
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
 
@@ -117,7 +120,7 @@ class Basics(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push()
+            .env.push_cib()
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
         self.env_assist.assert_reports([
@@ -163,7 +166,7 @@ class ContainerDocker(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push(
+            .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -237,7 +240,7 @@ class ContainerDocker(TestCase):
     def test_unknow_option_forced(self):
         (self.config
             .runner.cib.load(resources=fixture_resources_minimal)
-            .runner.cib.push(resources=self.fixture_cib_extra_option)
+            .env.push_cib(resources=self.fixture_cib_extra_option)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -264,7 +267,7 @@ class ContainerDocker(TestCase):
     def test_unknown_option_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_extra_option)
-            .runner.cib.push(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -308,7 +311,7 @@ class Network(TestCase):
     def test_add_network(self):
         (self.config
             .runner.cib.load(resources=fixture_resources_minimal)
-            .runner.cib.push(resources=self.fixture_cib_interface)
+            .env.push_cib(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -321,7 +324,7 @@ class Network(TestCase):
     def test_remove_network(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_interface)
-            .runner.cib.push(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal)
         )
 
         resource.bundle_update(
@@ -346,7 +349,7 @@ class Network(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push(
+            .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -381,7 +384,7 @@ class Network(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push(
+            .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -428,7 +431,7 @@ class Network(TestCase):
     def test_unknow_option_forced(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_interface)
-            .runner.cib.push(resources=self.fixture_cib_extra_option)
+            .env.push_cib(resources=self.fixture_cib_extra_option)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -456,7 +459,7 @@ class Network(TestCase):
     def test_unknown_option_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_extra_option)
-            .runner.cib.push(resources=self.fixture_cib_interface)
+            .env.push_cib(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -503,7 +506,7 @@ class PortMap(TestCase):
     def test_add_network(self):
         (self.config
             .runner.cib.load(resources=fixture_resources_minimal)
-            .runner.cib.push(resources=self.fixture_cib_port_80)
+            .env.push_cib(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -518,7 +521,7 @@ class PortMap(TestCase):
     def test_remove_network(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_port_80)
-            .runner.cib.push(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -542,7 +545,7 @@ class PortMap(TestCase):
                     </resources>
                 """
             )
-            .runner.cib.push(
+            .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
@@ -564,7 +567,7 @@ class PortMap(TestCase):
     def test_add(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_port_80)
-            .runner.cib.push(resources=self.fixture_cib_port_80_8080)
+            .env.push_cib(resources=self.fixture_cib_port_80_8080)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -579,7 +582,7 @@ class PortMap(TestCase):
     def test_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_port_80_8080)
-            .runner.cib.push(resources=self.fixture_cib_port_80)
+            .env.push_cib(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -666,7 +669,7 @@ class StorageMap(TestCase):
     def test_add_storage(self):
         (self.config
             .runner.cib.load(resources=fixture_resources_minimal)
-            .runner.cib.push(resources=self.fixture_cib_storage_1)
+            .env.push_cib(resources=self.fixture_cib_storage_1)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -682,7 +685,7 @@ class StorageMap(TestCase):
     def test_remove_storage(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_storage_1)
-            .runner.cib.push(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -695,7 +698,7 @@ class StorageMap(TestCase):
     def test_add(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_storage_1)
-            .runner.cib.push(resources=self.fixture_cib_storage_1_2)
+            .env.push_cib(resources=self.fixture_cib_storage_1_2)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -711,7 +714,7 @@ class StorageMap(TestCase):
     def test_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_storage_1_2)
-            .runner.cib.push(resources=self.fixture_cib_storage_1)
+            .env.push_cib(resources=self.fixture_cib_storage_1)
         )
 
         resource.bundle_update(
@@ -775,7 +778,7 @@ class Meta(TestCase):
     def test_add_meta_element(self):
         (self.config
             .runner.cib.load(resources=self.fixture_no_meta)
-            .runner.cib.push(resources=self.fixture_meta_stopped)
+            .env.push_cib(resources=self.fixture_meta_stopped)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -788,7 +791,7 @@ class Meta(TestCase):
     def test_remove_meta_element(self):
         (self.config
             .runner.cib.load(resources=self.fixture_meta_stopped)
-            .runner.cib.push(resources=self.fixture_no_meta)
+            .env.push_cib(resources=self.fixture_no_meta)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -831,7 +834,7 @@ class Meta(TestCase):
         """
         (self.config
             .runner.cib.load(resources=fixture_cib_pre)
-            .runner.cib.push(resources=fixture_cib_post)
+            .env.push_cib(resources=fixture_cib_post)
         )
         resource.bundle_update(
             self.env_assist.get_env(), "B1",
@@ -896,7 +899,10 @@ class Wait(TestCase):
         (self.config
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_cib_pre)
-            .runner.cib.push(resources=self.fixture_resources_bundle_simple)
+            .env.push_cib(
+                resources=self.fixture_resources_bundle_simple,
+                wait=TIMEOUT
+            )
         )
 
     def test_wait_fail(self):
@@ -906,8 +912,15 @@ class Wait(TestCase):
                     Action 12: B1-node2-stop on node2
             Error performing operation: Timer expired
             """
+        ).strip()
+        self.config.env.push_cib(
+            resources=self.fixture_resources_bundle_simple,
+            wait=TIMEOUT,
+            exception=LibraryError(
+                reports.wait_for_idle_timed_out(wait_error_message)
+            ),
+            instead="env.push_cib"
         )
-        self.config.runner.pcmk.wait(stderr=wait_error_message)
 
         self.env_assist.assert_raise_library_error(
             lambda: simple_bundle_update(self.env_assist.get_env()),
@@ -920,7 +933,6 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_running(self):
         (self.config
-            .runner.pcmk.wait()
             .runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         simple_bundle_update(self.env_assist.get_env())
@@ -933,7 +945,6 @@ class Wait(TestCase):
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_not_running(self):
         (self.config
-            .runner.pcmk.wait()
             .runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         simple_bundle_update(self.env_assist.get_env())

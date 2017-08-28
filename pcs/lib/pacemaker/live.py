@@ -4,8 +4,8 @@ from __future__ import (
     print_function,
 )
 
-import os.path
 from lxml import etree
+import os.path
 
 from pcs import settings
 from pcs.common.tools import (
@@ -16,6 +16,8 @@ from pcs.lib import reports
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.tools import write_tmpfile
+from pcs.lib.xml_tools import etree_to_str
 
 
 __EXITCODE_WAIT_TIMEOUT = 62
@@ -82,12 +84,55 @@ def replace_cib_configuration_xml(runner, xml):
         raise LibraryError(reports.cib_push_error(stderr, stdout))
 
 def replace_cib_configuration(runner, tree):
-    #etree returns bytes: b'xml'
-    #python 3 removed .encode() from bytes
-    #run(...) calls subprocess.Popen.communicate which calls encode...
-    #so here is bytes to str conversion
-    xml = etree.tostring(tree).decode()
-    return replace_cib_configuration_xml(runner, xml)
+    return replace_cib_configuration_xml(runner, etree_to_str(tree))
+
+def push_cib_diff_xml(runner, cib_diff_xml):
+    cmd = [
+        __exec("cibadmin"),
+        "--patch",
+        "--verbose",
+        "--xml-pipe",
+    ]
+    stdout, stderr, retval = runner.run(cmd, stdin_string=cib_diff_xml)
+    if retval != 0:
+        raise LibraryError(reports.cib_push_error(stderr, stdout))
+
+def diff_cibs_xml(runner, reporter, cib_old_xml, cib_new_xml):
+    """
+    Return xml diff of two CIBs
+    CommandRunner runner
+    string cib_old_xml -- original CIB
+    string cib_new_xml -- modified CIB
+    """
+    try:
+        cib_old_tmp_file = write_tmpfile(cib_old_xml)
+        reporter.process(
+            reports.tmp_file_write(cib_old_tmp_file.name, cib_old_xml)
+        )
+        cib_new_tmp_file = write_tmpfile(cib_new_xml)
+        reporter.process(
+            reports.tmp_file_write(cib_new_tmp_file.name, cib_new_xml)
+        )
+    except EnvironmentError as e:
+        raise LibraryError(reports.cib_save_tmp_error(str(e)))
+    command = [
+        __exec("crm_diff"),
+        "--original",
+        cib_old_tmp_file.name,
+        "--new",
+        cib_new_tmp_file.name,
+        "--no-version",
+    ]
+    # dummy_retval == 1 means one of two things:
+    # a) an error has occured
+    # b) --original and --new differ
+    # therefore it's of no use to see if an error occurred
+    stdout, stderr, dummy_retval = runner.run(command)
+    if stderr.strip():
+        raise LibraryError(
+            reports.cib_diff_error(stderr.strip(), cib_old_xml, cib_new_xml)
+        )
+    return stdout.strip()
 
 def ensure_cib_version(runner, cib, version):
     """

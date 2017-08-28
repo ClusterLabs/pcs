@@ -237,7 +237,7 @@ def node_add_remote(
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
     )
-    env.push_cib(cib, wait)
+    env.push_cib(wait=wait)
     if wait:
         _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
@@ -304,7 +304,7 @@ def node_add_guest(
         allow_pacemaker_remote_service_fail,
     )
 
-    env.push_cib(cib, wait)
+    env.push_cib(wait=wait)
     if wait:
         _ensure_resource_running(env, resource_id)
 
@@ -504,7 +504,7 @@ def node_remove_guest(
     for resource_element in resource_element_list:
         guest_node.unset_guest(resource_element)
 
-    env.push_cib(cib, wait)
+    env.push_cib(wait=wait)
 
     #remove node from pcmk caches
     if env.is_cib_live:

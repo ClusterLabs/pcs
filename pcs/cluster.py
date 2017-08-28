@@ -1416,7 +1416,7 @@ def cluster_push(argv):
             "--no-version"
         ]
         patch, error, dummy_retval = runner.run(command)
-        # dummy_retval == -1 means one of two things:
+        # dummy_retval == 1 means one of two things:
         # a) an error has occured
         # b) --original and --new differ
         # therefore it's of no use to see if an error occurred

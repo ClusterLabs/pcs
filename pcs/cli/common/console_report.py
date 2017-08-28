@@ -690,6 +690,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.CIB_DIFF_ERROR: lambda info:
+        "Unable to diff CIB: {reason}\n{cib_new}"
+        .format(**info)
+    ,
+
     codes.CIB_SAVE_TMP_ERROR: lambda info:
         "Unable to save CIB to a temporary file: {reason}"
         .format(**info)
@@ -1291,5 +1296,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "this command is not sufficient for removing a guest node, use"
             " 'pcs cluster node remove-guest'"
         )
+    ,
+
+    codes.TMP_FILE_WRITE: lambda info:
+        (
+            "Writing to a temporary file {file_path}:\n"
+            "--Debug Content Start--\n{content}\n--Debug Content End--\n"
+        ).format(**info)
     ,
 }

@@ -14,9 +14,8 @@ REQUIRED_CIB_VERSION = (2, 0, 0)
 
 @contextmanager
 def cib_acl_section(env):
-    cib = env.get_cib(REQUIRED_CIB_VERSION)
-    yield get_acls(cib)
-    env.push_cib(cib)
+    yield get_acls(env.get_cib(REQUIRED_CIB_VERSION))
+    env.push_cib()
 
 def create_role(lib_env, role_id, permission_info_list, description):
     """

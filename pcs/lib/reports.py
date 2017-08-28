@@ -1325,6 +1325,22 @@ def cib_save_tmp_error(reason):
         }
     )
 
+def cib_diff_error(reason, cib_old, cib_new):
+    """
+    cannot obtain a diff of CIBs
+    string reason -- error description
+    string cib_old -- the CIB to be diffed against
+    string cib_new -- the CIB diffed against the old cib
+    """
+    return ReportItem.error(
+        report_codes.CIB_DIFF_ERROR,
+        info={
+            "reason": reason,
+            "cib_old": cib_old,
+            "cib_new": cib_new,
+        }
+    )
+
 def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code
@@ -2726,4 +2742,18 @@ def use_command_node_remove_guest(
         severity,
         info={},
         forceable=forceable
+    )
+
+def tmp_file_write(file_path, content):
+    """
+    It has been written into a temporary file
+    string file_path -- the file path
+    string content -- content which has been written
+    """
+    return ReportItem.debug(
+        report_codes.TMP_FILE_WRITE,
+        info={
+            "file_path": file_path,
+            "content": content,
+        }
     )

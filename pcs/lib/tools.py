@@ -5,6 +5,7 @@ from __future__ import (
 )
 import binascii
 import os
+import tempfile
 
 
 def generate_key(random_bytes_count=32):
@@ -39,7 +40,6 @@ def environment_file_to_dict(config):
         data[key.strip()] = value
     return data
 
-
 def dict_to_environment_file(config_dict):
     """
     Convert data in dictionary to Environment file format.
@@ -54,3 +54,16 @@ def dict_to_environment_file(config_dict):
     for key, val in sorted(config_dict.items()):
         lines.append("{key}={val}\n".format(key=key, val=val))
     return "".join(lines)
+
+def write_tmpfile(data, binary=False):
+    """
+    Write data to a new tmp file and return the file; raises EnvironmentError.
+
+    string or bytes data -- data to write to the file
+    bool binary -- treat data as binary?
+    """
+    mode = "w+b" if binary else "w+"
+    tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")
+    tmpfile.write(data)
+    tmpfile.flush()
+    return tmpfile
