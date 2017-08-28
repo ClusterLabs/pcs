@@ -123,7 +123,7 @@ def diff_cibs_xml(runner, reporter, cib_old_xml, cib_new_xml):
         cib_new_tmp_file.name,
         "--no-version",
     ]
-    # dummy_retval == -1 means one of two things:
+    # dummy_retval == 1 means one of two things:
     # a) an error has occured
     # b) --original and --new differ
     # therefore it's of no use to see if an error occurred

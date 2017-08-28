@@ -74,6 +74,7 @@ def patch_env(call_queue, config, init_env):
     return unpatch
 
 class EnvAssistant(object):
+    # pylint: disable=too-many-instance-attributes
     def __init__(
         self, config=None, test_case=None, cib_data=None,
         corosync_conf_data=None

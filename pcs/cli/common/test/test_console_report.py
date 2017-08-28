@@ -1737,3 +1737,32 @@ class ServiceDisableSuccess(NameBuildTest):
             }
         )
 
+
+class CibDiffError(NameBuildTest):
+    code = codes.CIB_DIFF_ERROR
+    def test_success(self):
+        self.assert_message_from_info(
+            "Unable to diff CIB: error message\n<cib-new />",
+            {
+                "reason": "error message",
+                "cib_old": "<cib-old />",
+                "cib_new": "<cib-new />",
+            }
+        )
+
+
+class TmpFileWrite(NameBuildTest):
+    code = codes.TMP_FILE_WRITE
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Writing to a temporary file /tmp/pcs/test.tmp:\n"
+                "--Debug Content Start--\n"
+                "test file\ncontent\n\n"
+                "--Debug Content End--\n"
+            ),
+            {
+                "file_path": "/tmp/pcs/test.tmp",
+                "content": "test file\ncontent\n",
+            }
+        )

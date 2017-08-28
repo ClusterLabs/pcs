@@ -60,6 +60,7 @@ def write_tmpfile(data, binary=False):
     Write data to a new tmp file and return the file; raises EnvironmentError.
 
     string or bytes data -- data to write to the file
+    bool binary -- treat data as binary?
     """
     mode = "w+b" if binary else "w+"
     tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")

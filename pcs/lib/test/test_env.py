@@ -1153,7 +1153,7 @@ class CibLivePushFull(CibLive, TestCase):
     def test_push_fails(self):
         (self.config
             .runner.cib.load()
-            .runner.cib.push(stderr="invalid cib")
+            .runner.cib.push(stderr="invalid cib", returncode=1)
         )
         env = self.env_assist.get_env()
         env.get_cib()
@@ -1183,7 +1183,9 @@ class CibLivePushFull(CibLive, TestCase):
         self.config.runner.cib.load()
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assert_cannot_push_custom(lambda: env.push_cib_full("custom cib"))
+        self.assert_cannot_push_custom(
+            lambda: env.push_cib_full(etree.XML("<custom_cib />"))
+        )
 
 
 class CibLivePushDiff(CibLive, TestCase):
@@ -1401,7 +1403,9 @@ class CibFilePushFull(CibFile, TestCase):
     def test_push_custom_after_get(self):
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assert_cannot_push_custom(lambda: env.push_cib_full("custom cib"))
+        self.assert_cannot_push_custom(
+            lambda: env.push_cib_full(etree.XML("<custom_cib />"))
+        )
 
 
 class CibFilePushDiff(CibFile, TestCase):

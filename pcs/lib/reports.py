@@ -1329,8 +1329,8 @@ def cib_diff_error(reason, cib_old, cib_new):
     """
     cannot obtain a diff of CIBs
     string reason -- error description
-    string old_cib -- the CIB to be diffed against
-    string new_cib -- the CIB diffed against the old cib
+    string cib_old -- the CIB to be diffed against
+    string cib_new -- the CIB diffed against the old cib
     """
     return ReportItem.error(
         report_codes.CIB_DIFF_ERROR,

@@ -47,7 +47,7 @@ def get_push_cib(call_queue):
             (
                 "Trying to call env.push cib (call no. {0}) but cib in env does"
                 " not match\n\n"
-             ).format(i)
+            ).format(i)
         )
 
         if wait != expected_call.wait:

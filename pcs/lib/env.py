@@ -140,24 +140,22 @@ class LibraryEnvironment(object):
     def get_cib(self, minimal_version=None):
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
-        cib_xml = self._get_cib_xml()
-        cib = get_cib(cib_xml)
+        self.__loaded_cib_diff_source = self._get_cib_xml()
+        self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
                 self.cmd_runner(),
-                cib,
+                self.__loaded_cib_to_modify,
                 minimal_version
             )
             if upgraded_cib is not None:
-                cib = upgraded_cib
-                cib_xml = etree_to_str(upgraded_cib)
+                self.__loaded_cib_to_modify = upgraded_cib
+                self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if self.is_cib_live and not self._cib_upgraded:
                     self.report_processor.process(
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgraded = True
-        self.__loaded_cib_diff_source = cib_xml
-        self.__loaded_cib_to_modify = cib
         return self.__loaded_cib_to_modify
 
     @property

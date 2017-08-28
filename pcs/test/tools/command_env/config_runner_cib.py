@@ -58,6 +58,7 @@ class CibShortcuts(object):
         resources=None,
         instead=None,
         stderr="",
+        returncode=0
     ):
         """
         Create call for pushing cib.
@@ -82,7 +83,7 @@ class CibShortcuts(object):
             RunnerCall(
                 "cibadmin --replace --verbose --xml-pipe --scope configuration",
                 stderr=stderr,
-                returncode=(1 if stderr else 0),
+                returncode=returncode,
                 check_stdin=create_check_stdin_xml(cib),
             ),
             instead=instead,
