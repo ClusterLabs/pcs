@@ -943,6 +943,12 @@ class CibPushProxy(TestCase):
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor()
         )
+        get_cib_patcher = patch_env_object(
+            "get_cib",
+            lambda self: "<cib />"
+        )
+        self.addCleanup(get_cib_patcher.stop)
+        get_cib_patcher.start()
 
     def test_push_loaded(self, mock_push_full, mock_push_diff):
         self.env.get_cib()
