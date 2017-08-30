@@ -267,8 +267,8 @@ def update(
 
     # remove empty elements with no attributes
     # meta attributes are handled in their own function
-    remove_when_pointless(network_element, attribs_important=True)
-    remove_when_pointless(storage_element, attribs_important=True)
+    remove_when_pointless(network_element)
+    remove_when_pointless(storage_element)
 
 def add_resource(bundle_element, primitive_element):
     """

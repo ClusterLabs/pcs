@@ -95,7 +95,32 @@ def etree_to_str(tree):
     #so there is bytes to str conversion
     return etree.tostring(tree).decode()
 
-def remove_when_pointless(element, attribs_important=False):
-    is_element_useful = len(element) or (attribs_important and element.attrib)
+def remove_when_pointless(element, attribs_important=True):
+    """
+    Remove element when is not worth to keep it.
+
+    Some elements serve as a container for sub-elements. When all sub-elements
+    are removed is time to consider if such element is still meaningfull.
+
+    Some of these elements can be meaningfull standalone when it contains some
+    attributes (e.g. "network" or "storage" in "bundle"). Some of these elements
+    are not meaningfull without sub-elements even if they have attributes (e.g.
+    rsc_ticket - after last sub-element 'resource_set' removal there can be
+    attributes but the element is pointless - more details at the approrpriate
+    place of use). Element is meaningfull when contain attributes (except id) by
+    default. It can be switched by parameter attribs_important.
+
+    lxml.etree.element element -- element to remove
+    bool attribs_important -- prevents deletion when its value is True and
+        the element contains attributes
+    """
+    is_element_useful = len(element) or (
+        attribs_important
+        and
+        element.attrib
+        and
+        element.attrib.keys() != ["id"]
+    )
+
     if not is_element_useful:
         element.getparent().remove(element)

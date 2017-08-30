@@ -164,3 +164,42 @@ class EtreeElementAttributesToDictTest(TestCase):
                 self.el, ["id", "not_existing", "attribute"]
             )
         )
+
+class RemoveWhenPointless(TestCase):
+    def assert_count_tags_after_call(self, count, tag, **kwargs):
+        tree = etree.fromstring(
+            """
+            <root>
+                <empty />
+                <with-subelement>
+                    <subelement/>
+                </with-subelement>
+                <with-attr some="attribute"/>
+                <with-only-id id="1"/>
+            </root>
+            """
+        )
+        xpath=".//{0}".format(tag)
+        lib.remove_when_pointless(tree.find(xpath), **kwargs)
+        self.assertEqual(len(tree.xpath(xpath)), count)
+
+    def assert_remove(self, tag, **kwargs):
+        self.assert_count_tags_after_call(0, tag, **kwargs)
+
+    def assert_keep(self, tag, **kwargs):
+        self.assert_count_tags_after_call(1, tag, **kwargs)
+
+    def test_remove_empty(self):
+        self.assert_remove("empty")
+
+    def test_keep_with_subelement(self):
+        self.assert_keep("with-subelement")
+
+    def test_keep_when_attr(self):
+        self.assert_keep("with-attr")
+
+    def test_remove_when_attr_not_important(self):
+        self.assert_remove("with-attr", attribs_important=False)
+
+    def test_remove_when_only_id(self):
+        self.assert_remove("with-only-id")
