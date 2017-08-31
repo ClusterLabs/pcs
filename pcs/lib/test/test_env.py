@@ -1285,7 +1285,8 @@ class CibLivePushDiff(CibLive, TestCase):
 
 class CibFile(CibBase):
     def setUp(self):
-        self.cib_data = open(rc("cib-empty-2.6.xml")).read()
+        self.cib_file = rc("cib-empty-2.6.xml")
+        self.cib_data = open(self.cib_file).read()
         self.env_assist, self.config = get_env_tools(
             test_case=self,
             cib_data=self.cib_data
@@ -1295,7 +1296,7 @@ class CibFile(CibBase):
         return NotImplementedError
 
     def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
-        pass # no calls when the CIB is not live
+        self.config.runner.cib.load(filename=self.cib_file, name=name)
 
     def place_push_calls(self):
         pass # no calls when the CIB is not live
@@ -1305,6 +1306,7 @@ class CibFile(CibBase):
         self.assertFalse(env.is_cib_live)
 
     def test_get_and_push(self):
+        self.place_load_calls(name="load_cib_old")
         env = self.env_assist.get_env()
         assert_xml_equal(
             self.cib_data,
@@ -1312,14 +1314,12 @@ class CibFile(CibBase):
         )
         self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
-        assert_xml_equal(
-            self.cib_data,
-            env._get_cib_xml()
-        )
+        assert_xml_equal(self.cib_data, env._cib_data)
         self.assertFalse(env.cib_upgraded)
 
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
+            .runner.cib.load(filename=self.cib_file, name="load_cib_old")
             .runner.cib.upgrade()
             .runner.cib.load(filename="cib-empty-2.8.xml")
         )
@@ -1331,6 +1331,7 @@ class CibFile(CibBase):
         self.assertTrue(env.cib_upgraded)
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
+        self.place_load_calls(name="load_cib_old")
         env = self.env_assist.get_env()
 
         env.get_cib((2, 5, 0))
@@ -1339,6 +1340,7 @@ class CibFile(CibBase):
         self.assertFalse(env.cib_upgraded)
 
     def test_push_wait(self):
+        self.place_load_calls(name="load_cib_old")
         env = self.env_assist.get_env()
         env.get_cib()
         assert_raise_library_error(
@@ -1360,12 +1362,10 @@ class CibFilePushFull(CibFile, TestCase):
         custom_cib = "<custom_cib />"
         env = self.env_assist.get_env()
         env.push_cib_full(etree.XML(custom_cib))
-        assert_xml_equal(
-            custom_cib,
-            env._get_cib_xml()
-        )
+        assert_xml_equal(custom_cib, env._cib_data)
 
     def test_push_custom_after_get(self):
+        self.place_load_calls(name="load_cib_old")
         env = self.env_assist.get_env()
         env.get_cib()
         self.assert_cannot_push_custom(
@@ -1376,3 +1376,37 @@ class CibFilePushFull(CibFile, TestCase):
 class CibFilePushDiff(CibFile, TestCase):
     def push_function(self, env):
         return env.push_cib_diff
+
+class GetCib(TestCase):
+    def test_raise_library_error_when_cibadmin_failed(self):
+        stderr = "cibadmin: Connection to local file failed..."
+        env_assist, config = get_env_tools(
+            test_case=self,
+            #Value of cib_data is unimportant here. This content is only put
+            #into tempfile when the runner is not mocked. And content is then
+            #loaded from tempfile by `cibadmin --local --query`. In tests is
+            #runner mocked so the value of cib_data is not used in the fact.
+            cib_data="whatever",
+        )
+        config.runner.cib.load(returncode=203, stderr=stderr)
+
+        env_assist.assert_raise_library_error(
+            env_assist.get_env().get_cib,
+            [
+                fixture.error(report_codes.CIB_LOAD_ERROR, reason=stderr)
+            ],
+            expected_in_processor=False
+        )
+
+    def test_returns_cib_from_cib_data(self):
+        env_assist, config = get_env_tools(
+            test_case=self,
+            #Value of cib_data is unimportant here. See details in sibling test.
+            cib_data="whatever",
+        )
+        cib_filename = "cib-empty.xml"
+        config.runner.cib.load(filename=cib_filename)
+        assert_xml_equal(
+            etree_to_str(env_assist.get_env().get_cib()),
+            open(rc(cib_filename)).read()
+        )

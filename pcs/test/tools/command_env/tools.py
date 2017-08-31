@@ -19,6 +19,7 @@ def get_env_tools(
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
     cib_data=None,
     corosync_conf_data=None,
+    exception_reports_in_processor_by_default=True,
 ):
     """
     Shortcut for preparing EnvAssistant and Config
@@ -31,6 +32,9 @@ def get_env_tools(
         test_case=test_case,
         cib_data=cib_data,
         corosync_conf_data=corosync_conf_data,
+        exception_reports_in_processor_by_default
+            =exception_reports_in_processor_by_default
+        ,
     )
 
     runner = env_assistant.config.runner

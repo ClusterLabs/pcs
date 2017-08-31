@@ -77,7 +77,7 @@ class EnvAssistant(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self, config=None, test_case=None, cib_data=None,
-        corosync_conf_data=None
+        corosync_conf_data=None, exception_reports_in_processor_by_default=True
     ):
         """
         TestCase test_case -- cleanup callback is registered to test_case if is
@@ -89,6 +89,9 @@ class EnvAssistant(object):
         self.__extra_reports = []
         self.__cib_data = cib_data
         self.__corosync_conf_data = corosync_conf_data
+        self.exception_reports_in_processor_by_default = (
+            exception_reports_in_processor_by_default
+        )
 
         self.__unpatch = None
 
@@ -148,10 +151,15 @@ class EnvAssistant(object):
         )
 
     def assert_raise_library_error(
-        self, command, reports, expected_in_processor=True
+        self, command, reports, expected_in_processor=None
     ):
         if not isinstance(reports, list):
             raise self.__list_of_reports_expected(reports)
+
+        if expected_in_processor is None:
+            expected_in_processor = (
+                self.exception_reports_in_processor_by_default
+            )
 
         assert_raise_library_error(command, *reports)
         if expected_in_processor:

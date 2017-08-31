@@ -131,15 +131,10 @@ class LibraryEnvironment(object):
     def cib_upgraded(self):
         return self._cib_upgraded
 
-    def _get_cib_xml(self):
-        if self.is_cib_live:
-            return get_cib_xml(self.cmd_runner())
-        return self._cib_data
-
     def get_cib(self, minimal_version=None):
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
-        self.__loaded_cib_diff_source = self._get_cib_xml()
+        self.__loaded_cib_diff_source = get_cib_xml(self.cmd_runner())
         self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
@@ -359,7 +354,7 @@ class LibraryEnvironment(object):
             # don't need to take care of it every time the runner is called.
             if not self._cib_data_tmp_file:
                 try:
-                    cib_data = self._get_cib_xml()
+                    cib_data = self._cib_data
                     self._cib_data_tmp_file = write_tmpfile(cib_data)
                     self.report_processor.process(
                         reports.tmp_file_write(

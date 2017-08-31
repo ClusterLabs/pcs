@@ -29,6 +29,8 @@ class CibShortcuts(object):
         name="runner.cib.load",
         filename=None,
         before=None,
+        returncode=0,
+        stderr=None,
         **modifier_shortcuts
     ):
         """
@@ -47,17 +49,30 @@ class CibShortcuts(object):
             MODIFIER_GENERATORS - please refer it when you are adding params
             here)
         """
-        filename = filename if filename else self.cib_filename
-        cib = modify_cib(
-            open(rc(filename)).read(),
-            modifiers,
-            **modifier_shortcuts
-        )
-        self.__calls.place(
-            name,
-            RunnerCall("cibadmin --local --query", stdout=cib),
-            before=before,
-        )
+        if(returncode != 0 or stderr is not None) and (
+           modifiers is not None
+           or
+           filename is not None
+           or
+           resources is not None
+        ):
+            raise AssertionError(
+                "Do not combine parameters 'returncode' and 'stderr' with"
+                " parameters 'modifiers', 'filename' and 'resources'"
+            )
+
+        command = "cibadmin --local --query"
+        if returncode != 0:
+            call = RunnerCall(command, stderr=stderr, returncode=returncode)
+        else:
+            cib = modify_cib(
+                open(rc(filename if filename else self.cib_filename)).read(),
+                modifiers,
+                **modifier_shortcuts
+            )
+            call = RunnerCall(command, stdout=cib)
+
+        self.__calls.place(name, call, before=before)
 
     def push(
         self,

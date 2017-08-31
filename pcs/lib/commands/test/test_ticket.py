@@ -41,7 +41,7 @@ class CreateTest(TestCase):
         })
 
         assert_xml_equal(
-            env._get_cib_xml(),
+            env._cib_data,
             str(cib.append_to_first_tag_name(
                 'constraints', """
                     <rsc_ticket
