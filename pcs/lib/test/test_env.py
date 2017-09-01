@@ -1281,12 +1281,14 @@ class CibFile(CibBase):
             test_case=self,
             cib_data=self.cib_data
         )
+        self.loaded_cib = ""
 
     def push_function(self, env):
         return NotImplementedError
 
     def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
-        self.config.runner.cib.load(filename=self.cib_file, name=name)
+        self.config.runner.cib.load(filename=filename, name=name)
+        self.loaded_cib = self.config.calls.get(name).stdout
 
     def place_push_calls(self):
         pass # no calls when the CIB is not live
@@ -1296,35 +1298,36 @@ class CibFile(CibBase):
         self.assertFalse(env.is_cib_live)
 
     def test_get_and_push(self):
-        self.place_load_calls(name="load_cib_old")
+        self.place_load_calls()
+        self.place_push_calls()
+
         env = self.env_assist.get_env()
-        assert_xml_equal(
-            self.cib_data,
-            etree_to_str(env.get_cib())
-        )
+        env.get_cib()
         self.push_function(env)()
-        assert_xml_equal(self.cib_data, env._cib_data)
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_get_and_push_cib_version_upgrade_needed(self):
-        (self.config
-            .runner.cib.load(filename=self.cib_file, name="load_cib_old")
-            .runner.cib.upgrade()
-            .runner.cib.load(filename="cib-empty-2.8.xml")
-        )
+        self.place_load_calls(filename="cib-empty-2.6.xml", name="load_cib_old")
+        self.config.runner.cib.upgrade()
+        self.place_load_calls(filename="cib-empty-2.8.xml")
+        self.place_push_calls()
         env = self.env_assist.get_env()
 
         env.get_cib((2, 8, 0))
         self.push_function(env)()
+
         self.env_assist.assert_reports([
             fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
-        ])
+        ] + self.push_reports(strip_old=True))
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
-        self.place_load_calls(name="load_cib_old")
+        self.place_load_calls(filename="cib-empty-2.6.xml")
+        self.place_push_calls()
         env = self.env_assist.get_env()
 
         env.get_cib((2, 5, 0))
         self.push_function(env)()
+        self.env_assist.assert_reports(self.push_reports())
 
     def test_push_wait(self):
         self.place_load_calls(name="load_cib_old")
@@ -1345,11 +1348,14 @@ class CibFilePushFull(CibFile, TestCase):
     def push_function(self, env):
         return env.push_cib_full
 
+    def place_push_calls(self):
+        self.config.runner.cib.push()
+
     def test_push_custom_without_get(self):
         custom_cib = "<custom_cib />"
+        self.config.runner.cib.push_independent(custom_cib)
         env = self.env_assist.get_env()
         env.push_cib_full(etree.XML(custom_cib))
-        assert_xml_equal(custom_cib, env._cib_data)
 
     def test_push_custom_after_get(self):
         self.place_load_calls(name="load_cib_old")
@@ -1361,8 +1367,68 @@ class CibFilePushFull(CibFile, TestCase):
 
 
 class CibFilePushDiff(CibFile, TestCase):
+    def setUp(self):
+        tmpfile_patcher = mock.patch(
+            "pcs.lib.pacemaker.live.write_tmpfile"
+        )
+        self.addCleanup(tmpfile_patcher.stop)
+        self.mock_write_tmpfile = tmpfile_patcher.start()
+        self.tmpfile_old = self.mock_tmpfile("old.cib")
+        self.tmpfile_new = self.mock_tmpfile("new.cib")
+        self.mock_write_tmpfile.side_effect = [
+            self.tmpfile_old, self.tmpfile_new
+        ]
+
+        self.cib_file = rc("cib-empty-2.6.xml")
+        self.cib_data = open(self.cib_file).read()
+        self.env_assist, self.config = get_env_tools(
+            test_case=self,
+            cib_data=self.cib_data
+        )
+        self.loaded_cib = ""
+
+    def mock_tmpfile(self, filename):
+        mock_file = mock.MagicMock()
+        mock_file.name = rc(filename)
+        return mock_file
+
+
     def push_function(self, env):
         return env.push_cib_diff
+
+    def place_push_calls(self):
+        (self.config
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff()
+        )
+
+    def push_reports(self, strip_old=False):
+        # No test changes the CIB between load and push. The point is to test
+        # loading and pushing, not editing the CIB.
+        return [
+            (
+                severity.DEBUG,
+                report_codes.TMP_FILE_WRITE,
+                {
+                    "file_path": self.tmpfile_old.name,
+                    "content": (
+                        self.loaded_cib.strip() if strip_old
+                        else self.loaded_cib
+                    ),
+                },
+                None
+            ),
+            (
+                severity.DEBUG,
+                report_codes.TMP_FILE_WRITE,
+                {
+                    "file_path": self.tmpfile_new.name,
+                    "content": self.loaded_cib.strip(),
+                },
+                None
+            ),
+        ]
+
 
 class GetCib(TestCase):
     def test_raise_library_error_when_cibadmin_failed(self):

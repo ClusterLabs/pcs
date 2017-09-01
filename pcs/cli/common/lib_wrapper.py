@@ -59,7 +59,7 @@ def cli_env_to_lib_env(cli_env):
 
 def lib_env_to_cli_env(lib_env, cli_env):
     if not lib_env.is_cib_live:
-        cli_env.cib_data = lib_env._cib_data
+        cli_env.cib_data = lib_env.final_mocked_cib_content
     if not lib_env.is_corosync_conf_live:
         cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
     if not lib_env.is_cluster_conf_live:

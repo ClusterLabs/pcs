@@ -195,7 +195,6 @@ class LibraryEnvironment(object):
         self.__do_push_cib(
             cmd_runner,
             lambda: replace_cib_configuration(cmd_runner, cib_to_push),
-            cib_to_push,
             wait
         )
 
@@ -207,7 +206,6 @@ class LibraryEnvironment(object):
         self.__do_push_cib(
             cmd_runner,
             lambda: self.__main_push_cib_diff(cmd_runner),
-            self.__loaded_cib_to_modify,
             wait
         )
 
@@ -222,12 +220,9 @@ class LibraryEnvironment(object):
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
-    def __do_push_cib(self, cmd_runner, live_push_strategy, not_live_cib, wait):
+    def __do_push_cib(self, cmd_runner, push_strategy, wait):
         timeout = self._get_wait_timeout(wait)
-        if self.is_cib_live:
-            live_push_strategy()
-        else:
-            self._cib_data = etree_to_str(not_live_cib)
+        push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
@@ -237,6 +232,20 @@ class LibraryEnvironment(object):
     @property
     def is_cib_live(self):
         return self._cib_data is None
+
+    @property
+    def final_mocked_cib_content(self):
+        if self.is_cib_live:
+            raise AssertionError(
+                "Final mocked cib content does not make sense in live env."
+            )
+
+        if self._cib_data_tmp_file:
+            self._cib_data_tmp_file.seek(0)
+            return self._cib_data_tmp_file.read()
+
+        return self._cib_data
+
 
     def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
