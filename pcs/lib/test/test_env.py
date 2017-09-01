@@ -1019,9 +1019,7 @@ class CibLive(CibBase):
 
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_reports(self.push_reports())
 
     def test_get_and_push_cib_version_upgrade_needed(self):
@@ -1032,9 +1030,7 @@ class CibLive(CibBase):
         env = self.env_assist.get_env()
 
         env.get_cib((2, 8, 0))
-        self.assertTrue(env.cib_upgraded)
         self.push_function(env)()
-        self.assertFalse(env.cib_upgraded)
 
         self.env_assist.assert_reports([
             (
@@ -1052,9 +1048,7 @@ class CibLive(CibBase):
         env = self.env_assist.get_env()
 
         env.get_cib((2, 5, 0))
-        self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_reports(self.push_reports())
 
     def test_push_wait(self):
@@ -1122,7 +1116,6 @@ class CibLivePushFull(CibLive, TestCase):
         )
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_raise_library_error(
             env.push_cib_full,
             [
@@ -1214,7 +1207,6 @@ class CibLivePushDiff(CibLive, TestCase):
         self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_raise_library_error(
             env.push_cib_diff,
             [
@@ -1240,7 +1232,6 @@ class CibLivePushDiff(CibLive, TestCase):
         )
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_raise_library_error(
             env.push_cib_diff,
             [
@@ -1265,7 +1256,6 @@ class CibLivePushDiff(CibLive, TestCase):
         )
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assertFalse(env.cib_upgraded)
         self.env_assist.assert_raise_library_error(
             env.push_cib_diff,
             [
@@ -1312,10 +1302,8 @@ class CibFile(CibBase):
             self.cib_data,
             etree_to_str(env.get_cib())
         )
-        self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
         assert_xml_equal(self.cib_data, env._cib_data)
-        self.assertFalse(env.cib_upgraded)
 
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
@@ -1326,18 +1314,17 @@ class CibFile(CibBase):
         env = self.env_assist.get_env()
 
         env.get_cib((2, 8, 0))
-        self.assertTrue(env.cib_upgraded)
         self.push_function(env)()
-        self.assertTrue(env.cib_upgraded)
+        self.env_assist.assert_reports([
+            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
+        ])
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
         self.place_load_calls(name="load_cib_old")
         env = self.env_assist.get_env()
 
         env.get_cib((2, 5, 0))
-        self.assertFalse(env.cib_upgraded)
         self.push_function(env)()
-        self.assertFalse(env.cib_upgraded)
 
     def test_push_wait(self):
         self.place_load_calls(name="load_cib_old")

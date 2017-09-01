@@ -92,7 +92,7 @@ class LibraryEnvironment(object):
         # related code currently - it's in pcsd
         self._token_file_data_getter = token_file_data_getter
         self._token_file = None
-        self._cib_upgraded = False
+        self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
@@ -127,10 +127,6 @@ class LibraryEnvironment(object):
             self._is_cman_cluster = is_cman_cluster(self.cmd_runner())
         return self._is_cman_cluster
 
-    @property
-    def cib_upgraded(self):
-        return self._cib_upgraded
-
     def get_cib(self, minimal_version=None):
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
@@ -145,11 +141,11 @@ class LibraryEnvironment(object):
             if upgraded_cib is not None:
                 self.__loaded_cib_to_modify = upgraded_cib
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
-                if self.is_cib_live and not self._cib_upgraded:
+                if not self._cib_upgrade_reported:
                     self.report_processor.process(
                         reports.cib_upgrade_successful()
                     )
-                self._cib_upgraded = True
+                self._cib_upgrade_reported = True
         return self.__loaded_cib_to_modify
 
     @property
@@ -230,9 +226,9 @@ class LibraryEnvironment(object):
         timeout = self._get_wait_timeout(wait)
         if self.is_cib_live:
             live_push_strategy()
-            self._cib_upgraded = False
         else:
             self._cib_data = etree_to_str(not_live_cib)
+        self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
         if self.is_cib_live and timeout is not False:

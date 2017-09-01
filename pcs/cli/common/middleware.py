@@ -19,7 +19,7 @@ def build(*middleware_list):
         return next_in_line(env, *args, **kwargs)
     return run
 
-def cib(use_local_cib, load_cib_content, write_cib):
+def cib(filename, touch_cib_file):
     """
     return configured middleware that cares about local cib
     bool use_local_cib is flag if local cib was required
@@ -27,14 +27,17 @@ def cib(use_local_cib, load_cib_content, write_cib):
     callable write_cib put content of cib to required place
     """
     def apply(next_in_line, env, *args, **kwargs):
-        if use_local_cib:
-            original_content = load_cib_content()
+        if filename:
+            touch_cib_file(filename)
+            with open(filename, mode="r") as cib_file:
+                original_content = cib_file.read()
             env.cib_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
-        if use_local_cib and env.cib_data != original_content:
-            write_cib(env.cib_data, env.cib_upgraded)
+        if filename and env.cib_data != original_content:
+            with open(filename, mode="w") as cib_file:
+                cib_file.write(env.cib_data)
 
         return result_of_next
     return apply
