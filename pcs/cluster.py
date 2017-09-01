@@ -4,6 +4,7 @@ from __future__ import (
     print_function,
 )
 
+import math
 import os
 import subprocess
 import re
@@ -1003,9 +1004,10 @@ def start_cluster(argv):
         wait = True
 
     if len(argv) > 0:
-        start_cluster_nodes(argv)
+        nodes = set(argv) # unique
+        start_cluster_nodes(nodes)
         if wait:
-            wait_for_nodes_started(argv, wait_timeout)
+            wait_for_nodes_started(nodes, wait_timeout)
         return
 
     print("Starting Cluster...")
@@ -1048,7 +1050,20 @@ def start_cluster_all():
         wait_for_nodes_started(all_nodes, wait_timeout)
 
 def start_cluster_nodes(nodes):
-    node_errors = parallel_for_nodes(utils.startCluster, nodes, quiet=True)
+    # Large clusters take longer time to start up. So we make the timeout longer
+    # for each 8 nodes:
+    #  1 -  8 nodes: 1 * timeout
+    #  9 - 16 nodes: 2 * timeout
+    # 17 - 24 nodes: 3 * timeout
+    # and so on
+    # Users can override this and set their own timeout by specifying
+    # the --request-timeout option (see utils.sendHTTPRequest).
+    timeout = int(
+        settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
+    )
+    node_errors = parallel_for_nodes(
+        utils.startCluster, nodes, quiet=True, timeout=timeout
+    )
     if node_errors:
         utils.err(
             "unable to start all nodes\n" + "\n".join(node_errors.values())

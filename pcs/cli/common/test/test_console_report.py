@@ -311,6 +311,24 @@ class BuildNodeCommunicationStartedTest(NameBuildTest):
             }
         )
 
+
+class NodeCommunicationErrorTimedOut(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_ERROR_TIMED_OUT
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "node-1: Connection timeout, try setting higher timeout in "
+                "--request-timeout option (Connection timed out after 60049 "
+                "milliseconds)"
+            ),
+            {
+                "node": "node-1",
+                "command": "/remote/command",
+                "reason": "Connection timed out after 60049 milliseconds",
+            }
+        )
+
+
 class FormatOptionalTest(TestCase):
     def test_info_key_is_falsy(self):
         self.assertEqual("", format_optional("", "{0}: "))

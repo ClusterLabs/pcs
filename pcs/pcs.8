@@ -20,7 +20,7 @@ Print all network traffic and external commands run.
 \fB\-\-version\fR
 Print pcs version information.
 .TP
-\fB\-\-request\-timeout=<timeout>\fR
+\fB\-\-request\-timeout\fR=<timeout>
 Timeout for each outgoing request to another node in seconds. Default is 60s.
 .SS "Commands:"
 .TP
@@ -240,11 +240,11 @@ be used around the cluster.  \fB\-\-mcast0\fR defaults to 239.255.1.1 and
 ttl defaults to 1. If \fB\-\-broadcast\fR is specified, \fB\-\-mcast0/1\fR,
 \fB\-\-mcastport0/1\fR & \fB\-\-ttl0/1\fR are ignored.
 .TP
-start [\fB\-\-all\fR | <node>... ] [\fB\-\-wait\fR[=<n>]]
-Start corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are started on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are started on all nodes. If \fB\-\-wait\fR is specified, wait up to 'n' seconds for nodes to start.
+start [\fB\-\-all\fR | <node>... ] [\fB\-\-wait\fR[=<n>]] [\fB\-\-request\-timeout\fR=<seconds>]
+Start a cluster on specified node(s). If no nodes are specified then start a cluster on the local node. If \fB\-\-all\fR is specified then start a cluster on all nodes. If the cluster has many nodes then the start request may time out. In that case you should consider setting \fB\-\-request\-timeout\fR to a suitable value. If \fB\-\-wait\fR is specified, pcs waits up to 'n' seconds for the cluster to get ready to provide services after the cluster has successfully started.
 .TP
 stop [\fB\-\-all\fR | <node>... ] [\fB\-\-request\-timeout\fR=<seconds>]
-Stop corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are stopped on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are stopped on all nodes. If the cluster is running resources which take long time to stop, the request may time out before the cluster actually stops. In that case you should consider setting \fB\-\-request\-timeout\fR to a suitable value.
+Stop a cluster on specified node(s). If no nodes are specified then stop a cluster on the local node. If \fB\-\-all\fR is specified then stop a cluster on all nodes. If the cluster is running resources which take long time to stop then the stop request may time out before the cluster actually stops. In that case you should consider setting \fB\-\-request\-timeout\fR to a suitable value.
 .TP
 kill
 Force corosync and pacemaker daemons to stop on the local node (performs kill \-9). Note that init system (e.g. systemd) can detect that cluster is not running and start it again. If you want to stop cluster on a node, run pcs cluster stop on that node.

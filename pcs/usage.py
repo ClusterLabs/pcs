@@ -635,20 +635,22 @@ Commands:
         ttl defaults to 1. If --broadcast is specified, --mcast0/1,
         --mcastport0/1 & --ttl0/1 are ignored.
 
-    start [--all | <node>... ] [--wait[=<n>]]
-        Start corosync & pacemaker on specified node(s), if a node is not
-        specified then corosync & pacemaker are started on the local node.
-        If --all is specified then corosync & pacemaker are started on all
-        nodes.  If --wait is specified, wait up to 'n' seconds for nodes
-        to start.
+    start [--all | <node>... ] [--wait[=<n>]] [--request-timeout=<seconds>]
+        Start a cluster on specified node(s). If no nodes are specified then
+        start a cluster on the local node. If --all is specified then start
+        a cluster on all nodes. If the cluster has many nodes then the start
+        request may time out. In that case you should consider setting
+        --request-timeout to a suitable value. If --wait is specified, pcs
+        waits up to 'n' seconds for the cluster to get ready to provide
+        services after the cluster has successfully started.
 
     stop [--all | <node>... ] [--request-timeout=<seconds>]
-        Stop corosync & pacemaker on specified node(s), if a node is not
-        specified then corosync & pacemaker are stopped on the local node. If
-        --all is specified then corosync & pacemaker are stopped on all nodes.
-        If the cluster is running resources which take long time to stop, the
-        request may time out before the cluster actually stops. In that case you
-        should consider setting --request-timeout to a suitable value.
+        Stop a cluster on specified node(s). If no nodes are specified then
+        stop a cluster on the local node. If --all is specified then stop
+        a cluster on all nodes. If the cluster is running resources which take
+        long time to stop then the stop request may time out before the cluster
+        actually stops. In that case you should consider setting
+        --request-timeout to a suitable value.
 
     kill
         Force corosync and pacemaker daemons to stop on the local node

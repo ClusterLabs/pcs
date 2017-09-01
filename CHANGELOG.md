@@ -9,6 +9,8 @@
 - Upgrade CIB schema version when `resource-discovery` option is used in
   location constraints ([rhbz#1420437])
 - Fixed error messages in `pcs cluster report` ([rhbz#1388783])
+- Increase request timeout when starting a cluster with large number of nodes
+  to prevent timeouts ([rhbz#1463327])
 
 ### Changed
 - CIB changes are now pushed to pacemaker as a diff in commands overhauled to
@@ -20,6 +22,7 @@
 [rhbz#1420437]: https://bugzilla.redhat.com/show_bug.cgi?id=1420437
 [rhbz#1435697]: https://bugzilla.redhat.com/show_bug.cgi?id=1435697
 [rhbz#1441673]: https://bugzilla.redhat.com/show_bug.cgi?id=1441673
+[rhbz#1463327]: https://bugzilla.redhat.com/show_bug.cgi?id=1463327
 
 
 ## [0.9.159] - 2017-06-30

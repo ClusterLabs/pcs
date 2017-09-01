@@ -276,8 +276,14 @@ def getPacemakerNodeStatus(node):
         node, "remote/pacemaker_node_status", None, False, False
     )
 
-def startCluster(node, quiet=False):
-    return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
+def startCluster(node, quiet=False, timeout=None):
+    return sendHTTPRequest(
+        node,
+        "remote/cluster_start",
+        printResult=False,
+        printSuccess=not quiet,
+        timeout=timeout
+    )
 
 def stopPacemaker(node, quiet=False, force=True):
     return stopCluster(
@@ -508,9 +514,10 @@ def sendHTTPRequest(
         dummy_errno, reason = e.args
         if "--debug" in pcs_options:
             print("Response Reason: {0}".format(reason))
-        msg = "Unable to connect to {host} ({reason})".format(
-            host=host, reason=reason
-        )
+        msg = (
+            "Unable to connect to {host}, try setting higher timeout in "
+            "--request-timeout option ({reason})"
+        ).format(host=host, reason=reason)
         if printResult:
             print(msg)
         return (2, msg)

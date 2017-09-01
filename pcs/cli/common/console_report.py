@@ -414,8 +414,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_COMMUNICATION_ERROR_TIMED_OUT: lambda info:
-        "{node}: Connection timeout ({reason})"
-        .format(**info)
+        (
+            "{node}: Connection timeout, try setting higher timeout in "
+            "--request-timeout option ({reason})"
+        ).format(**info)
     ,
 
     codes.NODE_COMMUNICATION_PROXY_IS_SET:
