@@ -463,7 +463,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
       # auth begin
       retval, out = send_request_with_token(
-        PCSAuth.getSuperuserAuth(), node, '/get_cluster_tokens'
+        PCSAuth.getSuperuserAuth(), node, '/get_cluster_tokens', false, {'with_ports' => '1'}
       )
       if retval == 404 # backward compatibility layer
         warning_messages << "Unable to do correct authentication of cluster because it is running old version of pcs/pcsd."
@@ -472,14 +472,24 @@ already been added to pcsd.  You may not add two clusters with the same name int
           return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
         end
         begin
-          new_tokens = JSON.parse(out)
+          data = JSON.parse(out)
+          expected_keys = ['tokens', 'ports']
+          if expected_keys.all? {|i| data.has_key?(i) and data[i].class == Hash}
+            # new format
+            new_tokens = data["tokens"] || {}
+            new_ports = data["ports"] || {}
+          else
+            # old format
+            new_tokens = data
+            new_ports = {}
+          end
         rescue
           return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
         end
 
         sync_config = Cfgsync::PcsdTokens.from_file()
         pushed, _ = Cfgsync::save_sync_new_tokens(
-          sync_config, new_tokens, get_corosync_nodes(), $cluster_name
+          sync_config, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
         )
         if not pushed
           return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -542,10 +552,16 @@ already been added to pcsd.  You may not add two clusters with the same name int
     }
 
     # first we need to authenticate nodes to each other
-    tokens = add_prefix_to_keys(get_tokens_of_nodes(@nodes), "node:")
+    token_file_data = read_token_file()
+    tokens_data = add_prefix_to_keys(
+      token_file_data.tokens.select {|k,v| @nodes.include?(k)}, "node:"
+    )
+    ports_data = add_prefix_to_keys(
+      token_file_data.ports.select {|k,v| @nodes.include?(k)}, "port:"
+    )
     @nodes.each {|n|
       retval, out = send_request_with_token(
-        auth_user, n, "/save_tokens", true, tokens
+        auth_user, n, "/save_tokens", true, tokens_data.merge(ports_data)
       )
       if retval == 404 # backward compatibility layer
         warning_messages << "Unable to do correct authentication of cluster on node '#{n}', because it is running old version of pcs/pcsd."
@@ -621,22 +637,36 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
   get '/manage/check_pcsd_status' do
     auth_user = PCSAuth.sessionToAuthUser(session)
-    node_results = {}
+    node_list = []
     if params[:nodes] != nil and params[:nodes] != ''
-      node_array = params[:nodes].split(',')
-      online, offline, notauthorized = check_gui_status_of_nodes(
-        auth_user, node_array
-      )
-      online.each { |node|
-        node_results[node] = 'Online'
-      }
-      offline.each { |node|
-        node_results[node] = 'Offline'
-      }
-      notauthorized.each { |node|
-        node_results[node] = 'Unable to authenticate'
-      }
+      node_list = params[:nodes].split(',')
     end
+    ports = {}
+    node_list.each { |node|
+      ports[node] = (params["port-#{node}"] || '').strip
+    }
+    node_results = {}
+    node_list_to_check = []
+    token_file = read_token_file()
+    ports.each { |node, port|
+      if port != (token_file.ports[node] || '')
+        node_results[node] = 'Unable to authenticate'
+      else
+        node_list_to_check << node
+      end
+    }
+    online, offline, notauthorized = check_gui_status_of_nodes(
+      auth_user, node_list_to_check
+    )
+    online.each { |node|
+      node_results[node] = 'Online'
+    }
+    offline.each { |node|
+      node_results[node] = 'Offline'
+    }
+    notauthorized.each { |node|
+      node_results[node] = 'Unable to authenticate'
+    }
     return JSON.generate(node_results)
   end
 
@@ -671,6 +701,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     auth_user = PCSAuth.sessionToAuthUser(session)
     node_auth_error = {}
     new_tokens = {}
+    new_ports = {}
     threads = []
     params.each { |node|
       threads << Thread.new {
@@ -681,18 +712,26 @@ already been added to pcsd.  You may not add two clusters with the same name int
           else
             pass = node[1]
           end
+          port = (params["port-#{nodename}"] || '').strip
+          if port == ''
+            port = nil
+          end
           data = {
             'node-0' => nodename,
             'username' => SUPERUSER,
             'password' => pass,
             'force' => 1,
+            "port-#{nodename}" => port,
           }
           node_auth_error[nodename] = 1
-          code, response = send_request(auth_user, nodename, 'auth', true, data)
+          code, response = send_request(
+            auth_user, nodename, 'auth', true, data, true, nil, nil, nil, port
+          )
           if 200 == code
             token = response.strip
             if not token.empty?
               new_tokens[nodename] = token
+              new_ports[nodename] = port
               node_auth_error[nodename] = 0
             end
           end
@@ -701,11 +740,11 @@ already been added to pcsd.  You may not add two clusters with the same name int
     }
     threads.each { |t| t.join }
 
-    if not new_tokens.empty?
+    if not new_tokens.empty? or not new_ports.empty?
       cluster_nodes = get_corosync_nodes()
       tokens_cfg = Cfgsync::PcsdTokens.from_file()
       sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-        tokens_cfg, new_tokens, cluster_nodes, $cluster_name
+        tokens_cfg, new_tokens, cluster_nodes, $cluster_name, new_ports
       )
     end
 
@@ -1160,11 +1199,17 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     nodes = get_cluster_nodes(clustername)
-    tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
+    token_file_data = read_token_file()
+    tokens_data = add_prefix_to_keys(
+      token_file_data.tokens.select {|k,v| nodes.include?(k)}, "node:"
+    )
+    ports_data = add_prefix_to_keys(
+      token_file_data.ports.select {|k,v| nodes.include?(k)}, "port:"
+    )
 
     retval, out = send_cluster_request_with_token(
       PCSAuth.getSuperuserAuth(), clustername, "/save_tokens", true,
-      tokens_data, true
+      tokens_data.merge(ports_data), true
     )
     if retval == 404
       return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
@@ -1185,7 +1230,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     end
 
-    tokens = read_tokens
+    token_file_data = read_token_file()
+    tokens = token_file_data.tokens
 
     if not tokens.include? new_node
       return [400, "New node is not authenticated."]
@@ -1194,7 +1240,10 @@ already been added to pcsd.  You may not add two clusters with the same name int
     # Save the new node token on all nodes in a cluster the new node is beeing
     # added to. Send the token to one node and let the cluster nodes synchronize
     # it by themselves.
-    token_data = {"node:#{new_node}" => tokens[new_node]}
+    token_data = {
+      "node:#{new_node}" => tokens[new_node],
+      "port:#{new_node}" => token_file_data.ports[new_node],
+    }
     retval, out = send_cluster_request_with_token(
       # new node doesn't have config with permissions yet
       PCSAuth.getSuperuserAuth(), clustername, '/save_tokens', true, token_data

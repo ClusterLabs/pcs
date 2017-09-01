@@ -2083,7 +2083,16 @@ def get_cluster_tokens(params, request, auth_user)
   on, off = get_nodes
   nodes = on + off
   nodes.uniq!
-  return [200, JSON.generate(get_tokens_of_nodes(nodes))]
+  token_file_data = read_token_file()
+  tokens = token_file_data.tokens.select {|k,v| nodes.include?(k)}
+  if params["with_ports"] != '1'
+    return [200, JSON.generate(tokens)]
+  end
+  data = {
+    :tokens => tokens,
+    :ports => token_file_data.ports.select {|k,v| nodes.include?(k)},
+  }
+  return [200, JSON.generate(data)]
 end
 
 def save_tokens(params, request, auth_user)
@@ -2093,18 +2102,23 @@ def save_tokens(params, request, auth_user)
   end
 
   new_tokens = {}
+  new_ports = {}
 
   params.each{|nodes|
     if nodes[0].start_with?"node:" and nodes[0].length > 5
       node = nodes[0][5..-1]
-      token = nodes[1]
-      new_tokens[node] = token
+      new_tokens[node] = nodes[1]
+      port = (params["port:#{node}"] || '').strip
+      if port == ''
+        port = nil
+      end
+      new_ports[node] = port
     end
   }
 
   tokens_cfg = Cfgsync::PcsdTokens.from_file()
   sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-    tokens_cfg, new_tokens, get_corosync_nodes(), $cluster_name
+    tokens_cfg, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
   )
 
   if sync_successful
