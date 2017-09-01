@@ -216,18 +216,21 @@ class LibraryEnvironment(object):
         cmd_runner = self.cmd_runner()
         self.__do_push_cib(
             cmd_runner,
-            lambda: push_cib_diff_xml(
-                cmd_runner,
-                diff_cibs_xml(
-                    cmd_runner,
-                    self.report_processor,
-                    self.__loaded_cib_diff_source,
-                    etree_to_str(self.__loaded_cib_to_modify)
-                )
-            ),
+            lambda: self.__main_push_cib_diff(cmd_runner),
             self.__loaded_cib_to_modify,
             wait
         )
+
+    def __main_push_cib_diff(self, cmd_runner):
+        cib_diff_xml = diff_cibs_xml(
+            cmd_runner,
+            self.report_processor,
+            self.__loaded_cib_diff_source,
+            etree_to_str(self.__loaded_cib_to_modify)
+        )
+
+        if cib_diff_xml:
+            push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
     def __do_push_cib(self, cmd_runner, live_push_strategy, not_live_cib, wait):
         timeout = self._get_wait_timeout(wait)
