@@ -25,10 +25,13 @@ from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
 
 empty_cib = rc("cib-empty.xml")
-empty_cib_1_2 = rc("cib-empty-1.2.xml")
 temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
+skip_unless_location_resource_discovery = skip_unless_pacemaker_version(
+    (1, 1, 12),
+    "constraints with the resource-discovery option"
+)
 skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
     (1, 1, 16),
     "location constraints with resource patterns"
@@ -544,11 +547,8 @@ Colocation Constraints:
         ac(output, "")
         self.assertEqual(0, retValue)
 
-    @skip_unless_pacemaker_version(
-        (1, 1, 12),
-        "constraints with the resource-discovery option"
-    )
-    def testConstraintResourceDiscovery(self):
+    @skip_unless_location_resource_discovery
+    def testConstraintResourceDiscoveryRules(self):
         o,r = pcs("resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
@@ -583,20 +583,18 @@ Colocation Constraints:
         ])+'\n')
         assert r == 0
 
-        o,r = pcs("constraint delete location-crd")
+    @skip_unless_location_resource_discovery
+    def testConstraintResourceDiscovery(self):
+        o,r = pcs("resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
-        assert r==0
+        assert r == 0
 
-        o,r = pcs("constraint delete location-crd1")
+        o,r = pcs("resource create crd1 ocf:heartbeat:Dummy")
         ac(o,"")
-        assert r==0
-
-        o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
-        ac(o,"")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")

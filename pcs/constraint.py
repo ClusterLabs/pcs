@@ -817,6 +817,8 @@ def location_add(argv,rm=False):
         utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
 
     required_version = None
+    if [x for x in options if x[0] == "resource-discovery"]:
+        required_version = 2, 2, 0
     if rsc_type == RESOURCE_TYPE_REGEXP:
         required_version = 2, 6, 0
 
