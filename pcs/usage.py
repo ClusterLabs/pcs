@@ -804,7 +804,7 @@ Commands:
         performed on the currently running cluster.  If -V is used
         more verbose output will be printed.
 
-    report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D H:M:S"]] dest
+    report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D H:M:S"]] <dest>
         Create a tarball containing everything needed when reporting cluster
         problems.  If --from and --to are not used, the report will include
         the past 24 hours.

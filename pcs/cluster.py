@@ -2282,6 +2282,12 @@ def cluster_report(argv):
 
     crm_report_opts.append(outfile)
     output, retval = utils.run([settings.crm_report] + crm_report_opts)
+    if (
+        retval != 0
+        and
+        "ERROR: Cannot determine nodes; specify --nodes or --single-node" in output
+    ):
+        utils.err("cluster is not configured on this node")
     newoutput = ""
     for line in output.split("\n"):
         if line.startswith("cat:") or line.startswith("grep") or line.startswith("grep") or line.startswith("tail"):
@@ -2294,6 +2300,8 @@ def cluster_report(argv):
             continue
         if "to diagnose" in line:
             continue
+        if "--dest" in line:
+            line = line.replace("--dest", "<dest>")
         newoutput = newoutput + line + "\n"
     if retval != 0:
         utils.err(newoutput)
