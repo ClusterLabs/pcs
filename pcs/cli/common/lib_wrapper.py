@@ -22,6 +22,7 @@ from pcs.lib.commands import (
     node,
     qdevice,
     quorum,
+    remote_node,
     resource_agent,
     resource,
     cib_options,
@@ -189,11 +190,22 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
-                "node_add_remote": cluster.node_add_remote,
-                "node_add_guest": cluster.node_add_guest,
-                "node_remove_remote": cluster.node_remove_remote,
-                "node_remove_guest": cluster.node_remove_guest,
                 "node_clear": cluster.node_clear,
+            }
+        )
+
+    if name == "remote_node":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
+            ),
+            {
+                "node_add_remote": remote_node.node_add_remote,
+                "node_add_guest": remote_node.node_add_guest,
+                "node_remove_remote": remote_node.node_remove_remote,
+                "node_remove_guest": remote_node.node_remove_guest,
             }
         )
 

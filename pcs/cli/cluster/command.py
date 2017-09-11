@@ -35,7 +35,7 @@ def node_add_remote(lib, arg_list, modifiers):
     parts = parse_resource_create_args(rest_args)
     force = modifiers["force"]
 
-    lib.cluster.node_add_remote(
+    lib.remote_node.node_add_remote(
         node_host,
         node_name,
         parts["op"],
@@ -54,7 +54,7 @@ def create_node_remove_remote(remove_resource):
     def node_remove_remote(lib, arg_list, modifiers):
         if not arg_list:
             raise CmdLineInputError()
-        lib.cluster.node_remove_remote(
+        lib.remote_node.node_remove_remote(
             arg_list[0],
             remove_resource,
             skip_offline_nodes=modifiers["skip_offline_nodes"],
@@ -72,7 +72,7 @@ def node_add_guest(lib, arg_list, modifiers):
     resource_id = arg_list[1]
     meta_options = prepare_options(arg_list[2:])
 
-    lib.cluster.node_add_guest(
+    lib.remote_node.node_add_guest(
         node_name,
         resource_id,
         meta_options,
@@ -86,7 +86,7 @@ def node_remove_guest(lib, arg_list, modifiers):
     if not arg_list:
         raise CmdLineInputError()
 
-    lib.cluster.node_remove_guest(
+    lib.remote_node.node_remove_guest(
         arg_list[0],
         skip_offline_nodes=modifiers["skip_offline_nodes"],
         allow_remove_multiple_nodes=modifiers["force"],

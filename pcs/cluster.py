@@ -53,7 +53,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
-from pcs.lib.commands.cluster import _share_authkey, _destroy_pcmk_remote_env
+from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import DistributeFiles
