@@ -1711,7 +1711,7 @@ def node_add(lib_env, node0, node1, modifiers):
         utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
     report_processor = lib_env.report_processor
-    com_factory = lib_env.get_communicator_factory()
+    com_factory = lib_env.communicator_factory
 
     # First set up everything else than corosync. Once the new node is
     # present in corosync.conf / cluster.conf, it's considered part of a
