@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Configurable pcsd port ([rhbz#1415197])
+
 ### Fixed
 - Fixed some crashes when pcs encounters a non-ascii character in environment
   variables, command line arguments and so on ([rhbz#1435697])
@@ -24,6 +27,7 @@
 [ghissue#118]: https://github.com/ClusterLabs/pcs/issues/118
 [ghissue#132]: https://github.com/ClusterLabs/pcs/issues/132
 [rhbz#1388783]: https://bugzilla.redhat.com/show_bug.cgi?id=1388783
+[rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1418199]: https://bugzilla.redhat.com/show_bug.cgi?id=1418199
 [rhbz#1420437]: https://bugzilla.redhat.com/show_bug.cgi?id=1420437
 [rhbz#1435697]: https://bugzilla.redhat.com/show_bug.cgi?id=1435697
