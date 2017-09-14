@@ -20,7 +20,8 @@ from pcs.test.tools.pcs_unittest import TestCase
 TIMEOUT=10
 
 def create(
-    env, wait=False, disabled=False, meta_attributes=None, operations=None
+    env, wait=False, disabled=False, meta_attributes=None, operations=None,
+    allow_invalid_operation=False
 ):
     return resource.create(
         env,
@@ -29,7 +30,8 @@ def create(
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
-        ensure_disabled=disabled
+        ensure_disabled=disabled,
+        allow_invalid_operation=allow_invalid_operation
     )
 
 def create_master(
@@ -386,6 +388,38 @@ def fixture_state_resources_xml(role="Started", failed="false"):
     )
 
 class Create(TestCase):
+    fixture_sanitized_operation = """
+        <resources>
+            <primitive class="ocf" id="A" provider="heartbeat"
+                type="Dummy"
+            >
+                <operations>
+                    <op id="A-migrate_from-interval-0s" interval="0s"
+                        name="migrate_from" timeout="20"
+                    />
+                    <op id="A-migrate_to-interval-0s" interval="0s"
+                        name="migrate_to" timeout="20"
+                    />
+                    <op id="A-monitor-interval-20" interval="20"
+                        name="moni*tor" timeout="20"
+                    />
+                    <op id="A-monitor-interval-10" interval="10"
+                        name="monitor" timeout="20"
+                    />
+                    <op id="A-reload-interval-0s" interval="0s"
+                        name="reload" timeout="20"
+                    />
+                    <op id="A-start-interval-0s" interval="0s"
+                        name="start" timeout="20"
+                    />
+                    <op id="A-stop-interval-0s" interval="0s"
+                        name="stop" timeout="20"
+                    />
+                </operations>
+            </primitive>
+        </resources>
+    """
+
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (self.config
@@ -437,6 +471,38 @@ class Create(TestCase):
                 {"name": "monitor", "timeout": "10s", "interval": "10"}
             ]
         )
+
+    def test_sanitize_operation_id_from_agent(self):
+        self.config.runner.pcmk.load_agent(
+            instead="load_agent",
+            agent_filename="resource_agent_ocf_heartbeat_dummy_insane_action.xml"
+        )
+        self.config.env.push_cib(
+            resources=self.fixture_sanitized_operation
+        )
+        return create(self.env_assist.get_env())
+
+    def test_sanitize_operation_id_from_user(self):
+        self.config.env.push_cib(
+            resources=self.fixture_sanitized_operation
+        )
+        create(
+            self.env_assist.get_env(),
+            operations=[
+                {"name": "moni*tor", "timeout": "20", "interval": "20"}
+            ],
+            allow_invalid_operation=True
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="operation name",
+                option_value="moni*tor",
+                allowed_values=["start", "stop", "monitor", "reload",
+                    "migrate_to", "migrate_from", "meta-data", "validate-all"]
+            ),
+        ])
+
 
 class CreateWait(TestCase):
     def setUp(self):

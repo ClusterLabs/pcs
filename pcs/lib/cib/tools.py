@@ -9,7 +9,10 @@ import re
 from pcs.common.tools import is_string
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.values import (
+    sanitize_id,
+    validate_id,
+)
 from pcs.lib.xml_tools import (
     get_root,
     get_sub_element,
@@ -177,7 +180,9 @@ def find_element_by_tag_and_id(
     )
 
 def create_subelement_id(context_element, suffix, id_provider=None):
-    proposed_id = "{0}-{1}".format(context_element.get("id"), suffix)
+    proposed_id = sanitize_id(
+        "{0}-{1}".format(context_element.get("id"), suffix)
+    )
     if id_provider:
         return id_provider.allocate_id(proposed_id)
     return find_unique_id(context_element, proposed_id)

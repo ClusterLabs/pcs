@@ -11,6 +11,7 @@
 - Fixed error messages in `pcs cluster report` ([rhbz#1388783])
 - Increase request timeout when starting a cluster with large number of nodes
   to prevent timeouts ([rhbz#1463327])
+- Fixed "Unable to update cib" error caused by invalid resource operation IDs
 
 ### Changed
 - CIB changes are now pushed to pacemaker as a diff in commands overhauled to

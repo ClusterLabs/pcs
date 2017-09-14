@@ -48,6 +48,7 @@ class PcmkShortcuts(object):
         name="load_agent",
         agent_name="ocf:heartbeat:Dummy",
         agent_filename="resource_agent_ocf_heartbeat_dummy.xml",
+        instead=None,
     ):
         """
         Create call for loading resource agent metadata.
@@ -56,13 +57,16 @@ class PcmkShortcuts(object):
         string agent_name
         string agent_filename -- points to file with the agent metadata in the
             content
+        string instead -- key of call instead of which this new call is to be
+            placed
         """
         self.__calls.place(
             name,
             RunnerCall(
                 "crm_resource --show-metadata {0}".format(agent_name),
                 stdout=open(rc(agent_filename)).read()
-            )
+            ),
+            instead=instead,
         )
 
 
