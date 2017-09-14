@@ -29,9 +29,7 @@ class CibShortcuts(object):
         name="load_cib",
         filename=None,
         before=None,
-        resources=None,
-        optional_in_conf=None,
-        remove=None,
+        **modifier_shortcuts
     ):
         """
         Create call for loading cib.
@@ -48,9 +46,7 @@ class CibShortcuts(object):
         cib = modify_cib(
             open(rc(filename)).read(),
             modifiers,
-            resources=resources,
-            optional_in_conf=optional_in_conf,
-            remove=remove,
+            **modifier_shortcuts
         )
         self.__calls.place(
             name,
@@ -63,12 +59,10 @@ class CibShortcuts(object):
         modifiers=None,
         name="push_cib",
         load_key="load_cib",
-        resources=None,
         instead=None,
         stderr="",
         returncode=0,
-        optional_in_conf=None,
-        remove=None,
+        **modifier_shortcuts
     ):
         """
         Create call for pushing cib.
@@ -86,9 +80,7 @@ class CibShortcuts(object):
         cib = modify_cib(
             self.__calls.get(load_key).stdout,
             modifiers,
-            resources,
-            optional_in_conf=optional_in_conf,
-            remove=remove,
+            **modifier_shortcuts
         )
         self.__calls.place(
             name,

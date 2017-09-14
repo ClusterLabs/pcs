@@ -8,15 +8,13 @@ import re
 
 from pcs.common.tools import is_string
 from pcs.lib import reports
+from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
-from pcs.lib.xml_tools import (
-    get_root,
-)
-from pcs.lib.cib import sections
+from pcs.lib.xml_tools import get_root
 
 class IdProvider(object):
     """

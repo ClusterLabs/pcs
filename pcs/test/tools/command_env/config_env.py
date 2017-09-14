@@ -13,16 +13,14 @@ class EnvConfig(object):
         self.__calls = call_collection
 
     def push_cib(
-        self, modifiers=None, resources=None, name="env.push_cib",
+        self, modifiers=None, name="env.push_cib",
         load_key="load_cib", wait=False, exception=None, instead=None,
-        optional_in_conf=None, remove=None
+        **modifier_shortcuts
     ):
         cib_xml = modify_cib(
             self.__calls.get(load_key).stdout,
             modifiers,
-            resources=resources,
-            optional_in_conf=optional_in_conf,
-            remove=remove,
+            **modifier_shortcuts
         )
         self.__calls.place(
             name,

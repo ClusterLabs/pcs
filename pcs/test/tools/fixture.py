@@ -88,38 +88,54 @@ def _replace_element_in_parent(element_to_replace, new_element):
             parent.insert(index, new_element)
             return
 
-def modify_cib(
-    cib_xml, modifiers=None, resources=None, optional_in_conf=None, remove=None
-):
+MODIFIER_GENERATORS = {
+    "resources":
+        lambda resources: replace_element(".//resources", resources)
+    ,
+    "optional_in_conf": lambda optional_in_conf: replace_optional_element(
+        "./configuration",
+        etree.fromstring(optional_in_conf).tag,
+        optional_in_conf,
+    ),
+    "remove": remove_element,
+}
+
+def create_modifiers(**modifier_shortcuts):
+    unknown_shortcuts = (
+        set(modifier_shortcuts.keys()) - set(MODIFIER_GENERATORS.keys())
+    )
+    if unknown_shortcuts:
+        raise AssertionError(
+            "Unknown modifier shortcuts '{0}', available are: '{1}'".format(
+                "', '".join(list(unknown_shortcuts)),
+                "', '".join(MODIFIER_GENERATORS.keys()),
+            )
+        )
+
+    return [
+        MODIFIER_GENERATORS[name](param)
+        for name, param in modifier_shortcuts.items()
+    ]
+
+def modify_cib(cib_xml, modifiers=None, **modifier_shortcuts):
     """
     Apply modifiers to cib_xml and return the result cib_xml
 
     string cib_xml -- initial cib
     list of callable modifiers -- each takes cib (etree.Element)
-    string resources -- xml - resources section, current resources section will
-        be replaced by this
+    dict modifier_shortcuts -- a new modifier is generated from each modifier
+        shortcut.
+        As key there can be keys of MODIFIER_GENERATORS.
+        Value is passed into appropriate generator from MODIFIER_GENERATORS.
     """
     modifiers = modifiers if modifiers else []
-    if resources:
-        modifiers.append(replace_element(".//resources", resources))
+    all_modifiers = modifiers + create_modifiers(**modifier_shortcuts)
 
-    if optional_in_conf:
-        modifiers.append(
-            replace_optional_element(
-                "./configuration",
-                etree.fromstring(optional_in_conf).tag,
-                optional_in_conf,
-            )
-        )
-
-    if remove:
-        modifiers.append(remove_element(remove))
-
-    if not modifiers:
+    if not all_modifiers:
         return cib_xml
 
     cib_tree = etree.fromstring(cib_xml)
-    for modify in modifiers:
+    for modify in all_modifiers:
         modify(cib_tree)
 
     return etree_to_str(cib_tree)
@@ -174,9 +190,6 @@ def warn(code, force_code=None, **kwargs):
 
 def error(code, force_code=None, **kwargs):
     return severities.ERROR, code, kwargs, force_code
-
-def warn(code, force_code=None, **kwargs):
-    return severities.WARNING, code, kwargs, force_code
 
 def info(code, **kwargs):
     return severities.INFO, code, kwargs, None
