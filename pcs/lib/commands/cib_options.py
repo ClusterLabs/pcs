@@ -13,6 +13,12 @@ from pcs.lib.cib.nvpair import arrange_first_meta_attributes
 
 
 def _set_any_defaults(section_name, env, options):
+    """
+    string section_name -- determine the section of defaults
+    LibraryEnvironment env -- provides access to outside environment
+    dict options -- are desired options with its values; when value is empty the
+        option have to be removed
+    """
     env.report_processor.process(reports.defaults_can_be_overriden())
 
     if not options:

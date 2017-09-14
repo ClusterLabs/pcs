@@ -48,7 +48,7 @@ def get(tree, section_name):
     If the section is optional and is not found in the tree this function
     creates new section.
 
-    lxml.etree.Element tree -- is tree in which is section looked up
+    lxml.etree.Element tree -- is tree in which the section is looked up
     string section_name -- name of desired section; it is strongly recommended
         to use constants defined in this module
     """
