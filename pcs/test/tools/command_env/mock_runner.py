@@ -24,6 +24,21 @@ def create_check_stdin_xml(expected_stdin):
         )
     return stdin_xml_check
 
+def create_check_stdin_equal(expected_stdin):
+    def stdin_equal_check(stdin, command, order_num):
+        if stdin != expected_stdin:
+            raise AssertionError(
+                (
+                    "With command\n\n    '{0}'"
+                    "\n\nexpected stdin:\n\n'{1}'"
+                    "\n\nbut was:\n\n'{2}'"
+                )
+                .format(command, expected_stdin, stdin)
+            )
+
+    return stdin_equal_check
+
+
 def check_no_stdin(stdin, command, order_num):
     if stdin:
         raise AssertionError(
@@ -43,6 +58,7 @@ COMMAND_COMPLETIONS = {
     "crm_diff": path.join(settings.pacemaker_binaries, "crm_diff"),
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
+    "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
 }
 

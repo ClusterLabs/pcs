@@ -42,12 +42,15 @@ def get_cluster_status_xml(runner):
     return stdout
 
 ### cib
-
-def get_cib_xml(runner, scope=None):
+def get_cib_xml_cmd_results(runner, scope=None):
     command = [__exec("cibadmin"), "--local", "--query"]
     if scope:
         command.append("--scope={0}".format(scope))
-    stdout, stderr, retval = runner.run(command)
+    stdout, stderr, returncode = runner.run(command)
+    return stdout, stderr, returncode
+
+def get_cib_xml(runner, scope=None):
+    stdout, stderr, retval = get_cib_xml_cmd_results(runner, scope)
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(
@@ -65,11 +68,27 @@ def get_cib_xml(runner, scope=None):
 def parse_cib_xml(xml):
     return xml_fromstring(xml)
 
+
+
 def get_cib(xml):
     try:
         return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(reports.cib_load_error_invalid_format())
+
+def verify(runner, verbose=False, cib_content=None):
+    crm_verify_cmd = [__exec("crm_verify")]
+    if verbose:
+        crm_verify_cmd.append("-V")
+
+    if cib_content is None:
+        crm_verify_cmd.append("--live-check")
+        stdin = None
+    else:
+        crm_verify_cmd.append("--xml-pipe")
+        stdin = cib_content
+    stdout, stderr, returncode = runner.run(crm_verify_cmd, stdin_string=stdin)
+    return stdout, stderr, returncode
 
 def replace_cib_configuration_xml(runner, xml):
     cmd = [

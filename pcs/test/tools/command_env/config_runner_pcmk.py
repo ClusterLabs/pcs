@@ -6,7 +6,10 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs.test.tools.command_env.mock_runner import(
+    Call as RunnerCall,
+    create_check_stdin_equal
+)
 from pcs.test.tools.fixture import complete_state_resources
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import etree_to_str
@@ -110,4 +113,24 @@ class PcmkShortcuts(object):
             name,
             RunnerCall("crm_resource -?", stdout=stdout),
             before=before
+        )
+
+    def verify(self, name="verify", content=None, stderr=None, verbose=False):
+        """
+        Create call that checks that wait for idle is supported
+
+        string name -- key of the call
+        string before -- key of call before which this new call is to be placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "crm_verify{0} {1}".format(
+                    " -V" if verbose else "",
+                    "--live-check" if content is None else "--xml-pipe"
+                ),
+                stderr=("" if stderr is None else stderr),
+                returncode=(0 if stderr is None else 55),
+                check_stdin=create_check_stdin_equal(content)
+            ),
         )
