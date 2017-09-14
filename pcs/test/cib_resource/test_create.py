@@ -50,8 +50,17 @@ class Success(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
+                        <op id="R-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"
+                        />
+                        <op id="R-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"
+                        />
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
+                        />
+                        <op id="R-reload-interval-0s" interval="0s"
+                            name="reload" timeout="20"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
                             timeout="20"
@@ -375,8 +384,17 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
+                        <op id="R-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"
+                        />
+                        <op id="R-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"
+                        />
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
+                        />
+                        <op id="R-reload-interval-0s" interval="0s"
+                            name="reload" timeout="20"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
                             timeout="20"
@@ -395,8 +413,17 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
+                        <op id="R-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"
+                        />
+                        <op id="R-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"
+                        />
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
+                        />
+                        <op id="R-reload-interval-0s" interval="0s"
+                            name="reload" timeout="20"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
                             timeout="200"
@@ -436,6 +463,9 @@ class SuccessOperations(ResourceTest):
                         />
                         <op id="R-monitor-interval-11" interval="11"
                             name="monitor" role="Slave" timeout="20"
+                        />
+                        <op id="R-notify-interval-0s" interval="0s"
+                            name="notify" timeout="5"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
                             timeout="20"
@@ -662,8 +692,17 @@ class SuccessMaster(ResourceTest):
                             />
                         </instance_attributes>
                         <operations>
+                            <op id="R-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="R-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor" timeout="20"
+                            />
+                            <op id="R-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
                             />
                             <op id="R-start-interval-0s" interval="0s"
                                 name="start" timeout="20"
@@ -797,8 +836,17 @@ class SuccessClone(ResourceTest):
                             />
                         </meta_attributes>
                         <operations>
+                            <op id="R-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="R-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor" timeout="20"
+                            />
+                            <op id="R-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
                             />
                             <op id="R-start-interval-0s" interval="0s"
                                 name="start" timeout="20"
@@ -833,8 +881,17 @@ class SuccessClone(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
+                            <op id="R-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="R-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor"
+                            />
+                            <op id="R-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
                             />
                             <op id="R-start-interval-0s" interval="0s"
                                 name="start" timeout="20"
@@ -867,8 +924,17 @@ class SuccessClone(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
+                            <op id="R-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="R-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor" timeout="20"
+                            />
+                            <op id="R-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
                             />
                             <op id="R-start-interval-0s" interval="0s"
                                 name="start" timeout="20"

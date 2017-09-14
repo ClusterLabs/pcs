@@ -97,7 +97,16 @@ fixture_cib_resources_xml_primitive_simplest = """
     <resources>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -119,7 +128,16 @@ fixture_cib_resources_xml_simplest_disabled = """<resources>
             />
         </meta_attributes>
         <operations>
+            <op id="A-migrate_from-interval-0s" interval="0s"
+                name="migrate_from" timeout="20"
+            />
+            <op id="A-migrate_to-interval-0s" interval="0s" name="migrate_to"
+                timeout="20"
+            />
             <op id="A-monitor-interval-10" interval="10" name="monitor"
+                timeout="20"
+            />
+            <op id="A-reload-interval-0s" interval="0s" name="reload"
                 timeout="20"
             />
             <op id="A-start-interval-0s" interval="0s" name="start"
@@ -134,7 +152,16 @@ fixture_cib_resources_xml_master_simplest = """<resources>
     <master id="A-master">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -158,7 +185,16 @@ fixture_cib_resources_xml_master_simplest_disabled = """<resources>
         </meta_attributes>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -176,7 +212,16 @@ fixture_cib_resources_xml_master_simplest_disabled_meta_after = """<resources>
     <master id="A-master">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -199,7 +244,16 @@ fixture_cib_resources_xml_group_simplest = """<resources>
     <group id="G">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -223,7 +277,16 @@ fixture_cib_resources_xml_group_simplest_disabled = """<resources>
                 />
             </meta_attributes>
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -242,7 +305,16 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
     <clone id="A-clone">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -266,7 +338,16 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
         </meta_attributes>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
                     timeout="20"
                 />
                 <op id="A-start-interval-0s" interval="0s" name="start"
@@ -326,8 +407,17 @@ class Create(TestCase):
                         type="Dummy"
                     >
                         <operations>
+                            <op id="A-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="A-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
                             <op id="A-monitor-interval-10" interval="10"
                                 name="monitor" timeout="10s"
+                            />
+                            <op id="A-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
                             />
                             <op id="A-start-interval-0s" interval="0s"
                                 name="start" timeout="20"
@@ -605,8 +695,19 @@ class CreateAsMaster(TestCase):
                                     />
                                 </meta_attributes>
                                 <operations>
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
+                                        timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
                                     <op id="A-monitor-interval-10" interval="10"
                                         name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -667,9 +768,19 @@ class CreateAsMaster(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor"
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
                                         timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
+                                    <op id="A-monitor-interval-10" interval="10"
+                                        name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -714,9 +825,19 @@ class CreateAsMaster(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor"
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
                                         timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
+                                    <op id="A-monitor-interval-10" interval="10"
+                                        name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -772,8 +893,19 @@ class CreateInGroup(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
+                                        timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
                                     <op id="A-monitor-interval-10" interval="10"
                                         name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -1035,8 +1167,19 @@ class CreateAsClone(TestCase):
                                     />
                                 </meta_attributes>
                                 <operations>
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
+                                        timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
                                     <op id="A-monitor-interval-10" interval="10"
                                         name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -1076,9 +1219,19 @@ class CreateAsClone(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor"
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
                                         timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
+                                    <op id="A-monitor-interval-10" interval="10"
+                                        name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -1123,9 +1276,19 @@ class CreateAsClone(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor"
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
                                         timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
+                                    <op id="A-monitor-interval-10" interval="10"
+                                        name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -1170,9 +1333,19 @@ class CreateAsClone(TestCase):
                                 type="Dummy"
                             >
                                 <operations>
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor"
+                                    <op id="A-migrate_from-interval-0s"
+                                        interval="0s" name="migrate_from"
                                         timeout="20"
+                                    />
+                                    <op id="A-migrate_to-interval-0s"
+                                        interval="0s" name="migrate_to"
+                                        timeout="20"
+                                    />
+                                    <op id="A-monitor-interval-10" interval="10"
+                                        name="monitor" timeout="20"
+                                    />
+                                    <op id="A-reload-interval-0s" interval="0s"
+                                        name="reload" timeout="20"
                                     />
                                     <op id="A-start-interval-0s" interval="0s"
                                         name="start" timeout="20"
@@ -1224,8 +1397,17 @@ class CreateInToBundle(TestCase):
                     class="ocf" id="A" provider="heartbeat" type="Dummy"
                 >
                     <operations>
+                        <op id="A-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"
+                        />
+                        <op id="A-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"
+                        />
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
+                        />
+                        <op id="A-reload-interval-0s" interval="0s" name="reload"
+                            timeout="20"
                         />
                         <op id="A-start-interval-0s" interval="0s"
                             name="start" timeout="20"
@@ -1251,8 +1433,17 @@ class CreateInToBundle(TestCase):
                         />
                     </meta_attributes>
                     <operations>
+                        <op id="A-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"
+                        />
+                        <op id="A-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"
+                        />
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
+                        />
+                        <op id="A-reload-interval-0s" interval="0s" name="reload"
+                            timeout="20"
                         />
                         <op id="A-start-interval-0s" interval="0s"
                             name="start" timeout="20"

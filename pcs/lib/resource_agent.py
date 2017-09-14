@@ -19,15 +19,6 @@ from pcs.lib.pacemaker.values import is_true
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
-DEFAULT_RESOURCE_CIB_ACTION_NAMES = [
-    "monitor",
-    "start",
-    "stop",
-    "promote",
-    "demote",
-]
-DEFAULT_STONITH_CIB_ACTION_NAMES = ["monitor"]
-
 # Operation monitor is required always! No matter if --no-default-ops was
 # entered or if agent does not specify it. See
 # http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html-single/Pacemaker_Explained/index.html#_resource_operations
@@ -362,8 +353,6 @@ class Agent(object):
     """
     Base class for providing convinient access to an agent's metadata
     """
-    DEFAULT_CIB_ACTION_NAMES = []
-
     def __init__(self, runner):
         """
         create an instance which reads metadata by itself on demand
@@ -554,7 +543,7 @@ class Agent(object):
     def get_actions(self):
         """
         Get list of agent's actions (operations). Each action is represented as
-        dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
+        a dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
         """
         action_list = []
         for raw_action in self._get_raw_actions():
@@ -567,6 +556,9 @@ class Agent(object):
             action_list.append(action)
         return action_list
 
+    def _is_cib_default_action(self, action):
+        return False
+
     def get_cib_default_actions(self, necessary_only=False):
         """
         List actions that should be put to resource on its creation.
@@ -575,10 +567,17 @@ class Agent(object):
 
         action_list = [
             action for action in self.get_actions()
-            if action.get("name", "") in (
-                NECESSARY_CIB_ACTION_NAMES if necessary_only
-                else self.DEFAULT_CIB_ACTION_NAMES
-            )
+            if (
+                    necessary_only
+                    and
+                    action.get("name") in NECESSARY_CIB_ACTION_NAMES
+                )
+                or
+                (
+                    not necessary_only
+                    and
+                    self._is_cib_default_action(action)
+                )
         ]
 
         for action_name in NECESSARY_CIB_ACTION_NAMES:
@@ -739,7 +738,6 @@ class CrmAgent(Agent):
 
 
 class ResourceAgent(CrmAgent):
-    DEFAULT_CIB_ACTION_NAMES = DEFAULT_RESOURCE_CIB_ACTION_NAMES
     """
     Provides convinient access to a resource agent's metadata
     """
@@ -805,6 +803,20 @@ class ResourceAgent(CrmAgent):
 
         return parameters
 
+    def _is_cib_default_action(self, action):
+        # Copy all actions to the CIB even those not defined in the OCF standard
+        # or pacemaker. This way even custom actions defined in a resource agent
+        # will be copied to the CIB and run by pacemaker if they specify
+        # an interval. See https://github.com/ClusterLabs/pcs/issues/132
+        return action.get("name") not in [
+            # one-time action, not meant to be processed by pacemaker
+            "meta-data",
+            # deprecated alias of monitor
+            "status",
+            # one-time action, not meant to be processed by pacemaker
+            "validate-all",
+        ]
+
 
 class AbsentAgentMixin(object):
     def _load_metadata(self):
@@ -822,8 +834,6 @@ class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
-    DEFAULT_CIB_ACTION_NAMES = DEFAULT_STONITH_CIB_ACTION_NAMES
-
     _stonithd_metadata = None
 
     def _prepare_name_parts(self, name):
@@ -927,6 +937,9 @@ class StonithAgent(CrmAgent):
             ):
                 return True
         return False
+
+    def _is_cib_default_action(self, action):
+        return action.get("name") == "monitor"
 
 
 class AbsentStonithAgent(AbsentAgentMixin, StonithAgent):

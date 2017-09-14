@@ -322,3 +322,40 @@ class ValidateParameters(TestCase):
             [
             ],
         )
+
+
+@mock.patch.object(lib_ra.StonithAgent, "get_actions")
+class StonithAgentMetadataGetCibDefaultActions(TestCase):
+    fixture_actions = [
+        {"name": "custom1", "timeout": "40s"},
+        {"name": "custom2", "interval": "25s", "timeout": "60s"},
+        {"name": "meta-data"},
+        {"name": "monitor", "interval": "10s", "timeout": "30s"},
+        {"name": "start", "interval": "40s"},
+        {"name": "status", "interval": "15s", "timeout": "20s"},
+        {"name": "validate-all"},
+    ]
+
+    def setUp(self):
+        self.agent = lib_ra.StonithAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "fence_dummy"
+        )
+
+    def test_select_only_actions_for_cib(self, get_actions):
+        get_actions.return_value = self.fixture_actions
+        self.assertEqual(
+            [
+                {"name": "monitor", "interval": "10s", "timeout": "30s"}
+            ],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_select_only_necessary_actions_for_cib(self, get_actions):
+        get_actions.return_value = self.fixture_actions
+        self.assertEqual(
+            [
+                {"name": "monitor", "interval": "10s", "timeout": "30s"}
+            ],
+            self.agent.get_cib_default_actions(necessary_only=True)
+        )

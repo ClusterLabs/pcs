@@ -978,7 +978,10 @@ class AgentMetadataGetActionsTest(TestCase):
         )
 
 
-@patch_agent_object("DEFAULT_CIB_ACTION_NAMES", ["monitor", "start"])
+@patch_agent_object(
+    "_is_cib_default_action",
+    lambda self, action: action.get("name") == "monitor"
+)
 @patch_agent_object("get_actions")
 class AgentMetadataGetCibDefaultActions(TestCase):
     def setUp(self):
@@ -986,22 +989,8 @@ class AgentMetadataGetCibDefaultActions(TestCase):
             mock.MagicMock(spec_set=CommandRunner)
         )
 
-    def test_select_only_actions_for_cib(self, get_actions):
-        get_actions.return_value = [
-            {"name": "metadata"},
-            {"name": "start", "interval": "40s"},
-            {"name": "monitor", "interval": "10s", "timeout": "30s"},
-        ]
-        self.assertEqual(
-            [
-                {"name": "start", "interval": "40s"},
-                {"name": "monitor", "interval": "10s", "timeout": "30s"}
-            ],
-            self.agent.get_cib_default_actions()
-        )
-
     def test_complete_monitor(self, get_actions):
-        get_actions.return_value = [{"name": "metadata"}]
+        get_actions.return_value = [{"name": "meta-data"}]
         self.assertEqual(
             [{"name": "monitor", "interval": "60s"}],
             self.agent.get_cib_default_actions()
@@ -1009,7 +998,55 @@ class AgentMetadataGetCibDefaultActions(TestCase):
 
     def test_complete_intervals(self, get_actions):
         get_actions.return_value = [
-            {"name": "metadata"},
+            {"name": "meta-data"},
+            {"name": "monitor", "timeout": "30s"},
+        ]
+        self.assertEqual(
+            [{"name": "monitor", "interval": "60s", "timeout": "30s"}],
+            self.agent.get_cib_default_actions()
+        )
+
+
+@mock.patch.object(lib_ra.ResourceAgent, "get_actions")
+class ResourceAgentMetadataGetCibDefaultActions(TestCase):
+    fixture_actions = [
+        {"name": "custom1", "timeout": "40s"},
+        {"name": "custom2", "interval": "25s", "timeout": "60s"},
+        {"name": "meta-data"},
+        {"name": "monitor", "interval": "10s", "timeout": "30s"},
+        {"name": "start", "timeout": "40s"},
+        {"name": "status", "interval": "15s", "timeout": "20s"},
+        {"name": "validate-all"},
+    ]
+
+    def setUp(self):
+        self.agent = lib_ra.ResourceAgent(
+            mock.MagicMock(spec_set=CommandRunner),
+            "ocf:pacemaker:Dummy"
+        )
+
+    def test_select_only_actions_for_cib(self, get_actions):
+        get_actions.return_value = self.fixture_actions
+        self.assertEqual(
+            [
+                {"name": "custom1", "interval": "0s", "timeout": "40s"},
+                {"name": "custom2", "interval": "25s", "timeout": "60s"},
+                {"name": "monitor", "interval": "10s", "timeout": "30s"},
+                {"name": "start", "interval": "0s", "timeout": "40s"},
+            ],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_complete_monitor(self, get_actions):
+        get_actions.return_value = [{"name": "meta-data"}]
+        self.assertEqual(
+            [{"name": "monitor", "interval": "60s"}],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_complete_intervals(self, get_actions):
+        get_actions.return_value = [
+            {"name": "meta-data"},
             {"name": "monitor", "timeout": "30s"},
         ]
         self.assertEqual(
@@ -1018,11 +1055,7 @@ class AgentMetadataGetCibDefaultActions(TestCase):
         )
 
     def test_select_only_necessary_actions_for_cib(self, get_actions):
-        get_actions.return_value = [
-            {"name": "metadata"},
-            {"name": "start", "interval": "40s"},
-            {"name": "monitor", "interval": "10s", "timeout": "30s"},
-        ]
+        get_actions.return_value = self.fixture_actions
         self.assertEqual(
             [
                 {"name": "monitor", "interval": "10s", "timeout": "30s"}

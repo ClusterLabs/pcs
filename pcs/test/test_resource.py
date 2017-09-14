@@ -216,7 +216,10 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         ac(output, outdent(
             """\
              Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+              Operations: migrate_from interval=0s timeout=20 (dummy0-migrate_from-interval-0s)
+                          migrate_to interval=0s timeout=20 (dummy0-migrate_to-interval-0s)
+                          monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+                          reload interval=0s timeout=20 (dummy0-reload-interval-0s)
                           start interval=0s timeout=20 (dummy0-start-interval-0s)
                           stop interval=0s timeout=20 (dummy0-stop-interval-0s)
             """
@@ -749,8 +752,11 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success("resource show A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 (A-monitor-interval-10)
+              Operations: migrate_from interval=0s timeout=20 (A-migrate_from-interval-0s)
+                          migrate_to interval=0s timeout=20 (A-migrate_to-interval-0s)
+                          monitor interval=10 (A-monitor-interval-10)
                           monitor interval=20 (A-monitor-interval-20)
+                          reload interval=0s timeout=20 (A-reload-interval-0s)
                           start interval=0s timeout=20 (A-start-interval-0s)
                           stop interval=0s timeout=20 (A-stop-interval-0s)
             """
@@ -776,8 +782,11 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success("resource show A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=11 (A-monitor-interval-11)
+              Operations: migrate_from interval=0s timeout=20 (A-migrate_from-interval-0s)
+                          migrate_to interval=0s timeout=20 (A-migrate_to-interval-0s)
+                          monitor interval=11 (A-monitor-interval-11)
                           monitor interval=20 (A-monitor-interval-20)
+                          reload interval=0s timeout=20 (A-reload-interval-0s)
                           start interval=0s timeout=20 (A-start-interval-0s)
                           stop interval=0s timeout=20 (A-stop-interval-0s)
             """
@@ -3426,7 +3435,10 @@ Error: Cannot remove more than one resource from cloned group
              Clone: group0-clone
               Group: group0
                Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+                Operations: migrate_from interval=0s timeout=20 (dummy0-migrate_from-interval-0s)
+                            migrate_to interval=0s timeout=20 (dummy0-migrate_to-interval-0s)
+                            monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+                            reload interval=0s timeout=20 (dummy0-reload-interval-0s)
                             start interval=0s timeout=20 (dummy0-start-interval-0s)
                             stop interval=0s timeout=20 (dummy0-stop-interval-0s)
             """
@@ -4687,7 +4699,10 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
+                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
                            start interval=0s timeout=20 (dummy-start-interval-0s)
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
@@ -4704,7 +4719,10 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
+                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
                            start interval=0s timeout=20 (dummy-start-interval-0s)
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
@@ -4718,7 +4736,10 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             """\
              Master: dummy-master
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
+                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
                            start interval=0s timeout=20 (dummy-start-interval-0s)
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
@@ -4735,7 +4756,10 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             """\
              Master: dummy-master
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
+                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
                            start interval=0s timeout=20 (dummy-start-interval-0s)
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
