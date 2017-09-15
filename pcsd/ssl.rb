@@ -8,6 +8,7 @@ require 'socket'
 
 require 'bootstrap.rb'
 require 'pcs.rb'
+require 'settings.rb'
 
 unless defined? OpenSSL::SSL::OP_NO_TLSv1_1
   OpenSSL::SSL::OP_NO_TLSv1_1 = 268435456
@@ -140,7 +141,7 @@ if ENV['PCSD_BIND_ADDR']
 end
 
 webrick_options = {
-  :Port               => 2224,
+  :Port               => ENV['PCSD_PORT'] || PCSD_DEFAULT_PORT,
   :BindAddress        => primary_addr,
   :Host               => primary_addr,
   :SSLEnable          => true,

@@ -79,49 +79,6 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_is_cman.call_count)
 
 
-    @patch_env("NodeCommunicator")
-    def test_node_communicator_no_options(self, mock_comm):
-        expected_comm = mock.MagicMock()
-        mock_comm.return_value = expected_comm
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        comm = env.node_communicator()
-        self.assertEqual(expected_comm, comm)
-        mock_comm.assert_called_once_with(
-            self.mock_logger,
-            self.mock_reporter,
-            {},
-            None,
-            [],
-            None
-        )
-
-    @patch_env("NodeCommunicator")
-    def test_node_communicator_all_options(self, mock_comm):
-        expected_comm = mock.MagicMock()
-        mock_comm.return_value = expected_comm
-        user = "testuser"
-        groups = ["some", "group"]
-        tokens = {"node": "token"}
-        timeout = 10
-        env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            user_login=user,
-            user_groups=groups,
-            auth_tokens_getter=lambda:tokens,
-            request_timeout=timeout
-        )
-        comm = env.node_communicator()
-        self.assertEqual(expected_comm, comm)
-        mock_comm.assert_called_once_with(
-            self.mock_logger,
-            self.mock_reporter,
-            tokens,
-            user,
-            groups,
-            timeout
-        )
-
     @patch_env("get_local_cluster_conf")
     def test_get_cluster_conf_live(self, mock_get_local_cluster_conf):
         env = LibraryEnvironment(

@@ -192,20 +192,21 @@
     </table>
     <table>
       <tr><td align=right>Node Name/IP:</td><td><input size="50" name="node-name" type="text"></td></tr>
+      <tr><td align=right>PCSD port:</td><td><input class="port" size="5" name="node-port" type="text" placeholder="<%= PCSD_DEFAULT_PORT %>"></td></tr>
     </table>
   </form>
 </div>
 <div id="create_new_cluster" style="display: none;">
   <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
     <br>
-    Enter the hostnames of the nodes you would like to use to create a cluster:
+    Enter the hostnames and ports of the nodes you would like to use to create a cluster:
     <br>
     <br>
     <table>
-      <tr><td align=right>Cluster Name:</td><td><input size="50" name="clustername" type="text"></input></td></tr>
-      <tr><td align=right>Node 1:</td><td><input size="50" name="node-1" type="text"></input></td></tr>
-      <tr><td align=right>Node 2:</td><td><input size="50" name="node-2" type="text"></input></td></tr>
-      <tr><td align=right>Node 3:</td><td><input size="50" name="node-3" type="text"></input></td></tr>
+      <tr><td align=right>Cluster Name:</td><td colspan="2"><input size="50" name="clustername" type="text"></input></td></tr>
+      <tr class="new_node"><td align=right>Node 1:</td><td><input class="node" size="50" name="node-1" type="text"></input></td><td>:<input class="port" size="5" name="port-1" type="text" placeholder="<%= PCSD_DEFAULT_PORT %>"/></td></tr>
+      <tr class="new_node"><td align=right>Node 2:</td><td><input class="node" size="50" name="node-2" type="text"></input></td><td>:<input class="port" size="5" name="port-2" type="text" placeholder="<%= PCSD_DEFAULT_PORT %>"/></td></tr>
+      <tr class="new_node"><td align=right>Node 3:</td><td><input class="node" size="50" name="node-3" type="text"></input></td><td>:<input class="port" size="5" name="port-3" type="text" placeholder="<%= PCSD_DEFAULT_PORT %>"/></td></tr>
       <tr><td></td><td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
     </table>
     <table class="err_msg_table" style="width:100%">

@@ -22,6 +22,13 @@ except ImportError:
     # python3
     from subprocess import getstatusoutput
 
+try:
+    # python2
+    from urlparse import urlparse
+except ImportError:
+    # python3
+    from urllib.parse import urlparse
+
 from pcs import (
     constraint,
     node,
@@ -270,10 +277,10 @@ def auth_nodes(nodes):
     else:
         password = None
 
-    set_nodes = set(nodes)
+    nodes_dict = parse_nodes_with_ports(nodes)
     need_auth = "--force" in utils.pcs_options or (username or password)
     if not need_auth:
-        for node in set_nodes:
+        for node in nodes_dict.keys():
             status = utils.checkAuthorization(node)
             if status[0] == 3:
                 need_auth = True
@@ -283,7 +290,9 @@ def auth_nodes(nodes):
                 try:
                     auth_status = json.loads(status[1])
                     if auth_status["success"]:
-                        if set_nodes.issubset(set(auth_status["node_list"])):
+                        if set(nodes_dict.keys()).issubset(
+                            set(auth_status["node_list"])
+                        ):
                             mutually_authorized = True
                 except (ValueError, KeyError):
                     pass
@@ -298,12 +307,31 @@ def auth_nodes(nodes):
             password = utils.get_terminal_password()
 
         utils.auth_nodes_do(
-            set_nodes, username, password, '--force' in utils.pcs_options,
+            nodes_dict, username, password, '--force' in utils.pcs_options,
             '--local' in utils.pcs_options
         )
     else:
-        for node in set_nodes:
+        for node in nodes_dict.keys():
             print(node + ": Already authorized")
+
+
+def parse_nodes_with_ports(node_list):
+    result = {}
+    for node in node_list:
+        if node.count(":") > 1 and not node.startswith("["):
+            # if IPv6 without port put it in parentheses
+            node = "[{0}]".format(node)
+        # adding protocol so urlparse will parse hostname/ip and port correctly
+        url = urlparse("http://{0}".format(node))
+        if url.hostname in result and result[url.hostname] != url.port:
+            raise CmdLineInputError(
+                "Node '{0}' defined twice with different ports".format(
+                    url.hostname
+                )
+            )
+        result[url.hostname] = url.port
+    return result
+
 
 def cluster_certkey(argv):
     return pcsd.pcsd_certkey(argv)

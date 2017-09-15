@@ -237,16 +237,22 @@ function checkAddingNode(){
     $("#add_node_submit_btn").button("option", "disabled", false);
     return false;
   }
+  var port = $("#add_node_selector input.port").val().trim();
+  var data = {};
+  data["nodes"] = nodeName;
+  data["port-" + nodeName] = port;
 
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
-    data: {"nodes": nodeName},
+    data: data,
     timeout: pcs_timeout,
     success: function (data) {
       var mydata = jQuery.parseJSON(data);
       if (mydata[nodeName] == "Unable to authenticate") {
-        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
+        var nodes_to_auth = {};
+        nodes_to_auth[nodeName] = port;
+        auth_nodes_dialog(nodes_to_auth, function(){$("#add_node_submit_btn").trigger("click");});
         $("#add_node_submit_btn").button("option", "disabled", false);
       } else if (mydata[nodeName] == "Offline") {
         alert("Unable to contact node '" + nodeName + "'");
@@ -659,11 +665,15 @@ function checkExistingNode() {
   $('input[name="node-name"]').each(function(i,e) {
     node = e.value;
   });
+  var port = $("#add_existing_cluster_form input.port").val().trim();
+  var data = {};
+  data["nodes"] = node;
+  data["port-" + node] = port;
 
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
-    data: {"nodes": node},
+    data: data,
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
@@ -676,25 +686,39 @@ function checkExistingNode() {
   });
 }
 
+function get_node_ports_object_from_create_new_cluster_dialog() {
+  var nodes = {}
+  $("#create_new_cluster_form tr.new_node").each(function(i, e) {
+    var node = $(e).find(".node").val().trim();
+    var port = $(e).find(".port").val().trim();
+    nodes[node] = port;
+  });
+  return nodes;
+}
+
 function checkClusterNodes() {
-  var nodes = [];
-  $('input[name^="node-"]').each(function(i,e) {
-    if (e.value != "") {
-      nodes.push(e.value)
+  var nodes = get_node_ports_object_from_create_new_cluster_dialog();
+  var node_list_str = Object.keys(nodes).join(",");
+  var request_data = {
+    "nodes": node_list_str,
+  };
+  $.each(nodes, function(node, port) {
+    if (port) {
+      request_data["port-" + node] = port;
     }
   });
 
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
-    data: {"nodes": nodes.join(",")},
+    data: request_data,
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
       ajax_wrapper({
         type: 'GET',
         url: '/manage/get_nodes_sw_versions',
-        data: {"nodes": nodes.join(",")},
+        data: {"nodes": node_list_str},
         timeout: pcs_timeout,
         success: function(data) {
           versions = jQuery.parseJSON(data);
@@ -784,9 +808,10 @@ function auth_nodes_dialog_update(dialog_obj, data) {
   return unauth_nodes;
 }
 
-function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one) {
+function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one, ports_required) {
   callback_success = typeof callback_success !== 'undefined' ? callback_success : null;
   callback_success_one = typeof callback_success_one !== 'undefined' ? callback_success_one : null;
+  ports_required = typeof ports_required !== 'undefined' ? ports_required : false;
 
   var buttonsOpts = [
     {
@@ -825,15 +850,16 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
       return false;
     }
   });
+  unauth_nodes_count = Object.keys(unauth_nodes).length;
 
-  if (unauth_nodes.length == 0) {
+  if (unauth_nodes_count == 0) {
     if (callback_success !== null) {
       callback_success();
     }
     return;
   }
 
-  if (unauth_nodes.length == 1) {
+  if (unauth_nodes_count == 1) {
     dialog_obj.find("#same_pass").hide();
   } else {
     dialog_obj.find("#same_pass").show();
@@ -843,8 +869,16 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
   }
 
   dialog_obj.find('#auth_nodes_list').empty();
-  unauth_nodes.forEach(function(node) {
-    dialog_obj.find('#auth_nodes_list').append("\t\t\t<tr><td>" + htmlEncode(node) + '</td><td><input type="password" name="' + htmlEncode(node) + '-pass"></td></tr>\n');
+  $.each(unauth_nodes, function(node, port) {
+    var html = "<tr><td>" + htmlEncode(node) + "</td><td>";
+    if (ports_required) {
+      html += ':<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" />';
+    } else {
+      html += '<input type="hidden" name="port-' + htmlEncode(node) + '" value="' + htmlEncode(port) + '" />';
+    }
+    html += '</td><td><input type="password" name="' + htmlEncode(node) + '-pass"></td></tr>';
+
+    dialog_obj.find('#auth_nodes_list').append(html);
   });
 
 }
@@ -905,7 +939,9 @@ function update_existing_cluster_dialog(data) {
       });
       return;
     } else if (data[i] == "Unable to authenticate") {
-      auth_nodes_dialog([i], function() {$("#add_existing_submit_btn").trigger("click");});
+      var nodes_to_auth = {};
+      nodes_to_auth[i] = $("#add_existing_cluster_form input.port").val().trim();
+      auth_nodes_dialog(nodes_to_auth, function() {$("#add_existing_submit_btn").trigger("click");});
       $("#add_existing_submit_btn").button("option", "disabled", false);
       return;
     }
@@ -963,7 +999,12 @@ function update_create_cluster_dialog(nodes, version_info) {
     });
 
     if (cant_auth_nodes.length > 0) {
-      auth_nodes_dialog(cant_auth_nodes, function(){$("#create_cluster_submit_btn").trigger("click")});
+      var ports = get_node_ports_object_from_create_new_cluster_dialog();
+      var unauth_nodes_with_ports = {};
+      $.each(cant_auth_nodes, function(i, node) {
+        unauth_nodes_with_ports[node] = ports[node];
+      });
+      auth_nodes_dialog(unauth_nodes_with_ports, function(){$("#create_cluster_submit_btn").trigger("click")});
       $("#create_cluster_submit_btn").button("option", "disabled", false);
       return;
     }
@@ -1144,7 +1185,8 @@ function create_cluster_add_nodes() {
 
   first_node = node_list.eq(0);
   new_node = first_node.clone();
-  $("input",new_node).attr("name", "node-"+(cur_num_nodes+1));
+  $("input[name=node-1]",new_node).attr("name", "node-"+(cur_num_nodes+1));
+  $("input[name=port-1]",new_node).attr("name", "port-"+(cur_num_nodes+1));
   $("input",new_node).val("");
   $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
   new_node.insertAfter(node_list.last());

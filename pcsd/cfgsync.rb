@@ -460,7 +460,7 @@ module Cfgsync
 
 
   class ConfigPublisher
-    def initialize(auth_user, configs, nodes, cluster_name, tokens={})
+    def initialize(auth_user, configs, nodes, cluster_name, tokens={}, ports={})
       @configs = configs
       @nodes = nodes
       @cluster_name = cluster_name
@@ -469,6 +469,7 @@ module Cfgsync
       }
       @additional_tokens = tokens
       @auth_user = auth_user
+      @additional_ports = ports
     end
 
     def send(force=false)
@@ -487,7 +488,7 @@ module Cfgsync
         threads << Thread.new {
           code, out = send_request_with_token(
             @auth_user, node, 'set_configs', true, data, true, nil, 30,
-            @additional_tokens
+            @additional_tokens, @additional_ports
           )
           if 200 == code
             begin
@@ -726,7 +727,9 @@ module Cfgsync
 
   # save and sync updated config
   # return true on success, false on version conflict
-  def self.save_sync_new_version(config, nodes, cluster_name, fetch_on_conflict, tokens={})
+  def self.save_sync_new_version(
+    config, nodes, cluster_name, fetch_on_conflict, tokens={}, ports={}
+  )
     if not cluster_name or cluster_name.empty?
       # we run on a standalone host, no config syncing
       config.version += 1
@@ -735,7 +738,7 @@ module Cfgsync
     else
       # we run in a cluster so we need to sync the config
       publisher = ConfigPublisher.new(
-        PCSAuth.getSuperuserAuth(), [config], nodes, cluster_name, tokens
+        PCSAuth.getSuperuserAuth(), [config], nodes, cluster_name, tokens, ports
       )
       old_configs, node_responses = publisher.publish()
       if old_configs.include?(config.class.name)
@@ -754,7 +757,7 @@ module Cfgsync
     end
   end
 
-  def self.merge_tokens_files(orig_cfg, to_merge_cfgs, new_tokens)
+  def self.merge_tokens_files(orig_cfg, to_merge_cfgs, new_tokens, new_ports)
     # Merge tokens files, use only newer tokens files, keep the most recent
     # tokens, make sure new_tokens are included.
     max_version = orig_cfg.version
@@ -764,19 +767,24 @@ module Cfgsync
       if to_merge_cfgs.length > 0
         to_merge_cfgs.sort.each { |ft|
           with_new_tokens.tokens.update(PCSTokens.new(ft.text).tokens)
+          with_new_tokens.ports.update(PCSTokens.new(ft.text).ports)
         }
         max_version = [to_merge_cfgs.max.version, max_version].max
       end
     end
     with_new_tokens.tokens.update(new_tokens)
+    with_new_tokens.ports.update(new_ports)
     config_new = PcsdTokens.from_text(with_new_tokens.text)
     config_new.version = max_version
     return config_new
   end
 
-  def self.save_sync_new_tokens(config, new_tokens, nodes, cluster_name)
+  def self.save_sync_new_tokens(
+    config, new_tokens, nodes, cluster_name, new_ports={}
+  )
     with_new_tokens = PCSTokens.new(config.text)
     with_new_tokens.tokens.update(new_tokens)
+    with_new_tokens.ports.update(new_ports)
     config_new = PcsdTokens.from_text(with_new_tokens.text)
     if not cluster_name or cluster_name.empty?
       # we run on a standalone host, no config syncing
@@ -799,10 +807,12 @@ module Cfgsync
       PCSAuth.getSuperuserAuth(), [config_new.class], nodes, cluster_name
     )
     fetched_tokens = fetcher.fetch_all()[config_new.class.name]
-    config_new = Cfgsync::merge_tokens_files(config, fetched_tokens, new_tokens)
+    config_new = Cfgsync::merge_tokens_files(
+      config, fetched_tokens, new_tokens, new_ports
+    )
     # and try to publish again
     return Cfgsync::save_sync_new_version(
-      config_new, nodes, cluster_name, true, new_tokens
+      config_new, nodes, cluster_name, true, new_tokens, new_ports
     )
   end
 end
