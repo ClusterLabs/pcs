@@ -26,7 +26,7 @@ class CibShortcuts(object):
     def load(
         self,
         modifiers=None,
-        name="load_cib",
+        name="runner.cib.load",
         filename=None,
         before=None,
         **modifier_shortcuts
@@ -62,8 +62,8 @@ class CibShortcuts(object):
     def push(
         self,
         modifiers=None,
-        name="push_cib",
-        load_key="load_cib",
+        name="runner.cib.push",
+        load_key="runner.cib.load",
         instead=None,
         stderr="",
         returncode=0,
@@ -106,7 +106,7 @@ class CibShortcuts(object):
     def push_independent(
         self,
         cib,
-        name="push_cib",
+        name="runner.cib.push_independent",
         instead=None,
     ):
         """
@@ -131,7 +131,7 @@ class CibShortcuts(object):
         self,
         cib_old_file,
         cib_new_file,
-        name="diff_cib",
+        name="runner.cib.diff",
         stdout="resulting diff",
         stderr="",
         returncode=0
@@ -159,7 +159,7 @@ class CibShortcuts(object):
 
     def push_diff(
         self,
-        name="push_cib_diff",
+        name="runner.cib.push_diff",
         cib_diff="resulting diff",
         stdout="",
         stderr="",
@@ -181,7 +181,7 @@ class CibShortcuts(object):
             ),
         )
 
-    def upgrade(self, name="upgrade_cib", before=None):
+    def upgrade(self, name="runner.cib.upgrade", before=None):
         """
         Create call for upgrading cib.
 

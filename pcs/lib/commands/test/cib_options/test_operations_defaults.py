@@ -75,7 +75,7 @@ class SetOperationsDefaults(TestCase):
 
     def test_add_when_section_does_not_exists(self):
         (self.config
-            .remove("load_cib")
+            .remove("runner.cib.load")
             .runner.cib.load()
             .env.push_cib(
                 optional_in_conf="""

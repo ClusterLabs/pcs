@@ -474,7 +474,7 @@ class Create(TestCase):
 
     def test_sanitize_operation_id_from_agent(self):
         self.config.runner.pcmk.load_agent(
-            instead="load_agent",
+            instead="runner.pcmk.load_agent",
             agent_filename="resource_agent_ocf_heartbeat_dummy_insane_action.xml"
         )
         self.config.env.push_cib(
@@ -644,7 +644,7 @@ class CreateAsMaster(TestCase):
 
     def test_simplest_resource(self):
         (self.config
-            .remove(name="can_wait")
+            .remove(name="runner.pcmk.can_wait")
             .env.push_cib(
                 resources=fixture_cib_resources_xml_master_simplest
             )
@@ -950,7 +950,7 @@ class CreateInGroup(TestCase):
 
     def test_simplest_resource(self):
         (self.config
-            .remove(name="can_wait")
+            .remove(name="runner.pcmk.can_wait")
             .env.push_cib(
                 resources="""
                     <resources>
@@ -1117,7 +1117,7 @@ class CreateAsClone(TestCase):
 
     def test_simplest_resource(self):
         (self.config
-            .remove(name="can_wait")
+            .remove(name="runner.pcmk.can_wait")
             .env.push_cib(resources=fixture_cib_resources_xml_clone_simplest)
         )
         create_clone(self.env_assist.get_env(), wait=False)

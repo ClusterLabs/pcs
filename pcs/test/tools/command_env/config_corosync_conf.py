@@ -13,7 +13,7 @@ class CorosyncConf(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
 
-    def load_content(self, content, name="corosync_conf.load"):
+    def load_content(self, content, name="corosync_conf.load_content"):
         self.__calls.place(name, Call(content))
 
     def load(

@@ -14,7 +14,7 @@ class EnvConfig(object):
 
     def push_cib(
         self, modifiers=None, name="env.push_cib",
-        load_key="load_cib", wait=False, exception=None, instead=None,
+        load_key="runner.cib.load", wait=False, exception=None, instead=None,
         **modifier_shortcuts
     ):
         """
@@ -48,8 +48,8 @@ class EnvConfig(object):
         )
 
     def push_cib_custom(
-        self, name="env.push_cib", custom_cib=None, wait=False, exception=None,
-        instead=None
+        self, name="env.push_cib_custom", custom_cib=None, wait=False,
+        exception=None, instead=None
     ):
         self.__calls.place(
             name,

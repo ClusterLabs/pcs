@@ -11,7 +11,9 @@ class SystemctlShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
 
-    def is_active(self, service, name="is_service_active", is_active=True):
+    def is_active(
+        self, service, name="runner_systemctl.is_active", is_active=True
+    ):
         args = dict(
             stdout="unknown\n",
             returncode=3,

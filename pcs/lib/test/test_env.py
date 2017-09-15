@@ -1003,7 +1003,9 @@ class CibLive(CibBase):
     def place_push_calls(self):
         return NotImplementedError
 
-    def place_load_calls(self, filename="cib-empty.xml", name="load_cib"):
+    def place_load_calls(
+        self, filename="cib-empty.xml", name="runner.cib.load"
+    ):
         self.config.runner.cib.load(filename=filename, name=name)
         self.loaded_cib = self.config.calls.get(name).stdout
 
