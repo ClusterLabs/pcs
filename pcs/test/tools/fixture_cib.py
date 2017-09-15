@@ -10,7 +10,7 @@ from pcs.common.tools import is_string
 from pcs.test.tools.xml import etree_to_str
 
 
-def _replace_element_in_parent(element_to_replace, new_element):
+def _replace(element_to_replace, new_element):
     parent = element_to_replace.getparent()
     for child in parent:
         if element_to_replace == child:
@@ -29,7 +29,7 @@ def _xml_to_element(xml):
         )
     return new_element
 
-def _find_element(cib_tree, element_xpath):
+def _find_in(cib_tree, element_xpath):
     element = cib_tree.find(element_xpath)
     if element is None:
         raise AssertionError(
@@ -40,41 +40,33 @@ def _find_element(cib_tree, element_xpath):
         )
     return element
 
-def remove_element(element_xpath):
+def remove(element_xpath):
     def remove(cib_tree):
         xpath_list = (
             [element_xpath] if is_string(element_xpath) else element_xpath
         )
         for xpath in xpath_list:
-            element_to_remove = _find_element(cib_tree, xpath)
+            element_to_remove = _find_in(cib_tree, xpath)
             element_to_remove.getparent().remove(element_to_remove)
     return remove
 
-def replace_optional_element(element_place_xpath, element_name, new_content):
+def put_or_replace(parent_xpath, new_content):
     def replace_optional(cib_tree):
-        element_parent = _find_element(cib_tree, element_place_xpath)
-        elements_to_replace = element_parent.findall(element_name)
-        if not elements_to_replace:
-            new_element = etree.SubElement(element_parent, element_name)
-            elements_to_replace.append(new_element)
-        elif len(elements_to_replace) > 1:
-            raise AssertionError(
-                (
-                    "Cannot replace '{element}' in '{parent}' because '{parent}'"
-                    " contains more than one '{element}' in given cib:\n{cib}"
-                ).format(
-                    element=element_name,
-                    parent=element_place_xpath,
-                    cib=etree_to_str(cib_tree)
-                )
-            )
-        _replace_element_in_parent(
-            elements_to_replace[0],
-            _xml_to_element(new_content)
-        )
+        element = _xml_to_element(new_content)
+        parent = _find_in(cib_tree, parent_xpath)
+        current_elements = parent.findall(element.tag)
+
+        if len(current_elements) > 1:
+            raise _cannot_multireplace(element.tag, parent_xpath, cib_tree)
+
+        if current_elements:
+            _replace(current_elements[0], element)
+        else:
+            parent.append(element)
+
     return replace_optional
 
-def replace_more_elements(replacements):
+def replace_all(replacements):
     """
     Return a function that replace more elements (defined by replacement_dict)
     in the cib_tree with new_content.
@@ -87,10 +79,7 @@ def replace_more_elements(replacements):
     """
     def replace(cib_tree):
         for xpath, new_content in replacements.items():
-            _replace_element_in_parent(
-                _find_element(cib_tree, xpath),
-                _xml_to_element(new_content)
-            )
+            _replace(_find_in(cib_tree, xpath), _xml_to_element(new_content))
     return replace
 
 #Possible modifier shortcuts are defined here.
@@ -108,14 +97,10 @@ def replace_more_elements(replacements):
 #It would be not aplied. Not even mention that the majority of these names do
 #not make sense for a cib modifying ;)
 MODIFIER_GENERATORS = {
-    "remove": remove_element,
-    "replace": replace_more_elements,
-    "resources": lambda xml: replace_more_elements({".//resources": xml}),
-    "optional_in_conf": lambda optional_in_conf: replace_optional_element(
-        "./configuration",
-        etree.fromstring(optional_in_conf).tag,
-        optional_in_conf,
-    ),
+    "remove": remove,
+    "replace": replace_all,
+    "resources": lambda xml: replace_all({"./configuration/resources": xml}),
+    "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
 }
 
 def create_modifiers(**modifier_shortcuts):
@@ -166,3 +151,11 @@ def modify_cib(cib_xml, modifiers=None, **modifier_shortcuts):
         modify(cib_tree)
 
     return etree_to_str(cib_tree)
+
+def _cannot_multireplace(tag, parent_xpath, cib_tree):
+    return AssertionError(
+        (
+            "Cannot replace '{element}' in '{parent}' because '{parent}'"
+            " contains more than one '{element}' in given cib:\n{cib}"
+        ).format( element=tag, parent=parent_xpath, cib=etree_to_str(cib_tree))
+    )
