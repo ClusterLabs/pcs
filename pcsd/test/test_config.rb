@@ -757,6 +757,21 @@ class TestTokens < Test::Unit::TestCase
 
     text =
 '{
+  "format_version": 2,
+  "data_version": 9,
+  "tokens": {
+    "rh7-1": "token-rh7-1",
+    "rh7-2": "token-rh7-2"
+  }
+}'
+    cfg = PCSTokens.new(text)
+    assert_equal(2, cfg.format_version)
+    assert_equal(9, cfg.data_version)
+    assert_equal(2, cfg.tokens.length)
+    assert_equal(0, cfg.ports.length)
+    assert_equal('token-rh7-1', cfg.tokens['rh7-1'])
+    expected_text =
+'{
   "format_version": 3,
   "data_version": 9,
   "tokens": {
@@ -766,13 +781,7 @@ class TestTokens < Test::Unit::TestCase
   "ports": {
   }
 }'
-    cfg = PCSTokens.new(text)
-    assert_equal(3, cfg.format_version)
-    assert_equal(9, cfg.data_version)
-    assert_equal(2, cfg.tokens.length)
-    assert_equal(0, cfg.ports.length)
-    assert_equal('token-rh7-1', cfg.tokens['rh7-1'])
-    assert_equal(text, cfg.text)
+    assert_equal(expected_text, cfg.text)
   end
 
   def test_parse_format3()
