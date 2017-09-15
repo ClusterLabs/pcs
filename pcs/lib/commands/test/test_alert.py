@@ -17,11 +17,6 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.fixture import (
-    remove_element,
-    replace_element,
-    replace_optional_element,
-)
 from pcs.test.tools.pcs_unittest import mock, TestCase
 
 import pcs.lib.commands.alert as cmd_alert
@@ -81,15 +76,7 @@ class CreateAlertTest(TestCase):
     def test_create_no_upgrade(self):
         (self.config
             .runner.cib.load()
-            .env.push_cib(
-                modifiers=[
-                    replace_optional_element(
-                        "./configuration",
-                        "alerts",
-                        self.fixture_final_alerts
-                    )
-                ]
-            )
+            .env.push_cib(optional_in_conf=self.fixture_final_alerts)
         )
         cmd_alert.create_alert(
             self.env_assist.get_env(),
@@ -111,15 +98,7 @@ class CreateAlertTest(TestCase):
             )
             .runner.cib.upgrade()
             .runner.cib.load()
-            .env.push_cib(
-                modifiers=[
-                    replace_optional_element(
-                        "./configuration",
-                        "alerts",
-                        self.fixture_final_alerts
-                    )
-                ]
-            )
+            .env.push_cib(optional_in_conf=self.fixture_final_alerts)
         )
         cmd_alert.create_alert(
             self.env_assist.get_env(),
@@ -198,22 +177,9 @@ class UpdateAlertTest(TestCase):
         </alerts>
         """
         (self.config
-            .runner.cib.load(
-                modifiers=[
-                    replace_optional_element(
-                        "./configuration",
-                        "alerts",
-                        self.fixture_initial_alerts
-                    )
-                ]
-            )
+            .runner.cib.load(optional_in_conf=self.fixture_initial_alerts)
             .env.push_cib(
-                modifiers=[
-                    replace_element(
-                        "./configuration/alerts",
-                        fixture_final_alerts
-                    )
-                ]
+                replace={"./configuration/alerts": fixture_final_alerts}
             )
         )
         cmd_alert.update_alert(
@@ -230,32 +196,19 @@ class UpdateAlertTest(TestCase):
 
     def test_update_instance_attribute(self):
         (self.config
-            .runner.cib.load(
-                modifiers=[
-                    replace_optional_element(
-                        "./configuration",
-                        "alerts",
-                        self.fixture_initial_alerts
-                    )
-                ]
-            )
+            .runner.cib.load(optional_in_conf=self.fixture_initial_alerts)
             .env.push_cib(
-                modifiers=[
-                    replace_element(
-                        (
-                            './configuration/alerts/alert[@id="my-alert"]/'
-                            +
-                            'instance_attributes/nvpair[@name="instance"]'
-                        ),
-                        """
-                            <nvpair
-                                id="my-alert-instance_attributes-instance"
-                                name="instance"
-                                value="new_val"
-                            />
-                        """
-                    )
-                ]
+                replace={
+                    './configuration/alerts/alert[@id="my-alert"]/'
+                        'instance_attributes/nvpair[@name="instance"]'
+                    : """
+                        <nvpair
+                            id="my-alert-instance_attributes-instance"
+                            name="instance"
+                            value="new_val"
+                        />
+                    """
+                }
             )
         )
         cmd_alert.update_alert(
@@ -270,17 +223,11 @@ class UpdateAlertTest(TestCase):
     def test_alert_doesnt_exist(self):
         (self.config
             .runner.cib.load(
-                modifiers=[
-                    replace_optional_element(
-                        "./configuration",
-                        "alerts",
-                        """
-                            <alerts>
-                                <alert id="alert" path="path"/>
-                            </alerts>
-                        """
-                    )
-                ]
+                optional_in_conf="""
+                    <alerts>
+                        <alert id="alert" path="path"/>
+                    </alerts>
+                """
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -308,27 +255,19 @@ class RemoveAlertTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.cib.load(
-            modifiers=[
-                replace_optional_element(
-                    "./configuration",
-                    "alerts",
-                    """
-                        <alerts>
-                            <alert id="alert1" path="path"/>
-                            <alert id="alert2" path="/path"/>
-                            <alert id="alert3" path="/path"/>
-                            <alert id="alert4" path="/path"/>
-                        </alerts>
-                    """
-                )
-            ]
+            optional_in_conf="""
+                <alerts>
+                    <alert id="alert1" path="path"/>
+                    <alert id="alert2" path="/path"/>
+                    <alert id="alert3" path="/path"/>
+                    <alert id="alert4" path="/path"/>
+                </alerts>
+            """
         )
 
     def test_one_alert(self):
         self.config.env.push_cib(
-            modifiers=[
-                remove_element("./configuration/alerts/alert[@id='alert2']")
-            ]
+            remove="./configuration/alerts/alert[@id='alert2']"
         )
         cmd_alert.remove_alert(
             self.env_assist.get_env(),
@@ -337,10 +276,10 @@ class RemoveAlertTest(TestCase):
 
     def test_multiple_alerts(self):
         self.config.env.push_cib(
-            modifiers=[
-                remove_element("./configuration/alerts/alert[@id='alert1']"),
-                remove_element("./configuration/alerts/alert[@id='alert3']"),
-                remove_element("./configuration/alerts/alert[@id='alert4']"),
+            remove=[
+                "./configuration/alerts/alert[@id='alert1']",
+                "./configuration/alerts/alert[@id='alert3']",
+                "./configuration/alerts/alert[@id='alert4']",
             ]
         )
         cmd_alert.remove_alert(
@@ -684,13 +623,7 @@ class RemoveRecipientTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.cib.load(
-            modifiers=[
-                replace_optional_element(
-                    "./configuration",
-                    "alerts",
-                    self.fixture_initial_alerts
-                )
-            ]
+            optional_in_conf=self.fixture_initial_alerts
         )
 
     def test_recipient_not_found(self):
@@ -718,11 +651,7 @@ class RemoveRecipientTest(TestCase):
 
     def test_one_recipient(self):
         self.config.env.push_cib(
-            modifiers=[
-                remove_element(
-                    "./configuration/alerts/alert/recipient[@id='alert-recip1']"
-                )
-            ]
+            remove="./configuration/alerts/alert/recipient[@id='alert-recip1']"
         )
         cmd_alert.remove_recipient(
             self.env_assist.get_env(),
@@ -731,16 +660,10 @@ class RemoveRecipientTest(TestCase):
 
     def test_multiple_recipients(self):
         self.config.env.push_cib(
-            modifiers=[
-                remove_element(
-                    "./configuration/alerts/alert/recipient[@id='alert-recip1']"
-                ),
-                remove_element(
-                    "./configuration/alerts/alert/recipient[@id='alert-recip2']"
-                ),
-                remove_element(
-                    "./configuration/alerts/alert/recipient[@id='alert2-recip4']"
-                ),
+            remove=[
+                "./configuration/alerts/alert/recipient[@id='alert-recip1']",
+                "./configuration/alerts/alert/recipient[@id='alert-recip2']",
+                "./configuration/alerts/alert/recipient[@id='alert2-recip4']",
             ]
         )
         cmd_alert.remove_recipient(

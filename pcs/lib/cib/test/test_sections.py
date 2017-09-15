@@ -14,6 +14,7 @@ from pcs.test.tools.assertions import(
     assert_raise_library_error
 )
 from pcs.test.tools.pcs_unittest import TestCase
+from pcs.test.tools.xml import etree_to_str
 
 
 class Get(TestCase):
@@ -29,7 +30,7 @@ class Get(TestCase):
         )
 
     def assert_element_content(self, section_element, expected_xml):
-        assert_xml_equal(etree.tostring(section_element), expected_xml)
+        assert_xml_equal(etree_to_str(section_element), expected_xml)
 
     def test_get_existing_mandatory(self):
         self.assert_element_content(

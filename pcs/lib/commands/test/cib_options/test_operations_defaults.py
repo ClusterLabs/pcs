@@ -20,16 +20,22 @@ FIXTURE_INITIAL_DEFAULTS = """
 """
 
 class SetOperationsDefaults(TestCase):
-    def assert_options_produces_op_defaults_xml(self, options, op_defaults_xml):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
-            .env.push_cib(optional_in_conf=op_defaults_xml)
-        )
-        cib_options.set_operations_defaults(env_assist.get_env(), options)
-        env_assist.assert_reports([
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
+
+    def tearDown(self):
+        self.env_assist.assert_reports([
             fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
         ])
+
+    def assert_options_produces_op_defaults_xml(self, options, op_defaults_xml):
+        self.config.env.push_cib(
+            replace={
+                "./configuration/op_defaults/meta_attributes": op_defaults_xml
+            }
+        )
+        cib_options.set_operations_defaults(self.env_assist.get_env(), options)
 
     def test_change(self):
         self.assert_options_produces_op_defaults_xml(
@@ -38,12 +44,10 @@ class SetOperationsDefaults(TestCase):
                 "b": "C",
             },
             """
-                <op_defaults>
-                    <meta_attributes id="op_defaults-options">
-                        <nvpair id="op_defaults-options-a" name="a" value="B"/>
-                        <nvpair id="op_defaults-options-b" name="b" value="C"/>
-                    </meta_attributes>
-                </op_defaults>
+                <meta_attributes id="op_defaults-options">
+                    <nvpair id="op_defaults-options-a" name="a" value="B"/>
+                    <nvpair id="op_defaults-options-b" name="b" value="C"/>
+                </meta_attributes>
             """
         )
 
@@ -51,31 +55,27 @@ class SetOperationsDefaults(TestCase):
         self.assert_options_produces_op_defaults_xml(
             {"c": "d"},
             """
-                <op_defaults>
-                    <meta_attributes id="op_defaults-options">
-                        <nvpair id="op_defaults-options-a" name="a" value="b"/>
-                        <nvpair id="op_defaults-options-b" name="b" value="c"/>
-                        <nvpair id="op_defaults-options-c" name="c" value="d"/>
-                    </meta_attributes>
-                </op_defaults>
+                <meta_attributes id="op_defaults-options">
+                    <nvpair id="op_defaults-options-a" name="a" value="b"/>
+                    <nvpair id="op_defaults-options-b" name="b" value="c"/>
+                    <nvpair id="op_defaults-options-c" name="c" value="d"/>
+                </meta_attributes>
             """
         )
 
     def test_remove(self):
-        self.assert_options_produces_op_defaults_xml(
+        self.config.env.push_cib(
+            remove=
+                "./configuration/op_defaults/meta_attributes/nvpair[@name='a']"
+        )
+        cib_options.set_operations_defaults(
+            self.env_assist.get_env(),
             {"a": ""},
-            """
-                <op_defaults>
-                    <meta_attributes id="op_defaults-options">
-                        <nvpair id="op_defaults-options-b" name="b" value="c"/>
-                    </meta_attributes>
-                </op_defaults>
-            """
         )
 
     def test_add_when_section_does_not_exists(self):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
+        (self.config
+            .remove("load_cib")
             .runner.cib.load()
             .env.push_cib(
                 optional_in_conf="""
@@ -89,24 +89,17 @@ class SetOperationsDefaults(TestCase):
                 """
             )
         )
-        cib_options.set_operations_defaults(env_assist.get_env(), {"a": "b"})
-        env_assist.assert_reports([
-            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-        ])
+        cib_options.set_operations_defaults(
+            self.env_assist.get_env(),
+            {"a": "b"},
+        )
 
     def test_remove_section_when_empty(self):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
-            .env.push_cib(remove=".//op_defaults")
-        )
+        self.config.env.push_cib(remove="./configuration/op_defaults")
         cib_options.set_operations_defaults(
-            env_assist.get_env(),
+            self.env_assist.get_env(),
             {
                 "a": "",
                 "b": "",
             }
         )
-        env_assist.assert_reports([
-            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-        ])

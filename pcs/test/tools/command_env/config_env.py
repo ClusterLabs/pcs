@@ -5,7 +5,7 @@ from __future__ import (
 )
 
 from pcs.test.tools.command_env.mock_push_cib import Call as PushCibCall
-from pcs.test.tools.fixture import modify_cib
+from pcs.test.tools.fixture_cib import modify_cib
 
 
 class EnvConfig(object):
@@ -17,6 +17,25 @@ class EnvConfig(object):
         load_key="load_cib", wait=False, exception=None, instead=None,
         **modifier_shortcuts
     ):
+        """
+        Create call for pushing cib.
+
+        string name -- key of the call
+        list of callable modifiers -- every callable takes etree.Element and
+            returns new etree.Element with desired modification.
+        string load_key -- key of a call from which stdout can be cib taken
+        string|False wait -- wait for pacemaker idle
+        Exception|None exception -- exception that should raise env.push_cib
+        string instead -- key of call instead of which this new call is to be
+            placed
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs.test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
+        """
         cib_xml = modify_cib(
             self.__calls.get(load_key).stdout,
             modifiers,

@@ -20,18 +20,24 @@ FIXTURE_INITIAL_DEFAULTS = """
 """
 
 class SetResourcesDefaults(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
+
+    def tearDown(self):
+        self.env_assist.assert_reports([
+            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
+        ])
+
     def assert_options_produces_rsc_defaults_xml(
         self, options, rsc_defaults_xml
     ):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
-            .env.push_cib(optional_in_conf=rsc_defaults_xml)
+        self.config.env.push_cib(
+            replace={
+                "./configuration/rsc_defaults/meta_attributes": rsc_defaults_xml
+            }
         )
-        cib_options.set_resources_defaults(env_assist.get_env(), options)
-        env_assist.assert_reports([
-            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-        ])
+        cib_options.set_resources_defaults(self.env_assist.get_env(), options)
 
     def test_change(self):
         self.assert_options_produces_rsc_defaults_xml(
@@ -40,12 +46,10 @@ class SetResourcesDefaults(TestCase):
                 "b": "C",
             },
             """
-                <rsc_defaults>
-                    <meta_attributes id="rsc_defaults-options">
-                        <nvpair id="rsc_defaults-options-a" name="a" value="B"/>
-                        <nvpair id="rsc_defaults-options-b" name="b" value="C"/>
-                    </meta_attributes>
-                </rsc_defaults>
+                <meta_attributes id="rsc_defaults-options">
+                    <nvpair id="rsc_defaults-options-a" name="a" value="B"/>
+                    <nvpair id="rsc_defaults-options-b" name="b" value="C"/>
+                </meta_attributes>
             """
         )
 
@@ -53,31 +57,27 @@ class SetResourcesDefaults(TestCase):
         self.assert_options_produces_rsc_defaults_xml(
             {"c": "d"},
             """
-                <rsc_defaults>
-                    <meta_attributes id="rsc_defaults-options">
-                        <nvpair id="rsc_defaults-options-a" name="a" value="b"/>
-                        <nvpair id="rsc_defaults-options-b" name="b" value="c"/>
-                        <nvpair id="rsc_defaults-options-c" name="c" value="d"/>
-                    </meta_attributes>
-                </rsc_defaults>
+                <meta_attributes id="rsc_defaults-options">
+                    <nvpair id="rsc_defaults-options-a" name="a" value="b"/>
+                    <nvpair id="rsc_defaults-options-b" name="b" value="c"/>
+                    <nvpair id="rsc_defaults-options-c" name="c" value="d"/>
+                </meta_attributes>
             """
         )
 
     def test_remove(self):
-        self.assert_options_produces_rsc_defaults_xml(
+        self.config.env.push_cib(
+            remove=
+                "./configuration/rsc_defaults/meta_attributes/nvpair[@name='a']"
+        )
+        cib_options.set_resources_defaults(
+            self.env_assist.get_env(),
             {"a": ""},
-            """
-                <rsc_defaults>
-                    <meta_attributes id="rsc_defaults-options">
-                        <nvpair id="rsc_defaults-options-b" name="b" value="c"/>
-                    </meta_attributes>
-                </rsc_defaults>
-            """
         )
 
     def test_add_when_section_does_not_exists(self):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
+        (self.config
+            .remove("load_cib")
             .runner.cib.load()
             .env.push_cib(
                 optional_in_conf="""
@@ -91,24 +91,19 @@ class SetResourcesDefaults(TestCase):
                 """
             )
         )
-        cib_options.set_resources_defaults(env_assist.get_env(), {"a": "b"})
-        env_assist.assert_reports([
-            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-        ])
+        cib_options.set_resources_defaults(
+            self.env_assist.get_env(),
+            {"a": "b"},
+        )
 
     def test_remove_section_when_empty(self):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load(optional_in_conf=FIXTURE_INITIAL_DEFAULTS)
-            .env.push_cib(remove=".//rsc_defaults")
+        (self.config
+            .env.push_cib(remove="./configuration/rsc_defaults")
         )
         cib_options.set_resources_defaults(
-            env_assist.get_env(),
+            self.env_assist.get_env(),
             {
                 "a": "",
                 "b": "",
             }
         )
-        env_assist.assert_reports([
-            fixture.warn(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-        ])

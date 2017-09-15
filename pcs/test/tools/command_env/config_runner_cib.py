@@ -8,7 +8,7 @@ from pcs.test.tools.command_env.mock_runner import(
     Call as RunnerCall,
     create_check_stdin_xml,
 )
-from pcs.test.tools.fixture import modify_cib
+from pcs.test.tools.fixture_cib import modify_cib
 from pcs.test.tools.misc import get_test_resource as rc
 
 
@@ -38,9 +38,14 @@ class CibShortcuts(object):
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification.
         string filename -- points to file with cib in the content
-        string resources -- xml - resources section, current resources section
-            will be replaced by this
         string before -- key of call before which this new call is to be placed
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs.test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
         """
         filename = filename if filename else self.cib_filename
         cib = modify_cib(
@@ -72,10 +77,15 @@ class CibShortcuts(object):
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification.
         string load_key -- key of a call from which stdout can be cib taken
-        string resources -- xml - resources section, current resources section
-            will be replaced by this
         string instead -- key of call instead of which this new call is to be
             placed
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs.test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
         """
         cib = modify_cib(
             self.__calls.get(load_key).stdout,
