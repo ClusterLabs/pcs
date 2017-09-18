@@ -8,15 +8,13 @@ import re
 
 from pcs.common.tools import is_string
 from pcs.lib import reports
+from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
-from pcs.lib.xml_tools import (
-    get_root,
-    get_sub_element,
-)
+from pcs.lib.xml_tools import get_root
 
 class IdProvider(object):
     """
@@ -191,64 +189,54 @@ def check_new_id_applicable(tree, description, id):
     validate_id(id, description)
     validate_id_does_not_exist(tree, id)
 
-def _get_mandatory_section(tree, section_name):
-    """
-    Return required element from tree, raise LibraryError if missing
-    tree cib etree node
-    """
-    section = tree.find(".//{0}".format(section_name))
-    if section is not None:
-        return section
-    raise LibraryError(reports.cib_missing_mandatory_section(section_name))
-
 def get_configuration(tree):
     """
     Return 'configuration' element from tree, raise LibraryError if missing
     tree cib etree node
     """
-    return _get_mandatory_section(tree, "configuration")
+    return sections.get(tree, sections.CONFIGURATION)
 
 def get_acls(tree):
     """
     Return 'acls' element from tree, create a new one if missing
     tree cib etree node
     """
-    return get_sub_element(get_configuration(tree), "acls")
+    return sections.get(tree, sections.ACLS)
 
 def get_alerts(tree):
     """
     Return 'alerts' element from tree, create a new one if missing
     tree -- cib etree node
     """
-    return get_sub_element(get_configuration(tree), "alerts")
+    return sections.get(tree, sections.ALERTS)
 
 def get_constraints(tree):
     """
     Return 'constraint' element from tree
     tree cib etree node
     """
-    return _get_mandatory_section(tree, "configuration/constraints")
+    return sections.get(tree, sections.CONSTRAINTS)
 
 def get_fencing_topology(tree):
     """
     Return the 'fencing-topology' element from the tree
     tree -- cib etree node
     """
-    return get_sub_element(get_configuration(tree), "fencing-topology")
+    return sections.get(tree, sections.FENCING_TOPOLOGY)
 
 def get_nodes(tree):
     """
     Return 'nodes' element from the tree
     tree cib etree node
     """
-    return _get_mandatory_section(tree, "configuration/nodes")
+    return sections.get(tree, sections.NODES)
 
 def get_resources(tree):
     """
     Return the 'resources' element from the tree
     tree -- cib etree node
     """
-    return _get_mandatory_section(tree, "configuration/resources")
+    return sections.get(tree, sections.RESOURCES)
 
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """

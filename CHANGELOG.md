@@ -15,6 +15,7 @@
 - Increase request timeout when starting a cluster with large number of nodes
   to prevent timeouts ([rhbz#1463327])
 - Fixed "Unable to update cib" error caused by invalid resource operation IDs
+- `pcs resource op defaults` now fails on an invalid option ([rhbz#1341582])
 
 ### Changed
 - CIB changes are now pushed to pacemaker as a diff in commands overhauled to
@@ -26,6 +27,7 @@
 
 [ghissue#118]: https://github.com/ClusterLabs/pcs/issues/118
 [ghissue#132]: https://github.com/ClusterLabs/pcs/issues/132
+[rhbz#1341582]: https://bugzilla.redhat.com/show_bug.cgi?id=1341582
 [rhbz#1388783]: https://bugzilla.redhat.com/show_bug.cgi?id=1388783
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1418199]: https://bugzilla.redhat.com/show_bug.cgi?id=1418199

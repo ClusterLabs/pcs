@@ -22,7 +22,8 @@ class PcmkShortcuts(object):
         self.default_wait_error_returncode = WAIT_TIMEOUT_EXPIRED_RETURNCODE
 
     def load_state(
-        self, name="load_state", filename="crm_mon.minimal.xml", resources=None
+        self, name="runner.pcmk.load_state", filename="crm_mon.minimal.xml",
+        resources=None
     ):
         """
         Create call for loading pacemaker state.
@@ -45,7 +46,7 @@ class PcmkShortcuts(object):
 
     def load_agent(
         self,
-        name="load_agent",
+        name="runner.pcmk.load_agent",
         agent_name="ocf:heartbeat:Dummy",
         agent_filename="resource_agent_ocf_heartbeat_dummy.xml",
         instead=None,
@@ -70,7 +71,9 @@ class PcmkShortcuts(object):
         )
 
 
-    def wait(self, name="wait", stderr="", returncode=None, timeout=None):
+    def wait(
+        self, name="runner.pcmk.wait", stderr="", returncode=None, timeout=None
+    ):
         """
         Create call for waiting to pacemaker idle
 
@@ -94,7 +97,9 @@ class PcmkShortcuts(object):
             )
         )
 
-    def can_wait(self, name="can_wait", before=None, stdout="--wait"):
+    def can_wait(
+        self, name="runner.pcmk.can_wait", before=None, stdout="--wait"
+    ):
         """
         Create call that checks that wait for idle is supported
 

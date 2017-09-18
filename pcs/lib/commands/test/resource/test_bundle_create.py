@@ -92,9 +92,9 @@ class MinimalCreate(TestCase):
             .runner.cib.load(
                 name="load_cib_old_version",
                 filename="cib-empty.xml",
-                before="load_cib"
+                before="runner.cib.load"
             )
-            .runner.cib.upgrade(before="load_cib")
+            .runner.cib.upgrade(before="runner.cib.load")
         )
 
         simple_bundle_create(self.env_assist.get_env(), wait=False)

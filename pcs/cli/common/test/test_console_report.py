@@ -36,9 +36,13 @@ class NameBuildTest(TestCase):
     """
     code = None
 
-    def assert_message_from_info(self, message, info):
+    def assert_message_from_info(self, message, info=None):
+        info = info if info else {}
         build = CODE_TO_MESSAGE_BUILDER_MAP[self.code]
-        self.assertEqual(message, build(info))
+        self.assertEqual(
+            message,
+            build(info) if callable(build) else build
+        )
 
 
 class BuildInvalidOptionMessageTest(NameBuildTest):
@@ -1783,4 +1787,13 @@ class TmpFileWrite(NameBuildTest):
                 "file_path": "/tmp/pcs/test.tmp",
                 "content": "test file\ncontent\n",
             }
+        )
+
+
+class DefaultsCanBeOverriden(NameBuildTest):
+    code = codes.DEFAULTS_CAN_BE_OVERRIDEN
+    def test_message(self):
+        self.assert_message_from_info(
+            "Defaults do not apply to resources which override them with their "
+            "own defined values"
         )

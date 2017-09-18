@@ -158,7 +158,9 @@ def resource_cmd(argv):
                 if len(argv_next) == 0:
                     show_defaults("op_defaults")
                 else:
-                    set_default("op_defaults", argv_next)
+                    lib.cib_options.set_operations_defaults(
+                        prepare_options(argv_next)
+                    )
             elif op_subcmd == "add":
                 if len(argv_next) == 0:
                     usage.resource(["op"])
@@ -181,7 +183,9 @@ def resource_cmd(argv):
             if len(argv_next) == 0:
                 show_defaults("rsc_defaults")
             else:
-                set_default("rsc_defaults", argv_next)
+                lib.cib_options.set_resources_defaults(
+                    prepare_options(argv_next)
+                )
         elif sub_cmd == "cleanup":
             resource_cleanup(argv_next)
         elif sub_cmd == "history":
@@ -2258,18 +2262,6 @@ def show_defaults(def_type, indent=""):
     if not foundDefault:
         print(indent + "No defaults set")
 
-def set_default(def_type, argv):
-    warn(
-        "Defaults do not apply to resources which override them with their "
-        "own defined values"
-    )
-    for arg in argv:
-        args = arg.split('=')
-        if (len(args) != 2):
-            print("Invalid Property: " + arg)
-            continue
-        utils.setAttribute(def_type, args[0], args[1], exit_on_error=True)
-
 def print_node(node, tab = 0):
     spaces = " " * tab
     if node.tag == "group":
@@ -2427,8 +2419,7 @@ def get_attrs(node, prepend_string = "", append_string = ""):
         output += attr + "=" + val + " "
     if output != "":
         return prepend_string + output.rstrip() + append_string
-    else:
-        return output.rstrip()
+    return output.rstrip()
 
 def resource_cleanup(argv):
     resource = None

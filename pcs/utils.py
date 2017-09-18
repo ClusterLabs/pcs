@@ -820,9 +820,9 @@ def addNodeToClusterConf(node):
 
     return True
 
-def removeNodeFromCorosync(node):
+def removeNodeFromCorosync(node_expression):
     removed_node = False
-    node0, node1 = parse_multiring_node(node)
+    node0, node1 = parse_multiring_node(node_expression)
 
     corosync_conf = getCorosyncConfParsed()
     for nodelist in corosync_conf.get_sections("nodelist"):
@@ -1905,20 +1905,6 @@ def set_cib_property(prop, value, cib_dom=None):
 
     if update_cib:
         replace_cib_configuration(crm_config)
-
-def setAttribute(a_type, a_name, a_value, exit_on_error=False):
-    args = ["crm_attribute", "--type", a_type, "--attr-name", a_name,
-            "--attr-value", a_value]
-
-    if a_value == "":
-        args.append("-D")
-
-    output, retval = run(args)
-    if retval != 0:
-        if exit_on_error:
-            err(output)
-        else:
-            print(output)
 
 def getTerminalSize(fd=1):
     """

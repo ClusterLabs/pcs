@@ -8,7 +8,7 @@ from pcs.test.tools.command_env.mock_runner import(
     Call as RunnerCall,
     create_check_stdin_xml,
 )
-from pcs.test.tools.fixture import modify_cib
+from pcs.test.tools.fixture_cib import modify_cib
 from pcs.test.tools.misc import get_test_resource as rc
 
 
@@ -26,10 +26,10 @@ class CibShortcuts(object):
     def load(
         self,
         modifiers=None,
-        name="load_cib",
+        name="runner.cib.load",
         filename=None,
         before=None,
-        resources=None
+        **modifier_shortcuts
     ):
         """
         Create call for loading cib.
@@ -38,12 +38,21 @@ class CibShortcuts(object):
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification.
         string filename -- points to file with cib in the content
-        string resources -- xml - resources section, current resources section
-            will be replaced by this
         string before -- key of call before which this new call is to be placed
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs.test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
         """
         filename = filename if filename else self.cib_filename
-        cib = modify_cib(open(rc(filename)).read(), modifiers, resources)
+        cib = modify_cib(
+            open(rc(filename)).read(),
+            modifiers,
+            **modifier_shortcuts
+        )
         self.__calls.place(
             name,
             RunnerCall("cibadmin --local --query", stdout=cib),
@@ -53,12 +62,12 @@ class CibShortcuts(object):
     def push(
         self,
         modifiers=None,
-        name="push_cib",
-        load_key="load_cib",
-        resources=None,
+        name="runner.cib.push",
+        load_key="runner.cib.load",
         instead=None,
         stderr="",
-        returncode=0
+        returncode=0,
+        **modifier_shortcuts
     ):
         """
         Create call for pushing cib.
@@ -68,15 +77,20 @@ class CibShortcuts(object):
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification.
         string load_key -- key of a call from which stdout can be cib taken
-        string resources -- xml - resources section, current resources section
-            will be replaced by this
         string instead -- key of call instead of which this new call is to be
             placed
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs.test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
         """
         cib = modify_cib(
             self.__calls.get(load_key).stdout,
             modifiers,
-            resources,
+            **modifier_shortcuts
         )
         self.__calls.place(
             name,
@@ -92,7 +106,7 @@ class CibShortcuts(object):
     def push_independent(
         self,
         cib,
-        name="push_cib",
+        name="runner.cib.push_independent",
         instead=None,
     ):
         """
@@ -117,7 +131,7 @@ class CibShortcuts(object):
         self,
         cib_old_file,
         cib_new_file,
-        name="diff_cib",
+        name="runner.cib.diff",
         stdout="resulting diff",
         stderr="",
         returncode=0
@@ -145,7 +159,7 @@ class CibShortcuts(object):
 
     def push_diff(
         self,
-        name="push_cib_diff",
+        name="runner.cib.push_diff",
         cib_diff="resulting diff",
         stdout="",
         stderr="",
@@ -167,7 +181,7 @@ class CibShortcuts(object):
             ),
         )
 
-    def upgrade(self, name="upgrade_cib", before=None):
+    def upgrade(self, name="runner.cib.upgrade", before=None):
         """
         Create call for upgrading cib.
 

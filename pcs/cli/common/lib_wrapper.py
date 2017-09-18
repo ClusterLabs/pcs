@@ -24,6 +24,7 @@ from pcs.lib.commands import (
     quorum,
     resource_agent,
     resource,
+    cib_options,
     stonith,
     sbd,
     stonith_agent,
@@ -334,6 +335,19 @@ def load_module(env, middleware_factory, name):
                 "unmanage": resource.unmanage,
             }
         )
+
+    if name == "cib_options":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib,
+            ),
+            {
+                "set_operations_defaults": cib_options.set_operations_defaults,
+                "set_resources_defaults": cib_options.set_resources_defaults,
+            }
+        )
+
     if name == "stonith":
         return bind_all(
             env,

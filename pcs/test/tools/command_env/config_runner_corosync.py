@@ -11,7 +11,7 @@ class CorosyncShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
 
-    def version(self, name="corosync_version", version="2.4.0"):
+    def version(self, name="runner.corosync.version", version="2.4.0"):
         self.__calls.place(
             name,
             RunnerCall(
@@ -25,7 +25,7 @@ class CorosyncShortcuts(object):
             )
         )
 
-    def reload(self, name="corosync_reload"):
+    def reload(self, name="runner.corosync.reload"):
         self.__calls.place(
             name,
             RunnerCall(
