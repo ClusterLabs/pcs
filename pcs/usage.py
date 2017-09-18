@@ -918,9 +918,11 @@ Commands:
         call to stonith which will turn the node off instead of rebooting it).
 
     confirm <node> [--force]
-        Confirm that the host specified is currently down.  This command
-        should ONLY be used when the node specified has already been confirmed
-        to be powered off and to have no access to shared resources.
+        Confirm to the cluster that the specified node is powered off. This
+        allows the cluster to recover from a situation where no stonith device
+        is able to fence the node. This command should ONLY be used after
+        manually ensuring that the node is powered off and has no access to
+        shared resources.
 
         WARNING: If this node is not actually powered off or it does have
         access to shared resources, data corruption/cluster failure can occur.

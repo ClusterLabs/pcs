@@ -377,7 +377,7 @@ fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it).
 .TP
 confirm <node> [\fB\-\-force\fR]
-Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be powered off and to have no access to shared resources.
+Confirm to the cluster that the specified node is powered off. This allows the cluster to recover from a situation where no stonith device is able to fence the node. This command should \fBONLY\fR be used after manually ensuring that the node is powered off and has no access to shared resources.
 
 .B WARNING: If this node is not actually powered off or it does have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 

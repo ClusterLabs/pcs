@@ -24,6 +24,7 @@
 - All actions / operations defined in resource agent's metadata (except
   meta-data, status and validate-all) are now copied to the CIB when creating
   a resource. ([rhbz#1418199], [ghissue#132])
+- Improve documentation of the `pcs stonith confirm` command ([rhbz#1489682])
 
 [ghissue#118]: https://github.com/ClusterLabs/pcs/issues/118
 [ghissue#132]: https://github.com/ClusterLabs/pcs/issues/132
@@ -35,6 +36,7 @@
 [rhbz#1435697]: https://bugzilla.redhat.com/show_bug.cgi?id=1435697
 [rhbz#1441673]: https://bugzilla.redhat.com/show_bug.cgi?id=1441673
 [rhbz#1463327]: https://bugzilla.redhat.com/show_bug.cgi?id=1463327
+[rhbz#1489682]: https://bugzilla.redhat.com/show_bug.cgi?id=1489682
 
 
 ## [0.9.159] - 2017-06-30
