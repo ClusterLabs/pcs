@@ -51,6 +51,13 @@ def remove(element_xpath):
     return remove
 
 def put_or_replace(parent_xpath, new_content):
+    #This tranformation makes sense in "configuration" section only. In this
+    #section there are sub-tags (optional or mandatory) that can occure max 1x.
+    #
+    #In other sections it is possible to have more occurences of sub-tags. For
+    #such cases it is better to use `replace_all` - the difference is that in
+    #`replace_all` the element to be replaced is specified by full xpath
+    #whilst in `put_or_replace` the xpath to the parent element is specified.
     def replace_optional(cib_tree):
         element = _xml_to_element(new_content)
         parent = _find_in(cib_tree, parent_xpath)
@@ -101,6 +108,8 @@ MODIFIER_GENERATORS = {
     "replace": replace_all,
     "resources": lambda xml: replace_all({"./configuration/resources": xml}),
     "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
+    #common modifier `put_or_replace` makes not sense - see explanation inside
+    #this function - all occurences should be satisfied by `optional_in_conf`
 }
 
 def create_modifiers(**modifier_shortcuts):
