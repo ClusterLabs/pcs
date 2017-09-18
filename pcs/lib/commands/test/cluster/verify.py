@@ -13,17 +13,11 @@ from pcs.test.tools.pcs_unittest import TestCase
 
 CRM_VERIFY_ERROR_REPORT = "someting wrong\nsomething else wrong"
 
-put_bad_fencing_topology = fixture.replace_optional_element(
-    "./configuration",
-    "alerts",
-    """
-        <fencing-topology>
-            <fencing-level devices="FX" index="2" target="node1"
-                id="fl-node1-2"
-            />
-        </fencing-topology>
-    """
-)
+BAD_FENCING_TOPOLOGY = """
+    <fencing-topology>
+        <fencing-level devices="FX" index="2" target="node1" id="fl-node1-2"/>
+    </fencing-topology>
+"""
 
 BAD_FENCING_TOPOLOGY_REPORTS = [
     fixture.error(
@@ -52,7 +46,7 @@ class CibAsWholeValid(TestCase):
 
     def test_fail_on_invalid_fence_topology(self):
         (self.config
-            .runner.cib.load(modifiers=[put_bad_fencing_topology])
+            .runner.cib.load(optional_in_conf=BAD_FENCING_TOPOLOGY)
             .runner.pcmk.load_state()
         )
         self.env_assist.assert_raise_library_error(
@@ -93,7 +87,7 @@ class CibAsWholeInvalid(TestCase):
         #More fencing topology tests are provided by tests of
         #pcs.lib.commands.fencing_topology
         (self.config
-            .runner.cib.load(modifiers=[put_bad_fencing_topology])
+            .runner.cib.load(optional_in_conf=BAD_FENCING_TOPOLOGY)
             .runner.pcmk.load_state()
         )
         self.assert_raises_invalid_cib_content(

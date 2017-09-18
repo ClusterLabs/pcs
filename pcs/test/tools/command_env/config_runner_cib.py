@@ -54,11 +54,11 @@ class CibShortcuts(object):
            or
            filename is not None
            or
-           resources is not None
+           modifier_shortcuts
         ):
             raise AssertionError(
                 "Do not combine parameters 'returncode' and 'stderr' with"
-                " parameters 'modifiers', 'filename' and 'resources'"
+                " parameters 'modifiers', 'filename' and 'modifier_shortcuts'"
             )
 
         command = "cibadmin --local --query"

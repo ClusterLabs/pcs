@@ -210,7 +210,7 @@ class CibPushDiff(TestCase):
     def push_reports(self, strip_old=False):
         # No test changes the CIB between load and push. The point is to test
         # loading and pushing, not editing the CIB.
-        loaded_cib = self.config.calls.get("load_cib").stdout
+        loaded_cib = self.config.calls.get("runner.cib.load").stdout
         return [
             (
                 severity.DEBUG,

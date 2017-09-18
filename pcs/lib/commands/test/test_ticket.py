@@ -14,7 +14,6 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.lib.test.misc import get_mocked_env
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.fixture import replace_element
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
@@ -36,10 +35,8 @@ class CreateTest(TestCase):
                     </resources>
                 """
             )
-            .env.push_cib([
-                replace_element(
-                    "./configuration/constraints",
-                    """
+            .env.push_cib(
+                optional_in_conf="""
                     <constraints>
                         <rsc_ticket
                             id="ticket-ticketA-resourceA-Master"
@@ -49,9 +46,8 @@ class CreateTest(TestCase):
                             loss-policy="fence"
                         />
                     </constraints>
-                    """
-                )
-            ])
+                """
+            )
          )
 
         ticket_command.create(

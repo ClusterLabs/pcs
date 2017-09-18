@@ -326,22 +326,18 @@ class RemoveAlertTest(TestCase):
 class AddRecipientTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load([
-            replace_optional_element(
-                "./configuration",
-                "alerts",
-                """
+        self.config.runner.cib.load(
+            optional_in_conf="""
                 <alerts>
                     <alert id="alert" path="path">
                         <recipient id="alert-recipient" value="value1"/>
                     </alert>
                 </alerts>
-                """
-            )
-        ])
+            """
+        )
 
     def test_value_not_defined(self):
-        self.config.remove("load_cib")
+        self.config.remove("runner.cib.load")
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
                 self.env_assist.get_env(), "unknown", "", {}, {}
@@ -371,9 +367,9 @@ class AddRecipientTest(TestCase):
         )
 
     def test_without_id(self):
-        self.config.env.push_cib([
-            replace_element(
-                './/alert[@id="alert"]',
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]' :
                 """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
@@ -403,9 +399,9 @@ class AddRecipientTest(TestCase):
                         </instance_attributes>
                     </recipient>
                 </alert>
-                """,
-            )
-        ])
+                """
+            }
+        )
         cmd_alert.add_recipient(
             self.env_assist.get_env(),
             "alert",
@@ -418,9 +414,9 @@ class AddRecipientTest(TestCase):
         )
 
     def test_with_id(self):
-        self.config.env.push_cib([
-            replace_element(
-                './/alert[@id="alert"]',
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]':
                 """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
@@ -450,9 +446,9 @@ class AddRecipientTest(TestCase):
                         </instance_attributes>
                     </recipient>
                 </alert>
-                """,
-            )
-        ])
+                """
+            }
+        )
         cmd_alert.add_recipient(
             self.env_assist.get_env(),
             "alert",
@@ -468,11 +464,8 @@ class AddRecipientTest(TestCase):
 class UpdateRecipientTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load([
-            replace_optional_element(
-                "./configuration",
-                "alerts",
-                """
+        self.config.runner.cib.load(
+            optional_in_conf="""
                 <alerts>
                     <alert id="alert" path="path">
                         <recipient id="alert-recipient" value="value1"/>
@@ -505,12 +498,11 @@ class UpdateRecipientTest(TestCase):
                         </recipient>
                     </alert>
                 </alerts>
-                """
-            )
-        ])
+            """
+        )
 
     def test_empty_value(self):
-        self.config.remove("load_cib")
+        self.config.remove("runner.cib.load")
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
                 self.env_assist.get_env(),
@@ -543,9 +535,9 @@ class UpdateRecipientTest(TestCase):
         )
 
     def test_update_all(self):
-        self.config.env.push_cib([
-            replace_element(
-                './/alert[@id="alert"]',
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]':
                 """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
@@ -580,8 +572,8 @@ class UpdateRecipientTest(TestCase):
                     </recipient>
                 </alert>
                 """,
-            )
-        ])
+            }
+        )
         cmd_alert.update_recipient(
             self.env_assist.get_env(),
             "alert-recipient-1",
