@@ -4,6 +4,8 @@
 
 ### Added
 - Configurable pcsd port ([rhbz#1415197])
+- Description of the `--force` option added to man page and help
+  ([rhbz#1491631])
 
 ### Fixed
 - Fixed some crashes when pcs encounters a non-ascii character in environment
@@ -37,6 +39,7 @@
 [rhbz#1441673]: https://bugzilla.redhat.com/show_bug.cgi?id=1441673
 [rhbz#1463327]: https://bugzilla.redhat.com/show_bug.cgi?id=1463327
 [rhbz#1489682]: https://bugzilla.redhat.com/show_bug.cgi?id=1489682
+[rhbz#1491631]: https://bugzilla.redhat.com/show_bug.cgi?id=1491631
 
 
 ## [0.9.159] - 2017-06-30

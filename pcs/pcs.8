@@ -812,6 +812,8 @@ Create the MyStonith stonith fence_virt device which can fence host 'f1'
 .TP
 Set the stonith\-enabled property to false on the cluster (which disables stonith)
 .B # pcs property set stonith\-enabled=false
+.SH USING \-\-FORCE IN PCS COMMANDS
+Various pcs commands accept the \fB\-\-force\fR option. Its purpose is to override some of checks that pcs is doing or some of errors that may occur when a pcs command is run. When such error occurs, pcs will print the error with a note it may be overridden. The exact behavior of the option is different for each pcs command. Using the \fB\-\-force\fR option can lead into situations that would normally be prevented by logic of pcs commands and therefore \fBits use is strongly discouraged unless you know what you are doing\fR.
 .SH ENVIRONMENT VARIABLES
 .TP
 EDITOR

@@ -160,6 +160,9 @@ Options:
     --version          Print pcs version information.
     --request-timeout  Timeout for each outgoing request to another node in
                        seconds. Default is 60s.
+    --force            Override checks and errors, the exact behavior depends on
+                       the command. WARNING: Using the --force option is
+                       strongly discouraged unless you know what you are doing.
 
 Commands:
     cluster     Configure cluster options and nodes.
