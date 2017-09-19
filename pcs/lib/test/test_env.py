@@ -849,9 +849,8 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
 
 class PushCorosyncConfFile(TestCase):
     def setUp(self):
-        self.env_assistant, self.config = get_env_tools(
-            self, corosync_conf_data="totem {\n    version: 2\n}\n",
-        )
+        self.env_assistant, self.config = get_env_tools(test_case=self)
+        self.config.env.set_corosync_conf_data("totem {\n    version: 2\n}\n")
 
     def test_success(self):
         env = self.env_assistant.get_env()
@@ -865,9 +864,8 @@ class PushCorosyncConfFile(TestCase):
 class GetCorosyncConfFile(TestCase):
     def setUp(self):
         self.corosync_conf_data = "totem {\n    version: 2\n}\n"
-        self.env_assistant, self.config = get_env_tools(
-            self, corosync_conf_data=self.corosync_conf_data,
-        )
+        self.env_assistant, self.config = get_env_tools(test_case=self)
+        self.config.env.set_corosync_conf_data(self.corosync_conf_data)
 
     def test_success(self):
         env = self.env_assistant.get_env()

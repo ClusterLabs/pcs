@@ -97,9 +97,10 @@ class CibAsWholeInvalid(TestCase):
 class CibIsMocked(TestCase):
     def test_success_on_valid_cib(self):
         cib_content = "<cib/>"
-        env_assist, config = get_env_tools(test_case=self, cib_data=cib_content)
+        env_assist, config = get_env_tools(test_case=self)
 
         (config
+            .env.set_cib_data(cib_content)
             .runner.pcmk.verify(content=cib_content)
             .runner.cib.load()
             .runner.pcmk.load_state()

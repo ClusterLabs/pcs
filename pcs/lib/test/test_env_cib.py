@@ -75,7 +75,8 @@ class IsCibLive(TestCase):
         self.assertTrue(env_assist.get_env().is_cib_live)
 
     def test_is_not_live_when_cib_data_specified(self):
-        env_assist, _ = get_env_tools(test_case=self, cib_data="<cib/>")
+        env_assist, config = get_env_tools(test_case=self)
+        config.env.set_cib_data("<cib/>")
         self.assertFalse(env_assist.get_env().is_cib_live)
 
 class WaitSupportWithLiveCib(TestCase):
@@ -130,8 +131,11 @@ class WaitSupportWithLiveCib(TestCase):
 
 class WaitSupportWithMockedCib(TestCase):
     def test_does_not_suport_timeout(self):
-        env_assist, config = get_env_tools(test_case=self, cib_data="<cib/>")
-        config.runner.cib.load()
+        env_assist, config = get_env_tools(test_case=self)
+        (config
+            .env.set_cib_data("<cib/>")
+            .runner.cib.load()
+        )
 
         env = env_assist.get_env()
         env.get_cib()
@@ -388,15 +392,15 @@ class CibPushDiff(TestCase):
 class GetCib(TestCase):
     def test_raise_library_error_when_cibadmin_failed(self):
         stderr = "cibadmin: Connection to local file failed..."
-        env_assist, config = get_env_tools(
-            test_case=self,
+        env_assist, config = get_env_tools(test_case=self)
+        (config
             #Value of cib_data is unimportant here. This content is only put
             #into tempfile when the runner is not mocked. And content is then
             #loaded from tempfile by `cibadmin --local --query`. In tests is
             #runner mocked so the value of cib_data is not used in the fact.
-            cib_data="whatever",
+            .env.set_cib_data("whatever")
+            .runner.cib.load(returncode=203, stderr=stderr)
         )
-        config.runner.cib.load(returncode=203, stderr=stderr)
 
         env_assist.assert_raise_library_error(
             env_assist.get_env().get_cib,
@@ -407,13 +411,13 @@ class GetCib(TestCase):
         )
 
     def test_returns_cib_from_cib_data(self):
-        env_assist, config = get_env_tools(
-            test_case=self,
-            #Value of cib_data is unimportant here. See details in sibling test.
-            cib_data="whatever",
-        )
+        env_assist, config = get_env_tools(test_case=self)
         cib_filename = "cib-empty.xml"
-        config.runner.cib.load(filename=cib_filename)
+        (config
+            #Value of cib_data is unimportant here. See details in sibling test.
+            .env.set_cib_data("whatever")
+            .runner.cib.load(filename=cib_filename)
+        )
         assert_xml_equal(
             etree_to_str(env_assist.get_env().get_cib()),
             open(rc(cib_filename)).read()

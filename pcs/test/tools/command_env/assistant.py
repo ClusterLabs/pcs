@@ -76,8 +76,8 @@ def patch_env(call_queue, config, init_env):
 class EnvAssistant(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(
-        self, config=None, test_case=None, cib_data=None,
-        corosync_conf_data=None, exception_reports_in_processor_by_default=True
+        self, config=None, test_case=None,
+        exception_reports_in_processor_by_default=True
     ):
         """
         TestCase test_case -- cleanup callback is registered to test_case if is
@@ -87,8 +87,6 @@ class EnvAssistant(object):
         self.__config = config if config else Config()
         self.__reports_asserted = False
         self.__extra_reports = []
-        self.__cib_data = cib_data
-        self.__corosync_conf_data = corosync_conf_data
         self.exception_reports_in_processor_by_default = (
             exception_reports_in_processor_by_default
         )
@@ -131,8 +129,8 @@ class EnvAssistant(object):
         self._env =  LibraryEnvironment(
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor(),
-            cib_data=self.__cib_data,
-            corosync_conf_data=self.__corosync_conf_data,
+            cib_data=self.__config.env.cib_data,
+            corosync_conf_data=self.__config.env.corosync_conf_data,
             token_file_data_getter=(
                 (lambda: {
                     "tokens": self.__config.spy.auth_tokens,
