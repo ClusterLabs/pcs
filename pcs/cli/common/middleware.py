@@ -7,7 +7,6 @@ from __future__ import (
 from collections import namedtuple
 from functools import partial
 
-from pcs.cli.common import console_report
 from pcs.cli.common.console_report import error
 
 
@@ -61,7 +60,7 @@ def corosync_conf_existing(local_file_path):
             try:
                 env.corosync_conf_data = open(local_file_path).read()
             except EnvironmentError as e:
-                raise console_report.error("Unable to read {0}: {1}".format(
+                raise error("Unable to read {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
@@ -74,7 +73,7 @@ def corosync_conf_existing(local_file_path):
                 f.write(env.corosync_conf_data)
                 f.close()
             except EnvironmentError as e:
-                raise console_report.error("Unable to write {0}: {1}".format(
+                raise error("Unable to write {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
@@ -88,7 +87,7 @@ def cluster_conf_read_only(local_file_path):
             try:
                 env.cluster_conf_data = open(local_file_path).read()
             except EnvironmentError as e:
-                raise console_report.error("Unable to read {0}: {1}".format(
+                raise error("Unable to read {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
