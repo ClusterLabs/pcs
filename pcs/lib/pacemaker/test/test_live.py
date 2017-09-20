@@ -22,9 +22,10 @@ import pcs.lib.pacemaker.live as lib
 from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
 
-def get_runner(stdout="", stderr="", returncode=0):
+def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
     runner = mock.MagicMock(spec_set=CommandRunner)
     runner.run.return_value = (stdout, stderr, returncode)
+    runner.env_vars = env_vars if env_vars else {}
     return runner
 
 
@@ -226,19 +227,15 @@ class Verify(LibraryPacemakerTest):
         )
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "--live-check"],
-            stdin_string=None,
         )
 
     def test_run_on_mocked_cib(self):
-        cib_content = "<cib/>"
-        runner = get_runner()
-        self.assertEqual(
-            lib.verify(runner, cib_content=cib_content),
-            runner.run.return_value
-        )
+        fake_tmp_file = "/fake/tmp/file"
+        runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
+
+        self.assertEqual(lib.verify(runner), runner.run.return_value)
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "--xml-pipe"],
-            stdin_string=cib_content,
+            [self.path("crm_verify"), "--xml-file", fake_tmp_file],
         )
 
     def test_run_verbose(self):
@@ -249,7 +246,6 @@ class Verify(LibraryPacemakerTest):
         )
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "-V", "--live-check"],
-            stdin_string=None,
         )
 
 

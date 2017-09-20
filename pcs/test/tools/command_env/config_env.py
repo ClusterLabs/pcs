@@ -11,17 +11,23 @@ from pcs.test.tools.fixture_cib import modify_cib
 class EnvConfig(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
-        self.__cib_data=None
+        self.__cib_data = None
+        self.__cib_tempfile = None
         self.__corosync_conf_data = None
 
 
-    def set_cib_data(self, cib_data):
+    def set_cib_data(self, cib_data, cib_tempfile="/fake/tmp/file"):
         self.__cib_data = cib_data
+        self.__cib_tempfile = cib_tempfile
+
 
     @property
     def cib_data(self):
         return self.__cib_data
 
+    @property
+    def cib_tempfile(self):
+        return self.__cib_tempfile
 
     def set_corosync_conf_data(self, corosync_conf_data):
         self.__corosync_conf_data = corosync_conf_data

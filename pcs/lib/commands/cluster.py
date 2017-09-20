@@ -68,7 +68,6 @@ def verify(env, verbose=False):
     dummy_stdout, verify_stderr, verify_returncode = verify_cmd(
         runner,
         verbose=verbose,
-        cib_content=None if env.is_cib_live else env.initial_mocked_cib_content
     )
 
     #1) Do not even try to think about upgrading!

@@ -96,12 +96,11 @@ class CibAsWholeInvalid(TestCase):
 
 class CibIsMocked(TestCase):
     def test_success_on_valid_cib(self):
-        cib_content = "<cib/>"
+        cib_tempfile = "/fake/tmp/file"
         env_assist, config = get_env_tools(test_case=self)
-
         (config
-            .env.set_cib_data(cib_content)
-            .runner.pcmk.verify(content=cib_content)
+            .env.set_cib_data("<cib/>", cib_tempfile=cib_tempfile)
+            .runner.pcmk.verify(cib_tempfile=cib_tempfile)
             .runner.cib.load()
             .runner.pcmk.load_state()
         )

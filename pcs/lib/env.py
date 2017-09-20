@@ -234,15 +234,6 @@ class LibraryEnvironment(object):
         return self._cib_data is None
 
     @property
-    def initial_mocked_cib_content(self):
-        if self.is_cib_live:
-            raise AssertionError(
-                "Initial mocked cib content does not make sense in live env."
-            )
-
-        return self._cib_data
-
-    @property
     def final_mocked_cib_content(self):
         if self.is_cib_live:
             raise AssertionError(

@@ -360,6 +360,10 @@ class CommandRunner(object):
         self._env_vars = env_vars if env_vars else dict()
         self._python2 = sys.version[0] == "2"
 
+    @property
+    def env_vars(self):
+        return self._env_vars
+
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False
     ):

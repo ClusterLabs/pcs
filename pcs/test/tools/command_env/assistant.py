@@ -38,8 +38,12 @@ def patch_env(call_queue, config, init_env):
         patch_lib_env(
             "cmd_runner",
             lambda env:
-                Runner(call_queue) if not config.spy
-                else spy.Runner(init_env.cmd_runner())
+            spy.Runner(init_env.cmd_runner()) if config.spy else Runner(
+                call_queue,
+                env_vars={} if not config.env.cib_tempfile else {
+                    "CIB_file": config.env.cib_tempfile,
+                }
+            )
         ),
 
         mock.patch(

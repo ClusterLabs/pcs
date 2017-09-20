@@ -100,8 +100,13 @@ class Call(object):
 
 
 class Runner(object):
-    def __init__(self, call_queue=None):
+    def __init__(self, call_queue=None, env_vars=None):
         self.__call_queue = call_queue
+        self.__env_vars = env_vars if env_vars else {}
+
+    @property
+    def env_vars(self):
+        return self.__env_vars
 
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False

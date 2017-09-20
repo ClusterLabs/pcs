@@ -68,27 +68,29 @@ def get_cib_xml(runner, scope=None):
 def parse_cib_xml(xml):
     return xml_fromstring(xml)
 
-
-
 def get_cib(xml):
     try:
         return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(reports.cib_load_error_invalid_format())
 
-def verify(runner, verbose=False, cib_content=None):
+def verify(runner, verbose=False):
     crm_verify_cmd = [__exec("crm_verify")]
     if verbose:
         crm_verify_cmd.append("-V")
 
-    if cib_content is None:
+    #With the `crm_verify` command it is not possible simply use the environment
+    #variable CIB_file because `crm_verify` simply tries to connect to cib file
+    #via tool that can fail because: Update does not conform to the configured
+    #schema
+    #So we use the explicit flag `--xml-file`.
+    cib_tmp_file = runner.env_vars.get("CIB_file", None)
+    if cib_tmp_file is None:
         crm_verify_cmd.append("--live-check")
-        stdin = None
     else:
-        crm_verify_cmd.append("--xml-pipe")
-        stdin = cib_content
-    stdout, stderr, returncode = runner.run(crm_verify_cmd, stdin_string=stdin)
-    return stdout, stderr, returncode
+        crm_verify_cmd.extend(["--xml-file", cib_tmp_file])
+    #the tuple (stdout, stderr, returncode) is returned here
+    return runner.run(crm_verify_cmd)
 
 def replace_cib_configuration_xml(runner, xml):
     cmd = [
