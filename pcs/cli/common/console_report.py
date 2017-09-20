@@ -288,7 +288,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.INVALID_CIB_CONTENT: lambda info:
-        "invalid cib content: \n{0}"
+        "invalid cib: \n{0}"
         .format(info["report"])
     ,
 

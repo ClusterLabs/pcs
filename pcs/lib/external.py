@@ -263,11 +263,10 @@ def is_service_installed(runner, service, instance=None):
     service -- name of service
     instance -- systemd service instance
     """
-    if is_systemctl():
-        service_name = "{0}{1}".format(service, "" if instance is None else "@")
-        return service_name in get_systemd_services(runner)
-    else:
+    if not is_systemctl():
         return service in get_non_systemd_services(runner)
+    service_name = "{0}{1}".format(service, "" if instance is None else "@")
+    return service_name in get_systemd_services(runner)
 
 
 def get_non_systemd_services(runner):

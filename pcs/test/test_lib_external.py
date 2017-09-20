@@ -398,7 +398,6 @@ class CommandRunnerTest(TestCase):
             ]
         )
 
-
 @mock.patch(
     "pcs.lib.external.pycurl.Curl",
     autospec=True

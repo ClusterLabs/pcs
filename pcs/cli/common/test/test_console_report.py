@@ -189,11 +189,12 @@ class InvalidCibContent(NameBuildTest):
     def test_build_message(self):
         report = "report\nlines"
         self.assert_message_from_info(
-            "invalid cib content: \n{0}".format(report),
+            "invalid cib: \n{0}".format(report),
             {
                 "report": report,
             }
         )
+
 class BuildInvalidIdTest(NameBuildTest):
     code = codes.INVALID_ID
     def test_build_message_with_first_char_invalid(self):
