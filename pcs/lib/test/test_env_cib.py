@@ -79,6 +79,7 @@ class IsCibLive(TestCase):
         config.env.set_cib_data("<cib/>")
         self.assertFalse(env_assist.get_env().is_cib_live)
 
+
 class WaitSupportWithLiveCib(TestCase):
     wait_timeout = 10
 
@@ -147,7 +148,19 @@ class WaitSupportWithMockedCib(TestCase):
             expected_in_processor=False
         )
 
-class CibPushFull(TestCase):
+
+class MangeCibAssertionMixin(object):
+    def assert_raises_cib_error(self, callable_obj, message):
+        with self.assertRaises(AssertionError) as context_manager:
+            callable_obj()
+            self.assertEqual(str(context_manager.exception), message)
+
+    def assert_raises_cib_not_loaded(self, callable_obj):
+        self.assert_raises_cib_error(callable_obj,  "CIB has not been loaded")
+
+
+
+class CibPushFull(TestCase, MangeCibAssertionMixin):
     custom_cib = "<custom_cib />"
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -190,8 +203,31 @@ class CibPushFull(TestCase):
             expected_in_processor=False
         )
 
+    def test_get_and_push(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.push()
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        env.push_cib_full()
 
-class CibPushDiff(TestCase):
+    def test_can_get_after_push(self):
+        (self.config
+            .runner.cib.load()
+            .runner.cib.push()
+            .runner.cib.load(name="load_cib_2")
+         )
+
+        env = self.env_assist.get_env()
+        env.get_cib()
+        env.push_cib_full()
+        # need to use lambda because env.cib is a property
+        self.assert_raises_cib_not_loaded(lambda: env.cib)
+        env.get_cib()
+
+
+class CibPushDiff(TestCase, MangeCibAssertionMixin):
     def setUp(self):
         tmpfile_patcher = mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
         self.addCleanup(tmpfile_patcher.stop)
@@ -238,15 +274,6 @@ class CibPushDiff(TestCase):
 
     def assert_tmps_write_reported(self):
         self.env_assist.assert_reports(self.push_reports())
-
-
-    def assert_raises_cib_error(self, callable_obj, message):
-        with self.assertRaises(AssertionError) as context_manager:
-            callable_obj()
-            self.assertEqual(str(context_manager.exception), message)
-
-    def assert_raises_cib_not_loaded(self, callable_obj):
-        self.assert_raises_cib_error(callable_obj,  "CIB has not been loaded")
 
     def test_tmpfile_fails(self):
         self.config.runner.cib.load()
@@ -329,31 +356,76 @@ class CibPushDiff(TestCase):
         env.push_cib_diff()
         self.assert_tmps_write_reported()
 
+    def test_can_get_after_push(self):
+        self.config_load_and_push()
+        self.config.runner.cib.load(name="load_cib_2")
+
+        env = self.env_assist.get_env()
+        env.get_cib()
+        env.push_cib_diff()
+        # need to use lambda because env.cib is a property
+        self.assert_raises_cib_not_loaded(lambda: env.cib)
+        env.get_cib()
+        self.assert_tmps_write_reported()
+
+
+class UpgradeCib(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
             .runner.cib.load(name="load_cib_old")
             .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
         )
-        self.config_load_and_push(filename="cib-empty-2.8.xml")
         env = self.env_assist.get_env()
         env.get_cib((2, 8, 0))
-        env.push_cib_diff()
 
         self.env_assist.assert_reports(
             [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
-            +
-            self.push_reports(strip_old=True)
         )
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
-        self.config_load_and_push(filename="cib-empty-2.6.xml")
-
+        self.config.runner.cib.load(filename="cib-empty-2.6.xml")
         env = self.env_assist.get_env()
-
         env.get_cib((2, 5, 0))
-        env.push_cib_diff()
-        self.assert_tmps_write_reported()
 
+
+class ManageCib(TestCase, MangeCibAssertionMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_raise_library_error_when_cibadmin_failed(self):
+        stderr = "cibadmin: Connection to local file failed..."
+        (self.config
+            #Value of cib_data is unimportant here. This content is only put
+            #into tempfile when the runner is not mocked. And content is then
+            #loaded from tempfile by `cibadmin --local --query`. Runner is
+            #mocked in tests so the value of cib_data is not in the fact used.
+            .env.set_cib_data("whatever")
+            .runner.cib.load(returncode=203, stderr=stderr)
+        )
+
+        self.env_assist.assert_raise_library_error(
+            self.env_assist.get_env().get_cib,
+            [
+                fixture.error(report_codes.CIB_LOAD_ERROR, reason=stderr)
+            ],
+            expected_in_processor=False
+        )
+
+    def test_returns_cib_from_cib_data(self):
+        cib_filename = "cib-empty.xml"
+        (self.config
+            #Value of cib_data is unimportant here. See details in sibling test.
+            .env.set_cib_data("whatever")
+            .runner.cib.load(filename=cib_filename)
+        )
+        assert_xml_equal(
+            etree_to_str(self.env_assist.get_env().get_cib()),
+            open(rc(cib_filename)).read()
+        )
 
     def test_get_and_property(self):
         self.config.runner.cib.load()
@@ -374,51 +446,3 @@ class CibPushDiff(TestCase):
     def test_push_without_get(self):
         env = self.env_assist.get_env()
         self.assert_raises_cib_not_loaded(env.push_cib_diff)
-
-    def test_can_get_after_push(self):
-        self.config_load_and_push()
-        self.config.runner.cib.load(name="load_cib_2")
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib_diff()
-        # need to use lambda because env.cib is a property
-        self.assert_raises_cib_not_loaded(lambda: env.cib)
-        env.get_cib()
-
-        self.assert_tmps_write_reported()
-
-
-class GetCib(TestCase):
-    def test_raise_library_error_when_cibadmin_failed(self):
-        stderr = "cibadmin: Connection to local file failed..."
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            #Value of cib_data is unimportant here. This content is only put
-            #into tempfile when the runner is not mocked. And content is then
-            #loaded from tempfile by `cibadmin --local --query`. In tests is
-            #runner mocked so the value of cib_data is not used in the fact.
-            .env.set_cib_data("whatever")
-            .runner.cib.load(returncode=203, stderr=stderr)
-        )
-
-        env_assist.assert_raise_library_error(
-            env_assist.get_env().get_cib,
-            [
-                fixture.error(report_codes.CIB_LOAD_ERROR, reason=stderr)
-            ],
-            expected_in_processor=False
-        )
-
-    def test_returns_cib_from_cib_data(self):
-        env_assist, config = get_env_tools(test_case=self)
-        cib_filename = "cib-empty.xml"
-        (config
-            #Value of cib_data is unimportant here. See details in sibling test.
-            .env.set_cib_data("whatever")
-            .runner.cib.load(filename=cib_filename)
-        )
-        assert_xml_equal(
-            etree_to_str(env_assist.get_env().get_cib()),
-            open(rc(cib_filename)).read()
-        )
