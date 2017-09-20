@@ -8,6 +8,7 @@ from collections import namedtuple
 from functools import partial
 
 from pcs.cli.common import console_report
+from pcs.cli.common.console_report import error
 
 
 def build(*middleware_list):
@@ -29,15 +30,27 @@ def cib(filename, touch_cib_file):
     def apply(next_in_line, env, *args, **kwargs):
         if filename:
             touch_cib_file(filename)
-            with open(filename, mode="r") as cib_file:
-                original_content = cib_file.read()
+            try:
+                with open(filename, mode="r") as cib_file:
+                    original_content = cib_file.read()
+            except EnvironmentError as e:
+                raise error(
+                    "Cannot read cib file '{0}': '{1}'"
+                    .format(filename, str(e))
+                )
             env.cib_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
         if filename and env.cib_data != original_content:
-            with open(filename, mode="w") as cib_file:
-                cib_file.write(env.cib_data)
+            try:
+                with open(filename, mode="w") as cib_file:
+                    cib_file.write(env.cib_data)
+            except EnvironmentError as e:
+                raise error(
+                    "Cannot write cib file '{0}': '{1}'"
+                    .format(filename, str(e))
+                )
 
         return result_of_next
     return apply
