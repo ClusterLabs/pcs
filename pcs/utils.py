@@ -972,9 +972,8 @@ def touch_cib_file(filename):
     if not os.path.isfile(filename):
         try:
             write_empty_cib(filename)
-        except IOError:
-            err("Unable to write to file: " + filename)
-
+        except EnvironmentError as e:
+           err("Unable to write to file: '{0}': '{1}'".format(filename, str(e)))
 
 # Run command, with environment and return (output, retval)
 # DEPRECATED, please use lib.external.CommandRunner via utils.cmd_runner()
