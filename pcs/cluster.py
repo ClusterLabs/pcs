@@ -53,7 +53,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
-from pcs.lib.commands.cluster import _share_authkey, _destroy_pcmk_remote_env
+from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import DistributeFiles
@@ -2269,32 +2269,29 @@ def cluster_destroy(argv):
             pass
 
 def cluster_verify(argv):
-    nofilename = True
-    if len(argv) == 1:
-        filename = argv.pop(0)
-        nofilename = False
-    elif len(argv) > 1:
+    if len(argv) > 1:
         usage.cluster("verify")
+        raise SystemExit(1)
 
-    options = []
-    if "-V" in utils.pcs_options:
-        options.append("-V")
-    if nofilename:
-        options.append("--live-check")
-    else:
-        options.append("--xml-file")
-        options.append(filename)
-    output, retval = utils.run([settings.crm_verify] + options)
-    if output != "":
-        print(output)
+    if argv:
+        filename = argv[0]
+        if not utils.usefile:
+            #We must operate on given cib everywhere.
+            utils.usefile = True
+            utils.filename = filename
+        elif os.path.abspath(filename) == os.path.abspath(utils.filename):
+            warn("File '{0}' specified twice".format(os.path.abspath(filename)))
+        else:
+            raise error(
+                "Ambiguous cib filename specification: '{0}' vs  -f '{1}'"
+                .format(filename, utils.filename)
+            )
 
     lib = utils.get_library_wrapper()
     try:
-        lib.fencing_topology.verify()
+        lib.cluster.verify(verbose="-V" in utils.pcs_options)
     except LibraryError as e:
         utils.process_library_reports(e.args)
-
-    return retval
 
 def cluster_report(argv):
     if len(argv) != 1:

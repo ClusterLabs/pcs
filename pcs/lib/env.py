@@ -92,7 +92,7 @@ class LibraryEnvironment(object):
         # related code currently - it's in pcsd
         self._token_file_data_getter = token_file_data_getter
         self._token_file = None
-        self._cib_upgraded = False
+        self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
@@ -127,19 +127,10 @@ class LibraryEnvironment(object):
             self._is_cman_cluster = is_cman_cluster(self.cmd_runner())
         return self._is_cman_cluster
 
-    @property
-    def cib_upgraded(self):
-        return self._cib_upgraded
-
-    def _get_cib_xml(self):
-        if self.is_cib_live:
-            return get_cib_xml(self.cmd_runner())
-        return self._cib_data
-
     def get_cib(self, minimal_version=None):
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
-        self.__loaded_cib_diff_source = self._get_cib_xml()
+        self.__loaded_cib_diff_source = get_cib_xml(self.cmd_runner())
         self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
@@ -150,11 +141,11 @@ class LibraryEnvironment(object):
             if upgraded_cib is not None:
                 self.__loaded_cib_to_modify = upgraded_cib
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
-                if self.is_cib_live and not self._cib_upgraded:
+                if not self._cib_upgrade_reported:
                     self.report_processor.process(
                         reports.cib_upgrade_successful()
                     )
-                self._cib_upgraded = True
+                self._cib_upgrade_reported = True
         return self.__loaded_cib_to_modify
 
     @property
@@ -204,7 +195,6 @@ class LibraryEnvironment(object):
         self.__do_push_cib(
             cmd_runner,
             lambda: replace_cib_configuration(cmd_runner, cib_to_push),
-            cib_to_push,
             wait
         )
 
@@ -216,7 +206,6 @@ class LibraryEnvironment(object):
         self.__do_push_cib(
             cmd_runner,
             lambda: self.__main_push_cib_diff(cmd_runner),
-            self.__loaded_cib_to_modify,
             wait
         )
 
@@ -231,13 +220,10 @@ class LibraryEnvironment(object):
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
-    def __do_push_cib(self, cmd_runner, live_push_strategy, not_live_cib, wait):
+    def __do_push_cib(self, cmd_runner, push_strategy, wait):
         timeout = self._get_wait_timeout(wait)
-        if self.is_cib_live:
-            live_push_strategy()
-            self._cib_upgraded = False
-        else:
-            self._cib_data = etree_to_str(not_live_cib)
+        push_strategy()
+        self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
         if self.is_cib_live and timeout is not False:
@@ -246,6 +232,20 @@ class LibraryEnvironment(object):
     @property
     def is_cib_live(self):
         return self._cib_data is None
+
+    @property
+    def final_mocked_cib_content(self):
+        if self.is_cib_live:
+            raise AssertionError(
+                "Final mocked cib content does not make sense in live env."
+            )
+
+        if self._cib_data_tmp_file:
+            self._cib_data_tmp_file.seek(0)
+            return self._cib_data_tmp_file.read()
+
+        return self._cib_data
+
 
     def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
@@ -359,7 +359,7 @@ class LibraryEnvironment(object):
             # don't need to take care of it every time the runner is called.
             if not self._cib_data_tmp_file:
                 try:
-                    cib_data = self._get_cib_xml()
+                    cib_data = self._cib_data
                     self._cib_data_tmp_file = write_tmpfile(cib_data)
                     self.report_processor.process(
                         reports.tmp_file_write(

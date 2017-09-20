@@ -1,4 +1,4 @@
-<cib admin_epoch="0" cib-last-written="Thu Aug 23 16:49:17 2012" crm_feature_set="3.0.6" dc-uuid="2" epoch="1308" have-quorum="0" num_updates="1" update-client="crmd" update-origin="rh7-3" validate-with="pacemaker-1.2">
+<cib admin_epoch="0" cib-last-written="Thu Aug 23 16:49:17 2012" crm_feature_set="3.0.12" dc-uuid="2" epoch="1308" have-quorum="0" num_updates="1" update-client="crmd" update-origin="rh7-3" validate-with="pacemaker-1.2">
   <configuration>
     <crm_config/>
     <nodes>

@@ -111,3 +111,23 @@ class PcmkShortcuts(object):
             RunnerCall("crm_resource -?", stdout=stdout),
             before=before
         )
+
+    def verify(self, name="verify", cib_tempfile=None, stderr=None, verbose=False):
+        """
+        Create call that checks that wait for idle is supported
+
+        string name -- key of the call
+        string before -- key of call before which this new call is to be placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "crm_verify{0} {1}".format(
+                    " -V" if verbose else "",
+                    "--xml-file {0}".format(cib_tempfile) if cib_tempfile
+                        else "--live-check"
+                ),
+                stderr=("" if stderr is None else stderr),
+                returncode=(0 if stderr is None else 55),
+            ),
+        )

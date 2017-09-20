@@ -38,8 +38,12 @@ def patch_env(call_queue, config, init_env):
         patch_lib_env(
             "cmd_runner",
             lambda env:
-                Runner(call_queue) if not config.spy
-                else spy.Runner(init_env.cmd_runner())
+            spy.Runner(init_env.cmd_runner()) if config.spy else Runner(
+                call_queue,
+                env_vars={} if not config.env.cib_tempfile else {
+                    "CIB_file": config.env.cib_tempfile,
+                }
+            )
         ),
 
         mock.patch(
@@ -76,8 +80,8 @@ def patch_env(call_queue, config, init_env):
 class EnvAssistant(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(
-        self, config=None, test_case=None, cib_data=None,
-        corosync_conf_data=None
+        self, config=None, test_case=None,
+        exception_reports_in_processor_by_default=True
     ):
         """
         TestCase test_case -- cleanup callback is registered to test_case if is
@@ -87,8 +91,9 @@ class EnvAssistant(object):
         self.__config = config if config else Config()
         self.__reports_asserted = False
         self.__extra_reports = []
-        self.__cib_data = cib_data
-        self.__corosync_conf_data = corosync_conf_data
+        self.exception_reports_in_processor_by_default = (
+            exception_reports_in_processor_by_default
+        )
 
         self.__unpatch = None
 
@@ -128,8 +133,8 @@ class EnvAssistant(object):
         self._env =  LibraryEnvironment(
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor(),
-            cib_data=self.__cib_data,
-            corosync_conf_data=self.__corosync_conf_data,
+            cib_data=self.__config.env.cib_data,
+            corosync_conf_data=self.__config.env.corosync_conf_data,
             token_file_data_getter=(
                 (lambda: {
                     "tokens": self.__config.spy.auth_tokens,
@@ -148,10 +153,15 @@ class EnvAssistant(object):
         )
 
     def assert_raise_library_error(
-        self, command, reports, expected_in_processor=True
+        self, command, reports, expected_in_processor=None
     ):
         if not isinstance(reports, list):
             raise self.__list_of_reports_expected(reports)
+
+        if expected_in_processor is None:
+            expected_in_processor = (
+                self.exception_reports_in_processor_by_default
+            )
 
         assert_raise_library_error(command, *reports)
         if expected_in_processor:

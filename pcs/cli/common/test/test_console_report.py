@@ -184,6 +184,17 @@ class BuildServiceStartErrorTest(NameBuildTest):
             }
         )
 
+class InvalidCibContent(NameBuildTest):
+    code = codes.INVALID_CIB_CONTENT
+    def test_build_message(self):
+        report = "report\nlines"
+        self.assert_message_from_info(
+            "invalid cib: \n{0}".format(report),
+            {
+                "report": report,
+            }
+        )
+
 class BuildInvalidIdTest(NameBuildTest):
     code = codes.INVALID_ID
     def test_build_message_with_first_char_invalid(self):

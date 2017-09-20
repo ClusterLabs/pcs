@@ -968,6 +968,13 @@ def get_cluster_conf_cman_options():
 def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
+def touch_cib_file(filename):
+    if not os.path.isfile(filename):
+        try:
+            write_empty_cib(filename)
+        except EnvironmentError as e:
+           err("Unable to write to file: '{0}': '{1}'".format(filename, str(e)))
+
 # Run command, with environment and return (output, retval)
 # DEPRECATED, please use lib.external.CommandRunner via utils.cmd_runner()
 def run(
@@ -981,12 +988,7 @@ def run(
     env_var["LC_ALL"] = "C"
     if usefile:
         env_var["CIB_file"] = filename
-
-        if not os.path.isfile(filename):
-            try:
-                write_empty_cib(filename)
-            except IOError:
-                err("Unable to write to file: " + filename)
+        touch_cib_file(filename)
 
     command = args[0]
     if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
@@ -1714,7 +1716,7 @@ def is_etree(var):
     )
 
 # Replace only configuration section of cib with dom passed
-def replace_cib_configuration(dom, cib_upgraded=False):
+def replace_cib_configuration(dom):
     if is_etree(dom):
         #etree returns string in bytes: b'xml'
         #python 3 removed .encode() from byte strings
@@ -1725,11 +1727,7 @@ def replace_cib_configuration(dom, cib_upgraded=False):
         new_dom = dom.toxml()
     else:
         new_dom = dom
-    cmd = ["cibadmin", "--replace", "-V", "--xml-pipe"]
-    if cib_upgraded:
-        print("CIB has been upgraded to the latest schema version.")
-    else:
-        cmd += ["-o", "configuration"]
+    cmd = ["cibadmin", "--replace", "-V", "--xml-pipe", "-o", "configuration"]
     output, retval = run(cmd, False, new_dom)
     if retval != 0:
         err("Unable to update cib\n"+output)
@@ -2819,7 +2817,7 @@ def get_cli_env():
 
 def get_middleware_factory():
     return middleware.create_middleware_factory(
-        cib=middleware.cib(usefile, get_cib, replace_cib_configuration),
+        cib=middleware.cib(filename if usefile else None, touch_cib_file),
         corosync_conf_existing=middleware.corosync_conf_existing(
             pcs_options.get("--corosync_conf", None)
         ),

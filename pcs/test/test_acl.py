@@ -32,17 +32,8 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             'acl show',
-            "ACLs are disabled, run 'pcs acl enable' to enable\n\n"
-        )
-
-        with open(temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") != -1
-            assert data.find("pacemaker-2.") == -1
-
-        self.assert_pcs_success(
-            'acl role create test_role read xpath my_xpath',
-            "CIB has been upgraded to the latest schema version.\n"
+            "ACLs are disabled, run 'pcs acl enable' to enable"
+            "\n\nCIB has been upgraded to the latest schema version.\n"
         )
 
         with open(temp_cib) as myfile:

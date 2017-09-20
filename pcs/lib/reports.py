@@ -317,6 +317,20 @@ def mutually_exclusive_options(option_names, option_type):
         },
     )
 
+def invalid_cib_content(report):
+    """
+    Given cib content is not valid.
+    string report -- is human readable explanation of a cib invalidity. For
+        example a stderr of `crm_verify`.
+    """
+    return ReportItem.error(
+        report_codes.INVALID_CIB_CONTENT,
+        info={
+            "report": report,
+        }
+    )
+
+
 
 def invalid_id_is_empty(id, id_description):
     """

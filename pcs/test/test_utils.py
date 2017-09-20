@@ -2755,3 +2755,17 @@ class CanAddNodeToCluster(unittest.TestCase):
             ),
             "error checking node availability: reason"
         )
+
+class TouchCibFile(unittest.TestCase):
+    @mock.patch("pcs.utils.os.path.isfile", mock.Mock(return_value=False))
+    @mock.patch(
+        "pcs.utils.write_empty_cib",
+        mock.Mock(side_effect=EnvironmentError("some message"))
+    )
+    @mock.patch("pcs.utils.err")
+    def test_exception_is_transformed_correctly(self, err):
+        filename = "/fake/filename"
+        utils.touch_cib_file(filename)
+        err.assert_called_once_with(
+            "Unable to write to file: '/fake/filename': 'some message'"
+        )

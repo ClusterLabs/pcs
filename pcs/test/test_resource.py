@@ -208,8 +208,8 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
             temp_large_cib,
             "resource create dummy0 ocf:heartbeat:Dummy"
         )
-        assert returnVal == 0
         ac(output, '')
+        assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource show dummy0")
         assert returnVal == 0

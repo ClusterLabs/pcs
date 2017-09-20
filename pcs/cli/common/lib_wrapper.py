@@ -22,6 +22,7 @@ from pcs.lib.commands import (
     node,
     qdevice,
     quorum,
+    remote_node,
     resource_agent,
     resource,
     cib_options,
@@ -59,8 +60,7 @@ def cli_env_to_lib_env(cli_env):
 
 def lib_env_to_cli_env(lib_env, cli_env):
     if not lib_env.is_cib_live:
-        cli_env.cib_data = lib_env._get_cib_xml()
-        cli_env.cib_upgraded = lib_env.cib_upgraded
+        cli_env.cib_data = lib_env.final_mocked_cib_content
     if not lib_env.is_corosync_conf_live:
         cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
     if not lib_env.is_cluster_conf_live:
@@ -190,11 +190,23 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
-                "node_add_remote": cluster.node_add_remote,
-                "node_add_guest": cluster.node_add_guest,
-                "node_remove_remote": cluster.node_remove_remote,
-                "node_remove_guest": cluster.node_remove_guest,
                 "node_clear": cluster.node_clear,
+                "verify": cluster.verify,
+            }
+        )
+
+    if name == "remote_node":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
+            ),
+            {
+                "node_add_remote": remote_node.node_add_remote,
+                "node_add_guest": remote_node.node_add_guest,
+                "node_remove_remote": remote_node.node_remove_remote,
+                "node_remove_guest": remote_node.node_remove_guest,
             }
         )
 

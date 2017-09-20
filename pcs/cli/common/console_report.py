@@ -284,7 +284,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.EMPTY_ID: lambda info:
         "{id_description} cannot be empty"
-    .format(**info)
+        .format(**info)
+    ,
+
+    codes.INVALID_CIB_CONTENT: lambda info:
+        "invalid cib: \n{0}"
+        .format(info["report"])
     ,
 
     codes.INVALID_ID: lambda info:

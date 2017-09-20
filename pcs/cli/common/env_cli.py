@@ -8,7 +8,6 @@ class Env(object):
     #pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.cib_data = None
-        self.cib_upgraded = False
         self.user = None
         self.groups = None
         self.corosync_conf_data = None

@@ -263,11 +263,10 @@ def is_service_installed(runner, service, instance=None):
     service -- name of service
     instance -- systemd service instance
     """
-    if is_systemctl():
-        service_name = "{0}{1}".format(service, "" if instance is None else "@")
-        return service_name in get_systemd_services(runner)
-    else:
+    if not is_systemctl():
         return service in get_non_systemd_services(runner)
+    service_name = "{0}{1}".format(service, "" if instance is None else "@")
+    return service_name in get_systemd_services(runner)
 
 
 def get_non_systemd_services(runner):
@@ -359,6 +358,10 @@ class CommandRunner(object):
         # is set from outside.
         self._env_vars = env_vars if env_vars else dict()
         self._python2 = sys.version[0] == "2"
+
+    @property
+    def env_vars(self):
+        return self._env_vars.copy()
 
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False

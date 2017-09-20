@@ -11,10 +11,6 @@ from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
-from pcs.test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
-)
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock, TestCase
@@ -24,7 +20,8 @@ import pcs.lib.commands.alert as cmd_alert
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.5.xml"
+    base_cib_filename="cib-empty-2.5.xml",
+    exception_reports_in_processor_by_default=False,
 )
 
 class CreateAlertTest(TestCase):
@@ -70,7 +67,6 @@ class CreateAlertTest(TestCase):
                     None
                 ),
             ],
-            expected_in_processor=False
         )
 
     def test_create_no_upgrade(self):
@@ -247,7 +243,6 @@ class UpdateAlertTest(TestCase):
                     None
                 ),
             ],
-            expected_in_processor=False
         )
 
 
@@ -330,52 +325,85 @@ class RemoveAlertTest(TestCase):
 
 class AddRecipientTest(TestCase):
     def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        cib = """
-            <cib validate-with="pacemaker-2.5">
-                <configuration>
-                    <alerts>
-                        <alert id="alert" path="path">
-                            <recipient id="alert-recipient" value="value1"/>
-                        </alert>
-                    </alerts>
-                </configuration>
-            </cib>
-        """
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data=cib
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(
+            optional_in_conf="""
+                <alerts>
+                    <alert id="alert" path="path">
+                        <recipient id="alert-recipient" value="value1"/>
+                    </alert>
+                </alerts>
+            """
         )
 
     def test_value_not_defined(self):
-        assert_raise_library_error(
+        self.config.remove("runner.cib.load")
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
-                self.mock_env, "unknown", "", {}, {}
+                self.env_assist.get_env(), "unknown", "", {}, {}
             ),
-            (
-                Severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["value"]}
-            )
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {"option_names": ["value"]}
+                )
+            ],
         )
 
     def test_recipient_already_exists(self):
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
-                self.mock_env, "alert", "value1", {}, {},
+                self.env_assist.get_env(), "alert", "value1", {}, {},
                 recipient_id="alert-recipient"
             ),
-            (
-                Severities.ERROR,
-                report_codes.ID_ALREADY_EXISTS,
-                {"id": "alert-recipient"}
-            )
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.ID_ALREADY_EXISTS,
+                    {"id": "alert-recipient"}
+                )
+            ],
         )
 
     def test_without_id(self):
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]' :
+                """
+                <alert id="alert" path="path">
+                    <recipient id="alert-recipient" value="value1"/>
+                    <recipient id="alert-recipient-1" value="value">
+                        <meta_attributes
+                            id="alert-recipient-1-meta_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr2"
+                                name="attr2"
+                                value="val2"
+                            />
+                        </meta_attributes>
+                        <instance_attributes
+                            id="alert-recipient-1-instance_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-instance_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                        </instance_attributes>
+                    </recipient>
+                </alert>
+                """
+            }
+        )
         cmd_alert.add_recipient(
-            self.mock_env,
+            self.env_assist.get_env(),
             "alert",
             "value",
             {"attr1": "val1"},
@@ -384,49 +412,45 @@ class AddRecipientTest(TestCase):
                 "attr1": "val1"
             }
         )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="alert" path="path">
-                <recipient id="alert-recipient" value="value1"/>
-                <recipient id="alert-recipient-1" value="value">
-                    <meta_attributes
-                        id="alert-recipient-1-meta_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr2"
-                            name="attr2"
-                            value="val2"
-                        />
-                    </meta_attributes>
-                    <instance_attributes
-                        id="alert-recipient-1-instance_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-instance_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                    </instance_attributes>
-                </recipient>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
-        )
 
     def test_with_id(self):
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]':
+                """
+                <alert id="alert" path="path">
+                    <recipient id="alert-recipient" value="value1"/>
+                    <recipient id="my-recipient" value="value">
+                        <meta_attributes
+                            id="my-recipient-meta_attributes"
+                        >
+                            <nvpair
+                                id="my-recipient-meta_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                            <nvpair
+                                id="my-recipient-meta_attributes-attr2"
+                                name="attr2"
+                                value="val2"
+                            />
+                        </meta_attributes>
+                        <instance_attributes
+                            id="my-recipient-instance_attributes"
+                        >
+                            <nvpair
+                                id="my-recipient-instance_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                        </instance_attributes>
+                    </recipient>
+                </alert>
+                """
+            }
+        )
         cmd_alert.add_recipient(
-            self.mock_env,
+            self.env_assist.get_env(),
             "alert",
             "value",
             {"attr1": "val1"},
@@ -436,122 +460,122 @@ class AddRecipientTest(TestCase):
             },
             recipient_id="my-recipient"
         )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="alert" path="path">
-                <recipient id="alert-recipient" value="value1"/>
-                <recipient id="my-recipient" value="value">
-                    <meta_attributes
-                        id="my-recipient-meta_attributes"
-                    >
-                        <nvpair
-                            id="my-recipient-meta_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                        <nvpair
-                            id="my-recipient-meta_attributes-attr2"
-                            name="attr2"
-                            value="val2"
-                        />
-                    </meta_attributes>
-                    <instance_attributes
-                        id="my-recipient-instance_attributes"
-                    >
-                        <nvpair
-                            id="my-recipient-instance_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                    </instance_attributes>
-                </recipient>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
-        )
-
 
 class UpdateRecipientTest(TestCase):
     def setUp(self):
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_rep = MockLibraryReportProcessor()
-        cib = """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="alert" path="path">
-                <recipient id="alert-recipient" value="value1"/>
-                <recipient id="alert-recipient-1" value="value" description="d">
-                    <meta_attributes
-                        id="alert-recipient-1-meta_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr2"
-                            name="attr2"
-                            value="val2"
-                        />
-                    </meta_attributes>
-                    <instance_attributes
-                        id="alert-recipient-1-instance_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-instance_attributes-attr1"
-                            name="attr1"
-                            value="val1"
-                        />
-                    </instance_attributes>
-                </recipient>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-        """
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data=cib
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(
+            optional_in_conf="""
+                <alerts>
+                    <alert id="alert" path="path">
+                        <recipient id="alert-recipient" value="value1"/>
+                        <recipient id="alert-recipient-1" value="value"
+                            description="d"
+                        >
+                            <meta_attributes
+                                id="alert-recipient-1-meta_attributes"
+                            >
+                                <nvpair
+                                    id="alert-recipient-1-meta_attributes-attr1"
+                                    name="attr1"
+                                    value="val1"
+                                />
+                                <nvpair
+                                    id="alert-recipient-1-meta_attributes-attr2"
+                                    name="attr2"
+                                    value="val2"
+                                />
+                            </meta_attributes>
+                            <instance_attributes
+                                id="alert-recipient-1-instance_attributes"
+                            >
+                                <nvpair
+                                    id="alert-recipient-1-instance_attributes-attr1"
+                                    name="attr1"
+                                    value="val1"
+                                />
+                            </instance_attributes>
+                        </recipient>
+                    </alert>
+                </alerts>
+            """
         )
 
     def test_empty_value(self):
-        assert_raise_library_error(
+        self.config.remove("runner.cib.load")
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
-                self.mock_env, "alert-recipient-1", {}, {}, recipient_value=""
+                self.env_assist.get_env(),
+                "alert-recipient-1", {}, {}, recipient_value=""
             ),
-            (
-                Severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
-                {"recipient": ""}
-            )
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
+                    {"recipient": ""}
+                )
+            ],
         )
 
     def test_recipient_not_found(self):
-        assert_raise_library_error(
+        self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
-                self.mock_env, "recipient", {}, {}
+                self.env_assist.get_env(), "recipient", {}, {}
             ),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "recipient",
-                    "id_description": "recipient"
-                }
-            )
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {
+                        "id": "recipient",
+                        "id_description": "recipient"
+                    }
+                )
+            ],
         )
 
     def test_update_all(self):
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]':
+                """
+                <alert id="alert" path="path">
+                    <recipient id="alert-recipient" value="value1"/>
+                    <recipient
+                        id="alert-recipient-1"
+                        value="new_val"
+                        description="desc"
+                    >
+                        <meta_attributes
+                            id="alert-recipient-1-meta_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr2"
+                                name="attr2"
+                                value="val2"
+                            />
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr3"
+                                name="attr3"
+                                value="new_val"
+                            />
+                        </meta_attributes>
+                        <instance_attributes
+                            id="alert-recipient-1-instance_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-instance_attributes-attr1"
+                                name="attr1"
+                                value="value"
+                            />
+                        </instance_attributes>
+                    </recipient>
+                </alert>
+                """,
+            }
+        )
         cmd_alert.update_recipient(
-            self.mock_env,
+            self.env_assist.get_env(),
             "alert-recipient-1",
             {"attr1": "value"},
             {
@@ -560,49 +584,6 @@ class UpdateRecipientTest(TestCase):
             },
             recipient_value="new_val",
             description="desc"
-        )
-        assert_xml_equal(
-            """
-<cib validate-with="pacemaker-2.5">
-    <configuration>
-        <alerts>
-            <alert id="alert" path="path">
-                <recipient id="alert-recipient" value="value1"/>
-                <recipient
-                    id="alert-recipient-1"
-                    value="new_val"
-                    description="desc"
-                >
-                    <meta_attributes
-                        id="alert-recipient-1-meta_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr2"
-                            name="attr2"
-                            value="val2"
-                        />
-                        <nvpair
-                            id="alert-recipient-1-meta_attributes-attr3"
-                            name="attr3"
-                            value="new_val"
-                        />
-                    </meta_attributes>
-                    <instance_attributes
-                        id="alert-recipient-1-instance_attributes"
-                    >
-                        <nvpair
-                            id="alert-recipient-1-instance_attributes-attr1"
-                            name="attr1"
-                            value="value"
-                        />
-                    </instance_attributes>
-                </recipient>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """,
-            self.mock_env._get_cib_xml()
         )
 
 
