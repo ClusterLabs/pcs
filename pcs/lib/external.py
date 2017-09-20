@@ -361,7 +361,7 @@ class CommandRunner(object):
 
     @property
     def env_vars(self):
-        return self._env_vars
+        return self._env_vars.copy()
 
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False
