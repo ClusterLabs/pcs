@@ -299,6 +299,16 @@ class NodeAddGuest(ResourceTest):
             output=fixture_nolive_add_report
         )
 
+    def test_success_when_guest_node_matches_with_existing_guest(self):
+        self.create_resource()
+        self.assert_pcs_success(
+            "cluster node add-guest node-host G",
+            fixture_nolive_add_report
+        )
+        self.assert_pcs_success(
+            "resource update G meta remote-node=node-host",
+        )
+
     def test_success_with_options(self):
         self.create_resource()
         self.assert_effect(
