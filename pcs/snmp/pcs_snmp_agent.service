@@ -1,0 +1,12 @@
+[Unit]
+Description=SNMP agent for pacemaker cluster
+Requires=snmpd.service
+
+[Service]
+EnvironmentFile=/etc/sysconfig/pcs_snmp_agent
+ExecStart=/usr/lib/pcs/pcs_snmp_agent > /dev/null
+Type=simple
+TimeoutSec=500
+
+[Install]
+WantedBy=multi-user.target

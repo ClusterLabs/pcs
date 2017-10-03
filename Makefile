@@ -83,6 +83,23 @@ ifndef PCSD_PARENT_DIR
   endif
 endif
 
+ifndef PCS_PARENT_DIR
+  PCS_PARENT_DIR=${DESTDIR}/${PREFIX}/lib/pcs
+endif
+
+BUNDLED_LIB_INSTALL_DIR=${PCS_PARENT_DIR}/bundled
+
+ifndef BUNDLED_LIB_DIR
+  BUNDLED_LIB_DIR=./pcs/bundled/
+endif
+BUNDLED_LIB_DIR_ABS=$(shell readlink -f ${BUNDLED_LIB_DIR})
+BUNDLES_TMP_DIR=${BUNDLED_LIB_DIR_ABS}/tmp
+
+ifndef SNMP_MIB_DIR
+  SNMP_MIB_DIR=/share/snmp/mibs/
+endif
+SNMP_MIB_DIR_FULL=${DESTDIR}/${PREFIX}/${SNMP_MIB_DIR}
+
 pcsd_fonts = \
 	LiberationSans-Regular.ttf;LiberationSans:style=Regular \
 	LiberationSans-Bold.ttf;LiberationSans:style=Bold \
@@ -92,7 +109,7 @@ pcsd_fonts = \
 	Overpass-Bold.ttf;Overpass:style=Bold
 
 
-install:
+install: install_bundled_libs
 	# make Python interpreter execution sane (via -Es flags)
 	printf "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
@@ -100,11 +117,24 @@ install:
 	# https://github.com/pypa/setuptools/issues/188
 	# https://bugzilla.redhat.com/1353934
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DESTDIR}${PREFIX}/bin/pcs
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DESTDIR}${PREFIX}/bin/pcs_snmp_agent
 	rm setup.cfg
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
 	install -D -m644 pcs/bash_completion ${BASH_COMPLETION_DIR}/pcs
 	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
+	# pcs SNMP install
+	mv ${DESTDIR}${PREFIX}/bin/pcs_snmp_agent ${PCS_PARENT_DIR}/pcs_snmp_agent
+	install -d ${DESTDIR}/var/log/pcs
+	install -d ${SNMP_MIB_DIR_FULL}
+	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${SNMP_MIB_DIR_FULL}
+	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DESTDIR}/etc/sysconfig/pcs_snmp_agent
+	install -m 644 -D pcs/snmp/pcs_snmp_agent.logrotate ${DESTDIR}/etc/logrotate.d/pcs_snmp_agent
+	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DESTDIR}/${MANDIR}/man8/pcs_snmp_agent.8
+ifeq ($(IS_SYSTEMCTL),true)
+	install -d ${DESTDIR}/${systemddir}/system/
+	install -m 644 pcs/snmp/pcs_snmp_agent.service ${DESTDIR}/${systemddir}/system/
+endif
 ifeq ($(IS_DEBIAN),true)
   ifeq ($(install_settings),true)
 	rm -f  ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
@@ -166,21 +196,39 @@ endif
 		$(if $(font_path),ln -s -f $(font_path) ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
 	)
 
+build_bundled_libs:
+ifndef PYAGENTX_INSTALLED
+	rm -rf ${BUNDLES_TMP_DIR}
+	mkdir -p ${BUNDLES_TMP_DIR}
+	$(MAKE) -C pcs/snmp/ build_bundled_libs
+	rm -rf ${BUNDLES_TMP_DIR}
+endif
+
+install_bundled_libs: build_bundled_libs
+ifndef PYAGENTX_INSTALLED
+	install -d ${BUNDLED_LIB_INSTALL_DIR}
+	cp -r ${BUNDLED_LIB_DIR_ABS}/packages ${BUNDLED_LIB_INSTALL_DIR}
+endif
+
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
 	rm -rf ${DESTDIR}${PYTHON_SITELIB}/pcs
 ifeq ($(IS_DEBIAN),true)
 	rm -rf ${DESTDIR}/usr/share/pcsd
+	rm -rf ${DESTDIR}/usr/share/pcs
 else
 	rm -rf ${DESTDIR}${PREFIX}/lib/pcsd
+	rm -rf ${DESTDIR}${PREFIX}/lib/pcs
 endif
 ifeq ($(IS_SYSTEMCTL),true)
 	rm -f ${DESTDIR}/${systemddir}/system/pcsd.service
+	rm -f ${DESTDIR}/${systemddir}/system/pcs_snmp_agent.service
 else
 	rm -f ${DESTDIR}/${initdir}/pcsd
 endif
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
+	rm -f ${SNMP_MIB_DIR_FULL}/PCMK-PCS*-MIB.txt
 
 tarball:
 	$(PYTHON) setup.py sdist --formats=tar

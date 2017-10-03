@@ -1020,7 +1020,7 @@ def node_status(params, request, auth_user)
       'status?redirected=1',
       false,
       params.select { |k,_|
-        [:version, :operations].include?(k)
+        [:version, :operations, :skip_auth_check].include?(k)
       }
     )
   end
@@ -1041,20 +1041,22 @@ def node_status(params, request, auth_user)
 
   node = ClusterEntity::Node.load_current_node(crm_dom)
 
-  _,_,not_authorized_nodes = check_gui_status_of_nodes(
-    auth_user,
-    status[:known_nodes],
-    false,
-    3
-  )
+  if params[:skip_auth_check] != '1'
+    _,_,not_authorized_nodes = check_gui_status_of_nodes(
+      auth_user,
+      status[:known_nodes],
+      false,
+      3
+    )
 
-  if not_authorized_nodes.length > 0
-    node.warning_list << {
-      :message => 'Not authorized against node(s) ' +
-        not_authorized_nodes.join(', '),
-      :type => 'nodes_not_authorized',
-      :node_list => not_authorized_nodes,
-    }
+    if not_authorized_nodes.length > 0
+      node.warning_list << {
+        :message => 'Not authorized against node(s) ' +
+          not_authorized_nodes.join(', '),
+        :type => 'nodes_not_authorized',
+        :node_list => not_authorized_nodes,
+      }
+    end
   end
 
   version = params[:version] || '1'

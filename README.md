@@ -47,6 +47,7 @@ installation:
 * fontconfig
 * printf (package coreutils)
 * redhat-rpm-config if you are using Fedora
+* wget (to download bundled libraries)
 
 During the installation, all required rubygems are automatically downloaded and
 compiled.

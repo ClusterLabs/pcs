@@ -20,7 +20,7 @@ from pcs import utils
 
 logger_handler = logging.StreamHandler()
 logger_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-logger = logging.getLogger("old_cli")
+logger = logging.getLogger("pcs")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logger_handler)
 

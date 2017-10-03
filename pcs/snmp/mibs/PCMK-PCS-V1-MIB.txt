@@ -1,0 +1,218 @@
+PACEMAKER-PCS-V1-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    pcmkPcs FROM PACEMAKER-PCS-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32 FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF;
+
+pcmkPcsV1 MODULE-IDENTITY
+    LAST-UPDATED "201709260000Z"
+    ORGANIZATION "www.clusterlabs.org"
+    CONTACT-INFO "email: users@clusterlabs.org"
+    DESCRIPTION  "Pacemaker/corosync cluster MIB, data version 1"
+    REVISION     "201709260000Z"
+    DESCRIPTION  "initial version"
+    ::= { pcmkPcs 1 }
+
+pcmkPcsV1Cluster OBJECT IDENTIFIER ::= { pcmkPcsV1 1 }
+pcmkPcsV1Conformance OBJECT IDENTIFIER ::= { pcmkPcsV1 2 }
+
+--  #####  Cluster  #####  --
+
+pcmkPcsV1ClusterName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Cluster name"
+    ::= { pcmkPcsV1Cluster 1 }
+
+pcmkPcsV1ClusterQuorate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 if cluster is quorate, 0 otherwise"
+    ::= { pcmkPcsV1Cluster 2 }
+
+pcmkPcsV1ClusterNodesNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of nodes configured to participate in cluster"
+    ::= { pcmkPcsV1Cluster 3 }
+
+pcmkPcsV1ClusterNodesNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Names of nodes configured to participate in cluster"
+    ::= { pcmkPcsV1Cluster 4 }
+
+pcmkPcsV1ClusterCorosyncNodesOnlineNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 5 }
+
+pcmkPcsV1ClusterCorosyncNodesOnlineNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 6 }
+
+pcmkPcsV1ClusterCorosyncNodesOfflineNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 7 }
+
+pcmkPcsV1ClusterCorosyncNodesOfflineNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 8 }
+
+pcmkPcsV1ClusterPcmkNodesOnlineNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 9 }
+
+pcmkPcsV1ClusterPcmkNodesOnlineNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 10 }
+
+pcmkPcsV1ClusterPcmkNodesStandbyNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 11 }
+
+pcmkPcsV1ClusterPcmkNodesStandbyNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 12 }
+
+pcmkPcsV1ClusterPcmkNodesOfflineNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 13 }
+
+pcmkPcsV1ClusterPcmkNodesOfflineNames OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 14 }
+
+pcmkPcsV1ClusterAllResourcesNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 15 }
+
+pcmkPcsV1ClusterAllResourcesIds OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 16 }
+
+pcmkPcsV1ClusterRunningResourcesNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 17 }
+
+pcmkPcsV1ClusterRunningResourcesIds OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 18 }
+
+pcmkPcsV1ClusterStoppedResroucesNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 19 }
+
+pcmkPcsV1ClusterStoppedResroucesIds OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 20 }
+
+pcmkPcsV1ClusterFailedResourcesNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 21 }
+
+pcmkPcsV1ClusterFailedResourcesIds OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION ""
+    ::= { pcmkPcsV1Cluster 22 }
+
+-- COMPLIANCE
+
+pcmkPcsV1ConformanceCompliances OBJECT IDENTIFIER ::= { pcmkPcsV1Conformance 1 }
+
+pcmkPcsV1ConformanceGroups OBJECT IDENTIFIER ::= { pcmkPcsV1Conformance 2 }
+
+pcmkPcsV1ConformanceCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION "Clustering Compliance Information"
+    MODULE     -- this module
+    MANDATORY-GROUPS { pcmkPcsV1ConformanceObjectGroup }
+    ::= { pcmkPcsV1ConformanceCompliances 1 }
+
+pcmkPcsV1ConformanceObjectGroup OBJECT-GROUP
+    OBJECTS {
+        pcmkPcsV1ClusterName,
+        pcmkPcsV1ClusterQuorate,
+        pcmkPcsV1ClusterNodesNum,
+        pcmkPcsV1ClusterNodesNames,
+        pcmkPcsV1ClusterCorosyncNodesOnlineNum,
+        pcmkPcsV1ClusterCorosyncNodesOnlineNames,
+        pcmkPcsV1ClusterCorosyncNodesOfflineNum,
+        pcmkPcsV1ClusterCorosyncNodesOfflineNames,
+        pcmkPcsV1ClusterPcmkNodesOnlineNum,
+        pcmkPcsV1ClusterPcmkNodesOnlineNames,
+        pcmkPcsV1ClusterPcmkNodesStandbyNum,
+        pcmkPcsV1ClusterPcmkNodesStandbyNames,
+        pcmkPcsV1ClusterPcmkNodesOfflineNum,
+        pcmkPcsV1ClusterPcmkNodesOfflineNames,
+        pcmkPcsV1ClusterAllResourcesNum,
+        pcmkPcsV1ClusterAllResourcesIds,
+        pcmkPcsV1ClusterRunningResourcesNum,
+        pcmkPcsV1ClusterRunningResourcesIds,
+        pcmkPcsV1ClusterStoppedResroucesNum,
+        pcmkPcsV1ClusterStoppedResroucesIds,
+        pcmkPcsV1ClusterFailedResourcesNum,
+        pcmkPcsV1ClusterFailedResourcesIds
+    }
+    STATUS current
+    DESCRIPTION "Cluster objects"
+    ::= { pcmkPcsV1ConformanceGroups 1 }
+
+END

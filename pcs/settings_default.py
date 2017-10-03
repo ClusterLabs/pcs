@@ -53,3 +53,5 @@ pacemaker_wait_timeout_status = 62
 booth_config_dir = "/etc/booth"
 booth_binary = "/usr/sbin/booth"
 default_request_timeout = 60
+pcs_bundled_dir = "/usr/lib/pcs/bundled/"
+pcs_bundled_pacakges_dir = os.path.join(pcs_bundled_dir, "packages")

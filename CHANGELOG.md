@@ -5,6 +5,8 @@
 ### Added
 - `pcs status --full` now displays information about tickets ([rhbz#1389943])
 - Support for managing qdevice heuristics ([rhbz#1389209])
+- SNMP agent providing information about cluster to the master agent. It
+  supports only python 2.7 for now ([rhbz#1367808]).
 
 ### Fixed
 - Fixed crash when loading a huge xml ([rhbz#1506864])
@@ -18,6 +20,7 @@
   original functionality is available in the `pcs resource|stonith refresh`
   command. ([rhbz#1508351], [rhbz#1508350])
 
+[rhbz#1367808]: https://bugzilla.redhat.com/show_bug.cgi?id=1367808
 [rhbz#1389209]: https://bugzilla.redhat.com/show_bug.cgi?id=1389209
 [rhbz#1389943]: https://bugzilla.redhat.com/show_bug.cgi?id=1389943
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197

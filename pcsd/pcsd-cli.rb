@@ -9,6 +9,7 @@ require 'orderedhash'
 require 'bootstrap.rb'
 require 'pcs.rb'
 require 'auth.rb'
+require 'remote.rb'
 
 def cli_format_response(status, text=nil, data=nil)
   response = OrderedHash.new
@@ -122,8 +123,22 @@ allowed_commands = {
       pcsd_restart_nodes(auth_user_, params['nodes'] || [])
     }
   },
+  'node_status' => {
+    'only_superuser' => true,
+    'permissions' => Permissions::FULL,
+    'call' => lambda { |params, auth_user_|
+      return JSON.parse(node_status(
+        {
+          :version => '2',
+          :operations => '1',
+          :skip_auth_check => '1',
+        },
+        {},
+        auth_user_
+      ))
+    }
+  },
 }
-
 if allowed_commands.key?(command)
   begin
     params = JSON.parse(STDIN.read)

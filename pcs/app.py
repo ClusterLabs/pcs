@@ -151,7 +151,7 @@ def main(argv=None):
 
     # create a dummy logger
     # we do not have a log file for cli (yet), but library requires a logger
-    logger = logging.getLogger("old_cli")
+    logger = logging.getLogger("pcs")
     logger.propagate = 0
     logger.handlers = []
 

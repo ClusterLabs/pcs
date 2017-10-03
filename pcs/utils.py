@@ -1043,7 +1043,7 @@ def cmd_runner():
     env_vars.update(os.environ)
     env_vars["LC_ALL"] = "C"
     return CommandRunner(
-        logging.getLogger("old_cli"),
+        logging.getLogger("pcs"),
         get_report_processor(),
         env_vars
     )
@@ -2781,7 +2781,7 @@ def get_lib_env():
             err("Unable to read %s: %s" % (conf, e.strerror))
 
     return LibraryEnvironment(
-        logging.getLogger("old_cli"),
+        logging.getLogger("pcs"),
         get_report_processor(),
         user,
         groups,

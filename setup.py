@@ -30,9 +30,11 @@ setup(
         'test/resources/*.xml',
         'test/resources/*.conf',
     ]},
+    zip_safe=False,
     entry_points={
         'console_scripts': [
             'pcs = pcs.app:main',
+            'pcs_snmp_agent = pcs.snmp.pcs_snmp_agent:main',
         ],
     },
     cmdclass={

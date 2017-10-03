@@ -1,0 +1,16 @@
+PACEMAKER-PCS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    pacemaker FROM PACEMAKER-MIB
+    MODULE-IDENTITY FROM SNMPv2-SMI;
+
+pcmkPcs MODULE-IDENTITY
+    LAST-UPDATED "201709260000Z"
+    ORGANIZATION "www.clusterlabs.org"
+    CONTACT-INFO "email: users@clusterlabs.org"
+    DESCRIPTION  "Pacemaker/corosync cluster MIB"
+    REVISION     "201709260000Z"
+    DESCRIPTION  "initial MIB version"
+    ::= { pacemaker 100 }
+END
+
