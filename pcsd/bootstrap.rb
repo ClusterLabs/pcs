@@ -45,7 +45,7 @@ def get_pcs_path()
   end
 end
 
-PCS_VERSION = '0.9.159'
+PCS_VERSION = '0.9.160'
 # unique instance signature, allows detection of dameon restarts
 DAEMON_INSTANCE_SIGNATURE = Digest::SHA2.hexdigest("#{Time.now} #{rand()}")
 COROSYNC = COROSYNC_BINARIES + "corosync"

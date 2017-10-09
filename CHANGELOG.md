@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.160] - 2017-10-09
 
 ### Added
 - Configurable pcsd port ([rhbz#1415197])
