@@ -1,4 +1,4 @@
-FFI_VERSION="1.9.17"
+FFI_VERSION="1.9.18"
 FFI_C_DIR=vendor/bundle/ruby/gems/ffi-${FFI_VERSION}/ext/ffi_c
 
 build_gems: get_gems

@@ -2,17 +2,17 @@ GEM
   remote: https://rubygems.org/
   remote: https://tojeline.fedorapeople.org/rubygems/
   specs:
-    backports (3.6.8)
+    backports (3.9.1)
     ethon (0.10.1)
-    ffi (1.9.17)
-    json (2.0.3)
-    multi_json (1.12.1)
+    ffi (1.9.18)
+    json (2.1.0)
+    multi_json (1.12.2)
     open4 (1.3.4)
     orderedhash (0.0.6)
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
-    rack-test (0.6.3)
+    rack-test (0.7.0)
       rack (>= 1.0)
     rpam-ruby19 (1.2.1)
     sinatra (1.4.8)
@@ -26,7 +26,7 @@ GEM
       rack-test
       sinatra (~> 1.4.0)
       tilt (>= 1.3, < 3)
-    tilt (2.0.6)
+    tilt (2.0.8)
 
 PLATFORMS
   ruby
