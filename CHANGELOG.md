@@ -30,6 +30,10 @@
   a resource. ([rhbz#1418199], [ghissue#132])
 - Improve documentation of the `pcs stonith confirm` command ([rhbz#1489682])
 
+### Deprecated
+- This is the last version fully supporting CMAN clusters and python 2.6.
+  Support for these will be gradually dropped.
+
 [ghissue#118]: https://github.com/ClusterLabs/pcs/issues/118
 [ghissue#132]: https://github.com/ClusterLabs/pcs/issues/132
 [rhbz#1213946]: https://bugzilla.redhat.com/show_bug.cgi?id=1213946
