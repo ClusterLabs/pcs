@@ -9,7 +9,7 @@ pcs daemon, which operates as a remote server for pcs and provides a web UI.
 ### Installation from Source
 
 These are the runtime dependencies of pcs and pcsd:
-* python 2.6+
+* python 2.7+
 * python-lxml / python3-lxml
 * python-pycurl / python3-pycurl
 * python-setuptools / python3-setuptools
@@ -30,6 +30,8 @@ If you plan to manage Corosync 1.x based clusters, you will also need:
 * ccs
 
 It is however highly recommended for new clusters to use Corosync 2.x.
+Support for Corosync 1.x and CMAN has been deprecated in 0.9.160 and will be
+removed.
 
 Apart from the dependencies listed above, these are also required for
 installation:
@@ -51,8 +53,8 @@ compiled.
 
 To install pcs and pcsd run the following in terminal:
 ```shell
-# tar -xzvf pcs-0.9.159.tar.gz
-# cd pcs-0.9.159
+# tar -xzvf pcs-0.9.160.tar.gz
+# cd pcs-0.9.160
 # make install
 # make install_pcsd
 ```
@@ -73,7 +75,7 @@ Start pcsd and make it start on boot:
 ### Packages
 
 Currently this is built into Fedora, RHEL and its clones and Debian and its
-clones.
+derivates.
 * [Fedora package git repositories](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/)
 * [Current Fedora .spec](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/tree/pcs.spec)
 * [Debian-HA project home page](http://debian-ha.alioth.debian.org/)
