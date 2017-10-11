@@ -1165,16 +1165,21 @@ def add_prefix_to_keys(hash, prefix)
   return new_hash
 end
 
-def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=10)
+def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=10, ports=nil)
   options = {}
   options[:check_auth_only] = '' if not check_mutuality
   threads = []
   not_authorized_nodes = []
   online_nodes = []
   offline_nodes = []
+  token_file = read_token_file()
 
   nodes = nodes.uniq.sort
   nodes.each { |node|
+    if ports and ports[node] != token_file.ports[node]
+      not_authorized_nodes << node
+      next
+    end
     threads << Thread.new {
       code, response = send_request_with_token(
         auth_user, node, 'check_auth', false, options, true, nil, timeout
@@ -1203,6 +1208,7 @@ def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=1
             offline_nodes << node
           end
         rescue JSON::ParserError
+          not_authorized_nodes << node
         end
       end
     }
@@ -1220,7 +1226,7 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   # check for already authorized nodes
   if not force
     online, offline, not_authenticated = check_gui_status_of_nodes(
-      auth_user, nodes.keys, true
+      auth_user, nodes.keys, true, 10, nodes
     )
     if not_authenticated.length < 1
       result = {}

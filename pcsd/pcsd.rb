@@ -646,17 +646,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
       ports[node] = (params["port-#{node}"] || '').strip
     }
     node_results = {}
-    node_list_to_check = []
-    token_file = read_token_file()
-    ports.each { |node, port|
-      if port != (token_file.ports[node] || '')
-        node_results[node] = 'Unable to authenticate'
-      else
-        node_list_to_check << node
-      end
-    }
     online, offline, notauthorized = check_gui_status_of_nodes(
-      auth_user, node_list_to_check
+      auth_user, node_list, false, 10, ports
     )
     online.each { |node|
       node_results[node] = 'Online'

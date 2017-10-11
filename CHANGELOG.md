@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Fixed `pcs cluster auth` when already authenticated and using different port
+  ([rhbz#1415197])
+
+[rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
+
+
 ## [0.9.160] - 2017-10-09
 
 ### Added
