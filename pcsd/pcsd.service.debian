@@ -1,5 +1,7 @@
 [Unit]
 Description=PCS GUI and remote configuration interface
+Documentation=man:pcsd(8)
+Documentation=man:pcs(8)
 
 [Service]
 EnvironmentFile=/etc/default/pcsd
