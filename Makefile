@@ -28,6 +28,9 @@ endif
 ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
+ifeq ($(PYTHON_SITELIB), /usr/lib/python3/dist-packages)
+  EXTRA_SETUP_OPTS="--install-layout=deb"
+endif
 
 # Check for systemd presence
 ifeq ($(SYSTEMCTL_OVERRIDE),true)
