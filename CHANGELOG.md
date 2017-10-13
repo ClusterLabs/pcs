@@ -5,8 +5,10 @@
 ### Fixed
 - Fixed `pcs cluster auth` when already authenticated and using different port
   ([rhbz#1415197])
+- It is now possible to restart a bundle resource on one node ([rhbz#1501274])
 
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
+[rhbz#1501274]: https://bugzilla.redhat.com/show_bug.cgi?id=1501274
 
 
 ## [0.9.160] - 2017-10-09

@@ -2043,16 +2043,26 @@ def resource_restart(argv):
     node = None
     resource = argv.pop(0)
 
-    real_res = utils.dom_get_resource_clone_ms_parent(dom, resource)
+    real_res = (
+        utils.dom_get_resource_clone_ms_parent(dom, resource)
+        or
+        utils.dom_get_resource_bundle_parent(dom, resource)
+    )
     if real_res:
-        print("Warning: using %s... (if a resource is a clone or master/slave you must use the clone or master/slave name" % real_res.getAttribute("id"))
+        print("Warning: using %s... (if a resource is a clone, master/slave or bundle you must use the clone, master/slave or bundle name)" % real_res.getAttribute("id"))
         resource = real_res.getAttribute("id")
 
     args = ["crm_resource", "--restart", "--resource", resource]
     if len(argv) > 0:
         node = argv.pop(0)
-        if not utils.dom_get_clone(dom,resource) and not utils.dom_get_master(dom,resource):
-            utils.err("can only restart on a specific node for a clone or master/slave resource")
+        if not (
+            utils.dom_get_clone(dom, resource)
+            or
+            utils.dom_get_master(dom, resource)
+            or
+            utils.dom_get_bundle(dom, resource)
+        ):
+            utils.err("can only restart on a specific node for a clone, master/slave or bundle resource")
         args.extend(["--node", node])
 
     if "--wait" in utils.pcs_options:
