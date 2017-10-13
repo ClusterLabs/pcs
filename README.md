@@ -78,7 +78,7 @@ Currently this is built into Fedora, RHEL and its clones and Debian and its
 derivates.
 * [Fedora package git repositories](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/)
 * [Current Fedora .spec](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/tree/pcs.spec)
-* [Debian-HA project home page](http://debian-ha.alioth.debian.org/)
+* [Debian-HA project home page](https://wiki.debian.org/Debian-HA)
 
 ---
 
