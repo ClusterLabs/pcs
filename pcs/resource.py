@@ -709,11 +709,6 @@ def resource_update(res_id,args, deal_with_guest_change=True):
 
 # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
-    if deal_with_guest_change:
-        _detect_guest_change(
-            prepare_options(meta_values),
-            "--force" in utils.pcs_options,
-        )
 
     wait = False
     wait_timeout = None
@@ -797,6 +792,27 @@ def resource_update(res_id,args, deal_with_guest_change=True):
             instance_attributes.appendChild(ia)
 
     remote_node_name = utils.dom_get_resource_remote_node_name(resource)
+
+    if remote_node_name == guest_node.get_guest_option_value(prepare_options(meta_values)):
+        deal_with_guest_change = False
+
+    # The "remote-node" meta attribute makes sense (and causes creation of
+    # inner pacemaker resource) only for primitive. The meta attribute
+    # "remote-node" has no special meaining for clone/master. So there is no
+    # need for checking this attribute in clone/master.
+    #
+    # It is ok to not to check it until this point in this function:
+    # 1) Only master/clone element is updated if the parameter "res_id" is an id
+    # of the clone/master element. In that case another function is called and
+    # the code path does not reach this point.
+    # 2) No persistent changes happened until this line if the parameter
+    # "res_id" is an id of the primitive.
+    if deal_with_guest_change:
+        _detect_guest_change(
+            prepare_options(meta_values),
+            "--force" in utils.pcs_options,
+        )
+
     utils.dom_update_meta_attr(
         resource,
         utils.convert_args_to_tuples(meta_values)
