@@ -270,6 +270,10 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         ))
 
     def testResourceUpdate(self):
+        # The idempotency with remote-node is tested in
+        # pcs/test/test_cluster_pcmk_remote.py in
+        #NodeAddGuest.test_success_when_guest_node_matches_with_existing_guest
+
         # see also BundleMiscCommands
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"

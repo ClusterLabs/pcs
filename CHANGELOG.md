@@ -6,9 +6,14 @@
 - Fixed `pcs cluster auth` when already authenticated and using different port
   ([rhbz#1415197])
 - It is now possible to restart a bundle resource on one node ([rhbz#1501274])
+- `resurce update` no longer exits with an error when the `remote-node` meta
+  attribute is set to the same value that it already has.
+  ([rhbz#1502715], [ghissue#145])
 
+[ghissue#145]: https://github.com/ClusterLabs/pcs/issues/145
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1501274]: https://bugzilla.redhat.com/show_bug.cgi?id=1501274
+[rhbz#1502715]: https://bugzilla.redhat.com/show_bug.cgi?id=1502715
 
 
 ## [0.9.160] - 2017-10-09
