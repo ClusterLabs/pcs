@@ -45,19 +45,33 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                     )
                 )
 
-        def assert_effect_single(self, command, expected_xml, output=""):
-            self.assert_pcs_success(command, output)
+        def assert_effect_single(
+            self, command, expected_xml, output=None, output_start=None,
+            output_regexp=None
+        ):
+            self.assert_pcs_success(
+                command, output, output_start, output_regexp
+            )
             self.assert_resources_xml_in_cib(expected_xml)
 
-        def assert_effect(self, alternative_cmds, expected_xml, output=""):
+        def assert_effect(
+            self, alternative_cmds, expected_xml, output=None,
+            output_start=None, output_regexp=None
+        ):
             alternative_list = (
                 alternative_cmds if isinstance(alternative_cmds, list)
                 else [alternative_cmds]
             )
             cib_content = open(self.temp_cib).read()
             for alternative in alternative_list[:-1]:
-                self.assert_effect_single(alternative, expected_xml, output)
+                self.assert_effect_single(
+                    alternative, expected_xml,
+                    output, output_start, output_regexp
+                )
                 open(self.temp_cib, "w").write(cib_content)
 
-            self.assert_effect_single(alternative_list[-1], expected_xml, output)
+            self.assert_effect_single(
+                alternative_list[-1], expected_xml,
+                output, output_start, output_regexp
+            )
     return AssertPcsEffectMixin

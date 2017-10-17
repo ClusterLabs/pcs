@@ -4,6 +4,8 @@ from __future__ import (
     print_function,
 )
 
+import re
+
 from pcs import utils
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools import pcs_unittest as unittest
@@ -62,9 +64,13 @@ class PlainStonith(ResourceTest):
     def test_error_when_not_valid_agent(self):
         self.assert_pcs_fail(
             "stonith create S absent",
-            "Error: Agent 'absent' is not installed or does not provide valid"
-                " metadata: Metadata query for stonith:absent failed: -5, use"
-                " --force to override\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Error: Agent 'absent' is not installed or does not provide "
+                "valid metadata: Metadata query for stonith:absent failed: "
+                "(-5|Input/output error), use --force to override\n"
+                "$", re.MULTILINE
+            )
         )
 
     def test_warning_when_not_valid_agent(self):
@@ -79,8 +85,13 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: Agent 'absent' is not installed or does not provide valid"
-                " metadata: Metadata query for stonith:absent failed: -5\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            output_regexp=re.compile("^"
+                "Warning: Agent 'absent' is not installed or does not provide "
+                    "valid metadata: Metadata query for stonith:absent failed: "
+                    "(-5|Input/output error)\n"
+                "$", re.MULTILINE
+            )
         )
 
     @need_load_xvm_fence_agent

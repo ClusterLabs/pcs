@@ -94,10 +94,12 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
             "resource describe ocf:pacemaker:nonexistent",
-            (
-                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or"
-                " does not provide valid metadata: Metadata query for"
-                " ocf:pacemaker:nonexistent failed: -5\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or "
+                "does not provide valid metadata: Metadata query for "
+                "ocf:pacemaker:nonexistent failed: (-5|Input/output error)\n"
+                "$", re.MULTILINE
             )
         )
 
@@ -2845,9 +2847,21 @@ Ticket Constraints:
         ac(output,"Error: when specifying --master you must use the master id (D2-master)\n")
         assert returnVal == 1
 
-        output, returnVal  = pcs(temp_cib, "resource move D2-master --master")
-        ac(output,"Error: error moving/banning/clearing resource\nResource 'D2-master' not moved: active in 0 locations (promoted in 0).\nYou can prevent 'D2-master' from running on a specific location with: --ban --host <name>\nYou can prevent 'D2-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
-        assert returnVal == 1
+        self.assert_pcs_fail(
+            "resource move D2-master --master",
+            # pacemaker 1.1.18 changes --host to --node
+            stdout_regexp=re.compile("^"
+                "Error: error moving/banning/clearing resource\n"
+                "Resource 'D2-master' not moved: active in 0 locations "
+                    "\(promoted in 0\).\n"
+                "You can prevent 'D2-master' from running on a specific "
+                    "location with: --ban --(host|node) <name>\n"
+                "You can prevent 'D2-master' from being promoted at a specific "
+                    "location with: --ban --master --(host|node) <name>\n"
+                "Error performing operation: Invalid argument\n\n"
+                "$", re.MULTILINE
+            )
+        )
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2875,9 +2889,22 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource move group1-master --master")
-        ac(o,"Error: error moving/banning/clearing resource\nResource 'group1-master' not moved: active in 0 locations (promoted in 0).\nYou can prevent 'group1-master' from running on a specific location with: --ban --host <name>\nYou can prevent 'group1-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
-        assert r == 1
+        self.assert_pcs_fail(
+            "resource move group1-master --master",
+            # pacemaker 1.1.18 changes --host to --node
+            stdout_regexp=re.compile("^"
+                "Error: error moving/banning/clearing resource\n"
+                "Resource 'group1-master' not moved: active in 0 locations "
+                    "\(promoted in 0\).\n"
+                "You can prevent 'group1-master' from running on a specific "
+                    "location with: --ban --(host|node) <name>\n"
+                "You can prevent 'group1-master' from being promoted at a "
+                    "specific location with: --ban --master --(host|node) "
+                    "<name>\n"
+                "Error performing operation: Invalid argument\n\n"
+                "$", re.MULTILINE
+            )
+        )
 
     def testDebugStartCloneGroup(self):
         o,r = pcs("resource create D0 ocf:heartbeat:Dummy --group DGroup")

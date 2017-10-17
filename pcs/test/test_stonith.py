@@ -4,6 +4,7 @@ from __future__ import (
     print_function,
 )
 
+import re
 import shutil
 
 from pcs import utils
@@ -72,10 +73,12 @@ Stonith options:
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
             "stonith describe fence_noexist",
-            (
-                "Error: Agent 'fence_noexist' is not installed or does not"
-                " provide valid metadata: Metadata query for"
-                " stonith:fence_noexist failed: -5\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Error: Agent 'fence_noexist' is not installed or does not "
+                "provide valid metadata: Metadata query for "
+                "stonith:fence_noexist failed: (-5|Input/output error)\n"
+                "$", re.MULTILINE
             )
         )
 
@@ -98,13 +101,28 @@ class StonithTest(TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
 
     def testStonithCreation(self):
-        output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist")
-        ac(output, "Error: Agent 'fence_noxist' is not installed or does not provide valid metadata: Metadata query for stonith:fence_noxist failed: -5, use --force to override\n")
-        assert returnVal == 1
+        self.assert_pcs_fail(
+            "stonith create test1 fence_noexist",
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Error: Agent 'fence_noexist' is not installed or does not "
+                "provide valid metadata: Metadata query for "
+                "stonith:fence_noexist failed: (-5|Input/output error), use "
+                "--force to override\n"
+                "$", re.MULTILINE
+            )
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist --force")
-        ac(output, "Warning: Agent 'fence_noxist' is not installed or does not provide valid metadata: Metadata query for stonith:fence_noxist failed: -5\n")
-        self.assertEqual(returnVal, 0)
+        self.assert_pcs_success(
+            "stonith create test1 fence_noexist --force",
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Warning: Agent 'fence_noexist' is not installed or does not "
+                "provide valid metadata: Metadata query for "
+                "stonith:fence_noexist failed: (-5|Input/output error)\n"
+                "$", re.MULTILINE
+            )
+        )
 
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
@@ -196,7 +214,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
- Resource: test1 (class=stonith type=fence_noxist)
+ Resource: test1 (class=stonith type=fence_noexist)
   Operations: monitor interval=60s (test1-monitor-interval-60s)
  Resource: test2 (class=stonith type=fence_apc)
   Operations: monitor interval=60s (test2-monitor-interval-60s)
@@ -221,7 +239,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             Resources:
 
             Stonith Devices:
-             Resource: test1 (class=stonith type=fence_noxist)
+             Resource: test1 (class=stonith type=fence_noexist)
               Operations: monitor interval=60s (test1-monitor-interval-60s)
              Resource: test2 (class=stonith type=fence_apc)
               Operations: monitor interval=60s (test2-monitor-interval-60s)

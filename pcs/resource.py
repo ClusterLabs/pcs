@@ -585,6 +585,7 @@ def resource_move(argv,clear=False,ban=False):
 
     if clear:
         if dest_node:
+            # both --host and --node works, but --host is deprecated
             output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node] + other_options)
         else:
             output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"] + other_options)

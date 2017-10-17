@@ -4,6 +4,8 @@ from __future__ import (
     print_function,
 )
 
+import re
+
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
@@ -1084,10 +1086,14 @@ class FailOrWarn(ResourceTest):
     def test_fail_when_nonexisting_agent(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:NoExisting",
-            "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or does"
-                " not provide valid metadata: Metadata query for"
-                " ocf:heartbeat:NoExisting failed: -5, use --force to"
-                " override\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            stdout_regexp=re.compile("^"
+                "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
+                "does not provide valid metadata: Metadata query for "
+                "ocf:heartbeat:NoExisting failed: (-5|Input/output error), use "
+                "--force to override\n"
+                "$", re.MULTILINE
+            )
         )
 
     def test_warn_when_forcing_noexistent_agent(self):
@@ -1104,9 +1110,13 @@ class FailOrWarn(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or does"
-            " not provide valid metadata: Metadata query for"
-            " ocf:heartbeat:NoExisting failed: -5\n"
+            # pacemaker 1.1.18 changes -5 to Input/output error
+            output_regexp=re.compile("^"
+                "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or "
+                    "does not provide valid metadata: Metadata query for "
+                    "ocf:heartbeat:NoExisting failed: (-5|Input/output error)\n"
+                "$", re.MULTILINE
+            )
         )
 
 
