@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="Dummy®" version="0.9"
+  shortdesc="Example stateless resource agent: ®"
+>
+<longdesc lang="en">
+This is a Dummy Resource Agent fot testing utf-8 in metadata: ®
+</longdesc>
+<version>1.0</version>
+
+<parameters>
+  <parameter name="state-®" unique="1">
+    <longdesc lang="en">
+      Location to store the resource state in: ®
+    </longdesc>
+    <shortdesc lang="en">State file: ®</shortdesc>
+    <content type="string" default="/var/run/resource-agents/Dummy-®.state" />
+  </parameter>
+</parameters>
+
+<actions>
+  <action name="start"        timeout="20" />
+  <action name="stop"         timeout="20" />
+  <action name="monitor"      timeout="20" interval="10" depth="0" />
+  <action name="meta-data"    timeout="5" />
+  <action name="validate-all" timeout="20" />
+  <action name="custom-®"     timeout="20" />
+</actions>
+</resource-agent>

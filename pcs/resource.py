@@ -281,10 +281,12 @@ def resource_list_options(lib, argv, modifiers):
 
 
 def _format_agent_description(description, stonith=False, show_advanced=False):
+    # We are getting data from XML which may contain unicode strings, hence we
+    # must format them to unicode strings (u"...".format(...))
     output = []
 
     if description.get("name") and description.get("shortdesc"):
-        output.append("{0} - {1}".format(
+        output.append(u"{0} - {1}".format(
             description["name"],
             _format_desc(
                 len(description["name"] + " - "),
@@ -319,7 +321,7 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
                     param_desc = "No description available"
             if param.get("pcs_deprecated_warning"):
                 param_desc += " WARNING: " + param["pcs_deprecated_warning"]
-            output_params.append("  {0}: {1}".format(
+            output_params.append(u"  {0}: {1}".format(
                 param_title,
                 _format_desc(len(param_title) + 4, param_desc)
             ))
@@ -334,9 +336,9 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
     if description.get("actions"):
         output_actions = []
         for action in description["default_actions"]:
-            parts = ["  {0}:".format(action.get("name", ""))]
+            parts = [u"  {0}:".format(action.get("name", ""))]
             parts.extend([
-                "{0}={1}".format(name, value)
+                u"{0}={1}".format(name, value)
                 for name, value in sorted(action.items())
                 if name != "name"
             ])
