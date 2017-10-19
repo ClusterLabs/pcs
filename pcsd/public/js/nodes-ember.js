@@ -38,28 +38,48 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "wizards") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
-  available_features: [],
+  available_features: [], /* deprecated capability list */
+  pcsd_capabilities: [], /* new capability list */
   is_sbd_supported: function() {
-    return (this.get("available_features").indexOf("sbd") != -1);
-  }.property("available_features"),
+    return (
+      (this.get("available_features").indexOf("sbd") != -1)
+      ||
+      (this.get("pcsd_capabilities").indexOf("sbd") != -1)
+    );
+  }.property("available_features", "pcsd_capabilities"),
   is_ticket_constraints_supported: function(){
     return (
-      this.get("available_features").indexOf("ticket_constraints") != -1
+      (this.get("available_features").indexOf("ticket_constraints") != -1)
+      ||
+      (
+        (this.get("pcsd_capabilities").indexOf("pcmk.constraint.ticket.simple") != -1)
+        &&
+        (this.get("pcsd_capabilities").indexOf("pcmk.constraint.ticket.set") != -1)
+      )
     );
-  }.property("available_features"),
+  }.property("available_features", "pcsd_capabilities"),
   is_supported_constraint_colocation_set: function() {
     return (
-      this.get("available_features").indexOf("constraint_colocation_set") != -1
+      (this.get("available_features").indexOf("constraint_colocation_set") != -1)
+      ||
+      (this.get("pcsd_capabilities").indexOf("pcmk.constraint.colocation.set") != -1)
     );
-  }.property("available_features"),
+  }.property("available_features", "pcsd_capabilities"),
   is_supported_moving_resource_in_group: function() {
     return (
-      this.get("available_features").indexOf("moving_resource_in_group") != -1
+      (this.get("available_features").indexOf("moving_resource_in_group") != -1)
+      ||
+      /* ability to set a position in a group is mandatory in pcmk.resource.group */
+      (this.get("pcsd_capabilities").indexOf("pcmk.resource.group") != -1)
     );
-  }.property("available_features"),
+  }.property("available_features", "pcsd_capabilities"),
   is_supported_unmanaged_resource: function() {
-    return (this.get("available_features").indexOf("unmanaged_resource") != -1);
-  }.property("available_features"),
+    return (
+      (this.get("available_features").indexOf("unmanaged_resource") != -1)
+      ||
+      (this.get("pcsd_capabilities").indexOf("pcmk.resource.manage-unmanage") != -1)
+    );
+  }.property("available_features", "pcsd_capabilities"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {
@@ -156,9 +176,15 @@ Pcs = Ember.Application.createWithMixins({
         Pcs.set("cluster_settings",data.cluster_settings);
         Pcs.set('need_ring1_address', false);
         Pcs.set('is_cman_with_udpu_transport', false);
+        /* deprecated capability list */
         Pcs.set(
           'available_features',
           data['available_features'] ? data['available_features'] : []
+        );
+        /* new capability list */
+        Pcs.set(
+          'pcsd_capabilities',
+          data['pcsd_capabilities'] ? data['pcsd_capabilities'] : []
         );
         if (data['need_ring1_address']) {
           Pcs.set('need_ring1_address', true);

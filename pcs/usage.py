@@ -157,7 +157,8 @@ Options:
     -h, --help         Display usage and exit.
     -f file            Perform actions on file instead of active CIB.
     --debug            Print all network traffic and external commands run.
-    --version          Print pcs version information.
+    --version          Print pcs version information. List pcs capabilities if
+                       --full is specified.
     --request-timeout  Timeout for each outgoing request to another node in
                        seconds. Default is 60s.
     --force            Override checks and errors, the exact behavior depends on

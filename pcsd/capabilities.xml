@@ -1,0 +1,1536 @@
+<pcs-capabilities>
+  <capability-list>
+    <!--
+      "optionally" means a user or client may but is not required to specify
+      given parameters. The provider of a feature/capability is required to
+      implement means for specifying and processing these parameters.
+    -->
+
+    <capability id="booth" in-pcs="1" in-pcsd="0">
+      <description>
+        Supports booth cluster ticket manager:
+        * create and delete a booth config file and keyfile
+        * configure booth tickets in the config file
+        * grant and revoke booth tickets
+        * manage booth service for running booth on a single host: start, stop,
+          enable, disable
+        * manage booth resource for running booth as a cluster resource:
+          create, delete, restart
+        * pull a config from a host, sync a config to the local cluster
+        * show booth status
+        All changes are done on the local host only and have to be manually
+        pushed (synchronized) to all cluster nodes and other arbitrators /
+        sites (unles a feature which does this atomatically is implemented and
+        added to this list).
+
+        pcs commands: booth
+      </description>
+    </capability>
+    <capability id="booth.set-config" in-pcs="0" in-pcsd="1">
+      <description>
+        Save a booth config and key file to the local host.
+
+        daemon urls: booth_set_config
+      </description>
+    </capability>
+    <capability id="booth.set-config.multiple" in-pcs="0" in-pcsd="1">
+      <description>
+        Save more booth configs and keys to the local host.
+
+        daemon urls: booth_save_files
+      </description>
+    </capability>
+    <capability id="booth.get-config" in-pcs="0" in-pcsd="1">
+      <description>
+        Provide the local booth config and key file.
+
+        daemon urls: booth_get_config
+      </description>
+    </capability>
+
+
+
+    <capability id="cluster.config.backup-local" in-pcs="1" in-pcsd="0">
+      <description>
+        Create a tarball containing cluster configuration files (corosync,
+        pacemaker, pcsd) from the local host.
+
+        pcs commands: config backup
+      </description>
+    </capability>
+    <capability id="cluster.config.restore-cluster" in-pcs="1" in-pcsd="0">
+      <description>
+        Restore the cluster configuration on all cluster nodes from a tarball
+        created by pcs backup. List of cluster nodes is extracted from the
+        tarball.
+
+        pcs commands: config restore
+      </description>
+    </capability>
+    <capability id="cluster.config.restore-local" in-pcs="1" in-pcsd="1">
+      <description>
+        Restore the cluster configuration on the local host from a tarball
+        created by pcs backup.
+
+        pcs commands: config restore --local
+        daemon urls: config_restore
+      </description>
+    </capability>
+
+
+
+    <capability id="cluster.config.export.to-pcs-commands" in-pcs="1" in-pcsd="0">
+      <description>
+        Creates a list of pcs commands which upon execution recreates
+        the current cluster running on the local host.
+
+        pcs commands: config export pcs-commands[-verbose]
+      </description>
+    </capability>
+    <capability id="cluster.config.import-cman" in-pcs="1" in-pcsd="0">
+      <description>
+        Converts CMAN cluster configuration files to a Corosync/Pacemaker
+        cluster config files or pcs commands.
+
+        pcs commands: config import-cman
+      </description>
+    </capability>
+
+
+
+    <capability id="cluster.create" in-pcs="1" in-pcsd="1">
+      <description>
+        Set up a new cluster.
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
+    <capability id="cluster.create.enable" in-pcs="1" in-pcsd="0">
+      <description>
+        Enable cluster services on cluster nodes during cluster setup.
+
+        pcs commands: cluster setup --enable
+      </description>
+    </capability>
+    <capability id="cluster.create.start" in-pcs="1" in-pcsd="0">
+      <description>
+        Start cluster services on cluster nodes during cluster setup.
+
+        pcs commands: cluster setup --start
+      </description>
+    </capability>
+    <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for cluster nodes to start during cluster setup if start requested.
+
+        pcs commands: cluster setup --start --wait[=timeout]
+      </description>
+    </capability>
+    <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">
+      <description>
+        Destroy cluster on the local host.
+
+        pcs commands: cluster destroy
+        daemon urls: cluster_destroy
+      </description>
+    </capability>
+    <capability id="cluster.destroy.all" in-pcs="1" in-pcsd="0">
+      <description>
+        Destroy cluster on all nodes defined in a cluster which the local host
+        belongs to.
+
+        pcs commands: cluster destroy --all
+      </description>
+    </capability>
+    <capability id="cluster.report" in-pcs="1" in-pcsd="0">
+      <description>
+        Create a tarball containing everything needed when reporting cluster
+        problems.
+
+        pcs commands: cluster report
+      </description>
+    </capability>
+    <capability id="cluster.verify" in-pcs="1" in-pcsd="0">
+      <description>
+        Check cluster configuration for errors.
+      </description>
+    </capability>
+
+
+
+    <capability id="corosync.config.get" in-pcs="1" in-pcsd="1">
+      <description>
+        Provide the local corosync.conf file.
+
+        pcs commands: cluster corosync
+        daemon urls: get_corosync_conf
+      </description>
+    </capability>
+    <capability id="corosync.config.set" in-pcs="0" in-pcsd="1">
+      <description>
+        Save a corosync.conf file to the local host.
+
+        daemon urls: set_corosync_conf
+      </description>
+    </capability>
+    <capability id="corosync.config.reload" in-pcs="1" in-pcsd="0">
+      <description>
+        Instruct corosync to reload its configuration from its config files.
+
+        pcs commands: cluster reload corosync
+      </description>
+    </capability>
+    <capability id="corosync.config.sync-to-local-cluster" in-pcs="1" in-pcsd="0">
+      <description>
+        Push corosync configuration from the local host to all cluster nodes.
+
+        pcs commands: cluster sync
+      </description>
+    </capability>
+    <capability id="corosync.qdevice" in-pcs="1" in-pcsd="0">
+      <description>
+        Set up, manage and show status of a corosync qdevice. Specific
+        functionality depends on supported model.
+
+        pcs commands: pcs qdevice
+      </description>
+    </capability>
+    <capability id="corosync.qdevice.model.net" in-pcs="1" in-pcsd="0">
+      <description>
+        Set up and manage a corosync qdevice model "net": setup, destroy, start,
+        stop, kill, enable, disable, show status.
+
+        pcs commands: pcs qdevice
+      </description>
+    </capability>
+    <capability id="corosync.qdevice.model.net.certificates" in-pcs="0" in-pcsd="1">
+      <description>
+        Provide the certificate of the qdevice instance's certificate authority
+        and sign certificate requests.
+
+        daemon urls: qdevice_net_get_ca_certificate,
+          qdevice_net_sign_node_certificate
+      </description>
+    </capability>
+    <capability id="corosync.quorum" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and change corosync quorum configuration.
+
+        pcs commands: quorum config, quorum update
+      </description>
+    </capability>
+    <capability id="corosync.quorum.status" in-pcs="1" in-pcsd="1">
+      <description>
+        Show corosync quorum status on a node.
+
+        pcs commands: quorum status
+        daemon urls: get_quorum_info
+      </description>
+    </capability>
+    <capability id="corosync.quorum.device" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and change corosync qdevice configuration.
+
+        pcs commands: quorum device (add | remove | update | status)
+      </description>
+    </capability>
+    <capability id="corosync.quorum.device.client" in-pcs="0" in-pcsd="1">
+      <description>
+        Control qdevice client service: start, stop, enable, disable
+
+        daemon urls: qdevice_client_start, qdevice_client_stop,
+          qdevice_client_enable, qdevice_client_disable
+      </description>
+    </capability>
+    <capability id="corosync.quorum.device.model.net" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and change corosync qdevice model "net" configuration.
+
+        pcs commands: quorum device (add | remove | update | status)
+      </description>
+    </capability>
+    <capability id="corosync.quorum.device.client.model.net.certificates" in-pcs="0" in-pcsd="1">
+      <description>
+        Set up and destroy certificates in qdevice model net client.
+
+        daemon urls: qdevice_net_client_init_certificate_storage,
+          qdevice_net_client_import_certificate, qdevice_net_client_destroy
+      </description>
+    </capability>
+    <capability id="corosync.quorum.set-expected-votes-runtime" in-pcs="1" in-pcsd="0">
+      <description>
+        Set expected votes in the live cluster to specified value.
+
+        pcs commands: quorum expected-votes
+      </description>
+    </capability>
+    <capability id="corosync.quorum.unblock" in-pcs="1" in-pcsd="0">
+      <description>
+        Cancel waiting for all nodes when establishing quorum.
+
+        pcs commands: quorum unblock
+      </description>
+    </capability>
+    <capability id="corosync.uidgid" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and change configured uids and gids allowed to connect to corosync.
+      </description>
+    </capability>
+
+
+
+    <capability id="node.add" in-pcs="1" in-pcsd="1">
+      <description>
+        Add a new node to a cluster.
+
+        pcs commands: cluster node add
+        daemon urls: add_node_all
+      </description>
+    </capability>
+    <capability id="node.add.local" in-pcs="1" in-pcsd="1">
+      <description>
+        Add a new node to a cluster on the local host only (pcs/pcsd internal
+        function).
+
+        pcs commands: cluster localnode add
+        daemon urls: add_node
+      </description>
+    </capability>
+    <capability id="node.add.enable" in-pcs="1" in-pcsd="0">
+      <description>
+        Enable cluster services on the new cluster node during adding a node.
+
+        pcs commands: cluster node add --enable
+      </description>
+    </capability>
+    <capability id="node.add.start" in-pcs="1" in-pcsd="0">
+      <description>
+        Start cluster services on the new cluster node during adding a node.
+
+        pcs commands: cluster node add --start
+      </description>
+    </capability>
+    <capability id="node.add.start.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the new node start cluster service during adding a node if
+        start requested.
+
+        pcs commands: cluster node add --start --wait[=timeout]
+      </description>
+    </capability>
+    <capability id="node.add.enable-and-start" in-pcs="0" in-pcsd="1">
+      <description>
+        Enable and start cluster services on the new cluster node during adding
+        a node, cannot do "enable" and "start" separately.
+
+        daemon urls: add_node, add_node_all (param: auto_start)
+      </description>
+    </capability>
+    <capability id="node.remove" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove a node from a cluster.
+
+        pcs commands: cluster node remove
+        daemon urls: remove_nodes
+      </description>
+    </capability>
+    <capability id="node.remove.local" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove a node from a cluster on the local host only (pcs/pcsd internal
+        function).
+
+        pcs commands: cluster localnode remove
+        daemon urls: remove_node
+      </description>
+    </capability>
+    <capability id="node.remove.list" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove several nodes from a cluster at once.
+
+        daemon urls: remove_nodes
+      </description>
+    </capability>
+    <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="0">
+      <description>
+        Remove specified node from various cluster caches.
+
+        pcs commands: cluster node clear
+      </description>
+    </capability>
+    <capability id="node.guest" in-pcs="1" in-pcsd="0">
+      <description>
+        Add (based on an existing cluster resource) and remove a guest node to
+        a cluster. When adding, it is possible to wait for the node to start.
+
+        pcs commands: cluster node ( add-guest | remove-guest )
+      </description>
+    </capability>
+    <capability id="node.remote" in-pcs="1" in-pcsd="0">
+      <description>
+        Add and remove a remote node to a cluster. When adding, it is possible
+        to specify operations and instance and meta attributes for the newly
+        created pcmk_remote resource and wait for the new remote node to start.
+
+        pcs commands: cluster node ( add-remote | remove-remote )
+      </description>
+    </capability>
+
+
+
+    <capability id="node.start-stop-enable-disable" in-pcs="1" in-pcsd="1">
+      <description>
+        Allow starting, stopping, enabling and disabling cluster services on one
+        node or the local host if no node specified.
+
+        pcs commands: cluster (start | stop | enable | disable)
+        daemon urls: cluster_start, cluster_stop, cluster_enable,
+          cluster_disable
+      </description>
+    </capability>
+    <capability id="node.start-stop-enable-disable.all" in-pcs="1" in-pcsd="0">
+      <description>
+        Allow starting, stopping, enabling and disabling cluster services on all
+        nodes in the cluster.
+
+        pcs commands: cluster (start | stop | enable | disable) --all
+      </description>
+    </capability>
+    <capability id="node.start-stop-enable-disable.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Allow starting, stopping, enabling and disabling cluster services on
+        specified nodes in a cluster.
+
+        pcs commands: cluster (start | stop | enable | disable) node1 node2 ...
+      </description>
+    </capability>
+    <capability id="node.start-stop-enable-disable.start-wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the cluster nodes to start.
+
+        pcs commands: cluster start --wait[=timeout]
+      </description>
+    </capability>
+    <capability id="node.start-stop-enable-disable.stop-component" in-pcs="0" in-pcsd="1">
+      <description>
+        At the node level, provide means for stopping services separatelly so
+        the nodes stopping can be synchronized on the cluster level.
+
+        daemon urls: cluster_stop (param: component)
+      </description>
+    </capability>
+    <capability id="node.kill" in-pcs="1" in-pcsd="0">
+      <description>
+        Kill cluster services on the local node.
+
+        pcs commands: cluster kill
+      </description>
+    </capability>
+    <capability id="node.restart" in-pcs="0" in-pcsd="1">
+      <description>
+        Restart one host machine or the local host machine if no host specified.
+
+        daemon urls: node_restart
+      </description>
+    </capability>
+
+
+
+    <capability id="node.attributes" in-pcs="1" in-pcsd="1">
+      <description>
+        Show node attributes, add and remove a node attribute.
+
+        pcs commands: node attribute
+        daemon urls: add_node_attr_remote
+      </description>
+    </capability>
+    <capability id="node.attributes.set-list-for-node" in-pcs="1" in-pcsd="0">
+      <description>
+        Set list of node attributes for a node.
+
+        pcs commands: node attribute
+      </description>
+    </capability>
+    <capability id="node.maintenance" in-pcs="1" in-pcsd="0">
+      <description>
+        Put one node or the local host if no node specified to and from
+        maintenance mode. If this functionality is not available,
+        node.attributes can be used instead to set the maintenance attribute.
+
+        pcs commands: node ( maintenance | unmaintenance )
+      </description>
+    </capability>
+    <capability id="node.maintenance.all" in-pcs="1" in-pcsd="0">
+      <description>
+        Put all cluster nodes defined in a cluster which the local host belongs
+        to to and from maintenance mode.
+
+        pcs commands: node ( maintenance | unmaintenance ) --all
+      </description>
+    </capability>
+    <capability id="node.maintenance.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Put specified nodes in a cluster to and from maintenance mode.
+
+        pcs commands: node ( maintenance | unmaintenance ) node1 node2 ...
+      </description>
+    </capability>
+    <capability id="node.maintenance.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for nodes to finish transition to or from maintenance mode.
+
+        pcs commands: node ( maintenance | unmaintenance ) --wait[=timeout]
+      </description>
+    </capability>
+    <capability id="node.standby" in-pcs="1" in-pcsd="1">
+      <description>
+        Put one node or the local host if no node specified to and from
+        standby mode. If this functionality is not available, node.attributes
+        can be used instead to set the standby attribute.
+
+        pcs commands: node ( standby | unstandby )
+        daemon urls: node_standby, node_unstandby
+      </description>
+    </capability>
+    <capability id="node.standby.all" in-pcs="1" in-pcsd="0">
+      <description>
+        Put all cluster nodes defined in a cluster which the local host belongs
+        to to and from standby mode.
+
+        pcs commands: node ( standby | unstandby ) --all
+      </description>
+    </capability>
+    <capability id="node.standby.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Put specified nodes in a cluster to and from standby mode.
+
+        pcs commands: node ( standby | unstandby ) node1 node2 ...
+      </description>
+    </capability>
+    <capability id="node.standby.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for nodes to finish transition to or from standby mode.
+
+        pcs commands: node ( standby | unstandby ) --wait[=timeout]
+      </description>
+    </capability>
+    <capability id="node.utilization" in-pcs="1" in-pcsd="1">
+      <description>
+        Show node utilization attributes, add and remove a node utilization
+        attribute.
+
+        pcs commands: node utilization
+        daemon urls: set_node_utilization
+      </description>
+    </capability>
+    <capability id="node.utilization.set-list-for-node" in-pcs="1" in-pcsd="0">
+      <description>
+        Set several node utilization attributes for a single node at once.
+
+        pcs commands: node utilization
+      </description>
+    </capability>
+
+
+
+    <capability id="node.confirm-off" in-pcs="1" in-pcsd="0">
+      <description>
+        Confirm to the cluster that the specified node is powered off.
+
+        pcs commands: stonith confirm
+      </description>
+    </capability>
+    <capability id="node.fence" in-pcs="1" in-pcsd="0">
+      <description>
+        Fence the specified node.
+
+        pcs commands: stonith fence
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.acl.enable-disable" in-pcs="1" in-pcsd="0">
+      <description>
+        Enable and disable pacemaker ACLs. If this capability is not available,
+        pcmk.properties.cluster can be used instead to set the enable-acl
+        property.
+
+        pcs commands: acl ( enable | disable )
+      </description>
+    </capability>
+    <capability id="pcmk.acl.group" in-pcs="1" in-pcsd="0">
+      <description>
+        Create (with or without role ids) and delete ACL groups one at a time.
+        Show ACL groups.
+
+        pcs commands: acl group ( create | delete ), acl show
+      </description>
+    </capability>
+    <capability id="pcmk.acl.role" in-pcs="1" in-pcsd="1">
+      <description>
+        Create, delete, assign, unassign and show ACL roles, add and delete
+        roles' permissions, all one at a time.
+
+        pcs commands: acl role ( create | delete | assign | unassign ),
+          acl permission ( add | delete )
+        daemon urls: add_acl_role, remove_acl_role
+      </description>
+    </capability>
+    <capability id="pcmk.acl.role.create-with-permissions" in-pcs="1" in-pcsd="0">
+      <description>
+        Create an ACL role and its permissions in one command.
+
+        pcs commands: acl role create
+      </description>
+    </capability>
+    <capability id="pcmk.acl.role.delete-with-users-groups" in-pcs="1" in-pcsd="0">
+      <description>
+        When deleting a role, optinally delete users and groups to which the
+        role is assigned, if those users and groups do not have any other roles
+        assigned.
+      </description>
+    </capability>
+    <capability id="pcmk.acl.role.delete-with-users-groups-implicit" in-pcs="0" in-pcsd="1">
+      <description>
+        When deleting a role, automatically delete users and groups to which the
+        role is assigned, if those users and groups do not have any other roles
+        assigned.
+      </description>
+    </capability>
+    <capability id="pcmk.acl.user" in-pcs="1" in-pcsd="0">
+      <description>
+        Create (with or without role ids) and delete ACL users one at a time.
+        Show ACL groups.
+
+        pcs commands: acl user ( create | delete ), acl show
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.alert" in-pcs="1" in-pcsd="1">
+      <description>
+        Set and show pacemaker alerts configuration:
+        * create an alert including its id, description, options and meta
+          attributes
+        * delete a list of alerts specified by theit ids
+        * update an alert including its description, options and meta attributes
+        * create an alert recipient in the specified agent including its id,
+          description, options and meta attributes
+        * delete a list of recipients specified by theit ids
+        * update an alert recipient including its description, options and meta
+          attributes
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.cib.edit" in-pcs="1" in-pcsd="0">
+      <description>
+        Edit a CIB XML (as a plain text), support a CIB scope and editing the
+        configuration section.
+
+        pcs commands: cluster edit
+      </description>
+    </capability>
+    <capability id="pcmk.cib.get" in-pcs="1" in-pcsd="1">
+      <description>
+        Provide a CIB XML as a plain text.
+
+        pcs commands: cluster cib
+        daemon urls: get_cib
+      </description>
+    </capability>
+    <capability id="pcmk.cib.get.scope" in-pcs="1" in-pcsd="0">
+      <description>
+        Support a CIB scope when providing a CIB including providing just the
+        configuration section.
+
+        pcs commands: cluster cib
+      </description>
+    </capability>
+    <capability id="pcmk.cib.checkpoints" in-pcs="1" in-pcsd="0">
+      <description>
+        List, view (in a human-readable format) and restore CIB checkpoints.
+
+        pcs commands: config checkpoint ( | view | restore )
+      </description>
+    </capability>
+    <capability id="pcmk.cib.set" in-pcs="1" in-pcsd="0">
+      <description>
+        Push a CIB XML to a cluster, support CIB scope, pushing the
+        configuration section and pushing a CIB diff. Optionally wait for the
+        changes to take effect.
+
+        pcs commands: cluster cib-push
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.constraint.location.simple" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete a location constraint for one resource.
+
+        pcs commands: constraint location ( prefers | avoids ),
+          constraint location remove, constraint remove
+        daemon urls: add_constraint_remote (param: c_type=loc),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Constraint options (resource-discovery) and id can be specified when
+        creating a constraint and are shown in constraint listing.
+
+        pcs commands: constraint location add
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.resource-regexp" in-pcs="1" in-pcsd="0">
+      <description>
+        Resources can be specified by regular expressions.
+
+        pcs commands: regexp%resource_id
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.rule" in-pcs="1" in-pcsd="1">
+      <description>
+        Can create rule location constraints.
+
+        pcs commands. constraint location rule
+        daemon urls: add_constraint_rule_remote (param: c_type=loc)
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.rule.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Constraint options (resource-discovery, role, rule-id, score-attribute)
+        and id can be specified when creating a constraint and are shown in
+        constraint listing.
+
+        pcs commands: constraint location rule
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.rule.rule-add-remove" in-pcs="1" in-pcsd="0">
+      <description>
+        Add (including options role, rule-id, score-attribute) and remove rules
+        to an existing rule location constraint.
+
+        pcs commands: constraint rule ( add | remove )
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.colocation.simple" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete a colocation constraint for a pair of resources.
+
+        pcs commands: constraint colocation add, constraint colocation remove,
+          constraint remove
+        daemon urls: add_constraint_remote (param: c_type=col),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.colocation.simple.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set constraint options, constraint id and resources's role.
+
+        pcs commands: constraint colocation add
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.colocation.set" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete a colocation constraint for sets of resources.
+
+        pcs commands: constraint colocation set, constraint remove
+        daemon urls: add_constraint_set_remote (param: c_type=col),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.colocation.set.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set resource set options and constraint options.
+
+        pcs commands: constraint colocation set
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.order.simple" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete an order constraint for a pair of resources, including
+        specifying resources' action.
+
+        pcs commands: constraint order add, constraint order remove,
+          constraint remove
+        daemon urls: add_constraint_remote (param: c_type=ord),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.order.simple.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set constraint options and constraint id.
+
+        pcs commands: constraint order add
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.order.set" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete an order constraint for sets of resources.
+
+        pcs commands: constraint order set, constraint remove
+        daemon urls: add_constraint_set_remote (param: c_type=ord),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.order.set.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set resource set options and constraint options.
+
+        pcs commands: constraint order set
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.ticket.simple" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete a ticket constraint for one resource, including
+        specifying a resource role and loss policy.
+
+        pcs commands: constraint ticket add, constraint ticket remove,
+          constraint remove
+        daemon urls: add_constraint_remote (param: c_type=ticket),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.ticket.simple.constraint-id" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set constraint id when creating a ticket constraint.
+
+        pcs commands: constraint ticket add
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.ticket.set" in-pcs="1" in-pcsd="1">
+      <description>
+        Create and delete a ticket constraint for sets of resources, including
+        specifying loss policy.
+
+        pcs commands: constraint ticket set, constraint remove
+        daemon urls: add_constraint_set_remote (param: c_type=ticket),
+          remove_constraint_remote
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.ticket.set.options" in-pcs="1" in-pcsd="0">
+      <description>
+        Can set resource set options and constraint options (resources role, a
+        constraint id).
+
+        pcs commands: constraint ticket set
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.properties.cluster" in-pcs="1" in-pcsd="1">
+      <description>
+        Show and set pacemaker cluster properties, can set multiple properties
+        at once.
+
+        pcs commands: prop ( | set | unset )
+        daemon urls: update_cluster_settings
+      </description>
+    </capability>
+    <capability id="pcmk.properties.cluster.describe" in-pcs="0" in-pcsd="1">
+      <description>
+        Show cluster properties definition and description (meta data).
+
+        daemon urls: get_cluster_properties_definition
+      </description>
+    </capability>
+    <capability id="pcmk.properties.operation-defaults" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and set resource operations defaults, can set multiple defaults at
+        once.
+
+        pcs commands: resource op defaults
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and set resources defaults, can set multiple defaults at once.
+
+        pcs commands: resource defaults
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.resource.create" in-pcs="1" in-pcsd="1">
+      <description>
+        Create a resource (including specifying its options). Optionally put
+        the resource into a new clone, master/slave or to an existing or new
+        group. When putting the resource to a group, optionally specify the
+        resource's position in the group. Optionally disable the resource upon
+        its creation.
+
+        pcs commands: resource create
+        daemon urls: update_resource (param: resource_id not set)
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.in-existing-bundle" in-pcs="1" in-pcsd="0">
+      <description>
+        Put a newly created resource into an existing bundle.
+
+        pcs commands: resource create ... bundle
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
+      <description>
+        Set resource meta attributes when creating a resource. When creating a
+        resource as a clone resource, it is possible to set clone meta
+        attributes. When creating a resource into a master/slave resource, it is
+        possible to set master/slave meta attributes.
+
+        pcs commands: resource create
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="0">
+      <description>
+        Set resource operations when creating a resource, also allow to disable
+        copying operations from a resource agent.
+
+        pcs commands: resource create ... op
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the created resource to start.
+
+        pcs commands: resource create ... --wait
+      </description>
+    </capability>
+
+    <capability id="pcmk.resource.delete" in-pcs="1" in-pcsd="1">
+      <description>
+        Delete a resource.
+
+        pcs commands: resource delete
+        daemon urls: remove_resource
+      </description>
+    </capability>
+    <capability id="pcmk.resource.delete.list" in-pcs="0" in-pcsd="1">
+      <description>
+        Delete several resources at once.
+
+        daemon urls: remove_resource
+      </description>
+    </capability>
+
+    <capability id="pcmk.resource.update" in-pcs="1" in-pcsd="1">
+      <description>
+        Update instance options of a resource. Several options can be updated at
+        once.
+
+        pcs commands: resource update
+        daemon urls: update_resource (param: resource_id is set)
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update.meta" in-pcs="1" in-pcsd="0">
+      <description>
+        Can update both instance and meta attributes of a resource, several
+        instance and meta attributes can be specified.
+
+        pcs commands: resource update ... meta
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update.operations" in-pcs="1" in-pcsd="0">
+      <description>
+        Can update both instance attributes and operations of a resource,
+        several instance attributes and operations can be specified.
+
+        pcs commands: resource update ... op
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect.
+
+        pcs commands: resource update --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-meta" in-pcs="1" in-pcsd="1">
+      <description>
+        Update a meta attribute of a (primitive, clone, master/slave, group)
+        resource.
+
+        pcs commands: resource meta
+        daemon urls: add_meta_attr_remote
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-meta.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Update several meta attributes of a resource at once.
+
+        pcs commands: resource update meta, resource meta
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-meta.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect.
+
+        pcs commands: resource update --wait, resource meta --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-operations" in-pcs="1" in-pcsd="0">
+      <description>
+        Create and delete an operation of an existing resource. An operation can
+        be deleted based on its id or definition (resource and action and
+        options).
+
+        pcs commands: resource op ( add | remove )
+      </description>
+    </capability>
+
+    <capability id="pcmk.resource.group" in-pcs="1" in-pcsd="1">
+      <description>
+        Support resource groups:
+        * Create a group containing specified resources
+        * Add a resource to a group, optionally specifying the resource's
+          position
+        * Remove a resource from a group
+        * Ungroup - get all resources out of a group and delete the (now empty)
+          group
+
+        pcs commands: resource group ( add | remove ), resource ungroup
+        daemon urls: add_group, resource_ungroup, resource_change_group,
+          update_resource
+      </description>
+    </capability>
+    <capability id="pcmk.resource.group.add-remove-list" in-pcs="1" in-pcsd="0">
+      <description>
+        Add or remove several resource from a group at once.
+
+        pcs commands: resource group ( add | remove )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.group.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect.
+
+        pcs commands: resource group ( add | remove ) --wait,
+          resource ungroup --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.clone" in-pcs="1" in-pcsd="1">
+      <description>
+        Turn an existing resource to a clone resource and the other way around.
+
+        pcs commands: resource clone, resource unclone
+        daemon urls: update_resource, resource_clone, resource_unclone
+      </description>
+    </capability>
+    <capability id="pcmk.resource.clone.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect.
+
+        pcs commands: resource clone -- wait, resource unclone --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.clone.meta-in-create" in-pcs="1" in-pcsd="0">
+      <description>
+        Set clone meta attributes when cloning a resource.
+
+        pcs commands: resource clone
+      </description>
+    </capability>
+    <capability id="pcmk.resource.master" in-pcs="1" in-pcsd="1">
+      <description>
+        Turn an existing resource to a master/slave resource and the other way
+        around.
+
+        pcs commands: resource master, resource unclone
+        daemon urls: update_resource, resource_master, resource_unclone
+      </description>
+    </capability>
+    <capability id="pcmk.resource.master.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect.
+
+        pcs commands: resource master -- wait, resource unclone --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.master.meta-in-create" in-pcs="1" in-pcsd="0">
+      <description>
+        Set master/slave meta attributes when turning an existing resource to a
+        master/slave resource.
+
+        pcs commands: resource master
+      </description>
+    </capability>
+    <capability id="pcmk.resource.bundle" in-pcs="1" in-pcsd="0">
+      <description>
+        Support bundle resources: mainly create, update and delete them as well
+        as put a resource into a bundle. Includes support in other resource
+        related commands.
+
+        pcs commands: resource bundle ( create | update )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.bundle.container-docker" in-pcs="1" in-pcsd="0">
+      <description>
+        Support docker container in bundle resources.
+
+        pcs commands: resource bundle
+      </description>
+    </capability>
+    <capability id="pcmk.resource.bundle.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the changes to take effect when creating or updating a bundle
+        resource.
+
+        pcs commands: resource bundle ( create | update ) --wait
+      </description>
+    </capability>
+
+    <capability id="pcmk.resource.enable-disable" in-pcs="1" in-pcsd="1">
+      <description>
+        Disable and enable a resource.
+
+        pcs commands: resource disable, resource enable
+        daemon urls: resource_stop, resource_start
+      </description>
+    </capability>
+    <capability id="pcmk.resource.enable-disable.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Disable or enable several resources at once.
+
+        pcs commands: resource disable, resource enable
+      </description>
+    </capability>
+    <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for resources to start or stop.
+
+        pcs commands: resource disable --wait, resource enable --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.manage-unmanage" in-pcs="1" in-pcsd="1">
+      <description>
+        Put a resource into unmanaged and managed mode.
+
+        pcs commands: resource unmanage, resource manage
+        daemon urls: manage_resource, unmanage_resource
+      </description>
+    </capability>
+    <capability id="pcmk.resource.manage-unmanage.list" in-pcs="1" in-pcsd="1">
+      <description>
+        Put several resources into unmanaged or managed mode at once.
+
+        pcs commands: resource unmanage, resource manage
+        daemon urls: manage_resource, unmanage_resource
+      </description>
+    </capability>
+    <capability id="pcmk.resource.manage-unmanage.with-monitor" in-pcs="1" in-pcsd="0">
+      <description>
+        Optionally disable or enable monitor operations when putting resources
+        into unmanaged or managed mode respectively.
+
+        pcs commands: resource ( unmanage | manage ) --with-monitor
+      </description>
+    </capability>
+    <capability id="pcmk.resource.utilization" in-pcs="1" in-pcsd="1">
+      <description>
+        Show resource utilization attributes, add and remove a resource
+        utilization attribute.
+
+        pcs commands: resource utilization
+        daemon urls: set_resource_utilization
+      </description>
+    </capability>
+    <capability id="pcmk.resource.utilization-set-list-for-resource" in-pcs="1" in-pcsd="0">
+      <description>
+        Set several resource utilization attributes for a single resource at
+        once.
+
+        pcs commands: resource utilization
+      </description>
+    </capability>
+
+    <capability id="pcmk.resource.ban-move-clear" in-pcs="1" in-pcsd="0">
+      <description>
+        Ban a resource on a specified node and move a resource to a specified
+        node by creating constraints. Provide means to remove the constraints.
+        Applies to one specified resource. Optional parameters: a node, limiting
+        to a master role, a constraint lifetime. Optionally wait for the
+        constraints to take effect.
+      </description>
+    </capability>
+    <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">
+      <description>
+        Force a resource operation to happen on the local node and show debug
+        log of it. Support start, stop, promote, demote and monitor operations.
+
+        pcs commands: resource ( debug-start | debug-stop | debug-promote
+          | debug-demote | debug-monitor )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.cleanup" in-pcs="1" in-pcsd="0">
+      <description>
+        Forget history of resources and redetect their current state. Optionally
+        specify a resource and/or a node.
+
+        pcs commands: resource cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.resource.cleanup.one-resource" in-pcs="1" in-pcsd="1">
+      <description>
+        Forget history of a specified resource on all nodes and redetect its
+        current state.
+
+        pcs commands: resource cleanup
+        daemon urls: resource_cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.resource.failcount" in-pcs="1" in-pcsd="0">
+      <description>
+        Show or reset failcount of a specified resource on all nodes or on
+        a specified node.
+
+        pcs commands: resource failcount ( show | reset )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.relocate" in-pcs="1" in-pcsd="0">
+      <description>
+        Relocate all or specified resources to their preferred nodes, this also
+        includes a dry-run mode, means for displaying resources' optimal
+        placement and means for cleaning up related temporary settings.
+
+        pcs commands: resource relocate ( dry-run | run | show | clear )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.restart" in-pcs="1" in-pcsd="0">
+      <description>
+        Restart a resource, allow specifying a node for multi-node resources
+        (clones, master/slaves, bundles), allow waiting for the resource to
+        restart.
+
+        pcs commands: resource restart
+      </description>
+    </capability>
+
+
+
+    <capability id="pcmk.stonith.create" in-pcs="1" in-pcsd="1">
+      <description>
+        Create a stonith resource (including specifying its options). Optionally
+        disable the resource upon its creation.
+
+        pcs commands: stonith create
+        daemon urls: update_fence_device (param: resource_id not set)
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.in-group" in-pcs="1" in-pcsd="0">
+      <description>
+        Put a new stonith resource into an existing or new group upon its
+        creation. Optionally specify the resource's position in the group.
+
+        pcs commands: stonith create ... group
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.meta" in-pcs="1" in-pcsd="0">
+      <description>
+        Set resource meta attributes when creating a stonith resource.
+
+        pcs commands: stonith create ... meta
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="0">
+      <description>
+        Set resource operations when creating a stonith resource.
+
+        pcs commands: stonith create ... op
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for the created resource to start.
+
+        pcs commands: stonith create ... --wait
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="0">
+      <description>
+        Delete a stonith resource.
+
+        pcs commands: stonith delete
+        daemon urls: currently missing, remove_resource is used instead which
+          works for now
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.update" in-pcs="1" in-pcsd="1">
+      <description>
+        Update instance options of a stonith resource.
+
+        pcs commands: stonith update
+        daemon urls: update_fence_device (param: resource_id is set)
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="0">
+      <description>
+        Disable and enable a stonith resource.
+
+        pcs commands: stonith disable, stonith enable
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.enable-disable.list" in-pcs="1" in-pcsd="0">
+      <description>
+        Disable or enable several stonith resources at once.
+
+        pcs commands: stonith disable, stonith enable
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.enable-disable.wait" in-pcs="1" in-pcsd="0">
+      <description>
+        Wait for resources to start or stop.
+
+        pcs commands: stonith disable --wait, stonith enable --wait
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.cleanup" in-pcs="1" in-pcsd="0">
+      <description>
+        Forget history of stonith resources and redetect their current state.
+        Optionally specify a resource and/or a node.
+
+        pcs commands: stonith cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels" in-pcs="1" in-pcsd="1">
+      <description>
+        Basic stonith levels configuration:
+        * add a new stonith level with specified level, node and stonith device
+        * remove a stonith level with specified level, node and stonith device
+
+        pcs commands: stonith level ( | add | remove )
+        daemon urls: add_fence_level_remote
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.add-remove-devices-list" in-pcs="1" in-pcsd="0">
+      <description>
+        Add or remove a list of stonith to a fencing level.
+
+        pcs commands: stonith level ( add | remove )
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.node-attr" in-pcs="1" in-pcsd="0">
+      <description>
+        Support specifying a target by a node attribute.
+
+        pcs commands: attrib%name=value
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.node-regexp" in-pcs="1" in-pcsd="0">
+      <description>
+        Support specifying a target by a regular expression applied to node
+        name.
+
+        pcs commands: regexp%pattern
+      </description>
+    </capability>
+
+
+
+    <capability id="pcs.auth" in-pcs="1" in-pcsd="1">
+      <description>
+        Authenticate pcsd on a list of hosts against each other by a username
+        and password generating tokens which are then used to connect to pcsd
+        on the hosts.
+
+        pcs commands: cluster auth
+        daemon urls: auth
+      </description>
+    </capability>
+    <capability id="pcs.auth.clear" in-pcs="1" in-pcsd="0">
+      <description>
+        Remove tokens created during nodes authorization on the local and/or
+        remote hosts.
+      </description>
+    </capability>
+    <capability id="pcs.automatic-pcs-configs-sync" in-pcs="0" in-pcsd="1">
+      <description>
+        Automatically synchronize pcs/pcsd configuration files across the local
+        cluster. This consists of the synchonization itself done by the daemon
+        and commands to configure it (daemon and client).
+
+        daemon urls: get_sync_capabilities, set_sync_options, get_configs,
+          set_configs
+      </description>
+    </capability>
+    <capability id="pcs.cfg-in-file.cib" in-pcs="1" in-pcsd="0">
+      <description>
+        Can work with a CIB provided in a file instead of the live CIB of the
+        local cluster,
+
+        pcs commands: -f
+      </description>
+    </capability>
+    <capability id="pcs.permissions" in-pcs="0" in-pcsd="1">
+      <description>
+        Configure, list and enforce permissions for pcs/pcsd commands.
+
+        daemon urls: get_permissions, set_permissions
+      </description>
+    </capability>
+    <capability id="pcs.request-timeout" in-pcs="1" in-pcsd="0">
+      <description>
+        It is possible to se a request timeout applied in node to node
+        communication at pcs level.
+
+        pcs commands: --request-timeout
+      </description>
+    </capability>
+    <capability id="pcs.daemon-ssl-cert.set" in-pcs="1" in-pcsd="1">
+      <description>
+        Set a SSL certificate (a certificate-key pair) to be used by pcsd on the
+        local host.
+
+        pcs commands: pcsd certkey
+        daemon urls: set_certs
+      </description>
+    </capability>
+    <capability id="pcs.daemon-ssl-cert.sync-to-local-cluster" in-pcs="1" in-pcsd="0">
+      <description>
+        Push the daemon's SSL certificate from the local host to all nodes in
+        the local cluster.
+      </description>
+    </capability>
+
+
+
+    <capability id="resource-agents.describe" in-pcs="1" in-pcsd="1">
+      <description>
+        Describe a resource agent - present its metadata.
+
+        pcs commands: resource describe
+        daemon urls: get_resource_agent_metadata
+      </description>
+    </capability>
+    <capability id="resource-agents.list" in-pcs="1" in-pcsd="1">
+      <description>
+        List resource agents available on the local host.
+
+        pcs commands: resource list
+        daemon urls: get_avail_resource_agents
+      </description>
+    </capability>
+    <capability id="resource-agents.list.detailed" in-pcs="1" in-pcsd="0">
+      <description>
+        List resource agents available on the local host including their
+        description, list available standards and providers, filter agents by
+        name.
+
+        pcs commands: resource list, resource standards, resource providers,
+          resource agents
+      </description>
+    </capability>
+    <capability id="stonith-agents.describe" in-pcs="1" in-pcsd="1">
+      <description>
+        Describe a stonith agent - present its metadata.
+
+        pcs commands: stonith describe
+        daemon urls: get_fence_agent_metadata
+      </description>
+    </capability>
+    <capability id="stonith-agents.list" in-pcs="1" in-pcsd="1">
+      <description>
+        List stonith agents available on the local host.
+
+        pcs commands: stonith list
+        daemon urls: get_avail_fence_agents
+      </description>
+    </capability>
+    <capability id="stonith-agents.list.detailed" in-pcs="1" in-pcsd="0">
+      <description>
+        List stonith agents available on the local host including their
+        description, filter agents by name.
+
+        pcs commands: stonith list
+      </description>
+    </capability>
+
+
+
+    <capability id="sbd" in-pcs="1" in-pcsd="1">
+      <description>
+        Enable and disable SBD in the local cluster, show cluster SBD
+        configuration and status. Can set SBD with a watchdog.
+
+        pcs commands: stonith sbd ( enable | disable ), stonith sbd status,
+          stonith sbd config
+        daemon urls: remote_enable_sbd, remote_disable_sbd
+      </description>
+    </capability>
+    <capability id="sbd.shared-block-device" in-pcs="1" in-pcsd="0">
+      <description>
+        Support SBD with shared block devices:
+        * setup a device
+        * set a device message
+        * optionally use up to 3 devices when enabling SBD in a cluster
+
+        pcs commands: stonith sbd device ( setup | message ), stonith sbd enable
+      </description>
+    </capability>
+    <capability id="sbd-node" in-pcs="0" in-pcsd="1">
+      <description>
+        Configure SBD on the node level:
+        * check if node can run SBD
+        * set and get SBD config
+        * set stonith watchdog timeout
+        * enable and disable SBD service
+
+        daemon urls: check_sbd, set_sbd_config, get_sbd_config,
+          set_stonith_watchdog_timeout_to_zero, remove_stonith_watchdog_timeout,
+          sbd_enable, sbd_disable
+      </description>
+    </capability>
+    <capability id="sbd-node.shared-block-device" in-pcs="0" in-pcsd="1">
+      <description>
+        Configure SBD on the node level with shared block devices:
+        * check if node can run SBD and has access to the specified SBD devices
+
+        daemon urls: check_sbd
+      </description>
+    </capability>
+
+
+
+    <capability id="status.corosync.membership" in-pcs="1" in-pcsd="0">
+      <description>
+        Show corosync membership on a node.
+
+        pcs commands: status corosync
+      </description>
+    </capability>
+    <capability id="status.pcmk.local-node" in-pcs="0" in-pcsd="1">
+      <description>
+        Show status pacemaker status of the local node.
+
+        daemon urls:pacemaker_node_status
+      </description>
+    </capability>
+    <capability id="status.pcmk.resources.hide-inactive" in-pcs="1" in-pcsd="0">
+      <description>
+        Can hide inactive resources when showing resource status.
+
+        pcs commands: status resources --hide-inactive
+      </description>
+    </capability>
+    <capability id="status.pcmk.resources.orphaned" in-pcs="1" in-pcsd="0">
+      <description>
+        Display orphaned resources when showing resource status.
+
+        pcs commands: status resources
+      </description>
+    </capability>
+    <capability id="status.pcmk.xml" in-pcs="1" in-pcsd="0">
+      <description>
+        Display pacemaker status in XML format.
+
+        pcs commands: status xml
+      </description>
+    </capability>
+  </capability-list>
+</pcs-capabilities>

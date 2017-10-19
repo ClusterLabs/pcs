@@ -23,6 +23,7 @@ require 'pcsd_exchange_format.rb'
 # Commands for remote access
 def remote(params, request, auth_user)
   remote_cmd_without_pacemaker = {
+      :capabilities => method(:capabilities),
       :status => method(:node_status),
       :status_all => method(:status_all),
       :cluster_status => method(:cluster_status_remote),
@@ -157,6 +158,12 @@ def remote(params, request, auth_user)
   rescue NotImplementedException => e
     return [501, "#{e}"]
   end
+end
+
+def capabilities(params, request, auth_user)
+  return JSON.generate({
+    :pcsd_capabilities => CAPABILITIES_PCSD,
+  })
 end
 
 # provides remote cluster status to a local gui

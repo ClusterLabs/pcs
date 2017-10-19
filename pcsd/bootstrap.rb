@@ -34,10 +34,14 @@ def is_systemctl()
   return false
 end
 
-def get_pcs_path()
-  pcsd_path = Pathname.new(
+def get_pcsd_path()
+  return Pathname.new(
       File.expand_path(File.dirname(__FILE__))
-    ).realpath.to_s
+    ).realpath
+end
+
+def get_pcs_path()
+  pcsd_path = get_pcsd_path().to_s
   if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
     return PCS_EXEC
   else

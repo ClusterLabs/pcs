@@ -29,7 +29,11 @@ from pcs import (
     alert,
 )
 
-from pcs.cli.common import completion, parse_args
+from pcs.cli.common import (
+    capabilities,
+    completion,
+    parse_args,
+)
 
 
 logging.basicConfig()
@@ -75,6 +79,13 @@ def main(argv=None):
         usage.main()
         sys.exit(1)
     argv = parse_args.filter_out_options(argv)
+
+    full = False
+    for option, dummy_value in pcs_options:
+        if option == "--full":
+            full = True
+            break
+
     for o, a in pcs_options:
         if not o in utils.pcs_options:
             if o in ["--watchdog", "--device"]:
@@ -104,6 +115,13 @@ def main(argv=None):
             settings.cluster_conf_file = a
         elif o == "--version":
             print(settings.pcs_version)
+            if full:
+                print(" ".join(
+                    sorted([
+                        feat["id"]
+                        for feat in capabilities.get_pcs_capabilities()
+                    ])
+                ))
             sys.exit()
         elif o == "--fullhelp":
             usage.full_usage()
