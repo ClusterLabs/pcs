@@ -13,9 +13,10 @@
   attribute is set to the same value that it already has
   ([rhbz#1502715], [ghissue#145])
 - Listing and describing resource and stonith agents no longer crashes when
-  agents' metadata contain non-ascii characters ([rhbz#1503110])
+  agents' metadata contain non-ascii characters ([rhbz#1503110], [ghissue#151])
 
 [ghissue#145]: https://github.com/ClusterLabs/pcs/issues/145
+[ghissue#151]: https://github.com/ClusterLabs/pcs/issues/151
 [rhbz#1230919]: https://bugzilla.redhat.com/show_bug.cgi?id=1230919
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1501274]: https://bugzilla.redhat.com/show_bug.cgi?id=1501274
