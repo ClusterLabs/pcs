@@ -398,7 +398,7 @@ class DescribeAgentUtf8(TestCase):
             {
                 "name": name,
                 "shortdesc": u"Example stateless resource agent: ®",
-                "longdesc": u"This is a Dummy Resource Agent fot testing utf-8"
+                "longdesc": u"This is a Dummy Resource Agent for testing utf-8"
                     u" in metadata: ®"
                 ,
                 "parameters": [

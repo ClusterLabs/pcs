@@ -4,7 +4,7 @@
   shortdesc="Example stateless resource agent: ®"
 >
 <longdesc lang="en">
-This is a Dummy Resource Agent fot testing utf-8 in metadata: ®
+This is a Dummy Resource Agent for testing utf-8 in metadata: ®
 </longdesc>
 <version>1.0</version>
 
