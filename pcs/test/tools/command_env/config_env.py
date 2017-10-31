@@ -5,6 +5,9 @@ from __future__ import (
 )
 
 from pcs.test.tools.command_env.mock_push_cib import Call as PushCibCall
+from pcs.test.tools.command_env.mock_push_corosync_conf import (
+    Call as PushCorosyncConfCall,
+)
 from pcs.test.tools.fixture_cib import modify_cib
 
 
@@ -81,4 +84,15 @@ class EnvConfig(object):
                 custom_cib, custom_cib=True, wait=wait, exception=exception
             ),
             instead=instead
+        )
+
+    def push_corosync_conf(
+        self, name="env.push_corosync_conf", corosync_conf_text="",
+        skip_offline_targets=False, before=None, instead=None
+    ):
+        self.__calls.place(
+            name,
+            PushCorosyncConfCall(corosync_conf_text, skip_offline_targets),
+            instead=instead,
+            before=before
         )

@@ -29,15 +29,15 @@ def get_push_cib(call_queue):
         if custom_cib is None and expected_call.custom_cib:
             raise AssertionError(
                 (
-                    "Trying to call push cib (call no. {0}) without custom cib,"
-                    " but a custom cib was expected"
+                    "Trying to call env.push_cib (call no. {0}) without "
+                    "a custom cib but a custom cib was expected"
                 ).format(i)
             )
         if custom_cib is not None and not expected_call.custom_cib:
             raise AssertionError(
                 (
-                    "Trying to call push cib (call no. {0}) with custom cib,"
-                    " but no custom cib was expected"
+                    "Trying to call env.push_cib (call no. {0}) with a custom "
+                    "cib but no custom cib was expected"
                 ).format(i)
             )
 
@@ -45,7 +45,7 @@ def get_push_cib(call_queue):
             expected_call.cib_xml,
             etree_to_str(lib_env.cib),
             (
-                "Trying to call env.push cib (call no. {0}) but cib in env does"
+                "Trying to call env.push_cib (call no. {0}) but cib in env does"
                 " not match\n\n"
             ).format(i)
         )
@@ -53,8 +53,8 @@ def get_push_cib(call_queue):
         if wait != expected_call.wait:
             raise AssertionError(
                 (
-                    "Trying to call push cib (call no. {0}) with 'wait' == {1}"
-                    " but expected was 'wait' == {2}"
+                    "Trying to call env.push_cib (call no. {0}) with 'wait' == "
+                    "{1} but it was expected 'wait' == {2}"
                 ).format(i, wait, expected_call.wait)
             )
 

@@ -8,12 +8,16 @@ import logging
 from functools import partial
 
 from pcs.lib.env import LibraryEnvironment
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import assert_raise_library_error, prepare_diff
 from pcs.test.tools.command_env.calls import Queue as CallQueue
 from pcs.test.tools.command_env.config import Config
 from pcs.test.tools.command_env.mock_push_cib import(
     get_push_cib,
     is_push_cib_call_in,
+)
+from pcs.test.tools.command_env.mock_push_corosync_conf import(
+    get_push_corosync_conf,
+    is_push_corosync_conf_call_in,
 )
 from pcs.test.tools.command_env.mock_runner import Runner
 from pcs.test.tools.command_env.mock_get_local_corosync_conf import(
@@ -34,11 +38,14 @@ def patch_env(call_queue, config, init_env):
     #by accident. Such test would fails on different machine (with another live
     #environment)
 
+    get_cmd_runner = init_env.cmd_runner
+    get_node_communicator = init_env.get_node_communicator
+
     patcher_list = [
         patch_lib_env(
             "cmd_runner",
             lambda env:
-            spy.Runner(init_env.cmd_runner()) if config.spy else Runner(
+            spy.Runner(get_cmd_runner()) if config.spy else Runner(
                 call_queue,
                 env_vars={} if not config.env.cib_tempfile else {
                     "CIB_file": config.env.cib_tempfile,
@@ -56,16 +63,23 @@ def patch_env(call_queue, config, init_env):
             "get_node_communicator",
             lambda env:
                 NodeCommunicator(call_queue) if not config.spy
-                else spy.NodeCommunicator(init_env.get_node_communicator())
+                else spy.NodeCommunicator(get_node_communicator())
         )
     ]
 
-    #It is not always desirable to patch the method push_cib. Some tests can
-    #patch only the internals (runner...). So push_cib is patched only when it
-    #is explicitly configured
+    # It is not always desirable to patch these methods. Some tests may patch
+    # only the internals (runner etc.). So these methods are only patched when
+    # it is explicitly configured.
     if is_push_cib_call_in(call_queue):
         patcher_list.append(
             patch_lib_env("push_cib", get_push_cib(call_queue))
+        )
+    if is_push_corosync_conf_call_in(call_queue):
+        patcher_list.append(
+            patch_lib_env(
+                "push_corosync_conf",
+                get_push_corosync_conf(call_queue)
+            )
         )
 
     for patcher in patcher_list:
@@ -96,6 +110,7 @@ class EnvAssistant(object):
         )
 
         self.__unpatch = None
+        self.__original_mocked_corosync_conf = None
 
         if test_case:
             test_case.addCleanup(self.cleanup)
@@ -126,6 +141,29 @@ class EnvAssistant(object):
                         repr(call) for call in self.__call_queue.remaining
                     ]))
                 )
+            # If pushing corosync.conf has not been patched in the
+            # LibraryEnvironment and the LibraryEnvironment was constructed
+            # with a mocked corosync.conf, check if it was changed without the
+            # change being specified in a test.
+            # If no env.push_corosync_conf call has been specified, no mocking
+            # occurs, any changes to corosync.conf are done just in memory and
+            # nothing gets reported. So an explicit check is necessary.
+            corosync_conf_orig = self.__original_mocked_corosync_conf
+            corosync_conf_env = self._env._corosync_conf_data
+            if (
+                corosync_conf_orig
+                and
+                corosync_conf_orig != corosync_conf_env
+            ):
+                raise AssertionError(
+                    (
+                        "An unexpected change to corosync.conf in "
+                        "LibraryEnvironment has been detected:\n{0}"
+                    ).format(
+                        prepare_diff(corosync_conf_orig, corosync_conf_env)
+                    )
+                )
+
 
     def get_env(self):
         self.__call_queue = CallQueue(self.__config.calls)
@@ -143,6 +181,13 @@ class EnvAssistant(object):
             )
         )
         self.__unpatch = patch_env(self.__call_queue, self.__config, self._env)
+        # If pushing corosync.conf has not been patched in the
+        # LibraryEnvironment, store any corosync.conf passed to the
+        # LibraryEnvironment for check for changes in cleanup.
+        if not is_push_corosync_conf_call_in(self.__call_queue):
+            self.__original_mocked_corosync_conf = (
+                self.__config.env.corosync_conf_data
+            )
         return self._env
 
     def assert_reports(self, reports):

@@ -11,7 +11,7 @@ from pcs.test.tools.command_env.config_runner import RunnerConfig
 from pcs.test.tools.command_env.config_http import HttpConfig
 
 class Spy(object):
-    def __init__(self, auth_tokens=None, ports=None):
+    def __init__(self, auth_tokens, ports=None):
         self.auth_tokens = auth_tokens
         self.ports = ports
 

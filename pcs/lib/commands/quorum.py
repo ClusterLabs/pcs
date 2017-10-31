@@ -333,4 +333,3 @@ def set_expected_votes_live(lib_env, expected_votes):
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
         raise LibraryError(reports.cman_unsupported_command())
-

@@ -9,12 +9,12 @@ import os
 import os.path
 import re
 import shutil
-import tempfile
 
 from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import external, reports
 from pcs.lib.errors import LibraryError
+from pcs.lib.tools import write_tmpfile
 
 
 __model = "net"
@@ -329,10 +329,7 @@ def client_import_certificate_and_key(runner, pk12_certificate):
 
 def _store_to_tmpfile(data, report_func):
     try:
-        tmpfile = tempfile.NamedTemporaryFile(mode="wb", suffix=".pcs")
-        tmpfile.write(data)
-        tmpfile.flush()
-        return tmpfile
+        return write_tmpfile(data, binary=True)
     except EnvironmentError as e:
         raise LibraryError(report_func(e.strerror))
 
