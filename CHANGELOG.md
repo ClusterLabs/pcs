@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.161] - 2017-11-02
 
 ### Added
 - List of pcs and pcsd capabilities ([rhbz#1230919])
