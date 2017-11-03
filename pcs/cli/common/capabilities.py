@@ -8,9 +8,9 @@ from lxml import etree
 import os.path
 from textwrap import dedent
 
+from pcs import settings
 from pcs.cli.common.console_report import error
 from pcs.common.tools import xml_fromstring
-from pcs.utils import get_pcsd_dir
 
 
 def get_capabilities_definition():
@@ -19,7 +19,7 @@ def get_capabilities_definition():
 
     The point is to return all data in python structures for further processing.
     """
-    filename = os.path.join(get_pcsd_dir(), "capabilities.xml")
+    filename = os.path.join(settings.pcsd_exec_location, "capabilities.xml")
     try:
         with open(filename, mode="r") as file_:
             capabilities_xml = xml_fromstring(file_.read())

@@ -10,7 +10,7 @@ from pcs.test.tools.pcs_unittest import mock, TestCase
 from pcs.cli.common import capabilities
 
 
-@mock.patch("pcs.cli.common.capabilities.get_pcsd_dir", lambda: rc(""))
+@mock.patch("pcs.settings.pcsd_exec_location", rc(""))
 class Capabilities(TestCase):
     def test_get_definition(self):
         self.assertEqual(

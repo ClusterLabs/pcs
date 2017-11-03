@@ -1048,13 +1048,6 @@ def cmd_runner():
         env_vars
     )
 
-def get_pcsd_dir():
-    pcs_dir = os.path.realpath(os.path.dirname(sys.argv[0]))
-    if pcs_dir == "/usr/sbin":
-        return settings.pcsd_exec_location
-    else:
-        return os.path.join(pcs_dir, '../pcsd')
-
 def run_pcsdcli(command, data=None):
     if not data:
         data = dict()
@@ -1065,7 +1058,7 @@ def run_pcsdcli(command, data=None):
         env_var["PCSD_NETWORK_TIMEOUT"] = str(pcs_options["--request-timeout"])
     else:
         env_var["PCSD_NETWORK_TIMEOUT"] = str(settings.default_request_timeout)
-    pcsd_dir_path = get_pcsd_dir()
+    pcsd_dir_path = settings.pcsd_exec_location
     pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
     gem_home = os.path.join(pcsd_dir_path, 'vendor/bundle/ruby')
     env_var["GEM_HOME"] = gem_home
