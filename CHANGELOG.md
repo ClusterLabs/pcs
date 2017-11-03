@@ -9,7 +9,7 @@
 - Fixed `pcs cluster auth` when already authenticated and using different port
   ([rhbz#1415197])
 - It is now possible to restart a bundle resource on one node ([rhbz#1501274])
-- `resurce update` no longer exits with an error when the `remote-node` meta
+- `resource update` no longer exits with an error when the `remote-node` meta
   attribute is set to the same value that it already has
   ([rhbz#1502715], [ghissue#145])
 - Listing and describing resource and stonith agents no longer crashes when

@@ -253,12 +253,12 @@ class AreDuplicatePlain(TestCase):
     def setUp(self):
         self.first = Element({
             "ticket": "ticket_key",
-            "rsc": "resurceA",
+            "rsc": "resourceA",
             "rsc-role": "Master"
         })
         self.second = Element({
             "ticket": "ticket_key",
-            "rsc": "resurceA",
+            "rsc": "resourceA",
             "rsc-role": "Master"
         })
 

@@ -436,7 +436,7 @@ function verify_remove_nodes(node_id) {
 function verify_remove_resources(resource_id) {
   verify_remove(
     remove_resource, true, "resource_list", "dialog_verify_remove_resources",
-    "resource", "Remove resource(s)", "Resurce Removal", resource_id
+    "resource", "Remove resource(s)", "Resource Removal", resource_id
   );
 }
 

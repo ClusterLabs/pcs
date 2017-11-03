@@ -19,7 +19,7 @@ from pcs.test.tools.pcs_unittest import mock
 
 
 class PrepareSetTest(TestCase):
-    def test_return_corrected_resurce_set(self):
+    def test_return_corrected_resource_set(self):
         find_valid_id = mock.Mock()
         find_valid_id.side_effect = lambda id: {"A": "AA", "B": "BB"}[id]
         self.assertEqual(
