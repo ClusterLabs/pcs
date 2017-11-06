@@ -5,9 +5,13 @@
 ### Fixed
 - Fixed crash when loading a huge xml ([rhbz#1506864])
 - Fixed adding an existing cluster into the GUI ([rhbz#1415197])
+- False warnings about failed actions when resource is master/unmaster from the
+  web UI ([rhbz#1506220])
 
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
+[rhbz#1506220]: https://bugzilla.redhat.com/show_bug.cgi?id=1506220
 [rhbz#1506864]: https://bugzilla.redhat.com/show_bug.cgi?id=1506864
+
 
 ## [0.9.161] - 2017-11-02
 

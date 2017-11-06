@@ -567,7 +567,9 @@ module ClusterEntity
           # 7 == OCF_NOT_RUNNING == The resource is safely stopped.
           next if o.operation == 'monitor' and o.rc_code == 7
           # 8 == OCF_RUNNING_MASTER == The resource is running in master mode.
-          next if 8 == o.rc_code
+          # 193 == PCMK_OCF_UNKNOWN => The resource operation is still in
+          # progress.
+          next if [8, 193].include?(o.rc_code)
           failed_ops << o
           message = "Failed to #{o.operation} #{@id}"
           message += " on #{Time.at(o.last_rc_change).asctime}"
