@@ -355,9 +355,13 @@ class ConfigFacade(object):
                 "model",
                 model,
                 allowed_values,
-                ReportItemSeverity.WARNING if force_model
-                    else ReportItemSeverity.ERROR,
-                None if force_model else report_codes.FORCE_QDEVICE_MODEL
+                severity=(
+                    ReportItemSeverity.WARNING if force_model
+                    else ReportItemSeverity.ERROR
+                ),
+                forceable=(
+                    None if force_model else report_codes.FORCE_QDEVICE_MODEL
+                )
             ))
 
         return report_items
@@ -369,7 +373,7 @@ class ConfigFacade(object):
             return self.__validate_quorum_device_model_net_options(
                 model_options,
                 need_required,
-                force
+                force=force
             )
         return []
 
@@ -401,8 +405,8 @@ class ConfigFacade(object):
                     [name],
                     allowed_options,
                     "quorum device model",
-                    severity,
-                    forceable
+                    severity=severity,
+                    forceable=forceable
                 ))
                 continue
 
@@ -417,7 +421,11 @@ class ConfigFacade(object):
                 allowed_values = ("ffsplit", "lms")
                 if value not in allowed_values:
                     report_items.append(reports.invalid_option_value(
-                        name, value, allowed_values, severity, forceable
+                        name,
+                        value,
+                        allowed_values,
+                        severity=severity,
+                        forceable=forceable
                     ))
 
             if name == "connect_timeout":
@@ -425,14 +433,22 @@ class ConfigFacade(object):
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
                     report_items.append(reports.invalid_option_value(
-                        name, value, min_max, severity, forceable
+                        name,
+                        value,
+                        min_max,
+                        severity=severity,
+                        forceable=forceable
                     ))
 
             if name == "force_ip_version":
                 allowed_values = ("0", "4", "6")
                 if value not in allowed_values:
                     report_items.append(reports.invalid_option_value(
-                        name, value, allowed_values, severity, forceable
+                        name,
+                        value,
+                        allowed_values,
+                        severity=severity,
+                        forceable=forceable
                     ))
 
             if name == "port":
@@ -440,7 +456,11 @@ class ConfigFacade(object):
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
                     report_items.append(reports.invalid_option_value(
-                        name, value, min_max, severity, forceable
+                        name,
+                        value,
+                        min_max,
+                        severity=severity,
+                        forceable=forceable
                     ))
 
             if name == "tie_breaker":
@@ -449,7 +469,11 @@ class ConfigFacade(object):
                 if value not in allowed_nonid + node_ids:
                     allowed_values = allowed_nonid + ["valid node id"]
                     report_items.append(reports.invalid_option_value(
-                        name, value, allowed_values, severity, forceable
+                        name,
+                        value,
+                        allowed_values,
+                        severity=severity,
+                        forceable=forceable
                     ))
 
         if missing_options:
@@ -481,8 +505,11 @@ class ConfigFacade(object):
                     [name],
                     allowed_options,
                     "quorum device",
-                    severity if name != "model" else ReportItemSeverity.ERROR,
-                    forceable if name != "model" else None
+                    severity=(
+                        severity if name != "model"
+                        else ReportItemSeverity.ERROR
+                    ),
+                    forceable=(forceable if name != "model" else None)
                 ))
                 continue
 
@@ -491,7 +518,11 @@ class ConfigFacade(object):
 
             if not value.isdigit():
                 report_items.append(reports.invalid_option_value(
-                    name, value, "positive integer", severity, forceable
+                    name,
+                    value,
+                    "positive integer",
+                    severity=severity,
+                    forceable=forceable
                 ))
 
         return report_items

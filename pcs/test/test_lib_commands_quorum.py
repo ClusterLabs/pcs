@@ -413,6 +413,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
                         "last_man_standing_window",
                         "wait_for_all",
                     ],
+                    "allowed_patterns": [],
                 }
             )
         )
@@ -971,7 +972,8 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["bad_option"],
                     option_type="quorum device",
-                    allowed=["sync_timeout", "timeout"]
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[]
                 ),
             ]
         )
@@ -1032,6 +1034,7 @@ class AddDeviceNetTest(TestCase):
                 option_names=["bad_option"],
                 option_type="quorum device",
                 allowed=["sync_timeout", "timeout"],
+                allowed_patterns=[]
             ),
             fixture.info(report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED),
         ] + [
@@ -1982,6 +1985,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     "option_names": ["bad_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             )
@@ -2013,6 +2017,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                         "option_names": ["bad_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
                     }
                 )
             ]

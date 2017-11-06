@@ -74,6 +74,7 @@ class PrepareOptionsPlainTest(TestCase):
                     "option_names": ["unknown"],
                     "option_type": None,
                     "allowed": ["id", "loss-policy", "rsc", "rsc-role", "ticket"],
+                    "allowed_patterns": [],
                 }
             ),
         )

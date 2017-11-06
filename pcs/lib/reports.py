@@ -219,18 +219,19 @@ def required_option_of_alternatives_is_missing(
     )
 
 def invalid_option(
-    option_names, allowed_options, option_type,
+    option_names, allowed_options, option_type, allowed_option_patterns=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    specified option name is not valid, usualy an error or a warning
-    list option_names specified invalid option names
-    allowed_options iterable of possible allowed option names
-    option_type decsribes the option
-    severity report item severity
-    forceable is this report item forceable? by what cathegory?
-    """
+    specified option names are not valid, usualy an error or a warning
 
+    list option_names -- specified invalid option names
+    list allowed_options -- possible allowed option names
+    string option_type -- describes the option
+    list allowed_option_patterns -- allowed user defind options patterns
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what cathegory?
+    """
     return ReportItem(
         report_codes.INVALID_OPTION,
         severity,
@@ -239,6 +240,7 @@ def invalid_option(
             "option_names": option_names,
             "option_type": option_type,
             "allowed": sorted(allowed_options),
+            "allowed_patterns": sorted(allowed_option_patterns or []),
         }
     )
 

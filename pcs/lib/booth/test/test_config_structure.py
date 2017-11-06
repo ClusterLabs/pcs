@@ -61,6 +61,7 @@ class ValidateTicketOptionsTest(TestCase):
                     "option_names": ["site"],
                     "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed_patterns": [],
                 },
             ),
             (
@@ -70,6 +71,7 @@ class ValidateTicketOptionsTest(TestCase):
                     "option_names": ["port"],
                     "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed_patterns": [],
                 },
             ),
             (
@@ -88,6 +90,7 @@ class ValidateTicketOptionsTest(TestCase):
                     "option_names": ["unknown"],
                     "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -120,6 +123,7 @@ class ValidateTicketOptionsTest(TestCase):
                     "option_names": ["site"],
                     "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed_patterns": [],
                 },
             ),
         ]
@@ -143,6 +147,7 @@ class ValidateTicketOptionsTest(TestCase):
                         "option_names": ["unknown"],
                         "option_type": "booth ticket",
                         "allowed": list(config_structure.TICKET_KEYS),
+                        "allowed_patterns": [],
                     },
                 ),
             ]

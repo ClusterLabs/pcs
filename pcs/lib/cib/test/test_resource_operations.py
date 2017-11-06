@@ -273,6 +273,7 @@ class ValidateOperation(TestCase):
                         "option_names": ["unknown"],
                         "option_type": "resource operation",
                         "allowed": sorted(operations.ATTRIBUTES),
+                        "allowed_patterns": [],
                     },
                     None
                 ),

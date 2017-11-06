@@ -145,6 +145,7 @@ class ValidateOptions(TestCase):
                         "option_type": "guest",
                         "option_names": ["invalid"],
                         "allowed": sorted(guest_node.GUEST_OPTIONS),
+                        "allowed_patterns": [],
                     },
                     None
                 ),

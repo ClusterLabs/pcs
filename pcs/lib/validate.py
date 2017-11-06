@@ -200,7 +200,8 @@ def mutually_exclusive(mutually_exclusive_names, option_type="option"):
 
 def names_in(
     allowed_name_list, name_list, option_type="option",
-    code_to_allow_extra_names=None, allow_extra_names=False
+    code_to_allow_extra_names=None, allow_extra_names=False,
+    allowed_option_patterns=None
 ):
     """
     Return a list with report INVALID_OPTION when in name_list is a name that is
@@ -215,6 +216,7 @@ def names_in(
     bool allow_extra_names is flag that complements code_to_allow_extra_names
         and determines wheter is report INVALID_OPTION forceable error or
         warning.
+    mixed allowed_option_patterns -- option patterns to be added to a report
     """
     invalid_names = set(name_list) - set(allowed_name_list)
     if not invalid_names:
@@ -229,6 +231,7 @@ def names_in(
         sorted(invalid_names),
         sorted(allowed_name_list),
         option_type,
+        allowed_option_patterns=sorted(allowed_option_patterns or [])
     )]
 
 ### values validators

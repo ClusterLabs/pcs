@@ -93,6 +93,7 @@ class PrepareOptionsWithSetTest(TestCase):
                         "score-attribute",
                         "score-attribute-mangle",
                     ],
+                    "allowed_patterns": [],
                 }
             ),
         )

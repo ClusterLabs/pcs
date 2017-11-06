@@ -279,6 +279,7 @@ class Validate(TestCase):
                         'option_type': 'resource',
                         'option_names': ['server'],
                         'allowed': [],
+                        "allowed_patterns": [],
                     },
                     None
                 )

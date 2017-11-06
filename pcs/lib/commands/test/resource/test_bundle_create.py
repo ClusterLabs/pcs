@@ -254,6 +254,7 @@ class CreateDocker(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "container",
                         "allowed": self.allowed_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -286,6 +287,7 @@ class CreateDocker(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "container",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 None
             ),
@@ -379,6 +381,7 @@ class CreateWithNetwork(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -426,6 +429,7 @@ class CreateWithNetwork(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "network",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 None
             ),
@@ -625,6 +629,7 @@ class CreateWithPortMap(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "port-map",
                         "allowed": self.allowed_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -681,6 +686,7 @@ class CreateWithPortMap(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "port-map",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 None
             ),
@@ -856,6 +862,7 @@ class CreateWithStorageMap(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "storage-map",
                         "allowed": self.allowed_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -905,6 +912,7 @@ class CreateWithStorageMap(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "storage-map",
                         "allowed": self.allowed_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),

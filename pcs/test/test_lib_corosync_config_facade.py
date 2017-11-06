@@ -587,6 +587,7 @@ quorum {
                         "last_man_standing_window",
                         "wait_for_all"
                     ],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -601,6 +602,7 @@ quorum {
                         "last_man_standing_window",
                         "wait_for_all"
                     ],
+                    "allowed_patterns": [],
                 }
             )
         )
@@ -1260,6 +1262,7 @@ quorum {
                         "port",
                         "tie_breaker",
                     ],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1315,6 +1318,7 @@ quorum {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1325,6 +1329,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -1468,6 +1473,7 @@ quorum {
                             "port",
                             "tie_breaker",
                         ],
+                        "allowed_patterns": [],
                     }
                 ),
                 (
@@ -1513,6 +1519,7 @@ quorum {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
                     }
                 ),
                 (
@@ -1768,6 +1775,7 @@ quorum {
                         "port",
                         "tie_breaker",
                     ],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1877,6 +1885,7 @@ quorum {
                             "port",
                             "tie_breaker",
                         ],
+                        "allowed_patterns": [],
                     },
                 ),
                 (
@@ -1986,6 +1995,7 @@ quorum {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1996,6 +2006,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -2043,6 +2054,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             )
         )
@@ -2089,6 +2101,7 @@ quorum {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
                     },
                 ),
                 (

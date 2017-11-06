@@ -222,6 +222,7 @@ class PrepareOptionsTest(TestCase):
                     "option_names": ["b"],
                     "option_type": None,
                     "allowed": ["a", "id"],
+                    "allowed_patterns": [],
                 }
             ),
         )

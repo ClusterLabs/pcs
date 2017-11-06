@@ -1338,7 +1338,8 @@ class AgentMetadataValidateParameters(TestCase):
                             "another_required_param",
                             "required_param",
                             "test_param",
-                        ]
+                        ],
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -1445,7 +1446,8 @@ class AgentMetadataValidateParameters(TestCase):
                         "option_type": "resource",
                         "allowed": [
                             "deprecated",
-                        ]
+                        ],
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),

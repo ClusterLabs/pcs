@@ -131,6 +131,32 @@ def resource_running_on_nodes(info):
         ]))
     )
 
+def invalid_option(info):
+    template = "invalid {desc}option{plural_options} {option_names_list},"
+    if not info["allowed"] and not info["allowed_patterns"]:
+        template += " there are no options allowed"
+    elif not info["allowed_patterns"]:
+        template += " allowed option{plural_allowed} {allowed_values}"
+    elif not info["allowed"]:
+        template += (
+            " allowed are options matching patterns: {allowed_patterns_values}"
+        )
+    else:
+        template += (
+            " allowed option{plural_allowed} {allowed_values}"
+            " and"
+            " options matching patterns: {allowed_patterns_values}"
+        )
+    return template.format(
+        desc=format_optional(info["option_type"], "{0} "),
+        allowed_values=", ".join(sorted(info["allowed"])),
+        allowed_patterns_values=", ".join(sorted(info["allowed_patterns"])),
+        option_names_list=joined_list(info["option_names"]),
+        plural_options=("s:" if len(info["option_names"]) > 1 else ""),
+        plural_allowed=("s are:" if len(info["allowed"]) > 1 else " is"),
+        **info
+    )
+
 def build_node_description(node_types):
     if not node_types:
         return  "Node"
@@ -201,23 +227,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.INVALID_OPTION: lambda info:
-        (
-            "invalid {desc}option{s} {option_names_list},"
-            +
-            (
-                " allowed option{are} {allowed_values}" if info["allowed"]
-                else " there are no options allowed"
-            )
-        ).format(
-            desc=format_optional(info["option_type"], "{0} "),
-            allowed_values=", ".join(sorted(info["allowed"])),
-            option_names_list=joined_list(info["option_names"]),
-            s=("s:" if len(info["option_names"]) > 1 else ""),
-            are=("s are:" if len(info["allowed"]) > 1 else " is"),
-            **info
-        )
-    ,
+    codes.INVALID_OPTION: invalid_option,
 
     codes.INVALID_OPTION_VALUE: lambda info:
         #value on key "allowed_values" is overloaded:

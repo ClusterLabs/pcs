@@ -54,6 +54,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
                 "allowed": ["SECOND", "FIRST"],
+                "allowed_patterns": [],
             }
         )
 
@@ -64,6 +65,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME"],
                 "option_type": "",
                 "allowed": ["FIRST", "SECOND"],
+                "allowed_patterns": [],
             }
         )
 
@@ -74,6 +76,35 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
                 "allowed": ["FIRST"],
+                "allowed_patterns": [],
+            }
+        )
+
+    def test_pattern(self):
+        self.assert_message_from_info(
+            (
+                "invalid option 'NAME', allowed are options matching patterns: "
+                "exec_<name>"
+            ),
+            {
+                "option_names": ["NAME"],
+                "option_type": "",
+                "allowed": [],
+                "allowed_patterns": ["exec_<name>"],
+            }
+        )
+
+    def test_allowed_and_patterns(self):
+        self.assert_message_from_info(
+            (
+                "invalid option 'NAME', allowed option is FIRST and options "
+                "matching patterns: exec_<name>"
+            ),
+            {
+                "option_names": ["NAME"],
+                "option_type": "",
+                "allowed": ["FIRST"],
+                "allowed_patterns": ["exec_<name>"],
             }
         )
 
@@ -84,6 +115,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
                 "allowed": [],
+                "allowed_patterns": [],
             }
         )
 
