@@ -672,7 +672,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
     ports = {}
     node_list.each { |node|
-      ports[node] = (params["port-#{node}"] || '').strip
+      port = (params["port-#{node}"] || '').strip
+      ports[node] = port != '' ? port : nil
     }
     node_results = {}
     online, offline, notauthorized = check_gui_status_of_nodes(
