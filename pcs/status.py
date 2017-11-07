@@ -14,6 +14,7 @@ from pcs import (
 )
 from pcs.qdevice import qdevice_status_cmd
 from pcs.quorum import quorum_status_cmd
+from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
@@ -102,6 +103,15 @@ def full_status():
         print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
 
     print(output)
+
+    if "--full" in utils.pcs_options:
+        tickets, retval = utils.run(["crm_ticket", "-L"])
+        if retval != 0:
+            print("WARNING: Unable to get information about tickets")
+            print()
+        elif tickets:
+            print("Tickets:")
+            print("\n".join(indent(tickets.split("\n"))))
 
     if not utils.usefile:
         if  "--full" in utils.pcs_options and utils.hasCorosyncConf():
