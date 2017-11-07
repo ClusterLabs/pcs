@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Fixed crash when loading a huge xml ([rhbz#1506864])
+
+[rhbz#1506864]: https://bugzilla.redhat.com/show_bug.cgi?id=1506864
+
 ## [0.9.161] - 2017-11-02
 
 ### Added
