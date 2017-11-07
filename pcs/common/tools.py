@@ -72,4 +72,9 @@ def xml_fromstring(xml):
     # So we encode the string to bytes.
     # In python2 we cannot do that as it causes a UnicodeDecodeError if the xml
     # contains a non-ascii character.
-    return etree.fromstring(xml if _PYTHON2 else xml.encode("utf-8"))
+    return etree.fromstring(
+        xml if _PYTHON2 else xml.encode("utf-8"),
+        #it raises on a huge xml without the flag huge_tree=True
+        #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
+        etree.XMLParser(huge_tree=True)
+    )

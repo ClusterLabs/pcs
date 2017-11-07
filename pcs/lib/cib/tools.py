@@ -248,14 +248,19 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
     """
     version = cib.get("validate-with")
     if version is None:
-        raise LibraryError(reports.cib_load_error_invalid_format())
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            "the attribute 'validate-with' of the element 'cib' is missing"
+        ))
 
     regexp = re.compile(
         r"pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
     )
     match = regexp.match(version)
     if not match:
-        raise LibraryError(reports.cib_load_error_invalid_format())
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            "the attribute 'validate-with' of the element 'cib' has an invalid"
+            " value: '{0}'".format(version)
+        ))
     return (
         int(match.group("major")),
         int(match.group("minor")),

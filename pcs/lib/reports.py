@@ -1299,12 +1299,15 @@ def cib_load_error_scope_missing(scope, reason):
         }
     )
 
-def cib_load_error_invalid_format():
+def cib_load_error_invalid_format(reason):
     """
     cib does not conform to the schema
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+        info={
+            "reason": reason,
+        }
     )
 
 def cib_missing_mandatory_section(section_name):

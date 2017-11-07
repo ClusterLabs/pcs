@@ -412,7 +412,10 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-                {}
+                {
+                    "reason": "the attribute 'validate-with' of the element"
+                        " 'cib' is missing"
+                }
             )
         )
 
@@ -424,7 +427,10 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-                {}
+                {
+                    "reason": "the attribute 'validate-with' of the element"
+                        " 'cib' has an invalid value: 'something-1.2.3'"
+                }
             )
         )
 

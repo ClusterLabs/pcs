@@ -71,8 +71,8 @@ def parse_cib_xml(xml):
 def get_cib(xml):
     try:
         return parse_cib_xml(xml)
-    except (etree.XMLSyntaxError, etree.DocumentInvalid):
-        raise LibraryError(reports.cib_load_error_invalid_format())
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise LibraryError(reports.cib_load_error_invalid_format(str(e)))
 
 def verify(runner, verbose=False):
     crm_verify_cmd = [__exec("crm_verify")]

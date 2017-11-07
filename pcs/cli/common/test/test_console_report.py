@@ -1808,3 +1808,13 @@ class DefaultsCanBeOverriden(NameBuildTest):
             "Defaults do not apply to resources which override them with their "
             "own defined values"
         )
+
+class CibLoadErrorBadFormat(NameBuildTest):
+    code = codes.CIB_LOAD_ERROR_BAD_FORMAT
+    def test_message(self):
+        self.assert_message_from_info(
+            "unable to get cib, something wrong",
+            {
+                "reason": "something wrong"
+            }
+        )
