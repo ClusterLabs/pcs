@@ -28,11 +28,14 @@ def get_config(lib_env):
     cfg = lib_env.get_corosync_conf()
     device = None
     if cfg.has_quorum_device():
-        model, model_options, generic_options = cfg.get_quorum_device_settings()
+        model, model_options, generic_options, heuristics_options = (
+            cfg.get_quorum_device_settings()
+        )
         device = {
             "model": model,
             "model_options": model_options,
             "generic_options": generic_options,
+            "heuristics_options": heuristics_options,
         }
     return {
         "options": cfg.get_quorum_options(),
@@ -101,17 +104,19 @@ def status_device_text(lib_env, verbose=False):
     return qdevice_client.get_status_text(lib_env.cmd_runner(), verbose)
 
 def add_device(
-    lib_env, model, model_options, generic_options, force_model=False,
-    force_options=False, skip_offline_nodes=False
+    lib_env, model, model_options, generic_options, heuristics_options,
+    force_model=False, force_options=False, skip_offline_nodes=False
 ):
     """
-    Add quorum device to cluster, distribute and reload configs if live
-    model quorum device model
-    model_options model specific options dict
-    generic_options generic quorum device options dict
-    force_model continue even if the model is not valid
-    force_options continue even if options are not valid
-    skip_offline_nodes continue even if not all nodes are accessible
+    Add a quorum device to a cluster, distribute and reload configs if live
+
+    string model -- quorum device model
+    dict model_options -- model specific options
+    dict generic_options -- generic quorum device options
+    dict heuristics_options -- heuristics options
+    bool force_model -- continue even if the model is not valid
+    bool force_options -- continue even if options are not valid
+    bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
 
@@ -123,8 +128,9 @@ def add_device(
         model,
         model_options,
         generic_options,
-        force_model,
-        force_options
+        heuristics_options,
+        force_model=force_model,
+        force_options=force_options
     )
     target_list = lib_env.get_node_target_factory().get_target_list(
         cfg.get_nodes()
@@ -222,15 +228,17 @@ def _add_device_model_net(
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def update_device(
-    lib_env, model_options, generic_options, force_options=False,
-    skip_offline_nodes=False
+    lib_env, model_options, generic_options, heuristics_options,
+    force_options=False, skip_offline_nodes=False
 ):
     """
     Change quorum device settings, distribute and reload configs if live
-    model_options model specific options dict
-    generic_options generic quorum device options dict
-    force_options continue even if options are not valid
-    skip_offline_nodes continue even if not all nodes are accessible
+
+    dict model_options -- model specific options
+    dict generic_options -- generic quorum device options
+    dict heuristics_options -- heuristics options
+    bool force_options -- continue even if options are not valid
+    bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
@@ -238,8 +246,20 @@ def update_device(
         lib_env.report_processor,
         model_options,
         generic_options,
-        force_options
+        heuristics_options,
+        force_options=force_options
     )
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+def remove_device_heuristics(lib_env, skip_offline_nodes=False):
+    """
+    Stop using quorum device heuristics, distribute and reload configs if live
+
+    bool skip_offline_nodes -- continue even if not all nodes are accessible
+    """
+    __ensure_not_cman(lib_env)
+    cfg = lib_env.get_corosync_conf()
+    cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def remove_device(lib_env, skip_offline_nodes=False):
@@ -250,7 +270,9 @@ def remove_device(lib_env, skip_offline_nodes=False):
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
-    model, dummy_options, dummy_options = cfg.get_quorum_device_settings()
+    model, dummy_options, dummy_options, dummy_options = (
+        cfg.get_quorum_device_settings()
+    )
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:

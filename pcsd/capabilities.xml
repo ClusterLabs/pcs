@@ -232,7 +232,8 @@
       <description>
         Show and change corosync qdevice configuration.
 
-        pcs commands: quorum device (add | remove | update | status)
+        pcs commands: quorum device (add | remove | update | status),
+          quorum config
       </description>
     </capability>
     <capability id="corosync.quorum.device.client" in-pcs="0" in-pcsd="1">
@@ -243,11 +244,20 @@
           qdevice_client_enable, qdevice_client_disable
       </description>
     </capability>
+    <capability id="corosync.quorum.device.heuristics" in-pcs="1" in-pcsd="0">
+      <description>
+        Show and change corosync qdevice heuristics configuration.
+
+        pcs commands: quorum config, quorum device add ... heuristics,
+          quorum device update ... heuristics, quorum device heuristics remove
+      </description>
+    </capability>
     <capability id="corosync.quorum.device.model.net" in-pcs="1" in-pcsd="0">
       <description>
         Show and change corosync qdevice model "net" configuration.
 
-        pcs commands: quorum device (add | remove | update | status)
+        pcs commands: quorum device (add | remove | update | status),
+          quorum config
       </description>
     </capability>
     <capability id="corosync.quorum.device.client.model.net.certificates" in-pcs="0" in-pcsd="1">

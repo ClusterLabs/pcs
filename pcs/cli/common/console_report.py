@@ -263,6 +263,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.INVALID_USERDEFINED_OPTIONS: lambda info:
+        (
+            "invalid {desc}option{plural_options} {option_names_list}, "
+            "{allowed_description}"
+        ).format(
+            desc=format_optional(info["option_type"], "{0} "),
+            option_names_list=joined_list(info["option_names"]),
+            plural_options=("s:" if len(info["option_names"]) > 1 else ""),
+            **info
+        )
+    ,
+
     codes.DEPRECATED_OPTION: lambda info:
         (
             "{desc}option '{option_name}' is deprecated and should not be "
@@ -503,6 +515,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR: lambda info:
         "Unable to set expected votes: {reason}"
         .format(**info)
+    ,
+
+    codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC:
+        "No exec_NAME options are specified, so heuristics are effectively "
+            "disabled"
     ,
 
     codes.COROSYNC_CONFIG_RELOADED: "Corosync configuration reloaded",

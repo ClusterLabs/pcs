@@ -1526,11 +1526,16 @@ Commands:
         Show quorum runtime status.
 
     device add [<generic options>] model <device model> [<model options>]
+            [heuristics <heuristics options>]
         Add a quorum device to the cluster. Quorum device needs to be created
         first by "pcs qdevice setup" command. It is not possible to use more
-        than one quorum device in a cluster simultaneously. Generic options,
-        model and model options are all documented in corosync-qdevice(8) man
-        page.
+        than one quorum device in a cluster simultaneously. Models and options
+        are all documented in corosync-qdevice(8) man page; for heuristics
+        options check the quorum.device.heuristics subkey section, for model
+        options check the quorum.device.<device model> subkey sections.
+
+    device heuristics remove
+        Remove all heuristics settings of the configured quorum device.
 
     device remove
         Remove a quorum device from the cluster.
@@ -1540,9 +1545,12 @@ Commands:
         output.
 
     device update [<generic options>] [model <model options>]
-        Add/Change quorum device options. Generic options and model options are
-        all documented in corosync-qdevice(8) man page. Requires the cluster to
-        be stopped.
+            [heuristics <heuristics options>]
+        Add/Change quorum device options. Requires the cluster to be stopped.
+        Model and options are all documented in corosync-qdevice(8) man page;
+        for heuristics options check the quorum.device.heuristics subkey
+        section, for model options check the quorum.device.<device model> subkey
+        sections.
 
         WARNING: If you want to change "host" option of qdevice model net, use
         "pcs quorum device remove" and "pcs quorum device add" commands

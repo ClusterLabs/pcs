@@ -5,17 +5,19 @@ from __future__ import (
 )
 
 import shutil
-from pcs.test.tools.pcs_unittest import TestCase
+from textwrap import dedent
 
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
 )
 from pcs.test.tools.pcs_runner import PcsRunner
+from pcs.test.tools.pcs_unittest import TestCase
 
 
 coro_conf = rc("corosync.conf")
 coro_qdevice_conf = rc("corosync-3nodes-qdevice.conf")
+coro_qdevice_heuristics_conf = rc("corosync-3nodes-qdevice-heuristics.conf")
 temp_conf = rc("corosync.conf.tmp")
 
 
@@ -26,6 +28,9 @@ class TestBase(TestCase, AssertPcsMixin):
 
     def fixture_conf_qdevice(self):
         shutil.copy(coro_qdevice_conf, temp_conf)
+
+    def fixture_conf_qdevice_heuristics(self):
+        shutil.copy(coro_qdevice_heuristics_conf, temp_conf)
 
 
 class QuorumConfigTest(TestBase):
@@ -90,54 +95,47 @@ Options:
 
 class DeviceAddTest(TestBase):
     def test_no_model_keyword(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add option=value host=127.0.0.1",
             stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
-        self.assert_pcs_fail(
-            "quorum device add option=value host=127.0.0.1 --force",
-            stdout_start="\nUsage: pcs quorum <command>\n    device add "
-        )
-
     def test_no_model_value(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add option=value model host=127.0.0.1",
-            stdout_start="\nUsage: pcs quorum <command>\n    device add "
-        )
-        self.assert_pcs_fail(
-            "quorum device add option=value model host=127.0.0.1 --force",
             stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
     def test_more_models(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add model net host=127.0.0.1 model disk",
-            stdout_start="\nUsage: pcs quorum <command>\n    device add "
-        )
-        self.assert_pcs_fail(
-            "quorum device add model net host=127.0.0.1 model disk --force",
-            stdout_start="\nUsage: pcs quorum <command>\n    device add "
+            "Error: 'model' cannot be used more than once\n"
         )
 
     def test_model_in_options(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add model=disk model net host=127.0.0.1",
             "Error: Model cannot be specified in generic options\n"
         )
-        self.assert_pcs_fail(
-            "quorum device add model=disk model net host=127.0.0.1 --force",
-            "Error: Model cannot be specified in generic options\n"
+
+    def test_more_heuristics(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device add model net host=127.0.0.1 heuristics mode=on "
+                "heuristics 'exec_ls=test -f /tmp/test'"
+            ,
+            "Error: 'heuristics' cannot be used more than once\n"
+        )
+
+    def test_bad_keyword(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device add model net host=127.0.0.1 heuristic mode=on",
+            "Error: missing value of 'heuristic' option\n"
         )
 
     def test_device_already_set(self):
         self.fixture_conf_qdevice()
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add model net host=127.0.0.1",
-            "Error: quorum device is already defined\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device add model net host=127.0.0.1 --force",
             "Error: quorum device is already defined\n"
         )
 
@@ -147,74 +145,149 @@ class DeviceAddTest(TestBase):
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  Model: net
-    algorithm: lms
-    host: 127.0.0.1
-"""
+            dedent("""\
+                Options:
+                Device:
+                  Model: net
+                    algorithm: lms
+                    host: 127.0.0.1
+                """
+            )
         )
 
     def test_succes_generic_and_model_options(self):
         self.assert_pcs_success(
-            "quorum device add timeout=12345 model net host=127.0.0.1 algorithm=ffsplit"
+            "quorum device add timeout=12345 model net host=127.0.0.1 "
+                "algorithm=ffsplit"
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  timeout: 12345
-  votes: 1
-  Model: net
-    algorithm: ffsplit
-    host: 127.0.0.1
-"""
+            dedent("""\
+                Options:
+                Device:
+                  timeout: 12345
+                  votes: 1
+                  Model: net
+                    algorithm: ffsplit
+                    host: 127.0.0.1
+                """
+            )
+        )
+
+    def test_succes_model_options_and_heuristics(self):
+        self.assert_pcs_success(
+            "quorum device add model net host=127.0.0.1 algorithm=ffsplit "
+                "heuristics mode=on 'exec_ls=test -f /tmp/test'"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  votes: 1
+                  Model: net
+                    algorithm: ffsplit
+                    host: 127.0.0.1
+                  Heuristics:
+                    exec_ls: test -f /tmp/test
+                    mode: on
+                """
+            )
+        )
+
+    def test_succes_model_options_and_heuristics_no_exec(self):
+        self.assert_pcs_success(
+            "quorum device add model net host=127.0.0.1 algorithm=ffsplit "
+                "heuristics mode=on",
+            "Warning: No exec_NAME options are specified, so heuristics are "
+                "effectively disabled\n"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  votes: 1
+                  Model: net
+                    algorithm: ffsplit
+                    host: 127.0.0.1
+                  Heuristics:
+                    mode: on
+                """
+            )
+        )
+
+    def test_succes_all_options(self):
+        self.assert_pcs_success(
+            "quorum device add timeout=12345 model net host=127.0.0.1 "
+                "algorithm=ffsplit "
+                "heuristics mode=on 'exec_ls=test -f /tmp/test'"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  timeout: 12345
+                  votes: 1
+                  Model: net
+                    algorithm: ffsplit
+                    host: 127.0.0.1
+                  Heuristics:
+                    exec_ls: test -f /tmp/test
+                    mode: on
+                """
+            )
         )
 
     def test_missing_required_options(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device add model net",
-            "Error: required options 'algorithm', 'host' are missing\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device add model net --force",
             "Error: required options 'algorithm', 'host' are missing\n"
         )
 
     def test_bad_options(self):
         self.assert_pcs_fail(
-            "quorum device add a=b timeout=-1 model net host=127.0.0.1 algorithm=x c=d",
+            "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
+                "algorithm=x c=d heuristics mode=bad e=f",
             """\
 Error: 'x' is not a valid algorithm value, use ffsplit, lms, use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
 Error: '-1' is not a valid timeout value, use positive integer, use --force to override
+Error: 'bad' is not a valid mode value, use off, on, sync, use --force to override
+Error: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME, use --force to override
 """
         )
 
         self.assert_pcs_success(
-            "quorum device add a=b timeout=-1 model net host=127.0.0.1 algorithm=x c=d --force",
+            "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
+                "algorithm=x c=d heuristics mode=bad e=f --force",
             """\
 Warning: 'x' is not a valid algorithm value, use ffsplit, lms
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
 Warning: '-1' is not a valid timeout value, use positive integer
+Warning: 'bad' is not a valid mode value, use off, on, sync
+Warning: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME
 """
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  a: b
-  timeout: -1
-  Model: net
-    algorithm: x
-    c: d
-    host: 127.0.0.1
-"""
+            dedent("""\
+                Options:
+                Device:
+                  a: b
+                  timeout: -1
+                  Model: net
+                    algorithm: x
+                    c: d
+                    host: 127.0.0.1
+                  Heuristics:
+                    e: f
+                    mode: bad
+                """
+            )
         )
 
     def test_bad_model(self):
@@ -228,23 +301,20 @@ Device:
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  Model: invalid
-    x: y
-"""
+            dedent("""\
+                Options:
+                Device:
+                  Model: invalid
+                    x: y
+                """
+            )
         )
 
 
 class DeviceRemoveTest(TestBase):
     def test_no_device(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device remove",
-            "Error: no quorum device is defined in this cluster\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device remove --force",
             "Error: no quorum device is defined in this cluster\n"
         )
 
@@ -259,24 +329,45 @@ class DeviceRemoveTest(TestBase):
         )
 
     def test_bad_options(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device remove net",
             stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
         )
-        self.assert_pcs_fail(
-            "quorum device remove net --force",
-            stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
+
+
+class DeviceHeuristicsRemove(TestBase):
+    def test_no_device(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device heuristics remove",
+            "Error: no quorum device is defined in this cluster\n"
+        )
+
+    def test_bad_options(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device heuristics remove option",
+            stdout_start="\nUsage: pcs quorum <command>\n    device heuristics "
+                "remove\n"
+        )
+
+    def test_success(self):
+        self.fixture_conf_qdevice_heuristics()
+        self.assert_pcs_success("quorum device heuristics remove")
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  Model: net
+                    host: 127.0.0.1
+                """
+            )
         )
 
 
 class DeviceUpdateTest(TestBase):
     def test_no_device(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device update option=new_value model host=127.0.0.2",
-            "Error: no quorum device is defined in this cluster\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device update option=new_value model host=127.0.0.2 --force",
             "Error: no quorum device is defined in this cluster\n"
         )
 
@@ -285,13 +376,14 @@ class DeviceUpdateTest(TestBase):
         self.assert_pcs_success("quorum device update timeout=12345")
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  timeout: 12345
-  Model: net
-    host: 127.0.0.1
-"""
+            dedent("""\
+                Options:
+                Device:
+                  timeout: 12345
+                  Model: net
+                    host: 127.0.0.1
+                """
+            )
         )
 
     def test_model_options_change(self):
@@ -299,59 +391,106 @@ Device:
         self.assert_pcs_success("quorum device update model host=127.0.0.2")
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  Model: net
-    host: 127.0.0.2
-"""
+            dedent("""\
+                Options:
+                Device:
+                  Model: net
+                    host: 127.0.0.2
+                """
+            )
         )
 
-    def test_both_options_change(self):
+    def test_heuristic_options_change(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
-            "quorum device update timeout=12345 model host=127.0.0.2 port=1"
+            "quorum device update heuristics mode=on 'exec_ls=test -f /tmp/tst'"
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  timeout: 12345
-  Model: net
-    host: 127.0.0.2
-    port: 1
-"""
+            dedent("""\
+                Options:
+                Device:
+                  Model: net
+                    host: 127.0.0.1
+                  Heuristics:
+                    exec_ls: test -f /tmp/tst
+                    mode: on
+                """
+            )
+        )
+
+    def test_heuristic_options_change_no_exec(self):
+        self.fixture_conf_qdevice()
+        self.assert_pcs_success(
+            "quorum device update heuristics mode=on",
+            "Warning: No exec_NAME options are specified, so heuristics are "
+                "effectively disabled\n"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  Model: net
+                    host: 127.0.0.1
+                  Heuristics:
+                    mode: on
+                """
+            )
+        )
+
+    def test_all_options_change(self):
+        self.fixture_conf_qdevice()
+        self.assert_pcs_success(
+            "quorum device update timeout=12345 model host=127.0.0.2 port=1 "
+            "heuristics mode=on 'exec_ls=test -f /tmp/test'"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            dedent("""\
+                Options:
+                Device:
+                  timeout: 12345
+                  Model: net
+                    host: 127.0.0.2
+                    port: 1
+                  Heuristics:
+                    exec_ls: test -f /tmp/test
+                    mode: on
+                """
+            )
+        )
+
+    def test_more_heuristics(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device update model host=127.0.0.1 heuristics mode=on "
+                "heuristics 'exec_ls=test -f /tmp/test'"
+            ,
+            "Error: 'heuristics' cannot be used more than once\n"
+        )
+
+    def test_bad_keyword(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "quorum device update model host=127.0.0.1 heuristic mode=on",
+            "Error: missing value of 'heuristic' option\n"
         )
 
     def test_more_models(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device update model host=127.0.0.2 model port=1",
-            stdout_start="\nUsage: pcs quorum <command>\n    device update "
-        )
-        self.assert_pcs_fail(
-            "quorum device update model host=127.0.0.2 model port=1 --force",
-            stdout_start="\nUsage: pcs quorum <command>\n    device update "
+            "Error: 'model' cannot be used more than once\n"
         )
 
     def test_model_in_options(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device update model=disk",
-            "Error: Model cannot be specified in generic options\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device update model=disk --force",
             "Error: Model cannot be specified in generic options\n"
         )
 
     def test_missing_required_options(self):
         self.fixture_conf_qdevice()
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "quorum device update model host=",
-            "Error: required option 'host' is missing\n"
-        )
-        self.assert_pcs_fail(
-            "quorum device update model host= --force",
             "Error: required option 'host' is missing\n"
         )
 
@@ -377,14 +516,15 @@ Warning: '-1' is not a valid timeout value, use positive integer
         )
         self.assert_pcs_success(
             "quorum config",
-            """\
-Options:
-Device:
-  a: b
-  timeout: -1
-  Model: net
-    c: d
-    host: 127.0.0.1
-    port: x
-"""
+            dedent("""\
+                Options:
+                Device:
+                  a: b
+                  timeout: -1
+                  Model: net
+                    c: d
+                    host: 127.0.0.1
+                    port: x
+                """
+            )
         )

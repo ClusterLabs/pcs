@@ -53,6 +53,8 @@ def quorum_device_cmd(lib, argv, modificators):
     try:
         if sub_cmd == "add":
             quorum_device_add_cmd(lib, argv_next, modificators)
+        elif sub_cmd == "heuristics":
+            quorum_device_heuristics_cmd(lib, argv_next, modificators)
         elif sub_cmd == "remove":
             quorum_device_remove_cmd(lib, argv_next, modificators)
         elif sub_cmd == "status":
@@ -66,6 +68,23 @@ def quorum_device_cmd(lib, argv, modificators):
         utils.exit_on_cmdline_input_errror(
             e, "quorum", "device {0}".format(sub_cmd)
         )
+
+def quorum_device_heuristics_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+
+    sub_cmd, argv_next = argv[0], argv[1:]
+    try:
+        if sub_cmd == "remove":
+            quorum_device_heuristics_remove_cmd(lib, argv_next, modifiers)
+        else:
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "quorum", "device heuristics {0}".format(sub_cmd)
+        )
+
 
 def quorum_config_cmd(lib, argv, modificators):
     if argv:
@@ -91,6 +110,7 @@ def quorum_config_to_str(config):
                 config["device"].get("generic_options", {}).items()
             )
         ]))
+
         model_settings = [
             "Model: {m}".format(m=config["device"].get("model", ""))
         ]
@@ -101,6 +121,15 @@ def quorum_config_to_str(config):
             )
         ]))
         lines.extend(indent(model_settings))
+
+        heuristics_options = config["device"].get("heuristics_options", {})
+        if heuristics_options:
+            heuristics_settings = ["Heuristics:"]
+            heuristics_settings.extend(indent([
+                "{n}: {v}".format(n=name, v=value)
+                for name, value in sorted(heuristics_options.items())
+            ]))
+            lines.extend(indent(heuristics_settings))
 
     return lines
 
@@ -125,27 +154,46 @@ def quorum_update_cmd(lib, argv, modificators):
         force=modificators["force"]
     )
 
+def _parse_quorum_device_groups(arg_list):
+    keyword_list = ["model", "heuristics"]
+    groups = parse_args.group_by_keywords(
+        arg_list,
+        set(keyword_list),
+        implicit_first_group_key="generic",
+        keyword_repeat_allowed=False,
+        only_found_keywords=True
+    )
+    for keyword in keyword_list:
+        if keyword not in groups:
+            continue
+        if len(groups[keyword]) == 0:
+            raise CmdLineInputError(
+                "No {0} options specified".format(keyword)
+            )
+    return groups
+
 def quorum_device_add_cmd(lib, argv, modificators):
+    groups = _parse_quorum_device_groups(argv)
+    model_and_model_options = groups.get("model", [])
     # we expect "model" keyword once, followed by the actual model value
-    options_lists = parse_args.split_list(argv, "model")
-    if len(options_lists) != 2:
+    if not model_and_model_options or "=" in model_and_model_options[0]:
         raise CmdLineInputError()
-    # check if model value was specified
-    if not options_lists[1] or "=" in options_lists[1][0]:
-        raise CmdLineInputError()
-    generic_options = parse_args.prepare_options(options_lists[0])
-    model = options_lists[1][0]
-    model_options = parse_args.prepare_options(options_lists[1][1:])
+
+    generic_options = parse_args.prepare_options(groups.get("generic", []))
+    model = model_and_model_options[0]
+    model_options = parse_args.prepare_options(model_and_model_options[1:])
+    heuristics_options = parse_args.prepare_options(
+        groups.get("heuristics", [])
+    )
 
     if "model" in generic_options:
-        raise CmdLineInputError(
-            "Model cannot be specified in generic options"
-        )
+        raise CmdLineInputError("Model cannot be specified in generic options")
 
     lib.quorum.add_device(
         model,
         model_options,
         generic_options,
+        heuristics_options,
         force_model=modificators["force"],
         force_options=modificators["force"],
         skip_offline_nodes=modificators["skip_offline_nodes"]
@@ -165,28 +213,30 @@ def quorum_device_status_cmd(lib, argv, modificators):
     print(lib.quorum.status_device(modificators["full"]))
 
 def quorum_device_update_cmd(lib, argv, modificators):
-    # we expect "model" keyword once
-    options_lists = parse_args.split_list(argv, "model")
-    if len(options_lists) == 1:
-        generic_options = parse_args.prepare_options(options_lists[0])
-        model_options = dict()
-    elif len(options_lists) == 2:
-        generic_options = parse_args.prepare_options(options_lists[0])
-        model_options = parse_args.prepare_options(options_lists[1])
-    else:
+    groups = _parse_quorum_device_groups(argv)
+    if not groups:
         raise CmdLineInputError()
+    generic_options = parse_args.prepare_options(groups.get("generic", []))
+    model_options = parse_args.prepare_options(groups.get("model", []))
+    heuristics_options = parse_args.prepare_options(
+        groups.get("heuristics", [])
+    )
 
     if "model" in generic_options:
-        raise CmdLineInputError(
-            "Model cannot be specified in generic options"
-        )
+        raise CmdLineInputError("Model cannot be specified in generic options")
 
     lib.quorum.update_device(
         model_options,
         generic_options,
+        heuristics_options,
         force_options=modificators["force"],
         skip_offline_nodes=modificators["skip_offline_nodes"]
     )
+
+def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+    lib.quorum.remove_device_heuristics()
 
 # TODO switch to new architecture, move to lib
 def quorum_unblock_cmd(argv):

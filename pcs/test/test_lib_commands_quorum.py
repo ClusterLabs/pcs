@@ -139,6 +139,55 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
                     "generic_options": {
                         "option": "value",
                     },
+                    "heuristics_options": {
+                    },
+                },
+            },
+            lib.get_config(lib_env)
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_device_with_heuristics(self, mock_get_corosync):
+        original_conf = """\
+            quorum {
+                provider: corosync_votequorum
+                wait_for_all: 1
+                device {
+                    option: value
+                    model: net
+                    net {
+                        host: 127.0.0.1
+                        port: 4433
+                    }
+                    heuristics {
+                        mode: on
+                        exec_ls: test -f /tmp/test
+                    }
+                }
+            }
+        """
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        self.assertEqual(
+            {
+                "options": {
+                    "wait_for_all": "1",
+                },
+                "device": {
+                    "model": "net",
+                    "model_options": {
+                        "host": "127.0.0.1",
+                        "port": "4433",
+                    },
+                    "generic_options": {
+                        "option": "value",
+                    },
+                    "heuristics_options": {
+                        "exec_ls": "test -f /tmp/test",
+                        "mode": "on",
+                    },
                 },
             },
             lib.get_config(lib_env)
@@ -636,78 +685,16 @@ class AddDeviceNetTest(TestCase):
             output="corosync-qdevice started"
         )
 
-    def test_disabled_on_cman(self):
-        self.config.runner.corosync.version(version="1.4.7")
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.add_device(
-                self.env_assist.get_env(),
-                "net",
-                {"host": "qnetd-host"},
-                {}
-            ),
-            [
-                fixture.error(report_codes.CMAN_UNSUPPORTED_COMMAND),
-            ],
-            expected_in_processor=False
-        )
-
-    def test_does_not_check_cman_if_not_live(self):
-        (self.config
-            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.add_device(
-                self.env_assist.get_env(),
-                "bad model",
-                {},
-                {}
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
-                    option_name="model",
-                    option_value="bad model",
-                    allowed_values=("net", )
-                ),
-            ]
-        )
-
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success(self, mock_write_tmpfile):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
-
-        expected_corosync_conf = open(
-                rc(self.corosync_conf_name)
-            ).read().replace(
-            "    provider: corosync_votequorum\n",
-            outdent("""\
-                    provider: corosync_votequorum
-
-                    device {
-                        timeout: 20
-                        model: net
-                        votes: 1
-
-                        net {
-                            algorithm: ffsplit
-                            host: qnetd-host
-                        }
-                    }
-                """
-            )
-        )
-
+    def fixture_config_success(
+        self, expected_corosync_conf, cert_to_pk12_cert_path
+    ):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
         self.fixture_config_http_client_init()
         self.fixture_config_runner_get_cert_request()
         self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
+        self.fixture_config_runner_cert_to_pk12(cert_to_pk12_cert_path)
         self.fixture_config_http_import_final_cert()
         self.fixture_config_http_qdevice_enable()
         self.config.env.push_corosync_conf(
@@ -715,19 +702,8 @@ class AddDeviceNetTest(TestCase):
         )
         self.fixture_config_http_qdevice_start()
 
-        lib.add_device(
-            self.env_assist.get_env(),
-            "net",
-            {"host": self.qnetd_host, "algorithm": "ffsplit"},
-            {"timeout": "20"}
-        )
-
-        mock_write_tmpfile.assert_called_once_with(
-            self.certs["signed_request"]["data"],
-            binary=True
-        )
-
-        self.env_assist.assert_reports([
+    def fixture_reports_success(self):
+        return [
             fixture.info(report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED),
         ] + [
             fixture.info(
@@ -759,7 +735,266 @@ class AddDeviceNetTest(TestCase):
                 service="corosync-qdevice"
             )
             for node in self.cluster_nodes
-        ])
+        ]
+
+    def test_disabled_on_cman(self):
+        self.config.runner.corosync.version(version="1.4.7")
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": "qnetd-host"},
+                {},
+                {}
+            ),
+            [
+                fixture.error(report_codes.CMAN_UNSUPPORTED_COMMAND),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_does_not_check_cman_if_not_live(self):
+        (self.config
+            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "bad model",
+                {},
+                {},
+                {}
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    option_name="model",
+                    option_value="bad model",
+                    allowed_values=("net", )
+                ),
+            ]
+        )
+
+    def test_fail_if_device_already_set(self):
+        corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+                    }
+                """
+            )
+        )
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(corosync_conf)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": "qnetd-host"},
+                {},
+                {}
+            ),
+            [
+                fixture.error(report_codes.QDEVICE_ALREADY_DEFINED),
+            ],
+            expected_in_processor=False
+        )
+
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_minimal(self, mock_write_tmpfile):
+        tmpfile_instance = mock.MagicMock()
+        tmpfile_instance.name = rc("file.tmp")
+        mock_write_tmpfile.return_value = tmpfile_instance
+
+        expected_corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+                    }
+                """
+            )
+        )
+
+        self.fixture_config_success(
+            expected_corosync_conf,
+            tmpfile_instance.name
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            {}
+        )
+
+        mock_write_tmpfile.assert_called_once_with(
+            self.certs["signed_request"]["data"],
+            binary=True
+        )
+        self.env_assist.assert_reports(self.fixture_reports_success())
+
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_heuristics_no_exec(self, mock_write_tmpfile):
+        tmpfile_instance = mock.MagicMock()
+        tmpfile_instance.name = rc("file.tmp")
+        mock_write_tmpfile.return_value = tmpfile_instance
+
+        expected_corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+
+                        heuristics {
+                            mode: on
+                        }
+                    }
+                """
+            )
+        )
+
+        self.fixture_config_success(
+            expected_corosync_conf,
+            tmpfile_instance.name
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            { "mode": "on"}
+        )
+
+        mock_write_tmpfile.assert_called_once_with(
+            self.certs["signed_request"]["data"],
+            binary=True
+        )
+        self.env_assist.assert_reports(
+            self.fixture_reports_success()
+            +
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            ]
+        )
+
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_full(self, mock_write_tmpfile):
+        tmpfile_instance = mock.MagicMock()
+        tmpfile_instance.name = rc("file.tmp")
+        mock_write_tmpfile.return_value = tmpfile_instance
+
+        expected_corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        sync_timeout: 34567
+                        timeout: 23456
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            connect_timeout: 12345
+                            force_ip_version: 4
+                            host: qnetd-host
+                            port: 4433
+                            tie_breaker: lowest
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: 30
+                            mode: on
+                            sync_timeout: 15
+                            timeout: 5
+                        }
+                    }
+                """
+            )
+        )
+
+        self.fixture_config_success(
+            expected_corosync_conf,
+            tmpfile_instance.name
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {
+                "host": self.qnetd_host,
+                "port": "4433",
+                "algorithm": "ffsplit",
+                "connect_timeout": "12345",
+                "force_ip_version": "4",
+                "tie_breaker": "lowest",
+            },
+            {
+                "timeout": "23456",
+                "sync_timeout": "34567"
+            },
+            {
+                "mode": "on",
+                "timeout": "5",
+                "sync_timeout": "15",
+                "interval": "30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+                "exec_ls": "test -f /tmp/test",
+            }
+        )
+
+        mock_write_tmpfile.assert_called_once_with(
+            self.certs["signed_request"]["data"],
+            binary=True
+        )
+
+        self.env_assist.assert_reports(self.fixture_reports_success())
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
@@ -799,7 +1034,6 @@ class AddDeviceNetTest(TestCase):
                     provider: corosync_votequorum
 
                     device {
-                        timeout: 20
                         model: net
                         votes: 1
 
@@ -858,7 +1092,8 @@ class AddDeviceNetTest(TestCase):
             self.env_assist.get_env(),
             "net",
             {"host": self.qnetd_host, "algorithm": "ffsplit"},
-            {"timeout": "20"},
+            {},
+            {},
             skip_offline_nodes=True
         )
 
@@ -915,7 +1150,42 @@ class AddDeviceNetTest(TestCase):
             ),
         ])
 
-    def test_success_file(self):
+    def test_success_file_minimal(self):
+        original_corosync_conf = open(rc(self.corosync_conf_name)).read()
+        expected_corosync_conf = original_corosync_conf.replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+                    }
+                """
+            )
+        )
+
+        (self.config
+            .env.set_corosync_conf_data(original_corosync_conf)
+            .env.push_corosync_conf(
+                corosync_conf_text=expected_corosync_conf
+            )
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": "qnetd-host", "algorithm": "ffsplit"},
+            {},
+            {}
+        )
+
+    def test_success_file_full(self):
         expected_corosync_conf = open(
                 rc(self.corosync_conf_name)
             ).read().replace(
@@ -924,13 +1194,27 @@ class AddDeviceNetTest(TestCase):
                     provider: corosync_votequorum
 
                     device {
-                        timeout: 20
+                        sync_timeout: 34567
+                        timeout: 23456
                         model: net
                         votes: 1
 
                         net {
                             algorithm: ffsplit
+                            connect_timeout: 12345
+                            force_ip_version: 4
                             host: qnetd-host
+                            port: 4433
+                            tie_breaker: lowest
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: 30
+                            mode: on
+                            sync_timeout: 15
+                            timeout: 5
                         }
                     }
                 """
@@ -949,8 +1233,26 @@ class AddDeviceNetTest(TestCase):
         lib.add_device(
             self.env_assist.get_env(),
             "net",
-            {"host": "qnetd-host", "algorithm": "ffsplit"},
-            {"timeout": "20"}
+            {
+                "host": self.qnetd_host,
+                "port": "4433",
+                "algorithm": "ffsplit",
+                "connect_timeout": "12345",
+                "force_ip_version": "4",
+                "tie_breaker": "lowest",
+            },
+            {
+                "timeout": "23456",
+                "sync_timeout": "34567"
+            },
+            {
+                "mode": "on",
+                "timeout": "5",
+                "sync_timeout": "15",
+                "interval": "30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+                "exec_ls": "test -f /tmp/test",
+            }
         )
 
     def test_invalid_options(self):
@@ -964,7 +1266,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"bad_option": "bad_value"}
+                {"bad_option": "bad_value"},
+                {"mode": "bad-mode", "bad_heur": "abc", "exec_bad.name": ""}
             ),
             [
                 fixture.error(
@@ -974,6 +1277,30 @@ class AddDeviceNetTest(TestCase):
                     option_type="quorum device",
                     allowed=["sync_timeout", "timeout"],
                     allowed_patterns=[]
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="mode",
+                    option_value="bad-mode",
+                    allowed_values=("off", "on", "sync")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["bad_heur"],
+                    option_type="heuristics",
+                    allowed=["interval", "mode", "sync_timeout", "timeout"],
+                    allowed_patterns=["exec_NAME"]
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["exec_bad.name"],
+                    option_type="heuristics",
+                    allowed_description=(
+                        "exec_NAME cannot contain '.:{}#' and whitespace "
+                        "characters"
+                    )
                 ),
             ]
         )
@@ -1001,6 +1328,11 @@ class AddDeviceNetTest(TestCase):
                             algorithm: ffsplit
                             host: qnetd-host
                         }
+
+                        heuristics {
+                            bad_heur: abc
+                            mode: bad-mode
+                        }
                     }
                 """
             )
@@ -1023,8 +1355,9 @@ class AddDeviceNetTest(TestCase):
         lib.add_device(
             self.env_assist.get_env(),
             "net",
-            {"host": self.qnetd_host, "algorithm": "ffsplit"},
-            {"bad_option": "bad_value", },
+            {"host": "qnetd-host", "algorithm": "ffsplit"},
+            {"bad_option": "bad_value"},
+            {"mode": "bad-mode", "bad_heur": "abc",},
             force_options=True
         )
 
@@ -1035,6 +1368,19 @@ class AddDeviceNetTest(TestCase):
                 option_type="quorum device",
                 allowed=["sync_timeout", "timeout"],
                 allowed_patterns=[]
+            ),
+            fixture.warn(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="mode",
+                option_value="bad-mode",
+                allowed_values=("off", "on", "sync")
+            ),
+            fixture.warn(
+                report_codes.INVALID_OPTION,
+                option_names=["bad_heur"],
+                option_type="heuristics",
+                allowed=["interval", "mode", "sync_timeout", "timeout"],
+                allowed_patterns=["exec_NAME"]
             ),
             fixture.info(report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED),
         ] + [
@@ -1080,6 +1426,7 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "bad_model",
                 {},
+                {},
                 {}
             ),
             [
@@ -1120,6 +1467,7 @@ class AddDeviceNetTest(TestCase):
         lib.add_device(
             self.env_assist.get_env(),
             "bad_model",
+            {},
             {},
             {},
             force_model=True
@@ -1177,6 +1525,7 @@ class AddDeviceNetTest(TestCase):
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"timeout": "20"},
+                {},
                 skip_offline_nodes=True # test that this does not matter
             ),
             [], # an empty LibraryError is raised
@@ -1221,7 +1570,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"timeout": "20"}
+                {"timeout": "20"},
+                {}
             ),
             [], # an empty LibraryError is raised
             expected_in_processor=False
@@ -1258,7 +1608,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"timeout": "20"}
+                {"timeout": "20"},
+                {}
             ),
             [
                 fixture.error(
@@ -1304,7 +1655,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"timeout": "20"}
+                {"timeout": "20"},
+                {}
             ),
             [], # an empty LibraryError is raised
             expected_in_processor=False
@@ -1348,7 +1700,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"timeout": "20"}
+                {"timeout": "20"},
+                {}
             ),
             [
                 fixture.error(
@@ -1401,7 +1754,8 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(),
                 "net",
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
-                {"timeout": "20"}
+                {"timeout": "20"},
+                {}
             ),
             [], # an empty LibraryError is raised
             expected_in_processor=False
@@ -1425,6 +1779,62 @@ class AddDeviceNetTest(TestCase):
                 node=self.cluster_nodes[2],
             ),
         ])
+
+
+class RemoveDeviceHeuristics(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_disabled_on_cman(self):
+        self.config.runner.corosync.version(version="1.4.7")
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
+            [
+                fixture.error(report_codes.CMAN_UNSUPPORTED_COMMAND),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_enabled_on_cman_if_not_live(self):
+        (self.config
+            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_success(self):
+        config_no_heuristics = open(rc("corosync-3nodes-qdevice.conf")).read()
+        config_heuristics = config_no_heuristics.replace(
+            outdent("""\
+                    net {
+                        host: 127.0.0.1
+                    }
+            """),
+            outdent("""\
+                    net {
+                        host: 127.0.0.1
+                    }
+
+                    heuristics {
+                        mode: on
+                        exec_ls: test -f /tmp/test
+                    }
+            """)
+        )
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(config_heuristics)
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=config_no_heuristics
+        )
+
+        lib.remove_device_heuristics(self.env_assist.get_env())
+
 
 
 @skip("TODO: rewrite using new testing fremework")
@@ -1899,7 +2309,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(
-            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {})
+            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}, {})
         )
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
@@ -1917,7 +2327,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         )
 
         assert_raise_library_error(
-            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}),
+            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}, {}),
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_DEFINED,
@@ -1932,7 +2342,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         assert_raise_library_error(
-            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}),
+            lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}, {}),
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_DEFINED,
@@ -1951,20 +2361,65 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         lib.update_device(
             lib_env,
             {"host": "127.0.0.2"},
-            {"timeout": "12345"}
+            {"timeout": "12345"},
+            {"mode": "on", "exec_ls": "test -f /tmp/test"}
         )
 
         self.assertEqual(1, len(mock_push_corosync.mock_calls))
         ac(
             mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf
-                .replace("host: 127.0.0.1", "host: 127.0.0.2")
+                .replace(
+                    "            host: 127.0.0.1\n",
+                    outdent("""\
+                                host: 127.0.0.2
+                            }
+
+                            heuristics {
+                                exec_ls: test -f /tmp/test
+                                mode: on
+                    """)
+                )
                 .replace(
                     "model: net",
                     "model: net\n        timeout: 12345"
                 )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_no_exec(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.update_device(lib_env, {}, {}, {"mode": "on"})
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            original_conf
+                .replace(
+                    "            host: 127.0.0.1\n",
+                    outdent("""\
+                                host: 127.0.0.1
+                            }
+
+                            heuristics {
+                                mode: on
+                    """)
+                )
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            ]
+        )
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_invalid_options(self, mock_get_corosync, mock_push_corosync):
@@ -1976,7 +2431,8 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             lambda: lib.update_device(
                 lib_env,
                 {},
-                {"bad_option": "bad_value", }
+                {"bad_option": "bad_value", },
+                {"mode": "bad mode"}
             ),
             (
                 severity.ERROR,
@@ -1988,7 +2444,14 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
-            )
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="mode",
+                option_value="bad mode",
+                allowed_values=("off", "on", "sync")
+            ),
         )
 
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -2004,6 +2467,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             lib_env,
             {},
             {"bad_option": "bad_value", },
+            {"mode": "bad mode"},
             force_options=True
         )
 
@@ -2019,7 +2483,13 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                         "allowed": ["sync_timeout", "timeout"],
                         "allowed_patterns": [],
                     }
-                )
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="bad mode",
+                    allowed_values=("off", "on", "sync")
+                ),
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -2027,8 +2497,23 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         ac(
             mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
-                "model: net",
-                "model: net\n        bad_option: bad_value"
+                outdent("""\
+
+                        net {
+                            host: 127.0.0.1
+                        }
+                """),
+                outdent("""\
+                        bad_option: bad_value
+
+                        net {
+                            host: 127.0.0.1
+                        }
+
+                        heuristics {
+                            mode: bad mode
+                        }
+                """)
             )
         )
 
