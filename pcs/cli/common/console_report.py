@@ -688,8 +688,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.CIB_LOAD_ERROR_BAD_FORMAT:
-       "unable to get cib, xml does not conform to the schema"
+    codes.CIB_LOAD_ERROR_BAD_FORMAT: lambda info:
+       "unable to get cib, {reason}"
+       .format(**info)
     ,
 
     codes.CIB_CANNOT_FIND_MANDATORY_SECTION: lambda info:
