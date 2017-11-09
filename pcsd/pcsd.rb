@@ -116,32 +116,7 @@ configure do
   $logger = configure_logger('/var/log/pcsd/pcsd.log')
   $semaphore_cfgsync = Mutex.new
 
-  capabilities = []
-  capabilities_pcsd = []
-  begin
-    filename = (get_pcsd_path() + Pathname.new('capabilities.xml')).to_s
-    capabilities_xml = REXML::Document.new(File.new(filename))
-    capabilities_xml.elements.each('.//capability') { |feat_xml|
-      feat = {}
-      feat_xml.attributes.each() { |name, value|
-        feat[name] = value
-      }
-      feat['description'] = ''
-      if feat_xml.elements['description']
-        feat['description'] = feat_xml.elements['description'].text.strip
-      end
-      capabilities << feat
-    }
-    capabilities.each { |feat|
-      if feat['in-pcsd'] == '1'
-        capabilities_pcsd << feat['id']
-      end
-    }
-  rescue => e
-    $logger.error(
-      "Cannot read capabilities definition file '#{filename}': '#{e}'"
-    )
-  end
+  capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
 end

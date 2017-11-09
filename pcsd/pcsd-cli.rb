@@ -31,6 +31,10 @@ PCS = get_pcs_path()
 $logger_device = StringIO.new
 $logger = configure_logger($logger_device)
 
+capabilities, capabilities_pcsd = get_capabilities($logger)
+CAPABILITIES = capabilities.freeze
+CAPABILITIES_PCSD = capabilities_pcsd.freeze
+
 # check and set user
 uid = Process.uid
 if 0 == uid
