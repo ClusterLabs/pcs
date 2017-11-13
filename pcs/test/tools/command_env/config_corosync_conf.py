@@ -18,9 +18,9 @@ class CorosyncConf(object):
 
     def load(
         self, node_name_list=None, name="corosync_conf.load",
-        auto_tie_breaker=None
+        filename="corosync.conf", auto_tie_breaker=None
     ):
-        content = open(rc("corosync.conf")).read()
+        content = open(rc(filename)).read()
         corosync_conf = None
         if node_name_list:
             corosync_conf = ConfigFacade.from_string(content).config

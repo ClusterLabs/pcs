@@ -4,6 +4,7 @@
 
 ### Added
 - `pcs status --full` now displays information about tickets ([rhbz#1389943])
+- Support for managing qdevice heuristics ([rhbz#1389209])
 
 ### Fixed
 - Fixed crash when loading a huge xml ([rhbz#1506864])
@@ -11,6 +12,7 @@
 - False warnings about failed actions when resource is master/unmaster from the
   web UI ([rhbz#1506220])
 
+[rhbz#1389209]: https://bugzilla.redhat.com/show_bug.cgi?id=1389209
 [rhbz#1389943]: https://bugzilla.redhat.com/show_bug.cgi?id=1389943
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1506220]: https://bugzilla.redhat.com/show_bug.cgi?id=1506220

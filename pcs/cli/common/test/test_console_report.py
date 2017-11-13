@@ -54,6 +54,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
                 "allowed": ["SECOND", "FIRST"],
+                "allowed_patterns": [],
             }
         )
 
@@ -64,6 +65,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME"],
                 "option_type": "",
                 "allowed": ["FIRST", "SECOND"],
+                "allowed_patterns": [],
             }
         )
 
@@ -74,6 +76,35 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
                 "allowed": ["FIRST"],
+                "allowed_patterns": [],
+            }
+        )
+
+    def test_pattern(self):
+        self.assert_message_from_info(
+            (
+                "invalid option 'NAME', allowed are options matching patterns: "
+                "exec_<name>"
+            ),
+            {
+                "option_names": ["NAME"],
+                "option_type": "",
+                "allowed": [],
+                "allowed_patterns": ["exec_<name>"],
+            }
+        )
+
+    def test_allowed_and_patterns(self):
+        self.assert_message_from_info(
+            (
+                "invalid option 'NAME', allowed option is FIRST and options "
+                "matching patterns: exec_<name>"
+            ),
+            {
+                "option_names": ["NAME"],
+                "option_type": "",
+                "allowed": ["FIRST"],
+                "allowed_patterns": ["exec_<name>"],
             }
         )
 
@@ -84,6 +115,51 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
                 "allowed": [],
+                "allowed_patterns": [],
+            }
+        )
+
+
+class InvalidUserdefinedOptions(NameBuildTest):
+    code = codes.INVALID_USERDEFINED_OPTIONS
+
+    def test_without_type(self):
+        self.assert_message_from_info(
+            (
+                "invalid option 'exec_NAME', "
+                "exec_NAME cannot contain . and whitespace characters"
+            ),
+            {
+                "option_names": ["exec_NAME"],
+                "option_type": "",
+                "allowed_description":
+                    "exec_NAME cannot contain . and whitespace characters"
+                ,
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            (
+                "invalid heuristics option 'exec_NAME', "
+                "exec_NAME cannot contain . and whitespace characters"
+            ),
+            {
+                "option_names": ["exec_NAME"],
+                "option_type": "heuristics",
+                "allowed_description":
+                    "exec_NAME cannot contain . and whitespace characters"
+                ,
+            }
+        )
+
+    def test_more_options(self):
+        self.assert_message_from_info(
+            "invalid TYPE options: 'ANOTHER', 'NAME', DESC",
+            {
+                "option_names": ["NAME", "ANOTHER"],
+                "option_type": "TYPE",
+                "allowed_description": "DESC",
             }
         )
 
@@ -1809,6 +1885,7 @@ class DefaultsCanBeOverriden(NameBuildTest):
             "own defined values"
         )
 
+
 class CibLoadErrorBadFormat(NameBuildTest):
     code = codes.CIB_LOAD_ERROR_BAD_FORMAT
     def test_message(self):
@@ -1817,4 +1894,13 @@ class CibLoadErrorBadFormat(NameBuildTest):
             {
                 "reason": "something wrong"
             }
+        )
+
+
+class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+    def test_message(self):
+        self.assert_message_from_info(
+            "No exec_NAME options are specified, so heuristics are effectively "
+                "disabled"
         )

@@ -68,8 +68,14 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
                 [sbd_opt],
                 allowed_sbd_options,
                 None,
-                Severities.WARNING if allow_unknown_opts else Severities.ERROR,
-                None if allow_unknown_opts else report_codes.FORCE_OPTIONS
+                severity=(
+                    Severities.WARNING if allow_unknown_opts
+                    else Severities.ERROR
+                ),
+                forceable=(
+                    None if allow_unknown_opts
+                    else report_codes.FORCE_OPTIONS
+                )
             ))
     if "SBD_WATCHDOG_TIMEOUT" in sbd_config:
         report_item = reports.invalid_option_value(

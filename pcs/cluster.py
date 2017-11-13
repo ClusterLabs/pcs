@@ -1752,7 +1752,7 @@ def node_add(lib_env, node0, node1, modifiers):
             conf_facade = corosync_conf_facade.from_string(
                 utils.getCorosyncConf()
             )
-            qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
+            qdevice_model, qdevice_model_options, _, _ = conf_facade.get_quorum_device_settings()
             if qdevice_model == "net":
                 _add_device_model_net(
                     lib_env,

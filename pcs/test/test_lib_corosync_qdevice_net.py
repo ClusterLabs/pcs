@@ -450,10 +450,13 @@ class ClientSetupTest(TestCase):
     def test_success(self, mock_destroy):
         self.mock_runner.run.return_value = ("tool output", "", 0)
 
-        lib.client_setup(self.mock_runner, "certificate data".encode("utf-8"))
+        lib.client_setup(
+            self.mock_runner,
+            "qnetd CA certificate".encode("utf-8")
+        )
 
         self.assertEqual(
-            "certificate data".encode("utf-8"),
+            "qnetd CA certificate".encode("utf-8"),
             open(self.ca_file_path, "rb").read()
         )
         self.mock_runner.run.assert_called_once_with([
@@ -468,7 +471,7 @@ class ClientSetupTest(TestCase):
         assert_raise_library_error(
             lambda: lib.client_setup(
                 self.mock_runner,
-                "certificate data".encode("utf-8")
+                "qnetd CA certificate".encode("utf-8")
             ),
             (
                 severity.ERROR,
@@ -481,7 +484,7 @@ class ClientSetupTest(TestCase):
         )
 
         self.assertEqual(
-            "certificate data".encode("utf-8"),
+            "qnetd CA certificate".encode("utf-8"),
             open(self.ca_file_path, "rb").read()
         )
         self.mock_runner.run.assert_called_once_with([

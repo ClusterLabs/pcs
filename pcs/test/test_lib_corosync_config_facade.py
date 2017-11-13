@@ -4,16 +4,18 @@ from __future__ import (
     print_function,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
 import re
+from textwrap import dedent
 
+from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
     ac,
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import get_test_resource as rc, outdent
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -587,6 +589,7 @@ quorum {
                         "last_man_standing_window",
                         "wait_for_all"
                     ],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -601,6 +604,7 @@ quorum {
                         "last_man_standing_window",
                         "wait_for_all"
                     ],
+                    "allowed_patterns": [],
                 }
             )
         )
@@ -722,7 +726,7 @@ class GetQuorumDeviceSettingsTest(TestCase):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}),
+            (None, {}, {}, {}),
             facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -732,93 +736,138 @@ class GetQuorumDeviceSettingsTest(TestCase):
         config = open(rc("corosync.conf")).read()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}),
+            (None, {}, {}, {}),
             facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_empty_device(self):
-        config = """\
-quorum {
-    device {
-    }
-}
-"""
+        config = dedent("""\
+            quorum {
+                device {
+                }
+            }
+            """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}),
+            (None, {}, {}, {}),
             facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_model(self):
-        config = """\
-quorum {
-    device {
-        option: value
-        net {
-            host: 127.0.0.1
-        }
-    }
-}
-"""
+        config = dedent("""\
+            quorum {
+                device {
+                    option: value
+                    net {
+                        host: 127.0.0.1
+                    }
+                }
+            }
+            """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {"option": "value"}),
+            (None, {}, {"option": "value"}, {}),
             facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_configured_properly(self):
-        config = """\
-quorum {
-    device {
-        option: value
-        model: net
-        net {
-            host: 127.0.0.1
-        }
-    }
-}
-"""
+        config = dedent("""\
+            quorum {
+                device {
+                    option: value
+                    model: net
+                    net {
+                        host: 127.0.0.1
+                    }
+                }
+            }
+            """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            ("net", {"host": "127.0.0.1"}, {"option": "value"}),
+            ("net", {"host": "127.0.0.1"}, {"option": "value"}, {}),
+            facade.get_quorum_device_settings()
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_configured_properly_heuristics(self):
+        config = dedent("""\
+            quorum {
+                device {
+                    option: value
+                    model: net
+                    net {
+                        host: 127.0.0.1
+                    }
+                    heuristics {
+                        mode: on
+                        exec_ls: test -f /tmp/test
+                    }
+                }
+            }
+            """
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (
+                "net",
+                {"host": "127.0.0.1"},
+                {"option": "value"},
+                {"exec_ls": "test -f /tmp/test", "mode": "on"}
+            ),
             facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_one_quorum(self):
-        config = """\
-quorum {
-    device {
-        option0: valueX
-        option1: value1
-        model: disk
-        net {
-            host: 127.0.0.1
-        }
-    }
-    device {
-        option0: valueY
-        option2: value2
-        model: net
-        disk {
-            path: /dev/quorum_disk
-        }
-    }
-}
-"""
+        config = dedent("""\
+            quorum {
+                device {
+                    option0: valueX
+                    option1: value1
+                    model: disk
+                    net {
+                        host: 127.0.0.1
+                    }
+                    heuristics {
+                        mode: sync
+                        exec_ls: test -f /tmp/test
+                    }
+                }
+                device {
+                    option0: valueY
+                    option2: value2
+                    model: net
+                    disk {
+                        path: /dev/quorum_disk
+                    }
+                    heuristics {
+                        mode: on
+                    }
+                    heuristics {
+                        timeout: 5
+                    }
+                }
+            }
+            """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (
                 "net",
                 {"host": "127.0.0.1"},
-                {"option0": "valueY", "option1": "value1", "option2": "value2"}
+                {"option0": "valueY", "option1": "value1", "option2": "value2"},
+                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"}
             ),
             facade.get_quorum_device_settings()
         )
@@ -826,34 +875,46 @@ quorum {
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_more_quorum(self):
-        config = """\
-quorum {
-    device {
-        option0: valueX
-        option1: value1
-        model: disk
-        net {
-            host: 127.0.0.1
-        }
-    }
-}
-quorum {
-    device {
-        option0: valueY
-        option2: value2
-        model: net
-        disk {
-            path: /dev/quorum_disk
-        }
-    }
-}
-"""
+        config = dedent("""\
+            quorum {
+                device {
+                    option0: valueX
+                    option1: value1
+                    model: disk
+                    net {
+                        host: 127.0.0.1
+                    }
+                    heuristics {
+                        mode: sync
+                        exec_ls: test -f /tmp/test
+                    }
+                }
+            }
+            quorum {
+                device {
+                    option0: valueY
+                    option2: value2
+                    model: net
+                    disk {
+                        path: /dev/quorum_disk
+                    }
+                    heuristics {
+                        mode: on
+                    }
+                    heuristics {
+                        timeout: 5
+                    }
+                }
+            }
+            """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (
                 "net",
                 {"host": "127.0.0.1"},
-                {"option0": "valueY", "option1": "value1", "option2": "value2"}
+                {"option0": "valueY", "option1": "value1", "option2": "value2"},
+                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"}
             ),
             facade.get_quorum_device_settings()
         )
@@ -862,26 +923,75 @@ quorum {
 
 
 class AddQuorumDeviceTest(TestCase):
+    def heuristic_no_exec_warning(self, mode, warn):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            reporter,
+            "net",
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
+            {},
+            {"mode": mode}
+        )
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum\n",
+                outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: 127.0.0.1
+                        }
+
+                        heuristics {
+                            mode: *mode*
+                        }
+                    }
+                """.replace("*mode*", mode))
+            ),
+            facade.config.export()
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        expected_reports = []
+        if warn:
+            expected_reports.append(
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            expected_reports
+        )
+
     def test_already_exists(self):
-        config = """\
-totem {
-    version: 2
-}
+        config = dedent("""\
+            totem {
+                version: 2
+            }
 
-quorum {
-    provider: corosync_votequorum
+            quorum {
+                provider: corosync_votequorum
 
-    device {
-        option: value
-        model: net
+                device {
+                    option: value
+                    model: net
 
-        net {
-            host: 127.0.0.1
-            algorithm: ffsplit
-        }
-    }
-}
-"""
+                    net {
+                        host: 127.0.0.1
+                        algorithm: ffsplit
+                    }
+                }
+            }
+            """)
+
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
@@ -889,6 +999,7 @@ quorum {
                 reporter,
                 "net",
                 {"host": "127.0.0.1", "algorithm": "ffsplit"},
+                {},
                 {}
             ),
             (
@@ -909,6 +1020,7 @@ quorum {
             reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "ffsplit"},
+            {},
             {}
         )
         ac(
@@ -941,6 +1053,7 @@ quorum {
             reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "lms"},
+            {},
             {}
         )
         ac(
@@ -973,6 +1086,7 @@ quorum {
             reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "lms"},
+            {},
             {}
         )
         ac(
@@ -1014,35 +1128,62 @@ quorum {
             {
                 "timeout": "23456",
                 "sync_timeout": "34567"
+            },
+            {
+                "mode": "on",
+                "timeout": "5",
+                "sync_timeout": "15",
+                "interval": "30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+                "exec_ls": "test -f /tmp/test",
             }
         )
         ac(
             config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
+                "    provider: corosync_votequorum\n",
+                outdent("""\
+                    provider: corosync_votequorum
 
-    device {
-        sync_timeout: 34567
-        timeout: 23456
-        model: net
-        votes: 1
+                    device {
+                        sync_timeout: 34567
+                        timeout: 23456
+                        model: net
+                        votes: 1
 
-        net {
-            algorithm: ffsplit
-            connect_timeout: 12345
-            force_ip_version: 4
-            host: 127.0.0.1
-            port: 4433
-            tie_breaker: lowest
-        }
-    }"""
+                        net {
+                            algorithm: ffsplit
+                            connect_timeout: 12345
+                            force_ip_version: 4
+                            host: 127.0.0.1
+                            port: 4433
+                            tie_breaker: lowest
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: 30
+                            mode: on
+                            sync_timeout: 15
+                            timeout: 5
+                        }
+                    }
+                """)
             ),
             facade.config.export()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual([], reporter.report_item_list)
+
+    def test_succes_heuristics_on_no_exec(self):
+        self.heuristic_no_exec_warning("on", True)
+
+    def test_succes_heuristics_sync_no_exec(self):
+        self.heuristic_no_exec_warning("sync", True)
+
+    def test_succes_heuristics_off_no_exec(self):
+        self.heuristic_no_exec_warning("off", False)
 
     def test_remove_conflicting_options(self):
         config = open(rc("corosync.conf")).read()
@@ -1063,6 +1204,7 @@ quorum {
             reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "ffsplit"},
+            {},
             {}
         )
         ac(
@@ -1091,48 +1233,57 @@ quorum {
         self.assertEqual([], reporter.report_item_list)
 
     def test_remove_old_configuration(self):
-        config = """\
-quorum {
-    provider: corosync_votequorum
-    device {
-        option: value_old1
-    }
-}
-quorum {
-    provider: corosync_votequorum
-    device {
-        option: value_old2
-    }
-}
-        """
+        config = dedent("""\
+            quorum {
+                provider: corosync_votequorum
+                device {
+                    option: value_old1
+                    heuristics {
+                        h_option: hvalue_old1
+                    }
+                }
+            }
+            quorum {
+                provider: corosync_votequorum
+                device {
+                    option: value_old2
+                    heuristics {
+                        h_option: hvalue_old2
+                    }
+                }
+            }
+            """
+        )
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
             reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "ffsplit"},
+            {},
             {}
         )
         ac(
-            """\
-quorum {
-    provider: corosync_votequorum
-}
+            dedent("""\
+                quorum {
+                    provider: corosync_votequorum
+                }
 
-quorum {
-    provider: corosync_votequorum
+                quorum {
+                    provider: corosync_votequorum
 
-    device {
-        model: net
-        votes: 1
+                    device {
+                        model: net
+                        votes: 1
 
-        net {
-            algorithm: ffsplit
-            host: 127.0.0.1
-        }
-    }
-}
-"""
+                        net {
+                            algorithm: ffsplit
+                            host: 127.0.0.1
+                        }
+                    }
+                }
+                """
+            )
             ,
             facade.config.export()
         )
@@ -1145,7 +1296,7 @@ quorum {
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.add_quorum_device(reporter, "invalid", {}, {}),
+            lambda: facade.add_quorum_device(reporter, "invalid", {}, {}, {}),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
@@ -1165,7 +1316,9 @@ quorum {
         config = open(rc("corosync-3nodes.conf")).read()
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.add_quorum_device(reporter, "invalid", {}, {}, force_model=True)
+        facade.add_quorum_device(
+            reporter, "invalid", {}, {}, {}, force_model=True
+        )
         ac(
             config.replace(
                 "    provider: corosync_votequorum",
@@ -1200,7 +1353,7 @@ quorum {
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.add_quorum_device(reporter, "net", {}, {}),
+            lambda: facade.add_quorum_device(reporter, "net", {}, {}, {}),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
@@ -1234,6 +1387,19 @@ quorum {
                     "sync_timeout": "-3",
                     "bad_generic_option": "bad generic value",
                     "model": "some model",
+                },
+                {
+                    "mode": "bad mode",
+                    "timeout": "-5",
+                    "sync_timeout": "-15",
+                    "interval": "-30",
+                    "exec_ping": "",
+                    "exec_ls.bad": "test -f /tmp/test",
+                    "exec_ls:bad": "test -f /tmp/test",
+                    "exec_ls bad": "test -f /tmp/test",
+                    "exec_ls{bad": "test -f /tmp/test",
+                    "exec_ls}bad": "test -f /tmp/test",
+                    "exec_ls#bad": "test -f /tmp/test",
                 }
             ),
             (
@@ -1260,6 +1426,7 @@ quorum {
                         "port",
                         "tie_breaker",
                     ],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1315,6 +1482,7 @@ quorum {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1325,6 +1493,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -1346,6 +1515,51 @@ quorum {
                     "allowed_values": "positive integer",
                 },
                 report_codes.FORCE_OPTIONS
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="mode",
+                option_value="bad mode",
+                allowed_values=("off", "on", "sync")
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="interval",
+                option_value="-30",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="sync_timeout",
+                option_value="-15",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="timeout",
+                option_value="-5",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="exec_ping",
+                option_value="",
+                allowed_values="a command to be run"
+            ),
+            fixture.error(
+                report_codes.INVALID_USERDEFINED_OPTIONS,
+                option_names=[
+                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
+                    "exec_ls{bad", "exec_ls}bad",
+                ],
+                option_type="heuristics",
+                allowed_description=(
+                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
+                )
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1358,7 +1572,7 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.add_quorum_device(
-                reporter, "net", {}, {},
+                reporter, "net", {}, {}, {},
                 force_model=True, force_options=True
             ),
             (
@@ -1378,7 +1592,7 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.add_quorum_device(
-                reporter, "net", {"host": "", "algorithm": ""}, {},
+                reporter, "net", {"host": "", "algorithm": ""}, {}, {},
                 force_model=True, force_options=True
             ),
             (
@@ -1386,6 +1600,46 @@ quorum {
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"option_names": ["algorithm", "host"]},
                 None
+            )
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        ac(config, facade.config.export())
+
+    def test_cannot_force_bad_heuristics_exec_name(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device(
+                reporter,
+                "net",
+                {
+                    "host": "qnetd-host",
+                    "algorithm": "ffsplit",
+                },
+                {},
+                {
+                    "mode": "on",
+                    "exec_ls.bad": "test -f /tmp/test",
+                    "exec_ls:bad": "test -f /tmp/test",
+                    "exec_ls bad": "test -f /tmp/test",
+                    "exec_ls{bad": "test -f /tmp/test",
+                    "exec_ls}bad": "test -f /tmp/test",
+                    "exec_ls#bad": "test -f /tmp/test",
+                },
+                force_options=True
+            ),
+            fixture.error(
+                report_codes.INVALID_USERDEFINED_OPTIONS,
+                option_names=[
+                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
+                    "exec_ls{bad", "exec_ls}bad",
+                ],
+                option_type="heuristics",
+                allowed_description=(
+                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
+                )
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1413,32 +1667,48 @@ quorum {
                 "sync_timeout": "-3",
                 "bad_generic_option": "bad generic value",
             },
+            {
+                "mode": "bad mode",
+                "timeout": "-5",
+                "sync_timeout": "-15",
+                "interval": "-30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+            },
             force_options=True
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         ac(
             config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
+                "    provider: corosync_votequorum\n",
+                outdent("""\
+                    provider: corosync_votequorum
 
-    device {
-        bad_generic_option: bad generic value
-        sync_timeout: -3
-        timeout: -2
-        model: net
+                    device {
+                        bad_generic_option: bad generic value
+                        sync_timeout: -3
+                        timeout: -2
+                        model: net
 
-        net {
-            algorithm: bad algorithm
-            bad_model_option: bad model value
-            connect_timeout: -1
-            force_ip_version: 3
-            host: 127.0.0.1
-            port: 65537
-            tie_breaker: 125
-        }
-    }"""
+                        net {
+                            algorithm: bad algorithm
+                            bad_model_option: bad model value
+                            connect_timeout: -1
+                            force_ip_version: 3
+                            host: 127.0.0.1
+                            port: 65537
+                            tie_breaker: 125
+                        }
+
+                        heuristics {
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: -30
+                            mode: bad mode
+                            sync_timeout: -15
+                            timeout: -5
+                        }
+                    }
+                """)
             ),
             facade.config.export()
         )
@@ -1468,6 +1738,7 @@ quorum {
                             "port",
                             "tie_breaker",
                         ],
+                        "allowed_patterns": [],
                     }
                 ),
                 (
@@ -1513,6 +1784,7 @@ quorum {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
                     }
                 ),
                 (
@@ -1532,7 +1804,31 @@ quorum {
                         "option_value": "-2",
                         "allowed_values": "positive integer",
                     }
-                )
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="bad mode",
+                    allowed_values=("off", "on", "sync")
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="interval",
+                    option_value="-30",
+                    allowed_values="a positive integer"
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="-15",
+                    allowed_values="a positive integer"
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="timeout",
+                    option_value="-5",
+                    allowed_values="a positive integer"
+                ),
             ]
         )
 
@@ -1545,6 +1841,7 @@ quorum {
                 reporter,
                 "net",
                 {"host": "127.0.0.1", "algorithm": "test"},
+                {},
                 {}
             ),
             (
@@ -1565,6 +1862,7 @@ quorum {
                 reporter,
                 "net",
                 {"host": "127.0.0.1", "algorithm": "2nodelms"},
+                {},
                 {}
             ),
             (
@@ -1584,20 +1882,21 @@ class UpdateQuorumDeviceTest(TestCase):
     def fixture_add_device(self, config, votes=None):
         with_device = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            """\
-quorum {
-    provider: corosync_votequorum
+            dedent("""\
+                quorum {
+                    provider: corosync_votequorum
 
-    device {
-        timeout: 12345
-        model: net
+                    device {
+                        timeout: 12345
+                        model: net
 
-        net {
-            host: 127.0.0.1
-            port: 4433
-        }
-    }
-}""",
+                        net {
+                            host: 127.0.0.1
+                            port: 4433
+                        }
+                    }
+                }"""
+            ),
             config
         )
         if votes:
@@ -1607,6 +1906,77 @@ quorum {
             )
         return with_device
 
+    def fixture_add_device_with_heuristics(self, config, votes=None):
+        with_device = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            dedent("""\
+                quorum {
+                    provider: corosync_votequorum
+
+                    device {
+                        timeout: 12345
+                        model: net
+
+                        net {
+                            host: 127.0.0.1
+                            port: 4433
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            interval: 30
+                            mode: on
+                        }
+                    }
+                }"""
+            ),
+            config
+        )
+        if votes:
+            with_device = with_device.replace(
+                "model: net",
+                "model: net\n        votes: {0}".format(votes)
+            )
+        return with_device
+
+    def heuristic_no_exec_warning(
+        self, config, heuristics_options, expected_heuristics, warn
+    ):
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(reporter, {}, {}, heuristics_options)
+
+        expected_config = re.sub(
+            re.compile(r"\s*heuristics {[^}]*}", re.MULTILINE | re.DOTALL),
+            "",
+            config
+        )
+        expected_config = expected_config.replace(
+            "            port: 4433\n        }\n",
+            outdent("""\
+                        port: 4433
+                    }
+
+            *heuristics*
+            """)
+            .replace("*heuristics*\n", expected_heuristics)
+        )
+
+        ac(expected_config, facade.config.export())
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        expected_reports = []
+        if warn:
+            expected_reports.append(
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            expected_reports
+        )
+
     def test_not_existing(self):
         config = open(rc("corosync.conf")).read()
         reporter = MockLibraryReportProcessor()
@@ -1615,6 +1985,7 @@ quorum {
             lambda: facade.update_quorum_device(
                 reporter,
                 {"host": "127.0.0.1"},
+                {},
                 {}
             ),
             (
@@ -1622,6 +1993,23 @@ quorum {
                 report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        ac(config, facade.config.export())
+
+    def test_not_existing_add_heuristics(self):
+        config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter,
+                {},
+                {},
+                {"mode": "on"}
+            ),
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1637,6 +2025,7 @@ quorum {
         facade.update_quorum_device(
             reporter,
             {"host": "127.0.0.2", "port": "", "algorithm": "ffsplit"},
+            {},
             {}
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1656,7 +2045,7 @@ quorum {
         )
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.update_quorum_device(reporter, {"port": "4444"}, {})
+        facade.update_quorum_device(reporter, {"port": "4444"}, {}, {})
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
         ac(
@@ -1678,6 +2067,7 @@ quorum {
             lambda: facade.update_quorum_device(
                 reporter,
                 {"host": "", "algorithm": ""},
+                {},
                 {}
             ),
             (
@@ -1712,6 +2102,7 @@ quorum {
                 reporter,
                 {"host": "", "algorithm": ""},
                 {},
+                {},
                 force_options=True
             ),
             (
@@ -1742,6 +2133,7 @@ quorum {
                     "tie_breaker": "125",
                     "bad_model_option": "bad model value",
                 },
+                {},
                 {}
             ),
             (
@@ -1768,6 +2160,7 @@ quorum {
                         "port",
                         "tie_breaker",
                     ],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1833,6 +2226,7 @@ quorum {
                 "bad_model_option": "bad model value",
             },
             {},
+            {},
             force_options=True
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1877,6 +2271,7 @@ quorum {
                             "port",
                             "tie_breaker",
                         ],
+                        "allowed_patterns": [],
                     },
                 ),
                 (
@@ -1927,7 +2322,8 @@ quorum {
         facade.update_quorum_device(
             reporter,
             {},
-            {"timeout": "", "sync_timeout": "23456"}
+            {"timeout": "", "sync_timeout": "23456"},
+            {}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
@@ -1940,8 +2336,8 @@ quorum {
         )
         self.assertEqual([], reporter.report_item_list)
 
-    def test_success_both_options(self):
-        config = self.fixture_add_device(
+    def test_success_all_options(self):
+        config = self.fixture_add_device_with_heuristics(
             open(rc("corosync-3nodes.conf")).read()
         )
         reporter = MockLibraryReportProcessor()
@@ -1949,7 +2345,8 @@ quorum {
         facade.update_quorum_device(
             reporter,
             {"port": "4444"},
-            {"timeout": "23456"}
+            {"timeout": "23456"},
+            {"interval": "35"}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
@@ -1957,6 +2354,7 @@ quorum {
             config
                 .replace("port: 4433", "port: 4444")
                 .replace("timeout: 12345", "timeout: 23456")
+                .replace("interval: 30", "interval: 35")
             ,
             facade.config.export()
         )
@@ -1977,7 +2375,8 @@ quorum {
                     "sync_timeout": "-3",
                     "bad_generic_option": "bad generic value",
                     "model": "some model",
-                }
+                },
+                {}
             ),
             (
                 severity.ERROR,
@@ -1986,6 +2385,7 @@ quorum {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1996,6 +2396,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             ),
             (
@@ -2034,6 +2435,7 @@ quorum {
                 reporter,
                 {},
                 {"model": "some model", },
+                {},
                 force_options=True
             ),
             (
@@ -2043,6 +2445,7 @@ quorum {
                     "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
+                    "allowed_patterns": [],
                 }
             )
         )
@@ -2064,6 +2467,7 @@ quorum {
                 "sync_timeout": "-3",
                 "bad_generic_option": "bad generic value",
             },
+            {},
             force_options=True
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -2089,6 +2493,7 @@ quorum {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
                     },
                 ),
                 (
@@ -2109,6 +2514,315 @@ quorum {
                         "allowed_values": "positive integer",
                     },
                 )
+            ]
+        )
+
+    def test_success_add_heuristics(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {},
+            {},
+            {"mode": "on", "exec_ls": "test -f /tmp/test", "interval": "30"}
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync-3nodes.conf")).read()
+            ),
+            facade.config.export()
+        )
+        self.assertEqual([], reporter.report_item_list)
+
+    def test_success_heuristics_add_on_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device(open(rc("corosync.conf")).read()),
+            {"mode": "on"},
+            outdent("""\
+                    heuristics {
+                        mode: on
+                    }
+            """),
+            True
+        )
+
+    def test_success_heuristics_add_sync_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device(open(rc("corosync.conf")).read()),
+            {"mode": "sync"},
+            outdent("""\
+                    heuristics {
+                        mode: sync
+                    }
+            """),
+            True
+        )
+
+    def test_success_heuristics_add_off_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device(open(rc("corosync.conf")).read()),
+            {"mode": "off"},
+            outdent("""\
+                    heuristics {
+                        mode: off
+                    }
+            """),
+            False
+        )
+
+    def test_success_heuristics_update_on_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync.conf")).read()
+            ),
+            {"mode": "on", "exec_ls": ""},
+            outdent("""\
+                    heuristics {
+                        interval: 30
+                        mode: on
+                    }
+            """),
+            True
+        )
+
+    def test_success_heuristics_update_sync_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync.conf")).read()
+            ),
+            {"mode": "sync", "exec_ls": ""},
+            outdent("""\
+                    heuristics {
+                        interval: 30
+                        mode: sync
+                    }
+            """),
+            True
+        )
+
+    def test_success_heuristics_update_off_no_exec(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync.conf")).read()
+            ),
+            {"mode": "off", "exec_ls": ""},
+            outdent("""\
+                    heuristics {
+                        interval: 30
+                        mode: off
+                    }
+            """),
+            False
+        )
+
+    def test_success_heuristics_update_exec_present(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync.conf")).read()
+            ),
+            {"exec_ls": "", "exec_ping": "ping example.com"},
+            outdent("""\
+                    heuristics {
+                        interval: 30
+                        mode: on
+                        exec_ping: ping example.com
+                    }
+            """),
+            False
+        )
+
+    def test_success_heuristics_update_exec_kept(self):
+        self.heuristic_no_exec_warning(
+            self.fixture_add_device_with_heuristics(
+                open(rc("corosync.conf")).read()
+            ),
+            {"interval": "25"},
+            outdent("""\
+                    heuristics {
+                        exec_ls: test -f /tmp/test
+                        interval: 25
+                        mode: on
+                    }
+            """),
+            False
+        )
+
+    def test_success_remove_heuristics(self):
+        config = self.fixture_add_device_with_heuristics(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {},
+            {},
+            {"mode": "", "exec_ls": "", "interval": ""}
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(
+            self.fixture_add_device(
+                open(rc("corosync-3nodes.conf")).read()
+            ),
+            facade.config.export()
+        )
+        self.assertEqual([], reporter.report_item_list)
+
+    def test_success_change_heuristics(self):
+        config = self.fixture_add_device_with_heuristics(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {},
+            {},
+            {"mode": "sync", "interval": "", "timeout": "20"}
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(
+            config.replace(
+                "interval: 30\n            mode: on",
+                "mode: sync\n            timeout: 20",
+            ),
+            facade.config.export()
+        )
+        self.assertEqual([], reporter.report_item_list)
+
+    def test_heuristics_bad_options(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter,
+                {},
+                {},
+                {
+                    "mode": "bad mode",
+                    "timeout": "-5",
+                    "sync_timeout": "-15",
+                    "interval": "-30",
+                    "exec_ls.bad": "test -f /tmp/test",
+                    "exec_ls:bad": "test -f /tmp/test",
+                    "exec_ls bad": "test -f /tmp/test",
+                    "exec_ls{bad": "test -f /tmp/test",
+                    "exec_ls}bad": "test -f /tmp/test",
+                    "exec_ls#bad": "test -f /tmp/test",
+                }
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="mode",
+                option_value="bad mode",
+                allowed_values=("off", "on", "sync")
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="interval",
+                option_value="-30",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="sync_timeout",
+                option_value="-15",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="timeout",
+                option_value="-5",
+                allowed_values="a positive integer"
+            ),
+            fixture.error(
+                report_codes.INVALID_USERDEFINED_OPTIONS,
+                option_names=[
+                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
+                    "exec_ls{bad", "exec_ls}bad",
+                ],
+                option_type="heuristics",
+                allowed_description=(
+                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
+                )
+            )
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        ac(config, facade.config.export())
+
+    def test_heuristics_bad_options_forced(self):
+        config = self.fixture_add_device_with_heuristics(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {},
+            {},
+            {
+                "interval": "-30",
+                "mode": "bad mode",
+                "sync_timeout": "-15",
+                "timeout": "-5",
+            },
+            force_options=True
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(
+            config.replace(
+                "interval: 30\n            mode: on",
+                (
+                    "interval: -30\n            mode: bad mode\n"
+                    "            sync_timeout: -15\n"
+                    "            timeout: -5"
+                ),
+            ),
+            facade.config.export()
+        )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="bad mode",
+                    allowed_values=("off", "on", "sync")
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="interval",
+                    option_value="-30",
+                    allowed_values="a positive integer"
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="-15",
+                    allowed_values="a positive integer"
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="timeout",
+                    option_value="-5",
+                    allowed_values="a positive integer"
+                ),
             ]
         )
 
@@ -2215,3 +2929,116 @@ quorum {
             config_no_devices,
             facade.config.export()
         )
+
+
+class RemoveQuorumDeviceHeuristics(TestCase):
+    def test_error_on_empty_config(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            facade.remove_quorum_device_heuristics,
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_error_on_no_device(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            facade.remove_quorum_device_heuristics,
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_noop_on_no_heuristics(self):
+        config = open(rc("corosync-3nodes-qdevice.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_quorum_device_heuristics()
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(config, facade.config.export())
+
+    def test_remove_all_heuristics(self):
+        config_no_devices = open(rc("corosync-3nodes.conf")).read()
+        config_no_heuristics = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            dedent("""\
+                quorum {
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+
+                        net {
+                            host: 127.0.0.1
+                        }
+                    }
+
+                    device {
+                        option: value
+                    }
+                }
+
+                quorum {
+                    device {
+                        model: net
+
+                        net {
+                            host: 127.0.0.2
+                        }
+                    }
+                }"""
+            ),
+            config_no_devices
+        )
+        config_heuristics = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            dedent("""\
+                quorum {
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+
+                        net {
+                            host: 127.0.0.1
+                        }
+
+                        heuristics {
+                            mode: on
+                        }
+                    }
+
+                    device {
+                        option: value
+
+                        heuristics {
+                            interval: 3000
+                        }
+                    }
+                }
+
+                quorum {
+                    device {
+                        model: net
+
+                        net {
+                            host: 127.0.0.2
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                        }
+                    }
+                }"""
+            ),
+            config_no_devices
+        )
+
+        facade = lib.ConfigFacade.from_string(config_heuristics)
+        facade.remove_quorum_device_heuristics()
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_qdevice_reload)
+        ac(config_no_heuristics, facade.config.export())

@@ -98,6 +98,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -108,6 +109,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["another_unknown_option"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 )
@@ -133,6 +135,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -143,6 +146,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["another_unknown_option"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 )
@@ -170,6 +174,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -180,6 +185,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -190,6 +196,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_DEVICE"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 )
@@ -216,6 +223,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -226,6 +234,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -236,6 +245,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     report_codes.FORCE_OPTIONS
                 )
@@ -263,6 +273,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -273,6 +284,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -283,6 +295,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 ),
@@ -293,6 +306,7 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_names": ["SBD_PACEMAKER"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
+                        "allowed_patterns": [],
                     },
                     None
                 )
@@ -716,6 +730,7 @@ class InitializeBlockDevicesTest(CommonTest):
                     "option_names": sorted(["another_one", "unknown_option"]),
                     "option_type": "option",
                     "allowed": sorted(allowed_options),
+                    "allowed_patterns": [],
                 }
             ),
             *[

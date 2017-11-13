@@ -843,6 +843,29 @@ class NamesIn(TestCase):
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
                         "option_type": "option",
+                        "allowed_patterns": [],
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_return_error_with_allowed_patterns(self):
+        assert_report_item_list_equal(
+            validate.names_in(
+                ["a", "b", "c"],
+                ["x", "y"],
+                allowed_option_patterns=["pattern"]
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["x", "y"],
+                        "allowed": ["a", "b", "c"],
+                        "option_type": "option",
+                        "allowed_patterns": ["pattern"],
                     },
                     None
                 )
@@ -865,6 +888,7 @@ class NamesIn(TestCase):
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
                         "option_type": "option",
+                        "allowed_patterns": [],
                     },
                     None
                 )
@@ -887,6 +911,7 @@ class NamesIn(TestCase):
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
                         "option_type": "some option",
+                        "allowed_patterns": [],
                     },
                     "FORCE_CODE"
                 )
@@ -910,6 +935,7 @@ class NamesIn(TestCase):
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
                         "option_type": "some option",
+                        "allowed_patterns": [],
                     },
                     None
                 )

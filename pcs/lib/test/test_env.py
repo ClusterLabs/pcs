@@ -853,12 +853,14 @@ class PushCorosyncConfFile(TestCase):
         self.config.env.set_corosync_conf_data("totem {\n    version: 2\n}\n")
 
     def test_success(self):
-        env = self.env_assistant.get_env()
         new_corosync_conf_data = "totem {\n    version: 3\n}\n"
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=new_corosync_conf_data
+        )
+        env = self.env_assistant.get_env()
         env.push_corosync_conf(
             CorosyncConfigFacade.from_string(new_corosync_conf_data)
         )
-        self.assertEqual(new_corosync_conf_data, env.get_corosync_conf_data())
 
 
 class GetCorosyncConfFile(TestCase):

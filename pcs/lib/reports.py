@@ -219,18 +219,19 @@ def required_option_of_alternatives_is_missing(
     )
 
 def invalid_option(
-    option_names, allowed_options, option_type,
+    option_names, allowed_options, option_type, allowed_option_patterns=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    specified option name is not valid, usualy an error or a warning
-    list option_names specified invalid option names
-    allowed_options iterable of possible allowed option names
-    option_type decsribes the option
-    severity report item severity
-    forceable is this report item forceable? by what cathegory?
-    """
+    specified option names are not valid, usualy an error or a warning
 
+    list option_names -- specified invalid option names
+    list allowed_options -- possible allowed option names
+    string option_type -- describes the option
+    list allowed_option_patterns -- allowed user defind options patterns
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what cathegory?
+    """
     return ReportItem(
         report_codes.INVALID_OPTION,
         severity,
@@ -239,6 +240,37 @@ def invalid_option(
             "option_names": option_names,
             "option_type": option_type,
             "allowed": sorted(allowed_options),
+            "allowed_patterns": sorted(allowed_option_patterns or []),
+        }
+    )
+
+def invalid_userdefined_options(
+    option_names, allowed_description, option_type,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    specified option names defined by a user are not valid
+
+    This is different than invalid_option. In this case, the options are
+    supposed to be defined by a user. This report carries information that the
+    option names do not meet requirements, i.e. contain not allowed characters.
+    Invalid_options is used when the options are predefined by pcs (or
+    underlying tools).
+
+    list option_names -- specified invalid option names
+    string allowed_description -- describes what option names should look like
+    string option_type -- describes the option
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what cathegory?
+    """
+    return ReportItem(
+        report_codes.INVALID_USERDEFINED_OPTIONS,
+        severity,
+        forceable,
+        info={
+            "option_names": sorted(option_names),
+            "option_type": option_type,
+            "allowed_description": allowed_description,
         }
     )
 
@@ -798,6 +830,14 @@ def corosync_quorum_get_status_error(reason):
         info={
             "reason": reason,
         }
+    )
+
+def corosync_quorum_heuristics_enabled_with_no_exec():
+    """
+    no exec_ is specified, therefore heuristics are effectively disabled
+    """
+    return ReportItem.warning(
+        report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
     )
 
 def corosync_quorum_set_expected_votes_error(reason):

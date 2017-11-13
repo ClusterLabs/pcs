@@ -43,6 +43,7 @@ class PrepareSetTest(TestCase):
                     "option_names": ["invalid_name"],
                     "option_type": None,
                     "allowed": ["action", "require-all", "role", "sequential"],
+                    "allowed_patterns": [],
             }),
         )
 
