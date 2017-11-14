@@ -188,6 +188,8 @@ def resource_cmd(argv):
                 )
         elif sub_cmd == "cleanup":
             resource_cleanup(argv_next)
+        elif sub_cmd == "refresh":
+            resource_refresh(argv_next)
         elif sub_cmd == "history":
             resource_history(argv_next)
         elif sub_cmd == "relocate":
@@ -2450,20 +2452,38 @@ def get_attrs(node, prepend_string = "", append_string = ""):
         return prepend_string + output.rstrip() + append_string
     return output.rstrip()
 
-def resource_cleanup(argv):
+def _parse_cleanup_refresh(argv):
     resource = None
     node = None
-
     if len(argv) > 1:
         raise CmdLineInputError()
     if argv:
         resource = argv[0]
     if "--node" in utils.pcs_options:
         node = utils.pcs_options["--node"]
-    force = "--force" in utils.pcs_options
+    return {
+        "node": node,
+        "resource": resource,
+        "force": "--force" in utils.pcs_options,
+    }
 
+def resource_cleanup(argv):
+    # --force is noop now but we must support it for backwards compatibility
+    options = _parse_cleanup_refresh(argv)
     print(lib_pacemaker.resource_cleanup(
-        utils.cmd_runner(), resource, node, force
+        utils.cmd_runner(),
+        resource=options["resource"],
+        node=options["node"]
+    ))
+
+def resource_refresh(argv):
+    options = _parse_cleanup_refresh(argv)
+    print(lib_pacemaker.resource_refresh(
+        utils.cmd_runner(),
+        resource=options["resource"],
+        node=options["node"],
+        full="--full" in utils.pcs_options,
+        force=options["force"]
     ))
 
 def resource_history(args):

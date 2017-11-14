@@ -23,7 +23,7 @@ from pcs.lib.xml_tools import etree_to_str
 __EXITCODE_WAIT_TIMEOUT = 62
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 6
 __EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE = 211
-__RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD = 100
+__RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 
 class CrmMonErrorException(LibraryError):
     pass
@@ -313,17 +313,7 @@ def remove_node(runner, node_name):
 
 ### resources
 
-def resource_cleanup(runner, resource=None, node=None, force=False):
-    if not force and not node and not resource:
-        summary = ClusterState(get_cluster_status_xml(runner)).summary
-        operations = summary.nodes.attrs.count * summary.resources.attrs.count
-        if operations > __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD:
-            raise LibraryError(
-                reports.resource_cleanup_too_time_consuming(
-                    __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD
-                )
-            )
-
+def resource_cleanup(runner, resource=None, node=None):
     cmd = [__exec("crm_resource"), "--cleanup"]
     if resource:
         cmd.extend(["--resource", resource])
@@ -335,6 +325,38 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
     if retval != 0:
         raise LibraryError(
             reports.resource_cleanup_error(
+                join_multilines([stderr, stdout]),
+                resource,
+                node
+            )
+        )
+    # usefull output (what has been done) goes to stderr
+    return join_multilines([stdout, stderr])
+
+def resource_refresh(runner, resource=None, node=None, full=False, force=None):
+    if not force and not node and not resource:
+        summary = ClusterState(get_cluster_status_xml(runner)).summary
+        operations = summary.nodes.attrs.count * summary.resources.attrs.count
+        if operations > __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD:
+            raise LibraryError(
+                reports.resource_refresh_too_time_consuming(
+                    __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
+                )
+            )
+
+    cmd = [__exec("crm_resource"), "--refresh"]
+    if resource:
+        cmd.extend(["--resource", resource])
+    if node:
+        cmd.extend(["--node", node])
+    if full:
+        cmd.extend(["--force"])
+
+    stdout, stderr, retval = runner.run(cmd)
+
+    if retval != 0:
+        raise LibraryError(
+            reports.resource_refresh_error(
                 join_multilines([stderr, stdout]),
                 resource,
                 node

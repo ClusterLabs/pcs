@@ -103,6 +103,7 @@ def remote(params, request, auth_user)
       :resource_start => method(:resource_start),
       :resource_stop => method(:resource_stop),
       :resource_cleanup => method(:resource_cleanup),
+      :resource_refresh => method(:resource_refresh),
       :update_resource => method(:update_resource),
       :update_fence_device => method(:update_fence_device),
       :get_avail_resource_agents => method(:get_avail_resource_agents),
@@ -1435,6 +1436,24 @@ def resource_cleanup(params, request, auth_user)
     return JSON.generate({"success" => "true"})
   else
     return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
+  end
+end
+
+def resource_refresh(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  cmd = [PCS, "resource", "refresh", params[:resource]]
+  if params[:full] == '1'
+    cmd << "--full"
+  end
+  stdout, stderr, retval = run_cmd(auth_user, *cmd)
+  if retval == 0
+    return JSON.generate({"success" => "true"})
+  else
+    return JSON.generate(
+      {"error" => "true", "stdout" => stdout, "stderror" => stderr}
+    )
   end
 end
 

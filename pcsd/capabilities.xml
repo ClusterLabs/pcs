@@ -1180,19 +1180,36 @@
     </capability>
     <capability id="pcmk.resource.cleanup" in-pcs="1" in-pcsd="0">
       <description>
-        Forget history of resources and redetect their current state. Optionally
-        specify a resource and/or a node.
+        Delete failed operations from history of resources and redetect their
+        current state. Optionally specify a resource and/or a node.
 
         pcs commands: resource cleanup
       </description>
     </capability>
     <capability id="pcmk.resource.cleanup.one-resource" in-pcs="1" in-pcsd="1">
       <description>
-        Forget history of a specified resource on all nodes and redetect its
-        current state.
+        Delete failed operations from history of a specified resource on all
+        nodes and redetect its current state.
 
         pcs commands: resource cleanup
         daemon urls: resource_cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.resource.refresh" in-pcs="1" in-pcsd="0">
+      <description>
+        Forget history of resources and redetect their current state. Optionally
+        specify a resource and/or a node.
+
+        pcs commands: resource refresh
+      </description>
+    </capability>
+    <capability id="pcmk.resource.refresh.one-resource" in-pcs="1" in-pcsd="1">
+      <description>
+        Forget history of a specified resource on all nodes and redetect its
+        current state.
+
+        pcs commands: resource refresh
+        daemon urls: resource_refresh
       </description>
     </capability>
     <capability id="pcmk.resource.failcount" in-pcs="1" in-pcsd="0">
@@ -1302,10 +1319,18 @@
     </capability>
     <capability id="pcmk.stonith.cleanup" in-pcs="1" in-pcsd="0">
       <description>
+        Delete failed operations from history of stonith resources and redetect
+        their current state. Optionally specify a resource and/or a node.
+
+        pcs commands: stonith cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.refresh" in-pcs="1" in-pcsd="0">
+      <description>
         Forget history of stonith resources and redetect their current state.
         Optionally specify a resource and/or a node.
 
-        pcs commands: stonith cleanup
+        pcs commands: stonith refresh
       </description>
     </capability>
     <capability id="pcmk.stonith.levels" in-pcs="1" in-pcsd="1">

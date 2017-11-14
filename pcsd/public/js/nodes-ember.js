@@ -80,6 +80,9 @@ Pcs = Ember.Application.createWithMixins({
       (this.get("pcsd_capabilities").indexOf("pcmk.resource.manage-unmanage") != -1)
     );
   }.property("available_features", "pcsd_capabilities"),
+  is_supported_resource_refresh_one_resource: function() {
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.refresh.one-resource") != -1
+  }.property("pcsd_capabilities"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {

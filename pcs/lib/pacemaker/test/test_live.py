@@ -12,6 +12,8 @@ from pcs.test.tools.assertions import (
     assert_xml_equal,
     start_tag_error_text,
 )
+from pcs.test.tools import fixture
+from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import XmlManipulation
@@ -666,7 +668,91 @@ class RemoveNode(LibraryPacemakerTest):
             )
         )
 
-class ResourceCleanupTest(LibraryPacemakerTest):
+
+class ResourceCleanupTest(TestCase):
+    def setUp(self):
+        self.stdout = "expected output"
+        self.stderr = "expected stderr"
+        self.resource = "my_resource"
+        self.node = "my_node"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def assert_output(self, real_output):
+        self.assertEqual(
+            self.stdout + "\n" + self.stderr,
+            real_output
+        )
+
+    def test_basic(self):
+        self.config.runner.pcmk.resource_cleanup(
+            stdout=self.stdout,
+            stderr=self.stderr
+        )
+        env = self.env_assist.get_env()
+        real_output = lib.resource_cleanup(env.cmd_runner())
+        self.assert_output(real_output)
+
+    def test_resource(self):
+        self.config.runner.pcmk.resource_cleanup(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            resource=self.resource
+        )
+        env = self.env_assist.get_env()
+        real_output = lib.resource_cleanup(
+            env.cmd_runner(), resource=self.resource
+        )
+        self.assert_output(real_output)
+
+    def test_node(self):
+        self.config.runner.pcmk.resource_cleanup(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            node=self.node
+        )
+
+        env = self.env_assist.get_env()
+        real_output = lib.resource_cleanup(
+            env.cmd_runner(), node=self.node
+        )
+        self.assert_output(real_output)
+
+    def test_all_options(self):
+        self.config.runner.pcmk.resource_cleanup(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            resource=self.resource,
+            node=self.node
+        )
+
+        env = self.env_assist.get_env()
+        real_output = lib.resource_cleanup(
+            env.cmd_runner(), resource=self.resource, node=self.node
+        )
+        self.assert_output(real_output)
+
+    def test_error_cleanup(self):
+        self.config.runner.pcmk.resource_cleanup(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            returncode=1
+        )
+
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.resource_cleanup(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_CLEANUP_ERROR,
+                    force_code=None,
+                    reason=(self.stderr + "\n" + self.stdout)
+                )
+            ],
+            expected_in_processor=False
+        )
+
+
+class ResourceRefreshTest(LibraryPacemakerTest):
     def fixture_status_xml(self, nodes, resources):
         xml_man = XmlManipulation.from_file(rc("crm_mon.minimal.xml"))
         doc = xml_man.tree.getroottree()
@@ -680,7 +766,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         call_list = [
             mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_resource"), "--cleanup"]),
+            mock.call([self.path("crm_resource"), "--refresh"]),
         ]
         return_value_list = [
             (self.fixture_status_xml(1, 1), "", 0),
@@ -688,7 +774,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        real_output = lib.resource_cleanup(mock_runner)
+        real_output = lib.resource_refresh(mock_runner)
 
         self.assertEqual(len(return_value_list), len(call_list))
         self.assertEqual(len(return_value_list), mock_runner.run.call_count)
@@ -706,10 +792,10 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         )
 
         assert_raise_library_error(
-            lambda: lib.resource_cleanup(mock_runner),
+            lambda: lib.resource_refresh(mock_runner),
             (
                 Severity.ERROR,
-                report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
+                report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
                 {"threshold": 100},
                 report_codes.FORCE_LOAD_THRESHOLD
             )
@@ -717,15 +803,15 @@ class ResourceCleanupTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
-    def test_forced(self):
+    def test_threshold_exceeded_forced(self):
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"
         mock_runner = get_runner(expected_stdout, expected_stderr, 0)
 
-        real_output = lib.resource_cleanup(mock_runner, force=True)
+        real_output = lib.resource_refresh(mock_runner, force=True)
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--cleanup"]
+            [self.path("crm_resource"), "--refresh"]
         )
         self.assertEqual(
             expected_stdout + "\n" + expected_stderr,
@@ -738,10 +824,10 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         expected_stderr = "expected stderr"
         mock_runner = get_runner(expected_stdout, expected_stderr, 0)
 
-        real_output = lib.resource_cleanup(mock_runner, resource=resource)
+        real_output = lib.resource_refresh(mock_runner, resource=resource)
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--cleanup", "--resource", resource]
+            [self.path("crm_resource"), "--refresh", "--resource", resource]
         )
         self.assertEqual(
             expected_stdout + "\n" + expected_stderr,
@@ -754,31 +840,55 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         expected_stderr = "expected stderr"
         mock_runner = get_runner(expected_stdout, expected_stderr, 0)
 
-        real_output = lib.resource_cleanup(mock_runner, node=node)
+        real_output = lib.resource_refresh(mock_runner, node=node)
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--cleanup", "--node", node]
+            [self.path("crm_resource"), "--refresh", "--node", node]
         )
         self.assertEqual(
             expected_stdout + "\n" + expected_stderr,
             real_output
         )
 
-    def test_node_and_resource(self):
+    def test_full(self):
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        call_list = [
+            mock.call(self.crm_mon_cmd()),
+            mock.call([self.path("crm_resource"), "--refresh", "--force"]),
+        ]
+        return_value_list = [
+            (self.fixture_status_xml(1, 1), "", 0),
+            (expected_stdout, expected_stderr, 0),
+        ]
+        mock_runner.run.side_effect = return_value_list
+
+        real_output = lib.resource_refresh(mock_runner, full=True)
+
+        self.assertEqual(len(return_value_list), len(call_list))
+        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
+        mock_runner.run.assert_has_calls(call_list)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
+
+    def test_all_options(self):
         node = "test_node"
         resource = "test_resource"
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"
         mock_runner = get_runner(expected_stdout, expected_stderr, 0)
 
-        real_output = lib.resource_cleanup(
-            mock_runner, resource=resource, node=node
+        real_output = lib.resource_refresh(
+            mock_runner, resource=resource, node=node, full=True
         )
 
         mock_runner.run.assert_called_once_with(
             [
                 self.path("crm_resource"),
-                "--cleanup", "--resource", resource, "--node", node
+                "--refresh", "--resource", resource, "--node", node, "--force"
             ]
         )
         self.assertEqual(
@@ -797,7 +907,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         )
 
         assert_raise_library_error(
-            lambda: lib.resource_cleanup(mock_runner),
+            lambda: lib.resource_refresh(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
@@ -809,14 +919,14 @@ class ResourceCleanupTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
-    def test_error_cleanup(self):
+    def test_error_refresh(self):
         expected_stdout = "some info"
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         call_list = [
             mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_resource"), "--cleanup"]),
+            mock.call([self.path("crm_resource"), "--refresh"]),
         ]
         return_value_list = [
             (self.fixture_status_xml(1, 1), "", 0),
@@ -825,10 +935,10 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner.run.side_effect = return_value_list
 
         assert_raise_library_error(
-            lambda: lib.resource_cleanup(mock_runner),
+            lambda: lib.resource_refresh(mock_runner),
             (
                 Severity.ERROR,
-                report_codes.RESOURCE_CLEANUP_ERROR,
+                report_codes.RESOURCE_REFRESH_ERROR,
                 {
                     "reason": expected_stderr + "\n" + expected_stdout,
                 }
@@ -838,6 +948,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         self.assertEqual(len(return_value_list), len(call_list))
         self.assertEqual(len(return_value_list), mock_runner.run.call_count)
         mock_runner.run.assert_has_calls(call_list)
+
 
 class ResourcesWaitingTest(LibraryPacemakerTest):
     def test_has_support(self):

@@ -72,7 +72,7 @@ max-locals=47
 # Maximum number of statements in function / method body
 max-statements=160
 # Maximum number of branch for function / method body
-max-branches=63
+max-branches=64
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=115
 # Maximum number of boolean expressions in a if statement (default 5)

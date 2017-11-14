@@ -1466,10 +1466,11 @@ def wait_for_idle_not_live_cluster():
 
 def resource_cleanup_error(reason, resource=None, node=None):
     """
-    an error occured when deleting resource history in pacemaker
-    string reason error description
-    string resource resource which has been cleaned up
-    string node node which has been cleaned up
+    An error occured when deleting resource failed operations in pacemaker
+
+    string reason -- error description
+    string resource -- resource which has been cleaned up
+    string node -- node which has been cleaned up
     """
     return ReportItem.error(
         report_codes.RESOURCE_CLEANUP_ERROR,
@@ -1480,13 +1481,31 @@ def resource_cleanup_error(reason, resource=None, node=None):
         }
     )
 
-def resource_cleanup_too_time_consuming(threshold):
+def resource_refresh_error(reason, resource=None, node=None):
     """
-    resource cleanup will execute more than threshold operations in a cluster
-    threshold current threshold for trigerring this error
+    An error occured when deleting resource history in pacemaker
+
+    string reason -- error description
+    string resource -- resource which has been cleaned up
+    string node -- node which has been cleaned up
     """
     return ReportItem.error(
-        report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
+        report_codes.RESOURCE_REFRESH_ERROR,
+        info={
+            "reason": reason,
+            "resource": resource,
+            "node": node,
+        }
+    )
+
+def resource_refresh_too_time_consuming(threshold):
+    """
+    Resource refresh would execute more than threshold operations in a cluster
+
+    int threshold -- current threshold for trigerring this error
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
         info={"threshold": threshold},
         forceable=report_codes.FORCE_LOAD_THRESHOLD
     )

@@ -70,6 +70,47 @@ class PcmkShortcuts(object):
             instead=instead,
         )
 
+    def resource_cleanup(
+        self,
+        name="runner.pcmk.cleanup",
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for crm_resource --cleanup
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string resource -- the id of a resource to be cleaned
+        string node -- the name of the node where resources should be cleaned
+        string stdout -- crm_resource's stdout
+        string stderr -- crm_resource's stderr
+        int returncode -- crm_resource's returncode
+        """
+        cmd = ["crm_resource", "--cleanup"]
+        if resource:
+            cmd.extend(["--resource", resource])
+        if node:
+            cmd.extend(["--node", node])
+        self.__calls.place(
+            name,
+            RunnerCall(
+                " ".join(cmd),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode
+            ),
+            before=before,
+            instead=instead,
+        )
 
     def wait(
         self, name="runner.pcmk.wait", stderr="", returncode=None, timeout=None

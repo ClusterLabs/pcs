@@ -775,15 +775,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.RESOURCE_CLEANUP_ERROR: lambda info:
         (
-             "Unable to cleanup resource: {resource}\n{reason}"
+             (
+                "Unable to forget failed operations of resource: {resource}"
+                "\n{reason}"
+             )
              if info["resource"] else
-             "Unexpected error occured. 'crm_resource -C' error:\n{reason}"
+             "Unable to forget failed operations of resources\n{reason}"
         ).format(**info)
     ,
 
-    codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING: lambda info:
+    codes.RESOURCE_REFRESH_ERROR: lambda info:
         (
-             "Cleaning up all resources on all nodes will execute more "
+             "Unable to delete history of resource: {resource}\n{reason}"
+             if info["resource"] else
+             "Unable to delete history of resources\n{reason}"
+        ).format(**info)
+    ,
+
+    codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING: lambda info:
+        (
+             "Deleting history of all resources on all nodes will execute more "
              "than {threshold} operations in the cluster, which may "
              "negatively impact the responsiveness of the cluster. "
              "Consider specifying resource and/or node"

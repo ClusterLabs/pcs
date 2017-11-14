@@ -144,15 +144,29 @@
     {{#if resource.stonith}}
       <div class="xdark sprites" style="float: left"></div>
       <div id="stonith_delete_link" class="link" onclick="verify_remove_fence_devices(curStonith());">Remove</div>
-      <div class="restart sprites" style="float: left"></div>
-      <div id="stonith_cleanup_link" class="link" onclick="cleanup_stonith();">Cleanup</div>
+      {{#if Pcs.is_supported_resource_refresh_one_resource}}
+        <div class="restart sprites" style="float: left"></div>
+        <div id="stonith_cleanup_link" class="link" onclick="cleanup_stonith();">Cleanup</div>
+        <div class="restart sprites" style="float: left"></div>
+        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(true);">Refresh</div>
+      {{else}}
+        <div class="restart sprites" style="float: left"></div>
+        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(false);">Refresh</div>
+      {{/if}}
     {{else}}
       <div class="checkdark sprites" style="float: left"></div>
       <div id="resource_start_link" class="link" onclick="enable_resource();">Enable</div>
       <div class="cancel sprites" style="float: left"></div>
       <div id="resource_stop_link" class="link" onclick="disable_resource();">Disable</div>
-      <div class="restart sprites" style="float: left"></div>
-      <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();">Cleanup</div>
+      {{#if Pcs.is_supported_resource_refresh_one_resource}}
+        <div class="restart sprites" style="float: left"></div>
+        <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();">Cleanup</div>
+        <div class="restart sprites" style="float: left"></div>
+        <div id="resource_refresh_link" class="link" onclick="refresh_resource(true);">Refresh</div>
+      {{else}}
+        <div class="restart sprites" style="float: left"></div>
+        <div id="resource_refresh_link" class="link" onclick="refresh_resource(false);">Refresh</div>
+      {{/if}}
       <div class="xdark sprites" style="float: left"></div>
       <div id="resource_delete_link" class="link" onclick="verify_remove_resources(curResource());">Remove</div>
       </div>

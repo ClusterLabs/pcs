@@ -618,46 +618,76 @@ function disable_resource() {
   Pcs.resourcesContainer.disable_resource(curResource());
 }
 
-function cleanup_resource() {
-  var resource = curResource();
+function resource_stonith_cleanup_refresh(
+  resource, action_button_id, action_url, action_label, full_refresh
+) {
   if (resource == null) {
     return;
   }
-  fade_in_out("#resource_cleanup_link");
+  data = {"resource": resource}
+  if (full_refresh) {
+    data["full"] = 1
+  }
+  fade_in_out(action_button_id);
   ajax_wrapper({
     type: 'POST',
-    url: get_cluster_remote_url() + 'resource_cleanup',
-    data: {"resource": resource},
+    url: get_cluster_remote_url() + action_url,
+    data: data,
     success: function() {
     },
     error: function (xhr, status, error) {
       alert(
-        "Unable to cleanup resource '" + resource + "' "
+        "Unable to " + action_label + " resource '" + resource + "' "
         + ajax_simple_error(xhr, status, error)
       );
     }
   });
 }
 
+function cleanup_resource() {
+  resource_stonith_cleanup_refresh(
+    curResource(),
+    "#resource_cleanup_link",
+    "resource_cleanup",
+    "cleanup"
+  )
+}
+
 function cleanup_stonith() {
-  var resource = curStonith();
-  if (resource == null) {
-    return;
-  }
-  fade_in_out("#stonith_cleanup_link");
-  ajax_wrapper({
-    type: 'POST',
-    url: get_cluster_remote_url() + 'resource_cleanup',
-    data: {"resource": resource},
-    success: function() {
-    },
-    error: function (xhr, status, error) {
-      alert(
-        "Unable to cleanup resource '" + resource + "' "
-        + ajax_simple_error(xhr, status, error)
-      );
-    }
-  });
+  resource_stonith_cleanup_refresh(
+    curStonith(),
+    "#stonith_cleanup_link",
+    "resource_cleanup",
+    "cleanup"
+  )
+}
+
+function refresh_resource(refresh_supported) {
+  resource_stonith_cleanup_refresh(
+    curResource(),
+    "#resource_refresh_link",
+    /* previously, "refresh" was called "cleanup" */
+    refresh_supported ? "resource_refresh" : "resource_cleanup",
+    "refresh",
+    /* no way to set if we want to do the full (on all nodes) refresh from gui
+     * (yet);
+     * moreover the full refresh flag only works for refresh not for cleanup */
+    refresh_supported ? true : false
+  )
+}
+
+function refresh_stonith(refresh_supported) {
+  resource_stonith_cleanup_refresh(
+    curStonith(),
+    "#stonith_refresh_link",
+    /* previously, "refresh" was called "cleanup" */
+    refresh_supported ? "resource_refresh" : "resource_cleanup",
+    "refresh",
+    /* no way to set if we want to do the full (on all nodes) refresh from gui
+     * (yet);
+     * moreover the full refresh flag only works for refresh not for cleanup */
+    refresh_supported ? true : false
+  )
 }
 
 function checkExistingNode() {

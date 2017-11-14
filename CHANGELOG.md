@@ -12,11 +12,19 @@
 - False warnings about failed actions when resource is master/unmaster from the
   web UI ([rhbz#1506220])
 
+### Changed
+- `pcs resource|stonith cleanup` no longer deletes the whole operation history
+  of resources. Instead, it only deletes failed operations from the history. The
+  original functionality is available in the `pcs resource|stonith refresh`
+  command. ([rhbz#1508351], [rhbz#1508350])
+
 [rhbz#1389209]: https://bugzilla.redhat.com/show_bug.cgi?id=1389209
 [rhbz#1389943]: https://bugzilla.redhat.com/show_bug.cgi?id=1389943
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1506220]: https://bugzilla.redhat.com/show_bug.cgi?id=1506220
 [rhbz#1506864]: https://bugzilla.redhat.com/show_bug.cgi?id=1506864
+[rhbz#1508350]: https://bugzilla.redhat.com/show_bug.cgi?id=1508350
+[rhbz#1508351]: https://bugzilla.redhat.com/show_bug.cgi?id=1508351
 
 
 ## [0.9.161] - 2017-11-02

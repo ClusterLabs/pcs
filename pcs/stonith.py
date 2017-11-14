@@ -69,6 +69,8 @@ def stonith_cmd(argv):
             stonith_fence(argv_next)
         elif sub_cmd == "cleanup":
             resource.resource_cleanup(argv_next)
+        elif sub_cmd == "refresh":
+            resource.resource_refresh(argv_next)
         elif sub_cmd == "confirm":
             stonith_confirm(argv_next)
         elif sub_cmd == "get_fence_agent_info":

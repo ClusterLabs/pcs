@@ -1904,3 +1904,110 @@ class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
             "No exec_NAME options are specified, so heuristics are effectively "
                 "disabled"
         )
+
+
+class ResourceCleanupError(NameBuildTest):
+    code = codes.RESOURCE_CLEANUP_ERROR
+
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to forget failed operations of resources\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": None,
+                "node": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "Unable to forget failed operations of resources\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": None,
+                "node": "N1",
+            }
+        )
+
+    def test_resource(self):
+        self.assert_message_from_info(
+            "Unable to forget failed operations of resource: R1\n"
+                "something wrong"
+            ,
+            {
+                "reason": "something wrong",
+                "resource": "R1",
+                "node": None,
+            }
+        )
+
+    def test_resource_and_node(self):
+        self.assert_message_from_info(
+            "Unable to forget failed operations of resource: R1\n"
+                "something wrong"
+            ,
+            {
+                "reason": "something wrong",
+                "resource": "R1",
+                "node": "N1",
+            }
+        )
+
+
+class ResourceRefreshError(NameBuildTest):
+    code = codes.RESOURCE_REFRESH_ERROR
+
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Unable to delete history of resources\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": None,
+                "node": None,
+            }
+        )
+
+    def test_node(self):
+        self.assert_message_from_info(
+            "Unable to delete history of resources\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": None,
+                "node": "N1",
+            }
+        )
+
+    def test_resource(self):
+        self.assert_message_from_info(
+            "Unable to delete history of resource: R1\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": "R1",
+                "node": None,
+            }
+        )
+
+    def test_resource_and_node(self):
+        self.assert_message_from_info(
+            "Unable to delete history of resource: R1\nsomething wrong",
+            {
+                "reason": "something wrong",
+                "resource": "R1",
+                "node": "N1",
+            }
+        )
+
+
+class ResourceRefreshTooTimeConsuming(NameBuildTest):
+    code = codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING
+    def test_success(self):
+        self.assert_message_from_info(
+            "Deleting history of all resources on all nodes will execute more "
+                "than 25 operations in the cluster, which may negatively "
+                "impact the responsiveness of the cluster. Consider specifying "
+                "resource and/or node"
+            ,
+            {
+                "threshold": 25,
+            }
+        )
