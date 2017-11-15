@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.162] - 2017-11-15
 
 ### Added
 - `pcs status --full` now displays information about tickets ([rhbz#1389943])
