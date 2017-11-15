@@ -29,6 +29,7 @@ setup(
         'pcs',
         'test/resources/*.xml',
         'test/resources/*.conf',
+        'test/resources/qdevice-certs/*'
     ]},
     zip_safe=False,
     entry_points={
