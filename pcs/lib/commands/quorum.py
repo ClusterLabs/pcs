@@ -325,7 +325,7 @@ def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
     reporter.process(
         reports.qdevice_certificate_removal_started()
     )
-    com_cmd = qdevice_net_com.ClientDestroy(reporter)
+    com_cmd = qdevice_net_com.ClientDestroy(reporter, skip_offline_nodes)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(cluster_nodes)
     )

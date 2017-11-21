@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- `--skip-offline` is no longer ignored in the `pcs quorum device remove`
+  command
+
+
 ## [0.9.162] - 2017-11-15
 
 ### Added
