@@ -19,14 +19,12 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
 )
-from pcs.test.tools.pcs_unittest import mock, skip, TestCase
+from pcs.test.tools.pcs_unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.corosync.config_facade import ConfigFacade
-from pcs.lib.external import NodeCommunicationException
-from pcs.lib.node import NodeAddresses, NodeAddressesList
 
 from pcs.lib.commands import quorum as lib
 
@@ -1837,465 +1835,563 @@ class RemoveDeviceHeuristics(TestCase):
 
 
 
-@skip("TODO: rewrite using new testing fremework")
-@mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
-@mock.patch("pcs.lib.commands.quorum._remove_device_model_net")
-@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_disable")
-@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_stop")
-class RemoveDeviceTest(TestCase, CmanMixin):
-    def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
-    def test_disabled_on_cman(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        self.assert_disabled_on_cman(lambda: lib.remove_device(lib_env))
-        mock_get_corosync.assert_not_called()
-        mock_push_corosync.assert_not_called()
-        mock_remove_net.assert_not_called()
-        mock_remote_disable.assert_not_called()
-        mock_remote_stop.assert_not_called()
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
-    def test_enabled_on_cman_if_not_live(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        original_conf = open(rc("corosync-3nodes.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            corosync_conf_data=original_conf
-        )
-
-        assert_raise_library_error(
-            lambda: lib.remove_device(lib_env),
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_DEFINED,
-                {}
-            )
-        )
-
-        self.assertEqual(1, mock_get_corosync.call_count)
-        self.assertEqual(0, mock_push_corosync.call_count)
-        mock_remove_net.assert_not_called()
-        mock_remote_disable.assert_not_called()
-        mock_remote_stop.assert_not_called()
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_no_device(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        original_conf = open(rc("corosync-3nodes.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        assert_raise_library_error(
-            lambda: lib.remove_device(lib_env),
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_DEFINED,
-                {}
-            )
-        )
-
-        self.assertEqual(1, mock_get_corosync.call_count)
-        self.assertEqual(0, mock_push_corosync.call_count)
-        mock_remove_net.assert_not_called()
-        mock_remote_disable.assert_not_called()
-        mock_remote_stop.assert_not_called()
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
-    @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-    def test_success_3nodes_sbd(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        # nothing special needs to be done in regards of SBD if a cluster
-        # consists of odd number of nodes
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
-        no_device_conf = open(rc("corosync-3nodes.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        lib.remove_device(lib_env)
-
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            no_device_conf
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_DISABLE_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_STOP_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-            ]
-        )
-        self.assertEqual(1, len(mock_remove_net.mock_calls))
-        self.assertEqual(3, len(mock_remote_disable.mock_calls))
-        self.assertEqual(3, len(mock_remote_stop.mock_calls))
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: False)
-    @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: False)
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-    def test_success_2nodes_no_sbd(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        # cluster consists of two nodes, two_node must be set
-        original_conf = open(rc("corosync-qdevice.conf")).read()
-        no_device_conf = open(rc("corosync.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        lib.remove_device(lib_env)
-
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            no_device_conf
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_DISABLE_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_STOP_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-            ]
-        )
-        self.assertEqual(1, len(mock_remove_net.mock_calls))
-        self.assertEqual(2, len(mock_remote_disable.mock_calls))
-        self.assertEqual(2, len(mock_remote_stop.mock_calls))
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
-    @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-    def test_success_2nodes_sbd(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        # cluster consists of two nodes, but SBD is in use
-        # auto tie breaker must be enabled
-        original_conf = open(rc("corosync-qdevice.conf")).read()
-        no_device_conf = open(rc("corosync.conf")).read().replace(
-            "two_node: 1",
-            "auto_tie_breaker: 1"
-        )
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        lib.remove_device(lib_env)
-
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            no_device_conf
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.WARNING,
-                    report_codes.SBD_REQUIRES_ATB,
-                    {}
-                ),
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_DISABLE_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_STOP_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-            ]
-        )
-        self.assertEqual(1, len(mock_remove_net.mock_calls))
-        self.assertEqual(2, len(mock_remote_disable.mock_calls))
-        self.assertEqual(2, len(mock_remote_stop.mock_calls))
-
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    @mock.patch("pcs.lib.sbd.is_sbd_installed", lambda self: True)
-    @mock.patch("pcs.lib.sbd.is_sbd_enabled", lambda self: True)
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["/dev"])
-    def test_success_2nodes_sbd_with_device(
-        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
-        mock_get_corosync, mock_push_corosync
-    ):
-        # cluster consists of two nodes, but SBD with shared storage is in use
-        # auto tie breaker doesn't need to be enabled
-        original_conf = open(rc("corosync-qdevice.conf")).read()
-        no_device_conf = open(rc("corosync.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        lib.remove_device(lib_env)
-
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            no_device_conf
-        )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_DISABLE_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-                (
-                    severity.INFO,
-                    report_codes.SERVICE_STOP_STARTED,
-                    {
-                        "service": "corosync-qdevice",
-                    }
-                ),
-            ]
-        )
-        self.assertEqual(1, len(mock_remove_net.mock_calls))
-        self.assertEqual(2, len(mock_remote_disable.mock_calls))
-        self.assertEqual(2, len(mock_remote_stop.mock_calls))
-
-    @mock.patch("pcs.lib.sbd.atb_has_to_be_enabled")
-    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_success_file(
-        self, mock_atb_check, mock_remote_stop, mock_remote_disable,
-        mock_remove_net, mock_get_corosync, mock_push_corosync
-    ):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
-        no_device_conf = open(rc("corosync-3nodes.conf")).read()
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            corosync_conf_data=original_conf
-        )
-
-        lib.remove_device(lib_env)
-
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            no_device_conf
-        )
-        self.assertEqual([], self.mock_reporter.report_item_list)
-        mock_remove_net.assert_not_called()
-        mock_remote_disable.assert_not_called()
-        mock_remote_stop.assert_not_called()
-        mock_atb_check.assert_not_called()
-
-
-@skip("TODO: rewrite using new testing fremework")
-@mock.patch("pcs.lib.commands.quorum.qdevice_net.remote_client_destroy")
-@mock.patch.object(
-    LibraryEnvironment,
-    "node_communicator",
-    lambda self: "mock_communicator"
-)
+@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class RemoveDeviceNetTest(TestCase):
     def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
-        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        self.nodes = NodeAddressesList([
-            NodeAddresses("node1"),
-            NodeAddresses("node2"),
-        ])
+        self.env_assist, self.config = get_env_tools(self)
 
-    def test_success(self, mock_client_destroy):
-        skip_offline_nodes = False
+    def conf_2nodes(self, quorum_line):
+        cluster_nodes = ["rh7-1", "rh7-2"]
+        original_conf = open(rc("corosync-qdevice.conf")).read()
+        expected_conf = original_conf.replace(
+            outdent("""\
+                quorum {
+                    provider: corosync_votequorum
 
-        lib._remove_device_model_net(
-            self.lib_env,
-            self.nodes,
-            skip_offline_nodes
-        )
+                    device {
+                        model: net
 
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
-                    {}
-                ),
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
-                    {
-                        "node": self.nodes[0].label
+                        net {
+                            host: 127.0.0.1
+                        }
                     }
-                ),
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
-                    {
-                        "node": self.nodes[1].label
-                    }
-                ),
-            ]
-        )
-        client_destroy_calls = [
-            mock.call("mock_communicator", self.nodes[0]),
-            mock.call("mock_communicator", self.nodes[1]),
-        ]
-        self.assertEqual(
-            len(client_destroy_calls),
-            len(mock_client_destroy.mock_calls)
-        )
-        mock_client_destroy.assert_has_calls(
-            client_destroy_calls,
-            any_order=True
-        )
-
-    def test_error_client_destroy(self, mock_client_destroy):
-        def raiser(communicator, node):
-            if node == self.nodes[1]:
-                raise NodeCommunicationException("host", "command", "reason")
-        mock_client_destroy.side_effect = raiser
-        skip_offline_nodes = False
-
-        assert_raise_library_error(
-            lambda: lib._remove_device_model_net(
-                self.lib_env,
-                self.nodes,
-                skip_offline_nodes
+                }
+                """
             ),
-            (
-                severity.ERROR,
-                report_codes.NODE_COMMUNICATION_ERROR,
-                {},
-                report_codes.SKIP_OFFLINE_NODES
+            # cluster consists of two nodes, two_node must be set
+            outdent("""\
+                quorum {
+                    provider: corosync_votequorum
+                    """ + quorum_line + """
+                }
+                """
             )
         )
+        return cluster_nodes, original_conf, expected_conf
 
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            [
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
-                    {}
-                ),
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
-                    {
-                        "node": self.nodes[0].label
+    def conf_3nodes(self):
+        cluster_nodes = ["rh7-1", "rh7-2", "rh7-3"]
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        expected_conf = original_conf.replace(
+            outdent("""\
+                quorum {
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+
+                        net {
+                            host: 127.0.0.1
+                        }
                     }
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.NODE_COMMUNICATION_ERROR,
-                    {},
-                    report_codes.SKIP_OFFLINE_NODES
-                ),
-            ]
+                }
+                """
+            ),
+            outdent("""\
+                quorum {
+                    provider: corosync_votequorum
+                }
+                """
+            )
         )
-        client_destroy_calls = [
-            mock.call("mock_communicator", self.nodes[0]),
-            mock.call("mock_communicator", self.nodes[1]),
+        return cluster_nodes, original_conf, expected_conf
+
+    def fixture_config_http_qdevice_disable(self, nodes, responses=None):
+        responses = responses or [{"label": node} for node in nodes]
+        self.config.http.add_communication(
+            "http.qdevice_disable",
+            responses,
+            action="remote/qdevice_client_disable",
+            response_code=200,
+            output="corosync-qdevice disabled"
+        )
+
+    def fixture_config_http_qdevice_stop(self, nodes, responses=None):
+        responses = responses or [{"label": node} for node in nodes]
+        self.config.http.add_communication(
+            "http.qdevice_stop",
+            responses,
+            action="remote/qdevice_client_stop",
+            response_code=200,
+            output="corosync-qdevice stopped"
+        )
+
+    def fixture_config_http_qdevice_net_destroy(self, nodes, responses=None):
+        responses = responses or [{"label": node} for node in nodes]
+        self.config.http.add_communication(
+            "http.qdevice_net_destroy",
+            responses,
+            action="remote/qdevice_net_client_destroy",
+            response_code=200
+        )
+
+    def fixture_config_runner_sbd_installed(self, sbd_installed):
+        units = {
+            "non_sbd": "enabled",
+        }
+        if sbd_installed:
+            units["sbd"] = "enabled" # enabled/disabled doesn't matter
+        self.config.runner.systemctl.list_unit_files(
+            units,
+            before="http.qdevice_disable_requests",
+        )
+
+    def fixture_config_runner_sbd_enabled(self, sbd_enabled):
+        self.config.runner.systemctl.is_enabled(
+            "sbd",
+            sbd_enabled,
+            before="http.qdevice_disable_requests",
+        )
+
+    def fixture_config_success(
+        self, cluster_nodes, original_corosync_conf, expected_corosync_conf
+    ):
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(original_corosync_conf)
+        self.fixture_config_http_qdevice_disable(cluster_nodes)
+        self.fixture_config_http_qdevice_stop(cluster_nodes)
+        self.fixture_config_http_qdevice_net_destroy(cluster_nodes)
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=expected_corosync_conf
+        )
+
+    def fixture_config_success_sbd_part(
+        self, sbd_installed, sbd_enabled
+    ):
+        self.fixture_config_runner_sbd_installed(sbd_installed)
+        if sbd_installed:
+            self.fixture_config_runner_sbd_enabled(sbd_enabled)
+
+    def fixture_reports_success(self, cluster_nodes, atb_enabled=False):
+        reports = []
+        if atb_enabled:
+            reports.append(
+                fixture.warn(report_codes.SBD_REQUIRES_ATB)
+            )
+        reports += [
+            fixture.info(
+                report_codes.SERVICE_DISABLE_STARTED,
+                service="corosync-qdevice",
+            ),
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=node,
+                service="corosync-qdevice",
+            )
+            for node in cluster_nodes
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_STOP_STARTED,
+                service="corosync-qdevice",
+            ),
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=node,
+                service="corosync-qdevice",
+            )
+            for node in cluster_nodes
+        ] + [
+            fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+        ] + [
+            fixture.info(
+                report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                node=node,
+            )
+            for node in cluster_nodes
         ]
-        self.assertEqual(
-            len(client_destroy_calls),
-            len(mock_client_destroy.mock_calls)
-        )
-        mock_client_destroy.assert_has_calls(
-            client_destroy_calls,
-            any_order=True
-        )
+        return reports
 
-    def test_error_client_destroy_skip_offline(self, mock_client_destroy):
-        def raiser(communicator, node):
-            if node == self.nodes[1]:
-                raise NodeCommunicationException("host", "command", "reason")
-        mock_client_destroy.side_effect = raiser
-        skip_offline_nodes = True
-
-        lib._remove_device_model_net(
-            self.lib_env,
-            self.nodes,
-            skip_offline_nodes
-        )
-
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_disabled_on_cman(self):
+        self.config.runner.corosync.version(version="1.4.7")
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(self.env_assist.get_env()),
             [
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
-                    {}
-                ),
-                (
-                    severity.INFO,
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
-                    {
-                        "node": self.nodes[0].label
-                    }
-                ),
-                (
-                    severity.WARNING,
-                    report_codes.NODE_COMMUNICATION_ERROR,
-                    {}
-                ),
-            ]
+                fixture.error(report_codes.CMAN_UNSUPPORTED_COMMAND),
+            ],
+            expected_in_processor=False
         )
-        client_destroy_calls = [
-            mock.call("mock_communicator", self.nodes[0]),
-            mock.call("mock_communicator", self.nodes[1]),
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_does_not_check_cman_if_not_live(self):
+        (self.config
+            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(self.env_assist.get_env()),
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
+            expected_in_processor=False
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_fail_if_device_not_set(self):
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(self.env_assist.get_env()),
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
+            expected_in_processor=False
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_2nodes_no_sbd(self):
+        # cluster consists of two nodes, two_node must be set
+        cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            "two_node: 1"
+        )
+        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        self.fixture_config_success_sbd_part(False, False)
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(cluster_nodes)
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_2nodes_sbd_installed_disabled(self):
+        # cluster consists of two nodes, two_node must be set
+        cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            "two_node: 1"
+        )
+        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        self.fixture_config_success_sbd_part(True, False)
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(cluster_nodes, atb_enabled=False)
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_2nodes_sbd_enabled(self):
+        # cluster consists of two nodes and SBD is in use, so teo_nodes must be
+        # disabled and auto_tie_breaker must be enabled
+        cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            "auto_tie_breaker: 1"
+        )
+        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        self.fixture_config_success_sbd_part(True, True)
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(cluster_nodes, atb_enabled=True)
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["/dev/sdb"])
+    def test_success_2nodes_sbd_enabled_with_devices(self):
+        # cluster consists of two nodes, but SBD with shared storage is in use
+        # auto tie breaker doesn't need to be enabled
+        cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            "two_node: 1"
+        )
+        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        self.fixture_config_success_sbd_part(True, True)
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(cluster_nodes, atb_enabled=False)
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_3nodes(self):
+        # with odd number of nodes it doesn't matter if sbd is used
+        cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
+        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(cluster_nodes)
+        )
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_3nodes_file(self):
+        # with odd number of nodes it doesn't matter if sbd is used
+        dummy_cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
+        (self.config
+            .env.set_corosync_conf_data(original_conf)
+            .env.push_corosync_conf(corosync_conf_text=expected_conf)
+        )
+        lib.remove_device(self.env_assist.get_env())
+        self.env_assist.assert_reports([])
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_success_3nodes_one_node_offline(self):
+        # with odd number of nodes it doesn't matter if sbd is used
+        cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
+        node_2_offline_msg = (
+            "Failed connect to {0}:2224; No route to host".format(
+                cluster_nodes[1]
+            )
+        )
+        node_2_offline_responses = [
+            {"label": cluster_nodes[0]},
+            {
+                "label": cluster_nodes[1],
+                "was_connected": False,
+                "errno": 7,
+                "error_msg": node_2_offline_msg,
+            },
+            {"label": cluster_nodes[2]},
         ]
-        self.assertEqual(
-            len(client_destroy_calls),
-            len(mock_client_destroy.mock_calls)
+        def node_2_offline_warning(command):
+            return fixture.warn(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                node=cluster_nodes[1],
+                reason=node_2_offline_msg,
+                command=command
+            )
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(original_conf)
+        self.fixture_config_http_qdevice_disable(
+            cluster_nodes, node_2_offline_responses
         )
-        mock_client_destroy.assert_has_calls(
-            client_destroy_calls,
-            any_order=True
+        self.fixture_config_http_qdevice_stop(
+            cluster_nodes, node_2_offline_responses
         )
+        self.fixture_config_http_qdevice_net_destroy(
+            cluster_nodes, node_2_offline_responses
+        )
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=expected_conf
+        )
+
+        lib.remove_device(self.env_assist.get_env(), skip_offline_nodes=True)
+
+        self.env_assist.assert_reports([
+            fixture.info(
+                report_codes.SERVICE_DISABLE_STARTED,
+                service="corosync-qdevice",
+            ),
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=cluster_nodes[0],
+                service="corosync-qdevice",
+            ),
+            node_2_offline_warning("remote/qdevice_client_disable"),
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=cluster_nodes[2],
+                service="corosync-qdevice",
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_STARTED,
+                service="corosync-qdevice",
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=cluster_nodes[0],
+                service="corosync-qdevice",
+            ),
+            node_2_offline_warning("remote/qdevice_client_stop"),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=cluster_nodes[2],
+                service="corosync-qdevice",
+            ),
+            fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+            fixture.info(
+                report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                node=cluster_nodes[0],
+            ),
+            node_2_offline_warning("remote/qdevice_net_client_destroy"),
+            fixture.info(
+                report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                node=cluster_nodes[2],
+            ),
+        ])
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_error_disable_qdevice(self):
+        cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(original_conf)
+        self.fixture_config_http_qdevice_disable(
+            cluster_nodes,
+            [
+                {"label": cluster_nodes[0]},
+                {
+                    "label": cluster_nodes[1],
+                    "response_code": 400,
+                    "output": "some error occurred",
+                },
+                {"label": cluster_nodes[2]},
+            ],
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(
+                self.env_assist.get_env(),
+                skip_offline_nodes=False
+            ),
+            [], # an empty LibraryError is raised
+            expected_in_processor=False
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(
+                report_codes.SERVICE_DISABLE_STARTED,
+                service="corosync-qdevice",
+            ),
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=cluster_nodes[0],
+                service="corosync-qdevice",
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node=cluster_nodes[1],
+                command="remote/qdevice_client_disable",
+                reason="some error occurred",
+            ),
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=cluster_nodes[2],
+                service="corosync-qdevice",
+            ),
+        ])
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_error_stop_qdevice(self):
+        cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(original_conf)
+        self.fixture_config_http_qdevice_disable(cluster_nodes)
+        self.fixture_config_http_qdevice_stop(
+            cluster_nodes,
+            [
+                {"label": cluster_nodes[0]},
+                {
+                    "label": cluster_nodes[1],
+                    "response_code": 400,
+                    "output": "some error occurred",
+                },
+                {"label": cluster_nodes[2]},
+            ],
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(
+                self.env_assist.get_env(),
+                skip_offline_nodes=False
+            ),
+            [], # an empty LibraryError is raised
+            expected_in_processor=False
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(
+                report_codes.SERVICE_DISABLE_STARTED,
+                service="corosync-qdevice",
+            ),
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=node,
+                service="corosync-qdevice",
+            )
+            for node in cluster_nodes
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_STOP_STARTED,
+                service="corosync-qdevice",
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=cluster_nodes[0],
+                service="corosync-qdevice",
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node=cluster_nodes[1],
+                command="remote/qdevice_client_stop",
+                reason="some error occurred",
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=cluster_nodes[2],
+                service="corosync-qdevice",
+            ),
+        ])
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_error_destroy_qdevice_net(self):
+        cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(original_conf)
+        self.fixture_config_http_qdevice_disable(cluster_nodes)
+        self.fixture_config_http_qdevice_stop(cluster_nodes)
+        self.fixture_config_http_qdevice_net_destroy(
+            cluster_nodes,
+            [
+                {"label": cluster_nodes[0]},
+                {
+                    "label": cluster_nodes[1],
+                    "response_code": 400,
+                    "output": "some error occurred",
+                },
+                {"label": cluster_nodes[2]},
+            ],
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(
+                self.env_assist.get_env(),
+                skip_offline_nodes=False
+            ),
+            [], # an empty LibraryError is raised
+            expected_in_processor=False
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(
+                report_codes.SERVICE_DISABLE_STARTED,
+                service="corosync-qdevice",
+            ),
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_DISABLE_SUCCESS,
+                node=node,
+                service="corosync-qdevice",
+            )
+            for node in cluster_nodes
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_STOP_STARTED,
+                service="corosync-qdevice",
+            ),
+        ] + [
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node=node,
+                service="corosync-qdevice",
+            )
+            for node in cluster_nodes
+        ] + [
+            fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+            fixture.info(
+                report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                node=cluster_nodes[0],
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node=cluster_nodes[1],
+                command="remote/qdevice_net_client_destroy",
+                reason="some error occurred",
+            ),
+            fixture.info(
+                report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                node=cluster_nodes[2],
+            ),
+        ])
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
