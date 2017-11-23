@@ -665,24 +665,6 @@ class AddDeviceNetTest(TestCase):
             response_code=200,
         )
 
-    def fixture_config_http_qdevice_enable(self):
-        self.config.http.add_communication(
-            "http.qdevice_enable",
-            [{"label": node} for node in self.cluster_nodes],
-            action="remote/qdevice_client_enable",
-            response_code=200,
-            output="corosync-qdevice enabled"
-        )
-
-    def fixture_config_http_qdevice_start(self):
-        self.config.http.add_communication(
-            "http.qdevice_start",
-            [{"label": node} for node in self.cluster_nodes],
-            action="remote/qdevice_client_start",
-            response_code=200,
-            output="corosync-qdevice started"
-        )
-
     def fixture_config_success(
         self, expected_corosync_conf, cert_to_pk12_cert_path
     ):
@@ -694,11 +676,15 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_http_sign_cert_request()
         self.fixture_config_runner_cert_to_pk12(cert_to_pk12_cert_path)
         self.fixture_config_http_import_final_cert()
-        self.fixture_config_http_qdevice_enable()
+        self.config.http.corosync.qdevice_client_enable(
+            node_labels=self.cluster_nodes
+        )
         self.config.env.push_corosync_conf(
             corosync_conf_text=expected_corosync_conf
         )
-        self.fixture_config_http_qdevice_start()
+        self.config.http.corosync.qdevice_client_start(
+            node_labels=self.cluster_nodes
+        )
 
     def fixture_reports_success(self):
         return [
@@ -1068,22 +1054,14 @@ class AddDeviceNetTest(TestCase):
             ],
             response_code=200,
         )
-        self.config.http.add_communication(
-            "http.qdevice_enable",
-            node_2_offline_responses,
-            action="remote/qdevice_client_enable",
-            response_code=200,
-            output="corosync-qdevice enabled"
+        self.config.http.corosync.qdevice_client_enable(
+            communication_list=node_2_offline_responses
         )
         self.config.env.push_corosync_conf(
             corosync_conf_text=expected_corosync_conf
         )
-        self.config.http.add_communication(
-            "http.qdevice_start",
-            node_2_offline_responses,
-            action="remote/qdevice_client_start",
-            response_code=200,
-            output="corosync-qdevice started"
+        self.config.http.corosync.qdevice_client_start(
+            communication_list=node_2_offline_responses
         )
 
         lib.add_device(
@@ -1344,11 +1322,15 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_http_sign_cert_request()
         self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
         self.fixture_config_http_import_final_cert()
-        self.fixture_config_http_qdevice_enable()
+        self.config.http.corosync.qdevice_client_enable(
+            node_labels=self.cluster_nodes
+        )
         self.config.env.push_corosync_conf(
             corosync_conf_text=expected_corosync_conf
         )
-        self.fixture_config_http_qdevice_start()
+        self.config.http.corosync.qdevice_client_start(
+            node_labels=self.cluster_nodes
+        )
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -1456,11 +1438,15 @@ class AddDeviceNetTest(TestCase):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         # model is not "net" - do not set up certificates
-        self.fixture_config_http_qdevice_enable()
+        self.config.http.corosync.qdevice_client_enable(
+            node_labels=self.cluster_nodes
+        )
         self.config.env.push_corosync_conf(
             corosync_conf_text=expected_corosync_conf
         )
-        self.fixture_config_http_qdevice_start()
+        self.config.http.corosync.qdevice_client_start(
+            node_labels=self.cluster_nodes
+        )
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -1896,26 +1882,6 @@ class RemoveDeviceNetTest(TestCase):
         )
         return cluster_nodes, original_conf, expected_conf
 
-    def fixture_config_http_qdevice_disable(self, nodes, responses=None):
-        responses = responses or [{"label": node} for node in nodes]
-        self.config.http.add_communication(
-            "http.qdevice_disable",
-            responses,
-            action="remote/qdevice_client_disable",
-            response_code=200,
-            output="corosync-qdevice disabled"
-        )
-
-    def fixture_config_http_qdevice_stop(self, nodes, responses=None):
-        responses = responses or [{"label": node} for node in nodes]
-        self.config.http.add_communication(
-            "http.qdevice_stop",
-            responses,
-            action="remote/qdevice_client_stop",
-            response_code=200,
-            output="corosync-qdevice stopped"
-        )
-
     def fixture_config_http_qdevice_net_destroy(self, nodes, responses=None):
         responses = responses or [{"label": node} for node in nodes]
         self.config.http.add_communication(
@@ -1933,14 +1899,14 @@ class RemoveDeviceNetTest(TestCase):
             units["sbd"] = "enabled" # enabled/disabled doesn't matter
         self.config.runner.systemctl.list_unit_files(
             units,
-            before="http.qdevice_disable_requests",
+            before="http.corosync.qdevice_client_disable_requests",
         )
 
     def fixture_config_runner_sbd_enabled(self, sbd_enabled):
         self.config.runner.systemctl.is_enabled(
             "sbd",
             sbd_enabled,
-            before="http.qdevice_disable_requests",
+            before="http.corosync.qdevice_client_disable_requests",
         )
 
     def fixture_config_success(
@@ -1948,8 +1914,10 @@ class RemoveDeviceNetTest(TestCase):
     ):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load_content(original_corosync_conf)
-        self.fixture_config_http_qdevice_disable(cluster_nodes)
-        self.fixture_config_http_qdevice_stop(cluster_nodes)
+        self.config.http.corosync.qdevice_client_disable(
+            node_labels=cluster_nodes
+        )
+        self.config.http.corosync.qdevice_client_stop(node_labels=cluster_nodes)
         self.fixture_config_http_qdevice_net_destroy(cluster_nodes)
         self.config.env.push_corosync_conf(
             corosync_conf_text=expected_corosync_conf
@@ -2145,11 +2113,11 @@ class RemoveDeviceNetTest(TestCase):
 
         self.config.runner.corosync.version()
         self.config.corosync_conf.load_content(original_conf)
-        self.fixture_config_http_qdevice_disable(
-            cluster_nodes, node_2_offline_responses
+        self.config.http.corosync.qdevice_client_disable(
+            communication_list=node_2_offline_responses
         )
-        self.fixture_config_http_qdevice_stop(
-            cluster_nodes, node_2_offline_responses
+        self.config.http.corosync.qdevice_client_stop(
+            communication_list=node_2_offline_responses
         )
         self.fixture_config_http_qdevice_net_destroy(
             cluster_nodes, node_2_offline_responses
@@ -2209,9 +2177,8 @@ class RemoveDeviceNetTest(TestCase):
 
         self.config.runner.corosync.version()
         self.config.corosync_conf.load_content(original_conf)
-        self.fixture_config_http_qdevice_disable(
-            cluster_nodes,
-            [
+        self.config.http.corosync.qdevice_client_disable(
+            communication_list=[
                 {"label": cluster_nodes[0]},
                 {
                     "label": cluster_nodes[1],
@@ -2219,7 +2186,7 @@ class RemoveDeviceNetTest(TestCase):
                     "output": "some error occurred",
                 },
                 {"label": cluster_nodes[2]},
-            ],
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -2261,10 +2228,11 @@ class RemoveDeviceNetTest(TestCase):
 
         self.config.runner.corosync.version()
         self.config.corosync_conf.load_content(original_conf)
-        self.fixture_config_http_qdevice_disable(cluster_nodes)
-        self.fixture_config_http_qdevice_stop(
-            cluster_nodes,
-            [
+        self.config.http.corosync.qdevice_client_disable(
+            node_labels=cluster_nodes
+        )
+        self.config.http.corosync.qdevice_client_stop(
+            communication_list=[
                 {"label": cluster_nodes[0]},
                 {
                     "label": cluster_nodes[1],
@@ -2326,8 +2294,10 @@ class RemoveDeviceNetTest(TestCase):
 
         self.config.runner.corosync.version()
         self.config.corosync_conf.load_content(original_conf)
-        self.fixture_config_http_qdevice_disable(cluster_nodes)
-        self.fixture_config_http_qdevice_stop(cluster_nodes)
+        self.config.http.corosync.qdevice_client_disable(
+            node_labels=cluster_nodes
+        )
+        self.config.http.corosync.qdevice_client_stop(node_labels=cluster_nodes)
         self.fixture_config_http_qdevice_net_destroy(
             cluster_nodes,
             [

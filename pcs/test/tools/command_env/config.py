@@ -19,13 +19,12 @@ class Config(object):
     def __init__(self):
         self.__calls = CallListBuilder()
         self.runner = self.__wrap_helper(
-            RunnerConfig(
-                self.__calls,
-                self.__wrap_helper,
-            )
+            RunnerConfig(self.__calls, self.__wrap_helper)
         )
         self.env = self.__wrap_helper(EnvConfig(self.__calls))
-        self.http = self.__wrap_helper(HttpConfig(self.__calls))
+        self.http = self.__wrap_helper(
+            HttpConfig(self.__calls, self.__wrap_helper)
+        )
         self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
 
         self.spy = None
