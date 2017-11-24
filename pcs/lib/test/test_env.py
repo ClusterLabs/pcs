@@ -252,13 +252,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
     def test_dont_need_stopped_cluster(self, mock_is_systemctl):
         mock_is_systemctl.return_value = True
         (self.config
-            .http.add_communication(
-                "distribute_corosync_conf",
-                self.node_label_list,
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
-                response_code=200,
-                output="Succeeded",
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                node_labels=self.node_labels
             )
             .runner.systemctl.is_active("corosync")
             .runner.corosync.reload()
@@ -300,13 +296,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
 false,"acls":{},"username":"hacluster"}
                 """,
             )
-            .http.add_communication(
-                "set_corosync_conf",
-                self.node_label_list,
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
-                response_code=200,
-                output="Succeeded",
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                node_labels=self.node_labels
             )
             .runner.systemctl.is_active("corosync", is_active=False)
         )
@@ -526,22 +518,18 @@ false,"acls":{},"username":"hacluster"}
                 ],
                 action="remote/status",
             )
-            .http.add_communication(
-                "set_corosync_conf",
-                [
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                communication_list=[
                     dict(
                         label="node-1",
-                        response_code=200,
-                        output="Succeeded",
                     ),
                     dict(
                         label="node-2",
                         response_code=401,
                         output="""{"notauthorized":"true"}""",
                     )
-                ],
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
+                ]
             )
             .runner.systemctl.is_active("corosync", is_active=False)
         )
@@ -587,13 +575,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
     def test_qdevice_reload(self):
         self.corosync_conf_facade.need_qdevice_reload = True
         (self.config
-            .http.add_communication(
-                "set_corosync_conf",
-                self.node_label_list,
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
-                response_code=200,
-                output="Succeeded",
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                node_labels=self.node_labels
             )
             .runner.systemctl.is_active("corosync", is_active=False)
             .http.corosync.qdevice_client_stop(
@@ -652,13 +636,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
     def test_qdevice_reload_failures(self):
         self.corosync_conf_facade.need_qdevice_reload = True
         (self.config
-            .http.add_communication(
-                "set_corosync_conf",
-                self.node_label_list,
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
-                response_code=200,
-                output="Succeeded",
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                node_labels=self.node_labels
             )
             .runner.systemctl.is_active("corosync", is_active=False)
             .http.corosync.qdevice_client_stop(
@@ -736,13 +716,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
     def test_qdevice_reload_failures_skip_offline(self):
         self.corosync_conf_facade.need_qdevice_reload = True
         (self.config
-            .http.add_communication(
-                "set_corosync_conf",
-                [
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                communication_list=[
                     dict(
                         label="node-1",
-                        response_code=200,
-                        output="Succeeded",
                     ),
                     dict(
                         label="node-2",
@@ -750,9 +728,7 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         error_msg="failure",
                         was_connected=False,
                     ),
-                ],
-                action="remote/set_corosync_conf",
-                param_list=[("corosync_conf", self.corosync_conf_text)],
+                ]
             )
             .runner.systemctl.is_active("corosync", is_active=False)
             .http.corosync.qdevice_client_stop(

@@ -121,10 +121,9 @@ def _communication_to_response(
         error_msg=error_msg,
     )
 
-
 def create_communication(
     communication_list, action="", param_list=None, port=None, token=None,
-    response_code=None, output="", debug_output="", was_connected=True,
+    response_code=200, output="", debug_output="", was_connected=True,
     errno=0, error_msg_template=None
 ):
     """
@@ -192,6 +191,42 @@ def create_communication(
 
     return request_list, response_list
 
+def place_multinode_call(
+    calls, name, node_labels=None, communication_list=None, **kwargs
+):
+    """
+    Shortcut for adding a call sending the same request to one or more nodes
+
+    CallListBuilder calls -- list of expected calls
+    string name -- the key of this call
+    list node_labels -- create success responses from these nodes
+    list communication_list -- use these custom responses
+    **kwargs -- see __module__.create_communication
+    """
+    if (
+        (not node_labels and not communication_list)
+        or
+        (node_labels and communication_list)
+    ):
+        raise AssertionError(
+            "Exactly one of 'node_labels', 'communication_list' "
+            "must be specified"
+        )
+    communication_list = communication_list or [
+        {"label": label} for label in node_labels
+    ]
+    request_list, response_list = create_communication(
+        communication_list,
+        **kwargs
+    )
+    calls.place(
+        "{0}_requests".format(name),
+        AddRequestCall(request_list),
+    )
+    calls.place(
+        "{0}_responses".format(name),
+        StartLoopCall(response_list),
+    )
 
 class AddRequestCall(object):
     type = CALL_TYPE_HTTP_ADD_REQUESTS

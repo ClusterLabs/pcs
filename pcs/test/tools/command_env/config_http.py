@@ -35,7 +35,6 @@ class HttpConfig(object):
         self.add_requests(request_list, name="{0}_requests".format(name))
         self.start_loop(response_list, name="{0}_responses".format(name))
 
-
     def add_requests(self, request_list, name, before=None, instead=None):
         self.__calls.place(
             name,
