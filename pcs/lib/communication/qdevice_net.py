@@ -63,6 +63,7 @@ class ClientSetup(
             [("ca_certificate", base64.b64encode(self._ca_cert))]
         )
 
+
 class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
         super(SignCertificate, self).__init__(report_processor)
