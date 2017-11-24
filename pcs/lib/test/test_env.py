@@ -247,10 +247,9 @@ class PushCorosyncConfLiveBase(TestCase):
         ]
 
 
-@mock.patch("pcs.lib.external.is_systemctl")
+@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
-    def test_dont_need_stopped_cluster(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = True
+    def test_dont_need_stopped_cluster(self):
         (self.config
             .http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
@@ -275,8 +274,88 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             fixture.info(report_codes.COROSYNC_CONFIG_RELOADED)
         ])
 
-    def test_need_stopped_cluster(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = True
+    def test_dont_need_stopped_cluster_error(self):
+        (self.config
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                communication_list=[
+                    {
+                        "label": "node-1",
+                    },
+                    {
+                        "label": "node-2",
+                        "response_code": 400,
+                        "output": "Failed"
+                    },
+                ]
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(self.corosync_conf_facade),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+                command="remote/set_corosync_conf",
+                reason="Failed",
+            ),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+            ),
+        ])
+
+    def test_dont_need_stopped_cluster_error_skip_offline(self):
+        (self.config
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                communication_list=[
+                    {
+                        "label": "node-1",
+                    },
+                    {
+                        "label": "node-2",
+                        "response_code": 400,
+                        "output": "Failed"
+                    },
+                ]
+            )
+            .runner.systemctl.is_active("corosync")
+            .runner.corosync.reload()
+        )
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade, skip_offline_nodes=True
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.warn(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                node="node-2",
+                command="remote/set_corosync_conf",
+                reason="Failed",
+            ),
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                node="node-2",
+            ),
+            fixture.info(report_codes.COROSYNC_CONFIG_RELOADED)
+        ])
+
+    def test_need_stopped_cluster(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.add_communication(
@@ -326,9 +405,8 @@ false,"acls":{},"username":"hacluster"}
             ),
         ])
 
-    def test_need_stopped_cluster_not_stopped(self, mock_is_systemctl):
+    def test_need_stopped_cluster_not_stopped(self):
         self.corosync_conf_facade.need_stopped_cluster = True
-        mock_is_systemctl.return_value = True
         (self.config
             .http.add_communication(
                 "status",
@@ -367,10 +445,7 @@ false,"acls":{},"username":"hacluster"}
             ),
         ])
 
-    def test_need_stopped_cluster_not_stopped_skip_offline(
-        self, mock_is_systemctl
-    ):
-        mock_is_systemctl.return_value = True
+    def test_need_stopped_cluster_not_stopped_skip_offline(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.add_communication(
@@ -430,10 +505,7 @@ false,"acls":{},"username":"hacluster"}
             )
         ])
 
-    def test_need_stopped_cluster_comunnication_failure(
-        self, mock_is_systemctl
-    ):
-        mock_is_systemctl.return_value = True
+    def test_need_stopped_cluster_comunnication_failure(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.add_communication(
@@ -486,10 +558,7 @@ false,"acls":{},"username":"hacluster"}
             ),
         ])
 
-    def test_need_stopped_cluster_comunnication_failure_skip_offline(
-        self, mock_is_systemctl
-    ):
-        mock_is_systemctl.return_value = True
+    def test_need_stopped_cluster_comunnication_failure_skip_offline(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.add_communication(
