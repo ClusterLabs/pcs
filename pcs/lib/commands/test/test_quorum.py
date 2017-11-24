@@ -592,7 +592,7 @@ class AddDeviceNetTest(TestCase):
             # passes that to further processing.
             cert_info["b64data"] = base64.b64encode(plain).decode("utf-8")
 
-    def fixture_config_http_get_ca_cert(self):
+    def fixture_config_http_get_ca_cert(self, output=None):
         self.config.http.add_communication(
             "http.get_ca_certificate",
             [
@@ -600,7 +600,7 @@ class AddDeviceNetTest(TestCase):
             ],
             action="remote/qdevice_net_get_ca_certificate",
             response_code=200,
-            output=self.certs["cacert"]["b64data"]
+            output=(output or self.certs["cacert"]["b64data"])
         )
 
     def fixture_config_http_client_init(self):
@@ -625,7 +625,7 @@ class AddDeviceNetTest(TestCase):
             )
         )
 
-    def fixture_config_http_sign_cert_request(self):
+    def fixture_config_http_sign_cert_request(self, output=None):
         self.config.http.add_communication(
             "http.sign_certificate_request",
             [
@@ -640,7 +640,7 @@ class AddDeviceNetTest(TestCase):
                 ("cluster_name", self.cluster_name),
             ],
             response_code=200,
-            output=self.certs["signed_request"]["b64data"]
+            output=(output or self.certs["signed_request"]["b64data"])
         )
 
     def fixture_config_runner_cert_to_pk12(self, cert_file_path):
@@ -1603,7 +1603,7 @@ class AddDeviceNetTest(TestCase):
             for node in self.cluster_nodes
         ])
 
-    def test_error_get_ca_cert(self):
+    def test_get_ca_cert_error_communication(self):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.add_communication(
@@ -1637,6 +1637,35 @@ class AddDeviceNetTest(TestCase):
                 node=self.qnetd_host,
                 command="remote/qdevice_net_get_ca_certificate",
                 reason="Unable to read certificate: error description",
+            )
+        ])
+
+    def test_get_ca_cert_error_decode_certificate(self):
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.fixture_config_http_get_ca_cert(
+            output="invalid base64 encoded certificate data"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": self.qnetd_host, "algorithm": "ffsplit"},
+                {"timeout": "20"},
+                {},
+                skip_offline_nodes=True # test that this does not matter
+            ),
+            [], # an empty LibraryError is raised
+            expected_in_processor=False
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED),
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT,
+                force_code=None,
+                node=self.qnetd_host,
             )
         ])
 
@@ -1724,7 +1753,7 @@ class AddDeviceNetTest(TestCase):
         ])
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    def test_sign_certificate_error(self):
+    def test_sign_certificate_error_communication(self):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
@@ -1767,6 +1796,38 @@ class AddDeviceNetTest(TestCase):
                 node=self.qnetd_host,
                 command="remote/qdevice_net_sign_node_certificate",
                 reason="some error occurred",
+            )
+        ])
+
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    def test_sign_certificate_error_decode_certificate(self):
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.fixture_config_http_get_ca_cert()
+        self.fixture_config_http_client_init()
+        self.fixture_config_runner_get_cert_request()
+        self.fixture_config_http_sign_cert_request(
+            output="invalid base64 encoded certificate data"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": "qnetd-host", "algorithm": "ffsplit"},
+                {"timeout": "20"},
+                {}
+            ),
+            [], # an empty LibraryError is raised
+            expected_in_processor=False
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED),
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT,
+                force_code=None,
+                node=self.qnetd_host,
             )
         ])
 
