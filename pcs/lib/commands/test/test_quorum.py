@@ -704,7 +704,8 @@ class AddDeviceNetTest(TestCase):
             fixture.info(
                 report_codes.SERVICE_ENABLE_SUCCESS,
                 node=node,
-                service="corosync-qdevice"
+                service="corosync-qdevice",
+                instance=None
             )
             for node in self.cluster_nodes
         ] + [
@@ -716,7 +717,8 @@ class AddDeviceNetTest(TestCase):
             fixture.info(
                 report_codes.SERVICE_START_SUCCESS,
                 node=node,
-                service="corosync-qdevice"
+                service="corosync-qdevice",
+                instance=None
             )
             for node in self.cluster_nodes
         ]
@@ -842,6 +844,117 @@ class AddDeviceNetTest(TestCase):
             binary=True
         )
         self.env_assist.assert_reports(self.fixture_reports_success())
+
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_corosync_not_running_not_enabled(self, mock_write_tmpfile):
+        tmpfile_instance = mock.MagicMock()
+        tmpfile_instance.name = rc("file.tmp")
+        mock_write_tmpfile.return_value = tmpfile_instance
+
+        expected_corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+                    }
+                """
+            )
+        )
+
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.fixture_config_http_get_ca_cert()
+        self.fixture_config_http_client_init()
+        self.fixture_config_runner_get_cert_request()
+        self.fixture_config_http_sign_cert_request()
+        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
+        self.fixture_config_http_import_final_cert()
+        self.config.http.corosync.qdevice_client_enable(
+            communication_list=[
+                {
+                    "label": label,
+                    "output": "corosync is not enabled, skipping",
+                }
+                for label in self.cluster_nodes
+            ]
+        )
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=expected_corosync_conf
+        )
+        self.config.http.corosync.qdevice_client_start(
+            communication_list=[
+                {
+                    "label": label,
+                    "output": "corosync is not running, skipping",
+                }
+                for label in self.cluster_nodes
+            ]
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            {}
+        )
+
+        mock_write_tmpfile.assert_called_once_with(
+            self.certs["signed_request"]["data"],
+            binary=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                ),
+            ] + [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    node=node
+                )
+                for node in self.cluster_nodes
+            ] + [
+                fixture.info(
+                    report_codes.SERVICE_ENABLE_STARTED,
+                    service="corosync-qdevice"
+                ),
+            ] + [
+                fixture.info(
+                    report_codes.SERVICE_ENABLE_SKIPPED,
+                    node=node,
+                    service="corosync-qdevice",
+                    instance=None,
+                    reason="corosync is not enabled"
+                )
+                for node in self.cluster_nodes
+            ] + [
+                fixture.info(
+                    report_codes.SERVICE_START_STARTED,
+                    service="corosync-qdevice"
+                ),
+            ] + [
+                fixture.info(
+                    report_codes.SERVICE_START_SKIPPED,
+                    node=node,
+                    service="corosync-qdevice",
+                    instance=None,
+                    reason="corosync is not running"
+                )
+                for node in self.cluster_nodes
+            ]
+        )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")

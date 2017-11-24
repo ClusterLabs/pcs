@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase, skip
+from pcs.test.tools.pcs_unittest import TestCase
 import logging
 from functools import partial
 from lxml import etree
@@ -629,11 +629,74 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ),
         ])
 
-    @skip("TODO: test not implemented")
     def test_qdevice_reload_corosync_stopped(self):
-        pass
+        self.corosync_conf_facade.need_qdevice_reload = True
+        (self.config
+            .http.corosync.set_corosync_conf(
+                self.corosync_conf_text,
+                node_labels=self.node_labels
+            )
+            .runner.systemctl.is_active("corosync", is_active=False)
+            .http.corosync.qdevice_client_stop(
+                node_labels=self.node_labels
+            )
+            .http.corosync.qdevice_client_start(
+                communication_list=[
+                    {
+                        "label": label,
+                        "output": "corosync is not running, skipping",
+                    }
+                    for label in self.node_labels
+                ]
+            )
+        )
+
+        self.env_assistant.get_env().push_corosync_conf(
+            self.corosync_conf_facade
+        )
+
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-1",
+            ),
+            fixture.info(
+                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                node="node-2",
+            ),
+            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.info(
+                report_codes.SERVICE_STOP_SUCCESS,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SKIPPED,
+                node="node-1",
+                service="corosync-qdevice",
+                instance=None,
+                reason="corosync is not running",
+            ),
+            fixture.info(
+                report_codes.SERVICE_START_SKIPPED,
+                node="node-2",
+                service="corosync-qdevice",
+                instance=None,
+                reason="corosync is not running",
+            ),
+        ])
 
     def test_qdevice_reload_failures(self):
+        # This also tests that failing to stop qdevice on a node doesn't prevent
+        # starting qdevice on the same node.
         self.corosync_conf_facade.need_qdevice_reload = True
         (self.config
             .http.corosync.set_corosync_conf(
