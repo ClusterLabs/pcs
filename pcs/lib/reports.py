@@ -164,7 +164,7 @@ def required_option_is_missing(
     """
     required option has not been specified, command cannot continue
     list name is/are required but was not entered
-    option_type decsribes the option
+    option_type describes the option
     severity report item severity
     forceable is this report item forceable? by what cathegory?
     """
@@ -185,8 +185,8 @@ def prerequisite_option_is_missing(
     if the option_name is specified, the prerequisite_option must be specified
     string option_name -- an option which depends on the prerequisite_option
     string prerequisite_name -- the prerequisite option
-    string option_type -- decsribes the option
-    string prerequisite_type -- decsribes the prerequisite_option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
     """
     return ReportItem.error(
         report_codes.PREREQUISITE_OPTION_IS_MISSING,
@@ -204,7 +204,7 @@ def required_option_of_alternatives_is_missing(
     """
     at least one option has to be specified
     iterable option_names -- options from which at least one has to be specified
-    string option_type -- decsribes the option
+    string option_type -- describes the option
     """
     severity = ReportItemSeverity.ERROR
     forceable = None
@@ -339,7 +339,7 @@ def mutually_exclusive_options(option_names, option_type):
     """
     entered options can not coexist
     set option_names contain entered mutually exclusive options
-    string option_type decsribes the option
+    string option_type describes the option
     """
     return ReportItem.error(
         report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,

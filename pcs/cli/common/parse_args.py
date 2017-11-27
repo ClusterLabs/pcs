@@ -79,7 +79,7 @@ def group_by_keywords(
     group_repeated_keywords=None, only_found_keywords=False
 ):
     """
-    Return dictionary with keywords as keys and following argumets as value.
+    Return dictionary with keywords as keys and following arguments as value.
     For example when keywords are "first" and "seconds" then for arg_list
     ["first", 1, 2, "second", 3] it returns {"first": [1, 2], "second": [3]}
 
