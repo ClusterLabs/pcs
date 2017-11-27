@@ -358,22 +358,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
     def test_need_stopped_cluster(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
-            .http.add_communication(
-                "status",
-                self.node_label_list,
-                action="remote/status",
-                response_code=200,
-                output="""
-{"uptime":"0 days, 05:07:39","corosync":false,"pacemaker":false,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
-"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
-"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
-"resources":[],"groups":[],"constraints":{},"cluster_settings":{"error":\
-"Unable to get configuration settings"},"node_id":"","node_attr":{},\
-"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
-false,"acls":{},"username":"hacluster"}
-                """,
+            .http.corosync.check_corosync_offline(
+                node_labels=self.node_labels
             )
             .http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
@@ -408,24 +394,14 @@ false,"acls":{},"username":"hacluster"}
     def test_need_stopped_cluster_not_stopped(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
-            .http.add_communication(
-                "status",
-                self.node_label_list,
-                action="remote/status",
-                response_code=200,
-                output="""
-{"uptime":"0 days, 06:29:36","corosync":true,"pacemaker":true,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":\
-["node-1","node-2"],"corosync_offline":[],"pacemaker_online":["node-1",\
-"node-2"],"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":\
-"cluster_name","resources":[],"groups":[],"constraints":{},"cluster_settings":\
-{"have-watchdog":"false","dc-version":"1.1.16-11.el7-94ff4df",\
-"cluster-infrastructure":"corosync","cluster-name":"cluster_name"},\
-"node_id":"1","node_attr":{},"fence_levels":{},"need_ring1_address":false,\
-"is_cman_with_udpu_transport":false,"acls":{"role":{},"group":{},"user":{},\
-"target":{}},"username":"hacluster"}
-                """,
+            .http.corosync.check_corosync_offline(
+                communication_list=[
+                    {
+                        "label": node,
+                        "output": '{"corosync":true}'
+                    }
+                    for node in self.node_labels
+                ]
             )
         )
         env = self.env_assistant.get_env()
@@ -448,42 +424,16 @@ false,"acls":{},"username":"hacluster"}
     def test_need_stopped_cluster_not_stopped_skip_offline(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
-            .http.add_communication(
-                "status",
-                [
+            .http.corosync.check_corosync_offline(
+                communication_list=[
                     dict(
                         label="node-1",
-                        output="""\
-{"uptime":"0 days, 06:36:00","corosync":true,"pacemaker":true,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":\
-["node-1"],"corosync_offline":["node-2"],"pacemaker_online":["node-1"],\
-"pacemaker_offline":["node-2"],"pacemaker_standby":[],"cluster_name":\
-"cluster_name","resources":[],"groups":[],"constraints":{},"cluster_settings":\
-{"have-watchdog":"false","dc-version":"1.1.16-11.el7-94ff4df",\
-"cluster-infrastructure":"corosync","cluster-name":"cluster_name"},\
-"node_id":"1","node_attr":{},"fence_levels":{},"need_ring1_address":false,\
-"is_cman_with_udpu_transport":false,"acls":{"role":{},"group":{},"user":{},\
-"target":{}},"username":"hacluster"}
-                        """,
+                        output='{"corosync":true}',
                     ),
                     dict(
                         label="node-2",
-                        output="""\
-{"uptime":"0 days, 06:35:58","corosync":false,"pacemaker":false,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
-"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
-"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
-"resources":[],"groups":[],"constraints":{},"cluster_settings":\
-{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
-"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
-false,"acls":{},"username":"hacluster"}
-                        """,
                     ),
-                ],
-                action="remote/status",
-                response_code=200,
+                ]
             )
         )
         env = self.env_assistant.get_env()
@@ -508,31 +458,17 @@ false,"acls":{},"username":"hacluster"}
     def test_need_stopped_cluster_comunnication_failure(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
-            .http.add_communication(
-                "status",
-                [
+            .http.corosync.check_corosync_offline(
+                communication_list=[
                     dict(
                         label="node-1",
-                        response_code=200,
-                        output="""\
-{"uptime":"0 days, 00:11:52","corosync":false,"pacemaker":false,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
-"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
-"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
-"resources":[],"groups":[],"constraints":{},"cluster_settings":\
-{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
-"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
-false,"acls":{},"username":"hacluster"}
-                        """,
                     ),
                     dict(
                         label="node-2",
                         response_code=401,
                         output="""{"notauthorized":"true"}"""
                     ),
-                ],
-                action="remote/status",
+                ]
             )
         )
         env = self.env_assistant.get_env()
@@ -561,31 +497,17 @@ false,"acls":{},"username":"hacluster"}
     def test_need_stopped_cluster_comunnication_failure_skip_offline(self):
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
-            .http.add_communication(
-                "status",
-                [
+            .http.corosync.check_corosync_offline(
+                communication_list=[
                     dict(
                         label="node-1",
-                        response_code=200,
-                        output="""\
-{"uptime":"0 days, 00:11:52","corosync":false,"pacemaker":false,"cman":false,\
-"corosync_enabled":false,"pacemaker_enabled":false,"pacemaker_remote":false,\
-"pacemaker_remote_enabled":false,"pcsd_enabled":true,"corosync_online":[],\
-"corosync_offline":["node-1","node-2"],"pacemaker_online":[],\
-"pacemaker_offline":[],"pacemaker_standby":[],"cluster_name":"cluster_name",\
-"resources":[],"groups":[],"constraints":{},"cluster_settings":\
-{"error":"Unable to get configuration settings"},"node_id":"","node_attr":{},\
-"fence_levels":{},"need_ring1_address":false,"is_cman_with_udpu_transport":\
-false,"acls":{},"username":"hacluster"}
-                        """,
                     ),
                     dict(
                         label="node-2",
                         response_code=401,
                         output="""{"notauthorized":"true"}"""
                     ),
-                ],
-                action="remote/status",
+                ]
             )
             .http.corosync.set_corosync_conf(
                 self.corosync_conf_text,

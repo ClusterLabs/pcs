@@ -12,6 +12,26 @@ class CorosyncShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
 
+    def check_corosync_offline(
+        self, node_labels=None, communication_list=None,
+        name="http.corosync.check_corosync_offline"
+    ):
+        """
+        Create a call for checking that corosync is offline
+
+        string name -- the key of this call
+        list node_labels -- create success responses from these nodes
+        list communication_list -- create custom responses
+        """
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/status",
+            output='{"corosync":false}'
+        )
+
     def qdevice_client_enable(
         self, name="http.corosync.qdevice_client_enable",
         node_labels=None, communication_list=None
