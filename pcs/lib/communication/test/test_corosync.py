@@ -7,6 +7,12 @@ from __future__ import (
 from pcs.lib.communication import corosync
 from pcs.test.tools.pcs_unittest import TestCase
 
+class CheckCorosyncOffline(TestCase):
+    """
+    tested in:
+        pcs.lib.test.test_env.PushCorosyncConfLiveNoQdeviceTest
+    """
+
 class DistributeCorosyncConf(TestCase):
     """
     tested in:

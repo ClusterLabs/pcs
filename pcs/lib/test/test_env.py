@@ -241,10 +241,6 @@ class PushCorosyncConfLiveBase(TestCase):
         self.corosync_conf_facade.need_stopped_cluster = False
         self.corosync_conf_facade.need_qdevice_reload = False
         self.node_labels = ["node-1", "node-2"]
-        self.node_label_list = [
-            dict(label="node-1"),
-            dict(label="node-2"),
-        ]
 
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
@@ -422,6 +418,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         ])
 
     def test_need_stopped_cluster_not_stopped_skip_offline(self):
+        # If we know for sure that corosync is running, skip_offline doesn't
+        # matter.
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.corosync.check_corosync_offline(
@@ -453,6 +451,44 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
                 node="node-2",
             )
+        ])
+
+    def test_need_stopped_cluster_json_error(self):
+        self.corosync_conf_facade.need_stopped_cluster = True
+        (self.config
+            .http.corosync.check_corosync_offline(
+                communication_list=[
+                    dict(
+                        label="node-1",
+                        output="{" # not valid json
+                    ),
+                    dict(
+                        label="node-2",
+                        # The expected key (/corosync) is missing, we don't
+                        # care about version 2 status key
+                        # (/services/corosync/running)
+                        output='{"services":{"corosync":{"running":true}}}'
+                    ),
+                ]
+            )
+        )
+        env = self.env_assistant.get_env()
+        self.env_assistant.assert_raise_library_error(
+            lambda: env.push_corosync_conf(self.corosync_conf_facade),
+            []
+        )
+        self.env_assistant.assert_reports([
+            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            fixture.error(
+                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-1",
+            ),
+            fixture.error(
+                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                node="node-2",
+            ),
         ])
 
     def test_need_stopped_cluster_comunnication_failure(self):
@@ -494,13 +530,15 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ),
         ])
 
-    def test_need_stopped_cluster_comunnication_failure_skip_offline(self):
+    def test_need_stopped_cluster_comunnication_failures_skip_offline(self):
+        # If we don't know if corosync is running, skip_offline matters.
         self.corosync_conf_facade.need_stopped_cluster = True
         (self.config
             .http.corosync.check_corosync_offline(
                 communication_list=[
                     dict(
                         label="node-1",
+                        output="{" # not valid json
                     ),
                     dict(
                         label="node-2",
@@ -529,8 +567,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         )
         self.env_assistant.assert_reports([
             fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+            fixture.warn(
+                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                 node="node-1",
             ),
             fixture.warn(
