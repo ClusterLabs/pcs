@@ -1,4 +1,4 @@
-/var/log/pcsd/pcsd.log {
+/var/log/pcsd/*.log {
     rotate 5
     weekly
     missingok

@@ -129,7 +129,6 @@ install: install_bundled_libs
 	install -d ${SNMP_MIB_DIR_FULL}
 	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${SNMP_MIB_DIR_FULL}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DESTDIR}/etc/sysconfig/pcs_snmp_agent
-	install -m 644 -D pcs/snmp/pcs_snmp_agent.logrotate ${DESTDIR}/etc/logrotate.d/pcs_snmp_agent
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DESTDIR}/${MANDIR}/man8/pcs_snmp_agent.8
 ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DESTDIR}/${systemddir}/system/
