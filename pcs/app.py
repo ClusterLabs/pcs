@@ -168,39 +168,39 @@ def main(argv=None):
         "acl": lambda argv: acl.acl_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "status": lambda argv: status.status_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
         "node": lambda argv: node.node_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "quorum": lambda argv: quorum.quorum_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "qdevice": lambda argv: qdevice.qdevice_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "alert": lambda args: alert.alert_cmd(
             utils.get_library_wrapper(),
             args,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
         "booth": lambda argv: booth.booth_cmd(
             utils.get_library_wrapper(),
             argv,
-            utils.get_modificators()
+            utils.get_modifiers()
         ),
     }
     if command not in cmd_map:

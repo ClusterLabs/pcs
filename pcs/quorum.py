@@ -16,7 +16,7 @@ from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
-def quorum_cmd(lib, argv, modificators):
+def quorum_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         sub_cmd, argv_next = "config", []
     else:
@@ -26,18 +26,18 @@ def quorum_cmd(lib, argv, modificators):
         if sub_cmd == "help":
             usage.quorum([" ".join(argv_next)] if argv_next else [])
         elif sub_cmd == "config":
-            quorum_config_cmd(lib, argv_next, modificators)
+            quorum_config_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "expected-votes":
-            quorum_expected_votes_cmd(lib, argv_next, modificators)
+            quorum_expected_votes_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "status":
-            quorum_status_cmd(lib, argv_next, modificators)
+            quorum_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "device":
-            quorum_device_cmd(lib, argv_next, modificators)
+            quorum_device_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "unblock":
             # TODO switch to new architecture
             quorum_unblock_cmd(argv_next)
         elif sub_cmd == "update":
-            quorum_update_cmd(lib, argv_next, modificators)
+            quorum_update_cmd(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -45,22 +45,22 @@ def quorum_cmd(lib, argv, modificators):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
 
-def quorum_device_cmd(lib, argv, modificators):
+def quorum_device_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
         if sub_cmd == "add":
-            quorum_device_add_cmd(lib, argv_next, modificators)
+            quorum_device_add_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "heuristics":
-            quorum_device_heuristics_cmd(lib, argv_next, modificators)
+            quorum_device_heuristics_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "remove":
-            quorum_device_remove_cmd(lib, argv_next, modificators)
+            quorum_device_remove_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "status":
-            quorum_device_status_cmd(lib, argv_next, modificators)
+            quorum_device_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "update":
-            quorum_device_update_cmd(lib, argv_next, modificators)
+            quorum_device_update_cmd(lib, argv_next, modifiers)
         else:
             sub_cmd = ""
             raise CmdLineInputError()
@@ -86,7 +86,7 @@ def quorum_device_heuristics_cmd(lib, argv, modifiers):
         )
 
 
-def quorum_config_cmd(lib, argv, modificators):
+def quorum_config_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     config = lib.quorum.get_config()
@@ -133,25 +133,25 @@ def quorum_config_to_str(config):
 
     return lines
 
-def quorum_expected_votes_cmd(lib, argv, modificators):
+def quorum_expected_votes_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.quorum.set_expected_votes_live(argv[0])
 
-def quorum_status_cmd(lib, argv, modificators):
+def quorum_status_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     print(lib.quorum.status())
 
-def quorum_update_cmd(lib, argv, modificators):
+def quorum_update_cmd(lib, argv, modifiers):
     options = parse_args.prepare_options(argv)
     if not options:
         raise CmdLineInputError()
 
     lib.quorum.set_options(
         options,
-        skip_offline_nodes=modificators["skip_offline_nodes"],
-        force=modificators["force"]
+        skip_offline_nodes=modifiers["skip_offline_nodes"],
+        force=modifiers["force"]
     )
 
 def _parse_quorum_device_groups(arg_list):
@@ -172,7 +172,7 @@ def _parse_quorum_device_groups(arg_list):
             )
     return groups
 
-def quorum_device_add_cmd(lib, argv, modificators):
+def quorum_device_add_cmd(lib, argv, modifiers):
     groups = _parse_quorum_device_groups(argv)
     model_and_model_options = groups.get("model", [])
     # we expect "model" keyword once, followed by the actual model value
@@ -194,25 +194,25 @@ def quorum_device_add_cmd(lib, argv, modificators):
         model_options,
         generic_options,
         heuristics_options,
-        force_model=modificators["force"],
-        force_options=modificators["force"],
-        skip_offline_nodes=modificators["skip_offline_nodes"]
+        force_model=modifiers["force"],
+        force_options=modifiers["force"],
+        skip_offline_nodes=modifiers["skip_offline_nodes"]
     )
 
-def quorum_device_remove_cmd(lib, argv, modificators):
+def quorum_device_remove_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
 
     lib.quorum.remove_device(
-        skip_offline_nodes=modificators["skip_offline_nodes"]
+        skip_offline_nodes=modifiers["skip_offline_nodes"]
     )
 
-def quorum_device_status_cmd(lib, argv, modificators):
+def quorum_device_status_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
-    print(lib.quorum.status_device(modificators["full"]))
+    print(lib.quorum.status_device(modifiers["full"]))
 
-def quorum_device_update_cmd(lib, argv, modificators):
+def quorum_device_update_cmd(lib, argv, modifiers):
     groups = _parse_quorum_device_groups(argv)
     if not groups:
         raise CmdLineInputError()
@@ -229,8 +229,8 @@ def quorum_device_update_cmd(lib, argv, modificators):
         model_options,
         generic_options,
         heuristics_options,
-        force_options=modificators["force"],
-        skip_offline_nodes=modificators["skip_offline_nodes"]
+        force_options=modifiers["force"],
+        skip_offline_nodes=modifiers["skip_offline_nodes"]
     )
 
 def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):

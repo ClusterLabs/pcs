@@ -12,21 +12,21 @@ from pcs.cli.common import middleware
 class MiddlewareBuildTest(TestCase):
     def test_run_middleware_correctly_chained(self):
         log = []
-        def command(lib, argv, modificators):
-            log.append('command: {0}, {1}, {2}'.format(lib, argv, modificators))
+        def command(lib, argv, modifiers):
+            log.append('command: {0}, {1}, {2}'.format(lib, argv, modifiers))
 
-        def m1(next, lib, argv, modificators):
+        def m1(next, lib, argv, modifiers):
             log.append(
-                'm1 start: {0}, {1}, {2}'.format(lib, argv, modificators)
+                'm1 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
             )
-            next(lib, argv, modificators)
+            next(lib, argv, modifiers)
             log.append('m1 done')
 
-        def m2(next, lib, argv, modificators):
+        def m2(next, lib, argv, modifiers):
             log.append(
-                'm2 start: {0}, {1}, {2}'.format(lib, argv, modificators)
+                'm2 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
             )
-            next(lib, argv, modificators)
+            next(lib, argv, modifiers)
             log.append('m2 done')
 
         run_with_middleware = middleware.build(m1, m2)
@@ -38,4 +38,3 @@ class MiddlewareBuildTest(TestCase):
             'm2 done',
             'm1 done',
         ])
-

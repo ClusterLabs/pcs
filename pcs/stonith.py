@@ -33,7 +33,7 @@ def stonith_cmd(argv):
         sub_cmd, argv_next = argv[0], argv[1:]
 
     lib = utils.get_library_wrapper()
-    modifiers = utils.get_modificators()
+    modifiers = utils.get_modifiers()
 
     try:
         if sub_cmd == "help":

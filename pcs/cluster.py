@@ -141,7 +141,7 @@ def cluster_cmd(argv):
             node.node_standby_cmd(
                 utils.get_library_wrapper(),
                 argv,
-                utils.get_modificators(),
+                utils.get_modifiers(),
                 True
             )
         except LibraryError as e:
@@ -153,7 +153,7 @@ def cluster_cmd(argv):
             node.node_standby_cmd(
                 utils.get_library_wrapper(),
                 argv,
-                utils.get_modificators(),
+                utils.get_modifiers(),
                 False
             )
         except LibraryError as e:
@@ -206,7 +206,7 @@ def cluster_cmd(argv):
                 remote_node_command_map[argv[0]](
                     utils.get_library_wrapper(),
                     argv[1:],
-                    utils.get_modificators()
+                    utils.get_modifiers()
                 )
             except LibraryError as e:
                 utils.process_library_reports(e.args)
@@ -338,7 +338,7 @@ def cluster_certkey(argv):
 
 
 def cluster_setup(argv):
-    modifiers = utils.get_modificators()
+    modifiers = utils.get_modifiers()
     allowed_encryption_values = ["0", "1"]
     if modifiers["encryption"] not in allowed_encryption_values:
         process_library_reports([
@@ -1632,7 +1632,7 @@ def cluster_node(argv):
             node_add_outside_cluster(
                 utils.get_library_wrapper(),
                 argv[1:],
-                utils.get_modificators(),
+                utils.get_modifiers(),
             )
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "cluster", "node")
@@ -1668,7 +1668,7 @@ def cluster_node(argv):
             utils.err(msg)
 
     lib_env = utils.get_lib_env()
-    modifiers = utils.get_modificators()
+    modifiers = utils.get_modifiers()
 
     if add_node == True:
         node_add(lib_env, node0, node1, modifiers)

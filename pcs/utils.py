@@ -2833,7 +2833,7 @@ def get_library_wrapper():
     return Library(get_cli_env(), get_middleware_factory())
 
 
-def get_modificators():
+def get_modifiers():
     #please keep in mind that this is not final implemetation
     #beside missing support of other possible options, cases may arise that can
     #not be solved using a dict - for example "wait" - maybe there will be

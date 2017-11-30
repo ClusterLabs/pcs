@@ -7,21 +7,21 @@ from __future__ import (
 from pcs.cli.constraint import parse_args, console_report
 from pcs.cli.common.console_report import indent
 
-def create_with_set(create_with_set_library_call, argv, modificators):
+def create_with_set(create_with_set_library_call, argv, modifiers):
     """
     callable create_with_set_library_call create constraint with set
     list argv part of comandline args
         see usage for  "constraint (colocation|resource|ticket) set"
-    dict like object modificators can contain
+    dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
         "autocorrect" allows correct resource to its clone/master parent
     """
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
     create_with_set_library_call(
         resource_set_list, constraint_options,
-        can_repair_to_clone=modificators["autocorrect"],
-        resource_in_clone_alowed=modificators["force"],
-        duplication_alowed=modificators["force"],
+        can_repair_to_clone=modifiers["autocorrect"],
+        resource_in_clone_alowed=modifiers["force"],
+        duplication_alowed=modifiers["force"],
     )
 
 def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
@@ -39,7 +39,7 @@ def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
         indent_step=indent_step
     )
 
-def show(caption, load_constraints, format_options, modificators):
+def show(caption, load_constraints, format_options, modifiers):
     """
     load constraints and return console lines list with info about constraints
     string caption for example "Ticket Constraints:"
@@ -47,9 +47,9 @@ def show(caption, load_constraints, format_options, modificators):
         like {"plain": [], "with_resource_sets": []}
     callable format_options takes dict of options and show_detail flag (bool)
         and returns string with constraint formated for commandline
-    modificators dict like object with command modificators
+    modifiers dict like object with command modifiers
     """
-    show_detail = modificators["full"]
+    show_detail = modifiers["full"]
     constraints = load_constraints()
 
     line_list = [caption]

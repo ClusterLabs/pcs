@@ -124,7 +124,7 @@ def config_show(argv):
 
 def config_show_cib():
     lib = utils.get_library_wrapper()
-    modificators = utils.get_modificators()
+    modifiers = utils.get_modifiers()
 
     print("Resources:")
     utils.pcs_options["--all"] = 1
@@ -143,12 +143,12 @@ def config_show_cib():
 
     print()
     constraint.location_show([])
-    order_command.show(lib, [], modificators)
-    colocation_command.show(lib, [], modificators)
-    ticket_command.show(lib, [], modificators)
+    order_command.show(lib, [], modifiers)
+    colocation_command.show(lib, [], modifiers)
+    ticket_command.show(lib, [], modifiers)
 
     print()
-    alert.print_alert_config(lib, [], modificators)
+    alert.print_alert_config(lib, [], modifiers)
 
     print()
     del utils.pcs_options["--all"]
@@ -926,4 +926,3 @@ def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
             + "\n"
         )
         sys.exit(1 if result is None else result)
-

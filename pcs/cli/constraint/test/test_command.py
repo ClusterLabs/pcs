@@ -53,7 +53,7 @@ class ShowTest(TestCase):
             "caption",
             load_constraints=lambda: {"plain": [], "with_resource_sets": []},
             format_options=lambda: None,
-            modificators={"full": False}
+            modifiers={"full": False}
         ))
 
     def test_show_constraints_full(self):

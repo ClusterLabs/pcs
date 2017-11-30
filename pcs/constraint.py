@@ -42,7 +42,7 @@ RESOURCE_TYPE_REGEXP = "regexp"
 
 def constraint_cmd(argv):
     lib = utils.get_library_wrapper()
-    modificators = utils.get_modificators()
+    modifiers = utils.get_modifiers()
 
     if len(argv) == 0:
         argv = ["list"]
@@ -79,7 +79,7 @@ def constraint_cmd(argv):
 
             if (sub_cmd2 == "set"):
                 try:
-                    order_command.create_with_set(lib, argv, modificators)
+                    order_command.create_with_set(lib, argv, modifiers)
                 except CmdLineInputError as e:
                     utils.exit_on_cmdline_input_errror(e, "constraint", 'order set')
                 except LibraryError as e:
@@ -87,7 +87,7 @@ def constraint_cmd(argv):
             elif (sub_cmd2 in ["remove","delete"]):
                 order_rm(argv)
             elif (sub_cmd2 == "show"):
-                order_command.show(lib, argv, modificators)
+                order_command.show(lib, argv, modifiers)
             else:
                 order_start([sub_cmd2] + argv)
         elif sub_cmd == "ticket":
@@ -104,7 +104,7 @@ def constraint_cmd(argv):
                     raise CmdLineInputError()
                 usage_name = "ticket "+sub_command
 
-                command_map[sub_command](lib, argv[1:], modificators)
+                command_map[sub_command](lib, argv[1:], modifiers)
             except LibraryError as e:
                 utils.process_library_reports(e.args)
             except CmdLineInputError as e:
@@ -123,13 +123,13 @@ def constraint_cmd(argv):
             elif (sub_cmd2 == "set"):
                 try:
 
-                    colocation_command.create_with_set(lib, argv, modificators)
+                    colocation_command.create_with_set(lib, argv, modifiers)
                 except LibraryError as e:
                     utils.process_library_reports(e.args)
                 except CmdLineInputError as e:
                     utils.exit_on_cmdline_input_errror(e, "constraint", "colocation set")
             elif (sub_cmd2 == "show"):
-                colocation_command.show(lib, argv, modificators)
+                colocation_command.show(lib, argv, modifiers)
             else:
                 usage.constraint()
                 sys.exit(1)
@@ -137,9 +137,9 @@ def constraint_cmd(argv):
             constraint_rm(argv)
         elif (sub_cmd == "show" or sub_cmd == "list"):
             location_show(argv)
-            order_command.show(lib, argv, modificators)
-            colocation_command.show(lib, argv, modificators)
-            ticket_command.show(lib, argv, modificators)
+            order_command.show(lib, argv, modifiers)
+            colocation_command.show(lib, argv, modifiers)
+            ticket_command.show(lib, argv, modifiers)
         elif (sub_cmd == "ref"):
             constraint_ref(argv)
         elif (sub_cmd == "rule"):
