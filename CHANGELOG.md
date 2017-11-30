@@ -5,6 +5,8 @@
 ### Fixed
 - `--skip-offline` is no longer ignored in the `pcs quorum device remove`
   command
+- pcs now waits up to 5 minutes (previously 10 seconds) for pcsd restart when
+  synchronizing pcsd certificates
 
 
 ## [0.9.162] - 2017-11-15

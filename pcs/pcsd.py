@@ -194,12 +194,14 @@ def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
         return
 
     # check if the restart was performed already
+    sleep_seconds = 3
+    total_wait_seconds = 60 * 5
     error = False
-    for _ in range(5):
+    for _ in range(int(total_wait_seconds / sleep_seconds)):
         if not instance_signatures:
             # no more nodes to check
             break
-        time.sleep(2)
+        time.sleep(sleep_seconds)
         for node, signature in list(instance_signatures.items()):
             retval, output = utils.getPcsdInstanceSignature(node)
             if retval == 0 and signature != output:
@@ -210,12 +212,11 @@ def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
                 del instance_signatures[node]
                 utils.err(output, False)
                 error = True
-            # if connection refused or http error occurs the dameon is just
+            # if connection refused or an http error occurs the dameon is just
             # restarting so we'll try it again
     if instance_signatures:
-        for node in sorted(instance_signatures.keys()):
+        for node in sorted(instance_signatures):
             utils.err("{0}: Not restarted".format(node), False)
             error = True
     if error and exit_after_error:
         sys.exit(1)
-
