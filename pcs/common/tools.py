@@ -8,7 +8,7 @@ import sys
 from lxml import etree
 import threading
 
-_PYTHON2 = sys.version[0] == "2"
+_PYTHON2 = (sys.version_info.major == 2)
 
 def simple_cache(func):
     cache = {

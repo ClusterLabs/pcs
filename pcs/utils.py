@@ -88,7 +88,7 @@ except ImportError:
     from urllib.parse import urlencode as urllib_urlencode
 
 
-PYTHON2 = sys.version[0] == "2"
+PYTHON2 = (sys.version_info.major == 2)
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -973,7 +973,9 @@ def touch_cib_file(filename):
         try:
             write_empty_cib(filename)
         except EnvironmentError as e:
-           err("Unable to write to file: '{0}': '{1}'".format(filename, str(e)))
+            err(
+                "Unable to write to file: '{0}': '{1}'".format(filename, str(e))
+            )
 
 # Run command, with environment and return (output, retval)
 # DEPRECATED, please use lib.external.CommandRunner via utils.cmd_runner()

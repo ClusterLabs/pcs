@@ -4,14 +4,10 @@ from __future__ import (
     division,
     print_function,
 )
-import sys
+
+import importlib
 import os.path
-
-is_2_7_or_higher = sys.version_info[0] > 2 or sys.version_info[1] > 6
-
-if is_2_7_or_higher:
-    import importlib
-
+import sys
 
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
@@ -19,6 +15,7 @@ PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
 sys.path.insert(0, PACKAGE_DIR)
 
 from pcs.test.tools import pcs_unittest as unittest
+
 
 def prepare_test_name(test_name):
     """
@@ -33,13 +30,9 @@ def prepare_test_name(test_name):
     in such cause is extension removed
     """
     candidate = test_name.replace("/", ".")
-    if not is_2_7_or_higher:
-        return candidate
-
     py_extension = ".py"
     if not candidate.endswith(py_extension):
         return candidate
-
     try:
         importlib.import_module(candidate)
         return candidate

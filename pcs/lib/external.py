@@ -357,7 +357,7 @@ class CommandRunner(object):
         # executables must be specified with full path unless the PATH variable
         # is set from outside.
         self._env_vars = env_vars if env_vars else dict()
-        self._python2 = sys.version[0] == "2"
+        self._python2 = (sys.version_info.major == 2)
 
     @property
     def env_vars(self):
