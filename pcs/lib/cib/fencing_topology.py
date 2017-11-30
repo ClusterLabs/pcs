@@ -67,10 +67,10 @@ def remove_levels_by_params(
 
     object reporter -- report processor
     etree topology_el -- etree element to remove the levels from
-    int|string level -- level (index) of the new fencing level
-    constant target_type -- the new fencing level target value type
-    mixed target_value -- the new fencing level target value
-    Iterable devices -- list of stonith devices for the new fencing level
+    int|string level -- level (index) of the fencing level to remove
+    constant target_type -- the removed fencing level target value type
+    mixed target_value -- the removed fencing level target value
+    Iterable devices -- list of stonith devices of the removed fencing level
     bool ignore_if_missing -- when True, do not raise if level not found
     """
     if target_type:

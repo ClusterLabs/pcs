@@ -23,7 +23,7 @@ def add_level(
     """
     Validate and add a new fencing level
 
-    LibraryError lib_env -- environment
+    LibraryEnvironment lib_env -- environment
     int|string level -- level (index) of the new fencing level
     constant target_type -- the new fencing level target value type
     mixed target_value -- the new fencing level target value
@@ -62,7 +62,7 @@ def get_config(lib_env):
     Return a list of levels where each level is a dict with keys: target_type,
     target_value. level and devices. Devices is a list of stonith device ids.
 
-    LibraryError lib_env -- environment
+    LibraryEnvironment lib_env -- environment
     """
     cib = lib_env.get_cib()
     return cib_fencing_topology.export(get_fencing_topology(cib))
@@ -70,7 +70,7 @@ def get_config(lib_env):
 def remove_all_levels(lib_env):
     """
     Remove all fencing levels
-    LibraryError lib_env -- environment
+    LibraryEnvironment lib_env -- environment
     """
     cib_fencing_topology.remove_all_levels(
         get_fencing_topology(lib_env.get_cib())
@@ -84,11 +84,11 @@ def remove_levels_by_params(
     """
     Remove specified fencing level(s)
 
-    LibraryError lib_env -- environment
-    int|string level -- level (index) of the new fencing level
-    constant target_type -- the new fencing level target value type
-    mixed target_value -- the new fencing level target value
-    Iterable devices -- list of stonith devices for the new fencing level
+    LibraryEnvironment lib_env -- environment
+    int|string level -- level (index) of the fencing level to remove
+    constant target_type -- the removed fencing level target value type
+    mixed target_value -- the removed fencing level target value
+    Iterable devices -- list of stonith devices of the removed fencing level
     bool ignore_if_missing -- when True, do not report if level not found
     """
     cib_fencing_topology.remove_levels_by_params(
@@ -107,7 +107,7 @@ def verify(lib_env):
     """
     Check if all cluster nodes and stonith devices used in fencing levels exist
 
-    LibraryError lib_env -- environment
+    LibraryEnvironment lib_env -- environment
     """
     cib = lib_env.get_cib()
     cib_fencing_topology.verify(
