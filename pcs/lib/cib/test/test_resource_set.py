@@ -38,7 +38,7 @@ class PrepareSetTest(TestCase):
             }),
             (
                 severities.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["invalid_name"],
                     "option_type": None,

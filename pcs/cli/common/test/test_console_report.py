@@ -45,8 +45,8 @@ class NameBuildTest(TestCase):
         )
 
 
-class BuildInvalidOptionMessageTest(NameBuildTest):
-    code = codes.INVALID_OPTION
+class BuildInvalidOptionsMessageTest(NameBuildTest):
+    code = codes.INVALID_OPTIONS
     def test_build_message_with_type(self):
         self.assert_message_from_info(
             "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",

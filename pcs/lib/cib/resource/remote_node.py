@@ -123,7 +123,7 @@ def get_host(resource_element):
 
 def _validate_server_not_used(agent, option_dict):
     if "server" in option_dict:
-        return [reports.invalid_option(
+        return [reports.invalid_options(
             ["server"],
             sorted([
                 attr["name"] for attr in agent.get_parameters()
@@ -210,7 +210,7 @@ def create(
         )
     except LibraryError as e:
         for report in e.args:
-            if report.code == report_codes.INVALID_OPTION:
+            if report.code == report_codes.INVALID_OPTIONS:
                 report.info["allowed"] = [
                     value for value in report.info["allowed"]
                     if value != "server"

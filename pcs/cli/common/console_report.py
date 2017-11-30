@@ -131,7 +131,7 @@ def resource_running_on_nodes(info):
         ]))
     )
 
-def invalid_option(info):
+def invalid_options(info):
     template = "invalid {desc}option{plural_options} {option_names_list},"
     if not info["allowed"] and not info["allowed_patterns"]:
         template += " there are no options allowed"
@@ -227,7 +227,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.INVALID_OPTION: invalid_option,
+    codes.INVALID_OPTIONS: invalid_options,
 
     codes.INVALID_OPTION_VALUE: lambda info:
         #value on key "allowed_values" is overloaded:

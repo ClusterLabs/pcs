@@ -838,7 +838,7 @@ class NamesIn(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
@@ -860,7 +860,7 @@ class NamesIn(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
@@ -883,7 +883,7 @@ class NamesIn(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
@@ -906,7 +906,7 @@ class NamesIn(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],
@@ -930,7 +930,7 @@ class NamesIn(TestCase):
             [
                 (
                     severities.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["x", "y"],
                         "allowed": ["a", "b", "c"],

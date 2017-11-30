@@ -450,7 +450,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["invalid"],
                     "option_type": "quorum",
@@ -1360,7 +1360,7 @@ class AddDeviceNetTest(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["bad_option"],
                     option_type="quorum device",
@@ -1375,7 +1375,7 @@ class AddDeviceNetTest(TestCase):
                     allowed_values=("off", "on", "sync")
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["bad_heur"],
                     option_type="heuristics",
@@ -1456,7 +1456,7 @@ class AddDeviceNetTest(TestCase):
 
         self.env_assist.assert_reports([
             fixture.warn(
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 option_names=["bad_option"],
                 option_type="quorum device",
                 allowed=["sync_timeout", "timeout"],
@@ -1469,7 +1469,7 @@ class AddDeviceNetTest(TestCase):
                 allowed_values=("off", "on", "sync")
             ),
             fixture.warn(
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 option_names=["bad_heur"],
                 option_type="heuristics",
                 allowed=["interval", "mode", "sync_timeout", "timeout"],
@@ -2676,7 +2676,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["bad_option"],
                     "option_type": "quorum device",
@@ -2716,7 +2716,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             [
                 (
                     severity.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_option"],
                         "option_type": "quorum device",

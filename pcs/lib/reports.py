@@ -218,7 +218,7 @@ def required_option_of_alternatives_is_missing(
         }
     )
 
-def invalid_option(
+def invalid_options(
     option_names, allowed_options, option_type, allowed_option_patterns=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -233,7 +233,7 @@ def invalid_option(
     mixed forceable -- is this report item forceable? by what cathegory?
     """
     return ReportItem(
-        report_codes.INVALID_OPTION,
+        report_codes.INVALID_OPTIONS,
         severity,
         forceable,
         info={
@@ -251,7 +251,7 @@ def invalid_userdefined_options(
     """
     specified option names defined by a user are not valid
 
-    This is different than invalid_option. In this case, the options are
+    This is different than invalid_options. In this case, the options are
     supposed to be defined by a user. This report carries information that the
     option names do not meet requirements, i.e. contain not allowed characters.
     Invalid_options is used when the options are predefined by pcs (or

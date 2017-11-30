@@ -1330,7 +1330,7 @@ class AgentMetadataValidateParameters(TestCase):
             [
                 (
                     severity.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["invalid_param"],
                         "option_type": "resource",
@@ -1440,7 +1440,7 @@ class AgentMetadataValidateParameters(TestCase):
                 ),
                 (
                     severity.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["obsoletes"],
                         "option_type": "resource",

@@ -148,7 +148,7 @@ class ConfigFacade(object):
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
                 report_items.append(
-                    reports.invalid_option([name], allowed_names, "quorum")
+                    reports.invalid_options([name], allowed_names, "quorum")
                 )
                 continue
 
@@ -470,7 +470,7 @@ class ConfigFacade(object):
 
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
-                report_items.append(reports.invalid_option(
+                report_items.append(reports.invalid_options(
                     [name],
                     allowed_options,
                     "quorum device model",
@@ -570,7 +570,7 @@ class ConfigFacade(object):
             if name not in allowed_options:
                 # model is never allowed in generic options, it is passed
                 # in its own argument
-                report_items.append(reports.invalid_option(
+                report_items.append(reports.invalid_options(
                     [name],
                     allowed_options,
                     "quorum device",

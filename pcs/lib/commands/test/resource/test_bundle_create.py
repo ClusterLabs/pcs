@@ -249,7 +249,7 @@ class CreateDocker(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "container",
@@ -282,7 +282,7 @@ class CreateDocker(TestCase):
         self.env_assist.assert_reports([
             (
                 severities.WARNING,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["extra", ],
                     "option_type": "container",
@@ -376,7 +376,7 @@ class CreateWithNetwork(TestCase):
                 ),
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "network",
@@ -424,7 +424,7 @@ class CreateWithNetwork(TestCase):
             ),
             (
                 severities.WARNING,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["extra", ],
                     "option_type": "network",
@@ -624,7 +624,7 @@ class CreateWithPortMap(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "port-map",
@@ -681,7 +681,7 @@ class CreateWithPortMap(TestCase):
         self.env_assist.assert_reports([
             (
                 severities.WARNING,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["extra", ],
                     "option_type": "port-map",
@@ -857,7 +857,7 @@ class CreateWithStorageMap(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "storage-map",
@@ -907,7 +907,7 @@ class CreateWithStorageMap(TestCase):
             [
                 (
                     severities.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "storage-map",

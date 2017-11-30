@@ -487,7 +487,7 @@ class Agent(object):
         )
 
         if bad_opts:
-            report_list.append(reports.invalid_option(
+            report_list.append(reports.invalid_options(
                 bad_opts,
                 sorted([attr["name"] for attr in self.get_parameters()]),
                 parameters_type,

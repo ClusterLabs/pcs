@@ -274,7 +274,7 @@ class Validate(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         'option_type': 'resource',
                         'option_names': ['server'],

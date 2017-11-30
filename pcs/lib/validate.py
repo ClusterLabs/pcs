@@ -204,17 +204,17 @@ def names_in(
     allowed_option_patterns=None
 ):
     """
-    Return a list with report INVALID_OPTION when in name_list is a name that is
+    Return a list with report INVALID_OPTIONS when in name_list is a name that is
     not in allowed_name_list.
 
     list allowed_name_list contains names which are valid
     list name_list contains names for validation
     string option_type describes type of option for reporting purposes
     string code_to_allow_extra_names is code for forcing invalid names. If it is
-        empty report INVALID_OPTION is non-forceable error. If it is not empty
-        report INVALID_OPTION is forceable error or warning.
+        empty report INVALID_OPTIONS is non-forceable error. If it is not empty
+        report INVALID_OPTIONS is forceable error or warning.
     bool allow_extra_names is flag that complements code_to_allow_extra_names
-        and determines wheter is report INVALID_OPTION forceable error or
+        and determines wheter is report INVALID_OPTIONS forceable error or
         warning.
     mixed allowed_option_patterns -- option patterns to be added to a report
     """
@@ -227,7 +227,7 @@ def names_in(
         allow_extra_names
     )
     return [create_report(
-        reports.invalid_option,
+        reports.invalid_options,
         sorted(invalid_names),
         sorted(allowed_name_list),
         option_type,
@@ -250,10 +250,10 @@ def value_cond(
         description of value type
     string option_name_for_report is substitued by option name if is None
     string code_to_allow_extra_values is code for forcing invalid names. If it
-        is empty report INVALID_OPTION is non-forceable error. If it is not
-        empty report INVALID_OPTION is forceable error or warning.
+        is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
+        not empty report INVALID_OPTION_VALUE is forceable error or warning.
     bool allow_extra_values is flag that complements code_to_allow_extra_values
-        and determines wheter is report INVALID_OPTION forceable error or
+        and determines wheter is report INVALID_OPTION_VALUE forceable error or
         warning.
     """
     @_if_option_exists(option_name)
@@ -325,10 +325,10 @@ def value_in(
     allowed_values -- list of strings, list of possible values
     option_name_for_report -- string, it is substitued by option name if is None
     code_to_allow_extra_values -- string, code for forcing invalid names. If it
-        is empty report INVALID_OPTION is non-forceable error. If it is not
-        empty report INVALID_OPTION is forceable error or warning.
+        is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
+        not empty report INVALID_OPTION_VALUE is forceable error or warning.
     allow_extra_values -- bool, flag that complements code_to_allow_extra_values
-        and determines wheter is report INVALID_OPTION forceable error or
+        and determines wheter is report INVALID_OPTION_VALUE forceable error or
         warning.
     """
     return value_cond(

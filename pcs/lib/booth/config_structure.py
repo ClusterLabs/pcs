@@ -108,7 +108,7 @@ def validate_ticket_options(report_processor, options, allow_unknown_options):
     reports = []
     for key in sorted(options):
         if key in GLOBAL_KEYS:
-            reports.append(common_reports.invalid_option(
+            reports.append(common_reports.invalid_options(
                 [key],
                 TICKET_KEYS,
                 "booth ticket",
@@ -116,7 +116,7 @@ def validate_ticket_options(report_processor, options, allow_unknown_options):
 
         elif key not in TICKET_KEYS:
             reports.append(
-                common_reports.invalid_option(
+                common_reports.invalid_options(
                     [key],
                     TICKET_KEYS,
                     "booth ticket",

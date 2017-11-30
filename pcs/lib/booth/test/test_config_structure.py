@@ -56,7 +56,7 @@ class ValidateTicketOptionsTest(TestCase):
         expected_errors = [
             (
                 severities.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["site"],
                     "option_type": "booth ticket",
@@ -66,7 +66,7 @@ class ValidateTicketOptionsTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["port"],
                     "option_type": "booth ticket",
@@ -85,7 +85,7 @@ class ValidateTicketOptionsTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["unknown"],
                     "option_type": "booth ticket",
@@ -118,7 +118,7 @@ class ValidateTicketOptionsTest(TestCase):
         expected_errors = [
             (
                 severities.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["site"],
                     "option_type": "booth ticket",
@@ -142,7 +142,7 @@ class ValidateTicketOptionsTest(TestCase):
             expected_errors + [
                 (
                     severities.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["unknown"],
                         "option_type": "booth ticket",

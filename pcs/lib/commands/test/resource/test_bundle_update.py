@@ -226,7 +226,7 @@ class ContainerDocker(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "container",
@@ -254,7 +254,7 @@ class ContainerDocker(TestCase):
         self.env_assist.assert_reports([
             (
                 severities.WARNING,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["extra", ],
                     "option_type": "container",
@@ -417,7 +417,7 @@ class Network(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "network",
@@ -445,7 +445,7 @@ class Network(TestCase):
             [
                 (
                     severities.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["extra", ],
                         "option_type": "network",

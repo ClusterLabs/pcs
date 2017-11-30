@@ -579,7 +579,7 @@ quorum {
             lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["nonsense1"],
                     "option_type": "quorum",
@@ -594,7 +594,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["nonsense2"],
                     "option_type": "quorum",
@@ -1414,7 +1414,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["bad_model_option"],
                     "option_type": "quorum device model",
@@ -1477,7 +1477,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
@@ -1488,7 +1488,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["model"],
                     "option_type": "quorum device",
@@ -1726,7 +1726,7 @@ quorum {
                 ),
                 (
                     severity.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_model_option"],
                         "option_type": "quorum device model",
@@ -1779,7 +1779,7 @@ quorum {
                 ),
                 (
                     severity.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
@@ -2148,7 +2148,7 @@ class UpdateQuorumDeviceTest(TestCase):
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["bad_model_option"],
                     "option_type": "quorum device model",
@@ -2259,7 +2259,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 ),
                 (
                     severity.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_model_option"],
                         "option_type": "quorum device model",
@@ -2380,7 +2380,7 @@ class UpdateQuorumDeviceTest(TestCase):
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
@@ -2391,7 +2391,7 @@ class UpdateQuorumDeviceTest(TestCase):
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["model"],
                     "option_type": "quorum device",
@@ -2440,7 +2440,7 @@ class UpdateQuorumDeviceTest(TestCase):
             ),
             (
                 severity.ERROR,
-                report_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTIONS,
                 {
                     "option_names": ["model"],
                     "option_type": "quorum device",
@@ -2488,7 +2488,7 @@ class UpdateQuorumDeviceTest(TestCase):
             [
                 (
                     severity.WARNING,
-                    report_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
