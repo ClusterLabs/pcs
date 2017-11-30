@@ -709,6 +709,9 @@ View current quorum status.
 qdevice <device model> [\fB\-\-full\fR] [<cluster name>]
 Show runtime status of specified model of quorum device provider.  Using \fB\-\-full\fR will give more detailed output.  If <cluster name> is specified, only information about the specified cluster will be displayed.
 .TP
+booth
+Print current status of booth on the local node.
+.TP
 nodes [corosync | both | config]
 View current status of nodes from pacemaker. If 'corosync' is specified, view current status of nodes from corosync instead. If 'both' is specified, view current status of nodes from both corosync & pacemaker. If 'config' is specified, print nodes from corosync & pacemaker configuration.
 .TP

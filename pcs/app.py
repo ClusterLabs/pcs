@@ -170,7 +170,11 @@ def main(argv=None):
             argv,
             utils.get_modificators()
         ),
-        "status": status.status_cmd,
+        "status": lambda argv: status.status_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modificators()
+        ),
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
         "node": lambda argv: node.node_cmd(

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added `pcs status booth` as an alias to `pcs booth status`
+
 ### Fixed
 - `--skip-offline` is no longer ignored in the `pcs quorum device remove`
   command

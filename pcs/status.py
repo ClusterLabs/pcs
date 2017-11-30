@@ -14,6 +14,7 @@ from pcs import (
 )
 from pcs.qdevice import qdevice_status_cmd
 from pcs.quorum import quorum_status_cmd
+from pcs.cli.booth.command import status as booth_status_cmd
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
@@ -22,53 +23,41 @@ from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
-def status_cmd(argv):
-    if len(argv) == 0:
+def status_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
         full_status()
         sys.exit(0)
 
-    sub_cmd = argv.pop(0)
-    if (sub_cmd == "help"):
-        usage.status(argv)
-    elif (sub_cmd == "resources"):
-        resource.resource_show(argv)
-    elif (sub_cmd == "groups"):
-        resource.resource_group_list(argv)
-    elif (sub_cmd == "cluster"):
-        cluster_status(argv)
-    elif (sub_cmd == "nodes"):
-        nodes_status(argv)
-    elif (sub_cmd == "pcsd"):
-        cluster_pcsd_status(argv)
-    elif (sub_cmd == "xml"):
-        xml_status()
-    elif (sub_cmd == "corosync"):
-        corosync_status()
-    elif sub_cmd == "qdevice":
-        try:
-            qdevice_status_cmd(
-                utils.get_library_wrapper(),
-                argv,
-                utils.get_modificators()
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
-    elif sub_cmd == "quorum":
-        try:
-            quorum_status_cmd(
-                utils.get_library_wrapper(),
-                argv,
-                utils.get_modificators()
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
-    else:
-        usage.status()
-        sys.exit(1)
+    sub_cmd, argv_next = argv[0], argv[1:]
+    try:
+        if sub_cmd == "help":
+            usage.status(argv_next)
+        elif sub_cmd == "booth":
+            booth_status_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "corosync":
+            corosync_status()
+        elif sub_cmd == "cluster":
+            cluster_status(argv_next)
+        elif sub_cmd == "groups":
+            resource.resource_group_list(argv_next)
+        elif sub_cmd == "nodes":
+            nodes_status(argv_next)
+        elif sub_cmd == "pcsd":
+            cluster_pcsd_status(argv_next)
+        elif sub_cmd == "qdevice":
+            qdevice_status_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "quorum":
+            quorum_status_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "resources":
+            resource.resource_show(argv_next)
+        elif sub_cmd == "xml":
+            xml_status()
+        else:
+            raise CmdLineInputError()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
 
 def full_status():
     if "--hide-inactive" in utils.pcs_options and "--full" in utils.pcs_options:

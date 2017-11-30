@@ -1310,6 +1310,9 @@ Commands:
         --full will give more detailed output.  If <cluster name> is specified,
         only information about the specified cluster will be displayed.
 
+    booth
+        Print current status of booth on the local node.
+
     nodes [corosync | both | config]
         View current status of nodes from pacemaker. If 'corosync' is
         specified, view current status of nodes from corosync instead. If
