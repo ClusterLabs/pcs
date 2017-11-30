@@ -873,18 +873,19 @@ Commands:
     delete <stonith id>
         Remove stonith id from configuration.
 
-    enable <stonith id> [--wait[=n]]
-        Allow the cluster to use the stonith device. If --wait is specified, pcs
-        will wait up to 'n' seconds for the stonith device to start and then
-        return 0 if the stonith device is started, or 1 if the stonith device
-        has not yet started. If 'n' is not specified it defaults to 60 minutes.
+    enable <stonith id>... [--wait[=n]]
+        Allow the cluster to use the stonith devices. If --wait is specified,
+        pcs will wait up to 'n' seconds for the stonith devices to start and
+        then return 0 if the stonith devices are started, or 1 if the stonith
+        devices have not yet started. If 'n' is not specified it defaults to 60
+        minutes.
 
-    disable <stonith id> [--wait[=n]]
-        Attempt to stop the stonith device if it is running and disallow the
-        cluster to use it. If --wait is specified, pcs will wait up to 'n'
-        seconds for the stonith device to stop and then return 0 if the stonith
-        device is stopped or 1 if the stonith device has not stopped.  If 'n' is
-        not specified it defaults to 60 minutes.
+    disable <stonith id>... [--wait[=n]]
+        Attempt to stop the stonith devices if they are running and disallow
+        the cluster to use them. If --wait is specified, pcs will wait up to
+        'n' seconds for the stonith devices to stop and then return 0 if the
+        stonith devices are stopped or 1 if the stonith devices have not
+        stopped. If 'n' is not specified it defaults to 60 minutes.
 
     cleanup [<stonith id>] [--node <node>]
         Make the cluster forget failed operations from history of the stonith

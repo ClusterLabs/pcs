@@ -7,6 +7,8 @@
   command
 - pcs now waits up to 5 minutes (previously 10 seconds) for pcsd restart when
   synchronizing pcsd certificates
+- Usage and man page now correctly state it is possible to enable or disable
+  several stonith devices at once
 
 
 ## [0.9.162] - 2017-11-15
