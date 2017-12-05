@@ -1494,7 +1494,7 @@ def update_resource (params, request, auth_user)
       end
       resource_group = params[:resource_group]
     end
-    if params[:resource_type] == "ocf:pacemaker:remote"
+    if params[:resource_type] == "ocf:pacemaker:remote" and not cmd.include?("--force")
       # Workaround for Error: this command is not sufficient for create remote
       # connection, use 'pcs cluster node add-remote', use --force to override.
       # It is not possible to specify meta attributes so we don't need to take

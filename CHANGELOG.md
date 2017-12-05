@@ -12,6 +12,10 @@
   synchronizing pcsd certificates
 - Usage and man page now correctly state it is possible to enable or disable
   several stonith devices at once
+- It is now possible to set the `action` option of stonith devices in GUI by
+  using force ([rhbz#1421702])
+
+[rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 
 
 ## [0.9.162] - 2017-11-15

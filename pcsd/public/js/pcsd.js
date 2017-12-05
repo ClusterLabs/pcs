@@ -286,9 +286,24 @@ function create_node(form) {
   });
 }
 
+function create_resource_error_processing(error_message, form, update, stonith) {
+  var message = (
+    "Unable to " + (update ? "update " : "add ") + name + "\n" + error_message
+  );
+  if (message.indexOf('--force') == -1) {
+    alert(message);
+  }
+  else {
+    message = message.replace(', use --force to override', '');
+    if (confirm(message + "\n\nDo you want to force the operation?")) {
+      create_resource(form, update, stonith, true)
+    }
+  }
+}
+
 // If update is set to true we update the resource instead of create it
 // if stonith is set to true we update/create a stonith agent
-function create_resource(form, update, stonith) {
+function create_resource(form, update, stonith, force) {
   var data = {};
   $($(form).serializeArray()).each(function(index, obj) {
     data[obj.name] = obj.value;
@@ -303,6 +318,9 @@ function create_resource(form, update, stonith) {
   } else {
     name = "resource";
   }
+  if (force) {
+    data["force"] = force;
+  }
 
   ajax_wrapper({
     type: "POST",
@@ -312,7 +330,9 @@ function create_resource(form, update, stonith) {
     success: function(returnValue) {
       $('input.apply_changes').show();
       if (returnValue["error"] == "true") {
-        alert(returnValue["stderr"]);
+        create_resource_error_processing(
+          returnValue["stderr"], form, update, stonith
+        );
       } else {
         Pcs.update();
         if (!update) {
@@ -326,18 +346,9 @@ function create_resource(form, update, stonith) {
       }
     },
     error: function(xhr, status, error) {
-      if (update) {
-        alert(
-          "Unable to update " + name + " "
-          + ajax_simple_error(xhr, status, error)
-        );
-      }
-      else {
-        alert(
-          "Unable to add " + name + " "
-          + ajax_simple_error(xhr, status, error)
-        );
-      }
+      create_resource_error_processing(
+        ajax_simple_error(xhr, status, error), form, update, stonith
+      );
       $('input.apply_changes').show();
     }
   });

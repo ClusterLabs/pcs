@@ -211,6 +211,9 @@ helpers do
       if param == "disabled"
         meta_options << 'meta' << 'target-role=Stopped'
       end
+      if param == "force" and val
+        param_line << "--force"
+      end
     }
     return param_line + meta_options
   end
