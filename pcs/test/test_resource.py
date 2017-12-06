@@ -3444,11 +3444,11 @@ Error: Cannot remove more than one resource from cloned group
 
         # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
+        ac(o,"Error: bundle/clone/group/master/resource 'NoExist' does not exist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: resource/clone/master/group/bundle 'NoExist' does not exist\n")
+        ac(o,"Error: bundle/clone/group/master/resource 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
@@ -3955,7 +3955,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource enable dummy3 dummyX",
-            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
+            "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
@@ -3975,7 +3975,7 @@ Error: Cannot remove more than one resource from cloned group
 
         self.assert_pcs_fail_regardless_of_force(
             "resource disable dummy1 dummyX",
-            "Error: resource/clone/master/group/bundle 'dummyX' does not exist\n"
+            "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",

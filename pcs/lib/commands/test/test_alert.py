@@ -238,7 +238,7 @@ class UpdateAlertTest(TestCase):
                         "context_type": "alerts",
                         "context_id": "",
                         "id": "unknown",
-                        "id_description": "alert",
+                        "expected_types": ["alert"],
                     },
                     None
                 ),
@@ -303,7 +303,7 @@ class RemoveAlertTest(TestCase):
                         "context_type": "alerts",
                         "context_id": "",
                         "id": "unknown1",
-                        "id_description": "alert",
+                        "expected_types": ["alert"],
                     },
                     None
                 ),
@@ -314,7 +314,7 @@ class RemoveAlertTest(TestCase):
                         "context_type": "alerts",
                         "context_id": "",
                         "id": "unknown2",
-                        "id_description": "alert",
+                        "expected_types": ["alert"],
                     },
                     None
                 ),
@@ -528,8 +528,11 @@ class UpdateRecipientTest(TestCase):
                     report_codes.ID_NOT_FOUND,
                     {
                         "id": "recipient",
-                        "id_description": "recipient"
-                    }
+                        "expected_types": ["recipient"],
+                        "context_id": "",
+                        "context_type": "alerts",
+                    },
+                    None
                 )
             ],
         )

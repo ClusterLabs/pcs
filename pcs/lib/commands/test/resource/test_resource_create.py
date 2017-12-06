@@ -1602,7 +1602,7 @@ class CreateInToBundle(TestCase):
                 fixture.error(
                     report_codes.ID_NOT_FOUND,
                     id="B",
-                    id_description="bundle",
+                    expected_types=["bundle"],
                     context_type="resources",
                     context_id="",
                 )

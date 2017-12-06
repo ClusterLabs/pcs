@@ -15,6 +15,20 @@ from pcs.common.tools import is_string
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
 
+_type_translation = {
+    "acl_group": "ACL group",
+    "acl_permission": "ACL permission",
+    "acl_role": "ACL role",
+    "acl_target": "ACL user",
+    "primitive": "resource",
+}
+_type_articles = {
+    "ACL group": "an",
+    "ACL user": "an",
+    "ACL role": "an",
+    "ACL permission": "an",
+}
+
 def warn(message):
     sys.stdout.write(format_message(message, "Warning: "))
 
@@ -80,22 +94,30 @@ def service_operation_skipped(operation, info):
         **info
     )
 
+def typelist_to_string(type_list, article=False):
+    if not type_list:
+        return ""
+    new_list = sorted([
+        # get a translation or make a type_name a string
+        _type_translation.get(type_name, "{0}".format(type_name))
+        for type_name in type_list
+    ])
+    types = "/".join(new_list)
+    if not article:
+        return types
+    return "{article} {types}".format(
+        article=_type_articles.get(new_list[0], "a"),
+        types=types
+    )
+
 def id_belongs_to_unexpected_type(info):
-    translate_expected = {
-        "acl_group": "an acl group",
-        "acl_target": "an acl user",
-        "group": "a group",
-    }
     return "'{id}' is not {expected_type}".format(
         id=info["id"],
-        expected_type="/".join([
-            translate_expected.get(tag, "{0}".format(tag))
-            for tag in info["expected_types"]
-        ]),
+        expected_type=typelist_to_string(info["expected_types"], article=True)
     )
 
 def id_not_found(info):
-    desc = format_optional(info["id_description"], "{0} ")
+    desc = format_optional(typelist_to_string(info["expected_types"]), "{0} ")
     if not info["context_type"] or not info["context_id"]:
         return "{desc}'{id}' does not exist".format(desc=desc, id=info["id"])
 

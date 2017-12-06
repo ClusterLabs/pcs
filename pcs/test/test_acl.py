@@ -80,19 +80,19 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         ac(o,"")
 
         o, r = pcs("acl user create user1 roleX")
-        ac(o, "Error: role 'roleX' does not exist\n")
+        ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl user create user1 role1 roleX")
-        ac(o, "Error: role 'roleX' does not exist\n")
+        ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl group create group1 roleX")
-        ac(o, "Error: role 'roleX' does not exist\n")
+        ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl group create group1 role1 roleX")
-        ac(o, "Error: role 'roleX' does not exist\n")
+        ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl")
@@ -164,11 +164,11 @@ Role: role3
 
         o,r = pcs("acl role assign role1 to noexist")
         assert r == 1
-        ac(o,"Error: user/group 'noexist' does not exist\n")
+        ac(o,"Error: ACL group/ACL user 'noexist' does not exist\n")
 
         o,r = pcs("acl role assign noexist to user1")
         assert r == 1
-        ac(o,"Error: role 'noexist' does not exist\n")
+        ac(o,"Error: ACL role 'noexist' does not exist\n")
 
         o,r = pcs("acl role assign role3 to user1")
         assert r == 0
@@ -184,7 +184,7 @@ Role: role3
 
         o,r = pcs("acl role unassign role3 from noexist")
         assert r == 1
-        ac(o,"Error: user/group 'noexist' does not exist\n")
+        ac(o,"Error: ACL group/ACL user 'noexist' does not exist\n")
 
         o,r = pcs("acl role unassign role3 from user1")
         assert r == 0
@@ -395,7 +395,7 @@ Group: group2
 
         o,r = pcs("acl group delete user1")
         assert r == 1
-        ac(o,"Error: 'user1' is not an acl group\n")
+        ac(o,"Error: 'user1' is not an ACL group\n")
 
         o,r = pcs("acl")
         ac(o, """\
@@ -584,7 +584,7 @@ User: user2
 
         o,r = pcs("acl role delete role2")
         assert r == 1
-        ac(o,"Error: role 'role2' does not exist\n")
+        ac(o,"Error: ACL role 'role2' does not exist\n")
 
         o,r = pcs("acl role delete role1")
         assert r == 0
@@ -640,7 +640,7 @@ User: user2
         assert r == 0
 
         o,r = pcs("acl permission delete role4-deny")
-        ac(o,"Error: permission 'role4-deny' does not exist\n")
+        ac(o,"Error: ACL permission 'role4-deny' does not exist\n")
         assert r == 1
 
         o,r = pcs("acl show")
@@ -825,7 +825,7 @@ Role: role4
         self.assert_pcs_success("acl group create group1")
         self.assert_pcs_fail(
             "acl role assign role1 to user group1",
-            "Error: 'group1' is not an acl user\n"
+            "Error: 'group1' is not an ACL user\n"
         )
 
     def test_assign_unassign_role_to_user_with_to(self):
@@ -861,7 +861,7 @@ Role: role4
         self.assert_pcs_success("acl user create user1")
         self.assert_pcs_fail(
             "acl role assign role1 to group user1",
-            "Error: 'user1' is not an acl group\n"
+            "Error: 'user1' is not an ACL group\n"
         )
 
     def test_assign_unassign_role_to_group_with_to(self):

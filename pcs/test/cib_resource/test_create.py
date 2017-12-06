@@ -985,7 +985,7 @@ class Bundle(ResourceTest):
         self.fixture_primitive("R1")
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy bundle R1",
-            "Error: 'R1' is not bundle\n"
+            "Error: 'R1' is not a bundle\n"
         )
 
     def test_bundle_id_does_not_exist(self):

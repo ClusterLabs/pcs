@@ -65,7 +65,6 @@ def place_resource(
         "primitive",
         group_element,
         adjacent_resource_id,
-        id_description="resource",
     )
 
     if put_after_adjacent and adjacent_resource.getnext() is None:

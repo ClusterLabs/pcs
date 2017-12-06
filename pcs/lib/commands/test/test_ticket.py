@@ -73,8 +73,11 @@ class CreateTest(TestCase):
                     "context_type": "cib",
                     "context_id": "",
                     "id": "resourceA",
-                    "id_description": "resource"
+                    "expected_types": [
+                        "bundle", "clone", "group", "master", "primitive"
+                    ],
                 },
+                None
             ),
         )
 

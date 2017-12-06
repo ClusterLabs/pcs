@@ -40,7 +40,6 @@ def find_valid_resource_id(
         parent_tags + [resource.primitive.TAG, resource.group.TAG],
         cib,
         id,
-        id_description="resource"
     )
 
     if resource_element.tag in parent_tags:

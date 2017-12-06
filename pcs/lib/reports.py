@@ -1180,18 +1180,20 @@ def object_with_id_in_unexpected_context(
     )
 
 
-def id_not_found(id, id_description, context_type="", context_id=""):
+def id_not_found(id, expected_types, context_type="", context_id=""):
     """
     specified id does not exist in CIB, user referenced a nonexisting id
-    string id specified id
-    string id_description decribe id's role
-    string context_id specifies the search area
+
+    string id -- specified id
+    list expected_types -- list of id's roles - expected types with the id
+    string context_type -- context_id's role / type
+    string context_id -- specifies the search area
     """
     return ReportItem.error(
         report_codes.ID_NOT_FOUND,
         info={
             "id": id,
-            "id_description": id_description,
+            "expected_types": sorted(expected_types),
             "context_type": context_type,
             "context_id": context_id,
         }

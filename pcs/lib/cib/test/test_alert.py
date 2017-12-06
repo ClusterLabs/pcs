@@ -344,10 +344,11 @@ class UpdateAlertTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "alert0",
+                    "expected_types": ["alert"],
                     "context_type": "alerts",
                     "context_id": "",
-                    "id_description": "alert"
-                }
+                },
+                None
             )
         )
 
@@ -390,10 +391,11 @@ class RemoveAlertTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "not-existing-id",
+                    "expected_types": ["alert"],
                     "context_type": "alerts",
                     "context_id": "",
-                    "id_description": "alert"
-                }
+                },
+                None
             )
         )
 
@@ -550,10 +552,11 @@ class AddRecipientTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "alert1",
+                    "expected_types": ["alert"],
                     "context_type": "alerts",
                     "context_id": "",
-                    "id_description": "alert"
-                }
+                },
+                None
             )
         )
 
@@ -868,14 +871,17 @@ class UpdateRecipientTest(TestCase):
     def test_recipient_not_exists(self):
         assert_raise_library_error(
             lambda: alert.update_recipient(
-                self.mock_reporter, self.tree, "recipient"),
+                self.mock_reporter, self.tree, "missing-recipient"),
             (
                 severities.ERROR,
                 report_codes.ID_NOT_FOUND,
                 {
-                    "id": "recipient",
-                    "id_description": "recipient"
-                }
+                    "id": "missing-recipient",
+                    "expected_types": ["recipient"],
+                    "context_type": "alerts",
+                    "context_id": "",
+                },
+                None
             )
         )
 
@@ -922,10 +928,11 @@ class RemoveRecipientTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "recipient",
+                    "expected_types": ["recipient"],
                     "context_type": "alerts",
                     "context_id": "",
-                    "id_description": "recipient",
-                }
+                },
+                None
             )
         )
 

@@ -121,7 +121,7 @@ def find_unique_id(tree, check_id, reserved_ids=None):
     return temp_id
 
 def find_element_by_tag_and_id(
-    tag, context_element, element_id, none_if_id_unused=False, id_description=""
+    tag, context_element, element_id, none_if_id_unused=False, id_types=None
 ):
     """
     Return element with given tag and element_id under context_element. When
@@ -133,9 +133,16 @@ def find_element_by_tag_and_id(
     string element_id is id of search element
     bool none_if_id_unused if the element is not found then return None if True
         or raise a LibraryError if False
-    string id_description optional description for id
+    list id_types optional list of descriptions for id / expected types of id
     """
     tag_list = [tag] if is_string(tag) else tag
+    if id_types is None:
+        id_type_list = tag_list
+    elif is_string(id_types):
+        id_type_list = [id_types]
+    else:
+        id_type_list = id_types
+
     element_list = context_element.xpath(
         './/*[({0}) and @id="{1}"]'.format(
             " or ".join(["self::{0}".format(one_tag) for one_tag in tag_list]),
@@ -171,7 +178,7 @@ def find_element_by_tag_and_id(
     raise LibraryError(
         reports.id_not_found(
             element_id,
-            id_description if id_description else "/".join(tag_list),
+            id_type_list,
             context_element.tag,
             context_element.attrib.get("id", "")
         )

@@ -53,7 +53,7 @@ class Basics(TestCase):
                     report_codes.ID_NOT_FOUND,
                     {
                         "id": "B1",
-                        "id_description": "bundle",
+                        "expected_types": ["bundle"],
                         "context_type": "resources",
                         "context_id": "",
                     },
@@ -609,7 +609,7 @@ class PortMap(TestCase):
                     report_codes.ID_NOT_FOUND,
                     {
                         "id": "B1-port-map-8080",
-                        "id_description": "port-map",
+                        "expected_types": ["port-map"],
                         "context_type": "bundle",
                         "context_id": "B1",
                     },
@@ -742,7 +742,7 @@ class StorageMap(TestCase):
                     report_codes.ID_NOT_FOUND,
                     {
                         "id": "B1-storage-map-1",
-                        "id_description": "storage-map",
+                        "expected_types": ["storage-map"],
                         "context_type": "bundle",
                         "context_id": "B1",
                     },

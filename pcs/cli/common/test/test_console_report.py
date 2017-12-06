@@ -678,18 +678,24 @@ class ResourceOperationIntevalAdaptedTest(NameBuildTest):
 class IdBelongsToUnexpectedType(NameBuildTest):
     code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
     def test_build_message_with_data(self):
-        self.assert_message_from_info("'ID' is not primitive/master/clone", {
-            "id": "ID",
-            "expected_types": ["primitive", "master", "clone"],
-            "current_type": "op",
-        })
+        self.assert_message_from_info(
+            "'ID' is not a clone/master/resource",
+            {
+                "id": "ID",
+                "expected_types": ["primitive", "master", "clone"],
+                "current_type": "op",
+            }
+        )
 
-    def test_build_message_with_transformation(self):
-        self.assert_message_from_info("'ID' is not a group", {
-            "id": "ID",
-            "expected_types": ["group"],
-            "current_type": "op",
-        })
+    def test_build_message_with_transformation_and_article(self):
+        self.assert_message_from_info(
+            "'ID' is not an ACL group/ACL user",
+            {
+                "id": "ID",
+                "expected_types": ["acl_target", "acl_group"],
+                "current_type": "op",
+            }
+        )
 
 class ResourceRunOnNodes(NameBuildTest):
     code = codes.RESOURCE_RUNNING_ON_NODES
@@ -2009,5 +2015,51 @@ class ResourceRefreshTooTimeConsuming(NameBuildTest):
             ,
             {
                 "threshold": 25,
+            }
+        )
+
+class IdNotFound(NameBuildTest):
+    code = codes.ID_NOT_FOUND
+    def test_id(self):
+        self.assert_message_from_info(
+            "'ID' does not exist",
+            {
+                "id": "ID",
+                "expected_types": [],
+                "context_type": "",
+                "context_id": "",
+            }
+        )
+
+    def test_id_and_type(self):
+        self.assert_message_from_info(
+            "clone/master/resource 'ID' does not exist",
+            {
+                "id": "ID",
+                "expected_types": ["primitive", "master", "clone"],
+                "context_type": "",
+                "context_id": "",
+            }
+        )
+
+    def test_context(self):
+        self.assert_message_from_info(
+            "there is no 'ID' in the C_TYPE 'C_ID'",
+            {
+                "id": "ID",
+                "expected_types": [],
+                "context_type": "C_TYPE",
+                "context_id": "C_ID",
+            }
+        )
+
+    def test_type_and_context(self):
+        self.assert_message_from_info(
+            "there is no ACL user 'ID' in the C_TYPE 'C_ID'",
+            {
+                "id": "ID",
+                "expected_types": ["acl_target"],
+                "context_type": "C_TYPE",
+                "context_id": "C_ID",
             }
         )

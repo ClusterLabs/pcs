@@ -177,7 +177,7 @@ class NodeAddGuest(ResourceTest):
     def test_fail_when_resource_does_not_exists(self):
         self.assert_pcs_fail(
             "cluster node add-guest some-host non-existent",
-            "Error: primitive 'non-existent' does not exist\n"
+            "Error: resource 'non-existent' does not exist\n"
         )
 
     def test_fail_when_option_remote_node_specified(self):
@@ -207,7 +207,7 @@ class NodeAddGuest(ResourceTest):
             "cluster node add-guest node-host G a=b",
             "Error: invalid guest option 'a', allowed options are:"
                 " remote-addr, remote-connect-timeout, remote-port\n"
-                "Error: primitive 'G' does not exist\n"
+                "Error: resource 'G' does not exist\n"
         )
 
     def test_fail_when_disallowed_option_appear(self):

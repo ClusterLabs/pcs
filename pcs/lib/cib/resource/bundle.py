@@ -464,7 +464,7 @@ def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
     for id in id_list:
         try:
             find_element_by_tag_and_id(
-                map_type, bundle_el, id, id_description=map_label
+                map_type, bundle_el, id, id_types=[map_label]
             )
         except LibraryError as e:
             report_list.extend(e.args)

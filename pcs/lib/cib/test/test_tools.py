@@ -532,25 +532,29 @@ class FindTagWithId(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "a",
-                    "id_description": "group",
+                    "expected_types": ["group"],
                     "context_type": "resources",
                     "context_id": "",
                 },
+                None
             ),
         )
         assert_raise_library_error(
             lambda: find_group(
                 tree.find('.//resources'),
                 "a",
-                id_description="resource group"
+                id_types=["resource group"]
             ),
             (
                 severities.ERROR,
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "a",
-                    "id_description": "resource group",
+                    "expected_types": ["resource group"],
+                    "context_type": "resources",
+                    "context_id": "",
                 },
+                None
             ),
         )
 

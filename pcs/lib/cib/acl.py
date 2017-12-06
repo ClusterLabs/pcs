@@ -24,13 +24,6 @@ TAG_ROLE = "acl_role"
 TAG_TARGET = "acl_target"
 TAG_PERMISSION = "acl_permission"
 
-TAG_DESCRIPTION_MAP = {
-    TAG_GROUP: "group",
-    TAG_ROLE: "role",
-    TAG_TARGET: "user",
-    TAG_PERMISSION: "permission"
-}
-
 def validate_permissions(tree, permission_info_list):
     """
     Validate given permission list.
@@ -59,25 +52,20 @@ def validate_permissions(tree, permission_info_list):
             ))
 
         if scope_type == 'id' and not does_id_exist(tree, scope):
-            report_items.append(reports.id_not_found(scope, "id"))
+            report_items.append(reports.id_not_found(scope, ["id"]))
 
     if report_items:
         raise LibraryError(*report_items)
 
 
 def _find(
-    tag, acl_section, element_id, none_if_id_unused=False, id_description=None
+    tag, acl_section, element_id, none_if_id_unused=False, id_types=None
 ):
-    if tag not in TAG_DESCRIPTION_MAP.keys():
-        raise AssertionError("Unknown acl tag '{0}'".format(tag))
-
     return find_element_by_tag_and_id(
         tag,
         acl_section,
         element_id,
-        id_description=id_description if id_description
-            else TAG_DESCRIPTION_MAP[tag]
-        ,
+        id_types=id_types,
         none_if_id_unused=none_if_id_unused,
     )
 
@@ -112,7 +100,7 @@ def find_target_or_group(acl_section, target_or_group_id):
     return find_group(
         acl_section,
         target_or_group_id,
-        id_description="user/group"
+        id_types=[TAG_GROUP, TAG_TARGET]
     )
 
 def create_role(acl_section, role_id, description=None):

@@ -144,16 +144,22 @@ class ValidatePermissionsTest(LibraryAclTest):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "id",
-                    "id_description": "id",
-                }
+                    "expected_types": ["id"],
+                    "context_type": "",
+                    "context_id": "",
+                },
+                None
             ),
             (
                 severities.ERROR,
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "last",
-                    "id_description": "id",
-                }
+                    "expected_types": ["id"],
+                    "context_type": "",
+                    "context_id": "",
+                },
+                None
             )
         )
 
@@ -973,31 +979,30 @@ class FindTargetOrGroup(TestCase):
         find_group.assert_called_once_with(
             "acl_section",
             "group_id",
-            id_description="user/group"
+            id_types=["acl_group", "acl_target"]
         )
 
 
 class Find(TestCase):
-    def test_refuses_bad_tag(self):
-        self.assertRaises(
-            AssertionError,
-            lambda: lib._find("bad_tag", "acl_section", "id")
-        )
-
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
     def test_map_well_to_common_finder(self, common_finder):
         common_finder.return_value = "element"
-        self.assertEqual("element", lib._find(
-            lib.TAG_GROUP, "acl_section", "group_id",
-            none_if_id_unused=True,
-            id_description="some description"
-        ))
+        self.assertEqual(
+            "element",
+            lib._find(
+                lib.TAG_GROUP,
+                "acl_section",
+                "group_id",
+                none_if_id_unused=True,
+                id_types=["some", "types"]
+            )
+        )
         common_finder.assert_called_once_with(
             lib.TAG_GROUP,
             "acl_section",
             "group_id",
             none_if_id_unused=True,
-            id_description="some description"
+            id_types=["some", "types"]
         )
 
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
@@ -1011,5 +1016,5 @@ class Find(TestCase):
             "acl_section",
             "group_id",
             none_if_id_unused=True,
-            id_description=lib.TAG_DESCRIPTION_MAP[lib.TAG_GROUP]
+            id_types=None
         )

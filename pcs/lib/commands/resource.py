@@ -481,7 +481,9 @@ def create_into_bundle(
             resource.common.disable(primitive_element)
         resource.bundle.add_resource(
             find_element_by_tag_and_id(
-                "bundle", resources_section, bundle_id
+                resource.bundle.TAG,
+                resources_section,
+                bundle_id
             ),
             primitive_element
         )
@@ -682,7 +684,7 @@ def _resource_list_enable_disable(resource_el_list, func, cluster_state):
             report_list.append(
                 reports.id_not_found(
                     res_id,
-                    id_description="resource/clone/master/group/bundle"
+                    ["primitive", "clone", "master", "group", "bundle"]
                )
             )
     return report_list
@@ -784,8 +786,7 @@ def _find_resources_or_raise(
                     find_element_by_tag_and_id(
                         resource_tags,
                         resources_section,
-                        res_id,
-                        id_description="resource/clone/master/group/bundle"
+                        res_id
                     )
                 )
             )

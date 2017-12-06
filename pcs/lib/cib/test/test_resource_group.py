@@ -117,10 +117,11 @@ class PlaceResource(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "r",
-                    "id_description": "resource",
+                    "expected_types": ["primitive"],
                     "context_type": "group",
                     "context_id": "g",
                 },
+                None
             ),
         )
 
