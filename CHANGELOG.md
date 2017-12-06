@@ -14,8 +14,10 @@
   several stonith devices at once
 - It is now possible to set the `action` option of stonith devices in GUI by
   using force ([rhbz#1421702])
+- Do not crash when `--wait` is used in `pcs stonith create` ([rhbz#1522813])
 
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
+[rhbz#1522813]: https://bugzilla.redhat.com/show_bug.cgi?id=1522813
 
 
 ## [0.9.162] - 2017-11-15

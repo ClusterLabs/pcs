@@ -836,6 +836,10 @@ class StonithAgent(CrmAgent):
     """
     _stonithd_metadata = None
 
+    @classmethod
+    def clear_stonithd_metadata_cache(cls):
+        cls._stonithd_metadata = None
+
     def _prepare_name_parts(self, name):
         # pacemaker doesn't support stonith (nor resource) agents with : in type
         if ":" in name:

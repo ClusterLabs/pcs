@@ -4,11 +4,14 @@ from __future__ import (
     print_function,
 )
 
-from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import are_meta_disabled
+from pcs.lib.commands.resource import (
+    _ensure_disabled_after_wait,
+    resource_environment
+)
 from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.commands.resource import resource_environment
+from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
 
 def create(
     env, stonith_id, stonith_agent_name,
@@ -55,8 +58,10 @@ def create(
     with resource_environment(
         env,
         wait,
-        stonith_id,
-        ensure_disabled or are_meta_disabled(meta_attributes),
+        [stonith_id],
+        _ensure_disabled_after_wait(
+            ensure_disabled or are_meta_disabled(meta_attributes),
+        )
     ) as resources_section:
         stonith_element = resource.primitive.create(
             env.report_processor,
@@ -125,8 +130,10 @@ def create_in_group(
     with resource_environment(
         env,
         wait,
-        stonith_id,
-        ensure_disabled or are_meta_disabled(meta_attributes),
+        [stonith_id],
+        _ensure_disabled_after_wait(
+            ensure_disabled or are_meta_disabled(meta_attributes),
+        )
     ) as resources_section:
         stonith_element = resource.primitive.create(
             env.report_processor, resources_section,

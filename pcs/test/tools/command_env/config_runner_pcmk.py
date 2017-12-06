@@ -70,6 +70,42 @@ class PcmkShortcuts(object):
             instead=instead,
         )
 
+    def load_stonithd_metadata(
+        self,
+        name="runner.pcmk.load_stonithd_metadata",
+        stdout=None,
+        stderr="",
+        returncode=0,
+        instead=None,
+        before=None,
+    ):
+        """
+        Create a call for loading stonithd metadata - additional fence options
+
+        string name -- the key of this call
+        string stdout -- stonithd stdout, default metadata if None
+        string stderr -- stonithd stderr
+        int returncode -- stonithd returncode
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "/usr/libexec/pacemaker/stonithd metadata",
+                stdout=(
+                    stdout if stdout is not None
+                    else open(rc("stonithd_metadata.xml")).read()
+                ),
+                stderr=stderr,
+                returncode=returncode
+            ),
+            before=before,
+            instead=instead,
+        )
+
     def resource_cleanup(
         self,
         name="runner.pcmk.cleanup",
