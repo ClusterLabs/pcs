@@ -476,7 +476,13 @@ def resource_create(lib, argv, modifiers):
 def resource_move(argv,clear=False,ban=False):
     other_options = []
     if len(argv) == 0:
-        utils.err ("must specify resource to move/unmove")
+        if clear:
+            msg = "must specify a resource to clear"
+        elif ban:
+            msg = "must specify a resource to ban"
+        else:
+            msg = "must specify a resource to move"
+        utils.err(msg)
 
     resource_id = argv.pop(0)
 

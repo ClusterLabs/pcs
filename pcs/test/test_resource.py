@@ -2591,6 +2591,19 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
+        self.assert_pcs_fail_regardless_of_force(
+            "resource move",
+            "Error: must specify a resource to move\n"
+        )
+        self.assert_pcs_fail_regardless_of_force(
+            "resource ban",
+            "Error: must specify a resource to ban\n"
+        )
+        self.assert_pcs_fail_regardless_of_force(
+            "resource clear",
+            "Error: must specify a resource to clear\n"
+        )
+
         output, returnVal = pcs(
             temp_cib,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy"
