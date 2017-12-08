@@ -14,7 +14,7 @@
   synchronizing pcsd certificates
 - Usage and man page now correctly state it is possible to enable or disable
   several stonith devices at once
-- It is now possible to set the `action` option of stonith devices in GUI by
+- It is now possible to set the `action` option of stonith devices in web UI by
   using force ([rhbz#1421702])
 - Do not crash when `--wait` is used in `pcs stonith create` ([rhbz#1522813])
 
@@ -33,7 +33,7 @@
 
 ### Fixed
 - Fixed crash when loading a huge xml ([rhbz#1506864])
-- Fixed adding an existing cluster into the GUI ([rhbz#1415197])
+- Fixed adding an existing cluster into the web UI ([rhbz#1415197])
 - False warnings about failed actions when resource is master/unmaster from the
   web UI ([rhbz#1506220])
 
@@ -306,7 +306,7 @@
   more than one node is specified ([rhbz#1315992])
 - Restarting pcsd initiated from pcs is now a synchronous operation
   ([rhbz#1284404])
-- Stopped bundling fonts used in pcsd GUI ([ghissue#125])
+- Stopped bundling fonts used in pcsd web UI ([ghissue#125])
 - In `pcs resource create` flags `--master` and `--clone` changed to keywords
   `master` and `clone`
 - libcurl is now used for node to node communication
