@@ -21,45 +21,64 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
 
-    def fixture_stonith(self, action=False):
+    def fixture_stonith_action(self):
         self.assert_pcs_success(
-            "stonith create S fence_apc ipaddr=i login=l {0} --force".format(
-                "action=reboot" if action else ""
-            ),
+            "stonith create Sa fence_apc ipaddr=i login=l action=reboot --force",
             "Warning: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead\n"
-            if action
-            else ""
+        )
+
+    def fixture_stonith_cycle(self):
+        self.assert_pcs_success(
+            "stonith create Sc fence_ipmilan method=cycle"
         )
 
     def fixture_resource(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:pacemaker:Dummy action=reboot --force",
-            "Warning: invalid resource option 'action', allowed options are: "
-                "envfile, fail_start_on, fake, op_sleep, passwd, state,"
-                " trace_file, trace_ra\n"
+            "resource create dummy ocf:pacemaker:Dummy action=reboot "
+                "method=cycle --force"
+            ,
+            "Warning: invalid resource options: 'action', 'method', allowed "
+                "options are: envfile, fail_start_on, fake, op_sleep, passwd, "
+                "state, trace_file, trace_ra\n"
         )
 
     def test_warning_stonith_action(self):
-        self.fixture_stonith(action=True)
+        self.fixture_stonith_action()
+        self.fixture_resource()
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
-                WARNING: following stonith devices have the 'action' attribute set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: S
+                WARNING: following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
                 Stack: unknown
                 Current DC: NONE
             """)
         )
 
-    def test_action_ignored_for_non_stonith_resources(self):
-        self.fixture_stonith(action=False)
+    def test_warning_stonith_method_cycle(self):
+        self.fixture_stonith_cycle()
         self.fixture_resource()
-
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
+                WARNING: following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+                Stack: unknown
+                Current DC: NONE
+            """)
+        )
+
+    def test_stonith_warnings(self):
+        self.fixture_stonith_action()
+        self.fixture_stonith_cycle()
+        self.fixture_resource()
+        self.assert_pcs_success(
+            "status",
+            stdout_start=dedent("""\
+                Cluster name: test99
+                WARNING: following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+                WARNING: following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
                 Stack: unknown
                 Current DC: NONE
             """)

@@ -28,6 +28,8 @@
       <primitive class="stonith" id="node2-stonith" type="fence_xvm">
         <instance_attributes id="node2-stonith-instance_attributes">
           <nvpair id="node2-stonith-instance_attributes-domain" name="domain" value="node2"/>
+          <nvpair id="node2-stonith-instance_attributes-action" name="action" value="monitor"/>
+          <nvpair id="node2-stonith-instance_attributes-method" name="method" value="cycle"/>
         </instance_attributes>
         <operations>
           <op id="node2-stonith-monitor-interval-60s" interval="60s" name="monitor"/>

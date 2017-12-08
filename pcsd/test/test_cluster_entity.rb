@@ -719,6 +719,59 @@ class TestPrimitive < Test::Unit::TestCase
     assert(obj.operations.empty?)
   end
 
+  def test_init_stonith_with_warnings
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='node2-stonith']"]
+    )
+    assert_nil(obj.parent)
+    assert_nil(obj.get_master)
+    assert_nil(obj.get_clone)
+    assert_nil(obj.get_group)
+    assert(obj.meta_attr.empty?)
+    assert_equal('node2-stonith', obj.id)
+    assert(obj.error_list.empty?)
+    assert_equal(
+      obj.warning_list,
+      [
+        {
+          :message => (
+            'This fence-device has the "action" option set, it is ' +
+            'recommended to set "pcmk_off_action", "pcmk_reboot_action" instead'
+          )
+        },
+        {
+          :message => (
+            'This fence-device has the "method" option set to "cycle" which ' +
+            'is potentially dangerous, please consider using "onoff"'
+          )
+        }
+      ]
+    )
+    assert_equal('stonith:fence_xvm', obj.agentname)
+    assert_equal('stonith', obj._class)
+    assert_nil(obj.provider)
+    assert_equal('fence_xvm', obj.type)
+    assert(obj.stonith)
+    instance_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'node2-stonith-instance_attributes-domain',
+      'domain',
+      'node2'
+    )
+    instance_attr << ClusterEntity::NvPair.new(
+      'node2-stonith-instance_attributes-action',
+      'action',
+      'monitor'
+    )
+    instance_attr << ClusterEntity::NvPair.new(
+      'node2-stonith-instance_attributes-method',
+      'method',
+      'cycle'
+    )
+    assert_equal_NvSet(instance_attr, obj.instance_attr)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
+  end
+
   def test_init_stonith_with_crm
     obj = ClusterEntity::Primitive.new(
       @cib.elements["//primitive[@id='node1-stonith']"],

@@ -516,6 +516,28 @@ module ClusterEntity
           @utilization << ClusterEntity::NvPair.from_dom(e)
         }
         @stonith = @_class == 'stonith'
+        if @stonith
+          @instance_attr.each{ |attr|
+            if attr.name == 'action'
+              @warning_list << {
+                :message => (
+                  'This fence-device has the "action" option set, it is ' +
+                  'recommended to set "pcmk_off_action", "pcmk_reboot_action" ' +
+                  'instead'
+                )
+              }
+            end
+            if attr.name == 'method' and attr.value == 'cycle'
+              @warning_list << {
+                :message => (
+                  'This fence-device has the "method" option set to "cycle" ' +
+                  'which is potentially dangerous, please consider using ' +
+                  '"onoff"'
+                )
+              }
+            end
+          }
+        end
         if @id and rsc_status
           @crm_status = rsc_status[@id] || []
         end

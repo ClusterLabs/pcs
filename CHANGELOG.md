@@ -4,6 +4,8 @@
 
 ### Added
 - Added `pcs status booth` as an alias to `pcs booth status`
+- A warning is displayed in `pcs status` and a stonith device detail in web UI
+  when a stonith device has its `method` option set to `cycle` ([rhbz#1523378])
 
 ### Fixed
 - `--skip-offline` is no longer ignored in the `pcs quorum device remove`
@@ -18,6 +20,7 @@
 
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1522813]: https://bugzilla.redhat.com/show_bug.cgi?id=1522813
+[rhbz#1523378]: https://bugzilla.redhat.com/show_bug.cgi?id=1523378
 
 
 ## [0.9.162] - 2017-11-15

@@ -114,6 +114,7 @@ def status_stonith_check():
     stonith_enabled = True
     stonith_devices = []
     stonith_devices_id_action = []
+    stonith_devices_id_method_cycle = []
     sbd_running = False
 
     cib = utils.get_cib_dom()
@@ -144,6 +145,14 @@ def status_stonith_check():
                             stonith_devices_id_action.append(
                                 resource.getAttribute("id")
                             )
+                        if (
+                            nvpair.getAttribute("name") == "method"
+                            and
+                            nvpair.getAttribute("value") == "cycle"
+                        ):
+                            stonith_devices_id_method_cycle.append(
+                                resource.getAttribute("id")
+                            )
 
     if not utils.usefile:
         # check if SBD daemon is running
@@ -160,12 +169,20 @@ def status_stonith_check():
 
     if stonith_devices_id_action:
         print(
-            "WARNING: following stonith devices have the 'action' attribute"
-            " set, it is recommended to set {0} instead: {1}".format(
+            "WARNING: following stonith devices have the 'action' option set, "
+            "it is recommended to set {0} instead: {1}".format(
                 ", ".join(
                     ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
                 ),
                 ", ".join(sorted(stonith_devices_id_action))
+            )
+        )
+    if stonith_devices_id_method_cycle:
+        print(
+            "WARNING: following stonith devices have the 'method' option set "
+            "to 'cycle' which is potentially dangerous, please consider using "
+            "'onoff': {0}".format(
+                ", ".join(sorted(stonith_devices_id_method_cycle))
             )
         )
 
