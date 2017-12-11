@@ -10,6 +10,7 @@ from functools import partial
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.test.tools import fixture
@@ -380,6 +381,19 @@ class UpgradeCib(TestCase):
             .runner.cib.load(filename="cib-empty-2.8.xml")
         )
         env = self.env_assist.get_env()
+        env.get_cib(Version(2, 8, 0))
+
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
+    def test_get_and_push_cib_version_upgrade_needed_tuple(self):
+        (self.config
+            .runner.cib.load(name="load_cib_old")
+            .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
+        )
+        env = self.env_assist.get_env()
         env.get_cib((2, 8, 0))
 
         self.env_assist.assert_reports(
@@ -387,6 +401,11 @@ class UpgradeCib(TestCase):
         )
 
     def test_get_and_push_cib_version_upgrade_not_needed(self):
+        self.config.runner.cib.load(filename="cib-empty-2.6.xml")
+        env = self.env_assist.get_env()
+        env.get_cib(Version(2, 5, 0))
+
+    def test_get_and_push_cib_version_upgrade_not_needed_tuple(self):
         self.config.runner.cib.load(filename="cib-empty-2.6.xml")
         env = self.env_assist.get_env()
         env.get_cib((2, 5, 0))

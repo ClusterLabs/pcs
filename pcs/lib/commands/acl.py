@@ -6,11 +6,12 @@ from __future__ import (
 
 from contextlib import contextmanager
 
+from pcs.common.tools import Version
 from pcs.lib.cib import acl
 from pcs.lib.cib.tools import get_acls
 
 
-REQUIRED_CIB_VERSION = (2, 0, 0)
+REQUIRED_CIB_VERSION = Version(2, 0, 0)
 
 @contextmanager
 def cib_acl_section(env):

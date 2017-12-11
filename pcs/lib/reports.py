@@ -2545,14 +2545,14 @@ def unable_to_upgrade_cib_to_required_version(
     """
     Unable to upgrade CIB to minimal required schema version.
 
-    current_version -- current version of CIB schema
-    required_version -- required version of CIB schema
+    pcs.common.tools.Version current_version -- current version of CIB schema
+    pcs.common.tools.Version required_version -- required version of CIB schema
     """
     return ReportItem.error(
         report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
         info={
-            "required_version": "{0}.{1}.{2}".format(*required_version),
-            "current_version": "{0}.{1}.{2}".format(*current_version)
+            "required_version": str(required_version),
+            "current_version": str(current_version)
         }
     )
 

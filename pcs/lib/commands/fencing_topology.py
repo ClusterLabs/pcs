@@ -8,6 +8,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.tools import Version
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,
@@ -33,9 +34,9 @@ def add_level(
     """
     version_check = None
     if target_type == TARGET_TYPE_REGEXP:
-        version_check = (2, 3, 0)
+        version_check = Version(2, 3, 0)
     elif target_type == TARGET_TYPE_ATTRIBUTE:
-        version_check = (2, 4, 0)
+        version_check = Version(2, 4, 0)
 
     cib = lib_env.get_cib(version_check)
     cib_fencing_topology.add_level(

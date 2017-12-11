@@ -20,6 +20,7 @@ from pcs.test.tools.xml import XmlManipulation
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.tools import Version
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
@@ -355,7 +356,7 @@ class EnsureCibVersionTest(TestCase):
     def test_same_version(self, mock_upgrade, mock_get_cib):
         self.assertTrue(
             lib.ensure_cib_version(
-                self.mock_runner, self.cib, (2, 3, 4)
+                self.mock_runner, self.cib, Version(2, 3, 4)
             ) is None
         )
         mock_upgrade.assert_not_called()
@@ -364,7 +365,7 @@ class EnsureCibVersionTest(TestCase):
     def test_higher_version(self, mock_upgrade, mock_get_cib):
         self.assertTrue(
             lib.ensure_cib_version(
-                self.mock_runner, self.cib, (2, 3, 3)
+                self.mock_runner, self.cib, Version(2, 3, 3)
             ) is None
         )
         mock_upgrade.assert_not_called()
@@ -377,7 +378,7 @@ class EnsureCibVersionTest(TestCase):
             upgraded_cib,
             etree.tostring(
                 lib.ensure_cib_version(
-                    self.mock_runner, self.cib, (2, 3, 5)
+                    self.mock_runner, self.cib, Version(2, 3, 5)
                 )
             ).decode()
         )
@@ -391,7 +392,7 @@ class EnsureCibVersionTest(TestCase):
             upgraded_cib,
             etree.tostring(
                 lib.ensure_cib_version(
-                    self.mock_runner, self.cib, (2, 3, 5)
+                    self.mock_runner, self.cib, Version(2, 3, 5)
                 )
             ).decode()
         )
@@ -402,7 +403,7 @@ class EnsureCibVersionTest(TestCase):
         mock_get_cib.return_value = etree.tostring(self.cib).decode()
         assert_raise_library_error(
             lambda: lib.ensure_cib_version(
-                self.mock_runner, self.cib, (2, 3, 5)
+                self.mock_runner, self.cib, Version(2, 3, 5)
             ),
             (
                 Severity.ERROR,
@@ -420,7 +421,7 @@ class EnsureCibVersionTest(TestCase):
         mock_get_cib.return_value = "not xml"
         assert_raise_library_error(
             lambda: lib.ensure_cib_version(
-                self.mock_runner, self.cib, (2, 3, 5)
+                self.mock_runner, self.cib, Version(2, 3, 5)
             ),
             (
                 Severity.ERROR,

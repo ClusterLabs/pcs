@@ -6,7 +6,7 @@ from __future__ import (
 
 import re
 
-from pcs.common.tools import is_string
+from pcs.common.tools import is_string, Version
 from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
@@ -248,7 +248,7 @@ def get_resources(tree):
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """
     Return version of pacemaker which validated specified cib as tree.
-    Version is returned as tuple of integers: (<major>, <minor>, <revision>).
+    Version is returned as an instance of pcs.common.tools.Version.
     Raises LibraryError on any failure.
 
     cib -- cib etree
@@ -268,8 +268,8 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
             "the attribute 'validate-with' of the element 'cib' has an invalid"
             " value: '{0}'".format(version)
         ))
-    return (
+    return Version(
         int(match.group("major")),
         int(match.group("minor")),
-        int(match.group("rev") or 0)
+        int(match.group("rev")) if match.group("rev") else None
     )
