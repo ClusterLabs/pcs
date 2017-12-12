@@ -4696,7 +4696,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_referenced_primitive_resource(self):
@@ -4811,7 +4811,7 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
 
 class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_ticket(self):
@@ -5116,7 +5116,7 @@ class BundleMiscCommands(BundleCommon):
 
 class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_update_fail_on_pacemaker_guest_attempt(self):
@@ -5211,4 +5211,26 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource meta R remote-node= --force",
             "Warning: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest'\n"
+        )
+
+
+class OldCibPushTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_warning_old_push(self):
+        self.assert_pcs_success(
+            "resource create dummy ocf:pacemaker:Dummy --no-default-ops",
+            "Warning: Replacing the whole CIB instead of applying a diff, "
+                "a race condition may happen if the CIB is pushed more than "
+                "once simultaneously. To fix this, upgrade pacemaker to get "
+                "crm_feature_set at least 3.0.9, current is 3.0.8.\n"
+        )
+        self.assert_pcs_success(
+            "resource --full",
+            outdent("""\
+             Resource: dummy (class=ocf provider=pacemaker type=Dummy)
+              Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+            """)
         )

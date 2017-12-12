@@ -2761,26 +2761,6 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
 
-    @skip_unless_pacemaker_version((1, 1, 11), "CIB schema upgrade")
-    def testClusterUpgrade(self):
-        with open(temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") != -1
-            assert data.find("pacemaker-2.") == -1
-
-        o,r = pcs("cluster cib-upgrade")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
-
-        with open(temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.") != -1
-
-        o,r = pcs("cluster cib-upgrade")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
-
     def test_can_not_setup_cluster_for_unknown_transport_type(self):
         if utils.is_rhel6():
             return
@@ -2990,6 +2970,33 @@ logging {
   </rm>
 </cluster>
 """)
+
+
+class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    @skip_unless_pacemaker_version((1, 1, 11), "CIB schema upgrade")
+    def testClusterUpgrade(self):
+        with open(temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") != -1
+            assert data.find("pacemaker-2.") == -1
+
+        o,r = pcs("cluster cib-upgrade")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
+        with open(temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") == -1
+            assert data.find("pacemaker-2.") != -1
+
+        o,r = pcs("cluster cib-upgrade")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
 
 
 class ClusterStartStop(unittest.TestCase, AssertPcsMixin):

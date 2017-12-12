@@ -22,10 +22,13 @@
 - Pcs now properly exits with code 1 when an error occurs in `pcs cluster node
   add-remote` and `pcs cluster node add-guest` commands ([rhbz#1464781])
 - Fixed a crash in the `pcs booth sync` command ([rhbz#1527530])
+- Always replace the whole CIB instead of applying a diff when
+  crm\_feature\_set <= 3.0.8 ([rhbz#1488044])
 
 [ghissue#153]: https://github.com/ClusterLabs/pcs/issues/153
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1464781]: https://bugzilla.redhat.com/show_bug.cgi?id=1464781
+[rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
 [rhbz#1517333]: https://bugzilla.redhat.com/show_bug.cgi?id=1517333
 [rhbz#1522813]: https://bugzilla.redhat.com/show_bug.cgi?id=1522813
 [rhbz#1523378]: https://bugzilla.redhat.com/show_bug.cgi?id=1523378

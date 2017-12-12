@@ -20,7 +20,7 @@ class ResourceTest(
     TestCase,
     get_assert_pcs_effect_mixin(get_cib_resources)
 ):
-    empty_cib = rc("cib-empty-1.2.xml")
+    empty_cib = rc("cib-empty.xml")
     temp_cib = rc("temp-cib.xml")
 
     def setUp(self):

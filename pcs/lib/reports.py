@@ -1406,6 +1406,21 @@ def cib_diff_error(reason, cib_old, cib_new):
         }
     )
 
+def cib_push_forced_full_due_to_crm_feature_set(required_set, current_set):
+    """
+    Pcs uses the old approach of pushing the CIB so race conditions may occur.
+
+    pcs.common.tools.Version required_set -- crm_feature_set required for diff
+    pcs.common.tools.Version current_set -- actual CIB crm_feature_set
+    """
+    return ReportItem.warning(
+        report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,
+        info={
+            "required_set": str(required_set),
+            "current_set": str(current_set),
+        }
+    )
+
 def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code

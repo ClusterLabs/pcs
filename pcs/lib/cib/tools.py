@@ -245,6 +245,30 @@ def get_resources(tree):
     """
     return sections.get(tree, sections.RESOURCES)
 
+def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
+    version = cib.get(attribute)
+    if version is None:
+        if none_if_missing:
+            return None
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            "the attribute '{0}' of the element 'cib' is missing".format(
+                attribute
+            )
+        ))
+    match = regexp.match(version)
+    if not match:
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            (
+                "the attribute '{0}' of the element 'cib' has an invalid"
+                " value: '{1}'"
+            ).format(attribute, version)
+        ))
+    return Version(
+        int(match.group("major")),
+        int(match.group("minor")),
+        int(match.group("rev")) if match.group("rev") else None
+    )
+
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """
     Return version of pacemaker which validated specified cib as tree.
@@ -253,23 +277,23 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
 
     cib -- cib etree
     """
-    version = cib.get("validate-with")
-    if version is None:
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            "the attribute 'validate-with' of the element 'cib' is missing"
-        ))
-
-    regexp = re.compile(
-        r"pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
+    return _get_cib_version(
+        cib,
+        "validate-with",
+        re.compile(r"pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?")
     )
-    match = regexp.match(version)
-    if not match:
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            "the attribute 'validate-with' of the element 'cib' has an invalid"
-            " value: '{0}'".format(version)
-        ))
-    return Version(
-        int(match.group("major")),
-        int(match.group("minor")),
-        int(match.group("rev")) if match.group("rev") else None
+
+def get_cib_crm_feature_set(cib, none_if_missing=False):
+    """
+    Return crm_feature_set as pcs.common.tools.Version or raise LibraryError
+
+    etree cib -- cib etree
+    bool none_if_missing -- return None instead of raising when crm_feature_set
+        is missing
+    """
+    return _get_cib_version(
+        cib,
+        "crm_feature_set",
+        re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"),
+        none_if_missing=none_if_missing
     )

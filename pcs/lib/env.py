@@ -11,8 +11,10 @@ from pcs.common.node_communicator import (
     NodeCommunicatorFactory,
     NodeTargetFactory
 )
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
+from pcs.lib.cib.tools import get_cib_crm_feature_set
 from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.communication import qdevice
@@ -95,6 +97,7 @@ class LibraryEnvironment(object):
         self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
+        self.__loaded_cib_diff_source_feature_set = None
         self.__loaded_cib_to_modify = None
         self._communicator_factory = NodeCommunicatorFactory(
             LibCommunicatorLogger(self.logger, self.report_processor),
@@ -146,6 +149,14 @@ class LibraryEnvironment(object):
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgrade_reported = True
+        self.__loaded_cib_diff_source_feature_set = (
+            get_cib_crm_feature_set(
+                self.__loaded_cib_to_modify,
+                none_if_missing=True
+            )
+            or
+            Version(0, 0, 0)
+        )
         return self.__loaded_cib_to_modify
 
     @property
@@ -179,10 +190,24 @@ class LibraryEnvironment(object):
 
     def push_cib(self, custom_cib=None, wait=False):
         if custom_cib is not None:
-            return self.push_cib_full(custom_cib, wait)
-        return self.push_cib_diff(wait)
+            return self._push_cib_full(custom_cib, wait)
+        # Push by diff works with crm_feature_set > 3.0.8, see
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1488044 for details. We
+        # only check the version if a CIB has been loaded, otherwise the push
+        # fails anyway. By my testing it seems that only the source CIB's
+        # version matters.
+        if self.__loaded_cib_diff_source is not None:
+            if self.__loaded_cib_diff_source_feature_set < Version(3, 0, 9):
+                self.report_processor.process(
+                    reports.cib_push_forced_full_due_to_crm_feature_set(
+                        Version(3, 0, 9),
+                        self.__loaded_cib_diff_source_feature_set
+                    )
+                )
+                return self._push_cib_full(wait=wait)
+        return self._push_cib_diff(wait=wait)
 
-    def push_cib_full(self, custom_cib=None, wait=False):
+    def _push_cib_full(self, custom_cib=None, wait=False):
         if custom_cib is None and self.__loaded_cib_diff_source is None:
             raise AssertionError("CIB has not been loaded")
         if custom_cib is not None and self.__loaded_cib_diff_source is not None:
@@ -198,7 +223,7 @@ class LibraryEnvironment(object):
             wait
         )
 
-    def push_cib_diff(self, wait=False):
+    def _push_cib_diff(self, wait=False):
         if self.__loaded_cib_diff_source is None:
             raise AssertionError("CIB has not been loaded")
 
@@ -216,7 +241,6 @@ class LibraryEnvironment(object):
             self.__loaded_cib_diff_source,
             etree_to_str(self.__loaded_cib_to_modify)
         )
-
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
@@ -225,6 +249,7 @@ class LibraryEnvironment(object):
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
+        self.__loaded_cib_diff_source_feature_set = None
         self.__loaded_cib_to_modify = None
         if self.is_cib_live and timeout is not False:
             wait_for_idle(cmd_runner, timeout)

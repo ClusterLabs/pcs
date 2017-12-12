@@ -14,7 +14,10 @@ from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.test.tools import fixture
-from pcs.test.tools.assertions import assert_xml_equal
+from pcs.test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc, create_patcher
@@ -30,44 +33,134 @@ def mock_tmpfile(filename):
     mock_file.name = rc(filename)
     return mock_file
 
-@patch_env_object("push_cib_diff")
-@patch_env_object("push_cib_full")
+@patch_env_object("_push_cib_diff")
+@patch_env_object("_push_cib_full")
+@patch_env("get_cib_xml")
 class CibPushProxy(TestCase):
     def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
         self.env = LibraryEnvironment(
             mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
+            self.mock_reporter
         )
-        get_cib_patcher = patch_env_object(
-            "get_cib",
-            lambda self: "<cib />"
-        )
-        self.addCleanup(get_cib_patcher.stop)
-        get_cib_patcher.start()
+        self.cib_can_diff = '<cib crm_feature_set="3.0.9"/>'
+        self.cib_cannot_diff = '<cib crm_feature_set="3.0.8"/>'
+        self.cib_no_features = '<cib />'
 
-    def test_push_loaded(self, mock_push_full, mock_push_diff):
+    def test_push_loaded_goes_with_diff(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_can_diff
         self.env.get_cib()
         self.env.push_cib()
         mock_push_full.assert_not_called()
-        mock_push_diff.assert_called_once_with(False)
+        mock_push_diff.assert_called_once_with(wait=False)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
 
-    def test_push_loaded_wait(self, mock_push_full, mock_push_diff):
+    def test_push_loaded_wait(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_can_diff
         self.env.get_cib()
         self.env.push_cib(wait=10)
         mock_push_full.assert_not_called()
-        mock_push_diff.assert_called_once_with(10)
+        mock_push_diff.assert_called_once_with(wait=10)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
 
-    def test_push_custom(self, mock_push_full, mock_push_diff):
+    def test_push_custom_goes_always_full(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_can_diff
         self.env.get_cib()
-        self.env.push_cib(custom_cib="<cib />")
-        mock_push_full.assert_called_once_with("<cib />", False)
+        self.env.push_cib(custom_cib=self.cib_can_diff)
+        mock_push_full.assert_called_once_with(self.cib_can_diff, False)
         mock_push_diff.assert_not_called()
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
 
-    def test_push_custom_wait(self, mock_push_full, mock_push_diff):
+    def test_push_custom_wait(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_can_diff
         self.env.get_cib()
-        self.env.push_cib(custom_cib="<cib />", wait=10)
-        mock_push_full.assert_called_once_with("<cib />", 10)
+        self.env.push_cib(custom_cib=self.cib_can_diff, wait=10)
+        mock_push_full.assert_called_once_with(self.cib_can_diff, 10)
         mock_push_diff.assert_not_called()
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
+
+    def test_push_prior_load_goes_with_diff(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        self.env.push_cib()
+        mock_push_full.assert_not_called()
+        mock_push_diff.assert_called_once_with(wait=False)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
+
+    def test_push_cannot_diff_goes_with_full(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_cannot_diff
+        self.env.get_cib()
+        self.env.push_cib()
+        mock_push_full.assert_called_once_with(wait=False)
+        mock_push_diff.assert_not_called()
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                fixture.warn(
+                    report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,
+                    current_set="3.0.8",
+                    required_set="3.0.9"
+                )
+            ]
+        )
+
+    def test_push_no_features_goes_with_full(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_no_features
+        self.env.get_cib()
+        self.env.push_cib()
+        mock_push_full.assert_called_once_with(wait=False)
+        mock_push_diff.assert_not_called()
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                fixture.warn(
+                    report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,
+                    current_set="0.0.0",
+                    required_set="3.0.9"
+                )
+            ]
+        )
+
+    def test_modified_cib_features_do_not_matter(
+        self, mock_get_cib, mock_push_full, mock_push_diff
+    ):
+        mock_get_cib.return_value = self.cib_can_diff
+        cib = self.env.get_cib()
+        cib.set("crm_feature_set", "3.0.8")
+        self.env.push_cib()
+        mock_push_full.assert_not_called()
+        mock_push_diff.assert_called_once_with(wait=False)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
+        )
 
 
 class IsCibLive(TestCase):
@@ -97,7 +190,7 @@ class WaitSupportWithLiveCib(TestCase):
 
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib_full(wait=self.wait_timeout)
+        env._push_cib_full(wait=self.wait_timeout)
 
         self.env_assist.assert_reports([])
 
@@ -107,7 +200,7 @@ class WaitSupportWithLiveCib(TestCase):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait=self.wait_timeout),
+            lambda: env._push_cib_full(wait=self.wait_timeout),
             [
                 fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),
             ],
@@ -120,7 +213,7 @@ class WaitSupportWithLiveCib(TestCase):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait="abc"),
+            lambda: env._push_cib_full(wait="abc"),
             [
                 fixture.error(
                     report_codes.INVALID_TIMEOUT_VALUE,
@@ -142,7 +235,7 @@ class WaitSupportWithMockedCib(TestCase):
         env = env_assist.get_env()
         env.get_cib()
         env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait=10),
+            lambda: env._push_cib_full(wait=10),
             [
                 fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),
             ],
@@ -168,7 +261,7 @@ class CibPushFull(TestCase, MangeCibAssertionMixin):
 
     def test_push_custom_without_get(self):
         self.config.runner.cib.push_independent(self.custom_cib)
-        self.env_assist.get_env().push_cib_full(etree.XML(self.custom_cib))
+        self.env_assist.get_env()._push_cib_full(etree.XML(self.custom_cib))
 
     def test_push_custom_after_get(self):
         self.config.runner.cib.load()
@@ -176,7 +269,7 @@ class CibPushFull(TestCase, MangeCibAssertionMixin):
         env.get_cib()
 
         with self.assertRaises(AssertionError) as context_manager:
-            env.push_cib_full(etree.XML(self.custom_cib))
+            env._push_cib_full(etree.XML(self.custom_cib))
             self.assertEqual(
                 str(context_manager.exception),
                 "CIB has been loaded, cannot push custom CIB"
@@ -190,7 +283,7 @@ class CibPushFull(TestCase, MangeCibAssertionMixin):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            env.push_cib_full,
+            env._push_cib_full,
             [
                 (
                     severity.ERROR,
@@ -211,7 +304,7 @@ class CibPushFull(TestCase, MangeCibAssertionMixin):
         )
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib_full()
+        env._push_cib_full()
 
     def test_can_get_after_push(self):
         (self.config
@@ -222,7 +315,7 @@ class CibPushFull(TestCase, MangeCibAssertionMixin):
 
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib_full()
+        env._push_cib_full()
         # need to use lambda because env.cib is a property
         self.assert_raises_cib_not_loaded(lambda: env.cib)
         env.get_cib()
@@ -282,7 +375,7 @@ class CibPushDiff(TestCase, MangeCibAssertionMixin):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
+            env._push_cib_diff,
             [
                 (
                     severity.ERROR,
@@ -309,7 +402,7 @@ class CibPushDiff(TestCase, MangeCibAssertionMixin):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
+            env._push_cib_diff,
             [
                 (
                     severity.ERROR,
@@ -333,7 +426,7 @@ class CibPushDiff(TestCase, MangeCibAssertionMixin):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
+            env._push_cib_diff,
             [
                 (
                     severity.ERROR,
@@ -354,7 +447,7 @@ class CibPushDiff(TestCase, MangeCibAssertionMixin):
         env = self.env_assist.get_env()
 
         env.get_cib()
-        env.push_cib_diff()
+        env._push_cib_diff()
         self.assert_tmps_write_reported()
 
     def test_can_get_after_push(self):
@@ -363,7 +456,7 @@ class CibPushDiff(TestCase, MangeCibAssertionMixin):
 
         env = self.env_assist.get_env()
         env.get_cib()
-        env.push_cib_diff()
+        env._push_cib_diff()
         # need to use lambda because env.cib is a property
         self.assert_raises_cib_not_loaded(lambda: env.cib)
         env.get_cib()
@@ -464,4 +557,4 @@ class ManageCib(TestCase, MangeCibAssertionMixin):
 
     def test_push_without_get(self):
         env = self.env_assist.get_env()
-        self.assert_raises_cib_not_loaded(env.push_cib_diff)
+        self.assert_raises_cib_not_loaded(env._push_cib_diff)

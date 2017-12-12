@@ -17,8 +17,8 @@ from pcs.test.tools.pcs_runner import (
     PcsRunner,
 )
 
-old_cib = rc("cib-empty.xml")
-empty_cib = rc("cib-empty-1.2.xml")
+old_cib = rc("cib-empty-1.2.xml")
+empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
 class ACLTest(unittest.TestCase, AssertPcsMixin):
