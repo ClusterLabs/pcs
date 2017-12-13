@@ -1251,7 +1251,6 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
     end
   }
   if not new_tokens.empty?
-    cluster_nodes = get_corosync_nodes()
     tokens_cfg = Cfgsync::PcsdTokens.from_file()
     # only tokens used in pcsd-to-pcsd communication can and need to be synced
     # those are accessible only when running under root account
@@ -1262,10 +1261,10 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
       )
       return auth_responses, sync_successful, sync_failed_nodes, sync_responses
     end
+    cluster_nodes = get_corosync_nodes()
     sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
       tokens_cfg, new_tokens, cluster_nodes, $cluster_name, ports
     )
-    sync_failed_nodes = []
     sync_not_supported_nodes = []
     sync_responses.each { |node, response|
       if 'not_supported' == response['status']

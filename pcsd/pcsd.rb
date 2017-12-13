@@ -132,11 +132,14 @@ $thread_cfgsync = Thread.new {
         begin
           # do not sync if this host is not in a cluster
           cluster_name = get_cluster_name()
-          if cluster_name and !cluster_name.empty?()
+          cluster_nodes = get_corosync_nodes()
+          if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
-              PCSAuth.getSuperuserAuth(), Cfgsync::get_cfg_classes(),
-              get_corosync_nodes(), cluster_name
+              PCSAuth.getSuperuserAuth(),
+              Cfgsync::get_cfg_classes(),
+              cluster_nodes,
+              cluster_name
             )
             cfgs_to_save, _ = fetcher.fetch()
             cfgs_to_save.each { |cfg_to_save|

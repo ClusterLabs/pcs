@@ -730,7 +730,7 @@ module Cfgsync
   def self.save_sync_new_version(
     config, nodes, cluster_name, fetch_on_conflict, tokens={}, ports={}
   )
-    if not cluster_name or cluster_name.empty?
+    if not cluster_name or cluster_name.empty? or not nodes or nodes.empty?
       # we run on a standalone host, no config syncing
       config.version += 1
       config.save()
@@ -786,7 +786,7 @@ module Cfgsync
     with_new_tokens.tokens.update(new_tokens)
     with_new_tokens.ports.update(new_ports)
     config_new = PcsdTokens.from_text(with_new_tokens.text)
-    if not cluster_name or cluster_name.empty?
+    if not cluster_name or cluster_name.empty? or not nodes or nodes.empty?
       # we run on a standalone host, no config syncing
       config_new.version += 1
       config_new.save()
