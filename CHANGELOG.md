@@ -18,10 +18,11 @@
   using force ([rhbz#1421702])
 - Do not crash when `--wait` is used in `pcs stonith create` ([rhbz#1522813])
 - Nodes are now authenticated after running `pcs cluster auth` even if
-  an existing corosync.conf defines no nodes ([ghissue#153])
+  an existing corosync.conf defines no nodes ([ghissue#153], [rhbz#1517333])
 
 [ghissue#153]: https://github.com/ClusterLabs/pcs/issues/153
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
+[rhbz#1517333]: https://bugzilla.redhat.com/show_bug.cgi?id=1517333
 [rhbz#1522813]: https://bugzilla.redhat.com/show_bug.cgi?id=1522813
 [rhbz#1523378]: https://bugzilla.redhat.com/show_bug.cgi?id=1523378
 
