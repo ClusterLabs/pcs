@@ -130,7 +130,7 @@ def process_library_reports(report_item_list):
     report_item_list list of ReportItem
     """
     if not report_item_list:
-        error("Errors have occurred, therefore pcs is unable to continue")
+        raise error("Errors have occurred, therefore pcs is unable to continue")
 
     critical_error = False
     for report_item in report_item_list:
