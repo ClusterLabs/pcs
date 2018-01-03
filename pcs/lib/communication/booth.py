@@ -10,6 +10,7 @@ import os
 
 from pcs.common.node_communicator import RequestData
 from pcs.lib import reports
+from pcs.lib.booth import reports as reports_booth
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -51,12 +52,12 @@ class BoothSendConfig(
         )
 
     def _get_success_report(self, node_label):
-        return reports.booth_config_accepted_by_node(
+        return reports_booth.booth_config_accepted_by_node(
             node_label, [self._booth_name]
         )
 
     def before(self):
-        self._report(reports.booth_config_distribution_started())
+        self._report(reports_booth.booth_config_distribution_started())
 
 
 class ProcessJsonDataMixin(object):

@@ -21,6 +21,7 @@
   an existing corosync.conf defines no nodes ([ghissue#153], [rhbz#1517333])
 - Pcs now properly exits with code 1 when an error occurs in `pcs cluster node
   add-remote` and `pcs cluster node add-guest` commands ([rhbz#1464781])
+- Fixed a crash in the `pcs booth sync` command ([rhbz#1527530])
 
 [ghissue#153]: https://github.com/ClusterLabs/pcs/issues/153
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
@@ -28,6 +29,7 @@
 [rhbz#1517333]: https://bugzilla.redhat.com/show_bug.cgi?id=1517333
 [rhbz#1522813]: https://bugzilla.redhat.com/show_bug.cgi?id=1522813
 [rhbz#1523378]: https://bugzilla.redhat.com/show_bug.cgi?id=1523378
+[rhbz#1527530]: https://bugzilla.redhat.com/show_bug.cgi?id=1527530
 
 
 ## [0.9.162] - 2017-11-15
