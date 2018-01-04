@@ -574,11 +574,11 @@ def resource_move(argv,clear=False,ban=False):
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
+        allowed_nodes = set()
+        banned_nodes = set()
         if not clear:
             running_on = utils.resource_running_on(resource_id)
             was_running = running_on["is_running"]
-            allowed_nodes = set()
-            banned_nodes = set()
             if dest_node and ban: # ban, node specified
                 banned_nodes = set([dest_node])
             elif dest_node: # move, node specified

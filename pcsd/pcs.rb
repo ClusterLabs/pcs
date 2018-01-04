@@ -1807,7 +1807,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
         :message => 'Unable to connect to the cluster.'
       }
     end
-    status[:status] == 'unknown'
+    status[:status] = 'unknown'
     return status
   end
 

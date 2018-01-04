@@ -1451,11 +1451,7 @@ def validate_constraint_resource(dom, resource_id):
         return True, "", resource_id
 
     if "--force" in pcs_options:
-        return (
-            True,
-            "",
-            clone_el.getAttribute("id") if clone_el else resource_id
-        )
+        return True, "", clone_el.getAttribute("id")
 
     if clone_el.tagName == "clone":
         return (
