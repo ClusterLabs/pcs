@@ -587,10 +587,7 @@ class AddDeviceNetTest(TestCase):
             # matter.
             plain = open(cert_info["path"], "rb").read()
             cert_info["data"] = plain
-            # Convert bytes to string in python3, because the communicator does
-            # it the same way - it accepts bytes, converts them to string and
-            # passes that to further processing.
-            cert_info["b64data"] = base64.b64encode(plain).decode("utf-8")
+            cert_info["b64data"] = base64.b64encode(plain)
 
     def fixture_config_http_get_ca_cert(self, output=None):
         self.config.http.add_communication(

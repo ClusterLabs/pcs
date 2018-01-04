@@ -86,7 +86,7 @@ class EnableSbd(TestCase):
                 action="remote/check_sbd",
                 param_list=[
                     ("watchdog", "/dev/watchdog"),
-                    ("device_list", [])
+                    ("device_list", json.dumps([]))
                 ],
             )
             .corosync_conf.load(
