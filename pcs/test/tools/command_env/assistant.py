@@ -5,12 +5,18 @@ from __future__ import (
 )
 
 import logging
+import os.path
+import sys
 from functools import partial
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import assert_raise_library_error, prepare_diff
 from pcs.test.tools.command_env.calls import Queue as CallQueue
 from pcs.test.tools.command_env.config import Config
+from pcs.test.tools.command_env.mock_fs import(
+    get_fs_mock,
+    is_fs_call_in,
+)
 from pcs.test.tools.command_env.mock_push_cib import(
     get_push_cib,
     is_push_cib_call_in,
@@ -66,6 +72,23 @@ def patch_env(call_queue, config, init_env):
                 else spy.NodeCommunicator(get_node_communicator())
         )
     ]
+
+    if is_fs_call_in(call_queue):
+        fs_mock = get_fs_mock(call_queue)
+        builtin = (
+            ("__builtin__" if sys.version_info[0] == 2 else "builtins")+".{0}"
+        ).format
+
+        patcher_list.extend([
+            mock.patch(
+                builtin("open"),
+                fs_mock("open", open)
+            ),
+            mock.patch(
+                "os.path.exists",
+                fs_mock("os.path.exists", os.path.exists)
+            )
+        ])
 
     # It is not always desirable to patch these methods. Some tests may patch
     # only the internals (runner etc.). So these methods are only patched when
