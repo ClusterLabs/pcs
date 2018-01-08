@@ -2361,6 +2361,10 @@ function resource_unclone(resource_id) {
   }
   show_loading_screen();
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (!resource_obj) {
+    console.log("Resource '" + resource_id + "' not found.");
+    return;
+  }
   if (resource_obj.get('class_type') == 'clone') {
     resource_id = resource_obj.get('member').get('id');
   }
@@ -2409,6 +2413,10 @@ function resource_change_group(resource_id, form) {
   }
   show_loading_screen();
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (!resource_obj) {
+    console.log("Resource '" + resource_id + "' not found.");
+    return;
+  }
   var data = {
     resource_id: resource_id
   };
