@@ -11,6 +11,7 @@ from functools import partial
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import assert_raise_library_error, prepare_diff
+from pcs.test.tools.case_analysis import test_failed
 from pcs.test.tools.command_env import spy
 from pcs.test.tools.command_env.calls import Queue as CallQueue
 from pcs.test.tools.command_env.config import Config
@@ -136,15 +137,22 @@ class EnvAssistant(object):
         self.__original_mocked_corosync_conf = None
 
         if test_case:
-            test_case.addCleanup(self.cleanup)
+            test_case.addCleanup(lambda: self.cleanup(test_case))
 
     @property
     def config(self):
         return self.__config
 
-    def cleanup(self):
+    def cleanup(self, current_test):
         if self.__unpatch:
             self.__unpatch()
+
+        if test_failed(current_test):
+            # We have already got the message that main test failed. There is
+            # a high probability that something remains in reports or in the
+            # queue etc. But it is only consequence of the main test fail. And
+            # we do not want to make the report confusing.
+            return
 
         if not self.__reports_asserted:
             self.__assert_environment_created()
