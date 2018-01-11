@@ -4,6 +4,8 @@ from __future__ import (
     print_function,
 )
 
+import json
+
 try:
     # python 2
     from urlparse import parse_qs
@@ -109,15 +111,15 @@ def _communication_to_response(
     return Response(
         MockCurlSimple(
             info={pycurl.RESPONSE_CODE: response_code},
-            output=output.encode("utf-8"),
-            debug_output=debug_output.encode("utf-8"),
+            output=output,
+            debug_output=debug_output,
             request=Request(
                 RequestTarget(label, address_list, port, token),
                 RequestData(action, param_list),
             )
         ),
         was_connected=was_connected,
-        errno=6,
+        errno=errno,
         error_msg=error_msg,
     )
 
@@ -160,7 +162,7 @@ def create_communication(
 
     common = dict(
         action=action,
-        param_list=param_list if param_list else [],
+        param_list=param_list if param_list else (),
         port=port,
         token=token,
         response_code=response_code,
@@ -181,8 +183,6 @@ def create_communication(
                 "" if not error_msg_template
                 else error_msg_template.format(**full)
             )
-
-
         response_list.append(
             _communication_to_response(**full)
         )
@@ -260,6 +260,34 @@ class StartLoopCall(object):
     def __repr__(self):
         return str("<HttpStartLoop '{0}'>").format(self.response_list)
 
+def _compare_request_data(expected, real):
+    if expected == real:
+        return True
+
+    # If data is in json format it is not possible to compare it as string.
+    # Because python 3 does not keep key order of dict. So if is response
+    # builded by json.dumps(some_dict) the result string can vary.
+
+    # Let's try known use: [('data_json', 'some_json_here')]
+    # It means only one pair "data_json" + json string: everything else is False
+
+    if len(expected) != 1:
+        return False
+
+    if len(real) != 1:
+        return False
+
+    if expected[0][0] != real[0][0] or expected[0][0] != "data_json":
+        return False
+
+    try:
+        expected_data = json.loads(expected[0][1])
+        real_data = json.loads(real[0][1])
+        return expected_data == real_data
+    except ValueError:
+        return False
+
+
 class NodeCommunicator(object):
     def __init__(self, call_queue=None):
         self.__call_queue = call_queue
@@ -304,10 +332,13 @@ class NodeCommunicator(object):
                     real_request.target.port
                 )
 
-            if expected_request.data != real_request.data:
+            if not _compare_request_data(
+                expected_request._data.structured_data,
+                real_request._data.structured_data
+            ):
                 diff["data"] = (
-                    parse_qs(expected_request.data),
-                    parse_qs(real_request.data)
+                    expected_request._data.structured_data,
+                    real_request._data.structured_data,
                 )
 
             if diff:

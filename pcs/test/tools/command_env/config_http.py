@@ -22,8 +22,10 @@ class HttpConfig(object):
         """
         Create a generic call for network communication
         string name -- key of the call
-        list of dict communication_list -- see pcs.test.tools.command_env.mock_node_communicator.create_communication
-        **kwargs -- see pcs.test.tools.command_env.mock_node_communicator.create_communication
+        list of dict communication_list -- see
+            pcs.test.tools.command_env.mock_node_communicator.create_communication
+        **kwargs -- see
+            pcs.test.tools.command_env.mock_node_communicator.create_communication
         """
         request_list, response_list = create_communication(
             communication_list, **kwargs

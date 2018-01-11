@@ -108,9 +108,14 @@ class MockCurl(object):
 class MockCurlSimple(object):
     def __init__(self, info=None, output=b"", debug_output=b"", request=None):
         self.output_buffer = io.BytesIO()
-        self.output_buffer.write(output)
+        self.output_buffer.write(
+            output if isinstance(output, bytes) else output.encode("utf-8")
+        )
         self.debug_buffer = io.BytesIO()
-        self.debug_buffer.write(debug_output)
+        self.debug_buffer.write(
+            debug_output if isinstance(debug_output, bytes)
+            else debug_output.encode("utf-8")
+        )
         self.request_obj = request
         self._info = info if info else {}
 

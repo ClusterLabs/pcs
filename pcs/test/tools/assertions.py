@@ -245,6 +245,16 @@ def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
             )
         )
 
+def _format_report_item(report_item):
+    return repr(
+        (
+            report_item.severity,
+            report_item.code,
+            report_item.info,
+            report_item.forceable
+        )
+    )
+
 def assert_report_item_equal(real_report_item, report_item_info):
     if not __report_item_equal(real_report_item, report_item_info):
         raise AssertionError(
@@ -256,22 +266,44 @@ def assert_report_item_equal(real_report_item, report_item_info):
                     report_item_info[2],
                     None if len(report_item_info) < 4 else report_item_info[3]
                 )),
-                repr((
-                    real_report_item.severity,
-                    real_report_item.code,
-                    real_report_item.info,
-                    real_report_item.forceable
-                ))
+                _format_report_item(real_report_item)
             )
         )
+
+def _unexpected_report_given(
+    expected_report_info_list, real_report_item, real_report_item_list
+):
+    return AssertionError(
+        (
+            "\n  Unexpected real report given: \n    {0}"
+            "\n  all real reports: \n    {2}"
+            "\n  expected reports are: \n    {1}"
+        )
+        .format(
+            _format_report_item(real_report_item),
+            "\n    ".join(map(_format_report_item, real_report_item_list)),
+            "\n    ".join(map(repr, expected_report_info_list))
+                if expected_report_info_list
+                else "No other report is expected!"
+            ,
+        )
+    )
 
 def assert_report_item_list_equal(
     real_report_item_list, expected_report_info_list, hint=""
 ):
     for real_report_item in real_report_item_list:
-        expected_report_info_list.remove(
-            __find_report_info(expected_report_info_list, real_report_item)
+        found_report_info = __find_report_info(
+            expected_report_info_list,
+            real_report_item
         )
+        if found_report_info is None:
+            raise _unexpected_report_given(
+                expected_report_info_list,
+                real_report_item,
+                real_report_item_list,
+            )
+        expected_report_info_list.remove(found_report_info)
     if expected_report_info_list:
         def format_items(item_type, item_list):
             caption = "{0} ReportItems({1})".format(item_type, len(item_list))
@@ -300,20 +332,7 @@ def __find_report_info(expected_report_info_list, real_report_item):
     for report_info in expected_report_info_list:
         if __report_item_equal(real_report_item, report_info):
             return report_info
-    raise AssertionError(
-        "Unexpected report given: \n{0} \nexpected reports are: \n{1}"
-        .format(
-            repr((
-                real_report_item.severity,
-                real_report_item.code,
-                real_report_item.info,
-                real_report_item.forceable
-            )),
-            "\n".join(map(repr, expected_report_info_list))
-                if expected_report_info_list
-                else "  No other report is expected!"
-        )
-    )
+    return None
 
 def __report_item_equal(real_report_item, report_item_info):
     return (

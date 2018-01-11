@@ -3,6 +3,7 @@ from __future__ import (
     division,
     print_function,
 )
+import os
 
 from lxml import etree
 
@@ -14,6 +15,10 @@ from pcs.test.tools.xml import etree_to_str
 
 DEFAULT_WAIT_TIMEOUT = 10
 WAIT_TIMEOUT_EXPIRED_RETURNCODE = 62
+AGENT_FILENAME_MAP = {
+    "ocf:heartbeat:Dummy": "resource_agent_ocf_heartbeat_dummy.xml",
+    "ocf:pacemaker:remote": "resource_agent_ocf_pacemaker_remote.xml",
+}
 
 class PcmkShortcuts(object):
     def __init__(self, calls):
@@ -48,7 +53,7 @@ class PcmkShortcuts(object):
         self,
         name="runner.pcmk.load_agent",
         agent_name="ocf:heartbeat:Dummy",
-        agent_filename="resource_agent_ocf_heartbeat_dummy.xml",
+        agent_filename=None,
         instead=None,
     ):
         """
@@ -61,11 +66,28 @@ class PcmkShortcuts(object):
         string instead -- key of call instead of which this new call is to be
             placed
         """
+
+        if agent_filename:
+            agent_metadata_filename = agent_filename
+        elif agent_name in AGENT_FILENAME_MAP:
+            agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
+        else:
+            raise AssertionError((
+                "Filename with metadata of agent '{0}' not specified.\n"
+                "Please specify file with metadata for agent:\n"
+                "  a) explicitly for this test:"
+                " config.runner.pcmk.load_agent(agent_name='{0}',"
+                " filename='FILENAME_HERE.xml')\n"
+                "  b) implicitly for agent '{0}' in 'AGENT_FILENAME_MAP' in"
+                " '{1}'\n"
+                "Place agent metadata into '{2}FILENAME_HERE.xml'"
+            ).format(agent_name, os.path.realpath(__file__), rc("")))
+
         self.__calls.place(
             name,
             RunnerCall(
                 "crm_resource --show-metadata {0}".format(agent_name),
-                stdout=open(rc(agent_filename)).read()
+                stdout=open(rc(agent_metadata_filename)).read()
             ),
             instead=instead,
         )

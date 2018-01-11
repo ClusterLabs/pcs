@@ -9,6 +9,7 @@ from pcs.test.tools.command_env.config_env import EnvConfig
 from pcs.test.tools.command_env.config_corosync_conf import CorosyncConf
 from pcs.test.tools.command_env.config_runner import RunnerConfig
 from pcs.test.tools.command_env.config_http import HttpConfig
+from pcs.test.tools.command_env.config_fs import FsConfig
 
 class Spy(object):
     def __init__(self, auth_tokens, ports=None):
@@ -26,13 +27,13 @@ class Config(object):
             HttpConfig(self.__calls, self.__wrap_helper)
         )
         self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
+        self.fs = self.__wrap_helper(FsConfig(self.__calls))
 
         self.spy = None
 
     def set_spy(self, auth_tokens, ports=None):
         self.spy = Spy(auth_tokens, ports)
         return self
-
 
     @property
     def calls(self):
