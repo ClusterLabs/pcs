@@ -74,6 +74,33 @@ class CibShortcuts(object):
 
         self.__calls.place(name, call, before=before)
 
+    def load_content(
+        self,
+        cib,
+        returncode=0,
+        stderr=None,
+        name="runner.cib.load_content",
+        instead=None,
+        before=None,
+    ):
+        """
+        Create call for loading CIB specified by its full content
+
+        string cib -- CIB data (stdout of the loading process)
+        string stderr -- error returned from the loading process
+        int returncode -- exit code of the loading process
+        string name -- key of the call
+        string instead -- key of call instead of which this new call is to be
+            placed
+        string before -- key of call before which this new call is to be placed
+        """
+        command = "cibadmin --local --query"
+        if returncode != 0:
+            call = RunnerCall(command, stderr=stderr, returncode=returncode)
+        else:
+            call = RunnerCall(command, stdout=cib)
+        self.__calls.place(name, call, before=before, instead=instead)
+
     def push(
         self,
         modifiers=None,

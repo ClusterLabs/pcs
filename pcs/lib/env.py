@@ -189,44 +189,47 @@ class LibraryEnvironment(object):
         self._get_wait_timeout(wait)
 
     def push_cib(self, custom_cib=None, wait=False):
+        """
+        Push previously loaded instance of CIB or a custom CIB
+
+        etree custom_cib -- push a custom CIB instead of a loaded instance
+            (allows to push an externally provided CIB and replace the one in
+            the cluster completely)
+        mixed wait -- how many seconds to wait for pacemaker to process new CIB
+            or False for not waiting at all
+        """
         if custom_cib is not None:
-            return self._push_cib_full(custom_cib, wait)
+            if self.__loaded_cib_diff_source is not None:
+                raise AssertionError(
+                    "CIB has been loaded, cannot push custom CIB"
+                )
+            return self.__push_cib_full(custom_cib, wait)
+        if self.__loaded_cib_diff_source is None:
+            raise AssertionError("CIB has not been loaded")
         # Push by diff works with crm_feature_set > 3.0.8, see
         # https://bugzilla.redhat.com/show_bug.cgi?id=1488044 for details. We
         # only check the version if a CIB has been loaded, otherwise the push
         # fails anyway. By my testing it seems that only the source CIB's
         # version matters.
-        if self.__loaded_cib_diff_source is not None:
-            if self.__loaded_cib_diff_source_feature_set < Version(3, 0, 9):
-                self.report_processor.process(
-                    reports.cib_push_forced_full_due_to_crm_feature_set(
-                        Version(3, 0, 9),
-                        self.__loaded_cib_diff_source_feature_set
-                    )
+        if self.__loaded_cib_diff_source_feature_set < Version(3, 0, 9):
+            self.report_processor.process(
+                reports.cib_push_forced_full_due_to_crm_feature_set(
+                    Version(3, 0, 9),
+                    self.__loaded_cib_diff_source_feature_set
                 )
-                return self._push_cib_full(wait=wait)
-        return self._push_cib_diff(wait=wait)
+            )
+            return self.__push_cib_full(self.__loaded_cib_to_modify, wait=wait)
+        return self.__push_cib_diff(wait=wait)
 
-    def _push_cib_full(self, custom_cib=None, wait=False):
-        if custom_cib is None and self.__loaded_cib_diff_source is None:
-            raise AssertionError("CIB has not been loaded")
-        if custom_cib is not None and self.__loaded_cib_diff_source is not None:
-            raise AssertionError("CIB has been loaded, cannot push custom CIB")
-
+    def __push_cib_full(self, cib_to_push, wait=False):
         cmd_runner = self.cmd_runner()
-        cib_to_push = (
-            self.__loaded_cib_to_modify if custom_cib is None else custom_cib
-        )
         self.__do_push_cib(
             cmd_runner,
             lambda: replace_cib_configuration(cmd_runner, cib_to_push),
             wait
         )
 
-    def _push_cib_diff(self, wait=False):
-        if self.__loaded_cib_diff_source is None:
-            raise AssertionError("CIB has not been loaded")
-
+    def __push_cib_diff(self, wait=False):
         cmd_runner = self.cmd_runner()
         self.__do_push_cib(
             cmd_runner,

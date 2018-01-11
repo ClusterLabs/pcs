@@ -438,13 +438,7 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
 
     def test_no_revision(self):
         self.assertEqual(
-            (1, 2),
-            lib.get_pacemaker_version_by_which_cib_was_validated(
-                etree.XML('<cib validate-with="pacemaker-1.2"/>')
-            )
-        )
-        self.assertEqual(
-            (1, 2, 0),
+            Version(1, 2),
             lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2"/>')
             )

@@ -32,13 +32,9 @@ class VersionTest(TestCase):
 
     def assert_eq_tuple(self, a, b):
         self.assert_eq(Version(*a), Version(*b))
-        self.assert_eq(a, Version(*b))
-        self.assert_eq(Version(*a), b)
 
     def assert_lt_tuple(self, a, b):
         self.assert_lt(Version(*a), Version(*b))
-        self.assert_lt(a, Version(*b))
-        self.assert_lt(Version(*a), b)
 
     def assert_eq(self, a, b):
         self.assertTrue(a == b)
@@ -65,6 +61,7 @@ class VersionTest(TestCase):
         self.assertEqual(ver[1], None)
         self.assertEqual(ver.revision, None)
         self.assertEqual(ver[2], None)
+        self.assertEqual(ver.as_full_tuple, (2, 0, 0))
         self.assertEqual(str(ver), "2")
         self.assertEqual(str(ver.normalize()), "2.0.0")
 
@@ -77,6 +74,7 @@ class VersionTest(TestCase):
         self.assertEqual(ver[1], 3)
         self.assertEqual(ver.revision, None)
         self.assertEqual(ver[2], None)
+        self.assertEqual(ver.as_full_tuple, (2, 3, 0))
         self.assertEqual(str(ver), "2.3")
         self.assertEqual(str(ver.normalize()), "2.3.0")
 
@@ -89,6 +87,7 @@ class VersionTest(TestCase):
         self.assertEqual(ver[1], 3)
         self.assertEqual(ver.revision, 4)
         self.assertEqual(ver[2], 4)
+        self.assertEqual(ver.as_full_tuple, (2, 3, 4))
         self.assertEqual(str(ver), "2.3.4")
         self.assertEqual(str(ver.normalize()), "2.3.4")
 
@@ -108,8 +107,12 @@ class VersionTest(TestCase):
 
 
         self.assert_eq_tuple((2, 0, 0), (2, 0, 0))
+        self.assert_lt_tuple((2, 0, 0), (2, 0, 1))
         self.assert_lt_tuple((2, 0, 0), (2, 5, 0))
         self.assert_lt_tuple((2, 0, 0), (2, 5, 1))
+        self.assert_lt_tuple((2, 0, 0), (3, 0, 0))
+        self.assert_lt_tuple((2, 0, 0), (3, 0, 1))
+        self.assert_lt_tuple((2, 0, 0), (3, 5, 0))
         self.assert_lt_tuple((2, 0, 0), (3, 5, 1))
 
         self.assert_eq_tuple((2, 0, 0), (2, 0))

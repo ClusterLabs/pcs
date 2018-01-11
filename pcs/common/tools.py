@@ -81,59 +81,37 @@ def xml_fromstring(xml):
     )
 
 class Version(namedtuple("Version", ["major", "minor", "revision"])):
-    @staticmethod
-    def _normalize(ver):
-        if isinstance(ver, Version):
-            return (
-                ver.major,
-                ver.minor if ver.minor is not None else 0,
-                ver.revision if ver.revision is not None else 0,
-            )
-        if len(ver) == 1:
-            return (
-                ver[0] if ver[0] is not None else 0,
-                0,
-                0,
-            )
-        if len(ver) == 2:
-            return (
-                ver[0] if ver[0] is not None else 0,
-                ver[1] if ver[1] is not None else 0,
-                0,
-            )
-        if len(ver) == 3:
-            return (
-                ver[0] if ver[0] is not None else 0,
-                ver[1] if ver[1] is not None else 0,
-                ver[2] if ver[2] is not None else 0,
-            )
-        raise AssertionError(
-            "Expected a version with 1 to 3 items, got {0}".format(ver)
-        )
-
     def __new__(cls, major, minor=None, revision=None):
         return super(Version, cls).__new__(cls, major, minor, revision)
+
+    @property
+    def as_full_tuple(self):
+        return (
+            self.major,
+            self.minor if self.minor is not None else 0,
+            self.revision if self.revision is not None else 0,
+        )
+
+    def normalize(self):
+        return self.__class__(*self.as_full_tuple)
 
     def __str__(self):
         return ".".join([str(x) for x in self if x is not None])
 
-    def __lt__(self, x):
-        return self.__class__._normalize(self) < self.__class__._normalize(x)
+    def __lt__(self, other):
+        return self.as_full_tuple < other.as_full_tuple
 
-    def __le__(self, x):
-        return self.__class__._normalize(self) <= self.__class__._normalize(x)
+    def __le__(self, other):
+        return self.as_full_tuple <= other.as_full_tuple
 
-    def __eq__(self, x):
-        return self.__class__._normalize(self) == self.__class__._normalize(x)
+    def __eq__(self, other):
+        return self.as_full_tuple == other.as_full_tuple
 
-    def __ne__(self, x):
-        return self.__class__._normalize(self) != self.__class__._normalize(x)
+    def __ne__(self, other):
+        return self.as_full_tuple != other.as_full_tuple
 
-    def __gt__(self, x):
-        return self.__class__._normalize(self) > self.__class__._normalize(x)
+    def __gt__(self, other):
+        return self.as_full_tuple > other.as_full_tuple
 
-    def __ge__(self, x):
-        return self.__class__._normalize(self) >= self.__class__._normalize(x)
-
-    def normalize(self):
-        return self.__class__(*self.__class__._normalize(self))
+    def __ge__(self, other):
+        return self.as_full_tuple >= other.as_full_tuple
