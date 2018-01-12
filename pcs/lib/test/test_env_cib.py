@@ -4,69 +4,57 @@ from __future__ import (
     print_function,
 )
 
-import logging
 from functools import partial
 
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.test.tools import fixture
-from pcs.test.tools.assertions import assert_xml_equal
+from pcs.test.tools.assertions import  assert_xml_equal
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc, create_patcher
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    create_setup_patch_mixin,
+)
 from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import etree_to_str
 
-
-patch_env = create_patcher("pcs.lib.env")
-patch_env_object = partial(mock.patch.object, LibraryEnvironment)
 
 def mock_tmpfile(filename):
     mock_file = mock.MagicMock()
     mock_file.name = rc(filename)
     return mock_file
 
-@patch_env_object("push_cib_diff")
-@patch_env_object("push_cib_full")
-class CibPushProxy(TestCase):
-    def setUp(self):
-        self.env = LibraryEnvironment(
-            mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
+SetupPatchMixin = create_setup_patch_mixin(
+    partial(mock.patch.object, LibraryEnvironment)
+)
+
+
+class ManageCibAssertionMixin(object):
+    def assert_raises_cib_error(self, callable_obj, message):
+        with self.assertRaises(AssertionError) as context_manager:
+            callable_obj()
+            self.assertEqual(str(context_manager.exception), message)
+
+    def assert_raises_cib_not_loaded(self, callable_obj):
+        self.assert_raises_cib_error(
+            callable_obj,
+            "CIB has not been loaded"
         )
-        get_cib_patcher = patch_env_object(
-            "get_cib",
-            lambda self: "<cib />"
+
+    def assert_raises_cib_already_loaded(self, callable_obj):
+        self.assert_raises_cib_error(
+            callable_obj,
+            "CIB has already been loaded"
         )
-        self.addCleanup(get_cib_patcher.stop)
-        get_cib_patcher.start()
 
-    def test_push_loaded(self, mock_push_full, mock_push_diff):
-        self.env.get_cib()
-        self.env.push_cib()
-        mock_push_full.assert_not_called()
-        mock_push_diff.assert_called_once_with(False)
-
-    def test_push_loaded_wait(self, mock_push_full, mock_push_diff):
-        self.env.get_cib()
-        self.env.push_cib(wait=10)
-        mock_push_full.assert_not_called()
-        mock_push_diff.assert_called_once_with(10)
-
-    def test_push_custom(self, mock_push_full, mock_push_diff):
-        self.env.get_cib()
-        self.env.push_cib(custom_cib="<cib />")
-        mock_push_full.assert_called_once_with("<cib />", False)
-        mock_push_diff.assert_not_called()
-
-    def test_push_custom_wait(self, mock_push_full, mock_push_diff):
-        self.env.get_cib()
-        self.env.push_cib(custom_cib="<cib />", wait=10)
-        mock_push_full.assert_called_once_with("<cib />", 10)
-        mock_push_diff.assert_not_called()
+    def assert_raises_cib_loaded_cannot_custom(self, callable_obj):
+        self.assert_raises_cib_error(
+            callable_obj,
+            "CIB has been loaded, cannot push custom CIB"
+        )
 
 
 class IsCibLive(TestCase):
@@ -80,307 +68,18 @@ class IsCibLive(TestCase):
         self.assertFalse(env_assist.get_env().is_cib_live)
 
 
-class WaitSupportWithLiveCib(TestCase):
-    wait_timeout = 10
-
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load()
-
-    def test_supports_timeout(self):
-        (self.config
-            .runner.pcmk.can_wait()
-            .runner.cib.push()
-            .runner.pcmk.wait(timeout=self.wait_timeout)
-        )
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib_full(wait=self.wait_timeout)
-
-        self.env_assist.assert_reports([])
-
-    def test_does_not_support_timeout_without_pcmk_support(self):
-        self.config.runner.pcmk.can_wait(stdout="cannot wait")
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait=self.wait_timeout),
-            [
-                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),
-            ],
-            expected_in_processor=False
-        )
-
-    def test_raises_on_invalid_value(self):
-        self.config.runner.pcmk.can_wait()
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait="abc"),
-            [
-                fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE,
-                    timeout="abc"
-                ),
-            ],
-            expected_in_processor=False
-        )
-
-
-class WaitSupportWithMockedCib(TestCase):
-    def test_does_not_suport_timeout(self):
-        env_assist, config = get_env_tools(test_case=self)
-        (config
-            .env.set_cib_data("<cib/>")
-            .runner.cib.load()
-        )
-
-        env = env_assist.get_env()
-        env.get_cib()
-        env_assist.assert_raise_library_error(
-            lambda: env.push_cib_full(wait=10),
-            [
-                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),
-            ],
-            expected_in_processor=False
-        )
-
-
-class MangeCibAssertionMixin(object):
-    def assert_raises_cib_error(self, callable_obj, message):
-        with self.assertRaises(AssertionError) as context_manager:
-            callable_obj()
-            self.assertEqual(str(context_manager.exception), message)
-
-    def assert_raises_cib_not_loaded(self, callable_obj):
-        self.assert_raises_cib_error(callable_obj,  "CIB has not been loaded")
-
-
-
-class CibPushFull(TestCase, MangeCibAssertionMixin):
-    custom_cib = "<custom_cib />"
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-
-    def test_push_custom_without_get(self):
-        self.config.runner.cib.push_independent(self.custom_cib)
-        self.env_assist.get_env().push_cib_full(etree.XML(self.custom_cib))
-
-    def test_push_custom_after_get(self):
-        self.config.runner.cib.load()
-        env = self.env_assist.get_env()
-        env.get_cib()
-
-        with self.assertRaises(AssertionError) as context_manager:
-            env.push_cib_full(etree.XML(self.custom_cib))
-            self.assertEqual(
-                str(context_manager.exception),
-                "CIB has been loaded, cannot push custom CIB"
-            )
-
-    def test_push_fails(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.push(stderr="invalid cib", returncode=1)
-        )
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            env.push_cib_full,
-            [
-                (
-                    severity.ERROR,
-                    report_codes.CIB_PUSH_ERROR,
-                    {
-                        "reason": "invalid cib",
-                    },
-                    None
-                )
-            ],
-            expected_in_processor=False
-        )
-
-    def test_get_and_push(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.push()
-        )
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib_full()
-
-    def test_can_get_after_push(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.push()
-            .runner.cib.load(name="load_cib_2")
-         )
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib_full()
-        # need to use lambda because env.cib is a property
-        self.assert_raises_cib_not_loaded(lambda: env.cib)
-        env.get_cib()
-
-
-class CibPushDiff(TestCase, MangeCibAssertionMixin):
-    def setUp(self):
-        tmpfile_patcher = mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-        self.addCleanup(tmpfile_patcher.stop)
-        self.mock_write_tmpfile = tmpfile_patcher.start()
-        self.tmpfile_old = mock_tmpfile("old.cib")
-        self.tmpfile_new = mock_tmpfile("new.cib")
-        self.mock_write_tmpfile.side_effect = [
-            self.tmpfile_old, self.tmpfile_new
-        ]
-
-        self.env_assist, self.config = get_env_tools(test_case=self)
-
-    def config_load_and_push(self, filename="cib-empty.xml"):
-        (self.config
-            .runner.cib.load(filename=filename)
-            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
-            .runner.cib.push_diff()
-        )
-
-    def push_reports(self, strip_old=False):
-        # No test changes the CIB between load and push. The point is to test
-        # loading and pushing, not editing the CIB.
-        loaded_cib = self.config.calls.get("runner.cib.load").stdout
-        return [
-            (
-                severity.DEBUG,
-                report_codes.TMP_FILE_WRITE,
-                {
-                    "file_path": self.tmpfile_old.name,
-                    "content": loaded_cib.strip() if strip_old else loaded_cib,
-                },
-                None
-            ),
-            (
-                severity.DEBUG,
-                report_codes.TMP_FILE_WRITE,
-                {
-                    "file_path": self.tmpfile_new.name,
-                    "content": loaded_cib.strip(),
-                },
-                None
-            ),
-        ]
-
-    def assert_tmps_write_reported(self):
-        self.env_assist.assert_reports(self.push_reports())
-
-    def test_tmpfile_fails(self):
-        self.config.runner.cib.load()
-        self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
-            [
-                (
-                    severity.ERROR,
-                    report_codes.CIB_SAVE_TMP_ERROR,
-                    {
-                        "reason": "test error",
-                    },
-                    None
-                )
-            ],
-            expected_in_processor=False
-        )
-
-    def test_diff_fails(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.diff(
-                self.tmpfile_old.name,
-                self.tmpfile_new.name,
-                stderr="invalid cib",
-                returncode=1
-            )
-        )
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
-            [
-                (
-                    severity.ERROR,
-                    report_codes.CIB_DIFF_ERROR,
-                    {
-                        "reason": "invalid cib",
-                    },
-                    None
-                )
-            ],
-            expected_in_processor=False
-        )
-        self.assert_tmps_write_reported()
-
-    def test_push_fails(self):
-        (self.config
-            .runner.cib.load()
-            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
-            .runner.cib.push_diff(stderr="invalid cib", returncode=1)
-        )
-        env = self.env_assist.get_env()
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            env.push_cib_diff,
-            [
-                (
-                    severity.ERROR,
-                    report_codes.CIB_PUSH_ERROR,
-                    {
-                        "reason": "invalid cib",
-                    },
-                    None
-                )
-            ],
-            expected_in_processor=False
-        )
-        self.assert_tmps_write_reported()
-
-    def test_get_and_push(self):
-        self.config_load_and_push()
-
-        env = self.env_assist.get_env()
-
-        env.get_cib()
-        env.push_cib_diff()
-        self.assert_tmps_write_reported()
-
-    def test_can_get_after_push(self):
-        self.config_load_and_push()
-        self.config.runner.cib.load(name="load_cib_2")
-
-        env = self.env_assist.get_env()
-        env.get_cib()
-        env.push_cib_diff()
-        # need to use lambda because env.cib is a property
-        self.assert_raises_cib_not_loaded(lambda: env.cib)
-        env.get_cib()
-        self.assert_tmps_write_reported()
-
-
 class UpgradeCib(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_get_and_push_cib_version_upgrade_needed(self):
         (self.config
-            .runner.cib.load(name="load_cib_old")
+            .runner.cib.load(name="load_cib_old", filename="cib-empty-2.6.xml")
             .runner.cib.upgrade()
             .runner.cib.load(filename="cib-empty-2.8.xml")
         )
         env = self.env_assist.get_env()
-        env.get_cib((2, 8, 0))
+        env.get_cib(Version(2, 8, 0))
 
         self.env_assist.assert_reports(
             [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
@@ -389,10 +88,10 @@ class UpgradeCib(TestCase):
     def test_get_and_push_cib_version_upgrade_not_needed(self):
         self.config.runner.cib.load(filename="cib-empty-2.6.xml")
         env = self.env_assist.get_env()
-        env.get_cib((2, 5, 0))
+        env.get_cib(Version(2, 5, 0))
 
 
-class ManageCib(TestCase, MangeCibAssertionMixin):
+class GetCib(TestCase, ManageCibAssertionMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
@@ -441,8 +140,370 @@ class ManageCib(TestCase, MangeCibAssertionMixin):
         self.config.runner.cib.load()
         env = self.env_assist.get_env()
         env.get_cib()
-        self.assert_raises_cib_error(env.get_cib, "CIB has already been loaded")
+        self.assert_raises_cib_already_loaded(env.get_cib)
+
+
+class PushLoadedCib(TestCase, ManageCibAssertionMixin):
+    wait_timeout = 10
+    def setUp(self):
+        tmpfile_patcher = mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+        self.addCleanup(tmpfile_patcher.stop)
+        self.mock_write_tmpfile = tmpfile_patcher.start()
+        self.tmpfile_old = mock_tmpfile("old.cib")
+        self.tmpfile_new = mock_tmpfile("new.cib")
+        self.mock_write_tmpfile.side_effect = [
+            self.tmpfile_old, self.tmpfile_new
+        ]
+        self.cib_can_diff = "cib-empty-2.0.xml"
+        self.cib_cannot_diff = "cib-empty-1.2.xml"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def config_load_and_push_diff(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff()
+        )
+
+    def config_load_and_push(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_cannot_diff)
+            .runner.cib.push()
+        )
+
+    def push_reports(self, cib_old=None, cib_new=None):
+        # No test changes the CIB between load and push. The point is to test
+        # loading and pushing, not editing the CIB.
+        loaded_cib = self.config.calls.get("runner.cib.load").stdout
+        return [
+            fixture.debug(
+                report_codes.TMP_FILE_WRITE,
+                file_path=self.tmpfile_old.name,
+                content=(cib_old if cib_old is not None else loaded_cib)
+            ),
+            fixture.debug(
+                report_codes.TMP_FILE_WRITE,
+                file_path=self.tmpfile_new.name,
+                content=(cib_new if cib_new is not None else loaded_cib).strip()
+            ),
+        ]
+
+    def push_full_forced_reports(self, version):
+        return [
+            fixture.warn(
+                report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,
+                current_set=version,
+                required_set="3.0.9"
+            )
+        ]
+
+    def test_get_and_push(self):
+        self.config_load_and_push_diff()
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib()
+        self.env_assist.assert_reports(self.push_reports())
+
+    def test_get_and_push_cannot_diff(self):
+        self.config_load_and_push()
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib()
+        self.env_assist.assert_reports(
+            self.push_full_forced_reports("3.0.8")
+        )
+
+    def test_modified_cib_features_do_not_matter(self):
+        self.config_load_and_push_diff()
+        env = self.env_assist.get_env()
+
+        cib = env.get_cib()
+        cib.set("crm_feature_set", "3.0.8")
+        env.push_cib()
+        self.env_assist.assert_reports(self.push_reports(
+            cib_new=self.config.calls.get("runner.cib.load").stdout.replace(
+                "3.0.9",
+                "3.0.8"
+            )
+        ))
+
+    def test_push_no_features_goes_with_full(self):
+        (self.config
+            .runner.cib.load_content("<cib />", name="runner.cib.load_content")
+            .runner.cib.push(load_key="runner.cib.load_content")
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib()
+        self.env_assist.assert_reports(
+            self.push_full_forced_reports("0.0.0")
+        )
+
+    def test_can_get_after_push(self):
+        self.config_load_and_push_diff()
+        self.config.runner.cib.load(
+            name="load_cib_2",
+            filename=self.cib_can_diff
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib()
+        # need to use lambda because env.cib is a property
+        self.assert_raises_cib_not_loaded(lambda: env.cib)
+        env.get_cib()
+        self.env_assist.assert_reports(self.push_reports())
+
+    def test_can_get_after_push_cannot_diff(self):
+        self.config_load_and_push()
+        self.config.runner.cib.load(
+            name="load_cib_2",
+            filename=self.cib_cannot_diff
+         )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib()
+        # need to use lambda because env.cib is a property
+        self.assert_raises_cib_not_loaded(lambda: env.cib)
+        env.get_cib()
+        self.env_assist.assert_reports(
+            self.push_full_forced_reports("3.0.8")
+        )
+
+    def test_not_loaded(self):
+        env = self.env_assist.get_env()
+        self.assert_raises_cib_not_loaded(env.push_cib)
+
+    def test_tmpfile_fails(self):
+        self.config.runner.cib.load(filename=self.cib_can_diff)
+        self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            env.push_cib,
+            [
+                fixture.error(
+                    report_codes.CIB_SAVE_TMP_ERROR,
+                    reason="test error",
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_diff_fails(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.cib.diff(
+                self.tmpfile_old.name,
+                self.tmpfile_new.name,
+                stderr="invalid cib",
+                returncode=1
+            )
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            env.push_cib,
+            [
+                fixture.error(
+                    report_codes.CIB_DIFF_ERROR,
+                    reason="invalid cib",
+                )
+            ],
+            expected_in_processor=False
+        )
+        self.env_assist.assert_reports(self.push_reports())
+
+    def test_push_diff_fails(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff(stderr="invalid cib", returncode=1)
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            env.push_cib,
+            [
+                fixture.error(
+                    report_codes.CIB_PUSH_ERROR,
+                    reason="invalid cib",
+                )
+            ],
+            expected_in_processor=False
+        )
+        self.env_assist.assert_reports(self.push_reports())
+
+    def test_push_fails(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_cannot_diff)
+            .runner.cib.push(stderr="invalid cib", returncode=1)
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            env.push_cib,
+            [
+                fixture.error(
+                    report_codes.CIB_PUSH_ERROR,
+                    reason="invalid cib",
+                )
+            ],
+            expected_in_processor=False
+        )
+        self.env_assist.assert_reports(
+            self.push_full_forced_reports("3.0.8")
+        )
+
+    def test_wait(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.pcmk.can_wait()
+            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
+            .runner.cib.push_diff()
+            .runner.pcmk.wait(timeout=self.wait_timeout)
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib(wait=self.wait_timeout)
+        self.env_assist.assert_reports(self.push_reports())
+
+    def test_wait_cannot_diff(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_cannot_diff)
+            .runner.pcmk.can_wait()
+            .runner.cib.push()
+            .runner.pcmk.wait(timeout=self.wait_timeout)
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib(wait=self.wait_timeout)
+        self.env_assist.assert_reports(
+            self.push_full_forced_reports("3.0.8")
+        )
+
+    def test_wait_not_supported(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.pcmk.can_wait(stdout="cannot wait")
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            lambda: env.push_cib(wait=self.wait_timeout),
+            [
+                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_wait_raises_on_invalid_value(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.pcmk.can_wait()
+        )
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            lambda: env.push_cib(wait="abc"),
+            [
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE,
+                    timeout="abc"
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+
+class PushCustomCib(TestCase, ManageCibAssertionMixin):
+    custom_cib = "<custom_cib />"
+    wait_timeout = 10
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_push_without_get(self):
+        self.config.runner.cib.push_independent(self.custom_cib)
+        self.env_assist.get_env().push_cib(etree.XML(self.custom_cib))
+
+    def test_push_after_get(self):
+        self.config.runner.cib.load()
         env = self.env_assist.get_env()
-        self.assert_raises_cib_not_loaded(env.push_cib_diff)
+
+        env.get_cib()
+        self.assert_raises_cib_loaded_cannot_custom(
+            partial(env.push_cib, etree.XML(self.custom_cib))
+        )
+
+    def test_wait(self):
+        (self.config
+            .runner.pcmk.can_wait()
+            .runner.cib.push_independent(self.custom_cib)
+            .runner.pcmk.wait(timeout=self.wait_timeout)
+        )
+        env = self.env_assist.get_env()
+
+        env.push_cib(
+            etree.XML(self.custom_cib),
+            wait=self.wait_timeout
+        )
+
+    def test_wait_not_supported(self):
+        self.config.runner.pcmk.can_wait(stdout="cannot wait")
+        env = self.env_assist.get_env()
+
+        self.env_assist.assert_raise_library_error(
+            lambda: env.push_cib(
+                etree.XML(self.custom_cib),
+                wait=self.wait_timeout
+            ),
+            [
+                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_wait_raises_on_invalid_value(self):
+        self.config.runner.pcmk.can_wait()
+        env = self.env_assist.get_env()
+
+        self.env_assist.assert_raise_library_error(
+            lambda: env.push_cib(etree.XML(self.custom_cib), wait="abc"),
+            [
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE,
+                    timeout="abc"
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+
+class PushCibMockedWithWait(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_wait_not_suported_for_mocked_cib(self):
+        (self.config
+            .env.set_cib_data("<cib/>")
+            .runner.cib.load()
+        )
+
+        env = self.env_assist.get_env()
+        env.get_cib()
+        self.env_assist.assert_raise_library_error(
+            lambda: env.push_cib(wait=10),
+            [
+                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),
+            ],
+            expected_in_processor=False
+        )

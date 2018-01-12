@@ -4696,7 +4696,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_referenced_primitive_resource(self):
@@ -4811,7 +4811,7 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
 
 class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_ticket(self):
@@ -5116,7 +5116,7 @@ class BundleMiscCommands(BundleCommon):
 
 class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_update_fail_on_pacemaker_guest_attempt(self):

@@ -6,7 +6,7 @@ from __future__ import (
 
 import re
 
-from pcs.common.tools import is_string
+from pcs.common.tools import is_string, Version
 from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
@@ -15,6 +15,8 @@ from pcs.lib.pacemaker.values import (
     validate_id,
 )
 from pcs.lib.xml_tools import get_root
+
+_VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
 
 class IdProvider(object):
     """
@@ -245,31 +247,55 @@ def get_resources(tree):
     """
     return sections.get(tree, sections.RESOURCES)
 
+def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
+    version = cib.get(attribute)
+    if version is None:
+        if none_if_missing:
+            return None
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            "the attribute '{0}' of the element 'cib' is missing".format(
+                attribute
+            )
+        ))
+    match = regexp.match(version)
+    if not match:
+        raise LibraryError(reports.cib_load_error_invalid_format(
+            (
+                "the attribute '{0}' of the element 'cib' has an invalid"
+                " value: '{1}'"
+            ).format(attribute, version)
+        ))
+    return Version(
+        int(match.group("major")),
+        int(match.group("minor")),
+        int(match.group("rev")) if match.group("rev") else None
+    )
+
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """
     Return version of pacemaker which validated specified cib as tree.
-    Version is returned as tuple of integers: (<major>, <minor>, <revision>).
+    Version is returned as an instance of pcs.common.tools.Version.
     Raises LibraryError on any failure.
 
     cib -- cib etree
     """
-    version = cib.get("validate-with")
-    if version is None:
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            "the attribute 'validate-with' of the element 'cib' is missing"
-        ))
-
-    regexp = re.compile(
-        r"pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
+    return _get_cib_version(
+        cib,
+        "validate-with",
+        re.compile(r"pacemaker-{0}".format(_VERSION_FORMAT))
     )
-    match = regexp.match(version)
-    if not match:
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            "the attribute 'validate-with' of the element 'cib' has an invalid"
-            " value: '{0}'".format(version)
-        ))
-    return (
-        int(match.group("major")),
-        int(match.group("minor")),
-        int(match.group("rev") or 0)
+
+def get_cib_crm_feature_set(cib, none_if_missing=False):
+    """
+    Return crm_feature_set as pcs.common.tools.Version or raise LibraryError
+
+    etree cib -- cib etree
+    bool none_if_missing -- return None instead of raising when crm_feature_set
+        is missing
+    """
+    return _get_cib_version(
+        cib,
+        "crm_feature_set",
+        re.compile(_VERSION_FORMAT),
+        none_if_missing=none_if_missing
     )

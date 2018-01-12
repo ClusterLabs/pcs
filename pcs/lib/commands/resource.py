@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from functools import partial
 
 from pcs.common import report_codes
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource import operations, remote_node, guest_node
@@ -457,7 +458,7 @@ def create_into_bundle(
             or
             resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=(2, 8, 0)
+        required_cib_version=Version(2, 8, 0)
     ) as resources_section:
         _check_special_cases(
             env,
@@ -525,7 +526,7 @@ def bundle_create(
             or
             resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=(2, 8, 0)
+        required_cib_version=Version(2, 8, 0)
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
@@ -591,7 +592,7 @@ def bundle_update(
         env,
         wait,
         [bundle_id],
-        required_cib_version=(2, 8, 0)
+        required_cib_version=Version(2, 8, 0)
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources

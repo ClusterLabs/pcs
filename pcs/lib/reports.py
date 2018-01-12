@@ -1406,6 +1406,21 @@ def cib_diff_error(reason, cib_old, cib_new):
         }
     )
 
+def cib_push_forced_full_due_to_crm_feature_set(required_set, current_set):
+    """
+    Pcs uses the "push full CIB" approach so race conditions may occur.
+
+    pcs.common.tools.Version required_set -- crm_feature_set required for diff
+    pcs.common.tools.Version current_set -- actual CIB crm_feature_set
+    """
+    return ReportItem.warning(
+        report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,
+        info={
+            "required_set": str(required_set),
+            "current_set": str(current_set),
+        }
+    )
+
 def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code
@@ -2545,14 +2560,14 @@ def unable_to_upgrade_cib_to_required_version(
     """
     Unable to upgrade CIB to minimal required schema version.
 
-    current_version -- current version of CIB schema
-    required_version -- required version of CIB schema
+    pcs.common.tools.Version current_version -- current version of CIB schema
+    pcs.common.tools.Version required_version -- required version of CIB schema
     """
     return ReportItem.error(
         report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
         info={
-            "required_version": "{0}.{1}.{2}".format(*required_version),
-            "current_version": "{0}.{1}.{2}".format(*current_version)
+            "required_version": str(required_version),
+            "current_version": str(current_version)
         }
     )
 

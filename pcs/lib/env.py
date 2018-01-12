@@ -11,8 +11,10 @@ from pcs.common.node_communicator import (
     NodeCommunicatorFactory,
     NodeTargetFactory
 )
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
+from pcs.lib.cib.tools import get_cib_crm_feature_set
 from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.communication import qdevice
@@ -95,6 +97,7 @@ class LibraryEnvironment(object):
         self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
+        self.__loaded_cib_diff_source_feature_set = None
         self.__loaded_cib_to_modify = None
         self._communicator_factory = NodeCommunicatorFactory(
             LibCommunicatorLogger(self.logger, self.report_processor),
@@ -146,6 +149,14 @@ class LibraryEnvironment(object):
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgrade_reported = True
+        self.__loaded_cib_diff_source_feature_set = (
+            get_cib_crm_feature_set(
+                self.__loaded_cib_to_modify,
+                none_if_missing=True
+            )
+            or
+            Version(0, 0, 0)
+        )
         return self.__loaded_cib_to_modify
 
     @property
@@ -178,30 +189,47 @@ class LibraryEnvironment(object):
         self._get_wait_timeout(wait)
 
     def push_cib(self, custom_cib=None, wait=False):
+        """
+        Push previously loaded instance of CIB or a custom CIB
+
+        etree custom_cib -- push a custom CIB instead of a loaded instance
+            (allows to push an externally provided CIB and replace the one in
+            the cluster completely)
+        mixed wait -- how many seconds to wait for pacemaker to process new CIB
+            or False for not waiting at all
+        """
         if custom_cib is not None:
-            return self.push_cib_full(custom_cib, wait)
-        return self.push_cib_diff(wait)
-
-    def push_cib_full(self, custom_cib=None, wait=False):
-        if custom_cib is None and self.__loaded_cib_diff_source is None:
+            if self.__loaded_cib_diff_source is not None:
+                raise AssertionError(
+                    "CIB has been loaded, cannot push custom CIB"
+                )
+            return self.__push_cib_full(custom_cib, wait)
+        if self.__loaded_cib_diff_source is None:
             raise AssertionError("CIB has not been loaded")
-        if custom_cib is not None and self.__loaded_cib_diff_source is not None:
-            raise AssertionError("CIB has been loaded, cannot push custom CIB")
+        # Push by diff works with crm_feature_set > 3.0.8, see
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1488044 for details. We
+        # only check the version if a CIB has been loaded, otherwise the push
+        # fails anyway. By my testing it seems that only the source CIB's
+        # version matters.
+        if self.__loaded_cib_diff_source_feature_set < Version(3, 0, 9):
+            self.report_processor.process(
+                reports.cib_push_forced_full_due_to_crm_feature_set(
+                    Version(3, 0, 9),
+                    self.__loaded_cib_diff_source_feature_set
+                )
+            )
+            return self.__push_cib_full(self.__loaded_cib_to_modify, wait=wait)
+        return self.__push_cib_diff(wait=wait)
 
+    def __push_cib_full(self, cib_to_push, wait=False):
         cmd_runner = self.cmd_runner()
-        cib_to_push = (
-            self.__loaded_cib_to_modify if custom_cib is None else custom_cib
-        )
         self.__do_push_cib(
             cmd_runner,
             lambda: replace_cib_configuration(cmd_runner, cib_to_push),
             wait
         )
 
-    def push_cib_diff(self, wait=False):
-        if self.__loaded_cib_diff_source is None:
-            raise AssertionError("CIB has not been loaded")
-
+    def __push_cib_diff(self, wait=False):
         cmd_runner = self.cmd_runner()
         self.__do_push_cib(
             cmd_runner,
@@ -216,7 +244,6 @@ class LibraryEnvironment(object):
             self.__loaded_cib_diff_source,
             etree_to_str(self.__loaded_cib_to_modify)
         )
-
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
@@ -225,6 +252,7 @@ class LibraryEnvironment(object):
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
+        self.__loaded_cib_diff_source_feature_set = None
         self.__loaded_cib_to_modify = None
         if self.is_cib_live and timeout is not False:
             wait_for_idle(cmd_runner, timeout)

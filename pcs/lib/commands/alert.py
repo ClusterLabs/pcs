@@ -4,12 +4,13 @@ from __future__ import (
     print_function,
 )
 
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import alert
 from pcs.lib.errors import LibraryError
 
 
-REQUIRED_CIB_VERSION = (2, 5, 0)
+REQUIRED_CIB_VERSION = Version(2, 5, 0)
 
 
 def create_alert(

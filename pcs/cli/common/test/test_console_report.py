@@ -2018,6 +2018,7 @@ class ResourceRefreshTooTimeConsuming(NameBuildTest):
             }
         )
 
+
 class IdNotFound(NameBuildTest):
     code = codes.ID_NOT_FOUND
     def test_id(self):
@@ -2061,5 +2062,22 @@ class IdNotFound(NameBuildTest):
                 "expected_types": ["acl_target"],
                 "context_type": "C_TYPE",
                 "context_id": "C_ID",
+            }
+        )
+
+
+class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
+    code = codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Replacing the whole CIB instead of applying a diff, a race "
+                "condition may happen if the CIB is pushed more than once "
+                "simultaneously. To fix this, upgrade pacemaker to get "
+                "crm_feature_set at least 3.0.9, current is 3.0.6."
+            ),
+            {
+                "required_set": "3.0.9",
+                "current_set": "3.0.6",
             }
         )

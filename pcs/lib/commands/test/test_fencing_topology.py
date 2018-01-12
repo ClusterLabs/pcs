@@ -11,6 +11,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import mock, TestCase
@@ -119,7 +120,7 @@ class AddLevel(TestCase):
             "force device",
             "force node"
         )
-        mock_get_cib.assert_called_once_with((2, 4, 0))
+        mock_get_cib.assert_called_once_with(Version(2, 4, 0))
         self.assert_mocks(
             mock_status_xml, mock_status, mock_get_topology, mock_get_resources,
             mock_push_cib
@@ -152,7 +153,7 @@ class AddLevel(TestCase):
             "force device",
             "force node"
         )
-        mock_get_cib.assert_called_once_with((2, 3, 0))
+        mock_get_cib.assert_called_once_with(Version(2, 3, 0))
         self.assert_mocks(
             mock_status_xml, mock_status, mock_get_topology, mock_get_resources,
             mock_push_cib

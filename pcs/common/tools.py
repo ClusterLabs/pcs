@@ -4,9 +4,10 @@ from __future__ import (
     print_function,
 )
 
-import sys
+from collections import namedtuple
 from lxml import etree
 import threading
+import sys
 
 _PYTHON2 = (sys.version_info.major == 2)
 
@@ -78,3 +79,39 @@ def xml_fromstring(xml):
         #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
         etree.XMLParser(huge_tree=True)
     )
+
+class Version(namedtuple("Version", ["major", "minor", "revision"])):
+    def __new__(cls, major, minor=None, revision=None):
+        return super(Version, cls).__new__(cls, major, minor, revision)
+
+    @property
+    def as_full_tuple(self):
+        return (
+            self.major,
+            self.minor if self.minor is not None else 0,
+            self.revision if self.revision is not None else 0,
+        )
+
+    def normalize(self):
+        return self.__class__(*self.as_full_tuple)
+
+    def __str__(self):
+        return ".".join([str(x) for x in self if x is not None])
+
+    def __lt__(self, other):
+        return self.as_full_tuple < other.as_full_tuple
+
+    def __le__(self, other):
+        return self.as_full_tuple <= other.as_full_tuple
+
+    def __eq__(self, other):
+        return self.as_full_tuple == other.as_full_tuple
+
+    def __ne__(self, other):
+        return self.as_full_tuple != other.as_full_tuple
+
+    def __gt__(self, other):
+        return self.as_full_tuple > other.as_full_tuple
+
+    def __ge__(self, other):
+        return self.as_full_tuple >= other.as_full_tuple

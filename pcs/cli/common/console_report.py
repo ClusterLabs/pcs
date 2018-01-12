@@ -757,6 +757,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET: lambda info:
+        (
+            "Replacing the whole CIB instead of applying a diff, a race "
+            "condition may happen if the CIB is pushed more than once "
+            "simultaneously. To fix this, upgrade pacemaker to get "
+            "crm_feature_set at least {required_set}, current is {current_set}."
+        ).format(**info)
+    ,
+
     codes.CIB_SAVE_TMP_ERROR: lambda info:
         "Unable to save CIB to a temporary file: {reason}"
         .format(**info)

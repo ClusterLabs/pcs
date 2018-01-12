@@ -13,11 +13,13 @@ from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
+from pcs.test.tools import fixture
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.common import report_codes
+from pcs.common.tools import Version
 from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
@@ -436,7 +438,7 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
 
     def test_no_revision(self):
         self.assertEqual(
-            (1, 2, 0),
+            Version(1, 2),
             lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2"/>')
             )
@@ -444,9 +446,64 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
 
     def test_with_revision(self):
         self.assertEqual(
-            (1, 2, 3),
+            Version(1, 2, 3),
             lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2.3"/>')
+            )
+        )
+
+
+class getCibCrmFeatureSet(TestCase):
+    def test_success(self):
+        self.assertEqual(
+            Version(3, 0, 9),
+            lib.get_cib_crm_feature_set(
+                etree.XML('<cib crm_feature_set="3.0.9" />')
+            )
+        )
+
+    def test_success_no_revision(self):
+        self.assertEqual(
+            Version(3, 1),
+            lib.get_cib_crm_feature_set(
+                etree.XML('<cib crm_feature_set="3.1" />')
+            )
+        )
+
+    def test_missing_attribute(self):
+        assert_raise_library_error(
+            lambda: lib.get_cib_crm_feature_set(
+                etree.XML("<cib />")
+            ),
+            fixture.error(
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                reason=(
+                    "the attribute 'crm_feature_set' of the element 'cib' is "
+                    "missing"
+                )
+            )
+        )
+
+    def test_missing_attribute_none(self):
+        self.assertEqual(
+            None,
+            lib.get_cib_crm_feature_set(
+                etree.XML('<cib />'),
+                none_if_missing=True
+            )
+        )
+
+    def test_invalid_version(self):
+        assert_raise_library_error(
+            lambda: lib.get_cib_crm_feature_set(
+                etree.XML('<cib crm_feature_set="3" />')
+            ),
+            fixture.error(
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                reason=(
+                    "the attribute 'crm_feature_set' of the element 'cib' has "
+                    "an invalid value: '3'"
+                )
             )
         )
 

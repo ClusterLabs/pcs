@@ -163,9 +163,9 @@ def ensure_cib_version(runner, cib, version):
     Returns cib which was verified by pacemaker version 'version' or later.
     Raises LibraryError on any failure.
 
-    CommandRunner runner
-    etree cib cib tree
-    tuple version tuple of integers (<major>, <minor>, <revision>)
+    CommandRunner runner -- runner
+    etree cib -- cib tree
+    pcs.common.tools.Version version -- required cib version
     """
     current_version = get_pacemaker_version_by_which_cib_was_validated(cib)
     if current_version >= version:
