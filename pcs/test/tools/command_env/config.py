@@ -31,6 +31,17 @@ class Config(object):
 
         self.spy = None
 
+    def add_extension(self, name, Extension):
+        if hasattr(self, name):
+            raise AssertionError(
+                "Config (integration tests) has the extension '{0}' already."
+                .format(name)
+            )
+        setattr(self, name, self.__wrap_helper(
+            Extension(self.__calls, self.__wrap_helper, self)
+        ))
+
+
     def set_spy(self, auth_tokens, ports=None):
         self.spy = Spy(auth_tokens, ports)
         return self

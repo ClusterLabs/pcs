@@ -18,12 +18,17 @@ def get_env_tools(
     default_wait_timeout=DEFAULT_WAIT_TIMEOUT,
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
     exception_reports_in_processor_by_default=True,
+    local_extensions=None
 ):
     """
     Shortcut for preparing EnvAssistant and Config
 
     TestCase test_case -- corresponding test_case is used to registering cleanup
         method - to assert that everything is finished
+    dict local_extensions -- key is name of local extension, value is class that
+        will be used for local extension. So in config will be possible use
+        something like this:
+            config.my_local_extension.my_local_call_shortcut()
     """
 
     env_assistant = EnvAssistant(
@@ -37,5 +42,12 @@ def get_env_tools(
     runner.cib.cib_filename = base_cib_filename
     runner.pcmk.default_wait_timeout = default_wait_timeout
     runner.pcmk.default_wait_error_returncode = default_wait_error_returncode
+
+    if local_extensions:
+        for name, ExtensionClass in local_extensions.items():
+            env_assistant.config.add_extension(
+                name,
+                ExtensionClass,
+            )
 
     return env_assistant, env_assistant.config
