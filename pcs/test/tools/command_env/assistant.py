@@ -221,16 +221,19 @@ class EnvAssistant(object):
             )
         return self._env
 
-    def assert_reports(self, reports):
+    def assert_reports(self, expected_reports):
         self.__reports_asserted = True
         self.__assert_environment_created()
         self._env.report_processor.assert_reports(
-            reports + self.__extra_reports
+            expected_reports + self.__extra_reports
         )
 
     def assert_raise_library_error(
-        self, command, reports, expected_in_processor=None
+        self, command, reports=None, expected_in_processor=None
     ):
+        if reports is None:
+            reports = []
+
         if not isinstance(reports, list):
             raise self.__list_of_reports_expected(reports)
 

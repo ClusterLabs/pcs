@@ -23,7 +23,6 @@ class FsConfig(object):
             return_value=return_value,
         )
         self.__calls.place(name, call, before, instead)
-        return self
 
     def exists(
         self, path, return_value="", name="fs.exists", before=None, instead=None
@@ -34,4 +33,3 @@ class FsConfig(object):
             return_value=return_value,
         )
         self.__calls.place(name, call, before, instead)
-        return self

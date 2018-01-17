@@ -5,6 +5,7 @@ from __future__ import (
 )
 
 import os.path
+import site
 
 
 CALL_TYPE_FS = "CALL_TYPE_FS"
@@ -75,26 +76,32 @@ class Call(object):
         )
 
 def get_fs_mock(call_queue):
-    package_dir = os.path.realpath(
+    package_dir_list = site.getsitepackages()
+    package_dir_list.append(os.path.realpath(
         os.path.dirname(os.path.abspath(__file__))+"/../../.."
-    )
+    ))
     def get_fs_call(func_name, original_call):
         def call_fs(*args, **kwargs):
-            # Standard python unittest tries to open the test file (for caching)
-            # when the test raises AssertionError. Unittest do it before it
-            # calls cleanup so at this moment the function open is still mocked.
-            # Pcs should not open file inside its package in the command so
+            # Standard python unittest tries to open some python code (e.g. the
+            # test file for caching  when the test raises AssertionError).
+            # It is before it the cleanup is called so at this moment the
+            # function open is still mocked.
+            # Pcs should not open file inside python package in the command so
             # attempt to open file inside pcs package is almost certainly
             # outside of library command and we will provide the original
             # function.
-            if func_name == "open" and args[0].startswith(package_dir):
-                return original_call(*args, **kwargs)
+            if func_name == "open":
+                for python_package_dir in package_dir_list:
+                    if args[0].startswith(python_package_dir):
+                        return original_call(*args, **kwargs)
 
-
-            dummy_i, expected_call = call_queue.take(CALL_TYPE_FS)
             real_call = Call(
                 func_name,
                 call_kwargs=_get_all_args_as_kwargs(func_name, args, kwargs)
+            )
+            dummy_i, expected_call = call_queue.take(
+                CALL_TYPE_FS,
+                repr(real_call)
             )
 
             if expected_call != real_call:
