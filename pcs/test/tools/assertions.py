@@ -271,27 +271,34 @@ def assert_report_item_equal(real_report_item, report_item_info):
         )
 
 def _unexpected_report_given(
+    all_expected_report_info_list,
     expected_report_info_list, real_report_item, real_report_item_list
 ):
     return AssertionError(
         (
             "\n  Unexpected real report given: \n    {0}"
-            "\n  all real reports: \n    {2}"
-            "\n  expected reports are: \n    {1}"
+            "\n  remaining expected reports are: \n    {1}"
+            "\n  all expected reports are: \n    {2}"
+            "\n  all real reports: \n    {3}"
         )
         .format(
             _format_report_item(real_report_item),
-            "\n    ".join(map(_format_report_item, real_report_item_list)),
             "\n    ".join(map(repr, expected_report_info_list))
                 if expected_report_info_list
                 else "No other report is expected!"
             ,
+            "\n    ".join(map(repr, all_expected_report_info_list))
+                if all_expected_report_info_list
+                else "No report is expected!"
+            ,
+            "\n    ".join(map(_format_report_item, real_report_item_list)),
         )
     )
 
 def assert_report_item_list_equal(
     real_report_item_list, expected_report_info_list, hint=""
 ):
+    all_expected_report_info_list = expected_report_info_list[:]
     for real_report_item in real_report_item_list:
         found_report_info = __find_report_info(
             expected_report_info_list,
@@ -299,6 +306,7 @@ def assert_report_item_list_equal(
         )
         if found_report_info is None:
             raise _unexpected_report_given(
+                all_expected_report_info_list,
                 expected_report_info_list,
                 real_report_item,
                 real_report_item_list,
