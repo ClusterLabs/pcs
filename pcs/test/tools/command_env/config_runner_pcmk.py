@@ -20,6 +20,31 @@ AGENT_FILENAME_MAP = {
     "ocf:pacemaker:remote": "resource_agent_ocf_pacemaker_remote.xml",
 }
 
+def fixture_state_resources_xml(
+    resource_id="A", resource_agent="ocf::heartbeat:Dummy", role="Started",
+    failed="false", node_name="node1"
+):
+    return(
+        """
+        <resources>
+            <resource
+                id="{resource_id}"
+                resource_agent="{resource_agent}"
+                role="{role}"
+                failed="{failed}"
+            >
+                <node name="{node_name}" id="1" cached="false"/>
+            </resource>
+        </resources>
+        """.format(
+            resource_id=resource_id,
+            resource_agent=resource_agent,
+            role=role,
+            failed=failed,
+            node_name=node_name,
+        )
+    )
+
 class PcmkShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
@@ -28,7 +53,7 @@ class PcmkShortcuts(object):
 
     def load_state(
         self, name="runner.pcmk.load_state", filename="crm_mon.minimal.xml",
-        resources=None
+        resources=None, raw_resources=None
     ):
         """
         Create call for loading pacemaker state.
@@ -37,7 +62,15 @@ class PcmkShortcuts(object):
         string filename -- points to file with the status in the content
         string resources -- xml - resources section, will be put to state
         """
+        if resources and raw_resources is not None:
+            raise AssertionError(
+                "Cannot use 'resources' and 'raw_resources' together"
+            )
+
         state = etree.fromstring(open(rc(filename)).read())
+        if raw_resources is not None:
+            resources = fixture_state_resources_xml(**raw_resources)
+
         if resources:
             state.append(complete_state_resources(etree.fromstring(resources)))
 

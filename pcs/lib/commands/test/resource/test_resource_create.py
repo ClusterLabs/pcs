@@ -363,30 +363,6 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     </clone>
 </resources>"""
 
-def fixture_state_resources_xml(role="Started", failed="false"):
-    return(
-        """
-        <resources>
-            <resource
-                id="A"
-                resource_agent="ocf::heartbeat:Dummy"
-                role="{role}"
-                active="true"
-                orphaned="false"
-                managed="true"
-                failed="{failed}"
-                failure_ignored="false"
-                nodes_running_on="1"
-            >
-                <node name="node1" id="1" cached="false"/>
-            </resource>
-        </resources>
-        """.format(
-            role=role,
-            failed=failed,
-        )
-    )
-
 class Create(TestCase):
     fixture_sanitized_operation = """
         <resources>
@@ -536,9 +512,7 @@ class CreateWait(TestCase):
 
     def test_wait_ok_run_fail(self):
         (self.config
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
 
         self.env_assist.assert_raise_library_error(
@@ -552,9 +526,7 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_state_resources_xml())
-        )
+        self.config.runner.pcmk.load_state(raw_resources=dict())
         create(self.env_assist.get_env(), wait=TIMEOUT)
         self.env_assist.assert_reports([
             fixture.info(
@@ -566,7 +538,7 @@ class CreateWait(TestCase):
 
     def test_wait_ok_disable_fail(self):
         (self.config
-            .runner.pcmk.load_state(resources=fixture_state_resources_xml())
+            .runner.pcmk.load_state(raw_resources=dict())
             .env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -591,9 +563,7 @@ class CreateWait(TestCase):
 
     def test_wait_ok_disable_ok(self):
         (self.config
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
             .env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -611,9 +581,7 @@ class CreateWait(TestCase):
 
     def test_wait_ok_disable_ok_by_target_role(self):
         (self.config
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
             .env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -673,9 +641,7 @@ class CreateAsMaster(TestCase):
                 resources=fixture_cib_resources_xml_master_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_master(self.env_assist.get_env()),
@@ -693,9 +659,7 @@ class CreateAsMaster(TestCase):
                 resources=fixture_cib_resources_xml_master_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
         create_master(self.env_assist.get_env())
         self.env_assist.assert_reports([
@@ -712,9 +676,7 @@ class CreateAsMaster(TestCase):
                 resources=fixture_cib_resources_xml_master_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
 
         self.env_assist.assert_raise_library_error(
@@ -734,9 +696,7 @@ class CreateAsMaster(TestCase):
                 resources=fixture_cib_resources_xml_master_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_master(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports([
@@ -788,9 +748,7 @@ class CreateAsMaster(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_master(
             self.env_assist.get_env(),
@@ -809,9 +767,7 @@ class CreateAsMaster(TestCase):
                 =fixture_cib_resources_xml_master_simplest_disabled_meta_after,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_master(
             self.env_assist.get_env(),
@@ -866,9 +822,7 @@ class CreateAsMaster(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_master(
             self.env_assist.get_env(),
@@ -924,9 +878,7 @@ class CreateAsMaster(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_master(
             self.env_assist.get_env(),
@@ -1012,9 +964,7 @@ class CreateInGroup(TestCase):
                 resources=fixture_cib_resources_xml_group_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env()),
@@ -1032,9 +982,7 @@ class CreateInGroup(TestCase):
                 resources=fixture_cib_resources_xml_group_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
         create_group(self.env_assist.get_env())
         self.env_assist.assert_reports([
@@ -1051,9 +999,7 @@ class CreateInGroup(TestCase):
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1073,9 +1019,7 @@ class CreateInGroup(TestCase):
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_group(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports([
@@ -1091,9 +1035,7 @@ class CreateInGroup(TestCase):
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_group(
             self.env_assist.get_env(),
@@ -1144,9 +1086,7 @@ class CreateAsClone(TestCase):
                 resources=fixture_cib_resources_xml_clone_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env()),
@@ -1164,9 +1104,7 @@ class CreateAsClone(TestCase):
                 resources=fixture_cib_resources_xml_clone_simplest,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
         create_clone(self.env_assist.get_env())
         self.env_assist.assert_reports([
@@ -1183,9 +1121,7 @@ class CreateAsClone(TestCase):
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            )
+            .runner.pcmk.load_state(raw_resources=dict())
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1205,9 +1141,7 @@ class CreateAsClone(TestCase):
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports([
@@ -1260,9 +1194,7 @@ class CreateAsClone(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
             self.env_assist.get_env(),
@@ -1317,9 +1249,7 @@ class CreateAsClone(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
             self.env_assist.get_env(),
@@ -1374,9 +1304,7 @@ class CreateAsClone(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
             self.env_assist.get_env(),
@@ -1432,9 +1360,7 @@ class CreateAsClone(TestCase):
                 """,
                 wait=TIMEOUT
             )
-            .runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
             self.env_assist.get_env(),
