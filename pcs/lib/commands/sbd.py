@@ -218,7 +218,7 @@ def enable_sbd(
         +
         _validate_watchdog_dict(full_watchdog_dict)
         +
-        _validate_device_dict(full_device_dict) if using_devices else []
+        (_validate_device_dict(full_device_dict) if using_devices else [])
         +
         _validate_sbd_options(sbd_options, allow_unknown_opts)
     )
