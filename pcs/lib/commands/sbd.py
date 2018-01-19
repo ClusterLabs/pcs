@@ -213,7 +213,8 @@ def enable_sbd(
 
     lib_env.report_processor.process_list(
         _check_node_names_in_cluster(
-            node_list, watchdog_dict.keys() + node_device_dict.keys()
+            node_list,
+            list(watchdog_dict.keys()) + list(node_device_dict.keys())
         )
         +
         _validate_watchdog_dict(full_watchdog_dict)
