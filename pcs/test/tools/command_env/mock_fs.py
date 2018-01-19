@@ -48,7 +48,7 @@ class Call(object):
     type = CALL_TYPE_FS
 
     def __init__(
-        self, func_name, return_value=None, call_kwargs=None
+        self, func_name, return_value=None, side_effect=None, call_kwargs=None
     ):
         """
         callable check_stdin raises AssertionError when given stdin doesn't
@@ -56,11 +56,24 @@ class Call(object):
         """
         call_kwargs = call_kwargs if call_kwargs else {}
 
+        #TODO side effect with return_value - mutually exclusive
+
         self.type = CALL_TYPE_FS
         self.func_name = func_name
         self.call_kwargs = call_kwargs
         self.return_value = return_value
+        self.side_effect = side_effect
 
+    def finish(self):
+        if self.side_effect:
+            if isinstance(self.side_effect, Exception):
+                #pylint: disable=raising-bad-type
+                raise self.side_effect
+            raise AssertionError(
+                "side_effect other than instance of exception not supported yet"
+            )
+
+        return self.return_value
 
     def __repr__(self):
         return str("<Fs '{0}' kwargs={1}>").format(
@@ -112,7 +125,7 @@ def get_fs_mock(call_queue):
                     )
                 )
 
-            return expected_call.return_value
+            return expected_call.finish()
         return call_fs
     return get_fs_call
 

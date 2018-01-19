@@ -25,9 +25,9 @@ def get_env_tools(
 
     TestCase test_case -- corresponding test_case is used to registering cleanup
         method - to assert that everything is finished
-    dict local_extensions -- key is name of local extension, value is class that
-        will be used for local extension. So in config will be possible use
-        something like this:
+    dict local_extensions -- key is name of a local extension, value is a class
+        that will be used for local extension. So it will be possible to use
+        something like this in a config :
             config.my_local_extension.my_local_call_shortcut()
     """
 

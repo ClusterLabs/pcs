@@ -31,6 +31,7 @@ from pcs.test.tools.command_env.mock_push_corosync_conf import(
     get_push_corosync_conf,
     is_push_corosync_conf_call_in,
 )
+from pcs.test.tools import fixture
 from pcs.test.tools.command_env.mock_runner import Runner
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock
@@ -225,7 +226,13 @@ class EnvAssistant(object):
         self.__reports_asserted = True
         self.__assert_environment_created()
         self._env.report_processor.assert_reports(
-            expected_reports + self.__extra_reports
+            (
+                expected_reports.reports
+                    if isinstance(expected_reports, fixture.ReportStore)
+                else expected_reports
+            )
+            +
+            self.__extra_reports
         )
 
     def assert_raise_library_error(
