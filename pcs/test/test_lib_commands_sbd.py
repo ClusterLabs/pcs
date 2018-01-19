@@ -30,10 +30,6 @@ from pcs.lib.node import (
     NodeAddresses,
     NodeAddressesList,
 )
-from pcs.lib.external import (
-    NodeCommunicator,
-    CommandRunner,
-)
 import pcs.lib.commands.sbd as cmd_sbd
 
 
@@ -47,23 +43,6 @@ def _assert_equal_list_of_dictionaries_without_order(expected, actual):
     for item in expected:
         if item not in actual:
             raise AssertionError("Expected but not given: {0}".format(item))
-
-
-class CommandSbdTest(TestCase):
-    def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
-        self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_env.logger = self.mock_log
-        self.mock_com = mock.MagicMock(spec_set=NodeCommunicator)
-        self.mock_env.node_communicator.return_value = self.mock_com
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_env.cmd_runner.return_value = self.mock_run
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_env.report_processor = self.mock_rep
-
-        self.node_list = NodeAddressesList(
-            [NodeAddresses("node" + str(i)) for i in range(3)]
-        )
 
 
 class ValidateSbdOptionsTest(TestCase):

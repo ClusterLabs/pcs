@@ -14,6 +14,13 @@ from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.communication import nodes
 
 
+class GetOnlineTargets(TestCase):
+    """
+    tested in:
+        pcs.lib.commands.test.sbd.test_enable_sbd
+    """
+
+
 class AvailabilityCheckerNode(TestCase):
     def setUp(self):
         self.node = "node1"

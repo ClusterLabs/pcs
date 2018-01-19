@@ -41,6 +41,14 @@ from pcs.lib.validate import (
 )
 
 
+UNSUPPORTED_SBD_OPTION_LIST = [
+    "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
+]
+ALLOWED_SBD_OPTION_LIST = [
+    "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
+]
+
+
 def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     """
     Validate user SBD configuration. Options 'SBD_WATCHDOG_DEV' and 'SBD_OPTS'
@@ -51,22 +59,16 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     """
 
     report_item_list = []
-    unsupported_sbd_option_list = [
-        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
-    ]
-    allowed_sbd_options = [
-        "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
-    ]
     for sbd_opt in sbd_config:
-        if sbd_opt in unsupported_sbd_option_list:
+        if sbd_opt in UNSUPPORTED_SBD_OPTION_LIST:
             report_item_list.append(reports.invalid_options(
-                [sbd_opt], allowed_sbd_options, None
+                [sbd_opt], ALLOWED_SBD_OPTION_LIST, None
             ))
 
-        elif sbd_opt not in allowed_sbd_options:
+        elif sbd_opt not in ALLOWED_SBD_OPTION_LIST:
             report_item_list.append(reports.invalid_options(
                 [sbd_opt],
-                allowed_sbd_options,
+                ALLOWED_SBD_OPTION_LIST,
                 None,
                 severity=(
                     Severities.WARNING if allow_unknown_opts

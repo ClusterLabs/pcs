@@ -8,10 +8,13 @@ import json
 import pprint
 
 from pcs.test.tools.command_env.config_http_corosync import CorosyncShortcuts
+from pcs.test.tools.command_env.config_http_host import HostShortcuts
+from pcs.test.tools.command_env.config_http_pcmk import PcmkShortcuts
+from pcs.test.tools.command_env.config_http_sbd import SbdShortcuts
 from pcs.test.tools.command_env.mock_node_communicator import(
-    AddRequestCall,
-    create_communication,
-    StartLoopCall,
+    place_communication,
+    place_requests,
+    place_responses,
 )
 from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
@@ -37,41 +40,26 @@ class HttpConfig(object):
         self.__calls = call_collection
 
         self.corosync = wrap_helper(CorosyncShortcuts(self.__calls))
+        self.host = wrap_helper(HostShortcuts(self.__calls))
+        self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
+        self.sbd = wrap_helper(SbdShortcuts(self.__calls))
 
     def add_communication(self, name, communication_list, **kwargs):
         """
-        Create a generic call for network communication
+        Create a generic call for network communication.
         string name -- key of the call
         list of dict communication_list -- see
             pcs.test.tools.command_env.mock_node_communicator.create_communication
         **kwargs -- see
             pcs.test.tools.command_env.mock_node_communicator.create_communication
         """
-        request_list, response_list = create_communication(
-            communication_list, **kwargs
-        )
-        #TODO #when multiple add_request needed there should be:
-        # * unique name for each add_request
-        # * find start_loop by name and replace it with the new one that will
-        #   have merged responses
-        self.add_requests(request_list, name="{0}_requests".format(name))
-        self.start_loop(response_list, name="{0}_responses".format(name))
+        place_communication(self.__calls, name, communication_list, **kwargs)
 
-    def add_requests(self, request_list, name, before=None, instead=None):
-        self.__calls.place(
-            name,
-            AddRequestCall(request_list),
-            before=before,
-            instead=instead
-        )
+    def add_requests(self, request_list, name):
+        place_requests(self.__calls, name, request_list)
 
-    def start_loop(self, response_list, name, before=None, instead=None):
-        self.__calls.place(
-            name,
-            StartLoopCall(response_list),
-            before=before,
-            instead=instead
-        )
+    def start_loop(self, response_list, name):
+        place_responses(self.__calls, name, response_list)
 
     def put_file(
         self, communication_list, name="http.common.put_file",
