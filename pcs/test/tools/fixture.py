@@ -49,17 +49,85 @@ def _default_element_attributes(element, default_attributes):
         if name not in element.attrib:
             element.attrib[name] = value
 
+def create_report(severity, code, info, force_code=None):
+    return severity, code, info, force_code
+
+def report_variation(report, **info):
+    updated_info = report[2].copy()
+    updated_info.update(info)
+    return create_report(report[0], report[1], updated_info, report[3])
+
 def debug(code, **kwargs):
-    return severities.DEBUG, code, kwargs, None
+    return create_report(severities.DEBUG, code, kwargs)
 
 def warn(code, **kwargs):
-    return severities.WARNING, code, kwargs, None
+    return create_report(severities.WARNING, code, kwargs)
 
 def error(code, force_code=None, **kwargs):
-    return severities.ERROR, code, kwargs, force_code
+    return create_report(severities.ERROR, code, kwargs, force_code)
 
 def info(code, **kwargs):
-    return severities.INFO, code, kwargs, None
+    return create_report(severities.INFO, code, kwargs)
+
+class ReportStore(object):
+    def __init__(self, names=None, reports=None):
+        if not names:
+            names = []
+
+        duplicate_names = set([n for n in names if names.count(n) > 1])
+        if duplicate_names:
+            raise AssertionError(
+                "Duplicate names are not allowed in ReportStore. "
+                " Found duplications:\n  '{0}'".format(
+                    "'\n  '".join(duplicate_names)
+                )
+            )
+
+        self.__names = names or []
+        self.__reports = reports or []
+
+    @property
+    def reports(self):
+        return list(self.__reports)
+
+    def adapt(self, name, **info):
+        index = self.__names.index(name)
+        return ReportStore(self.__names, [
+            report if i != index else report_variation(report, **info)
+            for i, report in enumerate(self.__reports)
+        ])
+
+    def info(self, name, code, **kwargs):
+        return self.__append(name, info(code, **kwargs))
+
+    def warn(self, name, code, **kwargs):
+        return self.__append(name, warn(code, **kwargs))
+
+    def error(self, name, code, force_code=None, **kwargs):
+        return self.__append(name, error(code, force_code=force_code, **kwargs))
+
+    def copy(self, name, as_name, **info):
+        return self.__append(as_name, report_variation(self[name], **info))
+
+    def remove(self, *name_list):
+        names, reports = zip(*[
+            (name, report) for name, report in zip(self.__names, self.__reports)
+            if name not in name_list
+        ])
+        return ReportStore(list(names), list(reports))
+
+    def __getitem__(self, spec):
+        if not isinstance(spec, slice):
+            return self.__reports[self.__names.index(spec)]
+
+        assert spec.step is None, "Step is not supported in slicing"
+        start = None if spec.start is None else self.__names.index(spec.start)
+        stop = None if spec.stop is None else self.__names.index(spec.stop)
+
+        return ReportStore(self.__names[start:stop], self.__reports[start:stop])
+
+    def __append(self, name, report):
+        return ReportStore(self.__names + [name], self.__reports + [report])
 
 def report_not_found(res_id, context_type=""):
     return (
