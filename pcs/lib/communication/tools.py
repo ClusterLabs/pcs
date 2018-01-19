@@ -6,6 +6,7 @@ from __future__ import (
 
 from pcs.common import report_codes
 from pcs.common.node_communicator import Request
+from pcs.lib import reports
 from pcs.lib.node_communication import response_to_report_item
 from pcs.lib.errors import (
     LibraryError,
@@ -173,6 +174,7 @@ class OneByOneStrategyMixin(StrategyBase):
     """
     #pylint: disable=abstract-method
     __iter = None
+    __successful = False
 
     def get_initial_request_list(self):
         """
@@ -191,6 +193,14 @@ class OneByOneStrategyMixin(StrategyBase):
             return [next(self.__iter)]
         except StopIteration:
             return []
+
+    def _on_success(self):
+        self.__successful = True
+
+    def on_complete(self):
+        if not self.__successful:
+            self._report(reports.unable_to_perform_operation_on_any_node())
+        return None
 
 
 class AllAtOnceStrategyMixin(StrategyBase):

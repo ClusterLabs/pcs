@@ -2856,3 +2856,15 @@ def tmp_file_write(file_path, content):
             "content": content,
         }
     )
+
+
+def unable_to_perform_operation_on_any_node():
+    """
+    This report is raised whenever
+    pcs.lib.communication.tools.OneByOneStrategyMixin strategy mixin is used
+    for network communication and operation failed on all available hosts and
+    because of this it is not possible to continue.
+    """
+    return ReportItem.error(
+        report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
+    )
