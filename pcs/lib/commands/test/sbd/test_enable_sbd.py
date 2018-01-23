@@ -468,8 +468,8 @@ class EvenNumOfNodes(TestCase):
             _sbd_enable_successful_report_list_fixture(self.node_list)
         )
 
-#pylint: disable=too-many-instance-attributes
 class OfflineNodes(TestCase):
+    #pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync.conf"
@@ -1063,6 +1063,7 @@ class Validations(TestCase):
 
 
 class FailureHandling(TestCase):
+    #pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync.conf"
