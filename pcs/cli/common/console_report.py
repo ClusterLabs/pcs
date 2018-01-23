@@ -1386,4 +1386,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "--Debug Content Start--\n{content}\n--Debug Content End--\n"
         ).format(**info)
     ,
+    codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
+        "Unable to perform operation on any available node/host, therefore it "
+        "is not possible to continue."
 }

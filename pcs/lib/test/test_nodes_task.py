@@ -26,17 +26,6 @@ lib.__name__ = "nodes_task"
 
 patch_nodes_task = create_patcher(lib)
 
-@skip("TODO: rewrite for pcs.lib.communication.nodes.GetOnlineTargets")
-class NodeCheckAuthTest(TestCase):
-    def test_success(self):
-        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
-        node = NodeAddresses("node1")
-        lib.node_check_auth(mock_communicator, node)
-        mock_communicator.call_node.assert_called_once_with(
-            node, "remote/check_auth", "check_auth_only=1"
-        )
-
-
 def fixture_invalid_response_format(node_label):
     return (
         severity.ERROR,

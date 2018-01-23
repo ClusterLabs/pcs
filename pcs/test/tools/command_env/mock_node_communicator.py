@@ -215,18 +215,33 @@ def place_multinode_call(
     communication_list = communication_list or [
         {"label": label} for label in node_labels
     ]
-    request_list, response_list = create_communication(
-        communication_list,
-        **kwargs
-    )
-    calls.place(
-        "{0}_requests".format(name),
-        AddRequestCall(request_list),
-    )
-    calls.place(
-        "{0}_responses".format(name),
-        StartLoopCall(response_list),
-    )
+    place_communication(calls, name, communication_list, **kwargs)
+
+
+def place_requests(calls, name, request_list):
+    calls.place(name, AddRequestCall(request_list))
+
+
+def place_responses(calls, name, response_list):
+    calls.place(name, StartLoopCall(response_list))
+
+
+def place_communication(calls, name, communication_list, **kwargs):
+    if isinstance(communication_list[0], dict):
+        communication_list = [communication_list]
+
+    request_list = []
+    response_list = []
+    for com_list in communication_list:
+        req_list, res_list = create_communication(com_list, **kwargs)
+        request_list.append(req_list)
+        response_list.extend(res_list)
+
+    place_requests(calls, "{0}_requests".format(name), request_list[0])
+    place_responses(calls, "{0}_responses".format(name), response_list)
+    for i, req_list in enumerate(request_list[1:], start=1):
+        place_requests(calls, "{0}_requests_{1}".format(name, i), req_list)
+
 
 class AddRequestCall(object):
     type = CALL_TYPE_HTTP_ADD_REQUESTS

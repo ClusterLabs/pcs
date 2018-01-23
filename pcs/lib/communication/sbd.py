@@ -75,8 +75,11 @@ class StonithWatchdogTimeoutAction(
         return RequestData(self._get_request_action())
 
     def _process_response(self, response):
-        report = response_to_report_item(response)
+        report = response_to_report_item(
+            response, severity=ReportItemSeverity.WARNING
+        )
         if report is None:
+            self._on_success()
             return
         self._report(report)
         return self._get_next_list()
