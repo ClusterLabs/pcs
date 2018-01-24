@@ -83,8 +83,10 @@ class ReportStore(object):
                 )
             )
 
-        self.__names = names or []
+        self.__names = names
         self.__reports = reports or []
+        if len(self.__names) != len(self.__reports):
+            raise AssertionError("Same count reports as names required")
 
     @property
     def reports(self):
@@ -97,6 +99,16 @@ class ReportStore(object):
             for i, report in enumerate(self.__reports)
         ])
 
+    def adapt_multi(self, name_list, **info):
+        names, reports = zip(*[
+            (
+                name,
+                report_variation(self[name], **info) if name in name_list
+                    else self[name]
+            ) for name in self.__names
+        ])
+        return ReportStore(list(names), list(reports))
+
     def info(self, name, code, **kwargs):
         return self.__append(name, info(code, **kwargs))
 
@@ -106,15 +118,28 @@ class ReportStore(object):
     def error(self, name, code, force_code=None, **kwargs):
         return self.__append(name, error(code, force_code=force_code, **kwargs))
 
+    def as_warn(self, name, as_name):
+        report = self[name]
+        return self.__append(as_name, warn(report[1], **report[2]))
+
+
     def copy(self, name, as_name, **info):
         return self.__append(as_name, report_variation(self[name], **info))
 
     def remove(self, *name_list):
         names, reports = zip(*[
-            (name, report) for name, report in zip(self.__names, self.__reports)
+            (name, self[name]) for name in self.__names
             if name not in name_list
         ])
         return ReportStore(list(names), list(reports))
+
+    def select(self, *name_list):
+        names, reports = zip(*[(name, self[name]) for name in name_list])
+        return ReportStore(list(names), list(reports))
+
+    def only(self, name, **info):
+        return ReportStore([name], [report_variation(self[name], **info)])
+
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):
@@ -125,6 +150,12 @@ class ReportStore(object):
         stop = None if spec.stop is None else self.__names.index(spec.stop)
 
         return ReportStore(self.__names[start:stop], self.__reports[start:stop])
+
+    def __add__(self, other):
+        return ReportStore(
+            self.__names + other.__names,
+            self.__reports + other.__reports,
+        )
 
     def __append(self, name, report):
         return ReportStore(self.__names + [name], self.__reports + [report])
