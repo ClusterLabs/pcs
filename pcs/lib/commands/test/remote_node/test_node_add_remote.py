@@ -273,6 +273,21 @@ class AddRemote(TestCase):
             ]
         )
 
+    def test_fails_when_remote_node_returns_invalid_output(self):
+        (self.config
+            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+            .local.check_node_availability(REMOTE_HOST, output="INVALID_OUTPUT")
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: node_add_remote(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=REMOTE_HOST,
+                )
+            ]
+        )
+
     def test_open_failed(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
