@@ -49,25 +49,22 @@ def _default_element_attributes(element, default_attributes):
         if name not in element.attrib:
             element.attrib[name] = value
 
-def create_report(severity, code, info, force_code=None):
-    return severity, code, info, force_code
-
 def report_variation(report, **info):
     updated_info = report[2].copy()
     updated_info.update(info)
-    return create_report(report[0], report[1], updated_info, report[3])
+    return report[0], report[1], updated_info, report[3]
 
 def debug(code, **kwargs):
-    return create_report(severities.DEBUG, code, kwargs)
+    return severities.DEBUG, code, kwargs, None
 
 def warn(code, **kwargs):
-    return create_report(severities.WARNING, code, kwargs)
+    return severities.WARNING, code, kwargs, None
 
 def error(code, force_code=None, **kwargs):
-    return create_report(severities.ERROR, code, kwargs, force_code)
+    return severities.ERROR, code, kwargs, force_code
 
 def info(code, **kwargs):
-    return create_report(severities.INFO, code, kwargs)
+    return severities.INFO, code, kwargs, None
 
 class ReportStore(object):
     def __init__(self, names=None, reports=None):
@@ -122,7 +119,6 @@ class ReportStore(object):
         report = self[name]
         return self.__append(as_name, warn(report[1], **report[2]))
 
-
     def copy(self, name, as_name, **info):
         return self.__append(as_name, report_variation(self[name], **info))
 
@@ -139,7 +135,6 @@ class ReportStore(object):
 
     def only(self, name, **info):
         return ReportStore([name], [report_variation(self[name], **info)])
-
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):

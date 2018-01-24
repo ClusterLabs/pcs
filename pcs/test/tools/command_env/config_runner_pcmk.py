@@ -244,7 +244,10 @@ class PcmkShortcuts(object):
             before=before
         )
 
-    def verify(self, name="verify", cib_tempfile=None, stderr=None, verbose=False):
+    def verify(
+        self, name="runner.pcmk.verify", cib_tempfile=None, stderr=None,
+        verbose=False
+    ):
         """
         Create call that checks that wait for idle is supported
 

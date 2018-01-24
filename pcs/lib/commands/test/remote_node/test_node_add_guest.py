@@ -270,7 +270,7 @@ class AddGuest(TestCase):
 
 class WithWait(TestCase):
     def setUp(self):
-        self. wait = 1
+        self.wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
             .runner.pcmk.can_wait()
@@ -381,7 +381,7 @@ class RemoteService(TestCase):
             )
         )
 
-class AuthkeDistribution(TestCase):
+class AuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config

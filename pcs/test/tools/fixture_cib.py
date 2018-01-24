@@ -91,9 +91,9 @@ def replace_all(replacements):
 
 def append_all(append_map):
     """
-    Return a function that append more elements after specified (xpath) element
-    dixt apped_map -- key is xpath pointing to targed element (for appending),
-        value is appended content
+    Return a function that appends more elements after specified (xpath) element
+    dict append_map -- a key is an xpath pointing to a target element (for
+        appending), value is appended content
     """
     def append(cib_tree):
         for xpath, new_content in append_map.items():
