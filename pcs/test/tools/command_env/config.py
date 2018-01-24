@@ -4,6 +4,8 @@ from __future__ import (
     print_function,
 )
 
+import inspect
+
 from pcs.test.tools.command_env.calls import CallListBuilder
 from pcs.test.tools.command_env.config_env import EnvConfig
 from pcs.test.tools.command_env.config_corosync_conf import CorosyncConf
@@ -76,7 +78,7 @@ class Config(object):
 
         object helper -- helper for creatig call configuration
         """
-        for name, attr in helper.__class__.__dict__.items():
+        for name, attr in inspect.getmembers(helper.__class__):
             if not name.startswith("_") and hasattr(attr, "__call__"):
                 self.__wrap_method(helper, name, attr)
         return helper

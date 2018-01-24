@@ -9,6 +9,7 @@ import doctest
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
 import re
+from pcs.lib.errors import ReportItemSeverity
 
 from pcs.lib.errors import LibraryError
 
@@ -245,15 +246,35 @@ def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
             )
         )
 
-def _format_report_item(report_item):
-    return repr(
-        (
-            report_item.severity,
-            report_item.code,
-            report_item.info,
-            report_item.forceable
-        )
+SEVERITY_SHORTCUTS = {
+    ReportItemSeverity.INFO: "I",
+    ReportItemSeverity.WARNING: "W",
+    ReportItemSeverity.ERROR: "E",
+    ReportItemSeverity.DEBUG: "D",
+}
+
+def _format_report_item_info(info):
+    return ", ".join([
+        "{0}:{1}".format(key, repr(value)) for key, value in info.items()
+    ])
+
+def _expected_report_item_format(report_item_expectation):
+    return "{0} {1} {{{2}}} ! {3}".format(
+        SEVERITY_SHORTCUTS.get(
+            report_item_expectation[0], report_item_expectation[0]
+        ),
+        report_item_expectation[1],
+        _format_report_item_info(report_item_expectation[2]),
+        report_item_expectation[3]
     )
+
+def _format_report_item(report_item):
+    return _expected_report_item_format((
+        report_item.severity,
+        report_item.code,
+        report_item.info,
+        report_item.forceable
+    ))
 
 def assert_report_item_equal(real_report_item, report_item_info):
     if not __report_item_equal(real_report_item, report_item_info):
@@ -276,21 +297,30 @@ def _unexpected_report_given(
 ):
     return AssertionError(
         (
-            "\n  Unexpected real report given: \n    {0}"
-            "\n  remaining expected reports are: \n    {1}"
-            "\n  all expected reports are: \n    {2}"
-            "\n  all real reports: \n    {3}"
+            "\n  Unexpected real report given:"
+            "\n  =============================\n  {0}\n"
+            "\n  remaining expected reports ({1}) are:"
+            "\n  ------------------------------------\n    {2}\n"
+            "\n  all expected reports ({3}) are:"
+            "\n  ------------------------------\n    {4}\n"
+            "\n  all real reports ({5}):"
+            "\n  ---------------------\n    {6}"
         )
         .format(
             _format_report_item(real_report_item),
-            "\n    ".join(map(repr, expected_report_info_list))
-                if expected_report_info_list
+            len(expected_report_info_list),
+            "\n    ".join(map(
+                _expected_report_item_format, expected_report_info_list
+                )) if expected_report_info_list
                 else "No other report is expected!"
             ,
-            "\n    ".join(map(repr, all_expected_report_info_list))
-                if all_expected_report_info_list
+            len(all_expected_report_info_list),
+            "\n    ".join(map(
+                    _expected_report_item_format, all_expected_report_info_list
+                )) if all_expected_report_info_list
                 else "No report is expected!"
             ,
+            len(real_report_item_list),
             "\n    ".join(map(_format_report_item, real_report_item_list)),
         )
     )

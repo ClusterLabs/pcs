@@ -12,8 +12,8 @@ class FsConfig(object):
         self.__calls = call_collection
 
     def open(
-        self, path, return_value, name="fs.open", mode="r",
-        before=None, instead=None
+        self, path, return_value=None, side_effect=None, name="fs.open",
+        mode="r", before=None, instead=None
     ):
         call = FsCall(
             "open",
@@ -21,6 +21,7 @@ class FsConfig(object):
             # TODO use mock_open here. Allow to use simply "read_data",
             # "side_effect" etc. It depends on future use cases...
             return_value=return_value,
+            side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)
 

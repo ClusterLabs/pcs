@@ -89,6 +89,18 @@ def replace_all(replacements):
             _replace(_find_in(cib_tree, xpath), _xml_to_element(new_content))
     return replace
 
+def append_all(append_map):
+    """
+    Return a function that appends more elements after specified (xpath) element
+    dict append_map -- a key is an xpath pointing to a target element (for
+        appending), value is appended content
+    """
+    def append(cib_tree):
+        for xpath, new_content in append_map.items():
+            _find_in(cib_tree, xpath).append(_xml_to_element(new_content))
+    return append
+
+
 #Possible modifier shortcuts are defined here.
 #Keep in mind that every key will be named parameter in config function
 #(see modifier_shortcuts param in some of pcs.test.tools.command_env.config_*
@@ -106,6 +118,7 @@ def replace_all(replacements):
 MODIFIER_GENERATORS = {
     "remove": remove,
     "replace": replace_all,
+    "append": append_all,
     "resources": lambda xml: replace_all({"./configuration/resources": xml}),
     "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
     #common modifier `put_or_replace` makes not sense - see explanation inside

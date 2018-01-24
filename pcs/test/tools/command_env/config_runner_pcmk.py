@@ -244,7 +244,10 @@ class PcmkShortcuts(object):
             before=before
         )
 
-    def verify(self, name="verify", cib_tempfile=None, stderr=None, verbose=False):
+    def verify(
+        self, name="runner.pcmk.verify", cib_tempfile=None, stderr=None,
+        verbose=False
+    ):
         """
         Create call that checks that wait for idle is supported
 
@@ -262,4 +265,10 @@ class PcmkShortcuts(object):
                 stderr=("" if stderr is None else stderr),
                 returncode=(0 if stderr is None else 55),
             ),
+        )
+
+    def remove_node(self, node_name, name="runner.pcmk.remove_node"):
+        self.__calls.place(
+            name,
+            RunnerCall("crm_node --force --remove {0}".format(node_name)),
         )
