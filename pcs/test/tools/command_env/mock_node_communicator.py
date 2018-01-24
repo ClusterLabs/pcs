@@ -33,7 +33,7 @@ def log_request(request):
         ]
 
     if request.target.address_list != [request.target.label]:
-        label_data.append(("addres_list", request.target.address_list))
+        label_data.append(("address_list", request.target.address_list))
 
     if request.target.port != "2224":
         label_data.append(("port", request.target.port))
@@ -50,7 +50,7 @@ def log_response(response, indent=0):
     ]
 
     if response.request.target.address_list != [response.request.target.label]:
-        label_data.append(("addres_list", response.request.target.address_list))
+        label_data.append(("address_list", response.request.target.address_list))
 
     label_data.append(("was_connected", response.was_connected))
 

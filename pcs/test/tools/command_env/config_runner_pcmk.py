@@ -263,3 +263,9 @@ class PcmkShortcuts(object):
                 returncode=(0 if stderr is None else 55),
             ),
         )
+
+    def remove_node(self, node_name, name="runner.pcmk.remove_node"):
+        self.__calls.place(
+            name,
+            RunnerCall("crm_node --force --remove {0}".format(node_name)),
+        )

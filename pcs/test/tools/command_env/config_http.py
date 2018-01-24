@@ -102,6 +102,45 @@ class HttpConfig(object):
             **kwargs
         )
 
+    def remove_file(
+        self, communication_list, name="http.common.remove_file",
+        results=None, files=None, **kwargs
+    ):
+        """
+        Example:
+        config.http.remove_file(
+            communication_list=[dict(label="node")],
+            files={
+                "pacemaker_remote authkey": {
+                    "type": "pcmk_remote_authkey",
+                }
+            },
+            results={
+                "pacemaker_remote authkey": {
+                    "code": "deleted",
+                    "message": "",
+                }
+            }
+        )
+        """
+
+        _mutual_exclusive(["output", "results"], results=results, **kwargs)
+        _mutual_exclusive(["files", "param_list"], files=files, **kwargs)
+
+        if results:
+            kwargs["output"]=json.dumps({"files": results})
+
+        if files:
+            kwargs["param_list"] = [("data_json", json.dumps(files))]
+
+
+        self.place_multinode_call(
+            name,
+            communication_list=communication_list,
+            action="remote/remove_file",
+            **kwargs
+        )
+
     def manage_services(
         self, communication_list, name="http.common.manage_services",
         results=None, action_map=None, **kwargs

@@ -60,6 +60,7 @@ COMMAND_COMPLETIONS = {
     ),
     "crm_diff": path.join(settings.pacemaker_binaries, "crm_diff"),
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
+    "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
