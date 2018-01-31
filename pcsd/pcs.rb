@@ -403,22 +403,35 @@ end
 
 def send_request_with_token(
   auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
-  timeout=nil, additional_tokens={}, additional_ports={}
+  timeout=nil, additional_known_hosts={}
 )
-  token_file_data = read_token_file()
-  token = additional_tokens[node] || token_file_data.tokens[node]
   $logger.info "SRWT Node: #{node} Request: #{request}"
-  if not token
+  target_info = additional_known_hosts[node] || get_known_hosts()[node] || nil
+  if not target_info
+    $logger.error "Unable to connect to node #{node}, the node is not known"
+    return 400,'{"notoken":true}'
+  end
+  target_token = target_info.token
+  if not target_token
     $logger.error "Unable to connect to node #{node}, no token available"
     return 400,'{"notoken":true}'
   end
-  port = additional_ports[node] || token_file_data.ports[node]
+  target_addr = target_info.first_addr_port['addr']
+  target_port = target_info.first_addr_port['port']
+  if not target_addr
+    $logger.error "Unable to connect to node #{node}, its address is not known"
+    return 400,'{"notoken":true}'
+  end
+  if not target_port
+    $logger.error "Unable to connect to node #{node}, its port is not known"
+    return 400,'{"notoken":true}'
+  end
   cookies_data = {
-    'token' => token,
+    'token' => target_token,
   }
   return send_request(
-    auth_user, node, request, post, data, remote, raw_data, timeout,
-    cookies_data, port
+    auth_user, target_addr, request, post, data, remote, raw_data, timeout,
+    cookies_data, target_port
   )
 end
 
@@ -501,6 +514,8 @@ def send_request(
     end
   rescue
   end
+
+  $logger.info "Connecting to: #{url}"
 
   req = Ethon::Easy.new()
   req.set_attributes({
@@ -1109,6 +1124,12 @@ end
 def is_cib_true(var)
   return false if not var.respond_to?(:downcase)
   return ['true', 'on', 'yes', 'y', '1'].include?(var.downcase)
+end
+
+def get_known_hosts()
+  return CfgKnownHosts.new(
+    Cfgsync::PcsdKnownHosts.from_file().text()
+  ).known_hosts
 end
 
 def read_token_file()

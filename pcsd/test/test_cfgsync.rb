@@ -4,6 +4,7 @@ require 'thread'
 
 require 'pcsd_test_utils.rb'
 require 'cfgsync.rb'
+require 'config.rb'
 
 
 class TestCfgsync < Test::Unit::TestCase
@@ -281,6 +282,59 @@ class TestPcsdTokens < Test::Unit::TestCase
   end
 end
 
+
+class TestPcsdKnownHosts < Test::Unit::TestCase
+  def teardown()
+    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, {:force => true})
+  end
+
+  def test_basics()
+    assert_equal('known-hosts', Cfgsync::PcsdKnownHosts.name)
+    template =
+'{
+  "format_version": 1,
+  "data_version": %d,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    }
+  }
+}'
+
+    text = template % 2
+    cfg = Cfgsync::PcsdKnownHosts.from_text(text)
+    assert_equal(text, cfg.text)
+    assert_equal(2, cfg.version)
+    assert_equal('9730e692503d9af5163d18e21bee4e9749cbdd62', cfg.hash)
+
+    cfg.version = 3
+    assert_equal(3, cfg.version)
+    assert_equal('0082830bf2504d6a4025b65f6272df0dc188710b', cfg.hash)
+
+    cfg.text = template % 4
+    assert_equal(4, cfg.version)
+    assert_equal('064c134ffd43a16a70f03e7558ea56b1d49ec964', cfg.hash)
+  end
+
+  def test_file()
+    FileUtils.cp(File.join(CURRENT_DIR, 'known-hosts'), CFG_PCSD_KNOWN_HOSTS)
+    cfg = Cfgsync::PcsdKnownHosts.from_file()
+    assert_equal(5, cfg.version)
+    assert_equal('69482ef019603264ea24005ee90be9b5ab5c2910', cfg.hash)
+  end
+
+  def test_file_missing()
+    cfg = Cfgsync::PcsdKnownHosts.from_file()
+    assert_equal(0, cfg.version)
+    assert_equal('da39a3ee5e6b4b0d3255bfef95601890afd80709', cfg.hash)
+  end
+end
 
 class TestConfigSyncControll < Test::Unit::TestCase
   def setup()
@@ -699,325 +753,333 @@ class TestConfigFetcher < Test::Unit::TestCase
 end
 
 
-class TestMergeTokens < Test::Unit::TestCase
+class TestMergeKnownHosts < Test::Unit::TestCase
   def setup()
-    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
+    FileUtils.cp(File.join(CURRENT_DIR, 'known-hosts'), CFG_PCSD_KNOWN_HOSTS)
+  end
+
+  def teardown()
+    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, {:force => true})
+  end
+
+  def fixture_old_cfg()
+    return (
+'{
+  "format_version": 1,
+  "data_version": 5,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "token1"
+    },
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        },
+        {
+          "addr": "10.0.2.2",
+          "port": 2235
+        }
+      ],
+      "token": "token2"
+    }
+  }
+}')
+  end
+
+  def fixture_new_cfg(version=5)
+    return (
+'{
+  "format_version": 1,
+  "data_version": %d,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "token1"
+    },
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2a"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "token3"
+    }
+  }
+}' % version)
+  end
+
+  def fixture_node2()
+    return PcsKnownHost.new(
+      'node2',
+      'token2a',
+      [
+        {'addr' => '10.0.1.2', 'port' => 2224}
+      ]
+    )
+  end
+
+  def fixture_node3()
+    return PcsKnownHost.new(
+      'node3',
+      'token3',
+      [
+        {'addr' => '10.0.1.3', 'port' => 2224}
+      ]
+    )
+  end
+
+  def fixture_old_text()
+    return (
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "token1a"
+  }
+}')
   end
 
   def test_nothing_to_merge()
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {}, {})
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(old_cfg, nil, [])
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, nil, {'rh7-4' => 'token4'}, {'rh7-4' => '4321'}
-    )
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-2": "2224",
-    "rh7-3": "1234",
-    "rh7-4": "4321"
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, nil, {'rh7-3' => 'token3'}, {}
-    )
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "token3"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-2": "2224",
-    "rh7-3": "1234"
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
   end
 
-  def test_only_old_to_merge()
-    to_merge = [
-      Cfgsync::PcsdTokens.from_text(
-'{
-  "format_version": 3,
-  "data_version": 1,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-4": "token4a"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-4": "2224"
-  }
-}'
-      )
-    ]
+  def test_extra_hosts()
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [],
+      [fixture_node2(), fixture_node3()]
+    )
+    assert_equal(fixture_new_cfg, new_cfg.text.strip)
+  end
 
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {}, {})
+  def test_older_file()
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [Cfgsync::PcsdKnownHosts.from_text(fixture_old_text)],
+      []
+    )
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, to_merge, {'rh7-4' => 'token4'}, {'rh7-4' => '4321'}
-    )
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-2": "2224",
-    "rh7-3": "1234",
-    "rh7-4": "4321"
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, to_merge, {'rh7-3' => 'token3'}, {}
-    )
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "token3"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-2": "2224",
-    "rh7-3": "1234"
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
   end
 
-  def test_one_to_merge()
-    to_merge = [
-      Cfgsync::PcsdTokens.from_text(
-'{
-  "format_version": 3,
-  "data_version": 11,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-4": "token4a"
-  },
-  "ports": {
-    "rh7-1": "4321",
-    "rh7-4": null
-  }
-}'
-      )
-    ]
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {}, {})
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 11,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4a"
-  },
-  "ports": {
-    "rh7-1": "4321",
-    "rh7-2": "2224",
-    "rh7-3": "1234",
-    "rh7-4": null
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'}, {'rh7-4' => '12345'})
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 11,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4"
-  },
-  "ports": {
-    "rh7-1": "4321",
-    "rh7-2": "2224",
-    "rh7-3": "1234",
-    "rh7-4": "12345"
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'}, {})
-    new_cfg_text =
-'{
-  "format_version": 3,
-  "data_version": 11,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "token3",
-    "rh7-4": "token4a"
-  },
-  "ports": {
-    "rh7-1": "4321",
-    "rh7-2": "2224",
-    "rh7-3": "1234",
-    "rh7-4": null
-  }
-}'
-    assert_equal(new_cfg_text, new_cfg.text.strip)
+  def test_older_file_and_extra_hosts()
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [Cfgsync::PcsdKnownHosts.from_text(fixture_old_text)],
+      [fixture_node2(), fixture_node3()]
+    )
+    assert_equal(fixture_new_cfg, new_cfg.text.strip)
   end
 
-  def test_more_to_merge()
-    to_merge_12 = Cfgsync::PcsdTokens.from_text(
+  def test_newer_file()
+    new_text =
 '{
-  "format_version": 3,
-  "data_version": 12,
-  "tokens": {
-    "rh7-2": "token2",
-    "rh7-4": "token4b"
-  },
-  "ports": {
-    "rh7-2": "port2",
-    "rh7-4": "port4b"
+  "format_version": 1,
+  "data_version": 7,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2a"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "token3"
+    }
   }
 }'
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [Cfgsync::PcsdKnownHosts.from_text(new_text)],
+      []
     )
-    to_merge_11 = Cfgsync::PcsdTokens.from_text(
-'{
-  "format_version": 3,
-  "data_version": 11,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-4": "token4a"
-  },
-  "ports": {
-    "rh7-1": "port1",
-    "rh7-4": "port4a"
-  }
-}'
-    )
+    assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
+  end
 
-    new_cfg_text =
+  def test_newer_file_and_extra_hosts()
+    new_text =
 '{
-  "format_version": 3,
-  "data_version": 12,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "token2",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4b"
-  },
-  "ports": {
-    "rh7-1": "port1",
-    "rh7-2": "port2",
-    "rh7-3": "1234",
-    "rh7-4": "port4b"
+  "format_version": 1,
+  "data_version": 7,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.122.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2aaaaaaaa"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "token3"
+    }
   }
 }'
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {}, {}
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [Cfgsync::PcsdKnownHosts.from_text(new_text)],
+      [fixture_node2()]
     )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {}, {}
-    )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
+    assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
+  end
 
-    new_cfg_text =
+  def test_newer_files()
+    new_text1 =
 '{
-  "format_version": 3,
-  "data_version": 12,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "token2",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
-    "rh7-4": "token4"
-  },
-  "ports": {
-    "rh7-1": "port1",
-    "rh7-2": "port2",
-    "rh7-3": "1234",
-    "rh7-4": "port4"
+  "format_version": 1,
+  "data_version": 6,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2aaaaaaaaaa"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "token3"
+    }
   }
 }'
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {'rh7-4' => 'token4'},
-      {'rh7-4' => 'port4'}
+    new_text2 =
+'{
+  "format_version": 1,
+  "data_version": 7,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2a"
+    }
+  }
+}'
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [
+        Cfgsync::PcsdKnownHosts.from_text(new_text1),
+        Cfgsync::PcsdKnownHosts.from_text(new_text2),
+      ],
+      []
     )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {'rh7-4' => 'token4'},
-      {'rh7-4' => 'port4'}
-    )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
+    assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
+  end
 
-    new_cfg_text =
+  def test_newer_files_and_extra_hosts()
+    new_text1 =
 '{
-  "format_version": 3,
-  "data_version": 12,
-  "tokens": {
-    "rh7-1": "token1",
-    "rh7-2": "token2",
-    "rh7-3": "token3",
-    "rh7-4": "token4b"
-  },
-  "ports": {
-    "rh7-1": "port1",
-    "rh7-2": "port2",
-    "rh7-3": "1234",
-    "rh7-4": "port4b"
+  "format_version": 1,
+  "data_version": 6,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2aaaaaaaaaa"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "token3aaaaaaaaaa"
+    }
   }
 }'
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_11, to_merge_12], {'rh7-3' => 'token3'}, {}
+    new_text2 =
+'{
+  "format_version": 1,
+  "data_version": 7,
+  "known_hosts": {
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2224
+        }
+      ],
+      "token": "token2a"
+    }
+  }
+}'
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    new_cfg = Cfgsync::merge_known_host_files(
+      old_cfg,
+      [
+        Cfgsync::PcsdKnownHosts.from_text(new_text1),
+        Cfgsync::PcsdKnownHosts.from_text(new_text2),
+      ],
+      [fixture_node3()]
     )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
-    old_cfg = Cfgsync::PcsdTokens.from_file()
-    new_cfg = Cfgsync::merge_tokens_files(
-      old_cfg, [to_merge_12, to_merge_11], {'rh7-3' => 'token3'}, {}
-    )
-    assert_equal(new_cfg_text, new_cfg.text.strip)
+    assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
   end
 end
-

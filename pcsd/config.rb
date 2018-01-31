@@ -340,4 +340,12 @@ class PcsKnownHost
     }
     return ap_list
   end
+
+  def first_addr_port()
+    if @addr_port_list.length > 0
+      return @addr_port_list[0].clone()
+    else
+      return {}
+    end
+  end
 end

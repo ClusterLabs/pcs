@@ -6,6 +6,7 @@ PCSD_DEFAULT_PORT = 2224
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'
 COOKIE_FILE = PCSD_VAR_LOCATION + 'pcsd.cookiesecret'
+KNOWN_HOSTS_FILE_NAME = 'known-hosts'
 
 PENGINE = "/usr/libexec/pacemaker/pengine"
 CIB_BINARY = '/usr/libexec/pacemaker/cib'

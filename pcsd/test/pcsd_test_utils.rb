@@ -4,6 +4,7 @@ CFG_CLUSTER_CONF = File.join(CURRENT_DIR, "cluster.conf.tmp")
 CFG_PCSD_SETTINGS = File.join(CURRENT_DIR, "pcs_settings.conf.tmp")
 CFG_PCSD_USERS = File.join(CURRENT_DIR, "pcs_users.conf.tmp")
 CFG_PCSD_TOKENS = File.join(CURRENT_DIR, 'tokens.tmp')
+CFG_PCSD_KNOWN_HOSTS = File.join(CURRENT_DIR, 'known-hosts.tmp')
 
 CFG_SYNC_CONTROL = File.join(CURRENT_DIR, 'cfgsync_ctl.tmp')
 
