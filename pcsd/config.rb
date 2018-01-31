@@ -243,3 +243,101 @@ class PCSTokens
     return JSON.pretty_generate(out_hash)
   end
 end
+
+class CfgKnownHosts
+  CURRENT_FORMAT = 1
+  attr_reader :format_version, :known_hosts
+  attr_accessor :data_version
+
+  def initialize(cfg_text)
+    @format_version = CURRENT_FORMAT
+    @data_version = 0
+    @known_hosts = {}
+
+    # set a reasonable parseable default if got empty text
+    if cfg_text.nil? or cfg_text.strip.empty?
+      # all has been set above, nothing more to do
+      return
+    end
+
+    begin
+      json = JSON.parse(cfg_text)
+
+      @format_version = json.fetch('format_version')
+      @data_version = json.fetch('data_version')
+
+      if @format_version > CURRENT_FORMAT
+        $logger.warn(
+          "known-hosts file format version is #{@format_version}" +
+          ", newest fully supported version is #{CURRENT_FORMAT}"
+        )
+      end
+
+      if @format_version == 1
+        json.fetch('known_hosts').each { |name, data|
+          addr_port_list = []
+          data.fetch('addr_port_list').each { |addr_port|
+            addr_port_list << {
+              'addr' => addr_port.fetch('addr'),
+              'port' => addr_port.fetch('port'),
+            }
+          }
+          @known_hosts[name] = PcsKnownHost.new(
+            name,
+            data.fetch('token'),
+            addr_port_list
+          )
+        }
+      else
+        $logger.error(
+          'Unable to parse known-hosts file, ' +
+          "unknown format_version '#{@format_version}'"
+        )
+      end
+
+    rescue => e
+      $logger.error("Unable to parse known-hosts file: #{e}")
+    end
+  end
+
+  def text()
+    out_hosts = {}
+    @known_hosts.keys.sort.each { |host_name|
+      host = @known_hosts[host_name]
+      out_hosts[host_name] = {
+        'addr_port_list' => host.addr_port_list,
+        'token' => host.token,
+      }
+    }
+    out_hash = {
+      'format_version' => CURRENT_FORMAT,
+      'data_version' => @data_version,
+      'known_hosts' => out_hosts,
+    }
+    return JSON.pretty_generate(out_hash)
+  end
+end
+
+class PcsKnownHost
+  attr_reader :name, :token
+
+  def initialize(name, token, addr_port_list)
+    @name = name
+    @token = token
+    @addr_port_list = []
+    addr_port_list.each { |addr_port|
+      @addr_port_list << {
+        'addr' => addr_port.fetch('addr'),
+        'port' => addr_port.fetch('port'),
+      }
+    }
+  end
+
+  def addr_port_list()
+    ap_list = []
+    @addr_port_list.each { |addr_port|
+      ap_list << addr_port.clone()
+    }
+    return ap_list
+  end
+end

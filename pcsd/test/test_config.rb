@@ -907,3 +907,257 @@ class TestTokens < Test::Unit::TestCase
     )
   end
 end
+
+class TestCfgKnownHosts < Test::Unit::TestCase
+  def setup
+    $logger = MockLogger.new
+  end
+
+  def fixture_empty_config()
+    return(
+'{
+  "format_version": 1,
+  "data_version": 0,
+  "known_hosts": {
+  }
+}'
+    )
+  end
+
+  def assert_empty_data(cfg)
+    assert_equal(1, cfg.format_version)
+    assert_equal(0, cfg.data_version)
+    assert_equal(0, cfg.known_hosts.length)
+    assert_equal(fixture_empty_config(), cfg.text)
+  end
+
+  def assert_known_host(host, name, token, addr_port_list)
+    assert_equal(name, host.name)
+    assert_equal(token, host.token)
+    assert_equal(addr_port_list, host.addr_port_list)
+  end
+
+  def test_parse_nil()
+    cfg = CfgKnownHosts.new(nil)
+    assert_equal([], $logger.log)
+    assert_empty_data(cfg)
+  end
+
+  def test_parse_empty()
+    cfg = CfgKnownHosts.new('')
+    assert_equal([], $logger.log)
+    assert_empty_data(cfg)
+  end
+
+  def test_parse_whitespace()
+    cfg = CfgKnownHosts.new("   \n   ")
+    assert_equal([], $logger.log)
+    assert_empty_data(cfg)
+  end
+
+  def test_parse_malformed()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 0,
+  "known_hosts": {
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal(1, $logger.log.length)
+    assert_equal('error', $logger.log[0][0])
+    assert_match(
+      # the number is based on JSON gem version
+      /Unable to parse known-hosts file: \d+: unexpected token/,
+      $logger.log[0][1]
+    )
+    assert_empty_data(cfg)
+  end
+
+  def test_parse_format1_empty()
+    cfg = CfgKnownHosts.new(fixture_empty_config())
+    assert_equal([], $logger.log)
+    assert_empty_data(cfg)
+  end
+
+  def test_parse_format1_simple()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(1, cfg.known_hosts.length)
+    assert_equal('node1', cfg.known_hosts['node1'].name)
+    assert_equal('abcde', cfg.known_hosts['node1'].token)
+    assert_equal(
+      [
+        {'addr' => '10.0.1.1', 'port' => 2224}
+      ],
+      cfg.known_hosts['node1'].addr_port_list
+    )
+    assert_equal(text, cfg.text)
+  end
+
+  def test_parse_format1_complex()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        },
+        {
+          "addr": "10.0.2.1",
+          "port": 2225
+        }
+      ],
+      "token": "abcde"
+    },
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        },
+        {
+          "addr": "10.0.2.2",
+          "port": 2235
+        }
+      ],
+      "token": "fghij"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(2, cfg.known_hosts.length)
+    assert_known_host(
+      cfg.known_hosts['node1'],
+      'node1',
+      'abcde',
+      [
+        {'addr' => '10.0.1.1', 'port' => 2224},
+        {'addr' => '10.0.2.1', 'port' => 2225}
+      ]
+    )
+    assert_known_host(
+      cfg.known_hosts['node2'],
+      'node2',
+      'fghij',
+      [
+        {'addr' => '10.0.1.2', 'port' => 2234},
+        {'addr' => '10.0.2.2', 'port' => 2235}
+      ]
+    )
+    assert_equal(text, cfg.text)
+  end
+
+  def test_parse_format1_error()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "token": "abcde"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal(1, $logger.log.length)
+    assert_equal('error', $logger.log[0][0])
+    assert_match(
+      'Unable to parse known-hosts file: key not found: "addr_port_list"',
+      $logger.log[0][1]
+    )
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(0, cfg.known_hosts.length)
+  end
+
+  def test_update()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    },
+    "node2": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        }
+      ],
+      "token": "fghij"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    cfg.data_version += 1
+    cfg.known_hosts.delete('node2')
+    cfg.known_hosts['node3'] = PcsKnownHost.new(
+      'node3',
+      'klmno',
+      [
+        {'addr' => '10.0.1.3', 'port' => 2224}
+      ]
+    )
+    assert_equal(
+      cfg.text,
+'{
+  "format_version": 1,
+  "data_version": 3,
+  "known_hosts": {
+    "node1": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    },
+    "node3": {
+      "addr_port_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "klmno"
+    }
+  }
+}'
+    )
+  end
+end
