@@ -18,7 +18,8 @@ def get_env_tools(
     default_wait_timeout=DEFAULT_WAIT_TIMEOUT,
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
     exception_reports_in_processor_by_default=True,
-    local_extensions=None
+    local_extensions=None,
+    booth_env=None
 ):
     """
     Shortcut for preparing EnvAssistant and Config

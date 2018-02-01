@@ -61,7 +61,7 @@ def set_keyfile_access(file_path):
     except EnvironmentError as e:
         raise report_keyfile_io_error(file_path, "chown", e)
     try:
-        os.chmod(file_path, 0o600)
+        os.chmod(file_path, settings.pacemaker_authkey_file_mode)
     except EnvironmentError as e:
         raise report_keyfile_io_error(file_path, "chmod", e)
 

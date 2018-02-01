@@ -7,6 +7,7 @@ from __future__ import (
 import json
 import pprint
 
+from pcs.test.tools.command_env.config_http_booth import BoothShortcuts
 from pcs.test.tools.command_env.config_http_corosync import CorosyncShortcuts
 from pcs.test.tools.command_env.config_http_host import HostShortcuts
 from pcs.test.tools.command_env.config_http_pcmk import PcmkShortcuts
@@ -39,6 +40,7 @@ class HttpConfig(object):
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
+        self.booth = wrap_helper(BoothShortcuts(self.__calls))
         self.corosync = wrap_helper(CorosyncShortcuts(self.__calls))
         self.host = wrap_helper(HostShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
