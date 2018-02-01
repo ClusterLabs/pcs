@@ -26,6 +26,9 @@
   crm\_feature\_set <= 3.0.8 ([rhbz#1488044])
 - Fixed `pcs cluster auth` in a cluster when not authenticated and using
   a non-default port ([rhbz#1415197])
+- Fixed `pcs cluster auth` in a cluster when previously authenticated using a
+  non-default port and reauthenticating using an implicit default port
+  ([rhbz#1415197])
 
 [ghissue#153]: https://github.com/ClusterLabs/pcs/issues/153
 [rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197

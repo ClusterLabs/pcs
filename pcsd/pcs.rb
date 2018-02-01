@@ -1247,7 +1247,7 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   auth_responses.each { |node, response|
     if 'ok' == response['status']
       new_tokens[node] = response['token']
-      ports[node] = nodes[node]
+      ports[node] = nodes[node] || PCSD_DEFAULT_PORT
     end
   }
   if not new_tokens.empty?
