@@ -795,7 +795,7 @@ module Cfgsync
     # we run in a cluster so we need to sync the config
     publisher = ConfigPublisher.new(
       PCSAuth.getSuperuserAuth(), [config_new], nodes, cluster_name,
-      new_tokens
+      new_tokens, new_ports
     )
     old_configs, node_responses = publisher.publish()
     if not old_configs.include?(config_new.class.name)

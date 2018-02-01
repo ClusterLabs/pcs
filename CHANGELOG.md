@@ -24,8 +24,11 @@
 - Fixed a crash in the `pcs booth sync` command ([rhbz#1527530])
 - Always replace the whole CIB instead of applying a diff when
   crm\_feature\_set <= 3.0.8 ([rhbz#1488044])
+- Fixed `pcs cluster auth` in a cluster when not authenticated and using
+  a non-default port ([rhbz#1415197])
 
 [ghissue#153]: https://github.com/ClusterLabs/pcs/issues/153
+[rhbz#1415197]: https://bugzilla.redhat.com/show_bug.cgi?id=1415197
 [rhbz#1421702]: https://bugzilla.redhat.com/show_bug.cgi?id=1421702
 [rhbz#1464781]: https://bugzilla.redhat.com/show_bug.cgi?id=1464781
 [rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
