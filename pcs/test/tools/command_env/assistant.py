@@ -5,6 +5,7 @@ from __future__ import (
 )
 
 import logging
+import os
 import os.path
 import sys
 from functools import partial
@@ -89,7 +90,15 @@ def patch_env(call_queue, config, init_env):
             mock.patch(
                 "os.path.exists",
                 fs_mock("os.path.exists", os.path.exists)
-            )
+            ),
+            mock.patch(
+                "os.chmod",
+                fs_mock("os.chmod", os.chmod)
+            ),
+            mock.patch(
+                "os.chown",
+                fs_mock("os.chown", os.chown)
+            ),
         ])
 
     # It is not always desirable to patch these methods. Some tests may patch
@@ -210,7 +219,8 @@ class EnvAssistant(object):
                     "tokens": self.__config.spy.auth_tokens,
                     "ports": self.__config.spy.ports or {},
                 }) if self.__config.spy else None
-            )
+            ),
+            booth=self.__config.env.booth,
         )
         self.__unpatch = patch_env(self.__call_queue, self.__config, self._env)
         # If pushing corosync.conf has not been patched in the

@@ -17,6 +17,7 @@ class EnvConfig(object):
         self.__cib_data = None
         self.__cib_tempfile = None
         self.__corosync_conf_data = None
+        self.__booth = None
 
 
     def set_cib_data(self, cib_data, cib_tempfile="/fake/tmp/file"):
@@ -31,6 +32,13 @@ class EnvConfig(object):
     @property
     def cib_tempfile(self):
         return self.__cib_tempfile
+
+    def set_booth(self, booth):
+        self.__booth = booth
+
+    @property
+    def booth(self):
+        return self.__booth
 
     def set_corosync_conf_data(self, corosync_conf_data):
         self.__corosync_conf_data = corosync_conf_data

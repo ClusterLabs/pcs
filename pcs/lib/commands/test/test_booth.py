@@ -5,11 +5,12 @@ from __future__ import (
 )
 
 import os
-import base64
+from collections import namedtuple
 
-from pcs.test.tools.pcs_unittest import TestCase, skip
+from pcs.test.tools.pcs_unittest import TestCase, mock
 
-from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools import fixture
+from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -18,13 +19,11 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.misc import create_patcher
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import report_codes, env_file_role_codes as file_roles
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.node import NodeAddresses
 from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
 from pcs.lib.commands import booth as commands
 from pcs.lib.external import (
-    NodeCommunicator,
     CommandRunner,
     EnableServiceError,
     DisableServiceError,
@@ -138,62 +137,356 @@ class ConfigDestroyTest(TestCase):
             )
         ])
 
-@skip("TODO: rewrite using new testing fremework")
-@mock.patch("pcs.lib.commands.booth.config_structure.get_authfile")
-@mock.patch("pcs.lib.commands.booth.parse")
-@mock.patch("pcs.lib.booth.config_files.read_authfile")
-@mock.patch("pcs.lib.booth.sync.send_config_to_all_nodes")
+
 class ConfigSyncTest(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock()
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_env.report_processor = self.mock_rep
-        self.mock_com = mock.MagicMock(spec_set=NodeCommunicator)
-        self.mock_env.node_communicator.return_value = self.mock_com
-        self.node_list = ["node1", "node2", "node3"]
-        corosync_conf = mock.MagicMock()
-        corosync_conf.get_nodes.return_value = self.node_list
-        self.mock_env.get_corosync_conf.return_value = corosync_conf
-        self.mock_env.booth.get_config_content.return_value = "config"
+        self.env_assist, self.config = get_env_tools(self)
+        self.name = "booth"
+        self.config_path = os.path.join(
+            settings.booth_config_dir, "{}.conf".format(self.name)
+        )
+        self.node_list = ["rh7-1", "rh7-2"]
+        self.config.env.set_booth({"name": self.name})
+        self.reason = "fail"
 
-    def test_skip_offline(
-        self, mock_sync, mock_read_key, mock_parse, mock_get_authfile
-    ):
-        mock_get_authfile.return_value = "/key/path.key"
-        mock_read_key.return_value = "key"
-        commands.config_sync(self.mock_env, "name", True)
-        self.mock_env.booth.get_config_content.assert_called_once_with()
-        mock_read_key.assert_called_once_with(self.mock_rep, "/key/path.key")
-        mock_parse.assert_called_once_with("config")
-        mock_sync.assert_called_once_with(
-            self.mock_com,
-            self.mock_rep,
-            self.node_list,
-            "name",
-            "config",
-            authfile="/key/path.key",
-            authfile_data="key",
-            skip_offline=True
+    def test_success(self):
+        auth_file = "auth.file"
+        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
+        config_content = "authfile={}".format(auth_file_path)
+        auth_file_content = b"auth"
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data=config_content)(),
+                name="open.conf"
+            )
+            .fs.open(
+                auth_file_path,
+                mock.mock_open(read_data=auth_file_content)(),
+                mode="rb",
+                name="open.authfile",
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, config_content,
+                authfile=auth_file,
+                authfile_data=auth_file_content,
+                node_labels=self.node_list,
+            )
         )
 
-    def test_do_not_skip_offline(
-        self, mock_sync, mock_read_key, mock_parse, mock_get_authfile
-    ):
-        mock_get_authfile.return_value = "/key/path.key"
-        mock_read_key.return_value = "key"
-        commands.config_sync(self.mock_env, "name")
-        self.mock_env.booth.get_config_content.assert_called_once_with()
-        mock_read_key.assert_called_once_with(self.mock_rep, "/key/path.key")
-        mock_parse.assert_called_once_with("config")
-        mock_sync.assert_called_once_with(
-            self.mock_com,
-            self.mock_rep,
-            self.node_list,
-            "name",
-            "config",
-            authfile="/key/path.key",
-            authfile_data="key",
-            skip_offline=False
+        commands.config_sync(self.env_assist.get_env(), self.name)
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=[self.name]
+                ) for node in self.node_list
+            ]
+        )
+
+    def test_node_failure(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data="")(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, "",
+                communication_list=[
+                    dict(
+                        label=self.node_list[0],
+                        response_code=400,
+                        output=self.reason,
+                    ),
+                    dict(
+                        label=self.node_list[1],
+                    )
+                ]
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=self.node_list[1],
+                    name_list=[self.name]
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.node_list[0],
+                    reason=self.reason,
+                    command="remote/booth_set_config",
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                ),
+            ]
+        )
+
+    def test_node_failure_skip_offline(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data="")(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, "",
+                communication_list=[
+                    dict(
+                        label=self.node_list[0],
+                        response_code=400,
+                        output=self.reason,
+                    ),
+                    dict(
+                        label=self.node_list[1],
+                    )
+                ]
+            )
+        )
+
+        commands.config_sync(
+            self.env_assist.get_env(), self.name, skip_offline_nodes=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=self.node_list[1],
+                    name_list=[self.name]
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.node_list[0],
+                    reason=self.reason,
+                    command="remote/booth_set_config",
+                ),
+            ]
+        )
+
+    def test_node_offline(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data="")(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, "",
+                communication_list=[
+                    dict(
+                        label=self.node_list[0],
+                        errno=1,
+                        error_msg=self.reason,
+                        was_connected=False,
+                    ),
+                    dict(
+                        label=self.node_list[1],
+                    )
+                ],
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=self.node_list[1],
+                    name_list=[self.name]
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.node_list[0],
+                    reason=self.reason,
+                    command="remote/booth_set_config",
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                ),
+            ]
+        )
+
+    def test_node_offline_skip_offline(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data="")(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, "",
+                communication_list=[
+                    dict(
+                        label=self.node_list[0],
+                        errno=1,
+                        error_msg=self.reason,
+                        was_connected=False,
+                    ),
+                    dict(
+                        label=self.node_list[1],
+                    )
+                ],
+            )
+        )
+
+        commands.config_sync(
+            self.env_assist.get_env(), self.name, skip_offline_nodes=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=self.node_list[1],
+                    name_list=[self.name]
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.node_list[0],
+                    reason=self.reason,
+                    command="remote/booth_set_config",
+                ),
+            ]
+        )
+
+    def test_config_not_accessible(self):
+        self.config.fs.open(
+            self.config_path,
+            side_effect=EnvironmentError(0, self.reason, self.config_path),
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, self.config_path),
+                    file_role=file_roles.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                    operation="read",
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports([])
+
+    def test_authfile_not_accessible(self):
+        auth_file = "auth.file"
+        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
+        config_content = "authfile={}".format(auth_file_path)
+
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data=config_content)(),
+                name="open.conf"
+            )
+            .fs.open(
+                auth_file_path,
+                mode="rb",
+                name="open.authfile",
+                side_effect=EnvironmentError(0, self.reason, auth_file_path),
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, config_content, node_labels=self.node_list,
+            )
+        )
+
+        commands.config_sync(self.env_assist.get_env(), self.name)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, auth_file_path),
+                    file_role=file_roles.BOOTH_KEY,
+                    file_path=auth_file_path,
+                    operation="read",
+                ),
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=[self.name]
+                ) for node in self.node_list
+            ]
+        )
+
+    def test_no_authfile(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data="")(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, "", node_labels=self.node_list,
+            )
+        )
+
+        commands.config_sync(self.env_assist.get_env(), self.name)
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=[self.name]
+                ) for node in self.node_list
+            ]
+        )
+
+    def test_authfile_not_in_booth_dir(self):
+        config_file_content = "authfile=/etc/my_booth.conf"
+
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data=config_file_content)(),
+                name="open.conf"
+            )
+            .corosync_conf.load()
+            .http.booth.send_config(
+                self.name, config_file_content, node_labels=self.node_list,
+            )
+        )
+
+        commands.config_sync(self.env_assist.get_env(), self.name)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(report_codes.BOOTH_UNSUPORTED_FILE_LOCATION),
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=[self.name]
+                ) for node in self.node_list
+            ]
         )
 
 
@@ -380,128 +673,506 @@ class StopBoothTest(TestCase):
         mock_stop.assert_called_once_with(self.mock_run, "booth", "name")
         mock_is_systemctl.assert_called_once_with()
 
+def _get_booth_file_path(file):
+    return os.path.join(settings.booth_config_dir, file)
 
-@skip("TODO: rewrite using new testing fremework")
-@mock.patch("pcs.lib.booth.sync.pull_config_from_node")
-class PullConfigTest(TestCase):
+
+class PullConfigBase(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_com = mock.MagicMock(spec_set=NodeCommunicator)
-        self.mock_env.node_communicator.return_value = self.mock_com
-        self.mock_env.report_processor = self.mock_rep
+        self.env_assist, self.config = get_env_tools(self)
+        self.name = "booth"
+        self.node_name = "node"
+        self.config_data = "config"
+        self.config_path = _get_booth_file_path("{}.conf".format(self.name))
+        self.report_list = [
+            fixture.info(
+                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                node=self.node_name,
+                config=self.name
+            ),
+            fixture.info(
+                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                node=None,
+                name_list=[self.name],
+            )
+        ]
+        self.config.env.set_booth({"name": self.name})
 
-    def test_with_authfile(self, mock_pull):
-        mock_pull.return_value = {
-            "config": {
-                "name": "name.conf",
-                "data": "config"
-            },
-            "authfile": {
-                "name": "name.key",
-                "data": base64.b64encode("key".encode("utf-8")).decode("utf-8")
-            }
-        }
-        commands.pull_config(self.mock_env, "node", "name")
-        mock_pull.assert_called_once_with(
-            self.mock_com, NodeAddresses("node"), "name"
-        )
-        self.mock_env.booth.create_config.called_once_with("config", True)
-        self.mock_env.booth.set_key_path.called_once_with(os.path.join(
-            settings.booth_config_dir, "name.key"
-        ))
-        self.mock_env.booth.create_key.called_once_with(
-            "key".encode("utf-8"), True
-        )
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [
-                (
-                    Severities.INFO,
-                    report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
-                    {
-                        "node": "node",
-                        "config": "name"
-                    }
-                ),
-                (
-                    Severities.INFO,
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                    {
-                        "node": None,
-                        "name_list": ["name"]
-                    }
-                )
-            ]
-        )
 
-    def test_without_authfile(self, mock_pull):
-        mock_pull.return_value = {
-            "config": {
-                "name": "name.conf",
-                "data": "config"
-            },
-            "authfile": {
-                "name": None,
-                "data": None
-            }
-        }
-        commands.pull_config(self.mock_env, "node", "name")
-        mock_pull.assert_called_once_with(
-            self.mock_com, NodeAddresses("node"), "name"
+class PullConfigSuccess(PullConfigBase):
+    def setUp(self):
+        super(PullConfigSuccess, self).setUp()
+        self.booth_cfg_open_mock = mock.mock_open()()
+        (self.config
+            .http.booth.get_config(
+                self.name, self.config_data, node_labels=[self.node_name]
+            )
+            .fs.exists(self.config_path, False)
+            .fs.open(self.config_path, self.booth_cfg_open_mock, mode="w")
         )
-        self.mock_env.booth.create_config.called_once_with("config", True)
-        self.assertEqual(0, self.mock_env.booth.set_key_path.call_count)
-        self.assertEqual(0, self.mock_env.booth.create_key.call_count)
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [
-                (
-                    Severities.INFO,
-                    report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
-                    {
-                        "node": "node",
-                        "config": "name"
-                    }
-                ),
-                (
-                    Severities.INFO,
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                    {
-                        "node": None,
-                        "name_list": ["name"]
-                    }
-                )
-            ]
-        )
-
-    def test_invalid_input(self, mock_pull):
-        mock_pull.return_value = {}
-        assert_raise_library_error(
-            lambda: commands.pull_config(self.mock_env, "node", "name"),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESPONSE_FORMAT,
-                {"node": "node"}
+        self.addCleanup(
+            lambda: self.booth_cfg_open_mock.write.assert_called_once_with(
+                self.config_data
             )
         )
-        mock_pull.assert_called_once_with(
-            self.mock_com, NodeAddresses("node"), "name"
+
+    def test_success(self):
+        commands.pull_config(
+            self.env_assist.get_env(), self.node_name, self.name
         )
-        self.assertEqual(0, self.mock_env.booth.create_config.call_count)
-        self.assertEqual(0, self.mock_env.booth.set_key_path.call_count)
-        self.assertEqual(0, self.mock_env.booth.create_key.call_count)
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
-                {
-                    "node": "node",
-                    "config": "name"
-                }
+
+        self.env_assist.assert_reports(self.report_list)
+
+    def test_success_config_exists(self):
+        self.config.fs.exists(self.config_path, True, instead="fs.exists")
+
+        commands.pull_config(
+            self.env_assist.get_env(), self.node_name, self.name
+        )
+
+        self.env_assist.assert_reports(
+            self.report_list
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_ALREADY_EXISTS,
+                    node=None,
+                    file_role=file_roles.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                ),
+            ]
+        )
+
+
+class PullConfigFailure(PullConfigBase):
+    reason = "reason"
+    def test_write_failure(self):
+        (self.config
+            .http.booth.get_config(
+                self.name, self.config_data, node_labels=[self.node_name]
+            )
+            .fs.exists(self.config_path, False)
+            .fs.open(
+                self.config_path,
+                mode="w",
+                side_effect=EnvironmentError(0, self.reason, self.config_path),
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, self.config_path),
+                    file_role=file_roles.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                    operation="write",
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(self.report_list[:1])
+
+    def test_network_failure(self):
+        self.config.http.booth.get_config(
+            self.name,
+            communication_list=[dict(
+                label=self.node_name,
+                was_connected=False,
+                errno=1,
+                error_msg=self.reason,
             )]
         )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [],
+        )
+        self.env_assist.assert_reports([
+            self.report_list[0],
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                force_code=None,
+                node=self.node_name,
+                command="remote/booth_get_config",
+                reason=self.reason,
+            ),
+        ])
+
+    def test_network_request_failure(self):
+        self.config.http.booth.get_config(
+            self.name,
+            communication_list=[dict(
+                label=self.node_name,
+                response_code=400,
+                output=self.reason,
+            )]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [],
+        )
+        self.env_assist.assert_reports([
+            self.report_list[0],
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=None,
+                node=self.node_name,
+                command="remote/booth_get_config",
+                reason=self.reason,
+            ),
+        ])
+
+    def test_request_response_not_json(self):
+        self.config.http.booth.get_config(
+            self.name,
+            communication_list=[dict(
+                label=self.node_name,
+                output="not json",
+            )]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [],
+        )
+        self.env_assist.assert_reports([
+            self.report_list[0],
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT,
+                node=self.node_name,
+            ),
+        ])
+
+    def test_request_response_missing_keys(self):
+        self.config.http.booth.get_config(
+            self.name,
+            communication_list=[dict(
+                label=self.node_name,
+                output="{'config':{}}",
+            )]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [],
+        )
+        self.env_assist.assert_reports([
+            self.report_list[0],
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT,
+                node=self.node_name,
+            ),
+        ])
+
+
+class PullConfigWithAuthfile(PullConfigBase):
+    def setUp(self):
+        super(PullConfigWithAuthfile, self).setUp()
+        self.booth_cfg_open_mock = mock.mock_open()()
+        self.authfile = "authfile"
+        self.authfile_path = _get_booth_file_path(self.authfile)
+        self.authfile_data = b"auth"
+        self.pcmk_uid = 2
+        self.pcmk_gid = 3
+
+        (self.config
+            .http.booth.get_config(
+                self.name,
+                self.config_data,
+                authfile=self.authfile,
+                authfile_data=self.authfile_data,
+                node_labels=[self.node_name],
+            )
+            .fs.exists(self.config_path, False)
+            .fs.open(self.config_path, self.booth_cfg_open_mock, mode="w")
+            .fs.exists(self.authfile_path, False, name="fs.exists.authfile")
+        )
+
+        self.addCleanup(
+            lambda: self.booth_cfg_open_mock.write.assert_called_once_with(
+                self.config_data
+            )
+        )
+
+    def _set_pwd_mock(self, pwd_mock):
+        pwd_mock.return_value = namedtuple("Pw", "pw_uid")(self.pcmk_uid)
+        self.addCleanup(
+            lambda: pwd_mock.assert_called_once_with(settings.pacemaker_uname)
+        )
+
+    def _set_grp_mock(self, grp_mock):
+        grp_mock.return_value = namedtuple("Gr", "gr_gid")(self.pcmk_gid)
+        self.addCleanup(
+            lambda: grp_mock.assert_called_once_with(settings.pacemaker_gname)
+        )
+
+
+@mock.patch("grp.getgrnam")
+@mock.patch("pwd.getpwnam")
+class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
+    def setUp(self):
+        super(PullConfigWithAuthfileSuccess, self).setUp()
+        self.booth_authfile_open_mock = mock.mock_open()()
+
+        (self.config
+            .fs.open(
+                self.authfile_path,
+                self.booth_authfile_open_mock,
+                mode="wb",
+                name="fs.open.authfile.write"
+            )
+            .fs.chown(self.authfile_path, self.pcmk_uid, self.pcmk_gid)
+            .fs.chmod(self.authfile_path, settings.pacemaker_authkey_file_mode)
+        )
+
+        self.addCleanup(
+            lambda: self.booth_authfile_open_mock.write.assert_called_once_with(
+                self.authfile_data
+            )
+        )
+
+    def test_success(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        self._set_grp_mock(grp_mock)
+
+        commands.pull_config(
+            self.env_assist.get_env(), self.node_name, self.name
+        )
+
+        self.env_assist.assert_reports(self.report_list)
+
+    def test_success_authfile_exists(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        self._set_grp_mock(grp_mock)
+
+        self.config.fs.exists(
+            self.authfile_path, True,
+            name="fs.exists.authfile",
+            instead="fs.exists.authfile",
+        )
+
+        commands.pull_config(
+            self.env_assist.get_env(), self.node_name, self.name
+        )
+
+        self.env_assist.assert_reports(
+            self.report_list
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_ALREADY_EXISTS,
+                    node=None,
+                    file_role=file_roles.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                )
+            ]
+        )
+
+    def test_success_config_and_authfile_exists(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        self._set_grp_mock(grp_mock)
+
+        (self.config
+            .fs.exists(self.config_path, True, instead="fs.exists")
+            .fs.exists(
+                self.authfile_path, True,
+                name="fs.exists.authfile",
+                instead="fs.exists.authfile",
+            )
+        )
+
+        commands.pull_config(
+            self.env_assist.get_env(), self.node_name, self.name
+        )
+
+        self.env_assist.assert_reports(
+            self.report_list
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_ALREADY_EXISTS,
+                    node=None, file_role=role, file_path=path,
+                ) for role, path in [
+                    (file_roles.BOOTH_CONFIG, self.config_path),
+                    (file_roles.BOOTH_KEY, self.authfile_path)
+                ]
+            ]
+        )
+
+
+@mock.patch("grp.getgrnam")
+@mock.patch("pwd.getpwnam")
+class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
+    def setUp(self):
+        super(PullConfigWithAuthfileFailure, self).setUp()
+        self.reason = "reason"
+        self.booth_authfile_open_mock = mock.mock_open()()
+
+    def assert_authfile_written(self):
+        self.booth_authfile_open_mock.write.assert_called_once_with(
+            self.authfile_data
+        )
+
+    def test_authfile_write_failure(self, pwd_mock, grp_mock):
+        self.config.fs.open(
+            self.authfile_path,
+            mode="wb",
+            name="fs.open.authfile.write",
+            side_effect=EnvironmentError(1, self.reason, self.authfile_path)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, self.authfile_path),
+                    file_role=file_roles.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                    operation="write",
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(self.report_list[:1])
+
+    def test_unable_to_get_uid(self, pwd_mock, grp_mock):
+        pwd_mock.side_effect = KeyError()
+        self.config.fs.open(
+            self.authfile_path,
+            self.booth_authfile_open_mock,
+            mode="wb",
+            name="fs.open.authfile.write"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_DETERMINE_USER_UID,
+                    user=settings.pacemaker_uname,
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.assert_authfile_written()
+        pwd_mock.assert_called_once_with(settings.pacemaker_uname)
+        self.assertEqual(0, grp_mock.call_count)
+        self.env_assist.assert_reports(self.report_list[:1])
+
+    def test_unable_to_get_gid(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        grp_mock.side_effect = KeyError()
+        self.config.fs.open(
+            self.authfile_path,
+            self.booth_authfile_open_mock,
+            mode="wb",
+            name="fs.open.authfile.write"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
+                    group=settings.pacemaker_gname,
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.assert_authfile_written()
+        grp_mock.assert_called_once_with(settings.pacemaker_gname)
+        self.env_assist.assert_reports(self.report_list[:1])
+
+    def test_unable_to_set_authfile_uid_gid(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        self._set_grp_mock(grp_mock)
+        (self.config
+            .fs.open(
+                self.authfile_path,
+                self.booth_authfile_open_mock,
+                mode="wb",
+                name="fs.open.authfile.write"
+            )
+            .fs.chown(
+                self.authfile_path, self.pcmk_uid, self.pcmk_gid,
+                side_effect=EnvironmentError(1, self.reason, self.authfile_path)
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, self.authfile_path),
+                    file_role=file_roles.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                    operation="chown",
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.assert_authfile_written()
+        self.env_assist.assert_reports(self.report_list[:1])
+
+    def test_unable_to_set_authfile_mode(self, pwd_mock, grp_mock):
+        self._set_pwd_mock(pwd_mock)
+        self._set_grp_mock(grp_mock)
+        (self.config
+            .fs.open(
+                self.authfile_path,
+                self.booth_authfile_open_mock,
+                mode="wb",
+                name="fs.open.authfile.write"
+            )
+            .fs.chown(
+                self.authfile_path, self.pcmk_uid, self.pcmk_gid,
+            )
+            .fs.chmod(
+                self.authfile_path, settings.pacemaker_authkey_file_mode,
+                side_effect=EnvironmentError(1, self.reason, self.authfile_path)
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name, self.name
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    reason="{}: '{}'".format(self.reason, self.authfile_path),
+                    file_role=file_roles.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                    operation="chmod",
+                )
+            ],
+            expected_in_processor=False,
+        )
+        self.assert_authfile_written()
+        self.env_assist.assert_reports(self.report_list[:1])
+
 
 class TicketOperationTest(TestCase):
     @mock.patch("pcs.lib.booth.resource.find_bound_ip")

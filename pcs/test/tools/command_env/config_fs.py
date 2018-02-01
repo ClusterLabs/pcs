@@ -34,3 +34,32 @@ class FsConfig(object):
             return_value=return_value,
         )
         self.__calls.place(name, call, before, instead)
+
+    def chmod(
+        self, path, mode, side_effect=None, name="os.chmod", before=None,
+        instead=None,
+    ):
+        call = FsCall(
+            "os.chmod",
+            call_kwargs=dict(
+                fd=path,
+                mode=mode,
+            ),
+            side_effect=side_effect,
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def chown(
+        self, path, uid, gid, side_effect=None, name="os.chown", before=None,
+        instead=None,
+    ):
+        call = FsCall(
+            "os.chown",
+            call_kwargs=dict(
+                fd=path,
+                uid=uid,
+                gid=gid,
+            ),
+            side_effect=side_effect,
+        )
+        self.__calls.place(name, call, before, instead)
