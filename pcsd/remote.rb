@@ -68,7 +68,6 @@ def remote(params, request, auth_user)
       :cluster_destroy => method(:cluster_destroy),
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
-      :get_tokens => method(:get_tokens),
       :get_cluster_tokens => method(:get_cluster_tokens),
       :save_tokens => method(:save_tokens),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
@@ -1381,7 +1380,7 @@ def check_auth(params, request, auth_user)
   end
   return JSON.generate({
     'success' => true,
-    'node_list' => get_token_node_list,
+    'node_list' => read_tokens.keys,
   })
 end
 
@@ -2092,15 +2091,6 @@ def wizard_submit(params, request, auth_user)
     return "Error finding Wizard - #{params["wizard"]}"
   end
 
-end
-
-# not used anymore, left here for backward compatability reasons
-def get_tokens(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  return [200, JSON.generate(read_tokens)]
 end
 
 def get_cluster_tokens(params, request, auth_user)

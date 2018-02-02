@@ -1140,44 +1140,6 @@ def read_tokens()
   return read_token_file().tokens
 end
 
-def get_nodes_ports()
-  return read_token_file().ports
-end
-
-def write_tokens(tokens)
-  begin
-    cfg = read_token_file()
-    cfg.tokens = tokens
-    Cfgsync::PcsdTokens.from_text(cfg.text()).save()
-  rescue
-    return false
-  end
-  return true
-end
-
-def get_tokens_of_nodes(nodes)
-  tokens = {}
-  read_tokens.each { |node, token|
-    if nodes.include? node
-      tokens[node] = token
-    end
-  }
-  return tokens
-end
-
-def get_node_token(node)
-  tokens = read_tokens()
-  if tokens.include? node
-    return tokens[node]
-  else
-    return nil
-  end
-end
-
-def get_token_node_list()
-  return read_tokens.keys
-end
-
 def add_prefix_to_keys(hash, prefix)
   new_hash = {}
   hash.each { |k,v|
