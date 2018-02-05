@@ -8,6 +8,7 @@ from pcs.test.tools.custom_mock import (
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import Destination
 from pcs.lib.node import NodeAddresses
 import pcs.common.node_communicator as lib
 
@@ -36,12 +37,18 @@ class RequestDataUrlEncodeTest(TestCase):
         self.assertEqual(expected_raw_data, data.data)
 
 
+def _addr_list_to_host_con(addr_list, port=None):
+    return [Destination(addr, port) for addr in addr_list]
+
+
 class RequestTargetConstructorTest(TestCase):
     def test_no_adresses(self):
         label = "label"
         target = lib.RequestTarget(label)
         self.assertEqual(label, target.label)
-        self.assertEqual([label], target.address_list)
+        self.assertEqual(
+            _addr_list_to_host_con([label]), target.host_connection_list
+        )
 
     def test_with_adresses(self):
         label = "label"
@@ -50,8 +57,12 @@ class RequestTargetConstructorTest(TestCase):
         target = lib.RequestTarget(label, address_list=address_list)
         address_list.append("a3")
         self.assertEqual(label, target.label)
-        self.assertIsNot(address_list, target.address_list)
-        self.assertEqual(original_list, target.address_list)
+        self.assertIsNot(
+            _addr_list_to_host_con(address_list), target.host_connection_list
+        )
+        self.assertEqual(
+            _addr_list_to_host_con(original_list), target.host_connection_list
+        )
 
 
 class RequestTargetFromNodeAdressesTest(TestCase):
@@ -59,7 +70,9 @@ class RequestTargetFromNodeAdressesTest(TestCase):
         ring0 = "ring0"
         target = lib.RequestTarget.from_node_addresses(NodeAddresses(ring0))
         self.assertEqual(ring0, target.label)
-        self.assertEqual([ring0], target.address_list)
+        self.assertEqual(
+            _addr_list_to_host_con([ring0]), target.host_connection_list
+        )
 
     def test_ring1(self):
         ring0 = "ring0"
@@ -68,7 +81,9 @@ class RequestTargetFromNodeAdressesTest(TestCase):
             NodeAddresses(ring0, ring1)
         )
         self.assertEqual(ring0, target.label)
-        self.assertEqual([ring0, ring1], target.address_list)
+        self.assertEqual(
+            _addr_list_to_host_con([ring0, ring1]), target.host_connection_list
+        )
 
     def test_ring0_with_label(self):
         ring0 = "ring0"
@@ -77,7 +92,9 @@ class RequestTargetFromNodeAdressesTest(TestCase):
             NodeAddresses(ring0, name=label)
         )
         self.assertEqual(label, target.label)
-        self.assertEqual([ring0], target.address_list)
+        self.assertEqual(
+            _addr_list_to_host_con([ring0]), target.host_connection_list
+        )
 
     def test_ring1_with_label(self):
         ring0 = "ring0"
@@ -87,7 +104,9 @@ class RequestTargetFromNodeAdressesTest(TestCase):
             NodeAddresses(ring0, ring1, name=label)
         )
         self.assertEqual(label, target.label)
-        self.assertEqual([ring0, ring1], target.address_list)
+        self.assertEqual(
+            _addr_list_to_host_con([ring0, ring1]), target.host_connection_list
+        )
 
 
 class RequestUrlTest(TestCase):
@@ -147,14 +166,18 @@ class RequestHostTest(TestCase):
     def test_one_host(self):
         host = "host"
         request = self._get_request(lib.RequestTarget(host))
-        self.assertEqual(host, request.host)
+        self.assertEqual(
+            Destination(host, None), request.host_connection
+        )
         self.assertRaises(StopIteration, request.next_host)
 
     def test_multiple_hosts(self):
         hosts = ["host1", "host2", "host3"]
         request = self._get_request(lib.RequestTarget("label", hosts))
         for host in hosts:
-            self.assertEqual(host, request.host)
+            self.assertEqual(
+                Destination(host, None), request.host_connection
+            )
             if host == hosts[-1]:
                 self.assertRaises(StopIteration, request.next_host)
             else:
@@ -490,7 +513,9 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         self.assertIs(response, expected_response_list[-1])
         self.assertTrue(response.was_connected)
         self.assertIs(request, response.request)
-        self.assertEqual("host2", request.host)
+        self.assertEqual(
+            Destination("host2", None), request.host_connection
+        )
         self.assertEqual(3, mock_create_handle.call_count)
         self.assertEqual(3, len(expected_response_list))
         mock_create_handle.assert_has_calls([
@@ -499,11 +524,11 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         ])
         logger_calls = (
             fixture_logger_request_retry_calls(
-                expected_response_list[0], "host0"
+                expected_response_list[0], Destination("host0", None)
             )
             +
             fixture_logger_request_retry_calls(
-                expected_response_list[1], "host1"
+                expected_response_list[1], Destination("host1", None)
             )
             +
             [
@@ -538,7 +563,9 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         response = response_list[0]
         self.assertFalse(response.was_connected)
         self.assertIs(request, response.request)
-        self.assertEqual("host3", request.host)
+        self.assertEqual(
+            Destination("host3", None), request.host_connection
+        )
         self.assertEqual(4, mock_create_handle.call_count)
         mock_con_successful.assert_not_called()
         self.assertEqual(4, len(expected_response_list))
@@ -548,15 +575,15 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         ])
         logger_calls = (
             fixture_logger_request_retry_calls(
-                expected_response_list[0], "host0"
+                expected_response_list[0], Destination("host0", None)
             )
             +
             fixture_logger_request_retry_calls(
-                expected_response_list[1], "host1"
+                expected_response_list[1], Destination("host1", None)
             )
             +
             fixture_logger_request_retry_calls(
-                expected_response_list[2], "host2"
+                expected_response_list[2], Destination("host2", None)
             )
             +
             [

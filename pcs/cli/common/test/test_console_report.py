@@ -2076,3 +2076,22 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
                 "current_set": "3.0.6",
             }
         )
+
+class NodeCommunicationRetrying(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_RETRYING
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to connect to 'node_name' via address 'failed.address' "
+                "and port '2224'. Retrying request 'my/request' via address "
+                "'next.address' and port '2225'"
+            ),
+            {
+                "node": "node_name",
+                "failed_address": "failed.address",
+                "failed_port": "2224",
+                "next_address": "next.address",
+                "next_port": "2225",
+                "request": "my/request",
+            }
+        )

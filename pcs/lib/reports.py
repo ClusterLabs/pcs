@@ -693,7 +693,9 @@ def node_communication_proxy_is_set(node=None, address=None):
     )
 
 
-def node_communication_retrying(node, failed_address, next_address, request):
+def node_communication_retrying(
+    node, failed_address, failed_port, next_address, next_port, request
+):
     """
     Request failed due communication error connecting via specified address,
     therefore trying another address if there is any.
@@ -703,7 +705,9 @@ def node_communication_retrying(node, failed_address, next_address, request):
         info={
             "node": node,
             "failed_address": failed_address,
+            "failed_port": failed_port,
             "next_address": next_address,
+            "next_port": next_port,
             "request": request,
         }
     )

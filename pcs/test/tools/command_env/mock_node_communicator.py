@@ -329,10 +329,14 @@ class NodeCommunicator(object):
                     real_request.target.token
                 )
 
-            if expected_request.target.port != real_request.target.port:
-                diff["target.port"] = (
-                    expected_request.target.port,
-                    real_request.target.port
+            if (
+                expected_request.target.host_connection_list
+                !=
+                real_request.target.host_connection_list
+            ):
+                diff["target.host_connection_list"] = (
+                    expected_request.target.host_connection_list,
+                    real_request.target.host_connection_list
                 )
 
             if not _compare_request_data(

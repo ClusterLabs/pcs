@@ -50,21 +50,16 @@ REPORTS = (FIXTURE_REPORTS
 EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS
     .adapt_multi(
         [
-            "manage_services_connection_failed",
-            "manage_services_connection_failed_warn",
-            "remove_file_connection_failed",
-            "remove_file_connection_failed_warn",
-        ],
-        node=REMOTE_HOST
-    )
-    .adapt_multi(
-        [
             "authkey_remove_failed",
             "authkey_remove_failed_warn",
+            "manage_services_connection_failed",
+            "manage_services_connection_failed_warn",
             "pcmk_remote_disable_failed",
             "pcmk_remote_disable_failed_warn",
             "pcmk_remote_stop_failed",
             "pcmk_remote_stop_failed_warn",
+            "remove_file_connection_failed",
+            "remove_file_connection_failed_warn",
         ],
         node=NODE_NAME
     )

@@ -1,9 +1,14 @@
 import os
 
+from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.node_communicator import CommunicatorLoggerInterface
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib import reports
+
+
+def _get_port(port):
+    return port if port is not None else settings.pcsd_default_port
 
 
 class LibCommunicatorLogger(CommunicatorLoggerInterface):
@@ -47,17 +52,18 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
     def _log_response_failure(self, response):
         msg = "Unable to connect to {node} ({reason})"
         self._logger.debug(msg.format(
-            node=response.request.host, reason=response.error_msg
+            node=response.request.host_label, reason=response.error_msg
         ))
         self._reporter.process(
             reports.node_communication_not_connected(
-                response.request.host, response.error_msg
+                response.request.host_label, response.error_msg
             )
         )
         if is_proxy_set(os.environ):
             self._logger.warning("Proxy is set")
             self._reporter.process(reports.node_communication_proxy_is_set(
-                response.request.host_label, response.request.host
+                response.request.host_label,
+                response.request.host_connection.addr,
             ))
 
     def _log_debug(self, response):
@@ -75,21 +81,28 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             reports.node_communication_debug_info(url, debug_data)
         )
 
-    def log_retry(self, response, previous_host):
+    def log_retry(self, response, previous_host_connection):
+        old_port = _get_port(previous_host_connection.port)
+        new_port = _get_port(response.request.host_connection.port)
         msg = (
-            "Unable to connect to '{label}' via address '{old_addr}'. Retrying "
-            "request '{req}' via address '{new_addr}'"
+            "Unable to connect to '{label}' via address '{old_addr}' and port "
+            "'{old_port}'. Retrying request '{req}' via address '{new_addr}' "
+            "and port '{new_port}'"
         ).format(
             label=response.request.host_label,
-            old_addr=previous_host,
-            new_addr=response.request.host,
+            old_addr=previous_host_connection.addr,
+            old_port=old_port,
+            new_addr=response.request.host_connection.addr,
+            new_port=new_port,
             req=response.request.url,
         )
         self._logger.warning(msg)
         self._reporter.process(reports.node_communication_retrying(
             response.request.host_label,
-            previous_host,
-            response.request.host,
+            previous_host_connection.addr,
+            old_port,
+            response.request.host_connection.addr,
+            new_port,
             response.request.url,
         ))
 
@@ -149,7 +162,7 @@ def response_to_report_item(
     if not report:
         return None
     return report(
-        response.request.host,
+        response.request.host_label,
         response.request.action,
         reason,
         severity,

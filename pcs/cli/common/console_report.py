@@ -1382,4 +1382,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
         "Unable to perform operation on any available node/host, therefore it "
         "is not possible to continue."
+    ,
+    codes.NODE_COMMUNICATION_RETRYING: lambda info:
+        (
+            "Unable to connect to '{node}' via address '{failed_address}' and "
+            "port '{failed_port}'. Retrying request '{request}' via address "
+            "'{next_address}' and port '{next_port}'"
+        ).format(**info)
 }

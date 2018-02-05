@@ -4,6 +4,9 @@ import re
 from collections import namedtuple
 from urllib.parse import urlencode
 
+from pcs.common.host import Destination
+
+
 # We should ignore SIGPIPE when using pycurl.NOSIGNAL - see the libcurl tutorial
 # for more info.
 try:
@@ -74,8 +77,9 @@ class RequestData(
         )
 
 
+
 class RequestTarget(namedtuple(
-    "RequestTarget", ["label", "address_list", "port", "token"]
+    "RequestTarget", ["label", "host_connection_list", "token"]
 )):
     """
     This class represents target (host) for request to be performed on
@@ -93,7 +97,10 @@ class RequestTarget(namedtuple(
         if not address_list:
             address_list = [label]
         return super(RequestTarget, cls).__new__(
-            cls, label, list(address_list), port, token
+            cls,
+            label,
+            [Destination(addr, port) for addr in address_list],
+            token,
         )
 
     @classmethod
@@ -128,35 +135,52 @@ class Request(object):
         """
         self._target = request_target
         self._data = request_data
-        self._current_host_iterator = iter(request_target.address_list)
-        self._current_host = None
-        self.next_host()
+        self._current_host_connection_iterator = iter(
+            request_target.host_connection_list
+        )
+        self._current_host_connection = None
+        self.next_host_connection()
 
     def next_host(self):
         """
-        Move to the next available host. Raises StopIteration when there is no
-        host to use.
+        Deprecated
+        TODO: remove
         """
-        self._current_host = next(self._current_host_iterator)
+        self.next_host_connection()
+
+    def next_host_connection(self):
+        """
+        Move to the next available host connection. Raises StopIteration when
+        there is no connection to use.
+        """
+        self._current_host_connection = next(
+            self._current_host_connection_iterator
+        )
 
     @property
     def url(self):
         """
         URL representing request using current host.
         """
+        addr = self.host_connection.addr
+        port = self.host_connection.port
         return "https://{host}:{port}/{request}".format(
-            host="[{0}]".format(self.host) if ":" in self.host else self.host,
-            port=(
-                self._target.port
-                if self._target.port
-                else settings.pcsd_default_port
-            ),
+            host="[{0}]".format(addr) if ":" in addr else addr,
+            port=(port if port else settings.pcsd_default_port),
             request=self._data.action
         )
 
+    # @property
+    # def host(self):
+    #     """
+    #     Deprecated
+    #     TODO: remove
+    #     """
+    #     return self.host_connection.addr
+    #
     @property
-    def host(self):
-        return self._current_host
+    def host_connection(self):
+        return self._current_host_connection
 
     @property
     def host_label(self):
@@ -438,9 +462,9 @@ class MultiaddressCommunicator(Communicator):
                 yield response
                 continue
             try:
-                previous_host = response.request.host
-                response.request.next_host()
-                self._logger.log_retry(response, previous_host)
+                previous_host_connection = response.request.host_connection
+                response.request.next_host_connection()
+                self._logger.log_retry(response, previous_host_connection)
                 self.add_requests([response.request])
             except StopIteration:
                 self._logger.log_no_more_addresses(response)
@@ -454,7 +478,7 @@ class CommunicatorLoggerInterface(object):
     def log_response(self, response):
         raise NotImplementedError()
 
-    def log_retry(self, response, previous_host):
+    def log_retry(self, response, previous_host_connection):
         raise NotImplementedError()
 
     def log_no_more_addresses(self, response):

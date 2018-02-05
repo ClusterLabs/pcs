@@ -2,6 +2,8 @@ import io
 import logging
 from unittest import mock, TestCase
 
+from pcs import settings
+
 from pcs.test.tools.assertions import assert_report_item_equal
 from pcs.test.tools.custom_mock import (
     MockCurl,
@@ -14,6 +16,7 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     report_codes,
 )
+from pcs.common.host import Destination
 from pcs.common.node_communicator import (
     Request,
     RequestData,
@@ -454,7 +457,7 @@ class CommunicatorLoggerTest(TestCase):
             )
             +
             fixture_report_item_list_proxy_set(
-                response.request.host_label, response.request.host
+                response.request.host_label, response.request.host_label
             )
             +
             fixture_report_item_list_debug(
@@ -473,7 +476,9 @@ class CommunicatorLoggerTest(TestCase):
         self.assertEqual(logger_calls, self.logger.mock_calls)
 
     def test_log_retry(self):
-        prev_host = "prev host"
+        prev_addr = "addr"
+        prev_port = 2225
+        prev_host = Destination(prev_addr, prev_port)
         response = Response.connection_failure(
             MockCurlSimple(request=fixture_request()),
             pycurl.E_HTTP_POST_ERROR,
@@ -485,20 +490,25 @@ class CommunicatorLoggerTest(TestCase):
             report_codes.NODE_COMMUNICATION_RETRYING,
             {
                 "node": response.request.host_label,
-                "failed_address": prev_host,
-                "next_address": response.request.host,
+                "failed_address": prev_addr,
+                "failed_port": prev_port,
+                "next_address": response.request.host_connection.addr,
+                "next_port": settings.pcsd_default_port,
                 "request": response.request.url,
             },
             None
         )])
         logger_call = mock.call.warning(
             (
-                "Unable to connect to '{label}' via address '{old_addr}'. "
-                "Retrying request '{req}' via address '{new_addr}'"
+                "Unable to connect to '{label}' via address '{old_addr}' and "
+                "port '{old_port}'. Retrying request '{req}' via address "
+                "'{new_addr}' and port '{new_port}'"
             ).format(
                 label=response.request.host_label,
-                old_addr=prev_host,
-                new_addr=response.request.host,
+                old_addr=prev_addr,
+                old_port=prev_port,
+                new_addr=response.request.host_connection.addr,
+                new_port=settings.pcsd_default_port,
                 req=response.request.url,
             )
         )
