@@ -66,15 +66,23 @@ $cluster_name = get_cluster_name()
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
+  # TODO replace this function with read_known_hosts
+  # it is only kept here while overhauling authentication so the overhaul can
+  # be done in steps instead all at once
   'read_tokens' => {
     # returns tokens of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,
     'permissions' => nil,
     'call' => lambda { |params, auth_user_|
-      token_cfg = read_token_file()
+      tokens = {}
+      ports = {}
+      get_known_hosts().each { |name, obj|
+        tokens[name] = obj.token
+        ports[name] = obj.first_addr_port()['port']
+      }
       return {
-        :tokens => token_cfg.tokens,
-        :ports => token_cfg.ports,
+        :tokens => tokens,
+        :ports => ports,
       }
     },
   },

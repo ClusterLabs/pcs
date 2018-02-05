@@ -186,63 +186,6 @@ def hash_to_ordered_hash(hash)
   return new_hash
 end
 
-class PCSTokens
-  CURRENT_FORMAT = 3
-  attr_accessor :tokens, :format_version, :data_version, :ports
-
-  def initialize(cfg_text)
-    @format_version = 0
-    @data_version = 0
-    @tokens = {}
-    @ports = {}
-
-    # set a reasonable parseable default if got empty text
-    if cfg_text.nil? or cfg_text.strip.empty?
-      @format_version = CURRENT_FORMAT
-      return
-    end
-
-    begin
-      json = JSON.parse(cfg_text)
-      if not(json.is_a?(Hash) and json.key?('format_version') and json.key?('tokens'))
-        @format_version = 1
-      else
-        @format_version = json['format_version']
-      end
-
-      if @format_version > CURRENT_FORMAT
-        $logger.warn(
-          "tokens file format version is #{@format_version}" +
-          ", newest fully supported version is #{CURRENT_FORMAT}"
-        )
-      end
-
-      if @format_version >= 3
-        @ports = json['ports'] || {}
-      end
-      if @format_version >= 2
-        @data_version = json['data_version'] || 0
-        @tokens = json['tokens'] || {}
-      elsif @format_version == 1
-        @tokens = json
-      else
-        $logger.error('Unable to parse tokens file')
-      end
-    rescue => e
-      $logger.error("Unable to parse tokens file: #{e}")
-    end
-  end
-
-  def text()
-    out_hash = Hash.new
-    out_hash['format_version'] = CURRENT_FORMAT
-    out_hash['data_version'] = @data_version
-    out_hash['tokens'] = hash_to_ordered_hash(@tokens)
-    out_hash['ports'] = hash_to_ordered_hash(@ports)
-
-    return JSON.pretty_generate(out_hash)
-  end
-end
 
 class CfgKnownHosts
   CURRENT_FORMAT = 1

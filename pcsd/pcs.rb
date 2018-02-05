@@ -1132,14 +1132,6 @@ def get_known_hosts()
   ).known_hosts
 end
 
-def read_token_file()
-  return PCSTokens.new(Cfgsync::PcsdTokens.from_file().text())
-end
-
-def read_tokens()
-  return read_token_file().tokens
-end
-
 def add_prefix_to_keys(hash, prefix)
   new_hash = {}
   hash.each { |k,v|
@@ -1155,11 +1147,11 @@ def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=1
   not_authorized_nodes = []
   online_nodes = []
   offline_nodes = []
-  token_file = read_token_file()
+  known_hosts = get_known_hosts()
 
   nodes = nodes.uniq.sort
   nodes.each { |node|
-    if ports and ports[node] != token_file.ports[node]
+    if ports and known_hosts.include?(node) and (ports[node] || PCSD_DEFAULT_PORT) != known_hosts[node].first_addr_port()['port']
       not_authorized_nodes << node
       next
     end
@@ -1225,28 +1217,29 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   )
 
   # get the tokens and sync them within the local cluster
-  new_tokens = {}
-  ports = {}
+  new_hosts = []
   auth_responses.each { |node, response|
     if 'ok' == response['status']
-      new_tokens[node] = response['token']
-      ports[node] = nodes[node] || PCSD_DEFAULT_PORT
+      new_hosts << PcsKnownHost.new(
+        node,
+        response['token'],
+        [{'addr' => node, 'port' => nodes[node] || PCSD_DEFAULT_PORT}]
+      )
     end
   }
-  if not new_tokens.empty?
-    tokens_cfg = Cfgsync::PcsdTokens.from_file()
+  if not new_hosts.empty?
     # only tokens used in pcsd-to-pcsd communication can and need to be synced
     # those are accessible only when running under root account
     if Process.uid != 0
       # other tokens just need to be stored localy for the user
-      sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-        tokens_cfg, new_tokens, [], nil, ports
+      sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+        new_hosts, [], nil
       )
       return auth_responses, sync_successful, sync_failed_nodes, sync_responses
     end
     cluster_nodes = get_corosync_nodes()
-    sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-      tokens_cfg, new_tokens, cluster_nodes, $cluster_name, ports
+    sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+      new_hosts, cluster_nodes, $cluster_name
     )
     sync_not_supported_nodes = []
     sync_responses.each { |node, response|
@@ -1255,7 +1248,7 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
       elsif response['status'] != 'ok'
         sync_failed_nodes << node
       else
-        node_result = response['result'][Cfgsync::PcsdTokens.name]
+        node_result = response['result'][Cfgsync::PcsdKnownHosts.name]
         if 'not_supported' == node_result
           sync_not_supported_nodes << node
         elsif not ['accepted', 'rejected'].include?(node_result)

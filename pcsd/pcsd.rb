@@ -464,6 +464,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
 
       # auth begin
+      # TODO add get_known_hosts and keep get_cluster_tokens for compatibility with pcs-0.9
       retval, out = send_request_with_token(
         PCSAuth.getSuperuserAuth(), node, '/get_cluster_tokens', false, {'with_ports' => '1'}
       )
@@ -489,9 +490,22 @@ already been added to pcsd.  You may not add two clusters with the same name int
           return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
         end
 
-        sync_config = Cfgsync::PcsdTokens.from_file()
-        pushed, _ = Cfgsync::save_sync_new_tokens(
-          sync_config, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
+        # TODO properly adapt to know-hosts and be backward compatible with tokens
+        new_hosts = []
+        new_tokens.each { |name_addr, token|
+          new_hosts << PcsKnownHost.new(
+            name_addr,
+            token,
+            [
+              {
+                'addr' => name_addr,
+                'port' => (new_ports[name_addr] || PCSD_DEFAULT_PORT),
+              }
+            ]
+          )
+        }
+        pushed, _ = Cfgsync::save_sync_new_known_hosts(
+          new_hosts, get_corosync_nodes(), $cluster_name
         )
         if not pushed
           return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -553,13 +567,21 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     }
 
+    # TODO adapt to new /save_known_hosts url
+    # keep backward compatible /save_tokens in place for pcs-0.9
+
     # first we need to authenticate nodes to each other
-    token_file_data = read_token_file()
+    tokens = {}
+    ports = {}
+    get_known_hosts().each { |name, obj|
+      tokens[name] = obj.token
+      ports[name] = obj.first_addr_port()['port']
+    }
     tokens_data = add_prefix_to_keys(
-      token_file_data.tokens.select {|k,v| @nodes.include?(k)}, "node:"
+      tokens.select {|k,v| @nodes.include?(k)}, "node:"
     )
     ports_data = add_prefix_to_keys(
-      token_file_data.ports.select {|k,v| @nodes.include?(k)}, "port:"
+      ports.select {|k,v| @nodes.include?(k)}, "port:"
     )
     @nodes.each {|n|
       retval, out = send_request_with_token(
@@ -734,11 +756,22 @@ already been added to pcsd.  You may not add two clusters with the same name int
     }
     threads.each { |t| t.join }
 
-    if not new_tokens.empty? or not new_ports.empty?
-      cluster_nodes = get_corosync_nodes()
-      tokens_cfg = Cfgsync::PcsdTokens.from_file()
-      sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-        tokens_cfg, new_tokens, cluster_nodes, $cluster_name, new_ports
+    if not new_tokens.empty?
+      new_hosts = []
+      new_tokens.each { |name_addr, token|
+        new_hosts << PcsKnownHost.new(
+          name_addr,
+          token,
+          [
+            {
+              'addr' => name_addr,
+              'port' => (new_ports[name_addr] || PCSD_DEFAULT_PORT),
+            }
+          ]
+        )
+      }
+      _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
+        new_hosts, get_corosync_nodes(), $cluster_name
       )
     end
 
@@ -1193,12 +1226,19 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     nodes = get_cluster_nodes(clustername)
-    token_file_data = read_token_file()
+    # TODO adapt to new /save_known_hosts url
+    # keep backward compatible /save_tokens in place for pcs-0.9
+    tokens = {}
+    ports = {}
+    get_known_hosts().each { |name, obj|
+      tokens[name] = obj.token
+      ports[name] = obj.first_addr_port()['port']
+    }
     tokens_data = add_prefix_to_keys(
-      token_file_data.tokens.select {|k,v| nodes.include?(k)}, "node:"
+      tokens.select {|k,v| nodes.include?(k)}, "node:"
     )
     ports_data = add_prefix_to_keys(
-      token_file_data.ports.select {|k,v| nodes.include?(k)}, "port:"
+      ports.select {|k,v| nodes.include?(k)}, "port:"
     )
 
     retval, out = send_cluster_request_with_token(
@@ -1224,19 +1264,20 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     end
 
-    token_file_data = read_token_file()
-    tokens = token_file_data.tokens
-
-    if not tokens.include? new_node
+    known_hosts = get_known_hosts()
+    if not known_hosts.include? new_node
       return [400, "New node is not authenticated."]
     end
+
+    # TODO adapt to new /save_known_hosts url
+    # keep backward compatible /save_tokens in place for pcs-0.9
 
     # Save the new node token on all nodes in a cluster the new node is beeing
     # added to. Send the token to one node and let the cluster nodes synchronize
     # it by themselves.
     token_data = {
-      "node:#{new_node}" => tokens[new_node],
-      "port:#{new_node}" => token_file_data.ports[new_node],
+      "node:#{new_node}" => known_hosts[new_node].token,
+      "port:#{new_node}" => known_hosts[new_node].first_addr_port()['port']
     }
     retval, out = send_cluster_request_with_token(
       # new node doesn't have config with permissions yet

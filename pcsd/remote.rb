@@ -1380,7 +1380,7 @@ def check_auth(params, request, auth_user)
   end
   return JSON.generate({
     'success' => true,
-    'node_list' => read_tokens.keys,
+    'node_list' => get_known_hosts().keys,
   })
 end
 
@@ -2093,6 +2093,9 @@ def wizard_submit(params, request, auth_user)
 
 end
 
+# TODO replace this function for known_hosts
+# it is only kept here while overhauling authentication so the overhaul can
+# be done in steps instead all at once
 def get_cluster_tokens(params, request, auth_user)
   # pcsd runs as root thus always returns hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
@@ -2101,46 +2104,60 @@ def get_cluster_tokens(params, request, auth_user)
   on, off = get_nodes
   nodes = on + off
   nodes.uniq!
-  token_file_data = read_token_file()
-  tokens = token_file_data.tokens.select {|k,v| nodes.include?(k)}
+  hosts = get_known_hosts().select {|k,v| nodes.include?(k)}
+  tokens = {}
+  ports = {}
+  hosts.each { |name, obj|
+    tokens[name] = obj.token
+    ports[name] = obj.first_addr_port()['port']
+  }
   if params["with_ports"] != '1'
     return [200, JSON.generate(tokens)]
   end
   data = {
     :tokens => tokens,
-    :ports => token_file_data.ports.select {|k,v| nodes.include?(k)},
+    :ports => ports,
   }
   return [200, JSON.generate(data)]
 end
 
+# TODO replace this function with save_known_hosts
+# it is only kept here while overhauling authentication so the overhaul can
+# be done in steps instead all at once
 def save_tokens(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
+  # pcsd runs as root thus always works with hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
 
-  new_tokens = {}
-  new_ports = {}
+  new_hosts = []
 
   params.each{|nodes|
     if nodes[0].start_with?"node:" and nodes[0].length > 5
       node = nodes[0][5..-1]
-      new_tokens[node] = nodes[1]
+      token = nodes[1]
       port = (params["port:#{node}"] || '').strip
       if port == ''
-        port = nil
+        port = PCSD_DEFAULT_PORT
       end
-      new_ports[node] = port
+      new_hosts << PcsKnownHost.new(
+        node,
+        token,
+        [{'addr' => node, 'port' => port}]
+      )
     end
   }
 
-  tokens_cfg = Cfgsync::PcsdTokens.from_file()
-  sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-    tokens_cfg, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
+  sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
+    new_hosts, get_corosync_nodes(), $cluster_name
   )
 
   if sync_successful
-    return [200, JSON.generate(read_tokens())]
+    tokens = {}
+    get_known_hosts().each { |name, obj|
+      tokens[name] = obj.token
+    }
+    return [200, JSON.generate(tokens)]
   else
     return [400, "Cannot update tokenfile."]
   end

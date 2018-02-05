@@ -221,68 +221,6 @@ class TestPcsdSettings < Test::Unit::TestCase
 end
 
 
-class TestPcsdTokens < Test::Unit::TestCase
-  def teardown()
-    FileUtils.rm(CFG_PCSD_TOKENS, {:force => true})
-  end
-
-  def test_basics()
-    assert_equal('tokens', Cfgsync::PcsdTokens.name)
-    text =
-'{
-  "format_version": 3,
-  "data_version": 3,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  },
-  "ports": {
-    "rh7-1": "1234",
-    "rh7-2": null
-  }
-}'
-
-    cfg = Cfgsync::PcsdTokens.from_text(text)
-    assert_equal(text, cfg.text)
-    assert_equal(3, cfg.version)
-    assert_equal('aedd225c15fb8cc41c1a34a5dd42b9f403ebc0de', cfg.hash)
-
-    cfg.version = 4
-    assert_equal(4, cfg.version)
-    assert_equal('365d26bdf61966f8372ec23cdefd2a7cb235de02', cfg.hash)
-
-    cfg.text =
-'{
-  "format_version": 3,
-  "data_version": 4,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  },
-  "ports": {
-    "rh7-1": "1234",
-    "rh7-2": null
-  }
-}'
-    assert_equal(4, cfg.version)
-    assert_equal('365d26bdf61966f8372ec23cdefd2a7cb235de02', cfg.hash)
-  end
-
-  def test_file()
-    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
-    cfg = Cfgsync::PcsdTokens.from_file()
-    assert_equal(9, cfg.version)
-    assert_equal('1ddfeb1a7ada600356945344bd3c137c09cf5845', cfg.hash)
-  end
-
-  def test_file_missing()
-    cfg = Cfgsync::PcsdTokens.from_file()
-    assert_equal(0, cfg.version)
-    assert_equal('da39a3ee5e6b4b0d3255bfef95601890afd80709', cfg.hash)
-  end
-end
-
-
 class TestPcsdKnownHosts < Test::Unit::TestCase
   def teardown()
     FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, {:force => true})

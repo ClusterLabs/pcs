@@ -8,17 +8,6 @@ require 'corosyncconf.rb'
 require 'pcs.rb'
 require 'auth.rb'
 
-def token_file_path()
-  filename = ENV['PCS_TOKEN_FILE']
-  unless filename.nil?
-    return filename
-  end
-  if Process.uid == 0
-    return File.join(PCSD_VAR_LOCATION, 'tokens')
-  end
-  return File.expand_path('~/.pcs/tokens')
-end
-
 def known_hosts_file_path()
   if Process.uid == 0
     return File.join(PCSD_VAR_LOCATION, KNOWN_HOSTS_FILE_NAME)
@@ -38,7 +27,6 @@ end
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
-CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
 CFG_PCSD_KNOWN_HOSTS = known_hosts_file_path() unless defined? CFG_PCSD_KNOWN_HOSTS
 
 CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
@@ -216,47 +204,6 @@ module Cfgsync
 
     def set_version(new_version)
       parsed = PCSConfig.new(self.text)
-      parsed.data_version = new_version
-      return parsed.text
-    end
-  end
-
-
-  class PcsdTokens < Config
-    @name = 'tokens'
-    @file_path = ::CFG_PCSD_TOKENS
-    @file_perm = 0600
-
-    def self.backup()
-    end
-
-    def save()
-      dirname = File.dirname(self.class.file_path)
-      if not ENV['PCS_TOKEN_FILE'] and not File.directory?(dirname)
-        FileUtils.mkdir_p(dirname, {:mode => 0700})
-      end
-      super
-    end
-
-    protected
-
-    def self.on_file_missing(default)
-      return self.from_text(nil)
-    end
-
-    def self.on_file_read_error(exception, default)
-      $logger.warn(
-        "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
-      )
-      return self.from_text('')
-    end
-
-    def get_version()
-      return PCSTokens.new(self.text).data_version
-    end
-
-    def set_version(new_version)
-      parsed = PCSTokens.new(self.text)
       parsed.data_version = new_version
       return parsed.text
     end
@@ -828,30 +775,6 @@ module Cfgsync
     config_new = PcsdKnownHosts.from_text(with_new_hosts.text)
     config_new.version = max_version
     return config_new
-  end
-
-  # TODO remove this function
-  # it is only kept here while overhauling authentication so the overhaul can
-  # be done in steps instead all at once
-  def self.save_sync_new_tokens(
-    config, new_tokens, nodes, cluster_name, new_ports={}
-  )
-    new_hosts_data = Hash.new {|hash, key| hash[key] = {}}
-    new_tokens.each { |node, token|
-      new_hosts_data[node]['token'] = token
-    }
-    new_ports.each { |node, port|
-      new_hosts_data[node]['port'] = port
-    }
-    new_hosts = []
-    new_hosts_data.each { |node, data|
-      new_hosts << PcsKnownHost.new(
-        node,
-        data['token'],
-        [{'addr' => node, 'port' => data['port']}]
-      )
-    }
-    return save_sync_new_known_hosts(new_hosts, nodes, cluster_name)
   end
 
   def self.save_sync_new_known_hosts(new_hosts, target_nodes, cluster_name)
