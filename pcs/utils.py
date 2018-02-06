@@ -1084,11 +1084,17 @@ def run_pcsdcli(command, data=None):
 
 def auth_nodes_do(nodes, username, password, force, local):
     pcsd_data = {
-        'nodes': nodes,
-        'username': username,
-        'password': password,
-        'force': force,
-        'local': local,
+        'nodes': {
+            node_name: {
+                'username': username,
+                'password': password,
+                'addr_port_list': [{
+                    'addr': node_name,
+                    'port': node_port if node_port else settings.pcsd_default_port,
+                }],
+            }
+            for node_name, node_port in nodes.items()
+        }
     }
     output, retval = run_pcsdcli('auth', pcsd_data)
     if retval == 0 and output['status'] == 'access_denied':
@@ -1105,15 +1111,13 @@ def auth_nodes_do(nodes, username, password, force, local):
             for node, result in output['data']['auth_responses'].items():
                 if result['status'] == 'ok':
                     print("{0}: Authorized".format(node))
-                elif result['status'] == 'already_authorized':
-                    print("{0}: Already authorized".format(node))
                 elif result['status'] == 'bad_password':
                     err(
                         "{0}: Username and/or password is incorrect".format(node),
                         False
                     )
                     failed = True
-                elif result['status'] == 'noresponse':
+                elif result['status'] in ('noresponse', 'error'):
                     err("Unable to communicate with {0}".format(node), False)
                     failed = True
                 else:

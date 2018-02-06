@@ -1044,7 +1044,6 @@ def node_status(params, request, auth_user)
     _,_,not_authorized_nodes = check_gui_status_of_nodes(
       auth_user,
       status[:known_nodes],
-      false,
       3
     )
 
@@ -1207,7 +1206,6 @@ def clusters_overview(params, request, auth_user)
       online, offline, not_authorized_nodes = check_gui_status_of_nodes(
         auth_user,
         get_cluster_nodes(cluster.name),
-        false,
         3
       )
       not_supported = false
@@ -1354,34 +1352,12 @@ def clusters_overview(params, request, auth_user)
 end
 
 def auth(params, request, auth_user)
-  token = PCSAuth.validUser(params['username'],params['password'], true)
-  # If we authorized to this machine, attempt to authorize everywhere
-  nodes = {}
-  if token and params["bidirectional"]
-    params.each { |k,v|
-      if k.start_with?("node-")
-        nodes[v] = params["port-#{v}"]
-      end
-    }
-    if nodes.length > 0
-      pcs_auth(
-        auth_user, nodes, params['username'], params['password'],
-        params["force"] == "1"
-      )
-    end
-  end
-  return token
+  return PCSAuth.validUser(params['username'], params['password'], true)
 end
 
-# If we get here, we're already authorized
 def check_auth(params, request, auth_user)
-  if params.include?("check_auth_only")
-    return [200, "{\"success\":true}"]
-  end
-  return JSON.generate({
-    'success' => true,
-    'node_list' => get_known_hosts().keys,
-  })
+  # If we get here, we're already authorized
+  return [200, '{"success":true}']
 end
 
 # not used anymore, left here for backward compatability reasons

@@ -1140,9 +1140,7 @@ def add_prefix_to_keys(hash, prefix)
   return new_hash
 end
 
-def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=10, ports=nil)
-  options = {}
-  options[:check_auth_only] = '' if not check_mutuality
+def check_gui_status_of_nodes(auth_user, nodes, timeout=10, ports=nil)
   threads = []
   not_authorized_nodes = []
   online_nodes = []
@@ -1157,23 +1155,10 @@ def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=1
     end
     threads << Thread.new {
       code, response = send_request_with_token(
-        auth_user, node, 'check_auth', false, options, true, nil, timeout
+        auth_user, node, 'check_auth', false, {}, true, nil, timeout
       )
       if code == 200
-        if check_mutuality
-          begin
-            parsed_response = JSON.parse(response)
-            if parsed_response['node_list'] and parsed_response['node_list'].uniq.sort == nodes
-              online_nodes << node
-            else
-              not_authorized_nodes << node
-            end
-          rescue
-            not_authorized_nodes << node
-          end
-        else
-          online_nodes << node
-        end
+        online_nodes << node
       else
         begin
           parsed_response = JSON.parse(response)
@@ -1192,122 +1177,93 @@ def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=1
   return online_nodes, offline_nodes, not_authorized_nodes
 end
 
-def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
-  # nodes is hash, (nodename -> port)
-  # if no sync is needed, do not report a sync error
-  sync_successful = true
-  sync_failed_nodes = []
-  sync_responses = {}
-  # check for already authorized nodes
-  if not force
-    online, offline, not_authenticated = check_gui_status_of_nodes(
-      auth_user, nodes.keys, true, 10, nodes
-    )
-    if not_authenticated.length < 1
-      result = {}
-      online.each { |node| result[node] = {'status' => 'already_authorized'} }
-      offline.each { |node| result[node] = {'status' => 'noresponse'} }
-      return result, sync_successful, sync_failed_nodes, sync_responses
-    end
-  end
+def pcs_auth(auth_user, nodes)
+  # nodes is a hash of hashes:
+  # {
+  #   'node name' => {
+  #     'username' => a username used for auth
+  #     'password' => a password used for auth
+  #     'addr_port_list' => [ # currently only the first item is used
+  #       {'addr' => addr, 'port' => port} # how to connect to a node
+  #     ]
+  #   }
+  # }
 
-  # authorize the nodes locally (i.e. not bidirectionally)
-  auth_responses = run_auth_requests(
-    auth_user, nodes, nodes, username, password, force, true
-  )
-
-  # get the tokens and sync them within the local cluster
-  new_hosts = []
-  auth_responses.each { |node, response|
-    if 'ok' == response['status']
-      new_hosts << PcsKnownHost.new(
-        node,
-        response['token'],
-        [{'addr' => node, 'port' => nodes[node] || PCSD_DEFAULT_PORT}]
-      )
-    end
-  }
-  if not new_hosts.empty?
-    # only tokens used in pcsd-to-pcsd communication can and need to be synced
-    # those are accessible only when running under root account
-    if Process.uid != 0
-      # other tokens just need to be stored localy for the user
-      sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
-        new_hosts, [], nil
-      )
-      return auth_responses, sync_successful, sync_failed_nodes, sync_responses
-    end
-    cluster_nodes = get_corosync_nodes()
-    sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
-      new_hosts, cluster_nodes, $cluster_name
-    )
-    sync_not_supported_nodes = []
-    sync_responses.each { |node, response|
-      if 'not_supported' == response['status']
-        sync_not_supported_nodes << node
-      elsif response['status'] != 'ok'
-        sync_failed_nodes << node
-      else
-        node_result = response['result'][Cfgsync::PcsdKnownHosts.name]
-        if 'not_supported' == node_result
-          sync_not_supported_nodes << node
-        elsif not ['accepted', 'rejected'].include?(node_result)
-          sync_failed_nodes << node
-        end
-      end
-    }
-    if not local
-      # authorize nodes outside of the local cluster and nodes not supporting
-      # the tokens file synchronization in the other direction
-      nodes_to_auth = {}
-      nodes.each { |node, port|
-        nodes_to_auth[node] = port if sync_not_supported_nodes.include?(node)
-        nodes_to_auth[node] = port if not cluster_nodes.include?(node)
-      }
-      auth_responses2 = run_auth_requests(
-        auth_user, nodes_to_auth, nodes, username, password, force, false
-      )
-      auth_responses.update(auth_responses2)
-    end
-  end
-
-  return auth_responses, sync_successful, sync_failed_nodes, sync_responses
-end
-
-def run_auth_requests(auth_user, nodes_to_send, nodes_to_auth, username, password, force=false, local=true)
-  data = {}
-  index = 0
-  nodes_to_auth.each { |node, port|
-    data["node-#{index}"] = node
-    data["port-#{node}"] = port if port
-    index += 1
-  }
-  data['username'] = username
-  data['password'] = password
-  data['bidirectional'] = 1 if not local
-  data['force'] = 1 if force
-
+  # authorize against the nodes
   auth_responses = {}
   threads = []
-  nodes_to_send.each { |node, port|
+  nodes.each { |node_name, node_data|
     threads << Thread.new {
-      code, response = send_request(
-        auth_user, node, 'auth', true, data, true, nil, nil, nil, port
-      )
-      if 200 == code
-        token = response.strip
-        if '' == token
-          auth_responses[node] = {'status' => 'bad_password'}
+      begin
+        addr = node_data.fetch('addr_port_list').fetch(0).fetch('addr')
+        port = node_data.fetch('addr_port_list').fetch(0).fetch('port')
+        request_data = {
+          :username => node_data.fetch('username'),
+          :password => node_data.fetch('password'),
+        }
+        code, response = send_request(
+          auth_user, addr, 'auth', true, request_data, true, nil, nil, nil, port
+        )
+        if 200 == code
+          token = response.strip
+          if '' == token
+            auth_responses[node_name] = {'status' => 'bad_password'}
+          else
+            auth_responses[node_name] = {'status' => 'ok', 'token' => token}
+          end
         else
-          auth_responses[node] = {'status' => 'ok', 'token' => token}
+          auth_responses[node_name] = {'status' => 'noresponse'}
         end
-      else
-        auth_responses[node] = {'status' => 'noresponse'}
+      rescue => e
+        auth_responses[node_name] = {'status' => 'error', 'error' => e}
       end
     }
   }
   threads.each { |t| t.join }
-  return auth_responses
+
+  # get the tokens form the response
+  new_hosts = []
+  auth_responses.each { |node_name, response|
+    if 'ok' == response['status']
+      new_hosts << PcsKnownHost.new(
+        node_name,
+        response['token'],
+        [nodes[node_name]['addr_port_list'][0]]
+      )
+    end
+  }
+
+  # sync known hosts within the local cluster
+  sync_successful = true
+  sync_failed_nodes = []
+  sync_responses = {}
+  if new_hosts.empty?
+    return auth_responses, sync_successful, sync_failed_nodes, sync_responses
+  end
+  # Only tokens used in pcsd-to-pcsd communication can and need to be synced.
+  # Those are accessible only when running under root account.
+  if Process.uid != 0
+    # Other tokens just need to be stored localy for a user.
+    sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+      new_hosts, [], nil
+    )
+    return auth_responses, sync_successful, sync_failed_nodes, sync_responses
+  end
+  cluster_nodes = get_corosync_nodes()
+  sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+    new_hosts, cluster_nodes, $cluster_name
+  )
+  sync_responses.each { |node, response|
+    if response['status'] != 'ok'
+      sync_failed_nodes << node
+    else
+      node_result = response['result'][Cfgsync::PcsdKnownHosts.name]
+      if not ['accepted', 'rejected'].include?(node_result)
+        sync_failed_nodes << node
+      end
+    end
+  }
+  return auth_responses, sync_successful, sync_failed_nodes, sync_responses
 end
 
 def send_local_configs_to_nodes(

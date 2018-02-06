@@ -108,8 +108,7 @@ allowed_commands = {
     'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
-        auth_user_, params['nodes'] || [], params['username'] || '',
-        params['password'] || '', params['force'], params['local']
+        auth_user_, params.fetch('nodes')
       )
       return {
         'auth_responses' => auth_responses,

@@ -672,7 +672,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     }
     node_results = {}
     online, offline, notauthorized = check_gui_status_of_nodes(
-      auth_user, node_list, false, 10, ports
+      auth_user, node_list, 10, ports
     )
     online.each { |node|
       node_results[node] = 'Online'
