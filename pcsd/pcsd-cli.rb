@@ -66,7 +66,7 @@ $cluster_name = get_cluster_name()
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
-  # TODO replace this function with read_known_hosts
+  # TODO remove this function once it's replaced with read_known_hosts in pcs
   # it is only kept here while overhauling authentication so the overhaul can
   # be done in steps instead all at once
   'read_tokens' => {
@@ -83,6 +83,23 @@ allowed_commands = {
       return {
         :tokens => tokens,
         :ports => ports,
+      }
+    },
+  },
+  'read_known_hosts' => {
+    # returns hosts of the user who runs pcsd-cli, thus no permission check
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, auth_user_|
+      out_hosts = {}
+      get_known_hosts().each { |name, host|
+        out_hosts[name] = {
+          'addr_port_list' => host.addr_port_list,
+          'token' => host.token,
+        }
+      }
+      return {
+        'known_hosts' => out_hosts,
       }
     },
   },
