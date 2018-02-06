@@ -217,9 +217,6 @@ def remove_uid_gid_file(uid,gid):
         file_removed = True
 
     return file_removed
-# Returns a dictionary {'nodeA':'tokenA'}
-def readTokens():
-    return read_token_file()["tokens"]
 
 def read_token_file():
     data = {

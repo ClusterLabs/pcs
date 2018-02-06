@@ -99,10 +99,6 @@ def cluster_cmd(argv):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
         cluster_auth(argv)
-    elif (sub_cmd == "token"):
-        cluster_token(argv)
-    elif (sub_cmd == "token-nodes"):
-        cluster_token_nodes(argv)
     elif (sub_cmd == "start"):
         if "--all" in utils.pcs_options:
             if argv:
@@ -232,22 +228,6 @@ def cluster_auth(argv):
         auth_nodes(utils.getNodesFromCorosyncConf())
     else:
         auth_nodes(argv)
-
-def cluster_token(argv):
-    if len(argv) > 1:
-        utils.err("Must specify only one node")
-    elif len(argv) == 0:
-        utils.err("Must specify a node to get authorization token from")
-
-    node = argv[0]
-    tokens = utils.readTokens()
-    if node in tokens:
-        print(tokens[node])
-    else:
-        utils.err("No authorization token for: %s" % (node))
-
-def cluster_token_nodes(argv):
-    print("\n".join(sorted(utils.readTokens().keys())))
 
 def auth_nodes(nodes):
     if "-u" in utils.pcs_options:
