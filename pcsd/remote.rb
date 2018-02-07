@@ -68,7 +68,7 @@ def remote(params, request, auth_user)
       :cluster_destroy => method(:cluster_destroy),
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
-      :get_cluster_tokens => method(:get_cluster_tokens),
+      :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :save_tokens => method(:save_tokens),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :check_sbd => method(:check_sbd),
@@ -2069,30 +2069,21 @@ def wizard_submit(params, request, auth_user)
 
 end
 
-# TODO replace this function for known_hosts
-# it is only kept here while overhauling authentication so the overhaul can
-# be done in steps instead all at once
-def get_cluster_tokens(params, request, auth_user)
+def get_cluster_known_hosts(params, request, auth_user)
   # pcsd runs as root thus always returns hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
-  on, off = get_nodes
-  nodes = on + off
-  nodes.uniq!
-  hosts = get_known_hosts().select {|k,v| nodes.include?(k)}
-  tokens = {}
-  ports = {}
-  hosts.each { |name, obj|
-    tokens[name] = obj.token
-    ports[name] = obj.first_addr_port()['port']
-  }
-  if params["with_ports"] != '1'
-    return [200, JSON.generate(tokens)]
-  end
-  data = {
-    :tokens => tokens,
-    :ports => ports,
+  on, off = get_nodes()
+  nodes = (on + off).uniq()
+  data = {}
+  get_known_hosts().each { |host_name, host_obj|
+    if nodes.include?(host_name)
+      data[host_name] = {
+        'addr_port_list' => host_obj.addr_port_list,
+        'token' => host_obj.token,
+      }
+    end
   }
   return [200, JSON.generate(data)]
 end
