@@ -692,7 +692,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
           end
           port = (params["port-#{nodename}"] || '').strip
           if port == ''
-            port = nil
+            port = PCSD_DEFAULT_PORT
           end
           data = {
             'node-0' => nodename,
@@ -703,7 +703,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
           }
           node_auth_error[nodename] = 1
           code, response = send_request(
-            auth_user, nodename, 'auth', true, data, true, nil, nil, nil, port
+            auth_user, nodename, port, 'auth', true, data, true
           )
           if 200 == code
             token = response.strip

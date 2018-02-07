@@ -430,8 +430,8 @@ def send_request_with_token(
     'token' => target_token,
   }
   return send_request(
-    auth_user, target_addr, request, post, data, remote, raw_data, timeout,
-    cookies_data, target_port
+    auth_user, target_addr, target_port, request, post, data, remote, raw_data,
+    timeout, cookies_data
   )
 end
 
@@ -473,8 +473,8 @@ def _transform_data(data)
 end
 
 def send_request(
-  auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
-  timeout=nil, cookies_data=nil, port=nil
+  auth_user, node, port, request, post=false, data={}, remote=true,
+  raw_data=nil, timeout=nil, cookies_data=nil
 )
   cookies_data = {} if not cookies_data
   if request.start_with?("/")
@@ -485,8 +485,6 @@ def send_request(
   if (node.include?(":") and ! node.start_with?("["))
     node6 = "[#{node}]"
   end
-
-  port ||= PCSD_DEFAULT_PORT
 
   if remote
     url = "https://#{node6}:#{port}/remote/#{request}"
@@ -1202,7 +1200,7 @@ def pcs_auth(auth_user, nodes)
           :password => node_data.fetch('password'),
         }
         code, response = send_request(
-          auth_user, addr, 'auth', true, request_data, true, nil, nil, nil, port
+          auth_user, addr, port, 'auth', true, request_data, true
         )
         if 200 == code
           token = response.strip
