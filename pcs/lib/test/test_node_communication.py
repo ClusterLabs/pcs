@@ -492,7 +492,7 @@ class CommunicatorLoggerTest(TestCase):
                 "node": response.request.host_label,
                 "failed_address": prev_addr,
                 "failed_port": prev_port,
-                "next_address": response.request.host_connection.addr,
+                "next_address": response.request.dest.addr,
                 "next_port": settings.pcsd_default_port,
                 "request": response.request.url,
             },
@@ -507,7 +507,7 @@ class CommunicatorLoggerTest(TestCase):
                 label=response.request.host_label,
                 old_addr=prev_addr,
                 old_port=prev_port,
-                new_addr=response.request.host_connection.addr,
+                new_addr=response.request.dest.addr,
                 new_port=settings.pcsd_default_port,
                 req=response.request.url,
             )

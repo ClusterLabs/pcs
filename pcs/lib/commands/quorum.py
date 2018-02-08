@@ -126,14 +126,14 @@ def add_device(
         force_model=force_model,
         force_options=force_options
     )
-    target_list = lib_env.get_node_target_factory().get_target_list(
-        cfg.get_nodes()
-    )
 
     # First setup certificates for qdevice, then send corosync.conf to nodes.
     # If anything fails, nodes will not have corosync.conf with qdevice in it,
     # so there is no effect on the cluster.
     if lib_env.is_corosync_conf_live:
+        target_list = lib_env.get_node_target_factory().get_target_list(
+            cfg.get_nodes()
+        )
         # do model specific configuration
         # if model is not known to pcs and was forced, do not configure antyhing
         # else but corosync.conf, as we do not know what to do anyways

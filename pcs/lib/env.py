@@ -64,7 +64,7 @@ class LibraryEnvironment(object):
         corosync_conf_data=None,
         booth=None,
         pacemaker=None,
-        token_file_data_getter=None,
+        known_hosts_getter=None,
         cluster_conf_data=None,
         request_timeout=None,
     ):
@@ -86,8 +86,8 @@ class LibraryEnvironment(object):
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
-        self._token_file_data_getter = token_file_data_getter
-        self._token_file = None
+        self._known_hosts_getter = known_hosts_getter
+        self._known_hosts = None
         self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
@@ -403,8 +403,7 @@ class LibraryEnvironment(object):
         return self.communicator_factory.get_communicator()
 
     def get_node_target_factory(self):
-        token_file = self.__get_token_file()
-        return NodeTargetFactory(token_file["tokens"], token_file["ports"])
+        return NodeTargetFactory(self.__get_known_hosts())
 
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):
@@ -417,16 +416,13 @@ class LibraryEnvironment(object):
             self._request_timeout
         )
 
-    def __get_token_file(self):
-        if self._token_file is None:
-            if self._token_file_data_getter:
-                self._token_file = self._token_file_data_getter()
+    def __get_known_hosts(self):
+        if self._known_hosts is None:
+            if self._known_hosts_getter:
+                self._known_hosts = self._known_hosts_getter()
             else:
-                self._token_file = {
-                    "tokens": {},
-                    "ports": {},
-                }
-        return self._token_file
+                self._known_hosts = {}
+        return self._known_hosts
 
     @property
     def booth(self):

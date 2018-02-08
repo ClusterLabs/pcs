@@ -140,6 +140,7 @@ class ConfigSyncTest(TestCase):
         )
         self.node_list = ["rh7-1", "rh7-2"]
         self.config.env.set_booth({"name": self.name})
+        self.config.env.set_known_nodes(self.node_list)
         self.reason = "fail"
 
     def test_success(self):

@@ -22,6 +22,7 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     report_codes,
 )
+from pcs.common.host import PcsKnownHost
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
@@ -228,6 +229,27 @@ def read_token_file():
         data = output['data']
     return data
 
+def read_known_hosts_file():
+    output, retval = run_pcsdcli("read_known_hosts")
+    data = {}
+    if (
+        retval == 0
+        and
+        output['status'] == 'ok'
+        and
+        output['data']
+        and
+        output['data'].get('known_hosts')
+    ):
+        try:
+            data = {
+                name: PcsKnownHost.from_known_host_file_dict(name, host)
+                for name, host in output['data']['known_hosts'].items()
+            }
+        except KeyError:
+            print("Warning: Unable to parse known host file.")
+    return data
+
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
     def repeater(node, *args, **kwargs):
         repeats_left = repeat_count
@@ -409,12 +431,19 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
-    token_file = read_token_file()
-    port = token_file["ports"].get(host)
+    port = None
+    token = None
+    addr = host
+    known_host = read_known_hosts_file().get(host, None)
+    # TODO: do not allow communication with unknown host
+    if known_host:
+        port = known_host.dest.port
+        host = known_host.dest.addr
+        token = known_host.token
     if port is None:
         port = settings.pcsd_default_port
-    url = "https://{host}:{port}/{request}".format(
-        host=host, request=request, port=port
+    url = "https://{addr}:{port}/{request}".format(
+        addr=addr, request=request, port=port
     )
     if "--debug" in pcs_options:
         print("Sending HTTP Request to: " + url)
@@ -436,7 +465,7 @@ def sendHTTPRequest(
 
     output = BytesIO()
     debug_output = BytesIO()
-    cookies = __get_cookie_list(host, token_file["tokens"])
+    cookies = __get_cookie_list(token)
     if not timeout:
         timeout = settings.default_request_timeout
     if "--request-timeout" in pcs_options:
@@ -519,10 +548,10 @@ def sendHTTPRequest(
         return (2, msg)
 
 
-def __get_cookie_list(host, tokens):
+def __get_cookie_list(token):
     cookies = []
-    if host in tokens:
-        cookies.append("token=" + tokens[host])
+    if token:
+        cookies.append("token=" + token)
     if os.geteuid() == 0:
         for name in ("CIB_user", "CIB_user_groups"):
             if name in os.environ and os.environ[name].strip():
@@ -2771,7 +2800,7 @@ def get_lib_env():
         groups,
         cib_data,
         corosync_conf_data,
-        token_file_data_getter=read_token_file,
+        known_hosts_getter=read_known_hosts_file,
         request_timeout=pcs_options.get("--request-timeout"),
     )
 
@@ -2790,7 +2819,7 @@ def get_cli_env():
     env = Env()
     env.user = user
     env.groups = groups
-    env.token_file_data_getter = read_token_file
+    env.known_hosts_getter = read_known_hosts_file
     env.debug = "--debug" in pcs_options
     env.request_timeout = pcs_options.get("--request-timeout")
     return env

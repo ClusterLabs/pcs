@@ -9,7 +9,7 @@ class EnvConfigMixin(object):
         self.config = config
 
     def destroy_pacemaker_remote(
-        self, label=None, address_list=None, result=None, **kwargs
+        self, label=None, dest_list=None, result=None, **kwargs
     ):
         if kwargs.get("was_connected", True):
             result = result if result is not None else {
@@ -26,14 +26,14 @@ class EnvConfigMixin(object):
                 "Keyword 'result' makes no sense with 'was_connected=False'"
             )
 
-        if label or address_list:
+        if label or dest_list:
             if kwargs.get("communication_list", None):
                 raise AssertionError(
-                    "Keywords 'label' and 'address_list' makes no sense with"
+                    "Keywords 'label' and 'dest_list' makes no sense with"
                     " 'communication_list != None'"
                 )
             kwargs["communication_list"] = [
-                dict(label=label, address_list=address_list)
+                dict(label=label, dest_list=dest_list)
             ]
 
         self.config.http.manage_services(

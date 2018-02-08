@@ -208,11 +208,9 @@ class EnvAssistant(object):
             MockLibraryReportProcessor(),
             cib_data=self.__config.env.cib_data,
             corosync_conf_data=self.__config.env.corosync_conf_data,
-            token_file_data_getter=(
-                (lambda: {
-                    "tokens": self.__config.spy.auth_tokens,
-                    "ports": self.__config.spy.ports or {},
-                }) if self.__config.spy else None
+            known_hosts_getter=(
+                (lambda: self.__config.spy.known_hosts) if self.__config.spy
+                else self.__config.env.known_hosts_getter
             ),
             booth=self.__config.env.booth,
         )

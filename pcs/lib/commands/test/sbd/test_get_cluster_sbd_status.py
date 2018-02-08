@@ -18,17 +18,11 @@ class GetClusterSbdStatus(TestCase):
         self.env_assist, self.config = get_env_tools(self)
 
     def test_default_different_results_on_different_nodes(self):
+        node_name_list = ["node-1", "node-2", "node-3", "node-4", "node-5"]
         (self.config
+            .env.set_known_nodes(node_name_list)
             .runner.corosync.version()
-            .corosync_conf.load(
-                node_name_list=[
-                    "node-1",
-                    "node-2",
-                    "node-3",
-                    "node-4",
-                    "node-5"
-                ]
-            )
+            .corosync_conf.load(node_name_list=node_name_list)
             .http.add_communication(
                 "check_sbd",
                 [

@@ -575,6 +575,7 @@ class AddDeviceNetTest(TestCase):
                 "path": rc("qdevice-certs/final-certificate.pk12"),
             },
         }
+        self.config.env.set_known_nodes(self.cluster_nodes + [self.qnetd_host])
         for cert_info in self.certs.values():
             # b64encode accepts bytes in python3, so we must read the file as
             # binary to get bytes instead of a string. In python2, it doesn't
@@ -1990,6 +1991,7 @@ class RemoveDeviceHeuristics(TestCase):
 class RemoveDeviceNetTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(["rh7-1", "rh7-2", "rh7-3"])
 
     def conf_2nodes(self, quorum_line):
         cluster_nodes = ["rh7-1", "rh7-2"]

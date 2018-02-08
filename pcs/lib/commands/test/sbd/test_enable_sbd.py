@@ -156,6 +156,7 @@ class OddNumOfNodesSuccess(TestCase):
         self.watchdog_dict = {
             node: "/dev/watchdog-{0}".format(node) for node in self.node_list
         }
+        self.config.env.set_known_nodes(self.node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
@@ -245,6 +246,7 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         SBD_WATCHDOG_TIMEOUT=5
         """)
         self.watchdog = "/dev/watchdog"
+        self.config.env.set_known_nodes(self.node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
@@ -326,6 +328,7 @@ class EvenNumOfNodes(TestCase):
         SBD_WATCHDOG_TIMEOUT=5
         """)
         self.watchdog = "/dev/watchdog"
+        self.config.env.set_known_nodes(self.node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
@@ -494,6 +497,7 @@ class OfflineNodes(TestCase):
                 ) for node in self.offline_node_list
             ]
         )
+        self.config.env.set_known_nodes(node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(
@@ -607,6 +611,7 @@ class Validations(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync.conf"
         self.node_list = ["rh7-1", "rh7-2"]
+        self.config.env.set_known_nodes(self.node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
 
@@ -1096,6 +1101,7 @@ class FailureHandling(TestCase):
                 label=self.node_list[1],
             )
         ]
+        self.config.env.set_known_nodes(self.node_list)
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)

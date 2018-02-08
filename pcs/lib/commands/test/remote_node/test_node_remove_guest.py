@@ -1,7 +1,9 @@
 from functools import partial
 from unittest import TestCase
 
+from pcs import settings
 from pcs.common import report_codes
+from pcs.common.host import PcsKnownHost, Destination
 from pcs.lib.commands.remote_node import(
     node_remove_guest as node_remove_guest_orig
 )
@@ -72,17 +74,22 @@ get_env_tools = partial(get_env_tools, local_extensions={
 class RemoveGuest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.dest_list = [Destination(REMOTE_HOST, settings.pcsd_default_port)]
+        self.config.env.set_known_hosts_getter(lambda: {
+            NODE_NAME: PcsKnownHost(
+                NODE_NAME, token=None, dest_list=self.dest_list
+            ),
+        })
 
     def find_by(self, identifier):
         (self.config
             .runner.cib.load(resources=FIXTURE_RESOURCES)
             .local.destroy_pacemaker_remote(
-                label=NODE_NAME,
-                address_list=[REMOTE_HOST]
+                label=NODE_NAME, dest_list=self.dest_list
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                    dict(label=NODE_NAME, dest_list=self.dest_list)
                 ],
             )
             .env.push_cib(remove=".//primitive/meta_attributes")
@@ -104,6 +111,12 @@ class RemoveGuest(TestCase):
 class RemoveGuestOthers(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.dest_list = [Destination(REMOTE_HOST, settings.pcsd_default_port)]
+        self.config.env.set_known_hosts_getter(lambda: {
+            NODE_NAME: PcsKnownHost(
+                NODE_NAME, token=None, dest_list=self.dest_list,
+            ),
+        })
 
     def test_success_with_wait(self):
         wait = 10
@@ -111,12 +124,11 @@ class RemoveGuestOthers(TestCase):
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=FIXTURE_RESOURCES)
             .local.destroy_pacemaker_remote(
-                label=NODE_NAME,
-                address_list=[REMOTE_HOST]
+                label=NODE_NAME, dest_list=self.dest_list
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                    dict(label=NODE_NAME, dest_list=self.dest_list)
                 ],
             )
             .env.push_cib(remove=".//primitive/meta_attributes", wait=wait)
@@ -130,12 +142,12 @@ class RemoveGuestOthers(TestCase):
             .runner.cib.load(resources=FIXTURE_RESOURCES)
             .local.destroy_pacemaker_remote(
                 label=NODE_NAME,
-                address_list=[REMOTE_HOST],
+                dest_list=self.dest_list,
                 **FAIL_HTTP_KWARGS
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                    dict(label=NODE_NAME, dest_list=self.dest_list)
                 ],
                 **FAIL_HTTP_KWARGS
             )
@@ -229,6 +241,26 @@ class MultipleResults(TestCase):
                 "multiple_result_found_warn",
             )
         )
+        self.dest_list_b_name = [
+            Destination("B-ADDR", settings.pcsd_default_port)
+        ]
+        self.dest_list_remote = [
+            Destination("NODE_NAME", settings.pcsd_default_port)
+        ]
+        self.dest_list_node = [
+            Destination(REMOTE_HOST, settings.pcsd_default_port)
+        ]
+        self.config.env.set_known_hosts_getter(lambda: {
+            NODE_NAME: PcsKnownHost(
+                NODE_NAME, token=None, dest_list=self.dest_list_node,
+            ),
+            REMOTE_HOST: PcsKnownHost(
+                REMOTE_HOST, token=None, dest_list=self.dest_list_remote,
+            ),
+            "B-NAME": PcsKnownHost(
+                "B-NAME", token=None, dest_list=self.dest_list_b_name,
+            ),
+        })
 
     def test_fail(self):
         self.env_assist.assert_raise_library_error(
@@ -242,16 +274,16 @@ class MultipleResults(TestCase):
         (self.config
             .local.destroy_pacemaker_remote(
                 communication_list=[
-                    dict(label="B-NAME", address_list=["B-ADDR"]),
-                    dict(label=REMOTE_HOST, address_list=[NODE_NAME]),
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST]),
+                    dict(label="B-NAME", dest_list=self.dest_list_b_name),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
+                    dict(label=NODE_NAME, dest_list=self.dest_list_node),
                 ],
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label="B-NAME", address_list=["B-ADDR"]),
-                    dict(label=REMOTE_HOST, address_list=[NODE_NAME]),
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST]),
+                    dict(label="B-NAME", dest_list=self.dest_list_b_name),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
+                    dict(label=NODE_NAME, dest_list=self.dest_list_node),
                 ],
             )
             .env.push_cib(remove=[
@@ -316,18 +348,23 @@ class MultipleResults(TestCase):
 class AuthkeyRemove(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.dest_list = [Destination(REMOTE_HOST, settings.pcsd_default_port)]
         (self.config
+            .env.set_known_hosts_getter(lambda: {
+                NODE_NAME: PcsKnownHost(
+                    NODE_NAME, token=None, dest_list=self.dest_list,
+                ),
+            })
             .runner.cib.load(resources=FIXTURE_RESOURCES)
             .local.destroy_pacemaker_remote(
-                label=NODE_NAME,
-                address_list=[REMOTE_HOST]
+                label=NODE_NAME, dest_list=self.dest_list
             )
         )
 
     def test_fails_when_offline(self):
         self.config.local.remove_authkey(
             communication_list=[
-                dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                dict(label=NODE_NAME, dest_list=self.dest_list)
             ],
             **FAIL_HTTP_KWARGS
         )
@@ -343,7 +380,7 @@ class AuthkeyRemove(TestCase):
     def test_fails_when_remotely_fails(self):
         self.config.local.remove_authkey(
             communication_list=[
-                dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                dict(label=NODE_NAME, dest_list=self.dest_list)
             ],
             result={
                 "code": "unexpected",
@@ -363,7 +400,7 @@ class AuthkeyRemove(TestCase):
         (self.config
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                    dict(label=NODE_NAME, dest_list=self.dest_list)
                 ],
                 result={
                     "code": "unexpected",
@@ -386,13 +423,23 @@ class AuthkeyRemove(TestCase):
 class PcmkRemoteServiceDestroy(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.dest_list = [
+            Destination(REMOTE_HOST, settings.pcsd_default_port)
+        ]
+        self.config.env.set_known_hosts_getter(lambda: {
+            NODE_NAME: PcsKnownHost(
+                NODE_NAME,
+                token=None,
+                dest_list=self.dest_list,
+            ),
+        })
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
 
     def test_fails_when_offline(self):
         (self.config
             .local.destroy_pacemaker_remote(
                 label=NODE_NAME,
-                address_list=[REMOTE_HOST],
+                dest_list=self.dest_list,
                 **FAIL_HTTP_KWARGS
             )
         )
@@ -409,7 +456,7 @@ class PcmkRemoteServiceDestroy(TestCase):
         (self.config
             .local.destroy_pacemaker_remote(
                 label=NODE_NAME,
-                address_list=[REMOTE_HOST],
+                dest_list=self.dest_list,
                 result={
                     "code": "fail",
                     "message": "Action failed",
@@ -432,7 +479,7 @@ class PcmkRemoteServiceDestroy(TestCase):
         (self.config
             .local.destroy_pacemaker_remote(
                 label=NODE_NAME,
-                address_list=[REMOTE_HOST],
+                dest_list=self.dest_list,
                 result={
                     "code": "fail",
                     "message": "Action failed",
@@ -440,7 +487,7 @@ class PcmkRemoteServiceDestroy(TestCase):
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=NODE_NAME, address_list=[REMOTE_HOST])
+                    dict(label=NODE_NAME, dest_list=self.dest_list)
                 ],
             )
             .env.push_cib(remove=".//primitive/meta_attributes")

@@ -47,7 +47,7 @@ def cli_env_to_lib_env(cli_env):
         cli_env.cib_data,
         cli_env.corosync_conf_data,
         booth=cli_env.booth,
-        token_file_data_getter=cli_env.token_file_data_getter,
+        known_hosts_getter=cli_env.known_hosts_getter,
         cluster_conf_data=cli_env.cluster_conf_data,
         request_timeout=cli_env.request_timeout,
     )

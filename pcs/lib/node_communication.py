@@ -63,7 +63,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             self._logger.warning("Proxy is set")
             self._reporter.process(reports.node_communication_proxy_is_set(
                 response.request.host_label,
-                response.request.host_connection.addr,
+                response.request.dest.addr,
             ))
 
     def _log_debug(self, response):
@@ -81,27 +81,27 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             reports.node_communication_debug_info(url, debug_data)
         )
 
-    def log_retry(self, response, previous_host_connection):
-        old_port = _get_port(previous_host_connection.port)
-        new_port = _get_port(response.request.host_connection.port)
+    def log_retry(self, response, previous_dest):
+        old_port = _get_port(previous_dest.port)
+        new_port = _get_port(response.request.dest.port)
         msg = (
             "Unable to connect to '{label}' via address '{old_addr}' and port "
             "'{old_port}'. Retrying request '{req}' via address '{new_addr}' "
             "and port '{new_port}'"
         ).format(
             label=response.request.host_label,
-            old_addr=previous_host_connection.addr,
+            old_addr=previous_dest.addr,
             old_port=old_port,
-            new_addr=response.request.host_connection.addr,
+            new_addr=response.request.dest.addr,
             new_port=new_port,
             req=response.request.url,
         )
         self._logger.warning(msg)
         self._reporter.process(reports.node_communication_retrying(
             response.request.host_label,
-            previous_host_connection.addr,
+            previous_dest.addr,
             old_port,
-            response.request.host_connection.addr,
+            response.request.dest.addr,
             new_port,
             response.request.url,
         ))
