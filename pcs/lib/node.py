@@ -94,8 +94,6 @@ class NodeAddressesList(object):
         #raises.
         return NodeAddressesList(self._list + other)
 
-    def find_by_label(self, label):
-        for node in self._list:
-            if node.label == label:
-                return node
-        raise NodeNotFound()
+    @property
+    def labels(self):
+        return [node.label for node in self._list]

@@ -25,6 +25,7 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
+from pcs.common.node_communicator import HostNotFound
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
@@ -65,7 +66,7 @@ from pcs.lib.external import (
     node_communicator_exception_to_report_item,
 )
 from pcs.lib.env_tools import get_nodes
-from pcs.lib.node import NodeAddresses
+from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import (
@@ -444,18 +445,24 @@ def cluster_setup(argv):
         # verify and ensure no cluster is set up on the nodes
         # checks that nodes are authenticated as well
         lib_env = utils.get_lib_env()
+        target_list = []
+        try:
+            target_list = lib_env.get_node_target_factory().get_target_list(
+                primary_addr_list, allow_skip=False,
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+
         if "--force" not in utils.pcs_options:
             all_nodes_available = True
-            for node in primary_addr_list:
+            for target in target_list:
                 available, message = utils.canAddNodeToCluster(
-                    lib_env.get_node_communicator(),
-                    lib_env.get_node_target_factory().get_target(
-                        NodeAddresses(node)
-                    )
+                    lib_env.get_node_communicator(), target
                 )
                 if not available:
                     all_nodes_available = False
-                    utils.err("{0}: {1}".format(node, message), False)
+                    utils.err("{0}: {1}".format(target.label, message), False)
+
             if not all_nodes_available:
                 utils.err(
                     "nodes availability check failed, use --force to override. "
@@ -486,7 +493,10 @@ def cluster_setup(argv):
             )
             com_cmd.set_targets(
                 lib_env.get_node_target_factory().get_target_list(
-                    [NodeAddresses(node) for node in primary_addr_list]
+                    NodeAddressesList(
+                        [NodeAddresses(node) for node in primary_addr_list]
+                    ).labels,
+                    skip_non_existing=modifiers["skip_offline_nodes"],
                 )
             )
             run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -1575,7 +1585,8 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
             )
             com_cmd.set_targets(
                 lib_env.get_node_target_factory().get_target_list(
-                    corosync_conf.get_nodes()
+                    corosync_conf.get_nodes().labels,
+                    skip_non_existing=skip_offline_nodes,
                 )
             )
             run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -1693,9 +1704,16 @@ def node_add(lib_env, node0, node1, modifiers):
             "you must not specify ring 1 address for the node"
         )
     node_addr = NodeAddresses(node0, node1)
+    new_node_target = None
+    try:
+        new_node_target = lib_env.get_node_target_factory().get_target(
+            node_addr.label
+        )
+    except HostNotFound as e:
+        utils.err("Host '{}' is not authenticated".format(e.host_name))
+
     (canAdd, error) =  utils.canAddNodeToCluster(
-        lib_env.get_node_communicator(),
-        lib_env.get_node_target_factory().get_target(node_addr)
+        lib_env.get_node_communicator(), new_node_target,
     )
 
     if not canAdd:
@@ -1726,9 +1744,6 @@ def node_add(lib_env, node0, node1, modifiers):
                 )
 
         # sbd setup
-        new_node_target = lib_env.get_node_target_factory().get_target(
-            node_addr
-        )
         if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
             if "--watchdog" not in utils.pcs_options:
                 watchdog = settings.sbd_watchdog_default
@@ -1804,9 +1819,7 @@ def node_add(lib_env, node0, node1, modifiers):
                 skip_offline_targets=modifiers["skip_offline_nodes"],
                 allow_fails=modifiers["force"],
             )
-            com_cmd.set_targets(
-                lib_env.get_node_target_factory().get_target_list([node_addr])
-            )
+            com_cmd.set_targets(new_node_target)
             run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
         # do not send pcmk authkey to guest and remote nodes, they either have

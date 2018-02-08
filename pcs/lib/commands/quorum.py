@@ -131,8 +131,9 @@ def add_device(
     # If anything fails, nodes will not have corosync.conf with qdevice in it,
     # so there is no effect on the cluster.
     if lib_env.is_corosync_conf_live:
-        target_list = lib_env.get_node_target_factory().get_target_list(
-            cfg.get_nodes()
+        target_factory = lib_env.get_node_target_factory()
+        target_list = target_factory.get_target_list(
+            cfg.get_nodes().labels, skip_non_existing=skip_offline_nodes,
         )
         # do model specific configuration
         # if model is not known to pcs and was forced, do not configure antyhing
@@ -141,9 +142,9 @@ def add_device(
             _add_device_model_net(
                 lib_env,
                 # we are sure it's there, it was validated in add_quorum_device
-                model_options["host"],
+                target_factory.get_target_from_hostname(model_options["host"]),
                 cfg.get_cluster_name(),
-                cfg.get_nodes(),
+                target_list,
                 skip_offline_nodes
             )
 
@@ -171,7 +172,8 @@ def add_device(
         run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def _add_device_model_net(
-    lib_env, qnetd_host, cluster_name, cluster_nodes, skip_offline_nodes
+    lib_env, qnetd_target, cluster_name, cluster_nodes_target_list,
+    skip_offline_nodes,
 ):
     """
     setup cluster nodes for using qdevice model net
@@ -182,9 +184,6 @@ def _add_device_model_net(
     """
     runner = lib_env.cmd_runner()
     reporter = lib_env.report_processor
-    target_factory = lib_env.get_node_target_factory()
-    qnetd_target = target_factory.get_target_from_hostname(qnetd_host)
-    target_list = target_factory.get_target_list(cluster_nodes)
 
     reporter.process(
         reports.qdevice_certificate_distribution_started()
@@ -199,7 +198,7 @@ def _add_device_model_net(
     com_cmd = qdevice_net_com.ClientSetup(
         reporter, qnetd_ca_cert, skip_offline_nodes
     )
-    com_cmd.set_targets(target_list)
+    com_cmd.set_targets(cluster_nodes_target_list)
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
     # create client certificate request
     cert_request = qdevice_net.client_generate_certificate_request(
@@ -218,7 +217,7 @@ def _add_device_model_net(
     com_cmd = qdevice_net_com.ClientImportCertificateAndKey(
         reporter, pk12, skip_offline_nodes
     )
-    com_cmd.set_targets(target_list)
+    com_cmd.set_targets(cluster_nodes_target_list)
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def update_device(
@@ -271,7 +270,7 @@ def remove_device(lib_env, skip_offline_nodes=False):
 
     if lib_env.is_corosync_conf_live:
         target_list = lib_env.get_node_target_factory().get_target_list(
-            cfg.get_nodes()
+            cfg.get_nodes().labels, skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
@@ -300,30 +299,16 @@ def remove_device(lib_env, skip_offline_nodes=False):
         run_and_raise(lib_env.get_node_communicator(), com_cmd)
         # handle model specific configuration
         if model == "net":
-            _remove_device_model_net(
-                lib_env,
-                cfg.get_nodes(),
-                skip_offline_nodes
+            lib_env.report_processor.process(
+                reports.qdevice_certificate_removal_started()
             )
+            com_cmd = qdevice_net_com.ClientDestroy(
+                lib_env.report_processor, skip_offline_nodes
+            )
+            com_cmd.set_targets(target_list)
+            run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
-
-def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
-    """
-    remove configuration used by qdevice model net
-    NodeAddressesList cluster_nodes list of cluster nodes addresses
-    bool skip_offline_nodes continue even if not all nodes are accessible
-    """
-    reporter = lib_env.report_processor
-
-    reporter.process(
-        reports.qdevice_certificate_removal_started()
-    )
-    com_cmd = qdevice_net_com.ClientDestroy(reporter, skip_offline_nodes)
-    com_cmd.set_targets(
-        lib_env.get_node_target_factory().get_target_list(cluster_nodes)
-    )
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def set_expected_votes_live(lib_env, expected_votes):
     """

@@ -30,7 +30,10 @@ def _ensure_can_add_node_to_remote_cluster(
         skip_offline_targets=warn_on_communication_exception,
     )
     com_cmd.add_request(
-        env.get_node_target_factory().get_target(node_addresses)
+        env.get_node_target_factory().get_target_list(
+            [node_addresses.label],
+            skip_non_existing=warn_on_communication_exception,
+        )[0]
     )
     run(env.get_node_communicator(), com_cmd)
     env.report_processor.process_list(report_items)
@@ -55,7 +58,10 @@ def _share_authkey(
         description="remote node configuration files",
     )
     com_cmd.set_targets(
-        env.get_node_target_factory().get_target_list(node_addresses_list)
+        env.get_node_target_factory().get_target_list(
+            node_addresses_list.labels,
+            skip_non_existing=skip_offline_nodes,
+        )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
 
@@ -73,7 +79,10 @@ def _start_and_enable_pacemaker_remote(
         description="start of service pacemaker_remote"
     )
     com_cmd.set_targets(
-        env.get_node_target_factory().get_target_list(node_list)
+        env.get_node_target_factory().get_target_list(
+            NodeAddressesList(node_list).labels,
+            skip_non_existing=skip_offline_nodes,
+        )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
 
@@ -345,7 +354,8 @@ def _destroy_pcmk_remote_env(
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
     target_list = env.get_node_target_factory().get_target_list(
-        node_addresses_list
+        NodeAddressesList(node_addresses_list).labels,
+        skip_non_existing=skip_offline_nodes,
     )
 
     com_cmd = ServiceAction(

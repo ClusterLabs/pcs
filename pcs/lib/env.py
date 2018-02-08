@@ -1,10 +1,7 @@
 import os.path
 
 from pcs import settings
-from pcs.common.node_communicator import (
-    NodeCommunicatorFactory,
-    NodeTargetFactory
-)
+from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
@@ -34,7 +31,10 @@ from pcs.lib.external import (
     NodeCommunicator,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.node_communication import LibCommunicatorLogger
+from pcs.lib.node_communication import (
+    LibCommunicatorLogger,
+    NodeTargetLibFactory,
+)
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
     ensure_cib_version,
@@ -284,7 +284,8 @@ class LibraryEnvironment(object):
         if self.is_corosync_conf_live:
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    corosync_conf_facade.get_nodes()
+                    corosync_conf_facade.get_nodes().labels,
+                    skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,
                 corosync_conf_facade.need_stopped_cluster,
@@ -403,7 +404,9 @@ class LibraryEnvironment(object):
         return self.communicator_factory.get_communicator()
 
     def get_node_target_factory(self):
-        return NodeTargetFactory(self.__get_known_hosts())
+        return NodeTargetLibFactory(
+            self.__get_known_hosts(), self.report_processor
+        )
 
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):

@@ -105,10 +105,6 @@ def bad_request_list_content(errors):
     )
 
 
-def _addr_list_to_host_con(addr_list, port=None):
-    return [Destination(addr, port) for addr in addr_list]
-
-
 def _communication_to_response(
     label, dest_list, action, param_list, token, response_code,
     output, debug_output, was_connected, errno, error_msg

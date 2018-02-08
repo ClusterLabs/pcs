@@ -1389,4 +1389,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "port '{failed_port}'. Retrying request '{request}' via address "
             "'{next_address}' and port '{next_port}'"
         ).format(**info)
+    ,
+    codes.HOST_NOT_FOUND: lambda info:
+        (
+            "Host(s) {host_list_str} not found. Try to authenticate hosts using "
+            "`pcs auth` command."
+        ).format(host_list_str=", ".join(sorted(info["host_list"])))
+    ,
+    codes.NONE_HOST_FOUND: "None of hosts found."
 }

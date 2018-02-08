@@ -1,8 +1,15 @@
 import os
 
 from pcs import settings
-from pcs.common import pcs_pycurl as pycurl
-from pcs.common.node_communicator import CommunicatorLoggerInterface
+from pcs.common import (
+    pcs_pycurl as pycurl,
+    report_codes,
+)
+from pcs.common.node_communicator import (
+    CommunicatorLoggerInterface,
+    HostNotFound,
+    NodeTargetFactory,
+)
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib import reports
 
@@ -115,6 +122,45 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._reporter.process(reports.node_communication_no_more_addresses(
             response.request.host_label, response.request.url
         ))
+
+
+class NodeTargetLibFactory(NodeTargetFactory):
+    def __init__(self, known_hosts, report_processor):
+        super(NodeTargetLibFactory, self).__init__(known_hosts)
+        self._report_processor = report_processor
+
+    def get_target_list(
+        self, host_name_list, skip_non_existing=False, allow_skip=True
+    ):
+        target_list = []
+        unknown_host_list = []
+        for host_name in host_name_list:
+            try:
+                target_list.append(self.get_target(host_name))
+            except HostNotFound:
+                unknown_host_list.append(host_name)
+
+        report_list = []
+        if unknown_host_list:
+            report_kwargs = (
+                dict(severity=ReportItemSeverity.WARNING) if skip_non_existing
+                else dict(
+                    forceable=(
+                        report_codes.SKIP_OFFLINE_NODES if allow_skip else None
+                    )
+                )
+            )
+            report_list.append(reports.host_not_found(
+                unknown_host_list, **report_kwargs
+            ))
+
+        if not target_list and host_name_list:
+            # we want to create this report only if there was at least one
+            # required address specified
+            report_list.append(reports.none_host_found())
+        if report_list:
+            self._report_processor.process_list(report_list)
+        return target_list
 
 
 def response_to_report_item(

@@ -2866,3 +2866,24 @@ def unable_to_perform_operation_on_any_node():
     return ReportItem.error(
         report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
     )
+
+
+def host_not_found(
+    host_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Hosts with names in name_list are not included in pcs known hosts,
+    therefore it is not possible to sommunicate with them.
+    """
+    return ReportItem(
+        report_codes.HOST_NOT_FOUND,
+        severity,
+        info=dict(
+            host_list=host_list,
+        ),
+        forceable=forceable,
+    )
+
+
+def none_host_found():
+    return ReportItem.error(report_codes.NONE_HOST_FOUND)

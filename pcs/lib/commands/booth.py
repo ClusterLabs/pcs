@@ -264,7 +264,8 @@ def config_sync(env, name, skip_offline_nodes=False):
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            env.get_corosync_conf().get_nodes()
+            env.get_corosync_conf().get_nodes().labels,
+            skip_non_existing=skip_offline_nodes,
         )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)

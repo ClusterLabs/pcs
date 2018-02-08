@@ -2095,3 +2095,27 @@ class NodeCommunicationRetrying(NameBuildTest):
                 "request": "my/request",
             }
         )
+
+class HostNotFound(NameBuildTest):
+    code = codes.HOST_NOT_FOUND
+    def test_single_host(self):
+        self.assert_message_from_info(
+            (
+                "Host(s) unknown_host not found. Try to authenticate hosts "
+                "using `pcs auth` command."
+            ),
+            {
+                "host_list": ["unknown_host"],
+            }
+        )
+
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            (
+                "Host(s) another_one, unknown_host not found. Try to "
+                "authenticate hosts using `pcs auth` command."
+            ),
+            {
+                "host_list": ["unknown_host", "another_one"],
+            }
+        )

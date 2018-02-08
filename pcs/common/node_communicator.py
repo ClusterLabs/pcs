@@ -24,32 +24,27 @@ def _find_value_for_possible_keys(value_dict, possible_key_list):
     return None
 
 
+class HostNotFound(Exception):
+    def __init__(self, name):
+        super(HostNotFound, self).__init__()
+        self.name = name
+
+
 class NodeTargetFactory(object):
     def __init__(self, known_hosts):
         self._known_hosts = known_hosts
 
-    def get_target(self, node_addresses):
-        possible_names = [node_addresses.label, node_addresses.ring0]
-        if node_addresses.ring1:
-            possible_names.append(node_addresses.ring1)
-        known_host = _find_value_for_possible_keys(
-            self._known_hosts, possible_names
-        )
+    def get_target(self, host_name):
+        known_host = self._known_hosts.get(host_name)
         if known_host is None:
-            # TODO: add some meaningful exception
-            raise Exception(
-                "host with name '{}' not found".format(node_addresses.label)
-            )
+            raise HostNotFound(host_name)
         return RequestTarget.from_known_host(known_host)
 
-    def get_target_list(self, node_addresses_list):
-        return [self.get_target(node) for node in node_addresses_list]
-
     def get_target_from_hostname(self, hostname):
-        known_host = self._known_hosts.get(hostname)
-        if known_host:
-            return RequestTarget.from_known_host(known_host)
-        return RequestTarget(hostname)
+        try:
+            return self.get_target(hostname)
+        except HostNotFound:
+            return RequestTarget(hostname)
 
 
 class RequestData(
