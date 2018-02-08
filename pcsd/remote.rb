@@ -69,7 +69,7 @@ def remote(params, request, auth_user)
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
-      :save_tokens => method(:save_tokens),
+      :known_hosts_add => method(:known_hosts_add),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :check_sbd => method(:check_sbd),
       :set_sbd_config => method(:set_sbd_config),
@@ -2088,45 +2088,33 @@ def get_cluster_known_hosts(params, request, auth_user)
   return [200, JSON.generate(data)]
 end
 
-# TODO replace this function with save_known_hosts
-# it is only kept here while overhauling authentication so the overhaul can
-# be done in steps instead all at once
-def save_tokens(params, request, auth_user)
+def known_hosts_add(params, request, auth_user)
   # pcsd runs as root thus always works with hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
 
   new_hosts = []
-
-  params.each{|nodes|
-    if nodes[0].start_with?"node:" and nodes[0].length > 5
-      node = nodes[0][5..-1]
-      token = nodes[1]
-      port = (params["port:#{node}"] || '').strip
-      if port == ''
-        port = PCSD_DEFAULT_PORT
-      end
+  begin
+    data = JSON.parse(params.fetch('data_json'))
+    data.fetch('known_hosts').each { |host_name, host_data|
       new_hosts << PcsKnownHost.new(
-        node,
-        token,
-        [{'addr' => node, 'port' => port}]
+        host_name,
+        host_data.fetch('token'),
+        host_data.fetch('addr_port_list')
       )
-    end
-  }
+    }
+  rescue => e
+    return 400, "Incorrect format of request data: #{e}"
+  end
 
   sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
     new_hosts, get_corosync_nodes(), $cluster_name
   )
-
   if sync_successful
-    tokens = {}
-    get_known_hosts().each { |name, obj|
-      tokens[name] = obj.token
-    }
-    return [200, JSON.generate(tokens)]
+    return [200, '']
   else
-    return [400, "Cannot update tokenfile."]
+    return [400, 'Cannot update known-hosts file.']
   end
 end
 

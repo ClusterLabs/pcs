@@ -1130,14 +1130,6 @@ def get_known_hosts()
   ).known_hosts
 end
 
-def add_prefix_to_keys(hash, prefix)
-  new_hash = {}
-  hash.each { |k,v|
-    new_hash["#{prefix}#{k}"] = v
-  }
-  return new_hash
-end
-
 def check_gui_status_of_nodes(auth_user, nodes, timeout=10, ports=nil)
   threads = []
   not_authorized_nodes = []

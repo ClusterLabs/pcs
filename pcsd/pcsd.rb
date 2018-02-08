@@ -529,31 +529,22 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     }
 
-    # TODO adapt to new /save_known_hosts url
-    # keep backward compatible /save_tokens in place for pcs-0.9
-
-    # first we need to authenticate nodes to each other
-    tokens = {}
-    ports = {}
-    get_known_hosts().each { |name, obj|
-      tokens[name] = obj.token
-      ports[name] = obj.first_addr_port()['port']
+    # First we need to authenticate future cluster nodes to each other. We use
+    # a dirty hack to achieve that. Since the GUI is already authorized (it had
+    # to check if the nodes can create a cluster) we will send those GUI tokens
+    # to the nodes.
+    known_hosts = get_known_hosts().select { |name, obj|
+      @nodes.include?(name)
     }
-    tokens_data = add_prefix_to_keys(
-      tokens.select {|k,v| @nodes.include?(k)}, "node:"
-    )
-    ports_data = add_prefix_to_keys(
-      ports.select {|k,v| @nodes.include?(k)}, "port:"
-    )
-    @nodes.each {|n|
-      retval, out = send_request_with_token(
-        auth_user, n, "/save_tokens", true, tokens_data.merge(ports_data)
+    @nodes.each { |future_node|
+      retval = pcs_compatibility_layer_known_hosts_add(
+        auth_user, false, future_node, known_hosts
       )
-      if retval == 404 # backward compatibility layer
-        warning_messages << "Unable to do correct authentication of cluster on node '#{n}', because it is running old version of pcs/pcsd."
+      if retval == 'not_supported'
+        warning_messages << "Unable to do correct authentication of cluster on node '#{future_node}', because it is running an old version of pcs/pcsd."
         break
-      elsif retval != 200
-        return 400, "Unable to authenticate all nodes on node '#{n}'."
+      elsif retval == 'error'
+        return 400, "Unable to authenticate all nodes on node '#{future_node}'."
       end
     }
 
@@ -1188,28 +1179,15 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     nodes = get_cluster_nodes(clustername)
-    # TODO adapt to new /save_known_hosts url
-    # keep backward compatible /save_tokens in place for pcs-0.9
-    tokens = {}
-    ports = {}
-    get_known_hosts().each { |name, obj|
-      tokens[name] = obj.token
-      ports[name] = obj.first_addr_port()['port']
+    known_hosts = get_known_hosts().select { |name, obj|
+      nodes.include?(name)
     }
-    tokens_data = add_prefix_to_keys(
-      tokens.select {|k,v| nodes.include?(k)}, "node:"
+    retval = pcs_compatibility_layer_known_hosts_add(
+      PCSAuth.getSuperuserAuth(), true, clustername, known_hosts
     )
-    ports_data = add_prefix_to_keys(
-      ports.select {|k,v| nodes.include?(k)}, "port:"
-    )
-
-    retval, out = send_cluster_request_with_token(
-      PCSAuth.getSuperuserAuth(), clustername, "/save_tokens", true,
-      tokens_data.merge(ports_data), true
-    )
-    if retval == 404
+    if retval == 'not_supported'
       return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
-    elsif retval != 200
+    elsif retval == 'error'
       return [400, "Authentication failed."]
     end
     return [200, "Auhentication of nodes in cluster should be fixed."]
@@ -1231,24 +1209,18 @@ already been added to pcsd.  You may not add two clusters with the same name int
       return [400, "New node is not authenticated."]
     end
 
-    # TODO adapt to new /save_known_hosts url
-    # keep backward compatible /save_tokens in place for pcs-0.9
-
     # Save the new node token on all nodes in a cluster the new node is beeing
     # added to. Send the token to one node and let the cluster nodes synchronize
     # it by themselves.
-    token_data = {
-      "node:#{new_node}" => known_hosts[new_node].token,
-      "port:#{new_node}" => known_hosts[new_node].first_addr_port()['port']
-    }
-    retval, out = send_cluster_request_with_token(
+    new_node_known_hosts = {new_node => known_hosts[new_node]}
+    retval = pcs_compatibility_layer_known_hosts_add(
       # new node doesn't have config with permissions yet
-      PCSAuth.getSuperuserAuth(), clustername, '/save_tokens', true, token_data
+      PCSAuth.getSuperuserAuth(), true, clustername, new_node_known_hosts
     )
-    # If the cluster runs an old pcsd which doesn't support /save_tokens,
+    # If the cluster runs an old pcsd which doesn't support adding known hosts,
     # ignore 404 in order to not prevent the node to be added.
-    if retval != 404 and retval != 200
-      return [400, 'Failed to save the token of the new node in target cluster.']
+    if retval != 'not_supported' and retval != 'success'
+      return [400, 'Failed to save the token of the new node in the target cluster.']
     end
 
     retval, out = send_cluster_request_with_token(
@@ -1264,12 +1236,82 @@ already been added to pcsd.  You may not add two clusters with the same name int
     return [200, "Node added successfully."]
   end
 
+  def pcs_compatibility_layer_known_hosts_add(auth_user, is_cluster_request, target, known_hosts)
+    # try the new endpoint provided by pcs-0.10
+    known_hosts_request_data = {}
+    known_hosts.each { |host_name, host_obj|
+      known_hosts_request_data[host_name] = {
+        'addr_port_list' => host_obj.addr_port_list,
+        'token' => host_obj.token,
+      }
+    }
+    request_data = {
+      'data_json' => JSON.generate(
+        {'known_hosts' => known_hosts_request_data}
+      ),
+    }
+    if is_cluster_request
+      retval, _out = send_cluster_request_with_token(
+        auth_user, target, '/known_hosts_add', true, request_data
+      )
+    else
+      retval, _out = send_request_with_token(
+        auth_user, target, '/known_hosts_add', true, request_data
+      )
+    end
+
+    # a remote host supports the endpoint; success
+    if retval == 200
+      return 'success'
+    end
+
+    # a remote host supports the endpoint; error
+    if retval != 404
+      return 'error'
+    end
+
+    # a remote host does not support the endpoint
+    # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
+    request_data = {}
+    known_hosts.each { |host_name, host_obj|
+      addr = host_obj.first_addr_port()['addr']
+      port = host_obj.first_addr_port()['port']
+      request_data["node:#{host_name}"] = host_obj.token
+      request_data["port:#{host_name}"] = port
+      request_data["node:#{addr}"] = host_obj.token
+      request_data["port:#{addr}"] = port
+    }
+    if is_cluster_request
+      retval, _out = send_cluster_request_with_token(
+        auth_user, target, '/save_tokens', true, request_data
+      )
+    else
+      retval, _out = send_request_with_token(
+        auth_user, target, '/save_tokens', true, request_data
+      )
+    end
+
+    # a remote host supports the endpoint; success
+    if retval == 200
+      return 'success'
+    end
+
+    # a remote host supports the endpoint; error
+    if retval != 404
+      return 'error'
+    end
+
+    # a remote host does not support any of the endpoints
+    # there's nothing we can do about it
+    return 'not_supported'
+  end
+
   def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
     warning_messages = []
     known_hosts = []
+    auth_user = PCSAuth.getSuperuserAuth()
 
     # try the new endpoint provided by pcs-0.10
-    auth_user = PCSAuth.getSuperuserAuth()
     retval, out = send_request_with_token(
       auth_user, target_node, '/get_cluster_known_hosts'
     )
