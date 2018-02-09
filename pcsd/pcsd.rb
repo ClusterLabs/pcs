@@ -668,63 +668,42 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
   post '/manage/auth_gui_against_nodes' do
     auth_user = PCSAuth.sessionToAuthUser(session)
-    node_auth_error = {}
-    new_tokens = {}
-    new_ports = {}
     threads = []
-    params.each { |node|
+    new_hosts = {}
+    node_auth_error = {}
+
+    data = JSON.parse(params.fetch('data_json'))
+    data.fetch('nodes').each { |node_name, node_data|
       threads << Thread.new {
-        if node[0].end_with?("-pass") and node[0].length > 5
-          nodename = node[0][0..-6]
-          if params.has_key?("all")
-            pass = params["pass-all"]
-          else
-            pass = node[1]
-          end
-          port = (params["port-#{nodename}"] || '').strip
-          if port == ''
-            port = PCSD_DEFAULT_PORT
-          end
-          data = {
-            'node-0' => nodename,
-            'username' => SUPERUSER,
-            'password' => pass,
-            'force' => 1,
-            "port-#{nodename}" => port,
-          }
-          node_auth_error[nodename] = 1
-          code, response = send_request(
-            auth_user, nodename, port, 'auth', true, data, true
-          )
-          if 200 == code
-            token = response.strip
-            if not token.empty?
-              new_tokens[nodename] = token
-              new_ports[nodename] = port
-              node_auth_error[nodename] = 0
-            end
+        addr_port_list = node_data.fetch('addr_port_list')
+        addr = addr_port_list.fetch(0).fetch('addr')
+        port = addr_port_list.fetch(0).fetch('port')
+        request_data = {
+          :username => SUPERUSER,
+          :password => node_data.fetch('password'),
+        }
+        node_auth_error[node_name] = 1
+        code, response = send_request(
+          auth_user, addr, port, 'auth', true, request_data, true
+        )
+        if 200 == code
+          token = response.strip
+          if not token.empty?
+            new_hosts[node_name] = PcsKnownHost.new(
+              node_name,
+              token,
+              addr_port_list
+            )
+            node_auth_error[node_name] = 0
           end
         end
       }
     }
     threads.each { |t| t.join }
 
-    if not new_tokens.empty?
-      new_hosts = []
-      new_tokens.each { |name_addr, token|
-        new_hosts << PcsKnownHost.new(
-          name_addr,
-          token,
-          [
-            {
-              'addr' => name_addr,
-              'port' => (new_ports[name_addr] || PCSD_DEFAULT_PORT),
-            }
-          ]
-        )
-      }
+    if not new_hosts.empty?
       _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
-        new_hosts, get_corosync_nodes(), $cluster_name
+        new_hosts.values(), get_corosync_nodes(), $cluster_name
       )
     end
 
