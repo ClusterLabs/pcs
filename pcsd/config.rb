@@ -218,17 +218,17 @@ class CfgKnownHosts
 
       if @format_version == 1
         json.fetch('known_hosts').each { |name, data|
-          addr_port_list = []
-          data.fetch('addr_port_list').each { |addr_port|
-            addr_port_list << {
-              'addr' => addr_port.fetch('addr'),
-              'port' => addr_port.fetch('port'),
+          dest_list = []
+          data.fetch('dest_list').each { |dest|
+            dest_list << {
+              'addr' => dest.fetch('addr'),
+              'port' => dest.fetch('port'),
             }
           }
           @known_hosts[name] = PcsKnownHost.new(
             name,
             data.fetch('token'),
-            addr_port_list
+            dest_list
           )
         }
       else
@@ -248,7 +248,7 @@ class CfgKnownHosts
     @known_hosts.keys.sort.each { |host_name|
       host = @known_hosts[host_name]
       out_hosts[host_name] = {
-        'addr_port_list' => host.addr_port_list,
+        'dest_list' => host.dest_list,
         'token' => host.token,
       }
     }
@@ -264,29 +264,29 @@ end
 class PcsKnownHost
   attr_reader :name, :token
 
-  def initialize(name, token, addr_port_list)
+  def initialize(name, token, dest_list)
     @name = name
     @token = token
-    @addr_port_list = []
-    addr_port_list.each { |addr_port|
-      @addr_port_list << {
-        'addr' => addr_port.fetch('addr'),
-        'port' => addr_port.fetch('port'),
+    @dest_list = []
+    dest_list.each { |dest|
+      @dest_list << {
+        'addr' => dest.fetch('addr'),
+        'port' => dest.fetch('port'),
       }
     }
   end
 
-  def addr_port_list()
-    ap_list = []
-    @addr_port_list.each { |addr_port|
-      ap_list << addr_port.clone()
+  def dest_list()
+    output_list = []
+    @dest_list.each { |dest|
+      output_list << dest.clone()
     }
-    return ap_list
+    return output_list
   end
 
-  def first_addr_port()
-    if @addr_port_list.length > 0
-      return @addr_port_list[0].clone()
+  def first_dest()
+    if @dest_list.length > 0
+      return @dest_list[0].clone()
     else
       return {}
     end

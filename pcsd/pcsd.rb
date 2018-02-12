@@ -668,9 +668,9 @@ already been added to pcsd.  You may not add two clusters with the same name int
     data = JSON.parse(params.fetch('data_json'))
     data.fetch('nodes').each { |node_name, node_data|
       threads << Thread.new {
-        addr_port_list = node_data.fetch('addr_port_list')
-        addr = addr_port_list.fetch(0).fetch('addr')
-        port = addr_port_list.fetch(0).fetch('port')
+        dest_list = node_data.fetch('dest_list')
+        addr = dest_list.fetch(0).fetch('addr')
+        port = dest_list.fetch(0).fetch('port')
         request_data = {
           :username => SUPERUSER,
           :password => node_data.fetch('password'),
@@ -682,11 +682,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
         if 200 == code
           token = response.strip
           if not token.empty?
-            new_hosts[node_name] = PcsKnownHost.new(
-              node_name,
-              token,
-              addr_port_list
-            )
+            new_hosts[node_name] = PcsKnownHost.new(node_name, token, dest_list)
             node_auth_error[node_name] = 0
           end
         end
@@ -1213,7 +1209,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     known_hosts_request_data = {}
     known_hosts.each { |host_name, host_obj|
       known_hosts_request_data[host_name] = {
-        'addr_port_list' => host_obj.addr_port_list,
+        'dest_list' => host_obj.dest_list,
         'token' => host_obj.token,
       }
     }
@@ -1246,8 +1242,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
     # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
     request_data = {}
     known_hosts.each { |host_name, host_obj|
-      addr = host_obj.first_addr_port()['addr']
-      port = host_obj.first_addr_port()['port']
+      addr = host_obj.first_dest()['addr']
+      port = host_obj.first_dest()['port']
       request_data["node:#{host_name}"] = host_obj.token
       request_data["port:#{host_name}"] = port
       request_data["node:#{addr}"] = host_obj.token
@@ -1294,7 +1290,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
           known_hosts << PcsKnownHost.new(
             name,
             data.fetch('token'),
-            data.fetch('addr_port_list')
+            data.fetch('dest_list')
           )
         }
       rescue => e

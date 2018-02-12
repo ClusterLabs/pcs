@@ -234,7 +234,7 @@ class TestPcsdKnownHosts < Test::Unit::TestCase
   "data_version": %d,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -249,22 +249,22 @@ class TestPcsdKnownHosts < Test::Unit::TestCase
     cfg = Cfgsync::PcsdKnownHosts.from_text(text)
     assert_equal(text, cfg.text)
     assert_equal(2, cfg.version)
-    assert_equal('9730e692503d9af5163d18e21bee4e9749cbdd62', cfg.hash)
+    assert_equal('b34d5dde2727156d3a0f652e83aa1ed1c14104f5', cfg.hash)
 
     cfg.version = 3
     assert_equal(3, cfg.version)
-    assert_equal('0082830bf2504d6a4025b65f6272df0dc188710b', cfg.hash)
+    assert_equal('146e2be5708980d47bceb531729ba4f6a6e4a4e8', cfg.hash)
 
     cfg.text = template % 4
     assert_equal(4, cfg.version)
-    assert_equal('064c134ffd43a16a70f03e7558ea56b1d49ec964', cfg.hash)
+    assert_equal('f9c01aa74cf6dee7eea447c6ffcf253d3bb5b660', cfg.hash)
   end
 
   def test_file()
     FileUtils.cp(File.join(CURRENT_DIR, 'known-hosts'), CFG_PCSD_KNOWN_HOSTS)
     cfg = Cfgsync::PcsdKnownHosts.from_file()
     assert_equal(5, cfg.version)
-    assert_equal('69482ef019603264ea24005ee90be9b5ab5c2910', cfg.hash)
+    assert_equal('dcf0e2f53084b3bc26451753b639d7c1e28ac1a7', cfg.hash)
   end
 
   def test_file_missing()
@@ -707,7 +707,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 5,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -716,7 +716,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token1"
     },
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2234
@@ -739,7 +739,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": %d,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -748,7 +748,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token1"
     },
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224
@@ -757,7 +757,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token2a"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224
@@ -796,7 +796,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 2,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -850,7 +850,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 7,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224
@@ -859,7 +859,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token2a"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224
@@ -885,7 +885,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 7,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.122.2",
           "port": 2224
@@ -894,7 +894,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token2aaaaaaaa"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224
@@ -920,7 +920,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 6,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224
@@ -929,7 +929,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token2aaaaaaaaaa"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224
@@ -945,7 +945,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 7,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224
@@ -974,7 +974,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 6,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224
@@ -983,7 +983,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
       "token": "token2aaaaaaaaaa"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224
@@ -999,7 +999,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   "data_version": 7,
   "known_hosts": {
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2224

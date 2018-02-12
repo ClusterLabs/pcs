@@ -2080,7 +2080,7 @@ def get_cluster_known_hosts(params, request, auth_user)
   get_known_hosts().each { |host_name, host_obj|
     if nodes.include?(host_name)
       data[host_name] = {
-        'addr_port_list' => host_obj.addr_port_list,
+        'dest_list' => host_obj.dest_list,
         'token' => host_obj.token,
       }
     end
@@ -2101,7 +2101,7 @@ def known_hosts_add(params, request, auth_user)
       new_hosts << PcsKnownHost.new(
         host_name,
         host_data.fetch('token'),
-        host_data.fetch('addr_port_list')
+        host_data.fetch('dest_list')
       )
     }
   rescue => e

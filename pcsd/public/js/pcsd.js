@@ -794,7 +794,7 @@ function auth_nodes(dialog) {
   $.each(nodes, function(node_name, node_data) {
     nodes_for_request[node_name] = {
       password: node_data['password'],
-      addr_port_list: [
+      dest_list: [
         {
           addr: node_name,
           port: node_data['port']

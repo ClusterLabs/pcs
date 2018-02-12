@@ -687,10 +687,10 @@ class TestCfgKnownHosts < Test::Unit::TestCase
     assert_equal(fixture_empty_config(), cfg.text)
   end
 
-  def assert_known_host(host, name, token, addr_port_list)
+  def assert_known_host(host, name, token, dest_list)
     assert_equal(name, host.name)
     assert_equal(token, host.token)
-    assert_equal(addr_port_list, host.addr_port_list)
+    assert_equal(dest_list, host.dest_list)
   end
 
   def test_parse_nil()
@@ -742,7 +742,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   "data_version": 2,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -763,7 +763,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
       [
         {'addr' => '10.0.1.1', 'port' => 2224}
       ],
-      cfg.known_hosts['node1'].addr_port_list
+      cfg.known_hosts['node1'].dest_list
     )
     assert_equal(text, cfg.text)
   end
@@ -775,7 +775,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   "data_version": 2,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -788,7 +788,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
       "token": "abcde"
     },
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2234
@@ -843,7 +843,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
     assert_equal(1, $logger.log.length)
     assert_equal('error', $logger.log[0][0])
     assert_match(
-      'Unable to parse known-hosts file: key not found: "addr_port_list"',
+      'Unable to parse known-hosts file: key not found: "dest_list"',
       $logger.log[0][1]
     )
     assert_equal(1, cfg.format_version)
@@ -858,7 +858,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   "data_version": 2,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -867,7 +867,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
       "token": "abcde"
     },
     "node2": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.2",
           "port": 2234
@@ -895,7 +895,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   "data_version": 3,
   "known_hosts": {
     "node1": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.1",
           "port": 2224
@@ -904,7 +904,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
       "token": "abcde"
     },
     "node3": {
-      "addr_port_list": [
+      "dest_list": [
         {
           "addr": "10.0.1.3",
           "port": 2224

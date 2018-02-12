@@ -1088,7 +1088,7 @@ def auth_nodes_do(nodes, username, password, force, local):
             node_name: {
                 'username': username,
                 'password': password,
-                'addr_port_list': [{
+                'dest_list': [{
                     'addr': node_name,
                     'port': node_port if node_port else settings.pcsd_default_port,
                 }],

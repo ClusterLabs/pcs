@@ -416,8 +416,8 @@ def send_request_with_token(
     $logger.error "Unable to connect to node #{node}, no token available"
     return 400,'{"notoken":true}'
   end
-  target_addr = target_info.first_addr_port['addr']
-  target_port = target_info.first_addr_port['port']
+  target_addr = target_info.first_dest()['addr']
+  target_port = target_info.first_dest()['port']
   if not target_addr
     $logger.error "Unable to connect to node #{node}, its address is not known"
     return 400,'{"notoken":true}'
@@ -1167,7 +1167,7 @@ def pcs_auth(auth_user, nodes)
   #   'node name' => {
   #     'username' => a username used for auth
   #     'password' => a password used for auth
-  #     'addr_port_list' => [ # currently only the first item is used
+  #     'dest_list' => [ # currently only the first item is used
   #       {'addr' => addr, 'port' => port} # how to connect to a node
   #     ]
   #   }
@@ -1179,8 +1179,8 @@ def pcs_auth(auth_user, nodes)
   nodes.each { |node_name, node_data|
     threads << Thread.new {
       begin
-        addr = node_data.fetch('addr_port_list').fetch(0).fetch('addr')
-        port = node_data.fetch('addr_port_list').fetch(0).fetch('port')
+        addr = node_data.fetch('dest_list').fetch(0).fetch('addr')
+        port = node_data.fetch('dest_list').fetch(0).fetch('port')
         request_data = {
           :username => node_data.fetch('username'),
           :password => node_data.fetch('password'),
@@ -1212,7 +1212,7 @@ def pcs_auth(auth_user, nodes)
       new_hosts << PcsKnownHost.new(
         node_name,
         response['token'],
-        [nodes[node_name]['addr_port_list'][0]]
+        [nodes[node_name]['dest_list'][0]]
       )
     end
   }

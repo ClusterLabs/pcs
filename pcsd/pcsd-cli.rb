@@ -78,7 +78,7 @@ allowed_commands = {
       ports = {}
       get_known_hosts().each { |name, obj|
         tokens[name] = obj.token
-        ports[name] = obj.first_addr_port()['port']
+        ports[name] = obj.first_dest()['port']
       }
       return {
         :tokens => tokens,
@@ -94,7 +94,7 @@ allowed_commands = {
       out_hosts = {}
       get_known_hosts().each { |name, host|
         out_hosts[name] = {
-          'addr_port_list' => host.addr_port_list,
+          'dest_list' => host.dest_list,
           'token' => host.token,
         }
       }
