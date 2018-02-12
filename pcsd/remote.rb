@@ -1041,7 +1041,7 @@ def node_status(params, request, auth_user)
   node = ClusterEntity::Node.load_current_node(crm_dom)
 
   if params[:skip_auth_check] != '1'
-    _,_,not_authorized_nodes = check_gui_status_of_nodes(
+    _,_,not_authorized_nodes = is_auth_against_nodes(
       auth_user,
       status[:known_nodes],
       3
@@ -1203,7 +1203,7 @@ def clusters_overview(params, request, auth_user)
         'resource_list' => []
       }
       overview_cluster = nil
-      online, offline, not_authorized_nodes = check_gui_status_of_nodes(
+      online, offline, not_authorized_nodes = is_auth_against_nodes(
         auth_user,
         get_cluster_nodes(cluster.name),
         3

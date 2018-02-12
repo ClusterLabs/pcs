@@ -612,21 +612,14 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
   end
 
-  get '/manage/check_pcsd_status' do
+  get '/manage/check_auth_against_nodes' do
     auth_user = PCSAuth.sessionToAuthUser(session)
     node_list = []
     if params[:nodes] != nil and params[:nodes] != ''
       node_list = params[:nodes].split(',')
     end
-    ports = {}
-    node_list.each { |node|
-      port = (params["port-#{node}"] || '').strip
-      ports[node] = port != '' ? port : nil
-    }
     node_results = {}
-    online, offline, notauthorized = check_gui_status_of_nodes(
-      auth_user, node_list, 10, ports
-    )
+    online, offline, notauthorized = is_auth_against_nodes(auth_user, node_list)
     online.each { |node|
       node_results[node] = 'Online'
     }

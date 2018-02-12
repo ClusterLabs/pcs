@@ -1130,35 +1130,29 @@ def get_known_hosts()
   ).known_hosts
 end
 
-def check_gui_status_of_nodes(auth_user, nodes, timeout=10, ports=nil)
+def is_auth_against_nodes(auth_user, node_names, timeout=10)
   threads = []
   not_authorized_nodes = []
   online_nodes = []
   offline_nodes = []
-  known_hosts = get_known_hosts()
 
-  nodes = nodes.uniq.sort
-  nodes.each { |node|
-    if ports and known_hosts.include?(node) and (ports[node] || PCSD_DEFAULT_PORT) != known_hosts[node].first_addr_port()['port']
-      not_authorized_nodes << node
-      next
-    end
+  node_names.uniq.each { |node_name|
     threads << Thread.new {
       code, response = send_request_with_token(
-        auth_user, node, 'check_auth', false, {}, true, nil, timeout
+        auth_user, node_name, 'check_auth', false, {}, true, nil, timeout
       )
       if code == 200
-        online_nodes << node
+        online_nodes << node_name
       else
         begin
           parsed_response = JSON.parse(response)
           if parsed_response['notauthorized'] or parsed_response['notoken']
-            not_authorized_nodes << node
+            not_authorized_nodes << node_name
           else
-            offline_nodes << node
+            offline_nodes << node_name
           end
         rescue JSON::ParserError
-          not_authorized_nodes << node
+          not_authorized_nodes << node_name
         end
       end
     }
