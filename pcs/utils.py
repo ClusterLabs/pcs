@@ -219,16 +219,6 @@ def remove_uid_gid_file(uid,gid):
 
     return file_removed
 
-def read_token_file():
-    data = {
-        "tokens": {},
-        "ports": {},
-    }
-    output, retval = run_pcsdcli("read_tokens")
-    if retval == 0 and output['status'] == 'ok' and output['data']:
-        data = output['data']
-    return data
-
 def read_known_hosts_file():
     output, retval = run_pcsdcli("read_known_hosts")
     data = {}
