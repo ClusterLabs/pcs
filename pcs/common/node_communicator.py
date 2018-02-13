@@ -80,7 +80,7 @@ class RequestTarget(namedtuple(
                 Destination(label, settings.pcsd_default_port)
             ]
         return super(RequestTarget, cls).__new__(
-            cls, label, token=token, dest_list=dest_list,
+            cls, label, token=token, dest_list=list(dest_list),
         )
 
     @classmethod

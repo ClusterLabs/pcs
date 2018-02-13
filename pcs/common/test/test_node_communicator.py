@@ -7,11 +7,54 @@ from pcs.test.tools.custom_mock import (
 )
 
 from pcs import settings
-from pcs.common import pcs_pycurl as pycurl
+from pcs.common import (
+    host,
+    pcs_pycurl as pycurl,
+)
 from pcs.common.host import Destination
 import pcs.common.node_communicator as lib
 
 PORT = settings.pcsd_default_port
+
+
+class NodeTargetFactory(TestCase):
+    def setUp(self):
+        self.known_name = "node"
+        self.unknown_name = "none"
+        self.known_host = host.PcsKnownHost(
+            self.known_name, "token", [host.Destination("addr", "port")]
+        )
+        self.factory = lib.NodeTargetFactory({self.known_name: self.known_host})
+
+    def assert_equal_known_host_target(self, known_host, target):
+        self.assertEqual(known_host.name, target.label)
+        self.assertEqual(known_host.token, target.token)
+        self.assertEqual(known_host.dest_list, target.dest_list)
+
+    def test_get_target_success(self):
+        self.assert_equal_known_host_target(
+            self.known_host, self.factory.get_target(self.known_name)
+        )
+
+    def test_get_target_not_found(self):
+        with self.assertRaises(lib.HostNotFound) as cm:
+            self.factory.get_target(self.unknown_name)
+        self.assertEqual(self.unknown_name, cm.exception.name)
+
+    def test_from_hostname_known(self):
+        self.assert_equal_known_host_target(
+            self.known_host,
+            self.factory.get_target_from_hostname(self.known_name)
+        )
+
+    def test_from_hostname_unknown(self):
+        target = self.factory.get_target_from_hostname(self.unknown_name)
+        self.assertEqual(self.unknown_name, target.label)
+        self.assertEqual(None, target.token)
+        self.assertEqual(
+            [host.Destination(self.unknown_name, PORT)], target.dest_list
+        )
+
 
 class RequestDataUrlEncodeTest(TestCase):
     def test_no_data(self):
@@ -61,6 +104,23 @@ class RequestTargetConstructorTest(TestCase):
         self.assertEqual(label, target.label)
         self.assertIsNot(_addr_list_to_dest(address_list), target.dest_list)
         self.assertEqual(_addr_list_to_dest(original_list), target.dest_list)
+
+
+class RequestTargetFromKnownHost(TestCase):
+    def test_success(self):
+        known_host = host.PcsKnownHost(
+            "name",
+            "token",
+            [
+                host.Destination("addr1", "addr2"),
+                host.Destination("addr2", "port2"),
+            ]
+        )
+        target = lib.RequestTarget.from_known_host(known_host)
+        self.assertEqual(known_host.name, target.label)
+        self.assertEqual(known_host.token, target.token)
+        self.assertEqual(known_host.dest_list, target.dest_list)
+
 
 
 class RequestUrlTest(TestCase):
