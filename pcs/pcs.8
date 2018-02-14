@@ -759,12 +759,12 @@ Load custom certificate and key files for use in pcsd.
 sync\-certificates
 Sync pcsd certificates to all nodes in the local cluster. WARNING: This will restart pcsd daemon on the nodes.
 .TP
-deauth
-Delete locally stored authentication tokens used by remote systems to connect to the local pcsd instance. After this command is run other nodes will need to re\-authenticate against this node to be able to connect to it.
+deauth [<token>]...
+Delete locally stored authentication tokens used by remote systems to connect to the local pcsd instance. If no tokens are specified all tokens will be deleted. After this command is run other nodes will need to re\-authenticate against this node to be able to connect to it.
 .SS "host"
 .TP
 deauth [<host name>]...
-Delete locally stored authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If no host names are specified all tokens will be deleted. After this command is run this node will need to be re-authenticated against other nodes to be able to connect to them.
+Delete locally stored authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If no host names are specified all tokens will be deleted. After this command is run this node will need to re\-authenticate against other nodes to be able to connect to them.
 .SS "node"
 .TP
 attribute [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]

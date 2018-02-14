@@ -1,4 +1,4 @@
-import errno
+import json
 import os
 import sys
 import time
@@ -115,11 +115,56 @@ def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
     )
 
 def pcsd_deauth(argv):
+    filepath = settings.pcsd_users_conf_location
+    if len(argv) < 1:
+        try:
+            users_file = open(filepath, "w")
+            users_file.write(json.dumps([]))
+            users_file.close()
+        except EnvironmentError as e:
+            utils.err(
+                "Unable to edit data in {file}: {err}".format(
+                    file=filepath,
+                    err=e
+                )
+            )
+        return
+
     try:
-        os.remove(settings.pcsd_users_conf_location)
-    except OSError as e:
-        if (e.errno != errno.ENOENT):
-            utils.err(e.strerror + " (" + settings.pcsd_users_conf_location + ")")
+        tokens_to_remove = set(argv)
+        users_file = open(filepath, "r+")
+        old_data = json.loads(users_file.read())
+        new_data = []
+        removed_tokens = set()
+        for old_item in old_data:
+            if old_item["token"] in tokens_to_remove:
+                removed_tokens.add(old_item["token"])
+            else:
+                new_data.append(old_item)
+        if removed_tokens:
+            users_file.seek(0)
+            users_file.truncate()
+            users_file.write(json.dumps(new_data, indent=2))
+        users_file.close()
+        tokens_not_found = sorted(tokens_to_remove - removed_tokens)
+        if tokens_not_found:
+            utils.err("Following tokens were not found: '{tokens}'".format(
+                tokens="', '".join(tokens_not_found)
+            ))
+    except KeyError as e:
+        utils.err(
+            "Unable to parse data in {file}: missing key {key}".format(
+                file=filepath, key=e
+            )
+        )
+    except ValueError as e:
+        utils.err(
+            "Unable to parse data in {file}: {err}".format(file=filepath, err=e)
+        )
+    except EnvironmentError as e:
+        utils.err(
+            "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
+        )
 
 def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
     pcsd_data = {

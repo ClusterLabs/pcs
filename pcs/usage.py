@@ -1409,11 +1409,11 @@ Commands:
         Sync pcsd certificates to all nodes in the local cluster.
         WARNING: This will restart pcsd daemon on the nodes.
 
-    deauth
+    deauth [<token>]...
        Delete locally stored authentication tokens used by remote systems to
-       connect to the local pcsd instance. After this command is run other
-       nodes will need to re-authenticate against this node to be able to
-       connect to it.
+       connect to the local pcsd instance. If no tokens are specified all
+       tokens will be deleted. After this command is run other nodes will need
+       to re-authenticate against this node to be able to connect to it.
 """
     if pout:
         print(sub_usage(args, output))
@@ -1430,8 +1430,8 @@ Commands:
        Delete locally stored authentication tokens which allow pcs/pcsd on the
        current system to connect to remote pcsd instances on specified host
        names. If no host names are specified all tokens will be deleted. After
-       this command is run this node will need to be re-authenticated against
-       other nodes to be able to connect to them.
+       this command is run this node will need to re-authenticate against other
+       nodes to be able to connect to them.
 """
     if pout:
         print(sub_usage(args, output))
