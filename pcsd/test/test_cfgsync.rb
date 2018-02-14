@@ -732,6 +732,47 @@ class TestMergeKnownHosts < Test::Unit::TestCase
 }')
   end
 
+  def fixture_old_cfg_with_nodex()
+    return (
+'{
+  "format_version": 1,
+  "data_version": 5,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "token1"
+    },
+    "node2": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        },
+        {
+          "addr": "10.0.2.2",
+          "port": 2235
+        }
+      ],
+      "token": "token2"
+    },
+    "nodeX": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.100",
+          "port": 2224
+        }
+      ],
+      "token": "tokenX"
+    }
+  }
+}')
+  end
+
   def fixture_new_cfg(version=5)
     return (
 '{
@@ -809,16 +850,17 @@ class TestMergeKnownHosts < Test::Unit::TestCase
 
   def test_nothing_to_merge()
     old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
-    new_cfg = Cfgsync::merge_known_host_files(old_cfg, nil, [])
+    new_cfg = Cfgsync::merge_known_host_files(old_cfg, nil, [], [])
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
   end
 
   def test_extra_hosts()
-    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg_with_nodex())
     new_cfg = Cfgsync::merge_known_host_files(
       old_cfg,
       [],
-      [fixture_node2(), fixture_node3()]
+      [fixture_node2(), fixture_node3()],
+      ['nodeX', 'node3', 'nodeY']
     )
     assert_equal(fixture_new_cfg, new_cfg.text.strip)
   end
@@ -828,17 +870,19 @@ class TestMergeKnownHosts < Test::Unit::TestCase
     new_cfg = Cfgsync::merge_known_host_files(
       old_cfg,
       [Cfgsync::PcsdKnownHosts.from_text(fixture_old_text)],
+      [],
       []
     )
     assert_equal(old_cfg.text.strip, new_cfg.text.strip)
   end
 
   def test_older_file_and_extra_hosts()
-    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg_with_nodex())
     new_cfg = Cfgsync::merge_known_host_files(
       old_cfg,
       [Cfgsync::PcsdKnownHosts.from_text(fixture_old_text)],
-      [fixture_node2(), fixture_node3()]
+      [fixture_node2(), fixture_node3()],
+      ['nodeX', 'node3']
     )
     assert_equal(fixture_new_cfg, new_cfg.text.strip)
   end
@@ -873,6 +917,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
     new_cfg = Cfgsync::merge_known_host_files(
       old_cfg,
       [Cfgsync::PcsdKnownHosts.from_text(new_text)],
+      [],
       []
     )
     assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
@@ -901,14 +946,24 @@ class TestMergeKnownHosts < Test::Unit::TestCase
         }
       ],
       "token": "token3"
+    },
+    "nodeY": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.101",
+          "port": 2224
+        }
+      ],
+      "token": "tokenX"
     }
   }
 }'
-    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg())
+    old_cfg = Cfgsync::PcsdKnownHosts.from_text(fixture_old_cfg_with_nodex())
     new_cfg = Cfgsync::merge_known_host_files(
       old_cfg,
       [Cfgsync::PcsdKnownHosts.from_text(new_text)],
-      [fixture_node2()]
+      [fixture_node2()],
+      ['node2', 'nodeX', 'nodeY']
     )
     assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
   end
@@ -962,6 +1017,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
         Cfgsync::PcsdKnownHosts.from_text(new_text1),
         Cfgsync::PcsdKnownHosts.from_text(new_text2),
       ],
+      [],
       []
     )
     assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
@@ -1016,7 +1072,8 @@ class TestMergeKnownHosts < Test::Unit::TestCase
         Cfgsync::PcsdKnownHosts.from_text(new_text1),
         Cfgsync::PcsdKnownHosts.from_text(new_text2),
       ],
-      [fixture_node3()]
+      [fixture_node3()],
+      []
     )
     assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
   end

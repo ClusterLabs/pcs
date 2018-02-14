@@ -9,6 +9,7 @@ from pcs import (
     cluster,
     config,
     constraint,
+    host,
     node,
     pcsd,
     prop,
@@ -192,6 +193,11 @@ def main(argv=None):
             utils.get_modifiers()
         ),
         "booth": lambda argv: booth.booth_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modifiers()
+        ),
+        "host": lambda argv: host.host_cmd(
             utils.get_library_wrapper(),
             argv,
             utils.get_modifiers()

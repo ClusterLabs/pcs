@@ -1120,8 +1120,8 @@ def auth_nodes_do(nodes, username, password, force, local):
         try:
             if not output['data']['sync_successful']:
                 err(
-                    "Some nodes had a newer tokens than the local node. "
-                    + "Local node's tokens were updated. "
+                    "Some nodes had a newer known-hosts than the local node. "
+                    + "Local node's known-hosts were updated. "
                     + "Please repeat the authentication if needed."
                 )
             for node, result in output['data']['auth_responses'].items():
@@ -1142,7 +1142,7 @@ def auth_nodes_do(nodes, username, password, force, local):
             if output['data']['sync_nodes_err']:
                 err(
                     (
-                        "Unable to synchronize and save tokens on nodes: {0}. "
+                        "Unable to synchronize and save known-hosts on nodes: {0}. "
                         + "Are they authorized?"
                     ).format(
                         ", ".join(output['data']['sync_nodes_err'])
@@ -2867,7 +2867,7 @@ def get_modifiers():
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
-    if error.message:
+    if error and error.message:
         err(error.message)
     else:
         usage.show(main_name, [usage_name])

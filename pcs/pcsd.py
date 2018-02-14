@@ -16,12 +16,12 @@ def pcsd_cmd(argv):
     sub_cmd = argv.pop(0)
     if sub_cmd == "help":
         usage.pcsd(argv)
+    elif sub_cmd == "deauth":
+        pcsd_deauth(argv)
     elif sub_cmd == "certkey":
         pcsd_certkey(argv)
     elif sub_cmd == "sync-certificates":
         pcsd_sync_certs(argv)
-    elif sub_cmd == "clear-auth":
-        pcsd_clear_auth(argv)
     else:
         usage.pcsd()
         sys.exit(1)
@@ -114,34 +114,12 @@ def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
         nodes_restart, exit_after_error, async_restart=async_restart
     )
 
-def pcsd_clear_auth(argv):
-    output = []
-    files = []
-    if os.geteuid() == 0:
-        pcsd_tokens_file = settings.pcsd_tokens_location
-    else:
-        pcsd_tokens_file = os.path.expanduser("~/.pcs/tokens")
-
-    if '--local' in utils.pcs_options:
-        files.append(pcsd_tokens_file)
-    if '--remote' in utils.pcs_options:
-        files.append(settings.pcsd_users_conf_location)
-
-    if len(files) == 0:
-        files.append(pcsd_tokens_file)
-        files.append(settings.pcsd_users_conf_location)
-
-    for f in files:
-        try:
-            os.remove(f)
-        except OSError as e:
-            if (e.errno != errno.ENOENT):
-                output.append(e.strerror + " (" + f + ")")
-
-    if len(output) > 0:
-        for o in output:
-            print("Error: " + o)
-        sys.exit(1)
+def pcsd_deauth(argv):
+    try:
+        os.remove(settings.pcsd_users_conf_location)
+    except OSError as e:
+        if (e.errno != errno.ENOENT):
+            utils.err(e.strerror + " (" + settings.pcsd_users_conf_location + ")")
 
 def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
     pcsd_data = {

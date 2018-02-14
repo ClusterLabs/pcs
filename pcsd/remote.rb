@@ -69,7 +69,7 @@ def remote(params, request, auth_user)
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
-      :known_hosts_add => method(:known_hosts_add),
+      :known_hosts_change => method(:known_hosts_change),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :check_sbd => method(:check_sbd),
       :set_sbd_config => method(:set_sbd_config),
@@ -2088,28 +2088,32 @@ def get_cluster_known_hosts(params, request, auth_user)
   return [200, JSON.generate(data)]
 end
 
-def known_hosts_add(params, request, auth_user)
+def known_hosts_change(params, request, auth_user)
   # pcsd runs as root thus always works with hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
 
   new_hosts = []
+  remove_hosts = []
   begin
     data = JSON.parse(params.fetch('data_json'))
-    data.fetch('known_hosts').each { |host_name, host_data|
+    data.fetch('known_hosts_add').each { |host_name, host_data|
       new_hosts << PcsKnownHost.new(
         host_name,
         host_data.fetch('token'),
         host_data.fetch('dest_list')
       )
     }
+    data.fetch('known_hosts_remove').each { |host_name|
+      remove_hosts << host_name
+    }
   rescue => e
     return 400, "Incorrect format of request data: #{e}"
   end
 
   sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
-    new_hosts, get_corosync_nodes(), $cluster_name
+    new_hosts, remove_hosts, get_corosync_nodes(), $cluster_name
   )
   if sync_successful
     return [200, '']

@@ -1229,13 +1229,13 @@ def pcs_auth(auth_user, nodes)
   if Process.uid != 0
     # Other tokens just need to be stored localy for a user.
     sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
-      new_hosts, [], nil
+      new_hosts, [], [], nil
     )
     return auth_responses, sync_successful, sync_failed_nodes, sync_responses
   end
   cluster_nodes = get_corosync_nodes()
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
-    new_hosts, cluster_nodes, $cluster_name
+    new_hosts, [], cluster_nodes, $cluster_name
   )
   sync_responses.each { |node, response|
     if response['status'] != 'ok'
@@ -1248,6 +1248,40 @@ def pcs_auth(auth_user, nodes)
     end
   }
   return auth_responses, sync_successful, sync_failed_nodes, sync_responses
+end
+
+def pcs_deauth(auth_user, host_names)
+  # sync known hosts within the local cluster
+  sync_successful = true
+  sync_failed_nodes = []
+  sync_responses = {}
+  if host_names.empty?
+    return sync_successful, sync_failed_nodes, sync_responses
+  end
+  # Only tokens used in pcsd-to-pcsd communication can and need to be synced.
+  # Those are accessible only when running under root account.
+  if Process.uid != 0
+    # Other tokens just need to be stored localy for a user.
+    sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+      [], host_names, [], nil
+    )
+    return sync_successful, sync_failed_nodes, sync_responses
+  end
+  cluster_nodes = get_corosync_nodes()
+  sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
+    [], host_names, cluster_nodes, $cluster_name
+  )
+  sync_responses.each { |node, response|
+    if response['status'] != 'ok'
+      sync_failed_nodes << node
+    else
+      node_result = response['result'][Cfgsync::PcsdKnownHosts.name]
+      if not ['accepted', 'rejected'].include?(node_result)
+        sync_failed_nodes << node
+      end
+    end
+  }
+  return sync_successful, sync_failed_nodes, sync_responses
 end
 
 def send_local_configs_to_nodes(

@@ -467,7 +467,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       )
       if not new_hosts.empty?
         pushed, _ = Cfgsync::save_sync_new_known_hosts(
-          new_hosts, get_corosync_nodes(), $cluster_name
+          new_hosts, [], get_corosync_nodes(), $cluster_name
         )
         if not pushed
           return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -692,7 +692,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
     if not new_hosts.empty?
       _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
-        new_hosts.values(), get_corosync_nodes(), $cluster_name
+        new_hosts.values(), [], get_corosync_nodes(), $cluster_name
       )
     end
 
@@ -1204,7 +1204,9 @@ already been added to pcsd.  You may not add two clusters with the same name int
     return [200, "Node added successfully."]
   end
 
-  def pcs_compatibility_layer_known_hosts_add(auth_user, is_cluster_request, target, known_hosts)
+  def pcs_compatibility_layer_known_hosts_add(
+    auth_user, is_cluster_request, target, known_hosts
+  )
     # try the new endpoint provided by pcs-0.10
     known_hosts_request_data = {}
     known_hosts.each { |host_name, host_obj|
@@ -1215,16 +1217,19 @@ already been added to pcsd.  You may not add two clusters with the same name int
     }
     request_data = {
       'data_json' => JSON.generate(
-        {'known_hosts' => known_hosts_request_data}
+        {
+          'known_hosts_add' => known_hosts_request_data,
+          'known_hosts_remove' => [],
+        }
       ),
     }
     if is_cluster_request
       retval, _out = send_cluster_request_with_token(
-        auth_user, target, '/known_hosts_add', true, request_data
+        auth_user, target, '/known_hosts_change', true, request_data
       )
     else
       retval, _out = send_request_with_token(
-        auth_user, target, '/known_hosts_add', true, request_data
+        auth_user, target, '/known_hosts_change', true, request_data
       )
     end
 

@@ -753,9 +753,12 @@ module Cfgsync
     end
   end
 
-  def self.merge_known_host_files(orig_cfg, to_merge_cfgs, new_hosts)
+  def self.merge_known_host_files(
+    orig_cfg, to_merge_cfgs, new_hosts, remove_hosts_names
+  )
     # Merge known-hosts files, use only newer known-hosts files, keep the most
-    # recent known-hosts, make sure new_hosts are included.
+    # recent known-hosts, make sure remove_hosts_names are deleted and new_hosts
+    # are included
     max_version = orig_cfg.version
     with_new_hosts = CfgKnownHosts.new(orig_cfg.text)
     if to_merge_cfgs and to_merge_cfgs.length > 0
@@ -769,6 +772,9 @@ module Cfgsync
         max_version = [to_merge_cfgs.max.version, max_version].max
       end
     end
+    remove_hosts_names.each { |host_name|
+      with_new_hosts.known_hosts.delete(host_name)
+    }
     new_hosts.each { |host|
       with_new_hosts.known_hosts[host.name] = host
     }
@@ -777,9 +783,14 @@ module Cfgsync
     return config_new
   end
 
-  def self.save_sync_new_known_hosts(new_hosts, target_nodes, cluster_name)
+  def self.save_sync_new_known_hosts(
+    new_hosts, remove_hosts_names, target_nodes, cluster_name
+  )
     config_old = PcsdKnownHosts.from_file()
     with_new_hosts = CfgKnownHosts.new(config_old.text())
+    remove_hosts_names.each { |host_name|
+      with_new_hosts.known_hosts.delete(host_name)
+    }
     new_hosts.each { |host|
       with_new_hosts.known_hosts[host.name] = host
     }
@@ -806,7 +817,7 @@ module Cfgsync
     )
     fetched_hosts = fetcher.fetch_all()[config_new.class.name]
     config_new = Cfgsync::merge_known_host_files(
-      config_old, fetched_hosts, new_hosts
+      config_old, fetched_hosts, new_hosts, remove_hosts_names
     )
     # and try to publish again
     return Cfgsync::save_sync_new_version(
