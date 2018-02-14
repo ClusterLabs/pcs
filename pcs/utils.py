@@ -1157,6 +1157,51 @@ def auth_nodes_do(nodes, username, password, force, local):
         return
     err('Unable to communicate with pcsd')
 
+def auth_hosts(host_dict):
+    output, retval = run_pcsdcli('auth', dict(nodes=host_dict))
+    if retval == 0 and output['status'] == 'access_denied':
+        err('Access denied')
+    if retval == 0 and output['status'] == 'ok' and output['data']:
+        failed = False
+        try:
+            if not output['data']['sync_successful']:
+                err(
+                    "Some nodes had a newer known-hosts than the local node. "
+                    + "Local node's known-hosts were updated. "
+                    + "Please repeat the authentication if needed."
+                )
+            for node, result in output['data']['auth_responses'].items():
+                if result['status'] == 'ok':
+                    print("{0}: Authorized".format(node))
+                elif result['status'] == 'bad_password':
+                    err(
+                        "{0}: Username and/or password is incorrect".format(node),
+                        False
+                    )
+                    failed = True
+                elif result['status'] in ('noresponse', 'error'):
+                    err("Unable to communicate with {0}".format(node), False)
+                    failed = True
+                else:
+                    err("Unexpected response from {0}".format(node), False)
+                    failed = True
+            if output['data']['sync_nodes_err']:
+                err(
+                    (
+                        "Unable to synchronize and save known-hosts on nodes: {0}. "
+                        + "Are they authorized?"
+                    ).format(
+                        ", ".join(output['data']['sync_nodes_err'])
+                    ),
+                    False
+                )
+                failed = True
+        except (ValueError, KeyError):
+            err('Unable to communicate with pcsd')
+        if failed:
+            sys.exit(1)
+        return
+    err('Unable to communicate with pcsd')
 
 def call_local_pcsd(argv, interactive_auth=False, std_in=None):
     # some commands cannot be run under a non-root account
