@@ -1255,9 +1255,21 @@ def pcs_deauth(auth_user, host_names)
   sync_successful = true
   sync_failed_nodes = []
   sync_responses = {}
+  hosts_not_found = []
+
   if host_names.empty?
-    return sync_successful, sync_failed_nodes, sync_responses
+    return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
   end
+  known_hosts_names = get_known_hosts().keys()
+  host_names.each { |name_to_remove|
+    if not known_hosts_names.include?(name_to_remove)
+      hosts_not_found << name_to_remove
+    end
+  }
+  if hosts_not_found.length > 0
+    return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
+  end
+
   # Only tokens used in pcsd-to-pcsd communication can and need to be synced.
   # Those are accessible only when running under root account.
   if Process.uid != 0
@@ -1265,7 +1277,7 @@ def pcs_deauth(auth_user, host_names)
     sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
       [], host_names, [], nil
     )
-    return sync_successful, sync_failed_nodes, sync_responses
+    return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
   end
   cluster_nodes = get_corosync_nodes()
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
@@ -1281,7 +1293,7 @@ def pcs_deauth(auth_user, host_names)
       end
     end
   }
-  return sync_successful, sync_failed_nodes, sync_responses
+  return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
 end
 
 def send_local_configs_to_nodes(

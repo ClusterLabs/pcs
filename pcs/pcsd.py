@@ -141,16 +141,16 @@ def pcsd_deauth(argv):
                 removed_tokens.add(old_item["token"])
             else:
                 new_data.append(old_item)
-        if removed_tokens:
-            users_file.seek(0)
-            users_file.truncate()
-            users_file.write(json.dumps(new_data, indent=2))
-        users_file.close()
         tokens_not_found = sorted(tokens_to_remove - removed_tokens)
         if tokens_not_found:
             utils.err("Following tokens were not found: '{tokens}'".format(
                 tokens="', '".join(tokens_not_found)
             ))
+        if removed_tokens:
+            users_file.seek(0)
+            users_file.truncate()
+            users_file.write(json.dumps(new_data, indent=2))
+        users_file.close()
     except KeyError as e:
         utils.err(
             "Unable to parse data in {file}: missing key {key}".format(

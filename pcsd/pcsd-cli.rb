@@ -88,10 +88,11 @@ allowed_commands = {
     'only_superuser' => false,
     'permissions' => nil,
     'call' => lambda { |params, auth_user_|
-      sync_successful, sync_nodes_err, sync_responses = pcs_deauth(
+      sync_successful, sync_nodes_err, sync_responses, hosts_not_found = pcs_deauth(
         auth_user_, params.fetch('host_names')
       )
       return {
+        'hosts_not_found' => hosts_not_found,
         'sync_successful' => sync_successful,
         'sync_nodes_err' => sync_nodes_err,
         'sync_responses' => sync_responses,

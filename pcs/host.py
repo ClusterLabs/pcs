@@ -42,13 +42,22 @@ def deauth_cmd(lib, argv, modifiers):
         utils.err('Access denied')
     if retval == 0 and output['status'] == 'ok' and output['data']:
         failed = False
+        # The except statement below catches all exceptions including SystemExit
+        # so we cannot instruct utils.err to raise it.
         try:
+            if output["data"]["hosts_not_found"]:
+                utils.err("Following hosts were not found: '{hosts}'".format(
+                    hosts="', '".join(output["data"]["hosts_not_found"])
+                ), False)
+                failed = True
             if not output['data']['sync_successful']:
                 utils.err(
                     "Some nodes had a newer known-hosts than the local node. "
-                    + "Local node's known-hosts were updated. "
-                    + "Please repeat the action if needed."
+                        + "Local node's known-hosts were updated. "
+                        + "Please repeat the action if needed.",
+                    False
                 )
+                failed = True
             if output['data']['sync_nodes_err']:
                 utils.err(
                     (

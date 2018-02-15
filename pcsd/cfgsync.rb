@@ -787,14 +787,9 @@ module Cfgsync
     new_hosts, remove_hosts_names, target_nodes, cluster_name
   )
     config_old = PcsdKnownHosts.from_file()
-    with_new_hosts = CfgKnownHosts.new(config_old.text())
-    remove_hosts_names.each { |host_name|
-      with_new_hosts.known_hosts.delete(host_name)
-    }
-    new_hosts.each { |host|
-      with_new_hosts.known_hosts[host.name] = host
-    }
-    config_new = PcsdKnownHosts.from_text(with_new_hosts.text)
+    config_new = Cfgsync::merge_known_host_files(
+      config_old, [], new_hosts, remove_hosts_names
+    )
     if not cluster_name or cluster_name.empty? or not target_nodes or target_nodes.empty?
       # we run on a standalone host, no config syncing
       config_new.version += 1
