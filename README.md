@@ -77,8 +77,8 @@ Start pcsd and make it start on boot:
 
 Currently this is built into Fedora, RHEL and its clones and Debian and its
 derivates.
-* [Fedora package git repositories](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/)
-* [Current Fedora .spec](http://pkgs.fedoraproject.org/cgit/rpms/pcs.git/tree/pcs.spec)
+* [Fedora package git repositories](https://src.fedoraproject.org/rpms/pcs)
+* [Current Fedora .spec](https://src.fedoraproject.org/rpms/pcs/blob/master/f/pcs.spec)
 * [Debian-HA project home page](https://wiki.debian.org/Debian-HA)
 
 ---
@@ -145,11 +145,11 @@ Login as the `hacluster` user.
 
 ### Further Documentation
 
-[ClusterLabs website](http://clusterlabs.org) is an excellent place to learn
+[ClusterLabs website](https://clusterlabs.org) is an excellent place to learn
 more about Pacemaker clusters.
-* [ClusterLabs quick start](http://clusterlabs.org/quickstart.html)
-* [Clusters from Scratch](http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html/Clusters_from_Scratch/index.html)
-* [ClusterLabs documentation page](http://clusterlabs.org/doc/)
+* [ClusterLabs quick start](https://clusterlabs.org/quickstart.html)
+* [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/index.html)
+* [ClusterLabs documentation page](https://clusterlabs.org/pacemaker/doc/)
 
 ---
 
@@ -158,5 +158,5 @@ If you have any bug reports or feature requests please feel free to open a
 github issue on the pcs project.
 
 Alternatively you can use ClusterLabs
-[users mailinglist](http://oss.clusterlabs.org/mailman/listinfo/users)
+[users mailinglist](https://oss.clusterlabs.org/mailman/listinfo/users)
 which is also a great place to ask Pacemaker clusters related questions.
