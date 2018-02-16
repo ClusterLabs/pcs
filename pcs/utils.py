@@ -1228,8 +1228,16 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
             # pcsd will be used
         )
         if not port:
-            port = None
-        auth_nodes_do({"localhost": port}, username, password, True, True)
+            port = settings.pcsd_default_port
+        auth_hosts(
+            {
+                "localhost": {
+                    "username": username,
+                    "password": password,
+                    "dest_list": [{"addr": "localhost", "port": port, }]
+                }
+            }
+        )
         print()
         code, output = sendHTTPRequest(
             "localhost", "run_pcs", data_send, False, False
