@@ -1426,11 +1426,12 @@ Usage: pcs host [commands]...
 Manage hosts known to pcs/pcsd
 
 Commands:
-    auth [<host name> [addr=<ip>[:<port>]]] ... [-u <username>] [-p <password>]
-        Authenticate local pcs to pcsd on hosts specified. Host name should not
-        contain character '='. It is also possible to specify ip address and
-        port via which pcs can communicate with it. Authorization tokens are
-        stored in ~/.pcs/known_host or /var/lib/pcsd/known_host for root.
+    auth (<host name> [addr=<address>[:<port>]])... [-u <username>]
+            [-p <password>]
+        Authenticate local pcs/pcsd against pcsd on specified hosts. It is
+        possible to specify an address and a port via which pcs/pcsd will
+        communicate with each host. If an address is not specified a host name
+        will be used. If a port is not specified 2224 will be used.
 
     deauth [<host name>]...
        Delete locally stored authentication tokens which allow pcs/pcsd on the
