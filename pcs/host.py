@@ -4,8 +4,6 @@ from __future__ import (
     print_function,
 )
 
-import sys
-
 try:
     # python2
     from urlparse import urlparse
@@ -125,37 +123,29 @@ def deauth_cmd(lib, argv, modifiers):
     if retval == 0 and output['status'] == 'access_denied':
         utils.err('Access denied')
     if retval == 0 and output['status'] == 'ok' and output['data']:
-        failed = False
-        # The except statement below catches all exceptions including SystemExit
-        # so we cannot instruct utils.err to raise it.
         try:
             if output["data"]["hosts_not_found"]:
                 utils.err("Following hosts were not found: '{hosts}'".format(
                     hosts="', '".join(output["data"]["hosts_not_found"])
-                ), False)
-                failed = True
+                ))
             if not output['data']['sync_successful']:
                 utils.err(
                     "Some nodes had a newer known-hosts than the local node. "
                         + "Local node's known-hosts were updated. "
-                        + "Please repeat the action if needed.",
-                    False
+                        + "Please repeat the action if needed."
                 )
-                failed = True
             if output['data']['sync_nodes_err']:
                 utils.err(
                     (
-                        "Unable to synchronize and save known-hosts on nodes: {0}. "
-                        + "Are they authorized?"
+                        "Unable to synchronize and save known-hosts on nodes: "
+                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
+                        + "are authorized."
                     ).format(
-                        ", ".join(output['data']['sync_nodes_err'])
-                    ),
-                    False
+                        ", ".join(output['data']['sync_nodes_err']),
+                        " ".join(output['data']['sync_nodes_err'])
+                    )
                 )
-                failed = True
-        except:
+        except (ValueError, KeyError):
             utils.err('Unable to communicate with pcsd')
-        if failed:
-            sys.exit(1)
         return
     utils.err('Unable to communicate with pcsd')

@@ -567,11 +567,15 @@ module Cfgsync
 
 
   class ConfigFetcher
-    def initialize(auth_user, config_classes, nodes, cluster_name)
+    def initialize(
+      auth_user, config_classes, nodes, cluster_name, known_hosts=[]
+    )
       @config_classes = config_classes
       @nodes = nodes
       @cluster_name = cluster_name
       @auth_user = auth_user
+      @additional_known_hosts = {}
+      known_hosts.each{ |host| @additional_known_hosts[host.name] = host}
     end
 
     def fetch_all()
@@ -623,7 +627,8 @@ module Cfgsync
       nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            @auth_user, node, 'get_configs', false, data
+            @auth_user, node, 'get_configs', false, data, true, nil, nil,
+            @additional_known_hosts
           )
           if 200 == code
             begin
@@ -808,7 +813,8 @@ module Cfgsync
     end
     # get tokens from all nodes and merge them
     fetcher = ConfigFetcher.new(
-      PCSAuth.getSuperuserAuth(), [config_new.class], target_nodes, cluster_name
+      PCSAuth.getSuperuserAuth(), [config_new.class], target_nodes,
+      cluster_name, new_hosts
     )
     fetched_hosts = fetcher.fetch_all()[config_new.class.name]
     config_new = Cfgsync::merge_known_host_files(

@@ -1142,15 +1142,15 @@ def auth_nodes_do(nodes, username, password, force, local):
             if output['data']['sync_nodes_err']:
                 err(
                     (
-                        "Unable to synchronize and save known-hosts on nodes: {0}. "
-                        + "Are they authorized?"
+                        "Unable to synchronize and save known-hosts on nodes: "
+                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
+                        + "are authorized."
                     ).format(
-                        ", ".join(output['data']['sync_nodes_err'])
-                    ),
-                    False
+                        ", ".join(output['data']['sync_nodes_err']),
+                        " ".join(output['data']['sync_nodes_err'])
+                    )
                 )
-                failed = True
-        except:
+        except (ValueError, KeyError):
             err('Unable to communicate with pcsd')
         if failed:
             sys.exit(1)
@@ -1188,14 +1188,14 @@ def auth_hosts(host_dict):
             if output['data']['sync_nodes_err']:
                 err(
                     (
-                        "Unable to synchronize and save known-hosts on nodes: {0}. "
-                        + "Are they authorized?"
+                        "Unable to synchronize and save known-hosts on nodes: "
+                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
+                        + "are authorized."
                     ).format(
-                        ", ".join(output['data']['sync_nodes_err'])
-                    ),
-                    False
+                        ", ".join(output['data']['sync_nodes_err']),
+                        " ".join(output['data']['sync_nodes_err'])
+                    )
                 )
-                failed = True
         except (ValueError, KeyError):
             err('Unable to communicate with pcsd')
         if failed:
