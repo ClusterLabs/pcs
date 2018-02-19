@@ -85,19 +85,6 @@ def _split_by_hosts(argv):
     return hosts
 
 
-def _get_user_pass():
-    if "-u" in utils.pcs_options:
-        username = utils.pcs_options["-u"]
-    else:
-        username = utils.get_terminal_input('Username: ')
-
-    if "-p" in utils.pcs_options:
-        password = utils.pcs_options["-p"]
-    else:
-        password = utils.get_terminal_password()
-    return username, password
-
-
 def auth_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("No host specified")
@@ -105,7 +92,7 @@ def auth_cmd(lib, argv, modifiers):
         host: _parse_host_options(host, opts)
         for host, opts in _split_by_hosts(argv).items()
     }
-    username, password = _get_user_pass()
+    username, password = utils.get_user_and_pass()
     for host_info in host_dict.values():
         host_info.update(dict(username=username, password=password))
     utils.auth_hosts(host_dict)

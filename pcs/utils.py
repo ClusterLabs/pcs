@@ -1098,65 +1098,6 @@ def run_pcsdcli(command, data=None):
         }
     return output_json, retval
 
-def auth_nodes_do(nodes, username, password, force, local):
-    pcsd_data = {
-        'nodes': {
-            node_name: {
-                'username': username,
-                'password': password,
-                'dest_list': [{
-                    'addr': node_name,
-                    'port': node_port if node_port else settings.pcsd_default_port,
-                }],
-            }
-            for node_name, node_port in nodes.items()
-        }
-    }
-    output, retval = run_pcsdcli('auth', pcsd_data)
-    if retval == 0 and output['status'] == 'access_denied':
-        err('Access denied')
-    if retval == 0 and output['status'] == 'ok' and output['data']:
-        failed = False
-        try:
-            if not output['data']['sync_successful']:
-                err(
-                    "Some nodes had a newer known-hosts than the local node. "
-                    + "Local node's known-hosts were updated. "
-                    + "Please repeat the authentication if needed."
-                )
-            for node, result in output['data']['auth_responses'].items():
-                if result['status'] == 'ok':
-                    print("{0}: Authorized".format(node))
-                elif result['status'] == 'bad_password':
-                    err(
-                        "{0}: Username and/or password is incorrect".format(node),
-                        False
-                    )
-                    failed = True
-                elif result['status'] in ('noresponse', 'error'):
-                    err("Unable to communicate with {0}".format(node), False)
-                    failed = True
-                else:
-                    err("Unexpected response from {0}".format(node), False)
-                    failed = True
-            if output['data']['sync_nodes_err']:
-                err(
-                    (
-                        "Unable to synchronize and save known-hosts on nodes: "
-                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
-                        + "are authorized."
-                    ).format(
-                        ", ".join(output['data']['sync_nodes_err']),
-                        " ".join(output['data']['sync_nodes_err'])
-                    )
-                )
-        except (ValueError, KeyError):
-            err('Unable to communicate with pcsd')
-        if failed:
-            sys.exit(1)
-        return
-    err('Unable to communicate with pcsd')
-
 def auth_hosts(host_dict):
     output, retval = run_pcsdcli('auth', dict(nodes=host_dict))
     if retval == 0 and output['status'] == 'access_denied':
@@ -2941,3 +2882,18 @@ def get_set_properties(prop_name=None, defaults=None):
         if prop_name is None or (prop_name == prop.getAttribute("name")):
             properties[prop.getAttribute("name")] = prop.getAttribute("value")
     return properties
+
+
+def get_user_and_pass():
+    if "-u" in pcs_options:
+        username = pcs_options["-u"]
+    else:
+        username = get_terminal_input('Username: ')
+
+    if "-p" in pcs_options:
+        password = pcs_options["-p"]
+    else:
+        password = get_terminal_password()
+    return username, password
+
+

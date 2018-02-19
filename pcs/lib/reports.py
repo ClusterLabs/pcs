@@ -2887,3 +2887,11 @@ def host_not_found(
 
 def none_host_found():
     return ReportItem.error(report_codes.NONE_HOST_FOUND)
+
+def host_already_authorized(host_name):
+    return ReportItem.info(
+        report_codes.HOST_ALREADY_AUTHORIZED,
+        info=dict(
+            host_name=host_name,
+        )
+    )

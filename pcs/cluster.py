@@ -10,7 +10,6 @@ import json
 import time
 import xml.dom.minidom
 from subprocess import getstatusoutput
-from urllib.parse import urlparse
 
 from pcs import (
     constraint,
@@ -40,7 +39,10 @@ from pcs.lib.booth import sync as booth_sync
 from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.communication.corosync import CheckCorosyncOffline
-from pcs.lib.communication.nodes import DistributeFiles
+from pcs.lib.communication.nodes import (
+    CheckAuth,
+    DistributeFiles,
+)
 from pcs.lib.communication.sbd import (
     CheckSbd,
     SetSbdConfig,
@@ -99,7 +101,9 @@ def cluster_cmd(argv):
     elif (sub_cmd == "certkey"):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
-        cluster_auth(argv)
+        cluster_auth_cmd(
+            utils.get_library_wrapper(), argv, utils.get_modifiers()
+        )
     elif (sub_cmd == "start"):
         if "--all" in utils.pcs_options:
             if argv:
@@ -223,78 +227,6 @@ def cluster_cmd(argv):
 def sync_nodes(nodes,config):
     for node in nodes:
         utils.setCorosyncConfig(node,config)
-
-def cluster_auth(argv):
-    if len(argv) == 0:
-        auth_nodes(utils.getNodesFromCorosyncConf())
-    else:
-        auth_nodes(argv)
-
-def auth_nodes(nodes):
-    if "-u" in utils.pcs_options:
-        username = utils.pcs_options["-u"]
-    else:
-        username = None
-
-    if "-p" in utils.pcs_options:
-        password = utils.pcs_options["-p"]
-    else:
-        password = None
-
-    nodes_dict = parse_nodes_with_ports(nodes)
-    need_auth = "--force" in utils.pcs_options or (username or password)
-    if not need_auth:
-        for node in nodes_dict.keys():
-            status = utils.checkAuthorization(node)
-            if status[0] == 3:
-                need_auth = True
-                break
-            mutually_authorized = False
-            if status[0] == 0:
-                try:
-                    auth_status = json.loads(status[1])
-                    if auth_status["success"]:
-                        if set(nodes_dict.keys()).issubset(
-                            set(auth_status["node_list"])
-                        ):
-                            mutually_authorized = True
-                except (ValueError, KeyError):
-                    pass
-            if not mutually_authorized:
-                need_auth = True
-                break
-
-    if need_auth:
-        if username == None:
-            username = utils.get_terminal_input('Username: ')
-        if password == None:
-            password = utils.get_terminal_password()
-
-        utils.auth_nodes_do(
-            nodes_dict, username, password, '--force' in utils.pcs_options,
-            '--local' in utils.pcs_options
-        )
-    else:
-        for node in nodes_dict.keys():
-            print(node + ": Already authorized")
-
-
-def parse_nodes_with_ports(node_list):
-    result = {}
-    for node in node_list:
-        if node.count(":") > 1 and not node.startswith("["):
-            # if IPv6 without port put it in parentheses
-            node = "[{0}]".format(node)
-        # adding protocol so urlparse will parse hostname/ip and port correctly
-        url = urlparse("http://{0}".format(node))
-        if url.hostname in result and result[url.hostname] != url.port:
-            raise CmdLineInputError(
-                "Node '{0}' defined twice with different ports".format(
-                    url.hostname
-                )
-            )
-        result[url.hostname] = url.port
-    return result
 
 
 def cluster_certkey(argv):
@@ -506,30 +438,9 @@ def cluster_setup(argv):
 
         # send local cluster pcsd configs to the new nodes
         print("Sending cluster config files to the nodes...")
-        pcsd_data = {
-            "nodes": primary_addr_list,
-            "force": True,
-            "clear_local_cluster_permissions": True,
-        }
-        err_msgs = []
-        output, retval = utils.run_pcsdcli("send_local_configs", pcsd_data)
-        if retval == 0 and output["status"] == "ok" and output["data"]:
-            try:
-                for node in primary_addr_list:
-                    node_response = output["data"][node]
-                    if node_response["status"] == "notauthorized":
-                        err_msgs.append(
-                            "Unable to authenticate to " + node
-                            + ", try running 'pcs cluster auth'"
-                        )
-                    if node_response["status"] not in ["ok", "not_supported"]:
-                        err_msgs.append(
-                            "Unable to set pcsd configs on {0}".format(node)
-                        )
-            except:
-                err_msgs.append("Unable to communicate with pcsd")
-        else:
-            err_msgs.append("Unable to set pcsd configs")
+        err_msgs = send_local_configs(
+            primary_addr_list, clear_local_cluster_permissions=True, force=True
+        )
         for err_msg in err_msgs:
             print("Warning: {0}".format(err_msg))
 
@@ -1869,25 +1780,11 @@ def node_add(lib_env, node0, node1, modifiers):
     if corosync_conf != None:
         # send local cluster pcsd configs to the new node
         # may be used for sending corosync config as well in future
-        pcsd_data = {
-            'nodes': [node0],
-            'force': True,
-        }
-        output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
-        if retval != 0:
-            utils.err("Unable to set pcsd configs")
-        if output['status'] == 'notauthorized':
-            utils.err(
-                "Unable to authenticate to " + node0
-                + ", try running 'pcs cluster auth'"
-            )
-        if output['status'] == 'ok' and output['data']:
-            try:
-                node_response = output['data'][node0]
-                if node_response['status'] not in ['ok', 'not_supported']:
-                    utils.err("Unable to set pcsd configs")
-            except:
-                utils.err('Unable to communicate with pcsd')
+        err_msgs = send_local_configs([node0], force=False)
+        if err_msgs:
+            # we are sending configs only to one node, therefore there should
+            # should be only one message
+            utils.err(err_msgs[0])
 
         print("Setting up corosync...")
         utils.setCorosyncConfig(node0, corosync_conf)
@@ -2411,3 +2308,88 @@ def cluster_remote_node(argv):
         print(usage_remove)
         print()
         sys.exit(1)
+
+
+def send_local_configs(
+    node_name_list, clear_local_cluster_permissions=False, force=False
+):
+    pcsd_data = {
+        "nodes": node_name_list,
+        "force": force,
+        "clear_local_cluster_permissions": clear_local_cluster_permissions,
+    }
+    err_msgs = []
+    output, retval = utils.run_pcsdcli("send_local_configs", pcsd_data)
+    if retval == 0 and output["status"] == "ok" and output["data"]:
+        try:
+            for node_name in node_name_list:
+                node_response = output["data"][node_name]
+                if node_response["status"] == "notauthorized":
+                    err_msgs.append(
+                        (
+                            "Unable to authenticate to {}, try running 'pcs "
+                            "host auth'"
+                        ).format(node_name)
+                    )
+                if node_response["status"] not in ["ok", "not_supported"]:
+                    err_msgs.append(
+                        "Unable to set pcsd configs on {0}".format(node_name)
+                    )
+        except:
+            err_msgs.append("Unable to communicate with pcsd")
+    else:
+        err_msgs.append("Unable to set pcsd configs")
+    return err_msgs
+
+
+def _get_node_address_by_label(node_address_list, label):
+    for node_address in node_address_list:
+        if label == node_address.label:
+            return node_address
+    return None
+
+
+def cluster_auth_cmd(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+    lib_env = utils.get_lib_env()
+    target_factory = lib_env.get_node_target_factory()
+    cluster_node_list = lib_env.get_corosync_conf().get_nodes()
+    target_list = []
+    not_authorized_node_name_list = []
+    for node_name in cluster_node_list.labels:
+        try:
+            target_list.append(target_factory.get_target(node_name))
+        except HostNotFound:
+            print("{}: Not authorized".format(node_name))
+            not_authorized_node_name_list.append(node_name)
+    com_cmd = CheckAuth(lib_env.report_processor)
+    com_cmd.set_targets(target_list)
+    not_authorized_node_name_list.extend(run_and_raise(
+        lib_env.get_node_communicator(), com_cmd
+    ))
+    if not_authorized_node_name_list:
+        print("Nodes to authorize: {}".format(
+            ", ".join(not_authorized_node_name_list)
+        ))
+        username, password = utils.get_user_and_pass()
+        not_auth_node_address_list = [
+            _get_node_address_by_label(cluster_node_list, node_name)
+            for node_name in not_authorized_node_name_list
+        ]
+        nodes_to_auth_data = {
+            node_address.label: dict(
+                username=username,
+                password=password,
+                dest_list=[dict(
+                    addr=node_address.ring0,
+                    port=settings.pcsd_default_port,
+                )],
+            ) for node_address in not_auth_node_address_list
+        }
+        utils.auth_hosts(nodes_to_auth_data)
+    else:
+        print("Sending cluster config files to the nodes...")
+        msgs = send_local_configs(cluster_node_list.labels, force=True)
+        for msg in msgs:
+            print("Warning: {0}".format(msg))

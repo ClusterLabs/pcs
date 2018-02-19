@@ -2119,3 +2119,13 @@ class HostNotFound(NameBuildTest):
                 "host_list": ["unknown_host", "another_one"],
             }
         )
+
+class HostAlreadyAuthorized(NameBuildTest):
+    code = codes.HOST_ALREADY_AUTHORIZED
+    def test_success(self):
+        self.assert_message_from_info(
+            "host: Already authorized",
+            {
+                "host_name": "host",
+            }
+        )

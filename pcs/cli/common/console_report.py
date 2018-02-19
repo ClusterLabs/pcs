@@ -1396,5 +1396,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "`pcs auth` command."
         ).format(host_list_str=", ".join(sorted(info["host_list"])))
     ,
-    codes.NONE_HOST_FOUND: "None of hosts found."
+    codes.NONE_HOST_FOUND: "None of hosts found.",
+    codes.HOST_ALREADY_AUTHORIZED: lambda info:
+        "{host_name}: Already authorized".format(**info)
+    ,
 }

@@ -43,6 +43,29 @@ class GetOnlineTargets(
         return self._online_target_list
 
 
+class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
+    def __init__(self, report_processor):
+        super(CheckAuth, self).__init__(report_processor)
+        self._not_authorized_host_name_list = []
+
+    def _get_request_data(self):
+        return RequestData("remote/check_auth", [("check_auth_only", 1)])
+
+    def _process_response(self, response):
+        report = response_to_report_item(
+            response, severity=ReportItemSeverity.INFO
+        )
+        host_name = response.request.target.label
+        if report is None:
+            report = reports.host_already_authorized(host_name)
+        else:
+            self._not_authorized_host_name_list.append(host_name)
+        self._report(report)
+
+    def on_complete(self):
+        return self._not_authorized_host_name_list
+
+
 class PrecheckNewNode(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
