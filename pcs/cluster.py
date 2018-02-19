@@ -1544,7 +1544,7 @@ def cluster_node(argv):
             elif status == 3:
                 msg = (
                     "{node} is not yet authenticated "
-                    + " (try pcs cluster auth {node})"
+                    + " (try pcs host auth {node})"
                 ).format(node=node0)
             else:
                 msg = output
@@ -2327,8 +2327,8 @@ def send_local_configs(
                 if node_response["status"] == "notauthorized":
                     err_msgs.append(
                         (
-                            "Unable to authenticate to {}, try running 'pcs "
-                            "host auth'"
+                            "Unable to authenticate to {0}, try running 'pcs "
+                            "host auth {0}'"
                         ).format(node_name)
                     )
                 if node_response["status"] not in ["ok", "not_supported"]:

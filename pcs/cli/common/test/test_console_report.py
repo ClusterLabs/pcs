@@ -2102,7 +2102,7 @@ class HostNotFound(NameBuildTest):
         self.assert_message_from_info(
             (
                 "Host(s) unknown_host not found. Try to authenticate hosts "
-                "using `pcs auth` command."
+                "using 'pcs host auth unknown_host' command."
             ),
             {
                 "host_list": ["unknown_host"],
@@ -2113,7 +2113,8 @@ class HostNotFound(NameBuildTest):
         self.assert_message_from_info(
             (
                 "Host(s) another_one, unknown_host not found. Try to "
-                "authenticate hosts using `pcs auth` command."
+                "authenticate hosts using 'pcs host auth another_one "
+                "unknown_host' command."
             ),
             {
                 "host_list": ["unknown_host", "another_one"],
@@ -2127,5 +2128,19 @@ class HostAlreadyAuthorized(NameBuildTest):
             "host: Already authorized",
             {
                 "host_name": "host",
+            }
+        )
+
+class NodeCommunicationErrorNotAuthorized(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to authenticate to node1 (some error), try running "
+                "'pcs host auth node1'"
+            ),
+            {
+                "node": "node1",
+                "reason": "some error",
             }
         )

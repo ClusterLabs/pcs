@@ -496,7 +496,7 @@ def sendHTTPRequest(
                 3,
                 (
                     "Unable to authenticate to {node} - (HTTP error: {code}), "
-                    "try running 'pcs cluster auth'"
+                    "try running 'pcs host auth {node}'"
                 ).format(node=host, code=response_code)
             )
         elif response_code == 403:

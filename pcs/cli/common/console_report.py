@@ -425,7 +425,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED: lambda info:
         (
             "Unable to authenticate to {node} ({reason}),"
-            " try running 'pcs cluster auth'"
+            " try running 'pcs host auth {node}'"
         )
         .format(**info)
     ,
@@ -1392,9 +1392,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.HOST_NOT_FOUND: lambda info:
         (
-            "Host(s) {host_list_str} not found. Try to authenticate hosts using "
-            "`pcs auth` command."
-        ).format(host_list_str=", ".join(sorted(info["host_list"])))
+            "Host(s) {host_list_comma_str} not found. Try to authenticate hosts using "
+            "'pcs host auth {host_list_space_str}' command."
+        ).format(
+            host_list_comma_str=", ".join(sorted(info["host_list"])),
+            host_list_space_str=" ".join(sorted(info["host_list"])),
+        )
     ,
     codes.NONE_HOST_FOUND: "None of hosts found.",
     codes.HOST_ALREADY_AUTHORIZED: lambda info:
