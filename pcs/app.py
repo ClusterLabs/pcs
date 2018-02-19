@@ -226,6 +226,9 @@ def main(argv=None):
         ['cluster', 'stop', '...'],
         ['cluster', 'sync', '...'],
         # ['config', 'restore', '...'], # handled in config.config_restore
+        ['host', 'auth', '...'],
+        ['host', 'deauth', '...'],
+        ['pcsd', 'deauth', '...'],
         ['pcsd', 'sync-certificates'],
         ['status', 'nodes', 'corosync-id'],
         ['status', 'nodes', 'pacemaker-id'],
@@ -244,7 +247,7 @@ def main(argv=None):
             )
         ):
             # handle interactivity of 'pcs cluster auth'
-            if argv_cmd[0:2] == ["cluster", "auth"]:
+            if argv_cmd[0:2] in [["cluster", "auth"], ["host", "auth"]]:
                 if "-u" not in utils.pcs_options:
                     username = utils.get_terminal_input('Username: ')
                     orig_argv.extend(["-u", username])

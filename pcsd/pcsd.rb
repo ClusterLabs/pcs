@@ -316,6 +316,18 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
+    ['host', 'auth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['host', 'deauth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['pcsd', 'deauth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
     ['pcsd', 'sync-certificates', '...'] => {
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
