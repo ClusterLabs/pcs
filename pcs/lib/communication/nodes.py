@@ -49,6 +49,11 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         self._not_authorized_host_name_list = []
 
     def _get_request_data(self):
+        # check_auth_only is not used anymore. It was used in older pcsd to
+        # prevent a node to check against which nodes it is authorized and
+        # reporting that info. We are not interested in that anymore (it made
+        # sense to check it when authentication was bidirectional). So we tell
+        # the node not to do this extra check.
         return RequestData("remote/check_auth", [("check_auth_only", 1)])
 
     def _process_response(self, response):
@@ -59,6 +64,9 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         if report is None:
             report = reports.host_already_authorized(host_name)
         else:
+            # If we cannot connect it may be because a node's address and / or
+            # port is not correct. Since these are part of authentication info
+            # we tell we're not authorized.
             self._not_authorized_host_name_list.append(host_name)
         self._report(report)
 
