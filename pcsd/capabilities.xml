@@ -1368,20 +1368,72 @@
 
 
 
-    <capability id="pcs.auth" in-pcs="1" in-pcsd="1">
+    <capability id="pcs.auth.client" in-pcs="1" in-pcsd="0">
       <description>
-        Authenticate pcsd on a list of hosts against each other by a username
-        and password generating tokens which are then used to connect to pcsd
-        on the hosts.
+        Can authenticate against other hosts to be able to connect to such
+        hosts.
 
-        pcs commands: cluster auth
-        daemon urls: auth
+        pcs commands: pcs host auth
       </description>
     </capability>
-    <capability id="pcs.auth.clear" in-pcs="1" in-pcsd="0">
+    <capability id="pcs.auth.client.cluster" in-pcs="1" in-pcsd="0">
       <description>
-        Remove tokens created during nodes authorization on the local and/or
-        remote hosts.
+        Can authenticate against other hosts in the local cluster without
+        specifying them explicitely to be able to connect to such host.
+
+        pcs commands: pcs cluster auth
+      </description>
+    </capability>
+    <capability id="pcs.auth.server" in-pcs="0" in-pcsd="1">
+      <description>
+        Other hosts can authenticate against the local host to be able to
+        connect to the local host.
+
+        daemon urls: auth, check_auth
+      </description>
+    </capability>
+    <capability id="pcs.auth-deauth-client" in-pcs="1" in-pcsd="0">
+      <description>
+        Remove authentication tokens from a local host so that the local host
+        will not be able to connect to such remote hosts.
+
+        pcs commands: pcs host deauth
+      </description>
+    </capability>
+    <capability id="pcs.auth.deauth-server" in-pcs="1" in-pcsd="0">
+      <description>
+        Remove authentication tokens from a local host so that remote hosts
+        will not be able to connect with such tokens to the local host.
+
+        pcs commands: pcs pcsd deauth
+      </description>
+    </capability>
+    <capability id="pcs.auth.separate-name-and-address" in-pcs="1" in-pcsd="1">
+      <description>
+        It is possible to specify a host's address different from its name when
+        authenticating. Pcs/pcsd will communicate with the host via the
+        specified address.
+      </description>
+    </capability>
+    <capability id="pcs.auth.no-bidirectional" in-pcs="1" in-pcsd="1">
+      <description>
+        Authentication is not bidirectional, i.e. 'auth against B C' run on A
+        authenticates A against B and C and nothing more.
+      </description>
+    </capability>
+    <capability id="pcs.auth.known-host-change" in-pcs="0" in-pcsd="1">
+      <description>
+        Allow modifying the list of authenticated hosts by adding (or changing
+        if a host already exists) and removing hosts.
+
+        daemon urls: known_hosts_change
+      </description>
+    </capability>
+    <capability id="pcs.auth.export-cluster-known-hosts" in-pcs="0" in-pcsd="1">
+      <description>
+        Provide a list of known hosts participating in a local cluster.
+
+        daemon urls: get_cluster_known_hosts
       </description>
     </capability>
     <capability id="pcs.automatic-pcs-configs-sync" in-pcs="0" in-pcsd="1">
