@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.163] - 2018-02-20
 
 ### Added
 - Added `pcs status booth` as an alias to `pcs booth status`
