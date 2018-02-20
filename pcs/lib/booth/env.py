@@ -61,7 +61,10 @@ def set_keyfile_access(file_path):
     except EnvironmentError as e:
         raise report_keyfile_io_error(file_path, "chown", e)
     try:
-        os.chmod(file_path, settings.pacemaker_authkey_file_mode)
+        # According to booth documentation, user and group of booth authfile
+        # should be set to hacluster/haclient (created and used by pacemaker)
+        # but mode of file doesn't need to be same as pacemaker authfile.
+        os.chmod(file_path, settings.booth_authkey_file_mode)
     except EnvironmentError as e:
         raise report_keyfile_io_error(file_path, "chmod", e)
 

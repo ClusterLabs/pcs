@@ -935,7 +935,7 @@ class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
                 name="fs.open.authfile.write"
             )
             .fs.chown(self.authfile_path, self.pcmk_uid, self.pcmk_gid)
-            .fs.chmod(self.authfile_path, settings.pacemaker_authkey_file_mode)
+            .fs.chmod(self.authfile_path, settings.booth_authkey_file_mode)
         )
 
         self.addCleanup(
@@ -1150,7 +1150,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
                 self.authfile_path, self.pcmk_uid, self.pcmk_gid,
             )
             .fs.chmod(
-                self.authfile_path, settings.pacemaker_authkey_file_mode,
+                self.authfile_path, settings.booth_authkey_file_mode,
                 side_effect=EnvironmentError(1, self.reason, self.authfile_path)
             )
         )
