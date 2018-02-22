@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Removed
+- Pcs-0.10 removes support for CMAN, Corosync 1.x, Corosync 2.x and Pacemaker
+  1.x based clusters. For managing those clusters use pcs-0.9.x.
+- Pcs-0.10 requires Python 3.6, support for older Python versions has been
+  removed.
+
+
 ## [0.9.163] - 2018-02-20
 
 ### Added

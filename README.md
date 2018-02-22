@@ -9,34 +9,29 @@ pcs daemon, which operates as a remote server for pcs and provides a web UI.
 ### Installation from Source
 
 These are the runtime dependencies of pcs and pcsd:
-* python 2.7+
-* python-lxml / python3-lxml
-* python-pycurl / python3-pycurl
-* python-setuptools / python3-setuptools
+* python 3.6+
+* python3-lxml
+* python3-pycurl
+* python3-setuptools
 * ruby 2.0.0+
 * killall (package psmisc)
 * openssl
-* corosync
-* pacemaker
+* corosync 3.x
+* pacemaker 2.x
 
 It is also recommended to have these:
-* python-clufter / python3-clufter
+* python3-clufter
 * liberation fonts (package liberation-sans-fonts or fonts-liberation or
   fonts-liberation2)
 * overpass fonts (package overpass-fonts)
 
-If you plan to manage Corosync 1.x based clusters, you will also need:
-* cman
-* ccs
-
-It is however highly recommended for new clusters to use Corosync 2.x.
-Support for Corosync 1.x and CMAN has been deprecated in 0.9.160 and will be
-removed.
+For managing clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync
+1.x use pcs-0.9.x which you can get from the 0.9 branch.
 
 Apart from the dependencies listed above, these are also required for
 installation:
 
-* python development files (package python-devel / python3-devel)
+* python development files (package python3-devel)
 * ruby development files (package ruby-devel)
 * rubygems
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)
@@ -46,7 +41,7 @@ installation:
 * FFI development files (package libffi-devel or libffi-dev)
 * fontconfig
 * printf (package coreutils)
-* redhat-rpm-config if you are using Fedora
+* redhat-rpm-config (if you are using Fedora)
 * wget (to download bundled libraries)
 
 During the installation, all required rubygems are automatically downloaded and
@@ -54,8 +49,8 @@ compiled.
 
 To install pcs and pcsd run the following in terminal:
 ```shell
-# tar -xzvf pcs-0.9.160.tar.gz
-# cd pcs-0.9.160
+# tar -xzvf pcs-0.10.1.tar.gz
+# cd pcs-0.10.1
 # make install
 # make install_pcsd
 ```
@@ -97,7 +92,7 @@ derivates.
   Specify all your cluster nodes in the command. Make sure pcsd is running on
   all nodes.
   ```shell
-  # pcs cluster auth node1 node2 node3 -u hacluster
+  # pcs host auth node1 node2 node3 -u hacluster
   ```
 
 * **Create a cluster**
