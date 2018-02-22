@@ -4,7 +4,6 @@ require 'rubygems'
 require 'etc'
 require 'json'
 require 'stringio'
-require 'orderedhash'
 
 require 'bootstrap.rb'
 require 'pcs.rb'
@@ -12,7 +11,7 @@ require 'auth.rb'
 require 'remote.rb'
 
 def cli_format_response(status, text=nil, data=nil)
-  response = OrderedHash.new
+  response = Hash.new
   response['status'] = status
   response['text'] = text if text
   response['data'] = data if data

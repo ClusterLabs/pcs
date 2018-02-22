@@ -1,5 +1,4 @@
 require 'json'
-require 'orderedhash'
 
 require 'cluster.rb'
 require 'permissions.rb'
@@ -124,15 +123,15 @@ class PCSConfig
   end
 
   def text()
-    out_hash = OrderedHash.new
+    out_hash = Hash.new
     out_hash['format_version'] = CURRENT_FORMAT
     out_hash['data_version'] = @data_version
     out_hash['clusters'] = []
-    out_hash['permissions'] = OrderedHash.new
+    out_hash['permissions'] = Hash.new
     out_hash['permissions']['local_cluster'] = []
 
     @clusters.each { |c|
-      c_hash = OrderedHash.new
+      c_hash = Hash.new
       c_hash['name'] = c.name
       c_hash['nodes'] = c.nodes.uniq.sort
       out_hash['clusters'] << c_hash
@@ -182,7 +181,7 @@ class PCSConfig
 end
 
 def hash_to_ordered_hash(hash)
-  new_hash = OrderedHash.new
+  new_hash = Hash.new
   hash.keys.sort.each { |key| new_hash[key] = hash[key] }
   return new_hash
 end
@@ -235,7 +234,7 @@ class PCSTokens
   end
 
   def text()
-    out_hash = OrderedHash.new
+    out_hash = Hash.new
     out_hash['format_version'] = CURRENT_FORMAT
     out_hash['data_version'] = @data_version
     out_hash['tokens'] = hash_to_ordered_hash(@tokens)

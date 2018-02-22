@@ -1,5 +1,3 @@
-require 'orderedhash'
-
 module Permissions
 
   TYPE_USER = 'user'
@@ -104,7 +102,7 @@ module Permissions
     end
 
     def to_hash()
-      perm_hash = OrderedHash.new
+      perm_hash = Hash.new
       perm_hash['type'] = @type
       perm_hash['name'] = @name
       perm_hash['allow'] = @allow_list.uniq.sort
