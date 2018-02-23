@@ -20,13 +20,14 @@ build_gems_without_bundler:
 	vendor/cache/ffi-${FFI_VERSION}.gem \
 	vendor/cache/json-2.1.0.gem \
 	vendor/cache/multi_json-1.12.2.gem \
+	vendor/cache/musterman-1.0.2.gem \
 	vendor/cache/open4-1.3.4.gem \
-	vendor/cache/rack-1.6.4.gem \
-	vendor/cache/rack-protection-1.5.3.gem \
-	vendor/cache/rack-test-0.7.0.gem \
+	vendor/cache/rack-2.0.4.gem \
+	vendor/cache/rack-protection-2.0.1.gem \
+	vendor/cache/rack-test-0.8.2.gem \
 	vendor/cache/rpam-ruby19-1.2.1.gem \
-	vendor/cache/sinatra-1.4.8.gem \
-	vendor/cache/sinatra-contrib-1.4.7.gem \
+	vendor/cache/sinatra-2.0.1.gem \
+	vendor/cache/sinatra-contrib-2.0.1.gem \
 	vendor/cache/tilt-2.0.8.gem \
 	-- '--with-ldflags="-Wl,-z,now -Wl,-z,relro"'
 

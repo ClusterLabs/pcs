@@ -13,7 +13,7 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-lxml
 * python3-pycurl
 * python3-setuptools
-* ruby 2.0.0+
+* ruby 2.2.0+
 * killall (package psmisc)
 * openssl
 * corosync 3.x

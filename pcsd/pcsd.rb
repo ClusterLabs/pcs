@@ -83,6 +83,11 @@ before do
     $session_storage = env[:__session_storage]
     $session_storage_env = env
   end
+  begin
+    $session_storage.drop_expired(request)
+  rescue => e
+    $logger.warn("Exception while removing expired sessions: #{e}")
+  end
 
   # urls which are accesible for everybody including not logged in users
   always_accessible = [
@@ -153,19 +158,6 @@ $thread_cfgsync = Thread.new {
       $logger.debug('Config files sync thread finished')
     }
     sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
-  end
-}
-
-$thread_session_expired = Thread.new {
-  while true
-    sleep(60 * 5)
-    begin
-      if $session_storage
-        $session_storage.drop_expired($session_storage_env)
-      end
-    rescue => e
-      $logger.warn("Exception while removing expired sessions: #{e}")
-    end
   end
 }
 
