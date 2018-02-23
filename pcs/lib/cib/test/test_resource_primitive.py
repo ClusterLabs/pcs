@@ -1,9 +1,8 @@
 from functools import partial
-
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.lib.cib.resource import primitive
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
 @mock.patch("pcs.lib.cib.resource.primitive.append_new_instance_attributes")
 @mock.patch("pcs.lib.cib.resource.primitive.append_new_meta_attributes")

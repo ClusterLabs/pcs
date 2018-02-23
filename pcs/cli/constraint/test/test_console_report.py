@@ -1,4 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
+
 from pcs.cli.constraint import console_report
 
 class OptionsTest(TestCase):

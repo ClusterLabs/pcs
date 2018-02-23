@@ -1,3 +1,5 @@
+from unittest import TestCase
+
 from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.commands import resource
@@ -11,7 +13,6 @@ from pcs.test.tools.misc import (
     outdent,
     skip_unless_pacemaker_supports_bundle,
 )
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 TIMEOUT=10

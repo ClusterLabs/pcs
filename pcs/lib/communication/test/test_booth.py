@@ -1,4 +1,4 @@
-from pcs.test.tools.pcs_unittest import TestCase, skip
+from unittest import skip, TestCase
 
 
 class BoothSendConfig(TestCase):

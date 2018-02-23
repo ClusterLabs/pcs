@@ -1,8 +1,9 @@
+from functools import partial
 import logging
 import os
 import os.path
 import sys
-from functools import partial
+from unittest import mock
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import assert_raise_library_error, prepare_diff
@@ -29,7 +30,6 @@ from pcs.test.tools.command_env.mock_push_corosync_conf import(
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env.mock_runner import Runner
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock
 
 
 patch_lib_env = partial(mock.patch.object, LibraryEnvironment)

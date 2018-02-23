@@ -1,4 +1,4 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.booth import config_structure
@@ -8,7 +8,6 @@ from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock
 
 
 class ValidateTicketExistsTest(TestCase):

@@ -1,5 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
 import time
+from unittest import TestCase
 
 from pcs.common import tools
 

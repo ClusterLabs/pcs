@@ -1,7 +1,7 @@
-from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import mock, TestCase
+from unittest import mock, TestCase
 
 from pcs.cli.common import capabilities
+from pcs.test.tools.misc import get_test_resource as rc
 
 
 @mock.patch("pcs.settings.pcsd_exec_location", rc(""))

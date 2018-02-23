@@ -1,5 +1,6 @@
 import logging
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -7,7 +8,6 @@ from pcs.test.tools.assertions import (
     start_tag_error_text,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra

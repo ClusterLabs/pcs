@@ -1,5 +1,6 @@
-from lxml import etree
 from functools import partial
+from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
@@ -9,7 +10,6 @@ from pcs.test.tools.assertions import (
     start_tag_error_text,
 )
 from pcs.test.tools.misc import create_patcher
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import XmlManipulation
 
 from pcs.common import report_codes

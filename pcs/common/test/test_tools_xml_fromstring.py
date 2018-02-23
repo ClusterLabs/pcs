@@ -1,4 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
+
 from pcs.common.tools import xml_fromstring
 
 class XmlFromstring(TestCase):

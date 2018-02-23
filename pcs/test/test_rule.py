@@ -1,5 +1,5 @@
 import shutil
-from pcs.test.tools import pcs_unittest as unittest
+from unittest import TestCase
 import xml.dom.minidom
 
 from pcs import rule
@@ -10,7 +10,7 @@ from pcs.test.tools.pcs_runner import pcs
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
-class DateValueTest(unittest.TestCase):
+class DateValueTest(TestCase):
 
     def testParse(self):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
@@ -189,7 +189,7 @@ class DateValueTest(unittest.TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
-class ParserTest(unittest.TestCase):
+class ParserTest(TestCase):
 
     def setUp(self):
         self.parser = rule.RuleParser()
@@ -773,7 +773,7 @@ class ParserTest(unittest.TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
-class CibBuilderTest(unittest.TestCase):
+class CibBuilderTest(TestCase):
 
     def setUp(self):
         self.parser = rule.RuleParser()
@@ -1249,7 +1249,7 @@ class CibBuilderTest(unittest.TestCase):
         )
 
 
-class TokenPreprocessorTest(unittest.TestCase):
+class TokenPreprocessorTest(TestCase):
 
     def setUp(self):
         self.preprocessor = rule.TokenPreprocessor()
@@ -1591,7 +1591,7 @@ class TokenPreprocessorTest(unittest.TestCase):
             self.preprocessor.run(["(aA(", "(", "(bB)cC)"])
         )
 
-class ExportAsExpressionTest(unittest.TestCase):
+class ExportAsExpressionTest(TestCase):
 
     def test_success(self):
         self.assertXmlExport(
@@ -1652,7 +1652,7 @@ class ExportAsExpressionTest(unittest.TestCase):
         )
 
 
-class DomRuleAddTest(unittest.TestCase):
+class DomRuleAddTest(TestCase):
 
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)

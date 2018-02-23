@@ -2,14 +2,13 @@ from lxml import etree
 import re
 import shutil
 from textwrap import dedent
+from unittest import TestCase
 
-from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
 )
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -29,7 +28,7 @@ large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
 
-class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
+class ResourceDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
 
@@ -128,7 +127,7 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
         )
 
 
-class ResourceTest(unittest.TestCase, AssertPcsMixin):
+class ResourceTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
@@ -4688,7 +4687,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
 
-class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
+class ResourcesReferencedFromAclTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -4724,7 +4723,7 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
             'Deleting Resource (and group) - dummy2',
         ])
 
-class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
+class CloneMasterUpdate(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -4803,7 +4802,7 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             """
         ))
 
-class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
+class ResourceRemoveWithTicketTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -5108,7 +5107,7 @@ class BundleMiscCommands(BundleCommon):
         )
 
 
-class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
+class ResourceUpdateSpcialChecks(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)

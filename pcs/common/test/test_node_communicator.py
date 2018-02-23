@@ -1,6 +1,6 @@
 import io
+from unittest import mock, TestCase
 
-from pcs.test.tools.pcs_unittest import mock, TestCase
 from pcs.test.tools.custom_mock import (
     MockCurl,
     MockCurlMulti,

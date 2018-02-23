@@ -1,6 +1,7 @@
+from unittest import TestCase
+
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import create_setup_patch_mixin
-from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib import node_communication_format

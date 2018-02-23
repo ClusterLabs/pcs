@@ -1,5 +1,6 @@
 from functools import partial
 import logging
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as Severities
@@ -7,7 +8,6 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock, TestCase
 
 import pcs.lib.commands.alert as cmd_alert
 

@@ -1,9 +1,10 @@
+from unittest import mock, TestCase
+
 import pcs.lib.commands.acl as cmd_acl
 from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import ExtendedAssertionsMixin
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock, TestCase
 
 
 REQUIRED_CIB_VERSION = Version(2, 0, 0)

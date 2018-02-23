@@ -1,11 +1,11 @@
 import json
+from unittest import mock, TestCase
 
 from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.commands.sbd import enable_sbd, ALLOWED_SBD_OPTION_LIST
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.misc import get_test_resource, outdent
 from pcs.lib.corosync.config_parser import parse_string
 

@@ -1,7 +1,7 @@
-from pcs.test.tools.pcs_unittest import TestCase
-import logging
 from functools import partial
+import logging
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
@@ -11,7 +11,6 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc, create_patcher
-from pcs.test.tools.pcs_unittest import mock
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes

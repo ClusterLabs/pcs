@@ -1,5 +1,6 @@
 import base64
 import logging
+from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
@@ -13,7 +14,6 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
 )
-from pcs.test.tools.pcs_unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment

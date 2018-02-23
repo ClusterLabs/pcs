@@ -1,5 +1,6 @@
+from unittest import TestCase
+
 from pcs.lib.communication import qdevice_net
-from pcs.test.tools.pcs_unittest import TestCase
 
 class GetCaCert(TestCase):
     """

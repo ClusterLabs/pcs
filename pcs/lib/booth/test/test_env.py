@@ -1,11 +1,10 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.booth import env
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import create_patcher
-from pcs.test.tools.pcs_unittest import mock
 
 patch_env = create_patcher("pcs.lib.booth.env")
 

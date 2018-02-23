@@ -2,13 +2,12 @@
 import importlib
 import os.path
 import sys
+import unittest
 
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 )))
 sys.path.insert(0, PACKAGE_DIR)
-
-from pcs.test.tools import pcs_unittest as unittest
 
 
 def prepare_test_name(test_name):

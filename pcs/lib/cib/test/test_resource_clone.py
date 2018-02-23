@@ -1,7 +1,7 @@
 from lxml import etree
+from unittest import TestCase
 
 from pcs.lib.cib.resource import clone
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.assertions import assert_xml_equal
 
 class AppendNewCommon(TestCase):

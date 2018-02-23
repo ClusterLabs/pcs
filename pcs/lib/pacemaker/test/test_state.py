@@ -1,4 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase, mock
+from unittest import mock, TestCase
+
 from lxml import etree
 
 from pcs.test.tools.assertions import (

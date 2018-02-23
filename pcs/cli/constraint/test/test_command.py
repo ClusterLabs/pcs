@@ -1,7 +1,6 @@
-from pcs.test.tools.pcs_unittest import TestCase
-from pcs.cli.constraint import command
+from unittest import mock, TestCase
 
-from pcs.test.tools.pcs_unittest import mock
+from pcs.cli.constraint import command
 
 def fixture_constraint():
     return {

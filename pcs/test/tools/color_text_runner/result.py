@@ -1,4 +1,5 @@
-from pcs.test.tools import pcs_unittest as unittest
+import unittest
+
 from pcs.test.tools.color_text_runner.format import (
     separator1,
     format_error_list,

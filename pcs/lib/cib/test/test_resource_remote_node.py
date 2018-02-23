@@ -1,11 +1,11 @@
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import remote_node
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.lib.node import NodeAddresses
 from pcs.test.tools.assertions import assert_report_item_list_equal
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
 class FindNodeList(TestCase):

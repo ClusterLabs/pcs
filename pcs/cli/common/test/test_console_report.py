@@ -1,4 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
+
 from pcs.cli.common.console_report import(
     indent,
     CODE_TO_MESSAGE_BUILDER_MAP,

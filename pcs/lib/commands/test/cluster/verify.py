@@ -1,8 +1,9 @@
+from unittest import TestCase
+
 from pcs.common import report_codes
 from pcs.lib.commands.cluster import verify
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 CRM_VERIFY_ERROR_REPORT = "someting wrong\nsomething else wrong"

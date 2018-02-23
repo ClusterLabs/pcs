@@ -1,10 +1,8 @@
-from pcs.test.tools.pcs_unittest import TestCase
-
-import json
 import base64
+import json
+from unittest import mock, skip, TestCase
 from urllib.parse import parse_qs
 
-from pcs.test.tools.pcs_unittest import mock, skip
 from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
     assert_raise_library_error,

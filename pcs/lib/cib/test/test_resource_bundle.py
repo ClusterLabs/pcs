@@ -1,7 +1,7 @@
 from lxml import etree
+from unittest import TestCase
 
 from pcs.lib.cib.resource import bundle
-from pcs.test.tools.pcs_unittest import TestCase
 
 # pcs.lib.cib.resource.bundle is covered by:
 # - pcs.lib.commands.test.resource.test_bundle_create

@@ -1,5 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
-from pcs.test.tools.pcs_unittest import mock
+from unittest import mock, TestCase
+
 from pcs.cli.constraint_all import console_report
 from pcs.common import report_codes as codes
 

@@ -1,4 +1,4 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
 
 import pcs.lib.node as lib
 

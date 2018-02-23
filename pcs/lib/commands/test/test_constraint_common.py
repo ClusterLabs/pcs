@@ -1,6 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
-
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.commands.constraint import common as constraint
@@ -10,7 +9,6 @@ from pcs.test.tools.assertions import(
     assert_xml_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock
 
 
 def fixture_cib_and_constraints():

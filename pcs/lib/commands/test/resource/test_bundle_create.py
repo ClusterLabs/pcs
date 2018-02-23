@@ -1,5 +1,6 @@
 from functools import partial
 from textwrap import dedent
+from unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib import reports
@@ -11,7 +12,6 @@ from pcs.lib.errors import (
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 TIMEOUT=10

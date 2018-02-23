@@ -1,8 +1,8 @@
 from lxml import etree
+from unittest import TestCase
 
 from pcs.lib.cib.resource import common
 from pcs.test.tools.assertions import assert_xml_equal
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.xml import etree_to_str
 
 

@@ -1,4 +1,5 @@
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -7,7 +8,6 @@ from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import etree_to_str
 
 from pcs.lib.cib import node

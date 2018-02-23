@@ -45,9 +45,10 @@ checks (that whole Queue is consumed, that there was no extra reports, ...)
 
 Example:
 ========
+from unittest import TestCase
+
 from pcs.lib.commands import resource
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase
 
 class ExampleTest(TestCase):
     def test_success(self):

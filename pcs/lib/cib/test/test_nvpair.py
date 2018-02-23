@@ -1,9 +1,9 @@
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools.assertions import assert_xml_equal
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import etree_to_str
 
 class AppendNewNvpair(TestCase):

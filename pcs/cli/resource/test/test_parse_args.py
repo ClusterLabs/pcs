@@ -1,4 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
+
 from pcs.cli.resource import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 

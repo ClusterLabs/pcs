@@ -1,4 +1,5 @@
 import shutil
+from unittest import TestCase
 
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
@@ -6,7 +7,6 @@ from pcs.test.tools.misc import (
     outdent,
 )
 from pcs.test.tools.pcs_runner import PcsRunner
-from pcs.test.tools.pcs_unittest import TestCase
 
 temp_cib = rc("temp-cib.xml")
 

@@ -1,6 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
-
 from lxml import etree
+from unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib.cib import alert

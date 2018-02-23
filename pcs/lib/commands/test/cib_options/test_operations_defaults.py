@@ -1,6 +1,7 @@
+from unittest import TestCase
+
 from pcs.lib.commands import cib_options
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools import fixture
 from pcs.common import report_codes
 

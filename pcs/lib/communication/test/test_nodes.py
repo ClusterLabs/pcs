@@ -1,4 +1,4 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import TestCase
 
 from pcs.test.tools.assertions import assert_report_item_list_equal
 

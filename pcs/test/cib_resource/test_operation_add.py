@@ -1,10 +1,10 @@
 import shutil
+from unittest import TestCase
 
 from pcs.test.cib_resource.common import get_cib_resources
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import  get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 class OperationAdd(

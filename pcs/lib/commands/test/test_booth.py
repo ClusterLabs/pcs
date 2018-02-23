@@ -1,7 +1,6 @@
-import os
 from collections import namedtuple
-
-from pcs.test.tools.pcs_unittest import TestCase, mock
+import os
+from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools

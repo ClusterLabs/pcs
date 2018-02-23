@@ -1,9 +1,10 @@
+from unittest import TestCase
+
 from pcs.common import report_codes
 from pcs.lib.commands.sbd import get_cluster_sbd_config
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import outdent
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 class GetClusterSbdConfig(TestCase):

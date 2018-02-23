@@ -1,15 +1,13 @@
 from functools import partial
-
 from lxml import etree
+from unittest import mock, TestCase
 
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
 from pcs.test.tools import fixture
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.common import report_codes

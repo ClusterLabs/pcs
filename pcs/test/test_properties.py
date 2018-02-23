@@ -1,5 +1,5 @@
 import shutil
-from pcs.test.tools import pcs_unittest as unittest
+from unittest import TestCase
 
 from pcs.test.tools.assertions import (
     ac,
@@ -16,7 +16,7 @@ from pcs import utils
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
-class PropertyTest(unittest.TestCase):
+class PropertyTest(TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
 
@@ -273,7 +273,7 @@ class PropertyTest(unittest.TestCase):
         )
 
 
-class NodePropertyTestBase(unittest.TestCase, AssertPcsMixin):
+class NodePropertyTestBase(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)

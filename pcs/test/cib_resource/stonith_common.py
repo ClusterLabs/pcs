@@ -1,11 +1,11 @@
 import logging
+import unittest
 
 from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as ReportProcessor
 )
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import StonithAgent
-from pcs.test.tools import pcs_unittest as unittest
 
 
 def __can_load_xvm_fence_agent():

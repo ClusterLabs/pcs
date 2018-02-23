@@ -1,15 +1,12 @@
 import logging
 import os
 import re
+from unittest import mock, skipUnless
 
 # from pcs import utils
 from pcs.common.tools import is_string
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import (
-    mock,
-    skipUnless,
-)
 
 
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -1,12 +1,11 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from lxml import etree
+from unittest import TestCase
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
 from pcs.test.tools.misc import outdent
-
-from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity

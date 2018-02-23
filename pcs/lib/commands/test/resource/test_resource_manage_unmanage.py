@@ -1,9 +1,10 @@
+from unittest import TestCase
+
 from pcs.common import report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 fixture_primitive_cib_managed = """

@@ -1,5 +1,6 @@
 import io
 import logging
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import assert_report_item_equal
 from pcs.test.tools.custom_mock import (
@@ -8,10 +9,6 @@ from pcs.test.tools.custom_mock import (
     MockLibraryReportProcessor,
 )
 from pcs.test.tools.misc import outdent
-from pcs.test.tools.pcs_unittest import (
-    mock,
-    TestCase,
-)
 
 from pcs.common import (
     pcs_pycurl as pycurl,

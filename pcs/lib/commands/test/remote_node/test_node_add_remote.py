@@ -1,4 +1,5 @@
 from functools import partial
+from unittest import mock, TestCase
 
 from pcs.common import report_codes, env_file_role_codes
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
@@ -10,7 +11,6 @@ from pcs.lib.commands.test.remote_node.fixtures_add import(
 )
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
 REMOTE_HOST = "remote-host"

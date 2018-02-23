@@ -1,5 +1,6 @@
 from lxml import etree
 import os.path
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -9,7 +10,6 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import XmlManipulation
 
 from pcs import settings

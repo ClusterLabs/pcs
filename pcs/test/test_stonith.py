@@ -1,5 +1,6 @@
 import re
 import shutil
+from unittest import TestCase
 
 from pcs import utils
 from pcs.cli.common.console_report import indent
@@ -17,7 +18,6 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
-from pcs.test.tools.pcs_unittest import TestCase
 
 
 empty_cib = rc("cib-empty.xml")

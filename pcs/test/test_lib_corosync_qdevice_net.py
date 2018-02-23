@@ -1,6 +1,7 @@
 import base64
 import os.path
 from textwrap import dedent
+from unittest import mock, TestCase
 
 from pcs import settings
 from pcs.common import report_codes
@@ -10,7 +11,6 @@ from pcs.lib.external import CommandRunner
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
 import pcs.lib.corosync.qdevice_net as lib
 

@@ -1,6 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import mock, TestCase
 
-from pcs.test.tools.pcs_unittest import mock
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint_ticket import command
 

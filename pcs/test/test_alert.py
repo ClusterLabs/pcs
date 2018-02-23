@@ -1,4 +1,5 @@
 import shutil
+import unittest
 
 from pcs.test.tools.misc import (
     get_test_resource as rc,
@@ -7,7 +8,6 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.pcs_runner import PcsRunner
-from pcs.test.tools import pcs_unittest as unittest
 
 
 old_cib = rc("cib-empty.xml")

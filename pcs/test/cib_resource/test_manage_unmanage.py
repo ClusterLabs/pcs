@@ -1,8 +1,8 @@
 from lxml import etree
 import shutil
+from unittest import TestCase
 
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
 

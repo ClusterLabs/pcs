@@ -1,4 +1,5 @@
 import shutil
+from unittest import mock, TestCase
 
 from pcs import node
 from pcs.test.tools.assertions import (
@@ -13,7 +14,6 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
-from pcs.test.tools.pcs_unittest import TestCase, mock
 
 from pcs import utils
 

@@ -1,12 +1,11 @@
-from functools import partial
 from contextlib import contextmanager
-
-from lxml import etree
+from functools import partial
 import logging
+from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.pcs_unittest import mock, TestCase
 from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes

@@ -1,9 +1,7 @@
-from pcs.test.tools.pcs_unittest import TestCase
-
 from lxml import etree
+from unittest import mock, TestCase
 
 import pcs.lib.booth.resource as booth_resource
-from pcs.test.tools.pcs_unittest import mock
 
 
 def fixture_resources_with_booth(booth_config_file_path):

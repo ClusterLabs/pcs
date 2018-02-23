@@ -1,7 +1,7 @@
 import os
 import shutil
+from unittest import skipUnless, TestCase
 
-from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
@@ -16,7 +16,7 @@ BOOTH_KEY_FILE = rc("temp-booth.key")
 BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
     "/usr/lib/ocf/resource.d/pacemaker/booth-site"
 )
-need_booth_resource_agent = unittest.skipUnless(
+need_booth_resource_agent = skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,
     "test requires resource agent ocf:pacemaker:booth-site"
     " which is not installed"
@@ -59,7 +59,7 @@ class BoothMixin(AssertPcsMixin):
     def assert_pcs_fail_original(self, *args, **kwargs):
         return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
-class SetupTest(BoothMixin, unittest.TestCase):
+class SetupTest(BoothMixin, TestCase):
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -141,7 +141,7 @@ class SetupTest(BoothMixin, unittest.TestCase):
         ])
 
 
-class DestroyTest(BoothMixin, unittest.TestCase):
+class DestroyTest(BoothMixin, TestCase):
     def test_failed_when_using_mocked_booth_env(self):
         self.assert_pcs_fail(
             "booth destroy",
@@ -169,7 +169,7 @@ class DestroyTest(BoothMixin, unittest.TestCase):
             ),
         )
 
-class BoothTest(unittest.TestCase, BoothMixin):
+class BoothTest(TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
@@ -381,7 +381,7 @@ class TicketRevokeTest(BoothTest):
             ,
         ])
 
-class ConfigTest(unittest.TestCase, BoothMixin):
+class ConfigTest(TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)

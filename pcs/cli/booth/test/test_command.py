@@ -1,7 +1,6 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.cli.booth import command
-from pcs.test.tools.pcs_unittest import mock
 
 
 class ConfigSetupTest(TestCase):

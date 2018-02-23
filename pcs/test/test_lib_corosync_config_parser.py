@@ -1,11 +1,11 @@
-from pcs.test.tools import pcs_unittest as unittest
+from unittest import TestCase
 
 from pcs.test.tools.assertions import ac
 
 from pcs.lib.corosync import config_parser
 
 
-class SectionTest(unittest.TestCase):
+class SectionTest(TestCase):
 
     def test_empty_section(self):
         section = config_parser.Section("mySection")
@@ -726,7 +726,7 @@ child3 {
 """)
 
 
-class ParserTest(unittest.TestCase):
+class ParserTest(TestCase):
 
     def test_empty(self):
         ac(str(config_parser.parse_string("")), "")

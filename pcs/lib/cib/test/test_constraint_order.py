@@ -1,10 +1,9 @@
-from pcs.test.tools.pcs_unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.cib.constraint import order
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.pcs_unittest import mock
 
 
 #Patch check_new_id_applicable is always desired when working with

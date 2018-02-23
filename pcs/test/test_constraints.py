@@ -1,7 +1,7 @@
 from lxml import etree
 import os
 import shutil
-from pcs.test.tools import pcs_unittest as unittest
+import unittest
 
 from pcs.test.tools.assertions import (
     ac,

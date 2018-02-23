@@ -1,5 +1,6 @@
 from functools import partial
 import logging
+from unittest import mock, TestCase
 
 from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
@@ -8,7 +9,6 @@ from pcs.common.fencing_topology import (
 from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.misc import create_patcher
-from pcs.test.tools.pcs_unittest import mock, TestCase
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.lib.commands import fencing_topology as lib

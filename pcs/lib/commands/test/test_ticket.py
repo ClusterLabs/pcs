@@ -1,6 +1,4 @@
-from pcs.test.tools.pcs_unittest import TestCase
-from pcs.test.tools.pcs_unittest import mock
-from pcs.test.tools.misc import create_patcher
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
@@ -8,6 +6,7 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.lib.test.misc import get_mocked_env
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.command_env import get_env_tools
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 

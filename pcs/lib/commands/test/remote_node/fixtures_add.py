@@ -1,9 +1,9 @@
 import base64
 import json
+from unittest import mock
 
 from pcs.common import report_codes
 from pcs.test.tools import fixture
-from pcs.test.tools.pcs_unittest import mock
 
 
 OFFLINE_ERROR_MSG = "Could not resolve host"

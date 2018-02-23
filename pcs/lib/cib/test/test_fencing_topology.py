@@ -1,4 +1,5 @@
 from lxml import etree
+from unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib import reports
@@ -11,7 +12,6 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
-from pcs.test.tools.pcs_unittest import TestCase#, mock
 from pcs.test.tools.xml import etree_to_str
 
 from pcs.common.fencing_topology import (

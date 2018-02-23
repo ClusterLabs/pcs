@@ -1,5 +1,5 @@
-from pcs.test.tools.pcs_unittest import TestCase
-from pcs.test.tools.pcs_unittest import mock
+from unittest import mock, TestCase
+
 from pcs.cli.common import env_file
 from pcs.test.tools.misc import create_patcher, create_setup_patch_mixin
 

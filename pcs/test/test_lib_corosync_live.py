@@ -1,10 +1,8 @@
-from pcs.test.tools.pcs_unittest import TestCase
-
 import os.path
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import mock
 
 from pcs import settings
 from pcs.common import report_codes

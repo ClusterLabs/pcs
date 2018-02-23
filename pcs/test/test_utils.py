@@ -1,13 +1,12 @@
+from io import StringIO
 import sys
-from pcs.test.tools import pcs_unittest as unittest
+from time import sleep
+from unittest import mock, TestCase
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
-from time import sleep
-from io import StringIO
 
 from pcs.test.tools.xml import dom_get_child_elements
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import mock
 
 from pcs import utils
 from pcs.lib import reports
@@ -17,9 +16,9 @@ cib_with_nodes = rc("cib-empty-withnodes.xml")
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
-unittest.TestCase.maxDiff = None
+TestCase.maxDiff = None
 
-class UtilsTest(unittest.TestCase):
+class UtilsTest(TestCase):
 
     def get_cib_empty(self):
         return xml.dom.minidom.parse(empty_cib)
@@ -1880,7 +1879,7 @@ class UtilsTest(unittest.TestCase):
             self.assertEqual(node.tagName, tag)
 
 
-class RunParallelTest(unittest.TestCase):
+class RunParallelTest(TestCase):
     def fixture_create_worker(self, log, name, sleepSeconds=0):
         def worker():
             sleep(sleepSeconds)
@@ -1903,7 +1902,7 @@ class RunParallelTest(unittest.TestCase):
         )
 
 
-class PrepareNodeNamesTest(unittest.TestCase):
+class PrepareNodeNamesTest(TestCase):
     def test_return_original_when_is_in_pacemaker_nodes(self):
         node = 'test'
         self.assertEqual(
@@ -1940,7 +1939,7 @@ class PrepareNodeNamesTest(unittest.TestCase):
         )
 
 
-class NodeActionTaskTest(unittest.TestCase):
+class NodeActionTaskTest(TestCase):
     def test_can_run_action(self):
         def action(node, arg, kwarg=None):
             return (0, ':'.join([node, arg, kwarg]))
@@ -1955,7 +1954,7 @@ class NodeActionTaskTest(unittest.TestCase):
         self.assertEqual(['node|0|node:arg:kwarg'], report_list)
 
 
-class ParseCmanQuorumInfoTest(unittest.TestCase):
+class ParseCmanQuorumInfoTest(TestCase):
     def test_error_empty_string(self):
         parsed = utils.parse_cman_quorum_info("")
         self.assertEqual(None, parsed)
@@ -2119,7 +2118,7 @@ Node addresses: 192.168.122.61
         self.assertEqual(None, parsed)
 
 
-class ParseQuorumtoolOutputTest(unittest.TestCase):
+class ParseQuorumtoolOutputTest(TestCase):
     def test_error_empty_string(self):
         parsed = utils.parse_quorumtool_output("")
         self.assertEqual(None, parsed)
@@ -2409,7 +2408,7 @@ Membership information
         self.assertEqual(None, parsed)
 
 
-class IsNodeStopCauseQuorumLossTest(unittest.TestCase):
+class IsNodeStopCauseQuorumLossTest(TestCase):
     def test_not_quorate(self):
         quorum_info = {
             "quorate": False,
@@ -2663,7 +2662,7 @@ class IsNodeStopCauseQuorumLossTest(unittest.TestCase):
             )
         )
 
-class CanAddNodeToCluster(unittest.TestCase):
+class CanAddNodeToCluster(TestCase):
     def setUp(self):
         patcher = mock.patch("pcs.utils.run_com_cmd")
         self.addCleanup(patcher.stop)
@@ -2744,7 +2743,7 @@ class CanAddNodeToCluster(unittest.TestCase):
             "error checking node availability: reason"
         )
 
-class TouchCibFile(unittest.TestCase):
+class TouchCibFile(TestCase):
     @mock.patch("pcs.utils.os.path.isfile", mock.Mock(return_value=False))
     @mock.patch(
         "pcs.utils.write_empty_cib",

@@ -1,12 +1,12 @@
 from lxml import etree
 import re
+from unittest import TestCase
 
 from pcs.common import report_codes
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_report_item_list_equal
-from pcs.test.tools.pcs_unittest import TestCase
 
 class ValuesToPairs(TestCase):
     def test_create_from_plain_values(self):

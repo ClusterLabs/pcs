@@ -1,6 +1,6 @@
 from functools import partial
-
 from lxml import etree
+from unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.common.tools import Version
@@ -12,7 +12,6 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     create_setup_patch_mixin,
 )
-from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import etree_to_str
 
 
