@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os
 
 from pcs.common import report_codes, env_file_role_codes as file_roles

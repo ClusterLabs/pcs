@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.commands.resource import (

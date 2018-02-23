@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.assertions import AssertPcsMixin, assert_xml_equal
 
 def xml_format(xml_string):

@@ -1,30 +1,12 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import base64
 import io
 import json
 import os
-
-try:
-    # python 2
-    from pipes import quote as shell_quote
-except ImportError:
-    # python 3
-    from shlex import quote as shell_quote
 import re
+from shlex import quote as shell_quote
 import signal
 import subprocess
-import sys
-try:
-    # python2
-    from urllib import urlencode as urllib_urlencode
-except ImportError:
-    # python3
-    from urllib.parse import urlencode as urllib_urlencode
+from urllib.parse import urlencode
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
@@ -357,7 +339,6 @@ class CommandRunner(object):
         # executables must be specified with full path unless the PATH variable
         # is set from outside.
         self._env_vars = env_vars if env_vars else dict()
-        self._python2 = (sys.version_info.major == 2)
 
     @property
     def env_vars(self):
@@ -411,7 +392,7 @@ class CommandRunner(object):
                 shell=False,
                 env=env_vars,
                 # decodes newlines and in python3 also converts bytes to str
-                universal_newlines=(not self._python2 and not binary_output)
+                universal_newlines=(not binary_output)
             )
             out_std, out_err = process.communicate(stdin_string)
             retval = process.returncode
@@ -523,7 +504,7 @@ class NodeCommunicator(object):
         """
         Encode data for transport (only plain dict is supported)
         """
-        return urllib_urlencode(data)
+        return urlencode(data)
 
     @classmethod
     def format_data_json(cls, data):

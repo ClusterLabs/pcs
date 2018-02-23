@@ -1,18 +1,4 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
-
-try:
-    # python 2
-    #pylint: disable=unused-import
-    from urlparse import parse_qs as url_decode
-except ImportError:
-    # python 3
-    from urllib.parse import parse_qs as url_decode
 
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.assertions import assert_raise_library_error

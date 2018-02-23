@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 
 from pcs.lib import reports
@@ -87,4 +81,3 @@ def _create_node(tree, node_id, uname, node_type=None):
     if node_type:
         node.set("type", node_type)
     return node
-

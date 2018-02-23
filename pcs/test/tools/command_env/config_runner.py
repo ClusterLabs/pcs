@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.command_env.config_runner_cib import CibShortcuts
 from pcs.test.tools.command_env.config_runner_pcmk import PcmkShortcuts
 from pcs.test.tools.command_env.config_runner_corosync import CorosyncShortcuts

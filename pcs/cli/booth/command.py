@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import group_by_keywords, prepare_options
 
@@ -54,7 +48,7 @@ def config_show(lib, arg_list, modifiers):
         raise CmdLineInputError()
     node = None if not arg_list else arg_list[0]
 
-    print(lib.booth.config_text(DEFAULT_BOOTH_NAME, node), end="")
+    print(lib.booth.config_text(DEFAULT_BOOTH_NAME, node).rstrip())
 
 
 def config_ticket_add(lib, arg_list, modifiers):
@@ -184,4 +178,3 @@ def status(lib, arg_list, modifiers):
     if booth_status.get("status"):
         print("DAEMON STATUS:")
         print(booth_status["status"])
-

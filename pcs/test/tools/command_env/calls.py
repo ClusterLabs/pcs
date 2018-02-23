@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 def format_call(call):
     if hasattr(call, "format"):
         return call.format()

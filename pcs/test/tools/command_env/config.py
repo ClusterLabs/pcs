@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import inspect
 
 from pcs.test.tools.command_env.calls import CallListBuilder

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 import json
 from functools import partial
@@ -240,4 +234,3 @@ def print_alerts_in_json(lib, argv, dummy_modifiers):
         raise CmdLineInputError()
 
     print(json.dumps(lib.alert.get_all_alerts()))
-

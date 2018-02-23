@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 
 from pcs.common import report_codes
@@ -16,7 +10,7 @@ from pcs.test.tools.pcs_unittest import TestCase, mock
 
 class FindNodeList(TestCase):
     def assert_nodes_equals(self, xml, expected_nodes):
-        self.assertEquals(
+        self.assertEqual(
             expected_nodes,
             [
                 (node.ring0, node.name)

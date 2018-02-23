@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os.path
 
 from pcs.test.tools.misc import get_test_resource as rc
@@ -73,5 +67,3 @@ def pcs(testfile, args = ""):
     return utils.run(
         [__pcs_location, "-f", testfile] + conf_opts + arg_split_temp
     )
-
-

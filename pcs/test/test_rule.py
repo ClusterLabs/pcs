@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import shutil
 from pcs.test.tools import pcs_unittest as unittest
 import xml.dom.minidom

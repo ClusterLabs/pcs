@@ -1,20 +1,9 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 from pcs.test.tools import pcs_unittest as unittest
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 from time import sleep
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    #python 3
-    from io import StringIO
+from io import StringIO
 
 from pcs.test.tools.xml import dom_get_child_elements
 from pcs.test.tools.misc import get_test_resource as rc
@@ -1394,8 +1383,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_dom_get_node(self):
         cib = self.get_cib_with_nodes_minidom()
-        #assertIsNone is not supported in python 2.6
-        self.assertTrue(utils.dom_get_node(cib, "non-existing-node") is None)
+        self.assertIsNone(utils.dom_get_node(cib, "non-existing-node"))
         node = utils.dom_get_node(cib, "rh7-1")
         self.assertEqual(node.getAttribute("uname"), "rh7-1")
         self.assertEqual(node.getAttribute("id"), "1")

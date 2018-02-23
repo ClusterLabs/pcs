@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import shutil
 
 from pcs.test.cib_resource.common import get_cib_resources

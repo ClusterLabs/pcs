@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 import xml.dom.minidom
 from xml.dom.minidom import parseString
@@ -2183,7 +2177,7 @@ def resource_force_action(action, argv):
         utils.err("stonith devices are not supported")
         sys.exit(retval)
 
-    print(output, end="")
+    print(output.rstrip())
     sys.exit(retval)
 
 def resource_manage_cmd(lib, argv, modifiers):

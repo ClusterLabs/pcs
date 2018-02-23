@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
 import base64
 import logging
@@ -619,7 +613,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_generic.return_value = "generic status info\n"
         mock_status_cluster.return_value = "cluster status info\n"
 
-        self.assertEquals(
+        self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net"),
              "generic status info\ncluster status info\n"
         )
@@ -631,7 +625,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_generic.return_value = "generic status info\n"
         mock_status_cluster.return_value = "cluster status info\n"
 
-        self.assertEquals(
+        self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net", verbose=True),
              "generic status info\ncluster status info\n"
         )
@@ -643,7 +637,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_generic.return_value = "generic status info\n"
         mock_status_cluster.return_value = "cluster status info\n"
 
-        self.assertEquals(
+        self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net", cluster="name"),
              "generic status info\ncluster status info\n"
         )
@@ -1151,4 +1145,3 @@ class ClientNetDestroyTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         lib.client_net_destroy(self.lib_env)
         mock_qdevice_func.assert_called_once_with()
-

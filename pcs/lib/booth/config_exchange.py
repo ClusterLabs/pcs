@@ -1,8 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
 from pcs.lib.booth.config_structure import ConfigItem
 
 def to_exchange_format(booth_configuration):

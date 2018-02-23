@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import difflib
 import doctest
 from lxml.doctestcompare import LXMLOutputChecker

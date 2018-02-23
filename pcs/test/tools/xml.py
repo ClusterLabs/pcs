@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import xml.dom.minidom
 from lxml import etree
 
@@ -49,4 +43,3 @@ class XmlManipulation(object):
 
 def get_xml_manipulation_creator_from_file(file_name):
     return lambda: XmlManipulation.from_file(file_name)
-

@@ -1,8 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
 from pcs.cli.common.parse_args import group_by_keywords, prepare_options
 from pcs.cli.common.errors import CmdLineInputError
 

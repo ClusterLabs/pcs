@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import io
 
 from pcs.test.tools.pcs_unittest import mock, TestCase
@@ -573,4 +567,3 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
         com._multi_handle.assert_no_handle_left()
-

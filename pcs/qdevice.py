@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 
 from pcs import (
@@ -142,18 +136,13 @@ def qdevice_sign_net_cert_request_cmd(lib, argv, modifiers):
         certificate_request,
         modifiers["name"]
     )
-    if sys.version_info.major > 2:
-        # In python3 base64.b64encode returns bytes.
-        # In python2 base64.b64encode returns string.
-        # Bytes is printed like this: b'bytes content'
-        # and we need to get rid of that b'', so we change bytes to string.
-        # Since it's base64encoded, it's safe to use ascii.
-        signed = signed.decode("ascii")
+    # In python3 base64.b64encode returns bytes.
+    # Bytes is printed like this: b'bytes content'
+    # and we need to get rid of that b'', so we change bytes to string.
+    # Since it's base64encoded, it's safe to use ascii.
+    signed = signed.decode("ascii")
     print(signed)
 
 def _read_stdin():
     # in python3 stdin returns str so we need to use buffer
-    if hasattr(sys.stdin, "buffer"):
-        return sys.stdin.buffer.read()
-    else:
-        return sys.stdin.read()
+    return sys.stdin.buffer.read()

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os
 import sys
 import subprocess
@@ -80,15 +74,8 @@ from pcs.lib.pacemaker.values import(
     validate_id,
 )
 
-try:
-    # python2
-    from urllib import urlencode as urllib_urlencode
-except ImportError:
-    # python3
-    from urllib.parse import urlencode as urllib_urlencode
+from urllib.parse import urlencode
 
-
-PYTHON2 = (sys.version_info.major == 2)
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -267,12 +254,12 @@ def getCorosyncConfig(node):
 
 def setCorosyncConfig(node,config):
     if is_rhel6():
-        data = urllib_urlencode({'cluster_conf':config})
+        data = urlencode({'cluster_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
         if status != 0:
             err("Unable to set cluster.conf: {0}".format(data))
     else:
-        data = urllib_urlencode({'corosync_conf':config})
+        data = urlencode({'corosync_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
         if status != 0:
             err("Unable to set corosync config: {0}".format(data))
@@ -311,7 +298,7 @@ def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
         data["component"] = "corosync"
     if force:
         data["force"] = 1
-    data = urllib_urlencode(data)
+    data = urlencode(data)
     return sendHTTPRequest(
         node,
         'remote/cluster_stop',
@@ -331,15 +318,15 @@ def destroyCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_destroy', None, not quiet, not quiet)
 
 def restoreConfig(node, tarball_data):
-    data = urllib_urlencode({"tarball": tarball_data})
+    data = urlencode({"tarball": tarball_data})
     return sendHTTPRequest(node, "remote/config_restore", data, False, True)
 
 def pauseConfigSyncing(node, delay_seconds=300):
-    data = urllib_urlencode({"sync_thread_pause": delay_seconds})
+    data = urlencode({"sync_thread_pause": delay_seconds})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 def resumeConfigSyncing(node):
-    data = urllib_urlencode({"sync_thread_resume": 1})
+    data = urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 def canAddNodeToCluster(node_communicator, target):
@@ -389,7 +376,7 @@ def addLocalNode(node, node_to_add, ring1_addr=None):
     options = {'new_nodename': node_to_add}
     if ring1_addr:
         options['new_ring1addr'] = ring1_addr
-    data = urllib_urlencode(options)
+    data = urlencode(options)
     retval, output = sendHTTPRequest(node, 'remote/add_node', data, False, False)
     if retval == 0:
         try:
@@ -402,7 +389,7 @@ def addLocalNode(node, node_to_add, ring1_addr=None):
     return 1, output
 
 def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
-    data = urllib_urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
+    data = urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
     retval, output = sendHTTPRequest(node, 'remote/remove_node', data, False, False)
     if retval == 0:
         try:
@@ -1022,13 +1009,13 @@ def run(
             close_fds=True,
             env=env_var,
             # decodes newlines and in python3 also converts bytes to str
-            universal_newlines=(not PYTHON2 and not binary_output)
+            universal_newlines=(not binary_output)
         )
         output, dummy_stderror = p.communicate(string_for_stdin)
         returnVal = p.returncode
         if "--debug" in pcs_options:
             print("Return Value: {0}".format(returnVal))
-            print("--Debug Output Start--\n{0}".format(output), end="")
+            print(("--Debug Output Start--\n{0}".format(output)).rstrip())
             print("--Debug Output End--")
             print()
     except OSError as e:
@@ -1160,7 +1147,7 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
     }
     if std_in:
         data['stdin'] = std_in
-    data_send = urllib_urlencode(data)
+    data_send = urlencode(data)
     code, output = sendHTTPRequest(
         "localhost", "run_pcs", data_send, False, False
     )
@@ -1924,8 +1911,6 @@ def get_terminal_input(message=None):
         sys.stdout.write(message)
         sys.stdout.flush()
     try:
-        if PYTHON2:
-            return raw_input("")
         return input("")
     except EOFError:
         return ""

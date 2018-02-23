@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from functools import partial
 from pcs.lib.cib.constraint import order
 import pcs.lib.commands.constraint.common

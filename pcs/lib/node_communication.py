@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os
 
 from pcs.common import pcs_pycurl as pycurl

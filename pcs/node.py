@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 import json
 
@@ -179,4 +173,3 @@ def attribute_print(node_attributes):
         for name, value in sorted(node_attributes[node].items()):
             line_parts.append("{0}={1}".format(name, value))
         print(" ".join(line_parts))
-

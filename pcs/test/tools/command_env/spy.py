@@ -1,15 +1,4 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
-try:
-    # python 2
-    from urlparse import parse_qs
-except ImportError:
-    # python 3
-    from urllib.parse import parse_qs
+from urllib.parse import parse_qs
 
 from pcs.lib.corosync.live import(
     get_local_corosync_conf as original_get_local_corosync_conf

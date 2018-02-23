@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import math
 import os
 import subprocess
@@ -15,19 +9,8 @@ import datetime
 import json
 import time
 import xml.dom.minidom
-try:
-    # python2
-    from commands import getstatusoutput
-except ImportError:
-    # python3
-    from subprocess import getstatusoutput
-
-try:
-    # python2
-    from urlparse import urlparse
-except ImportError:
-    # python3
-    from urllib.parse import urlparse
+from subprocess import getstatusoutput
+from urllib.parse import urlparse
 
 from pcs import (
     constraint,
@@ -1572,7 +1555,7 @@ def get_cib(argv):
         scope = "configuration"
 
     if not filename:
-        print(utils.get_cib(scope), end="")
+        print(utils.get_cib(scope).rstrip())
     else:
         try:
             f = open(filename, 'w')
@@ -2181,7 +2164,7 @@ def cluster_get_corosync_conf(argv):
         exit(1)
 
     if len(argv) == 0:
-        print(utils.getCorosyncConf(), end="")
+        print(utils.getCorosyncConf().rstrip())
         return
 
     node = argv[0]
@@ -2189,7 +2172,7 @@ def cluster_get_corosync_conf(argv):
     if retval != 0:
         utils.err(output)
     else:
-        print(output, end="")
+        print(output.rstrip())
 
 def cluster_reload(argv):
     if len(argv) != 1 or argv[0] != "corosync":

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.pcs_unittest import mock
@@ -56,4 +50,3 @@ class GetStatusTextTest(TestCase):
         self.mock_runner.run.assert_called_once_with([
             self.qdevice_tool, "-s"
         ])
-

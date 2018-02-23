@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import alert

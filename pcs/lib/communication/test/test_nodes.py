@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.assertions import assert_report_item_list_equal

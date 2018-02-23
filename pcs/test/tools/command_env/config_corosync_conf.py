@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.command_env.mock_get_local_corosync_conf import Call
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.corosync.config_parser import Section

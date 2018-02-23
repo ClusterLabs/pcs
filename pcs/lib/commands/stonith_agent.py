@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib import resource_agent
 from pcs.lib.commands.resource_agent import _complete_agent_list
 

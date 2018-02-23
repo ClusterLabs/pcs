@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.cib_resource.stonith_common import need_load_xvm_fence_agent
 

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from collections import namedtuple
 
 import pcs.snmp.agentx.pcs_pyagentx as pyagentx

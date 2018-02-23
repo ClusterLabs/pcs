@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.common.node_communicator import RequestData
 from pcs.lib import reports
 from pcs.lib.communication.tools import (

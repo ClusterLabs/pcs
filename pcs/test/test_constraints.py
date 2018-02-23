@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 import os
 import shutil
@@ -3519,9 +3513,6 @@ class BundleOrder(Bundle):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleTicket(Bundle):
-    def setUp(self):
-        super(BundleTicket, self).setUp()
-
     def test_bundle(self):
         self.assert_effect(
             "constraint ticket add T B",

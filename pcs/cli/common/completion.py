@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 def has_applicable_environment(environment):
     """
     dict environment - very likely os.environ

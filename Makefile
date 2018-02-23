@@ -5,7 +5,8 @@ IS_DEBIAN=false
 DISTRO_DEBIAN_VER_8=false
 
 ifndef PYTHON
-	PYTHON := $(shell which python3 || which python2 || which python)
+	# some distros ship python3 as python
+	PYTHON := $(shell which python3 || which python)
 endif
 
 ifeq ($(UNAME_OS_GNU),true)
@@ -21,12 +22,6 @@ endif
 
 ifndef PYTHON_SITELIB
   PYTHON_SITELIB=$(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-endif
-ifeq ($(PYTHON_SITELIB), /usr/lib/python2.6/dist-packages)
-  EXTRA_SETUP_OPTS="--install-layout=deb"
-endif
-ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
-  EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
 ifeq ($(PYTHON_SITELIB), /usr/lib/python3/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"

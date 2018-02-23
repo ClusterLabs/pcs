@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.common import console_report
 from pcs.common.env_file_role_codes import BOOTH_CONFIG, BOOTH_KEY
 from pcs.lib.errors import LibraryEnvError

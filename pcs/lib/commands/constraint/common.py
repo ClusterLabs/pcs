@@ -3,12 +3,6 @@ Common functions used from specific constraint commands.
 Functions of this module are not intended to be used for direct call from
 client.
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from functools import partial
 
 from pcs.lib.cib.constraint import constraint, resource_set

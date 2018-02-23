@@ -1,8 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
 from pcs.cli.constraint.console_report import prepare_options
 
 

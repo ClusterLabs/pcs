@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 class Env(object):
     #pylint: disable=too-many-instance-attributes
     def __init__(self):

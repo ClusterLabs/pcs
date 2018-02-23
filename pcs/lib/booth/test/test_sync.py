@@ -1,19 +1,8 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
 
 import json
 import base64
-try:
-    # python 2
-    from urlparse import parse_qs as url_decode
-except ImportError:
-    # python 3
-    from urllib.parse import parse_qs as url_decode
+from urllib.parse import parse_qs
 
 from pcs.test.tools.pcs_unittest import mock, skip
 from pcs.test.tools.assertions import (
@@ -598,7 +587,7 @@ class SendAllConfigToNodeTest(TestCase):
             "remote/booth_save_files",
             self.mock_communicator.call_node.call_args[0][1]
         )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
+        data = parse_qs(self.mock_communicator.call_node.call_args[0][2])
         self.assertFalse("rewrite_existing" in data)
         self.assertTrue("data_json" in data)
         self.assertEqual(
@@ -680,7 +669,7 @@ class SendAllConfigToNodeTest(TestCase):
             "remote/booth_save_files",
             self.mock_communicator.call_node.call_args[0][1]
         )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
+        data = parse_qs(self.mock_communicator.call_node.call_args[0][2])
         self.assertFalse("rewrite_existing" in data)
         self.assertTrue("data_json" in data)
         self.assertEqual(
@@ -753,7 +742,7 @@ class SendAllConfigToNodeTest(TestCase):
             "remote/booth_save_files",
             self.mock_communicator.call_node.call_args[0][1]
         )
-        data = url_decode(self.mock_communicator.call_node.call_args[0][2])
+        data = parse_qs(self.mock_communicator.call_node.call_args[0][2])
         self.assertFalse("rewrite_existing" in data)
         self.assertTrue("data_json" in data)
         self.assertEqual(

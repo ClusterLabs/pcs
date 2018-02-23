@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 # This module is intented to just test new Communicator/MultiringCommunicator
 # classes which are using curllib
 
@@ -59,5 +53,3 @@ for response in communicator.start_loop():
     if len(request_list) == 8 and response.request == request_list[7]:
         r = get_request(15)
         communicator.add_requests([r])
-
-

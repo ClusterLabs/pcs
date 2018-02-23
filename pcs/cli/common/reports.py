@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 import inspect
 from functools import partial
@@ -51,11 +45,11 @@ def build_message_from_report(code_builder_map, report_item, force_text=""):
         # regular python function. We have to use original function for that.
         if isinstance(message, partial):
             keywords = message.keywords if message.keywords is not None else {}
-            args = inspect.getargspec(message.func).args
+            args = inspect.getfullargspec(message.func).args
             del args[:len(message.args)]
             args = [arg for arg in args if arg not in keywords]
         else:
-            args = inspect.getargspec(message).args
+            args = inspect.getfullargspec(message).args
         if "force_text" in args:
             return message(report_item.info, force_text)
         return message(report_item.info) + force_text

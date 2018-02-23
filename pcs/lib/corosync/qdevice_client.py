@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os.path
 
 from pcs import settings
@@ -31,4 +25,3 @@ def get_status_text(runner, verbose=False):
             )
         )
     return stdout
-

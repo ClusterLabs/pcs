@@ -31,12 +31,6 @@ and pairs_to_values.
 TODO provide parameters to provide forceable error/warning for functions that
      does not support it
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from collections import namedtuple
 import re
 

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from os import path
 
 from pcs import settings
@@ -275,4 +269,3 @@ def set_message(cmd_runner, device, node_name, message):
         raise LibraryError(reports.sbd_device_message_error(
             device, node_name, message, std_err
         ))
-

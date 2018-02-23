@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.test.tools.assertions import prepare_diff
 

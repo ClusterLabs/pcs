@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.common import report_codes
 from pcs.lib.commands.sbd import get_cluster_sbd_config
 from pcs.test.tools import fixture

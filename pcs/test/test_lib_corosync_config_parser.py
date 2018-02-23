@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.assertions import ac

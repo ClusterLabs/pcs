@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.constraint import parse_args, console_report
 from pcs.cli.common.console_report import indent
 

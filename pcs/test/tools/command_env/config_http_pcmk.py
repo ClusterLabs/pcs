@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
 )

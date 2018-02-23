@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.constraint_ticket import parse_args
 from pcs.cli.common.errors import CmdLineInputError

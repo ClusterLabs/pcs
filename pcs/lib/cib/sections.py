@@ -2,12 +2,6 @@
 This module defines madatory and optional cib sections. It provides function for
 getting existing section from the cib (lxml) tree.
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_sub_element

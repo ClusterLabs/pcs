@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.constraint.console_report import (
     constraint_plain as constraint_plain_default,
     constraint_with_sets,

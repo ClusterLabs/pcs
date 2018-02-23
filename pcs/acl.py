@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 
 from pcs import (
@@ -324,4 +318,3 @@ def _permission_to_str(permission):
         out += ["id", permission.get("reference")]
     out.append("({0})".format(permission.get("id")))
     return " ".join(out)
-

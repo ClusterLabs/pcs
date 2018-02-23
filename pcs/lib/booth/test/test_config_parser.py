@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.common import report_codes
 from pcs.lib.booth import config_parser
 from pcs.lib.booth.config_structure import ConfigItem

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 
 from pcs.common import report_codes
@@ -280,7 +274,7 @@ class FindNodeList(TestCase, SetupPatchMixin):
     def assert_find_meta_attributes(self, xml, meta_attributes_xml_list):
         get_node = self.setup_patch("get_node", return_value=None)
 
-        self.assertEquals(
+        self.assertEqual(
             [None] * len(meta_attributes_xml_list),
             guest_node.find_node_list(etree.fromstring(xml))
         )
@@ -343,7 +337,7 @@ class FindNodeList(TestCase, SetupPatchMixin):
 class GetNode(TestCase):
     def assert_node(self, xml, expected_node):
         node = guest_node.get_node(etree.fromstring(xml))
-        self.assertEquals(expected_node, (node.ring0, node.name))
+        self.assertEqual(expected_node, (node.ring0, node.name))
 
     def test_return_none_when_is_not_guest_node(self):
         self.assertIsNone(guest_node.get_node(etree.fromstring(
@@ -419,7 +413,7 @@ class FindNodeResources(TestCase):
                 </primitive>
             </resources>
         """)
-        self.assertEquals(
+        self.assertEqual(
             "RESOURCE_ID",
             guest_node.find_node_resources(resources_section, identifier)[0]
                 .attrib["id"]
@@ -438,7 +432,7 @@ class FindNodeResources(TestCase):
         resources_section = etree.fromstring(
             '<resources><primitive id="RESOURCE_ID"/></resources>'
         )
-        self.assertEquals([], guest_node.find_node_resources(
+        self.assertEqual([], guest_node.find_node_resources(
             resources_section,
             "RESOURCE_ID"
         ))

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import sys
 import os
 
@@ -287,27 +281,6 @@ def nodes_status(argv):
     print(" ".join([" Maintenance:"] + remote_maintenancenodes))
     print(" ".join([" Offline:"] + remote_offlinenodes))
 
-# TODO: Remove, currently unused, we use status from the resource.py
-def resources_status(argv):
-    info_dom = utils.getClusterState()
-
-    print("Resources:")
-
-    resources = info_dom.getElementsByTagName("resources")
-    if resources.length == 0:
-        utils.err("no resources section found")
-
-    for resource in resources[0].getElementsByTagName("resource"):
-        nodes = resource.getElementsByTagName("node")
-        node_line = ""
-        if nodes.length > 0:
-            for node in nodes:
-                node_line += node.getAttribute("name") + " "
-
-        print("", resource.getAttribute("id"), end=' ')
-        print("(" + resource.getAttribute("resource_agent") + ")", end=' ')
-        print("- " + resource.getAttribute("role") + " " + node_line)
-
 def cluster_status(argv):
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
@@ -334,14 +307,14 @@ def corosync_status():
     if retval != 0:
         utils.err("corosync not running")
     else:
-        print(output, end="")
+        print(output.rstrip())
 
 def xml_status():
     (output, retval) = utils.run(["crm_mon", "-1", "-r", "-X"])
 
     if (retval != 0):
         utils.err("running crm_mon, is pacemaker running?")
-    print(output, end="")
+    print(output.rstrip())
 
 def is_service_running(service):
     if utils.is_systemctl():

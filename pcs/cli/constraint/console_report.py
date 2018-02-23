@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
-
 def constraint_plain(constraint_type, constraint_info, with_id=False):
     return constraint_type + " ".join(
         prepare_options(constraint_info["options"], with_id)

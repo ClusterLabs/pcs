@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.misc import outdent
 from pcs.test.tools.pcs_unittest import TestCase, mock
 

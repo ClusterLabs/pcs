@@ -1,20 +1,8 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import base64
 import io
 import re
 from collections import namedtuple
-
-try:
-    # python2
-    from urllib import urlencode as urllib_urlencode
-except ImportError:
-    # python3
-    from urllib.parse import urlencode as urllib_urlencode
+from urllib.parse import urlencode
 
 # We should ignore SIGPIPE when using pycurl.NOSIGNAL - see the libcurl tutorial
 # for more info.
@@ -82,7 +70,7 @@ class RequestData(
             action
         """
         return super(RequestData, cls).__new__(
-            cls, action, structured_data, urllib_urlencode(structured_data)
+            cls, action, structured_data, urlencode(structured_data)
         )
 
 

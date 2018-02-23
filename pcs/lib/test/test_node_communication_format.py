@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import create_setup_patch_mixin
 from pcs.test.tools.pcs_unittest import TestCase

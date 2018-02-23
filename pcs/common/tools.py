@@ -1,15 +1,6 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from collections import namedtuple
 from lxml import etree
 import threading
-import sys
-
-_PYTHON2 = (sys.version_info.major == 2)
 
 def simple_cache(func):
     cache = {
@@ -71,10 +62,8 @@ def xml_fromstring(xml):
     # ValueError: Unicode strings with encoding declaration are not supported.
     # Please use bytes input or XML fragments without declaration.
     # So we encode the string to bytes.
-    # In python2 we cannot do that as it causes a UnicodeDecodeError if the xml
-    # contains a non-ascii character.
     return etree.fromstring(
-        xml if _PYTHON2 else xml.encode("utf-8"),
+        xml.encode("utf-8"),
         #it raises on a huge xml without the flag huge_tree=True
         #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
         etree.XMLParser(huge_tree=True)

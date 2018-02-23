@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib.commands import cib_options
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.pcs_unittest import TestCase

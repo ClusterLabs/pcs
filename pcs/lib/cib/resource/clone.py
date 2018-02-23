@@ -3,12 +3,6 @@ Module for stuff related to clones.
 Multi-state resources are a specialization of clone resources. So this module
 include stuffs related to master.
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 
 from pcs.lib.cib.nvpair import append_new_meta_attributes

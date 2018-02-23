@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.command_env.calls import Queue, CallListBuilder
 from pcs.test.tools.command_env.mock_runner import Runner as NewRunner
 

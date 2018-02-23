@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.common import env_file_role_codes
 from pcs.lib.env_file import RealFile
 from pcs import settings

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.constraint import command
 from pcs.cli.constraint_order import console_report
 

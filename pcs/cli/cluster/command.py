@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.cli.resource.parse_args import(
     parse_create_simple as parse_resource_create_args
 )

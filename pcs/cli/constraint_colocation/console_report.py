@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 def constraint_plain(constraint_info, with_id=False):
     """
     dict constraint_info see constraint in pcs/lib/exchange_formats.md

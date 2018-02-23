@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.command_env.mock_runner import(
     Call as RunnerCall,
     create_check_stdin_xml,

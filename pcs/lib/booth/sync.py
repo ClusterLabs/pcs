@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os
 import base64
 
@@ -96,4 +90,3 @@ def send_all_config_to_node(
         )
     except (KeyError, ValueError):
         raise LibraryError(lib_reports.invalid_response_format(target.label))
-

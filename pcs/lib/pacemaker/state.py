@@ -2,13 +2,6 @@
 The intention is put there knowledge about cluster state structure.
 Hide information about underlaying xml is desired too.
 '''
-
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import os.path
 from collections import defaultdict
 

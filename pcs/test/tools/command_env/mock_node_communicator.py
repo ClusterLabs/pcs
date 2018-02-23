@@ -1,17 +1,5 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import json
-
-try:
-    # python 2
-    from urlparse import parse_qs
-except ImportError:
-    # python 3
-    from urllib.parse import parse_qs
+from urllib.parse import parse_qs
 
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.node_communicator import(

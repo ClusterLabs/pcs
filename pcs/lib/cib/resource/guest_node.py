@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib import reports, validate
 from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.nvpair import(

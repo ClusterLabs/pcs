@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.misc import outdent
 

@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from lxml import etree
 import re
 
@@ -1044,7 +1038,7 @@ class IsEmptyString(TestCase):
 class IsTimeInterval(TestCase):
     def test_no_reports_for_valid_time_interval(self):
         for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:
-            self.assertEquals(
+            self.assertEqual(
                 [],
                 validate.value_time_interval("a")({"a": interval}),
                 "interval: {0}".format(interval)

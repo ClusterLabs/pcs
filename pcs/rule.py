@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import re
 import xml.dom.minidom
 
@@ -1069,4 +1063,3 @@ class TokenPreprocessor(object):
         if token_parts:
             output_list.extend(token_parts)
         return output_list
-

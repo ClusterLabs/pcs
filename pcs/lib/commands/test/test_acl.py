@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import pcs.lib.commands.acl as cmd_acl
 from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment

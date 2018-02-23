@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.lib.cib.resource import remote_node, guest_node
 from pcs.lib.xml_tools import get_root
 from pcs.lib.node import NodeAddressesList

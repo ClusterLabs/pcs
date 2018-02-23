@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 def _list2reason(test, exc_list):
     if exc_list and exc_list[-1][0] is test:
         return exc_list[-1][1]

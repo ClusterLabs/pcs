@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 import io
 import logging
 
@@ -536,4 +530,3 @@ class CommunicatorLoggerTest(TestCase):
             )
         )
         self.assertEqual([logger_call], self.logger.mock_calls)
-

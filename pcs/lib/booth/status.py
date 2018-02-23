@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib.booth import reports

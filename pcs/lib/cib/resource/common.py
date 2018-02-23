@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
-
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
     is_bundle,

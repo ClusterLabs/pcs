@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.xml import etree_to_str
 
