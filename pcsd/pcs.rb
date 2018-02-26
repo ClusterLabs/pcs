@@ -2248,3 +2248,12 @@ def get_alerts(auth_user)
     return nil
   end
 end
+
+def get_service_info(service_name)
+  return {
+    :installed => is_service_installed?(service_name),
+    :enabled => is_service_enabled?(service_name),
+    :running => is_service_running?(service_name),
+    :version => nil,
+  }
+end

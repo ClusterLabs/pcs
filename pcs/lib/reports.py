@@ -2895,3 +2895,130 @@ def host_already_authorized(host_name):
             host_name=host_name,
         )
     )
+
+
+def cluster_destroy_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_DESTROY_STARTED,
+        info=dict(
+            host_name_list=host_name_list,
+        ),
+    )
+
+
+def cluster_destroy_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_DESTROY_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def cluster_enable_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_ENABLE_STARTED,
+        info=dict(
+            host_name_list=host_name_list,
+        ),
+    )
+
+
+def cluster_enable_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_ENABLE_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def cluster_start_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_START_STARTED,
+        info=dict(
+            host_name_list=host_name_list,
+        ),
+    )
+
+
+def cluster_start_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_START_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def service_not_installed(
+    node, service_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.SERVICE_NOT_INSTALLED,
+        severity,
+        info=dict(
+            node=node,
+            service_list=service_list,
+        ),
+        forceable=forceable,
+    )
+
+
+def service_running_unexpectedly(
+    node, service_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.SERVICE_RUNNING_UNEXPECTEDLY,
+        severity,
+        info=dict(
+            node=node,
+            service_list=service_list,
+        ),
+        forceable=forceable,
+    )
+
+
+def host_already_in_cluster(
+    host_name, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.HOST_ALREADY_IN_CLUSTER,
+        severity,
+        info=dict(
+            host_name=host_name,
+        ),
+        forceable=forceable,
+    )
+
+
+def service_version_mismatch(
+    service, version_host_names_dict,
+    severity=ReportItemSeverity.ERROR, forceable=None,
+):
+    return ReportItem(
+        report_codes.SERVICE_VERSION_MISMATCH,
+        severity,
+        info=dict(
+            service=service,
+            version_host_names_dict=version_host_names_dict,
+        ),
+        forceable=forceable,
+    )
+
+
+def wait_for_node_startup_started(node_name_list):
+    return ReportItem.info(
+        report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+        info=dict(
+            node_name_list=node_name_list,
+        )
+    )
+
+
+def wait_for_node_startup_timed_out():
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT)
+
+
+def wait_for_node_startup_error():
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)

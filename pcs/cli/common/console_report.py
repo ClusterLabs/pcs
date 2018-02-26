@@ -1403,4 +1403,71 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.HOST_ALREADY_AUTHORIZED: lambda info:
         "{host_name}: Already authorized".format(**info)
     ,
+    codes.CLUSTER_DESTROY_STARTED: lambda info:
+        "Destroying cluster on host(s) {host_name_list_str} ...".format(
+            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        )
+    ,
+    codes.CLUSTER_DESTROY_SUCCESS: lambda info:
+        "{node}: Successfully destroyed cluster".format(**info)
+    ,
+    codes.CLUSTER_ENABLE_STARTED: lambda info:
+        "Enabling cluster on host(s) {host_name_list_str} ...".format(
+            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        )
+    ,
+    codes.CLUSTER_ENABLE_SUCCESS: lambda info:
+        "{node}: Cluster Enabled".format(**info)
+    ,
+    codes.CLUSTER_START_STARTED: lambda info:
+        "Starting cluster on host(s) {host_name_list_str} ...".format(
+            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        )
+    ,
+    codes.CLUSTER_START_SUCCESS: lambda info:
+        "{node}: Started".format(**info)
+    ,
+    codes.SERVICE_NOT_INSTALLED: lambda info:
+        "{node}: Service(s) not installed: {service_list_str}".format(
+            service_list_str=", ".join(sorted(info["service_list"])), **info
+        )
+    ,
+    codes.SERVICE_RUNNING_UNEXPECTEDLY: lambda info:
+        (
+            "{node}: Services {service_list_str} are running. Is host part of "
+            "a cluster?"
+        ).format(
+            service_list_str=", ".join(sorted(info["service_list"])), **info
+        )
+    ,
+    codes.HOST_ALREADY_IN_CLUSTER: lambda info:
+        "{host_name}: Already in a cluster.".format(**info)
+    ,
+    codes.SERVICE_VERSION_MISMATCH: lambda info:
+        (
+            "Version of '{service}' doesn't match on the hosts ({versions_str})"
+        ).format(
+            service=info["version"],
+            versions_str="; ".join(
+                [
+                    "version {version}: {host_list_str}".format(
+                        version=version,
+                        host_list_str=", ".join(sorted(host_list)),
+                    )
+                    for version, host_list in sorted(
+                        info["version_host_names_dict"].items()
+                    )
+                ]
+            ),
+        )
+    ,
+    codes.WAIT_FOR_NODE_STARTUP_STARTED: lambda info:
+        "Waiting for node(s) {node_name_list_str} to start ...".format(
+            node_name_list_str=", ".join(sorted(info["node_name_list"]))
+        )
+    ,
+    codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Waiting timeout",
+    codes.WAIT_FOR_NODE_STARTUP_ERROR:
+        "Unable to verify all nodes have started"
+    ,
 }

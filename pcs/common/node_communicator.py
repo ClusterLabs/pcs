@@ -252,17 +252,19 @@ class NodeCommunicatorFactory(object):
         self._groups = groups
         self._request_timeout = request_timeout
 
-    def get_communicator(self):
-        return self.get_simple_communicator()
+    def get_communicator(self, request_timeout=None):
+        return self.get_simple_communicator(request_timeout=request_timeout)
 
-    def get_simple_communicator(self):
+    def get_simple_communicator(self, request_timeout=None):
+        timeout = request_timeout if request_timeout else self._request_timeout
         return Communicator(
-            self._logger, self._user, self._groups, self._request_timeout
+            self._logger, self._user, self._groups, request_timeout=timeout
         )
 
-    def get_multiaddress_communicator(self):
+    def get_multiaddress_communicator(self, request_timeout=None):
+        timeout = request_timeout if request_timeout else self._request_timeout
         return MultiaddressCommunicator(
-            self._logger, self._user, self._groups, self._request_timeout
+            self._logger, self._user, self._groups, request_timeout=timeout
 
         )
 

@@ -408,6 +408,14 @@ class LibraryEnvironment(object):
             self.__get_known_hosts(), self.report_processor
         )
 
+    def get_known_hosts(self, host_name_list):
+        known_hosts = self.__get_known_hosts()
+        return [
+            known_hosts[host_name]
+            for host_name in host_name_list
+            if host_name in known_hosts
+        ]
+
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):
         return NodeCommunicator(

@@ -24,7 +24,7 @@ def settings_file_path()
   end
 end
 
-CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
+CFG_COROSYNC_CONF = COROSYNC_CONF unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_KNOWN_HOSTS = known_hosts_file_path() unless defined? CFG_PCSD_KNOWN_HOSTS

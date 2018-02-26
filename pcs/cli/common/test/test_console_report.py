@@ -2144,3 +2144,159 @@ class NodeCommunicationErrorNotAuthorized(NameBuildTest):
                 "reason": "some error",
             }
         )
+
+class ClusterDestroyStarted(NameBuildTest):
+    code = codes.CLUSTER_DESTROY_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Destroying cluster on host(s) node1, node2, node3 ...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Destroying cluster on host(s) node1 ...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ClusterDestroySuccess(NameBuildTest):
+    code = codes.CLUSTER_DESTROY_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Successfully destroyed cluster",
+            {
+                "node": "node1",
+            }
+        )
+
+class ClusterEnableStarted(NameBuildTest):
+    code = codes.CLUSTER_ENABLE_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Enabling cluster on host(s) node1, node2, node3 ...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Enabling cluster on host(s) node1 ...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ClusterEnableSuccess(NameBuildTest):
+    code = codes.CLUSTER_ENABLE_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Cluster Enabled",
+            {
+                "node": "node1",
+            }
+        )
+
+class ClusterStartStarted(NameBuildTest):
+    code = codes.CLUSTER_START_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Starting cluster on host(s) node1, node2, node3 ...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Starting cluster on host(s) node1 ...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ServiceNotInstalled(NameBuildTest):
+    code = codes.SERVICE_NOT_INSTALLED
+    def test_multiple_services(self):
+        self.assert_message_from_info(
+            "node1: Service(s) not installed: service1, service2, service3",
+            {
+                "service_list": ["service1", "service3", "service2"],
+                "node": "node1",
+            }
+        )
+
+    def test_single_service(self):
+        self.assert_message_from_info(
+            "node1: Service(s) not installed: service",
+            {
+                "service_list": ["service"],
+                "node": "node1",
+            }
+        )
+
+class ServiceRunningUnexpectedly(NameBuildTest):
+    code = codes.SERVICE_RUNNING_UNEXPECTEDLY
+    def test_multiple_services(self):
+        self.assert_message_from_info(
+            (
+                "node1: Services service1, service2, service3 are running. Is "
+                "host part of a cluster?"
+            ),
+            {
+                "service_list": ["service1", "service3", "service2"],
+                "node": "node1",
+            }
+        )
+
+    def test_single_service(self):
+        self.assert_message_from_info(
+            "node1: Services service are running. Is host part of a cluster?",
+            {
+                "service_list": ["service"],
+                "node": "node1",
+            }
+        )
+
+class HostAlreadyInCluster(NameBuildTest):
+    code = codes.HOST_ALREADY_IN_CLUSTER
+    def test_success(self):
+        self.assert_message_from_info(
+            "host: Already in a cluster",
+            {
+                "host_name": "host",
+            }
+        )
+
+class ServiceVersionMismatch(NameBuildTest):
+    code = codes.SERVICE_VERSION_MISMATCH
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Version of 'service' doesn't match on the hosts (version 1.0: "
+                "host1, host3; version 1.2: host2; version 2.0: host4, host5, "
+                "host6)"
+            ),
+            {
+                "service": "service",
+                "version_host_names_dict": {
+                    "2.0": ["host5", "host4", "host6"],
+                    "1.0": ["host1", "host3"],
+                    "1.2": ["host2"]
+                }
+            }
+        )
+
+class WaitForNodeStartupStarted(NameBuildTest):
+    code = codes.SERVICE_VERSION_MISMATCH
+    def test_success(self):
+        self.assert_message_from_info(
+            "Waiting for node(s) node1, node2, node3 to start ...",
+            {
+                "node_name_list": ["node1", "node3", "node2"],
+            }
+        )

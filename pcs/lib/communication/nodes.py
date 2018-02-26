@@ -8,6 +8,8 @@ from pcs.lib.communication.tools import (
     AllSameDataMixin,
     RunRemotelyBase,
     SkipOfflineMixin,
+    SimpleResponseProcessingMixin,
+    SimpleResponseProcessingNoResponseOnSuccessMixin,
 )
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
@@ -72,6 +74,30 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
 
     def on_complete(self):
         return self._not_authorized_host_name_list
+
+
+class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
+    _responses = None
+
+    def _get_request_data(self):
+        return RequestData("remote/check_host")
+
+    def _process_response(self, response):
+        report = self._get_response_report(response)
+        if report:
+            self._report(report)
+            return
+        host_name = response.request.target.label
+        try:
+            self._responses[host_name] = json.loads(response.data)
+        except json.JSONDecodeError:
+            self._report(reports.invalid_response_format(host_name))
+
+    def before(self):
+        self._responses = {}
+
+    def on_complete(self):
+        return self._responses
 
 
 class PrecheckNewNode(
@@ -216,6 +242,16 @@ class DistributeFiles(FileActionBase):
         return action_response.code in ["written", "rewritten", "same_content"]
 
 
+class DistributeFilesWithoutForces(DistributeFiles):
+    def _init_properties(self):
+        super()._init_properties()
+        # We don't want to allow any kind of force or skip, therefore all force
+        # codes have to be set to None
+        self._force_code = None
+        # _failure_forceable is defined in SkipOfflineMixin
+        self._failure_forceable = None
+
+
 class RemoveFiles(FileActionBase):
     def _init_properties(self):
         super(RemoveFiles, self)._init_properties()
@@ -227,6 +263,98 @@ class RemoveFiles(FileActionBase):
 
     def _is_success(self, action_response):
         return action_response.code in ["deleted", "not_found"]
+
+
+class RemoveFilesWithoutForces(RemoveFiles):
+    def _init_properties(self):
+        super()._init_properties()
+        # We don't want to allow any kind of force or skip, therefore all force
+        # codes have to be set to None
+        self._force_code = None
+        # _failure_forceable is defined in SkipOfflineMixin
+        self._failure_forceable = None
+
+
+class StartCluster(
+    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
+    AllAtOnceStrategyMixin, RunRemotelyBase,
+):
+    def _get_request_data(self):
+        return RequestData("remote/cluster_start")
+
+    def before(self):
+        self._report(reports.cluster_start_started(self._target_label_list))
+
+
+class EnableCluster(
+    SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    RunRemotelyBase,
+):
+    def _get_request_data(self):
+        return RequestData("remote/cluster_enable")
+
+    def _get_success_report(self, node_label):
+        return reports.cluster_enable_success(node_label)
+
+    def before(self):
+        self._report(reports.cluster_enable_started(self._target_label_list))
+
+
+class CheckPacemakerStarted(
+    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
+):
+    _not_yet_started_target_list = None
+
+    def _get_request_data(self):
+        return RequestData("remote/pacemaker_node_status")
+
+    def _process_response(self, response):
+        report = response_to_report_item(response)
+        target = response.request.target
+        if report is None:
+            try:
+                parsed_response = json.loads(response.data)
+                if not parsed_response["online"] or parsed_response["pending"]:
+                    self._not_yet_started_target_list.append(target)
+                    return
+                else:
+                    report = reports.cluster_start_success(target.label)
+            except (json.JSONDecodeError, KeyError):
+                report = reports.invalid_response_format(target.label)
+        else:
+            if not response.was_connected:
+                self._not_yet_started_target_list.append(target)
+        self._report(report)
+
+    def before(self):
+        self._not_yet_started_target_list = []
+
+    def on_complete(self):
+        return self._not_yet_started_target_list
+
+
+class UpdateKnownHosts(
+    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
+    AllAtOnceStrategyMixin, RunRemotelyBase,
+):
+    def __init__(
+        self, report_processor, known_hosts_to_add, known_hosts_to_remove
+    ):
+        super().__init__(report_processor)
+        self._json_data = dict(
+            known_hosts_add=dict(
+                [host.to_known_host_dict() for host in known_hosts_to_add]
+            ),
+            known_hosts_remove=dict(
+                [host.to_known_host_dict() for host in known_hosts_to_remove]
+            ),
+        )
+
+    def _get_request_data(self):
+        return RequestData(
+            "remote/known_hosts_change",
+            [("data_json", json.dumps(self._json_data))],
+        )
 
 
 def _force(force_code, is_forced):

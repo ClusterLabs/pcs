@@ -95,7 +95,7 @@ def remote(params, request, auth_user)
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
       :manage_services => method(:manage_services),
-
+      :check_host => method(:check_host),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -485,6 +485,8 @@ def set_cluster_conf(params, request, auth_user)
   end
 end
 
+# deprecated, use /remote/put_file (note that put_file doesn't support backup
+# yet)
 def set_corosync_conf(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
@@ -2876,6 +2878,11 @@ def put_file(params, request, auth_user)
     files = check_request_data_for_json(params, auth_user)
     PcsdExchangeFormat::validate_item_map_is_Hash('files', files)
 
+    operation_types = files.map{ |id, data| data[:type] }.uniq
+    if operation_types & ['corosync_conf']
+      check_permissions(auth_user, Permissions::FULL)
+    end
+
     return pcsd_success(
       JSON.generate({"files" => Hash[files.map{|id, file_data|
         PcsdExchangeFormat::validate_item_is_Hash('file', id, file_data)
@@ -3109,4 +3116,29 @@ def check_request_data_for_json(params, auth_user)
   rescue JSON::ParserError
     raise PcsdRequestException.new('Invalid input data format')
   end
+end
+
+def check_host(params, reqest, auth_user)
+  service_list = [
+    :pacemaker, :pacemaker_remote, :corosync, :pcsd, :sbd, :qdevice, :booth
+  ]
+  service_version_getter = {
+    :pacemaker => method(:get_pacemaker_version),
+    :corosync => method(:get_corosync_version),
+    :pcsd => method(:get_pcsd_version),
+    # TODO: add version getters for all services
+  }
+  output = {
+    :services => {},
+    :cluster_configuration_exist => (
+      File.exist?(Cfgsync::CorosyncConf.file_path) or File.exist?(CIB_PATH)
+    )
+  }
+  service_list.each do |service|
+    output[:services][service] = get_service_info(service.to_s)
+  end
+  service_version_getter.each do |service, version_getter|
+    output[:services][service][:version] = version_getter.call()
+  end
+  return [200, JSON.generate(output)]
 end
