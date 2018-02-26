@@ -1,15 +1,4 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
-
-try:
-    # python2
-    from urlparse import urlparse
-except ImportError:
-    # python3
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from pcs import (
     settings,
