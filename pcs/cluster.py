@@ -101,9 +101,12 @@ def cluster_cmd(argv):
     elif (sub_cmd == "certkey"):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
-        cluster_auth_cmd(
-            utils.get_library_wrapper(), argv, utils.get_modifiers()
-        )
+        try:
+            cluster_auth_cmd(
+                utils.get_library_wrapper(), argv, utils.get_modifiers()
+            )
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "start"):
         if "--all" in utils.pcs_options:
             if argv:
