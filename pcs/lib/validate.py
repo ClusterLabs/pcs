@@ -34,7 +34,6 @@ TODO provide parameters to provide forceable error/warning for functions that
 from collections import namedtuple
 import re
 
-from pcs.common.tools import is_string
 from pcs.lib import reports
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
@@ -479,7 +478,7 @@ def is_empty_string(value):
 
     mixed value -- value to check
     """
-    return is_string(value) and not value
+    return isinstance(value, str) and not value
 
 def is_integer(value, at_least=None, at_most=None):
     """

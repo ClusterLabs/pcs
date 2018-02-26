@@ -4,7 +4,6 @@ import re
 from unittest import mock, skipUnless
 
 # from pcs import utils
-from pcs.common.tools import is_string
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
@@ -105,7 +104,7 @@ def create_patcher(target_prefix_or_module):
         Between prefix and target is "." (dot)
     """
     prefix = target_prefix_or_module
-    if not is_string(target_prefix_or_module):
+    if not isinstance(target_prefix_or_module, str):
         prefix = target_prefix_or_module.__name__
 
     def patch(target, *args, **kwargs):

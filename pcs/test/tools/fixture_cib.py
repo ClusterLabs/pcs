@@ -1,6 +1,5 @@
 from lxml import etree
 
-from pcs.common.tools import is_string
 from pcs.test.tools.xml import etree_to_str
 
 
@@ -37,7 +36,7 @@ def _find_in(cib_tree, element_xpath):
 def remove(element_xpath):
     def remove(cib_tree):
         xpath_list = (
-            [element_xpath] if is_string(element_xpath) else element_xpath
+            [element_xpath] if isinstance(element_xpath, str) else element_xpath
         )
         for xpath in xpath_list:
             element_to_remove = _find_in(cib_tree, xpath)

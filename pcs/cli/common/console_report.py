@@ -4,7 +4,6 @@ import sys
 
 from pcs.common import report_codes as codes
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
-from pcs.common.tools import is_string
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -179,7 +178,7 @@ def build_node_description(node_types):
 
     label = "{0} node".format
 
-    if is_string(node_types):
+    if isinstance(node_types, str):
         return label(node_types)
 
     if len(node_types) == 1:
@@ -255,7 +254,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 ", ".join(sorted(info["allowed_values"])) if (
                     isinstance(info["allowed_values"], Iterable)
                     and
-                    not is_string(info["allowed_values"])
+                    not isinstance(info["allowed_values"], str)
                 ) else info["allowed_values"]
             ),
             **info
@@ -272,7 +271,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 ", ".join(sorted(info["allowed_types"])) if (
                     isinstance(info["allowed_types"], Iterable)
                     and
-                    not is_string(info["allowed_types"])
+                    not isinstance(info["allowed_types"], str)
                 ) else info["allowed_types"]
             ),
             **info
@@ -301,7 +300,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 ", ".join(sorted(info["replaced_by"])) if (
                     isinstance(info["replaced_by"], Iterable)
                     and
-                    not is_string(info["replaced_by"])
+                    not isinstance(info["replaced_by"], str)
                 ) else info["replaced_by"]
             ),
             **info

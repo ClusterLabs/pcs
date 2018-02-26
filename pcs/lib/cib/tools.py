@@ -1,6 +1,6 @@
 import re
 
-from pcs.common.tools import is_string, Version
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
@@ -131,10 +131,10 @@ def find_element_by_tag_and_id(
         or raise a LibraryError if False
     list id_types optional list of descriptions for id / expected types of id
     """
-    tag_list = [tag] if is_string(tag) else tag
+    tag_list = [tag] if isinstance(tag, str) else tag
     if id_types is None:
         id_type_list = tag_list
-    elif is_string(id_types):
+    elif isinstance(id_types, str):
         id_type_list = [id_types]
     else:
         id_type_list = id_types
