@@ -1834,7 +1834,7 @@ def node_add(lib_env, node0, node1, modifiers):
             com_cmd = DistributeFiles(
                 lib_env.report_processor,
                 node_communication_format.corosync_authkey_file(
-                    open(settings.corosync_authkey_file).read()
+                    open(settings.corosync_authkey_file, "rb").read()
                 ),
                 # added force, it was missing before
                 # but it doesn't make sence here

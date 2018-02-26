@@ -82,6 +82,7 @@ class EnvConfigMixin(object):
 
         self.config.fs.open(
             self.PCMK_AUTHKEY_PATH,
+            mode="rb",
             **kwargs
         )
 

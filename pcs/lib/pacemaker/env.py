@@ -17,6 +17,7 @@ class PacemakerEnv(object):
         self.__authkey = RealFile(
             file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
             file_path=settings.pacemaker_authkey_file,
+            is_binary=True,
         )
 
     @property
