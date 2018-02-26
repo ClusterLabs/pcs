@@ -14,6 +14,7 @@ except ImportError:
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import Destination
 
 
 def _find_value_for_possible_keys(value_dict, possible_key_list):
@@ -23,36 +24,27 @@ def _find_value_for_possible_keys(value_dict, possible_key_list):
     return None
 
 
+class HostNotFound(Exception):
+    def __init__(self, name):
+        super(HostNotFound, self).__init__()
+        self.name = name
+
+
 class NodeTargetFactory(object):
-    def __init__(self, auth_tokens, ports):
-        self._auth_tokens = auth_tokens
-        self._ports = ports
+    def __init__(self, known_hosts):
+        self._known_hosts = known_hosts
 
-    def _get_token(self, possible_names):
-        return _find_value_for_possible_keys(self._auth_tokens, possible_names)
-
-    def _get_port(self, possible_names):
-        return _find_value_for_possible_keys(self._ports, possible_names)
-
-    def get_target(self, node_addresses):
-        possible_names = [node_addresses.label, node_addresses.ring0]
-        if node_addresses.ring1:
-            possible_names.append(node_addresses.ring1)
-        return RequestTarget.from_node_addresses(
-            node_addresses,
-            token=self._get_token(possible_names),
-            port=self._get_port(possible_names),
-        )
-
-    def get_target_list(self, node_addresses_list):
-        return [self.get_target(node) for node in node_addresses_list]
+    def get_target(self, host_name):
+        known_host = self._known_hosts.get(host_name)
+        if known_host is None:
+            raise HostNotFound(host_name)
+        return RequestTarget.from_known_host(known_host)
 
     def get_target_from_hostname(self, hostname):
-        return RequestTarget(
-            hostname,
-            token=self._get_token([hostname]),
-            port=self._get_port([hostname]),
-        )
+        try:
+            return self.get_target(hostname)
+        except HostNotFound:
+            return RequestTarget(hostname)
 
 
 class RequestData(
@@ -74,44 +66,29 @@ class RequestData(
         )
 
 
+
 class RequestTarget(namedtuple(
-    "RequestTarget", ["label", "address_list", "port", "token"]
+    "RequestTarget", ["label", "token", "dest_list"]
 )):
     """
     This class represents target (host) for request to be performed on
     """
 
-    def __new__(cls, label, address_list=None, port=None, token=None):
-        """
-        string label -- label for the host, this is used as only hostname
-            if address_list is not defined
-        list address_list -- list of all possible hostnames on which the host is
-            reachable
-        int port -- target communnication port
-        string token -- authentication token
-        """
-        if not address_list:
-            address_list = [label]
+    def __new__(cls, label, token=None, dest_list=()):
+        if not dest_list:
+            dest_list = [
+                Destination(label, settings.pcsd_default_port)
+            ]
         return super(RequestTarget, cls).__new__(
-            cls, label, list(address_list), port, token
+            cls, label, token=token, dest_list=list(dest_list),
         )
 
     @classmethod
-    def from_node_addresses(cls, node_addresses, port=None, token=None):
-        """
-        Create object RequestTarget from NodeAddresses instance. Returns new
-        RequestTarget instance.
-
-        NodeAddresses node_addresses -- node which defines target
-        string port -- target communnication port
-        string token -- authentication token
-        """
-        address_list = [node_addresses.ring0]
-        if node_addresses.ring1:
-            address_list.append(node_addresses.ring1)
+    def from_known_host(cls, known_host):
         return cls(
-            node_addresses.label,
-            address_list=address_list, port=port, token=token
+            known_host.name,
+            token=known_host.token,
+            dest_list=known_host.dest_list,
         )
 
 
@@ -128,35 +105,33 @@ class Request(object):
         """
         self._target = request_target
         self._data = request_data
-        self._current_host_iterator = iter(request_target.address_list)
-        self._current_host = None
-        self.next_host()
+        self._current_dest_iterator = iter(self._target.dest_list)
+        self._current_dest = None
+        self.next_dest()
 
-    def next_host(self):
+    def next_dest(self):
         """
-        Move to the next available host. Raises StopIteration when there is no
-        host to use.
+        Move to the next available host connection. Raises StopIteration when
+        there is no connection to use.
         """
-        self._current_host = next(self._current_host_iterator)
+        self._current_dest = next(self._current_dest_iterator)
 
     @property
     def url(self):
         """
         URL representing request using current host.
         """
+        addr = self.dest.addr
+        port = self.dest.port
         return "https://{host}:{port}/{request}".format(
-            host="[{0}]".format(self.host) if ":" in self.host else self.host,
-            port=(
-                self._target.port
-                if self._target.port
-                else settings.pcsd_default_port
-            ),
+            host="[{0}]".format(addr) if ":" in addr else addr,
+            port=(port if port else settings.pcsd_default_port),
             request=self._data.action
         )
 
     @property
-    def host(self):
-        return self._current_host
+    def dest(self):
+        return self._current_dest
 
     @property
     def host_label(self):
@@ -438,9 +413,9 @@ class MultiaddressCommunicator(Communicator):
                 yield response
                 continue
             try:
-                previous_host = response.request.host
-                response.request.next_host()
-                self._logger.log_retry(response, previous_host)
+                previous_dest = response.request.dest
+                response.request.next_dest()
+                self._logger.log_retry(response, previous_dest)
                 self.add_requests([response.request])
             except StopIteration:
                 self._logger.log_no_more_addresses(response)
@@ -454,7 +429,7 @@ class CommunicatorLoggerInterface(object):
     def log_response(self, response):
         raise NotImplementedError()
 
-    def log_retry(self, response, previous_host):
+    def log_retry(self, response, previous_dest):
         raise NotImplementedError()
 
     def log_no_more_addresses(self, response):

@@ -68,9 +68,8 @@ def remote(params, request, auth_user)
       :cluster_destroy => method(:cluster_destroy),
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
-      :get_tokens => method(:get_tokens),
-      :get_cluster_tokens => method(:get_cluster_tokens),
-      :save_tokens => method(:save_tokens),
+      :get_cluster_known_hosts => method(:get_cluster_known_hosts),
+      :known_hosts_change => method(:known_hosts_change),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :check_sbd => method(:check_sbd),
       :set_sbd_config => method(:set_sbd_config),
@@ -1042,10 +1041,9 @@ def node_status(params, request, auth_user)
   node = ClusterEntity::Node.load_current_node(crm_dom)
 
   if params[:skip_auth_check] != '1'
-    _,_,not_authorized_nodes = check_gui_status_of_nodes(
+    _,_,not_authorized_nodes = is_auth_against_nodes(
       auth_user,
       status[:known_nodes],
-      false,
       3
     )
 
@@ -1205,10 +1203,9 @@ def clusters_overview(params, request, auth_user)
         'resource_list' => []
       }
       overview_cluster = nil
-      online, offline, not_authorized_nodes = check_gui_status_of_nodes(
+      online, offline, not_authorized_nodes = is_auth_against_nodes(
         auth_user,
         get_cluster_nodes(cluster.name),
-        false,
         3
       )
       not_supported = false
@@ -1355,34 +1352,12 @@ def clusters_overview(params, request, auth_user)
 end
 
 def auth(params, request, auth_user)
-  token = PCSAuth.validUser(params['username'],params['password'], true)
-  # If we authorized to this machine, attempt to authorize everywhere
-  nodes = {}
-  if token and params["bidirectional"]
-    params.each { |k,v|
-      if k.start_with?("node-")
-        nodes[v] = params["port-#{v}"]
-      end
-    }
-    if nodes.length > 0
-      pcs_auth(
-        auth_user, nodes, params['username'], params['password'],
-        params["force"] == "1"
-      )
-    end
-  end
-  return token
+  return PCSAuth.validUser(params['username'], params['password'], true)
 end
 
-# If we get here, we're already authorized
 def check_auth(params, request, auth_user)
-  if params.include?("check_auth_only")
-    return [200, "{\"success\":true}"]
-  end
-  return JSON.generate({
-    'success' => true,
-    'node_list' => get_token_node_list,
-  })
+  # If we get here, we're already authorized
+  return [200, '{"success":true}']
 end
 
 # not used anymore, left here for backward compatability reasons
@@ -2094,65 +2069,56 @@ def wizard_submit(params, request, auth_user)
 
 end
 
-# not used anymore, left here for backward compatability reasons
-def get_tokens(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  return [200, JSON.generate(read_tokens)]
-end
-
-def get_cluster_tokens(params, request, auth_user)
+def get_cluster_known_hosts(params, request, auth_user)
   # pcsd runs as root thus always returns hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
-  on, off = get_nodes
-  nodes = on + off
-  nodes.uniq!
-  token_file_data = read_token_file()
-  tokens = token_file_data.tokens.select {|k,v| nodes.include?(k)}
-  if params["with_ports"] != '1'
-    return [200, JSON.generate(tokens)]
-  end
-  data = {
-    :tokens => tokens,
-    :ports => token_file_data.ports.select {|k,v| nodes.include?(k)},
+  on, off = get_nodes()
+  nodes = (on + off).uniq()
+  data = {}
+  get_known_hosts().each { |host_name, host_obj|
+    if nodes.include?(host_name)
+      data[host_name] = {
+        'dest_list' => host_obj.dest_list,
+        'token' => host_obj.token,
+      }
+    end
   }
   return [200, JSON.generate(data)]
 end
 
-def save_tokens(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
+def known_hosts_change(params, request, auth_user)
+  # pcsd runs as root thus always works with hacluster's tokens
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, "Permission denied"
   end
 
-  new_tokens = {}
-  new_ports = {}
+  new_hosts = []
+  remove_hosts = []
+  begin
+    data = JSON.parse(params.fetch('data_json'))
+    data.fetch('known_hosts_add').each { |host_name, host_data|
+      new_hosts << PcsKnownHost.new(
+        host_name,
+        host_data.fetch('token'),
+        host_data.fetch('dest_list')
+      )
+    }
+    data.fetch('known_hosts_remove').each { |host_name|
+      remove_hosts << host_name
+    }
+  rescue => e
+    return 400, "Incorrect format of request data: #{e}"
+  end
 
-  params.each{|nodes|
-    if nodes[0].start_with?"node:" and nodes[0].length > 5
-      node = nodes[0][5..-1]
-      new_tokens[node] = nodes[1]
-      port = (params["port:#{node}"] || '').strip
-      if port == ''
-        port = nil
-      end
-      new_ports[node] = port
-    end
-  }
-
-  tokens_cfg = Cfgsync::PcsdTokens.from_file()
-  sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-    tokens_cfg, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
+  sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
+    new_hosts, remove_hosts, get_corosync_nodes(), $cluster_name
   )
-
   if sync_successful
-    return [200, JSON.generate(read_tokens())]
+    return [200, '']
   else
-    return [400, "Cannot update tokenfile."]
+    return [400, 'Cannot update known-hosts file.']
   end
 end
 

@@ -2,7 +2,13 @@ import io
 import logging
 from unittest import mock, TestCase
 
-from pcs.test.tools.assertions import assert_report_item_equal
+from pcs import settings
+
+from pcs.test.tools import fixture
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_equal,
+)
 from pcs.test.tools.custom_mock import (
     MockCurl,
     MockCurlSimple,
@@ -14,6 +20,10 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     report_codes,
 )
+from pcs.common.host import (
+    Destination,
+    PcsKnownHost,
+)
 from pcs.common.node_communicator import (
     Request,
     RequestData,
@@ -22,6 +32,123 @@ from pcs.common.node_communicator import (
 )
 from pcs.lib.errors import ReportItemSeverity as severity
 import pcs.lib.node_communication as lib
+
+
+class NodeTargetLibFactory(TestCase):
+    def setUp(self):
+        self.known_hosts = {
+            "host{}".format(i): PcsKnownHost(
+                "host{}".format(i),
+                "token{}".format(i),
+                [
+                    Destination(
+                        "addr{}{}".format(i, j), "port{}{}".format(i, j)
+                    ) for j in range(2)
+                ]
+            ) for i in range(2)
+        }
+        self.report_processor = MockLibraryReportProcessor()
+        self.factory = lib.NodeTargetLibFactory(
+            self.known_hosts, self.report_processor
+        )
+
+    def assert_equal_known_host_target(self, known_host, target):
+        self.assertEqual(known_host.name, target.label)
+        self.assertEqual(known_host.token, target.token)
+        self.assertEqual(known_host.dest_list, target.dest_list)
+
+    def test_one_host(self):
+        host = "host0"
+        self.assert_equal_known_host_target(
+            self.known_hosts[host],
+            self.factory.get_target_list([host])[0]
+        )
+        self.report_processor.assert_reports([])
+
+    def test_multiple_hosts(self):
+        host_list = ["host0", "host1"]
+        target_list = self.factory.get_target_list(host_list)
+        for i, host in enumerate(host_list):
+            self.assert_equal_known_host_target(
+                self.known_hosts[host], target_list[i]
+            )
+        self.report_processor.assert_reports([])
+
+    def test_multiple_not_found(self):
+        host = "host0"
+        unknown_hosts = ["node0", "node1"]
+        report = fixture.error(
+            report_codes.HOST_NOT_FOUND,
+            force_code=report_codes.SKIP_OFFLINE_NODES,
+            host_list=unknown_hosts
+        )
+        assert_raise_library_error(
+            lambda: self.factory.get_target_list([host] + unknown_hosts),
+            report
+        )
+        self.report_processor.assert_reports([report])
+
+    def test_multiple_skip_not_allowed(self):
+        host = "host0"
+        unknown_hosts = ["node0", "node1"]
+        report = fixture.error(
+            report_codes.HOST_NOT_FOUND,
+            host_list=unknown_hosts
+        )
+        assert_raise_library_error(
+            lambda: self.factory.get_target_list(
+                [host] + unknown_hosts, allow_skip=False,
+            ),
+            report
+        )
+        self.report_processor.assert_reports([report])
+
+    def test_multiple_not_found_skip_offline(self):
+        host = "host0"
+        unknown_hosts = ["node0", "node1"]
+        target_list = self.factory.get_target_list(
+            [host] + unknown_hosts, skip_non_existing=True
+        )
+        self.assert_equal_known_host_target(
+            self.known_hosts[host], target_list[0]
+        )
+        self.report_processor.assert_reports([
+            fixture.warn(report_codes.HOST_NOT_FOUND, host_list=unknown_hosts)
+        ])
+
+    def test_no_host_found(self):
+        unknown_hosts = ["node0", "node1"]
+        report_list = [
+            fixture.error(
+                report_codes.HOST_NOT_FOUND,
+                force_code=report_codes.SKIP_OFFLINE_NODES,
+                host_list=unknown_hosts
+            ),
+            fixture.error(report_codes.NONE_HOST_FOUND)
+        ]
+        assert_raise_library_error(
+            lambda: self.factory.get_target_list(unknown_hosts),
+            *report_list
+        )
+        self.report_processor.assert_reports(report_list)
+
+    def test_no_host_found_skip_offline(self):
+        unknown_hosts = ["node0", "node1"]
+        report_list = [
+            fixture.warn(report_codes.HOST_NOT_FOUND, host_list=unknown_hosts),
+            fixture.error(report_codes.NONE_HOST_FOUND)
+        ]
+        assert_raise_library_error(
+            lambda: self.factory.get_target_list(
+                unknown_hosts, skip_non_existing=True
+            ),
+            report_list[1]
+        )
+        self.report_processor.assert_reports(report_list)
+
+    def test_empty_host_list(self):
+        self.assertEqual([], self.factory.get_target_list([]))
+        self.report_processor.assert_reports([])
 
 
 class ResponseToReportItemTest(TestCase):
@@ -454,7 +581,7 @@ class CommunicatorLoggerTest(TestCase):
             )
             +
             fixture_report_item_list_proxy_set(
-                response.request.host_label, response.request.host
+                response.request.host_label, response.request.host_label
             )
             +
             fixture_report_item_list_debug(
@@ -473,7 +600,9 @@ class CommunicatorLoggerTest(TestCase):
         self.assertEqual(logger_calls, self.logger.mock_calls)
 
     def test_log_retry(self):
-        prev_host = "prev host"
+        prev_addr = "addr"
+        prev_port = 2225
+        prev_host = Destination(prev_addr, prev_port)
         response = Response.connection_failure(
             MockCurlSimple(request=fixture_request()),
             pycurl.E_HTTP_POST_ERROR,
@@ -485,20 +614,25 @@ class CommunicatorLoggerTest(TestCase):
             report_codes.NODE_COMMUNICATION_RETRYING,
             {
                 "node": response.request.host_label,
-                "failed_address": prev_host,
-                "next_address": response.request.host,
+                "failed_address": prev_addr,
+                "failed_port": prev_port,
+                "next_address": response.request.dest.addr,
+                "next_port": settings.pcsd_default_port,
                 "request": response.request.url,
             },
             None
         )])
         logger_call = mock.call.warning(
             (
-                "Unable to connect to '{label}' via address '{old_addr}'. "
-                "Retrying request '{req}' via address '{new_addr}'"
+                "Unable to connect to '{label}' via address '{old_addr}' and "
+                "port '{old_port}'. Retrying request '{req}' via address "
+                "'{new_addr}' and port '{new_port}'"
             ).format(
                 label=response.request.host_label,
-                old_addr=prev_host,
-                new_addr=response.request.host,
+                old_addr=prev_addr,
+                old_port=prev_port,
+                new_addr=response.request.dest.addr,
+                new_port=settings.pcsd_default_port,
                 req=response.request.url,
             )
         )

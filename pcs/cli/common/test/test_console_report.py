@@ -2076,3 +2076,71 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
                 "current_set": "3.0.6",
             }
         )
+
+class NodeCommunicationRetrying(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_RETRYING
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to connect to 'node_name' via address 'failed.address' "
+                "and port '2224'. Retrying request 'my/request' via address "
+                "'next.address' and port '2225'"
+            ),
+            {
+                "node": "node_name",
+                "failed_address": "failed.address",
+                "failed_port": "2224",
+                "next_address": "next.address",
+                "next_port": "2225",
+                "request": "my/request",
+            }
+        )
+
+class HostNotFound(NameBuildTest):
+    code = codes.HOST_NOT_FOUND
+    def test_single_host(self):
+        self.assert_message_from_info(
+            (
+                "Host(s) unknown_host not found. Try to authenticate hosts "
+                "using 'pcs host auth unknown_host' command."
+            ),
+            {
+                "host_list": ["unknown_host"],
+            }
+        )
+
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            (
+                "Host(s) another_one, unknown_host not found. Try to "
+                "authenticate hosts using 'pcs host auth another_one "
+                "unknown_host' command."
+            ),
+            {
+                "host_list": ["unknown_host", "another_one"],
+            }
+        )
+
+class HostAlreadyAuthorized(NameBuildTest):
+    code = codes.HOST_ALREADY_AUTHORIZED
+    def test_success(self):
+        self.assert_message_from_info(
+            "host: Already authorized",
+            {
+                "host_name": "host",
+            }
+        )
+
+class NodeCommunicationErrorNotAuthorized(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to authenticate to node1 (some error), try running "
+                "'pcs host auth node1'"
+            ),
+            {
+                "node": "node1",
+                "reason": "some error",
+            }
+        )

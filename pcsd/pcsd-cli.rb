@@ -66,15 +66,36 @@ $cluster_name = get_cluster_name()
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
-  'read_tokens' => {
-    # returns tokens of the user who runs pcsd-cli, thus no permission check
+  'read_known_hosts' => {
+    # returns hosts of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,
     'permissions' => nil,
     'call' => lambda { |params, auth_user_|
-      token_cfg = read_token_file()
+      out_hosts = {}
+      get_known_hosts().each { |name, host|
+        out_hosts[name] = {
+          'dest_list' => host.dest_list,
+          'token' => host.token,
+        }
+      }
       return {
-        :tokens => token_cfg.tokens,
-        :ports => token_cfg.ports,
+        'known_hosts' => out_hosts,
+      }
+    },
+  },
+  'remove_known_hosts' => {
+    # changes hosts of the user who runs pcsd-cli, thus no permission check
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, auth_user_|
+      sync_successful, sync_nodes_err, sync_responses, hosts_not_found = pcs_deauth(
+        auth_user_, params.fetch('host_names')
+      )
+      return {
+        'hosts_not_found' => hosts_not_found,
+        'sync_successful' => sync_successful,
+        'sync_nodes_err' => sync_nodes_err,
+        'sync_responses' => sync_responses,
       }
     },
   },
@@ -83,8 +104,7 @@ allowed_commands = {
     'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
-        auth_user_, params['nodes'] || [], params['username'] || '',
-        params['password'] || '', params['force'], params['local']
+        auth_user_, params.fetch('nodes')
       )
       return {
         'auth_responses' => auth_responses,

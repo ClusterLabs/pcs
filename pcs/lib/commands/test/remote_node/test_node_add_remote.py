@@ -107,6 +107,7 @@ FIXTURE_RESOURCES = """
 class AddRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
 
     def test_success_base(self):
         (self.config
@@ -328,6 +329,7 @@ class WithWait(TestCase):
         self. wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
             .runner.pcmk.can_wait()
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .local.check_node_availability(REMOTE_HOST, result=True)
@@ -379,6 +381,7 @@ class AddRemotePcmkRemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .local.check_node_availability(REMOTE_HOST, result=True)
             .local.push_existing_authkey_to_remote(REMOTE_HOST)
@@ -439,6 +442,7 @@ class AddRemoteAuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .local.check_node_availability(REMOTE_HOST, result=True)
         )

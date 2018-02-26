@@ -664,246 +664,256 @@ class TestConfig < Test::Unit::TestCase
 end
 
 
-class TestTokens < Test::Unit::TestCase
+class TestCfgKnownHosts < Test::Unit::TestCase
   def setup
     $logger = MockLogger.new
-    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
   end
 
   def fixture_empty_config()
     return(
 '{
-  "format_version": 3,
+  "format_version": 1,
   "data_version": 0,
-  "tokens": {
-  },
-  "ports": {
+  "known_hosts": {
   }
 }'
     )
+  end
+
+  def assert_empty_data(cfg)
+    assert_equal(1, cfg.format_version)
+    assert_equal(0, cfg.data_version)
+    assert_equal(0, cfg.known_hosts.length)
+    assert_equal(fixture_empty_config(), cfg.text)
+  end
+
+  def assert_known_host(host, name, token, dest_list)
+    assert_equal(name, host.name)
+    assert_equal(token, host.token)
+    assert_equal(dest_list, host.dest_list)
   end
 
   def test_parse_nil()
-    text = nil
-    cfg = PCSTokens.new(text)
-    assert_equal(0, cfg.tokens.length)
+    cfg = CfgKnownHosts.new(nil)
     assert_equal([], $logger.log)
-    assert_equal(fixture_empty_config(), cfg.text)
+    assert_empty_data(cfg)
   end
 
   def test_parse_empty()
-    text = ''
-    cfg = PCSTokens.new(text)
-    assert_equal(0, cfg.tokens.length)
+    cfg = CfgKnownHosts.new('')
     assert_equal([], $logger.log)
-    assert_equal(fixture_empty_config(), cfg.text)
+    assert_empty_data(cfg)
   end
 
   def test_parse_whitespace()
-    text = "  \n  "
-    cfg = PCSTokens.new(text)
-    assert_equal(0, cfg.tokens.length)
+    cfg = CfgKnownHosts.new("   \n   ")
     assert_equal([], $logger.log)
-    assert_equal(fixture_empty_config(), cfg.text)
+    assert_empty_data(cfg)
   end
 
-  def test_parse_format1()
-    text = '{}'
-    cfg = PCSTokens.new(text)
-    assert_equal(0, cfg.tokens.length)
-
-    text = '{"rh7-1": "token-rh7-1", "rh7-2": "token-rh7-2"}'
-    cfg = PCSTokens.new(text)
-    assert_equal(2, cfg.tokens.length)
-    assert_equal(0, cfg.ports.length)
-    assert_equal('token-rh7-1', cfg.tokens['rh7-1'])
-    assert_equal(
+  def test_parse_malformed()
+    text =
 '{
-  "format_version": 3,
+  "format_version": 1,
   "data_version": 0,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  },
-  "ports": {
-  }
-}',
-      cfg.text
+  "known_hosts": {
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal(1, $logger.log.length)
+    assert_equal('error', $logger.log[0][0])
+    assert_match(
+      # the number is based on JSON gem version
+      /Unable to parse known-hosts file: \d+: unexpected token/,
+      $logger.log[0][1]
     )
+    assert_empty_data(cfg)
   end
 
-  def test_parse_format2()
-    text =
-'{
-  "format_version": 2,
-  "tokens": {}
-}'
-    cfg = PCSTokens.new(text)
-    assert_equal(2, cfg.format_version)
-    assert_equal(0, cfg.data_version)
-    assert_equal(0, cfg.tokens.length)
-    assert_equal(0, cfg.ports.length)
-    assert_equal(
-'{
-  "format_version": 3,
-  "data_version": 0,
-  "tokens": {
-  },
-  "ports": {
-  }
-}',
-      cfg.text
-    )
-
-    text =
-'{
-  "format_version": 2,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  }
-}'
-    cfg = PCSTokens.new(text)
-    assert_equal(2, cfg.format_version)
-    assert_equal(9, cfg.data_version)
-    assert_equal(2, cfg.tokens.length)
-    assert_equal(0, cfg.ports.length)
-    assert_equal('token-rh7-1', cfg.tokens['rh7-1'])
-    expected_text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  },
-  "ports": {
-  }
-}'
-    assert_equal(expected_text, cfg.text)
+  def test_parse_format1_empty()
+    cfg = CfgKnownHosts.new(fixture_empty_config())
+    assert_equal([], $logger.log)
+    assert_empty_data(cfg)
   end
 
-  def test_parse_format3()
+  def test_parse_format1_simple()
     text =
 '{
-  "format_version": 3,
-  "tokens": {},
-  "ports": {}
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    }
+  }
 }'
-    cfg = PCSTokens.new(text)
-    assert_equal(3, cfg.format_version)
-    assert_equal(0, cfg.data_version)
-    assert_equal(0, cfg.tokens.length)
-    assert_equal(0, cfg.ports.length)
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(1, cfg.known_hosts.length)
+    assert_equal('node1', cfg.known_hosts['node1'].name)
+    assert_equal('abcde', cfg.known_hosts['node1'].token)
     assert_equal(
-'{
-  "format_version": 3,
-  "data_version": 0,
-  "tokens": {
-  },
-  "ports": {
-  }
-}',
-      cfg.text
+      [
+        {'addr' => '10.0.1.1', 'port' => 2224}
+      ],
+      cfg.known_hosts['node1'].dest_list
     )
-
-    text =
-'{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "token-rh7-1",
-    "rh7-2": "token-rh7-2"
-  },
-  "ports": {
-    "rh7-1": "1234",
-    "rh7-2": null
-  }
-}'
-    cfg = PCSTokens.new(text)
-    assert_equal(3, cfg.format_version)
-    assert_equal(9, cfg.data_version)
-    assert_equal(2, cfg.tokens.length)
-    assert_equal(2, cfg.ports.length)
-    assert_equal('token-rh7-1', cfg.tokens['rh7-1'])
-    assert_equal('1234', cfg.ports['rh7-1'])
     assert_equal(text, cfg.text)
   end
 
-  def test_update()
-    cfg = PCSTokens.new(File.open(CFG_PCSD_TOKENS).read)
-    assert_equal(
-      {
-        'rh7-1' => '2a8b40aa-b539-4713-930a-483468d62ef4',
-        'rh7-2' => '76174e2c-09e8-4435-b318-5c6b8250a22c',
-        'rh7-3' => '55844951-9ae5-4103-bb4a-64f9c1ea0a71',
-      },
-      cfg.tokens
-    )
-    assert_equal(
-      {
-        'rh7-1' => nil,
-        'rh7-2' => '2224',
-        'rh7-3' => '1234',
-      },
-      cfg.ports
-    )
-
-    cfg.tokens.delete('rh7-2')
-    assert_equal(
-      {
-        'rh7-1' => '2a8b40aa-b539-4713-930a-483468d62ef4',
-        'rh7-3' => '55844951-9ae5-4103-bb4a-64f9c1ea0a71',
-      },
-      cfg.tokens
-    )
-
-    cfg.tokens['rh7-2'] = '76174e2c-09e8-4435-b318-5c6b8250a22c'
-    assert_equal(
-      {
-        'rh7-1' => '2a8b40aa-b539-4713-930a-483468d62ef4',
-        'rh7-3' => '55844951-9ae5-4103-bb4a-64f9c1ea0a71',
-        'rh7-2' => '76174e2c-09e8-4435-b318-5c6b8250a22c',
-      },
-      cfg.tokens
-    )
-
-    cfg.ports.delete('rh7-3')
-    assert_equal(
-      {
-        'rh7-1' => nil,
-        'rh7-2' => '2224',
-      },
-      cfg.ports
-    )
-
-    cfg.ports['rh7-3'] = "4321"
-    assert_equal(
-      {
-        'rh7-1' => nil,
-        'rh7-2' => '2224',
-        'rh7-3' => '4321',
-      },
-      cfg.ports
-    )
-
-    assert_equal(
+  def test_parse_format1_complex()
+    text =
 '{
-  "format_version": 3,
-  "data_version": 9,
-  "tokens": {
-    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
-    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
-    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71"
-  },
-  "ports": {
-    "rh7-1": null,
-    "rh7-2": "2224",
-    "rh7-3": "4321"
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        },
+        {
+          "addr": "10.0.2.1",
+          "port": 2225
+        }
+      ],
+      "token": "abcde"
+    },
+    "node2": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        },
+        {
+          "addr": "10.0.2.2",
+          "port": 2235
+        }
+      ],
+      "token": "fghij"
+    }
   }
-}',
-      cfg.text
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(2, cfg.known_hosts.length)
+    assert_known_host(
+      cfg.known_hosts['node1'],
+      'node1',
+      'abcde',
+      [
+        {'addr' => '10.0.1.1', 'port' => 2224},
+        {'addr' => '10.0.2.1', 'port' => 2225}
+      ]
+    )
+    assert_known_host(
+      cfg.known_hosts['node2'],
+      'node2',
+      'fghij',
+      [
+        {'addr' => '10.0.1.2', 'port' => 2234},
+        {'addr' => '10.0.2.2', 'port' => 2235}
+      ]
+    )
+    assert_equal(text, cfg.text)
+  end
+
+  def test_parse_format1_error()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "token": "abcde"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal(1, $logger.log.length)
+    assert_equal('error', $logger.log[0][0])
+    assert_match(
+      'Unable to parse known-hosts file: key not found: "dest_list"',
+      $logger.log[0][1]
+    )
+    assert_equal(1, cfg.format_version)
+    assert_equal(2, cfg.data_version)
+    assert_equal(0, cfg.known_hosts.length)
+  end
+
+  def test_update()
+    text =
+'{
+  "format_version": 1,
+  "data_version": 2,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    },
+    "node2": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        }
+      ],
+      "token": "fghij"
+    }
+  }
+}'
+    cfg = CfgKnownHosts.new(text)
+    assert_equal([], $logger.log)
+    cfg.data_version += 1
+    cfg.known_hosts.delete('node2')
+    cfg.known_hosts['node3'] = PcsKnownHost.new(
+      'node3',
+      'klmno',
+      [
+        {'addr' => '10.0.1.3', 'port' => 2224}
+      ]
+    )
+    assert_equal(
+      cfg.text,
+'{
+  "format_version": 1,
+  "data_version": 3,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        }
+      ],
+      "token": "abcde"
+    },
+    "node3": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.3",
+          "port": 2224
+        }
+      ],
+      "token": "klmno"
+    }
+  }
+}'
     )
   end
 end

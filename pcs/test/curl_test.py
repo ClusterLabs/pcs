@@ -9,6 +9,7 @@ import logging
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PACKAGE_DIR)
 
+from pcs.common.host import Destination
 from pcs.common.node_communicator import Request, RequestData, RequestTarget
 from pcs import utils
 
@@ -19,7 +20,11 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logger_handler)
 
 global_target = RequestTarget(
-    "TestServer", ["httpbin.org2", "httpbin.org"], port=443
+    "TestServer",
+    dest_list=[
+        Destination("httpbin.org2", 433),
+        Destination("httpbin.org", 443),
+    ]
 )
 
 pprint.pprint(global_target)

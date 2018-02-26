@@ -27,7 +27,6 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as Severities
 )
-from pcs.lib.node import NodeNotFound
 from pcs.lib.validate import (
     names_in,
     run_collection_of_option_validators,
@@ -133,24 +132,6 @@ def _validate_device_dict(node_device_dict):
     return report_item_list
 
 
-def _check_node_names_in_cluster(node_list, node_name_list):
-    """
-    Check whenever all node names from node_name_list exists in node_list.
-    Returns list of ReportItem
-
-    node_list -- NodeAddressesList
-    node_name_list -- list of stings
-    """
-    not_existing_node_set = set()
-    for node_name in node_name_list:
-        try:
-            node_list.find_by_label(node_name)
-        except NodeNotFound:
-            not_existing_node_set.add(node_name)
-
-    return [reports.node_not_found(node) for node in not_existing_node_set]
-
-
 def _get_full_target_dict(target_list, node_value_dict, default_value):
     """
     Returns dictionary where keys are labels of all nodes in cluster and value
@@ -187,8 +168,11 @@ def enable_sbd(
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
     """
+    # TODO: do not load corosync conf multiple times
     node_list = _get_cluster_nodes(lib_env)
-    target_list = lib_env.get_node_target_factory().get_target_list(node_list)
+    target_list = lib_env.get_node_target_factory().get_target_list(
+        node_list.labels, skip_non_existing=ignore_offline_nodes,
+    )
     using_devices = not (
         default_device_list is None and node_device_dict is None
     )
@@ -208,10 +192,14 @@ def enable_sbd(
     )
 
     lib_env.report_processor.process_list(
-        _check_node_names_in_cluster(
-            node_list,
-            list(watchdog_dict.keys()) + list(node_device_dict.keys())
-        )
+        [
+            reports.node_not_found(node)
+            for node in (
+                set(list(watchdog_dict.keys()) + list(node_device_dict.keys()))
+                -
+                set(node_list.labels)
+            )
+        ]
         +
         _validate_watchdog_dict(full_watchdog_dict)
         +
@@ -289,7 +277,8 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     )
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env)
+            _get_cluster_nodes(lib_env).labels,
+            skip_non_existing=ignore_offline_nodes,
         )
     )
     online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -332,7 +321,7 @@ def get_cluster_sbd_status(lib_env):
     com_cmd = GetSbdStatus(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env)
+            _get_cluster_nodes(lib_env).labels, skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)
@@ -357,7 +346,7 @@ def get_cluster_sbd_config(lib_env):
     com_cmd = GetSbdConfig(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env)
+            _get_cluster_nodes(lib_env).labels, skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)

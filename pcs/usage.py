@@ -18,6 +18,7 @@ def full_usage():
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
+    out += strip_extras(host([],False))
     out += strip_extras(alert([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(" \ ",""))
@@ -109,6 +110,7 @@ def generate_completion_tree_from_usage():
     tree["status"] = generate_tree(status([],False))
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
+    tree["host"] = generate_tree(host([],False))
     tree["node"] = generate_tree(node([], False))
     tree["alert"] = generate_tree(alert([], False))
     tree["booth"] = generate_tree(booth([], False))
@@ -172,6 +174,7 @@ Commands:
     status      View cluster status.
     config      View and manage cluster configuration.
     pcsd        Manage pcs daemon.
+    host        Manage hosts known to pcs/pcsd.
     node        Manage cluster nodes.
     alert       Manage pacemaker alerts.
 """
@@ -568,15 +571,8 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    auth [<node>[:<port>]] [...] [-u <username>] [-p <password>] [--force]
-            [--local]
-        Authenticate pcs to pcsd on nodes specified, or on all nodes
-        configured in the local cluster if no nodes are specified (authorization
-        tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).
-        By default all nodes are also authenticated to each other, using
-        --local only authenticates the local node (and does not authenticate
-        the remote nodes with each other). Using --force forces
-        re-authentication to occur.
+    auth [-u <username>] [-p <password>]
+        Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 
     setup [--start [--wait[=<n>]]] [--local] [--enable] --name <cluster name>
             <node1[,node1-altaddr]> [<node2[,node2-altaddr]>] [...]
@@ -1406,14 +1402,36 @@ Commands:
         Sync pcsd certificates to all nodes in the local cluster.
         WARNING: This will restart pcsd daemon on the nodes.
 
-    clear-auth [--local] [--remote]
-       Removes all system tokens which allow pcs/pcsd on the current system to
-       authenticate with remote pcs/pcsd instances and vice-versa.  After this
-       command is run this node will need to be re-authenticated with other
-       nodes (using 'pcs cluster auth').  Using --local only removes tokens
-       used by local pcs (and pcsd if root) to connect to other pcsd instances,
-       using --remote clears authentication tokens used by remote systems to
-       connect to the local pcsd instance.
+    deauth [<token>]...
+       Delete locally stored authentication tokens used by remote systems to
+       connect to the local pcsd instance. If no tokens are specified all
+       tokens will be deleted. After this command is run other nodes will need
+       to re-authenticate against this node to be able to connect to it.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
+def host(args=[], pout=True):
+    output = """
+Usage: pcs host [commands]...
+Manage hosts known to pcs/pcsd
+
+Commands:
+    auth (<host name> [addr=<address>[:<port>]])... [-u <username>]
+            [-p <password>]
+        Authenticate local pcs/pcsd against pcsd on specified hosts. It is
+        possible to specify an address and a port via which pcs/pcsd will
+        communicate with each host. If an address is not specified a host name
+        will be used. If a port is not specified 2224 will be used.
+
+    deauth [<host name>]...
+       Delete locally stored authentication tokens which allow pcs/pcsd on the
+       current system to connect to remote pcsd instances on specified host
+       names. If no host names are specified all tokens will be deleted. After
+       this command is run this node will need to re-authenticate against other
+       nodes to be able to connect to them.
 """
     if pout:
         print(sub_usage(args, output))
@@ -1725,15 +1743,16 @@ def show(main_usage_name, rest_usage_names):
     usage_map = {
         "acl": acl,
         "alert": alert,
+        "booth": booth,
         "cluster": cluster,
         "config": config,
         "constraint": constraint,
+        "host": host,
         "node": node,
         "pcsd": pcsd,
         "property": property,
         "qdevice": qdevice,
         "quorum": quorum,
-        "booth": booth,
         "resource": resource,
         "status": status,
         "stonith": stonith,

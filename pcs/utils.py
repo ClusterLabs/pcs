@@ -22,6 +22,7 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     report_codes,
 )
+from pcs.common.host import PcsKnownHost
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
@@ -217,18 +218,26 @@ def remove_uid_gid_file(uid,gid):
         file_removed = True
 
     return file_removed
-# Returns a dictionary {'nodeA':'tokenA'}
-def readTokens():
-    return read_token_file()["tokens"]
 
-def read_token_file():
-    data = {
-        "tokens": {},
-        "ports": {},
-    }
-    output, retval = run_pcsdcli("read_tokens")
-    if retval == 0 and output['status'] == 'ok' and output['data']:
-        data = output['data']
+def read_known_hosts_file():
+    output, retval = run_pcsdcli("read_known_hosts")
+    data = {}
+    if (
+        retval == 0
+        and
+        output['status'] == 'ok'
+        and
+        output['data']
+        and
+        output['data'].get('known_hosts')
+    ):
+        try:
+            data = {
+                name: PcsKnownHost.from_known_host_file_dict(name, host)
+                for name, host in output['data']['known_hosts'].items()
+            }
+        except KeyError:
+            print("Warning: Unable to parse known host file.")
     return data
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
@@ -412,12 +421,19 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
-    token_file = read_token_file()
-    port = token_file["ports"].get(host)
+    port = None
+    token = None
+    addr = host
+    known_host = read_known_hosts_file().get(host, None)
+    # TODO: do not allow communication with unknown host
+    if known_host:
+        port = known_host.dest.port
+        host = known_host.dest.addr
+        token = known_host.token
     if port is None:
         port = settings.pcsd_default_port
-    url = "https://{host}:{port}/{request}".format(
-        host=host, request=request, port=port
+    url = "https://{addr}:{port}/{request}".format(
+        addr=addr, request=request, port=port
     )
     if "--debug" in pcs_options:
         print("Sending HTTP Request to: " + url)
@@ -439,7 +455,7 @@ def sendHTTPRequest(
 
     output = BytesIO()
     debug_output = BytesIO()
-    cookies = __get_cookie_list(host, token_file["tokens"])
+    cookies = __get_cookie_list(token)
     if not timeout:
         timeout = settings.default_request_timeout
     if "--request-timeout" in pcs_options:
@@ -480,7 +496,7 @@ def sendHTTPRequest(
                 3,
                 (
                     "Unable to authenticate to {node} - (HTTP error: {code}), "
-                    "try running 'pcs cluster auth'"
+                    "try running 'pcs host auth {node}'"
                 ).format(node=host, code=response_code)
             )
         elif response_code == 403:
@@ -522,10 +538,10 @@ def sendHTTPRequest(
         return (2, msg)
 
 
-def __get_cookie_list(host, tokens):
+def __get_cookie_list(token):
     cookies = []
-    if host in tokens:
-        cookies.append("token=" + tokens[host])
+    if token:
+        cookies.append("token=" + token)
     if os.geteuid() == 0:
         for name in ("CIB_user", "CIB_user_groups"):
             if name in os.environ and os.environ[name].strip():
@@ -1082,15 +1098,8 @@ def run_pcsdcli(command, data=None):
         }
     return output_json, retval
 
-def auth_nodes_do(nodes, username, password, force, local):
-    pcsd_data = {
-        'nodes': nodes,
-        'username': username,
-        'password': password,
-        'force': force,
-        'local': local,
-    }
-    output, retval = run_pcsdcli('auth', pcsd_data)
+def auth_hosts(host_dict):
+    output, retval = run_pcsdcli('auth', dict(nodes=host_dict))
     if retval == 0 and output['status'] == 'access_denied':
         err('Access denied')
     if retval == 0 and output['status'] == 'ok' and output['data']:
@@ -1098,22 +1107,20 @@ def auth_nodes_do(nodes, username, password, force, local):
         try:
             if not output['data']['sync_successful']:
                 err(
-                    "Some nodes had a newer tokens than the local node. "
-                    + "Local node's tokens were updated. "
+                    "Some nodes had a newer known-hosts than the local node. "
+                    + "Local node's known-hosts were updated. "
                     + "Please repeat the authentication if needed."
                 )
             for node, result in output['data']['auth_responses'].items():
                 if result['status'] == 'ok':
                     print("{0}: Authorized".format(node))
-                elif result['status'] == 'already_authorized':
-                    print("{0}: Already authorized".format(node))
                 elif result['status'] == 'bad_password':
                     err(
                         "{0}: Username and/or password is incorrect".format(node),
                         False
                     )
                     failed = True
-                elif result['status'] == 'noresponse':
+                elif result['status'] in ('noresponse', 'error'):
                     err("Unable to communicate with {0}".format(node), False)
                     failed = True
                 else:
@@ -1122,21 +1129,20 @@ def auth_nodes_do(nodes, username, password, force, local):
             if output['data']['sync_nodes_err']:
                 err(
                     (
-                        "Unable to synchronize and save tokens on nodes: {0}. "
-                        + "Are they authorized?"
+                        "Unable to synchronize and save known-hosts on nodes: "
+                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
+                        + "are authorized."
                     ).format(
-                        ", ".join(output['data']['sync_nodes_err'])
-                    ),
-                    False
+                        ", ".join(output['data']['sync_nodes_err']),
+                        " ".join(output['data']['sync_nodes_err'])
+                    )
                 )
-                failed = True
-        except:
+        except (ValueError, KeyError):
             err('Unable to communicate with pcsd')
         if failed:
             sys.exit(1)
         return
     err('Unable to communicate with pcsd')
-
 
 def call_local_pcsd(argv, interactive_auth=False, std_in=None):
     # some commands cannot be run under a non-root account
@@ -1163,8 +1169,16 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
             # pcsd will be used
         )
         if not port:
-            port = None
-        auth_nodes_do({"localhost": port}, username, password, True, True)
+            port = settings.pcsd_default_port
+        auth_hosts(
+            {
+                "localhost": {
+                    "username": username,
+                    "password": password,
+                    "dest_list": [{"addr": "localhost", "port": port, }]
+                }
+            }
+        )
         print()
         code, output = sendHTTPRequest(
             "localhost", "run_pcs", data_send, False, False
@@ -2770,7 +2784,7 @@ def get_lib_env():
         groups,
         cib_data,
         corosync_conf_data,
-        token_file_data_getter=read_token_file,
+        known_hosts_getter=read_known_hosts_file,
         request_timeout=pcs_options.get("--request-timeout"),
     )
 
@@ -2789,7 +2803,7 @@ def get_cli_env():
     env = Env()
     env.user = user
     env.groups = groups
-    env.token_file_data_getter = read_token_file
+    env.known_hosts_getter = read_known_hosts_file
     env.debug = "--debug" in pcs_options
     env.request_timeout = pcs_options.get("--request-timeout")
     return env
@@ -2847,7 +2861,7 @@ def get_modifiers():
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
-    if error.message:
+    if error and error.message:
         err(error.message)
     else:
         usage.show(main_name, [usage_name])
@@ -2868,3 +2882,18 @@ def get_set_properties(prop_name=None, defaults=None):
         if prop_name is None or (prop_name == prop.getAttribute("name")):
             properties[prop.getAttribute("name")] = prop.getAttribute("value")
     return properties
+
+
+def get_user_and_pass():
+    if "-u" in pcs_options:
+        username = pcs_options["-u"]
+    else:
+        username = get_terminal_input('Username: ')
+
+    if "-p" in pcs_options:
+        password = pcs_options["-p"]
+    else:
+        password = get_terminal_password()
+    return username, password
+
+

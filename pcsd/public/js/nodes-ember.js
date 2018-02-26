@@ -1938,20 +1938,20 @@ Pcs.clusterController = Ember.Object.create({
         });
       }
 
-      var nodes_to_auth = {};
+      var nodes_to_auth = [];
       $.each(cluster.get('warning_list'), function(key, val){
         if (val.hasOwnProperty("type") && val.type == "nodes_not_authorized"){
           $.each(val['node_list'], function(i, node) {
-            nodes_to_auth[node] = '';
+            nodes_to_auth.push(node);
           });
         }
       });
 
-      if (cluster.get('need_reauth') || Object.keys(nodes_to_auth).length > 0) {
+      if (cluster.get('need_reauth') || nodes_to_auth.length > 0) {
         cluster.get('warning_list').pushObject({
           message: "There are few authentication problems. To fix them, click <a href='#' onclick='auth_nodes_dialog(" + JSON.stringify(nodes_to_auth) + ", null, function() {fix_auth_of_cluster();}, true)'>here</a>.",
           type: "nodes_not_authorized",
-          node_list: Object.keys(nodes_to_auth)
+          node_list: nodes_to_auth
         });
       }
 

@@ -8,15 +8,11 @@ require 'corosyncconf.rb'
 require 'pcs.rb'
 require 'auth.rb'
 
-def token_file_path()
-  filename = ENV['PCS_TOKEN_FILE']
-  unless filename.nil?
-    return filename
-  end
+def known_hosts_file_path()
   if Process.uid == 0
-    return File.join(PCSD_VAR_LOCATION, 'tokens')
+    return File.join(PCSD_VAR_LOCATION, KNOWN_HOSTS_FILE_NAME)
   end
-  return File.expand_path('~/.pcs/tokens')
+  return File.join(File.expand_path('~/.pcs'), KNOWN_HOSTS_FILE_NAME)
 end
 
 def settings_file_path()
@@ -31,7 +27,7 @@ end
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
-CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
+CFG_PCSD_KNOWN_HOSTS = known_hosts_file_path() unless defined? CFG_PCSD_KNOWN_HOSTS
 
 CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
 
@@ -214,9 +210,9 @@ module Cfgsync
   end
 
 
-  class PcsdTokens < Config
-    @name = 'tokens'
-    @file_path = ::CFG_PCSD_TOKENS
+  class PcsdKnownHosts < Config
+    @name = KNOWN_HOSTS_FILE_NAME
+    @file_path = ::CFG_PCSD_KNOWN_HOSTS
     @file_perm = 0600
 
     def self.backup()
@@ -224,7 +220,7 @@ module Cfgsync
 
     def save()
       dirname = File.dirname(self.class.file_path)
-      if not ENV['PCS_TOKEN_FILE'] and not File.directory?(dirname)
+      if not File.directory?(dirname)
         FileUtils.mkdir_p(dirname, {:mode => 0700})
       end
       super
@@ -240,15 +236,15 @@ module Cfgsync
       $logger.warn(
         "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
       )
-      return self.from_text('')
+      return self.from_text(nil)
     end
 
     def get_version()
-      return PCSTokens.new(self.text).data_version
+      return CfgKnownHosts.new(self.text).data_version
     end
 
     def set_version(new_version)
-      parsed = PCSTokens.new(self.text)
+      parsed = CfgKnownHosts.new(self.text)
       parsed.data_version = new_version
       return parsed.text
     end
@@ -460,16 +456,16 @@ module Cfgsync
 
 
   class ConfigPublisher
-    def initialize(auth_user, configs, nodes, cluster_name, tokens={}, ports={})
+    def initialize(auth_user, configs, nodes, cluster_name, known_hosts=[])
+      @auth_user = auth_user
       @configs = configs
       @nodes = nodes
       @cluster_name = cluster_name
+      @additional_known_hosts = {}
+      known_hosts.each{ |host| @additional_known_hosts[host.name] = host}
       @published_configs_names = @configs.collect { |cfg|
         cfg.class.name
       }
-      @additional_tokens = tokens
-      @auth_user = auth_user
-      @additional_ports = ports
     end
 
     def send(force=false)
@@ -488,7 +484,7 @@ module Cfgsync
         threads << Thread.new {
           code, out = send_request_with_token(
             @auth_user, node, 'set_configs', true, data, true, nil, 30,
-            @additional_tokens, @additional_ports
+            @additional_known_hosts
           )
           if 200 == code
             begin
@@ -571,11 +567,15 @@ module Cfgsync
 
 
   class ConfigFetcher
-    def initialize(auth_user, config_classes, nodes, cluster_name)
+    def initialize(
+      auth_user, config_classes, nodes, cluster_name, known_hosts=[]
+    )
       @config_classes = config_classes
       @nodes = nodes
       @cluster_name = cluster_name
       @auth_user = auth_user
+      @additional_known_hosts = {}
+      known_hosts.each{ |host| @additional_known_hosts[host.name] = host}
     end
 
     def fetch_all()
@@ -627,7 +627,8 @@ module Cfgsync
       nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            @auth_user, node, 'get_configs', false, data
+            @auth_user, node, 'get_configs', false, data, true, nil, nil,
+            @additional_known_hosts
           )
           if 200 == code
             begin
@@ -685,7 +686,7 @@ module Cfgsync
   end
 
   def self.get_cfg_classes()
-    return [PcsdSettings, PcsdTokens]
+    return [PcsdSettings, PcsdKnownHosts]
     # return [PcsdSettings, self.cluster_cfg_class]
   end
 
@@ -728,7 +729,7 @@ module Cfgsync
   # save and sync updated config
   # return true on success, false on version conflict
   def self.save_sync_new_version(
-    config, nodes, cluster_name, fetch_on_conflict, tokens={}, ports={}
+    config, nodes, cluster_name, fetch_on_conflict, known_hosts=[]
   )
     if not cluster_name or cluster_name.empty? or not nodes or nodes.empty?
       # we run on a standalone host, no config syncing
@@ -738,7 +739,7 @@ module Cfgsync
     else
       # we run in a cluster so we need to sync the config
       publisher = ConfigPublisher.new(
-        PCSAuth.getSuperuserAuth(), [config], nodes, cluster_name, tokens, ports
+        PCSAuth.getSuperuserAuth(), [config], nodes, cluster_name, known_hosts
       )
       old_configs, node_responses = publisher.publish()
       if old_configs.include?(config.class.name)
@@ -757,36 +758,44 @@ module Cfgsync
     end
   end
 
-  def self.merge_tokens_files(orig_cfg, to_merge_cfgs, new_tokens, new_ports)
-    # Merge tokens files, use only newer tokens files, keep the most recent
-    # tokens, make sure new_tokens are included.
+  def self.merge_known_host_files(
+    orig_cfg, to_merge_cfgs, new_hosts, remove_hosts_names
+  )
+    # Merge known-hosts files, use only newer known-hosts files, keep the most
+    # recent known-hosts, make sure remove_hosts_names are deleted and new_hosts
+    # are included
     max_version = orig_cfg.version
-    with_new_tokens = PCSTokens.new(orig_cfg.text)
-    if to_merge_cfgs
+    with_new_hosts = CfgKnownHosts.new(orig_cfg.text)
+    if to_merge_cfgs and to_merge_cfgs.length > 0
       to_merge_cfgs.reject! { |item| item.version <= orig_cfg.version }
       if to_merge_cfgs.length > 0
-        to_merge_cfgs.sort.each { |ft|
-          with_new_tokens.tokens.update(PCSTokens.new(ft.text).tokens)
-          with_new_tokens.ports.update(PCSTokens.new(ft.text).ports)
+        to_merge_cfgs.sort.each { |merge_cfg|
+          with_new_hosts.known_hosts.update(
+            CfgKnownHosts.new(merge_cfg.text).known_hosts
+          )
         }
         max_version = [to_merge_cfgs.max.version, max_version].max
       end
     end
-    with_new_tokens.tokens.update(new_tokens)
-    with_new_tokens.ports.update(new_ports)
-    config_new = PcsdTokens.from_text(with_new_tokens.text)
+    remove_hosts_names.each { |host_name|
+      with_new_hosts.known_hosts.delete(host_name)
+    }
+    new_hosts.each { |host|
+      with_new_hosts.known_hosts[host.name] = host
+    }
+    config_new = PcsdKnownHosts.from_text(with_new_hosts.text)
     config_new.version = max_version
     return config_new
   end
 
-  def self.save_sync_new_tokens(
-    config, new_tokens, nodes, cluster_name, new_ports={}
+  def self.save_sync_new_known_hosts(
+    new_hosts, remove_hosts_names, target_nodes, cluster_name
   )
-    with_new_tokens = PCSTokens.new(config.text)
-    with_new_tokens.tokens.update(new_tokens)
-    with_new_tokens.ports.update(new_ports)
-    config_new = PcsdTokens.from_text(with_new_tokens.text)
-    if not cluster_name or cluster_name.empty? or not nodes or nodes.empty?
+    config_old = PcsdKnownHosts.from_file()
+    config_new = Cfgsync::merge_known_host_files(
+      config_old, [], new_hosts, remove_hosts_names
+    )
+    if not cluster_name or cluster_name.empty? or not target_nodes or target_nodes.empty?
       # we run on a standalone host, no config syncing
       config_new.version += 1
       config_new.save()
@@ -794,8 +803,8 @@ module Cfgsync
     end
     # we run in a cluster so we need to sync the config
     publisher = ConfigPublisher.new(
-      PCSAuth.getSuperuserAuth(), [config_new], nodes, cluster_name,
-      new_tokens, new_ports
+      PCSAuth.getSuperuserAuth(), [config_new], target_nodes, cluster_name,
+      new_hosts
     )
     old_configs, node_responses = publisher.publish()
     if not old_configs.include?(config_new.class.name)
@@ -804,15 +813,16 @@ module Cfgsync
     end
     # get tokens from all nodes and merge them
     fetcher = ConfigFetcher.new(
-      PCSAuth.getSuperuserAuth(), [config_new.class], nodes, cluster_name
+      PCSAuth.getSuperuserAuth(), [config_new.class], target_nodes,
+      cluster_name, new_hosts
     )
-    fetched_tokens = fetcher.fetch_all()[config_new.class.name]
-    config_new = Cfgsync::merge_tokens_files(
-      config, fetched_tokens, new_tokens, new_ports
+    fetched_hosts = fetcher.fetch_all()[config_new.class.name]
+    config_new = Cfgsync::merge_known_host_files(
+      config_old, fetched_hosts, new_hosts, remove_hosts_names
     )
     # and try to publish again
     return Cfgsync::save_sync_new_version(
-      config_new, nodes, cluster_name, true, new_tokens, new_ports
+      config_new, target_nodes, cluster_name, true, new_hosts
     )
   end
 end

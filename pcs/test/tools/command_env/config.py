@@ -8,9 +8,8 @@ from pcs.test.tools.command_env.config_http import HttpConfig
 from pcs.test.tools.command_env.config_fs import FsConfig
 
 class Spy(object):
-    def __init__(self, auth_tokens, ports=None):
-        self.auth_tokens = auth_tokens
-        self.ports = ports
+    def __init__(self, known_hosts):
+        self.known_hosts = known_hosts
 
 class Config(object):
     def __init__(self):
@@ -37,9 +36,8 @@ class Config(object):
             Extension(self.__calls, self.__wrap_helper, self)
         ))
 
-
-    def set_spy(self, auth_tokens, ports=None):
-        self.spy = Spy(auth_tokens, ports)
+    def set_spy(self, known_hosts):
+        self.spy = Spy(known_hosts)
         return self
 
     @property

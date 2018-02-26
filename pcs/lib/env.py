@@ -1,10 +1,7 @@
 import os.path
 
 from pcs import settings
-from pcs.common.node_communicator import (
-    NodeCommunicatorFactory,
-    NodeTargetFactory
-)
+from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
@@ -34,7 +31,10 @@ from pcs.lib.external import (
     NodeCommunicator,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.node_communication import LibCommunicatorLogger
+from pcs.lib.node_communication import (
+    LibCommunicatorLogger,
+    NodeTargetLibFactory,
+)
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
     ensure_cib_version,
@@ -64,7 +64,7 @@ class LibraryEnvironment(object):
         corosync_conf_data=None,
         booth=None,
         pacemaker=None,
-        token_file_data_getter=None,
+        known_hosts_getter=None,
         cluster_conf_data=None,
         request_timeout=None,
     ):
@@ -86,8 +86,8 @@ class LibraryEnvironment(object):
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
-        self._token_file_data_getter = token_file_data_getter
-        self._token_file = None
+        self._known_hosts_getter = known_hosts_getter
+        self._known_hosts = None
         self._cib_upgrade_reported = False
         self._cib_data_tmp_file = None
         self.__loaded_cib_diff_source = None
@@ -284,7 +284,8 @@ class LibraryEnvironment(object):
         if self.is_corosync_conf_live:
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    corosync_conf_facade.get_nodes()
+                    corosync_conf_facade.get_nodes().labels,
+                    skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,
                 corosync_conf_facade.need_stopped_cluster,
@@ -403,8 +404,9 @@ class LibraryEnvironment(object):
         return self.communicator_factory.get_communicator()
 
     def get_node_target_factory(self):
-        token_file = self.__get_token_file()
-        return NodeTargetFactory(token_file["tokens"], token_file["ports"])
+        return NodeTargetLibFactory(
+            self.__get_known_hosts(), self.report_processor
+        )
 
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):
@@ -417,16 +419,13 @@ class LibraryEnvironment(object):
             self._request_timeout
         )
 
-    def __get_token_file(self):
-        if self._token_file is None:
-            if self._token_file_data_getter:
-                self._token_file = self._token_file_data_getter()
+    def __get_known_hosts(self):
+        if self._known_hosts is None:
+            if self._known_hosts_getter:
+                self._known_hosts = self._known_hosts_getter()
             else:
-                self._token_file = {
-                    "tokens": {},
-                    "ports": {},
-                }
-        return self._token_file
+                self._known_hosts = {}
+        return self._known_hosts
 
     @property
     def booth(self):

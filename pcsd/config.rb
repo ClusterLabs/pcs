@@ -186,60 +186,109 @@ def hash_to_ordered_hash(hash)
   return new_hash
 end
 
-class PCSTokens
-  CURRENT_FORMAT = 3
-  attr_accessor :tokens, :format_version, :data_version, :ports
+
+class CfgKnownHosts
+  CURRENT_FORMAT = 1
+  attr_reader :format_version, :known_hosts
+  attr_accessor :data_version
 
   def initialize(cfg_text)
-    @format_version = 0
+    @format_version = CURRENT_FORMAT
     @data_version = 0
-    @tokens = {}
-    @ports = {}
+    @known_hosts = {}
 
     # set a reasonable parseable default if got empty text
     if cfg_text.nil? or cfg_text.strip.empty?
-      @format_version = CURRENT_FORMAT
+      # all has been set above, nothing more to do
       return
     end
 
     begin
       json = JSON.parse(cfg_text)
-      if not(json.is_a?(Hash) and json.key?('format_version') and json.key?('tokens'))
-        @format_version = 1
-      else
-        @format_version = json['format_version']
-      end
+
+      @format_version = json.fetch('format_version')
+      @data_version = json.fetch('data_version')
 
       if @format_version > CURRENT_FORMAT
         $logger.warn(
-          "tokens file format version is #{@format_version}" +
+          "known-hosts file format version is #{@format_version}" +
           ", newest fully supported version is #{CURRENT_FORMAT}"
         )
       end
 
-      if @format_version >= 3
-        @ports = json['ports'] || {}
-      end
-      if @format_version >= 2
-        @data_version = json['data_version'] || 0
-        @tokens = json['tokens'] || {}
-      elsif @format_version == 1
-        @tokens = json
+      if @format_version == 1
+        json.fetch('known_hosts').each { |name, data|
+          dest_list = []
+          data.fetch('dest_list').each { |dest|
+            dest_list << {
+              'addr' => dest.fetch('addr'),
+              'port' => dest.fetch('port'),
+            }
+          }
+          @known_hosts[name] = PcsKnownHost.new(
+            name,
+            data.fetch('token'),
+            dest_list
+          )
+        }
       else
-        $logger.error('Unable to parse tokens file')
+        $logger.error(
+          'Unable to parse known-hosts file, ' +
+          "unknown format_version '#{@format_version}'"
+        )
       end
+
     rescue => e
-      $logger.error("Unable to parse tokens file: #{e}")
+      $logger.error("Unable to parse known-hosts file: #{e}")
     end
   end
 
   def text()
-    out_hash = Hash.new
-    out_hash['format_version'] = CURRENT_FORMAT
-    out_hash['data_version'] = @data_version
-    out_hash['tokens'] = hash_to_ordered_hash(@tokens)
-    out_hash['ports'] = hash_to_ordered_hash(@ports)
-
+    out_hosts = {}
+    @known_hosts.keys.sort.each { |host_name|
+      host = @known_hosts[host_name]
+      out_hosts[host_name] = {
+        'dest_list' => host.dest_list,
+        'token' => host.token,
+      }
+    }
+    out_hash = {
+      'format_version' => CURRENT_FORMAT,
+      'data_version' => @data_version,
+      'known_hosts' => out_hosts,
+    }
     return JSON.pretty_generate(out_hash)
+  end
+end
+
+class PcsKnownHost
+  attr_reader :name, :token
+
+  def initialize(name, token, dest_list)
+    @name = name
+    @token = token
+    @dest_list = []
+    dest_list.each { |dest|
+      @dest_list << {
+        'addr' => dest.fetch('addr'),
+        'port' => dest.fetch('port'),
+      }
+    }
+  end
+
+  def dest_list()
+    output_list = []
+    @dest_list.each { |dest|
+      output_list << dest.clone()
+    }
+    return output_list
+  end
+
+  def first_dest()
+    if @dest_list.length > 0
+      return @dest_list[0].clone()
+    else
+      return {}
+    end
   end
 end

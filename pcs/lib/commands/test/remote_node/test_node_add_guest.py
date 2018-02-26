@@ -95,6 +95,9 @@ EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
 class AddGuest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(
+            [NODE_1, NODE_2, REMOTE_HOST, NODE_NAME]
+        )
 
     def test_success_base(self):
         (self.config
@@ -267,6 +270,7 @@ class WithWait(TestCase):
         self.wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([NODE_1, NODE_2, REMOTE_HOST, NODE_NAME])
             .runner.pcmk.can_wait()
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -319,6 +323,7 @@ class RemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([NODE_1, NODE_2, REMOTE_HOST, NODE_NAME])
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
             .local.check_node_availability(REMOTE_HOST)
@@ -379,6 +384,7 @@ class AuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
+            .env.set_known_nodes([NODE_1, NODE_2, REMOTE_HOST, NODE_NAME])
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
             .local.check_node_availability(REMOTE_HOST)

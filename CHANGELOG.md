@@ -8,6 +8,19 @@
 - Pcs-0.10 requires Python 3.6 and Ruby 2.2, support for older Python and Ruby
   versions has been removed.
 
+### Changed
+- Authentication has been overhauled which brings several changes:
+  - The `pcs cluster auth` command only authenticates nodes in a local cluster
+    and does not accept a node list.
+  - The new command for authentication is `pcs host auth`. It allows to specify
+    host names, addresses and pcsd ports.
+  - Previously, running `pcs cluster auth A B C` caused A, B and C to be all
+    authenticated against each other. Now, `pcs host auth A B C` makes the
+    local host authenticated against A, B and C. This allows better control of
+    what is authenticated against what.
+  - These changes are not backward compatible. You should use the `pcs host
+    auth` command to re-authenticate your hosts.
+
 
 ## [0.9.163] - 2018-02-20
 

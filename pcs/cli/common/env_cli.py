@@ -7,7 +7,7 @@ class Env(object):
         self.corosync_conf_data = None
         self.booth = None
         self.pacemaker = None
-        self.token_file_data_getter = None
+        self.known_hosts_getter = None
         self.debug = False
         self.cluster_conf_data = None
         self.request_timeout = None

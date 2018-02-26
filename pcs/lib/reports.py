@@ -693,7 +693,9 @@ def node_communication_proxy_is_set(node=None, address=None):
     )
 
 
-def node_communication_retrying(node, failed_address, next_address, request):
+def node_communication_retrying(
+    node, failed_address, failed_port, next_address, next_port, request
+):
     """
     Request failed due communication error connecting via specified address,
     therefore trying another address if there is any.
@@ -703,7 +705,9 @@ def node_communication_retrying(node, failed_address, next_address, request):
         info={
             "node": node,
             "failed_address": failed_address,
+            "failed_port": failed_port,
             "next_address": next_address,
+            "next_port": next_port,
             "request": request,
         }
     )
@@ -2861,4 +2865,33 @@ def unable_to_perform_operation_on_any_node():
     """
     return ReportItem.error(
         report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
+    )
+
+
+def host_not_found(
+    host_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Hosts with names in name_list are not included in pcs known hosts,
+    therefore it is not possible to sommunicate with them.
+    """
+    return ReportItem(
+        report_codes.HOST_NOT_FOUND,
+        severity,
+        info=dict(
+            host_list=host_list,
+        ),
+        forceable=forceable,
+    )
+
+
+def none_host_found():
+    return ReportItem.error(report_codes.NONE_HOST_FOUND)
+
+def host_already_authorized(host_name):
+    return ReportItem.info(
+        report_codes.HOST_ALREADY_AUTHORIZED,
+        info=dict(
+            host_name=host_name,
+        )
     )

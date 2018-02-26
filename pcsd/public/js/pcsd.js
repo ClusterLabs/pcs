@@ -237,25 +237,22 @@ function checkAddingNode(){
     $("#add_node_submit_btn").button("option", "disabled", false);
     return false;
   }
-  var port = $("#add_node_selector input.port").val().trim();
   var data = {};
   data["nodes"] = nodeName;
-  data["port-" + nodeName] = port;
 
   ajax_wrapper({
     type: 'GET',
-    url: '/manage/check_pcsd_status',
+    url: '/manage/check_auth_against_nodes',
     data: data,
     timeout: pcs_timeout,
     success: function (data) {
       var mydata = jQuery.parseJSON(data);
       if (mydata[nodeName] == "Unable to authenticate") {
-        var nodes_to_auth = {};
-        nodes_to_auth[nodeName] = port;
-        auth_nodes_dialog(nodes_to_auth, function(){$("#add_node_submit_btn").trigger("click");});
+        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
         $("#add_node_submit_btn").button("option", "disabled", false);
       } else if (mydata[nodeName] == "Offline") {
         alert("Unable to contact node '" + nodeName + "'");
+        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
         $("#add_node_submit_btn").button("option", "disabled", false);
       } else {
         create_node($("#add_node").children("form"));
@@ -706,19 +703,16 @@ function checkExistingNode() {
   $('input[name="node-name"]').each(function(i,e) {
     node = e.value;
   });
-  var port = $("#add_existing_cluster_form input.port").val().trim();
   var data = {};
   data["nodes"] = node;
-  data["port-" + node] = port;
 
   ajax_wrapper({
     type: 'GET',
-    url: '/manage/check_pcsd_status',
+    url: '/manage/check_auth_against_nodes',
     data: data,
     timeout: pcs_timeout,
     success: function (data) {
-      mydata = jQuery.parseJSON(data);
-      update_existing_cluster_dialog(mydata);
+      update_existing_cluster_dialog(jQuery.parseJSON(data));
 
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -727,32 +721,21 @@ function checkExistingNode() {
   });
 }
 
-function get_node_ports_object_from_create_new_cluster_dialog() {
-  var nodes = {}
+function get_nodes_from_create_new_cluster_dialog() {
+  var nodes = []
   $("#create_new_cluster_form tr.new_node").each(function(i, e) {
     var node = $(e).find(".node").val().trim();
-    var port = $(e).find(".port").val().trim();
-    nodes[node] = port;
+    nodes.push(node);
   });
   return nodes;
 }
 
 function checkClusterNodes() {
-  var nodes = get_node_ports_object_from_create_new_cluster_dialog();
-  var node_list_str = Object.keys(nodes).join(",");
-  var request_data = {
-    "nodes": node_list_str,
-  };
-  $.each(nodes, function(node, port) {
-    if (port) {
-      request_data["port-" + node] = port;
-    }
-  });
-
+  var node_list_str = get_nodes_from_create_new_cluster_dialog().join(",");
   ajax_wrapper({
     type: 'GET',
-    url: '/manage/check_pcsd_status',
-    data: request_data,
+    url: '/manage/check_auth_against_nodes',
+    data: {"nodes": node_list_str},
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
@@ -778,10 +761,56 @@ function checkClusterNodes() {
 
 function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
+  var form = dialog.find("#auth_nodes_form");
+  var nodes = {};
+  form.find('#auth_nodes_list input').each(function() {
+    var input = $(this)
+    if(input.attr('name').endsWith('-pass')) {
+      var nodename = input.attr('name').slice(0, -('-pass'.length))
+      if(!nodes[nodename]) {
+        nodes[nodename] = {};
+      }
+      nodes[nodename]['password'] = input.val();
+    }
+    else if(input.attr('name').startsWith('port-')) {
+      var nodename = input.attr('name').slice('port-'.length)
+      if(!nodes[nodename]) {
+        nodes[nodename] = {};
+      }
+      nodes[nodename]['port'] = input.val().trim();
+      if(nodes[nodename]['port'].length < 1) {
+        nodes[nodename]['port'] = input.prop('placeholder');
+      }
+    }
+  });
+  if(form.find('input:checkbox[name=all]').prop('checked')) {
+    var passwd_for_all = form.find('input[name=pass-all]').val();
+    $.each(nodes, function(node_name, node_data) {
+      node_data.password = passwd_for_all;
+    });
+  }
+
+  var nodes_for_request = {}
+  $.each(nodes, function(node_name, node_data) {
+    nodes_for_request[node_name] = {
+      password: node_data['password'],
+      dest_list: [
+        {
+          addr: node_name,
+          port: node_data['port']
+        }
+      ]
+    }
+  });
+
   ajax_wrapper({
     type: 'POST',
     url: '/manage/auth_gui_against_nodes',
-    data: dialog.find("#auth_nodes_form").serialize(),
+    data: {
+      data_json: JSON.stringify({
+        nodes: nodes_for_request,
+      })
+    },
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
@@ -849,10 +878,9 @@ function auth_nodes_dialog_update(dialog_obj, data) {
   return unauth_nodes;
 }
 
-function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one, ports_required) {
+function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one) {
   callback_success = typeof callback_success !== 'undefined' ? callback_success : null;
   callback_success_one = typeof callback_success_one !== 'undefined' ? callback_success_one : null;
-  ports_required = typeof ports_required !== 'undefined' ? ports_required : false;
 
   var buttonsOpts = [
     {
@@ -891,7 +919,7 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one,
       return false;
     }
   });
-  unauth_nodes_count = Object.keys(unauth_nodes).length;
+  unauth_nodes_count = unauth_nodes.length;
 
   if (unauth_nodes_count == 0) {
     if (callback_success !== null) {
@@ -910,15 +938,10 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one,
   }
 
   dialog_obj.find('#auth_nodes_list').empty();
-  $.each(unauth_nodes, function(node, port) {
+  $.each(unauth_nodes, function(i, node) {
     var html = "<tr><td>" + htmlEncode(node) + "</td><td>";
-    if (ports_required) {
-      html += ':<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" />';
-    } else {
-      html += '<input type="hidden" name="port-' + htmlEncode(node) + '" value="' + htmlEncode(port) + '" />';
-    }
+    html += ':<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" />';
     html += '</td><td><input type="password" name="' + htmlEncode(node) + '-pass"></td></tr>';
-
     dialog_obj.find('#auth_nodes_list').append(html);
   });
 
@@ -959,8 +982,8 @@ function add_existing_dialog() {
 }
 
 function update_existing_cluster_dialog(data) {
-  for (var i in data) {
-    if (data[i] == "Online") {
+  for (var node in data) {
+    if (data[node] == "Online") {
       ajax_wrapper({
         type: "POST",
         url: "/manage/existingcluster",
@@ -979,10 +1002,15 @@ function update_existing_cluster_dialog(data) {
         }
       });
       return;
-    } else if (data[i] == "Unable to authenticate") {
-      var nodes_to_auth = {};
-      nodes_to_auth[i] = $("#add_existing_cluster_form input.port").val().trim();
-      auth_nodes_dialog(nodes_to_auth, function() {$("#add_existing_submit_btn").trigger("click");});
+    } else if (
+      (data[node] == "Unable to authenticate")
+      ||
+      (data[node] == "Offline")
+    ) {
+      if(data[node] == "Offline") {
+        alert("Unable to contact node '" + node + "'");
+      }
+      auth_nodes_dialog([node], function() {$("#add_existing_submit_btn").trigger("click");});
       $("#add_existing_submit_btn").button("option", "disabled", false);
       return;
     }
@@ -996,15 +1024,15 @@ function update_existing_cluster_dialog(data) {
   $("#add_existing_submit_btn").button("option", "disabled", false);
 }
 
-function update_create_cluster_dialog(nodes, version_info) {
-  var keys = [];
-  for (var i in nodes) {
-    if (nodes.hasOwnProperty(i)) {
-      keys.push(i);
+function update_create_cluster_dialog(nodes_auth_status, version_info) {
+  var node_names = [];
+  for (var name in nodes_auth_status) {
+    if (nodes_auth_status.hasOwnProperty(name)) {
+      node_names.push(name);
     }
   }
 
-  var cant_connect_nodes = 0;
+  var cant_connect_nodes = [];
   var cant_auth_nodes = [];
   var good_nodes = 0;
   var addr1_match = 1;
@@ -1022,14 +1050,14 @@ function update_create_cluster_dialog(nodes, version_info) {
         $(this).parent().prev().css("background-color", "");
         return;
       }
-      for (var i = 0; i < keys.length; i++) {
-        if ($(this).val() == keys[i]) {
-          if (nodes[keys[i]] != "Online") {
-            if (nodes[keys[i]] == "Unable to authenticate") {
-              cant_auth_nodes.push(keys[i]);
+      for (var node_index = 0; node_index < node_names.length; node_index++) {
+        if ($(this).val() == node_names[node_index]) {
+          if (nodes_auth_status[node_names[node_index]] != "Online") {
+            if (nodes_auth_status[node_names[node_index]] == "Unable to authenticate") {
+              cant_auth_nodes.push(node_names[node_index]);
             } else {
               $(this).parent().prev().css("background-color", "red");
-              cant_connect_nodes++;
+              cant_connect_nodes.push(node_names[node_index]);
             }
           } else {
             $(this).parent().prev().css("background-color", "");
@@ -1039,13 +1067,8 @@ function update_create_cluster_dialog(nodes, version_info) {
       }
     });
 
-    if (cant_auth_nodes.length > 0) {
-      var ports = get_node_ports_object_from_create_new_cluster_dialog();
-      var unauth_nodes_with_ports = {};
-      $.each(cant_auth_nodes, function(i, node) {
-        unauth_nodes_with_ports[node] = ports[node];
-      });
-      auth_nodes_dialog(unauth_nodes_with_ports, function(){$("#create_cluster_submit_btn").trigger("click")});
+    if ((cant_auth_nodes.length > 0) || (cant_connect_nodes.length > 0)){
+      auth_nodes_dialog(cant_auth_nodes.concat(cant_connect_nodes), function(){$("#create_cluster_submit_btn").trigger("click")});
       $("#create_cluster_submit_btn").button("option", "disabled", false);
       return;
     }
@@ -1096,13 +1119,13 @@ function update_create_cluster_dialog(nodes, version_info) {
     });
   }
 
-  if (cant_connect_nodes != 0) {
+  if (cant_connect_nodes.length > 0) {
     $("#unable_to_connect_error_msg").show();
   } else {
     $("#unable_to_connect_error_msg").hide();
   }
 
-  if (good_nodes == 0 && cant_connect_nodes == 0) {
+  if (good_nodes == 0 && cant_connect_nodes.length == 0) {
     $("#at_least_one_node_error_msg").show();
   } else {
     $("#at_least_one_node_error_msg").hide();
@@ -1158,7 +1181,7 @@ function update_create_cluster_dialog(nodes, version_info) {
     $("#rhel_version_mismatch_error_msg").hide();
   }
 
-  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes.length == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
+  if (good_nodes != 0 && cant_connect_nodes.length == 0 && cant_auth_nodes.length == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
     ajax_wrapper({
       type: "POST",
       url: "/manage/newcluster",

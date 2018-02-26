@@ -1,4 +1,4 @@
-import errno
+import json
 import os
 import sys
 import time
@@ -16,12 +16,12 @@ def pcsd_cmd(argv):
     sub_cmd = argv.pop(0)
     if sub_cmd == "help":
         usage.pcsd(argv)
+    elif sub_cmd == "deauth":
+        pcsd_deauth(argv)
     elif sub_cmd == "certkey":
         pcsd_certkey(argv)
     elif sub_cmd == "sync-certificates":
         pcsd_sync_certs(argv)
-    elif sub_cmd == "clear-auth":
-        pcsd_clear_auth(argv)
     else:
         usage.pcsd()
         sys.exit(1)
@@ -114,34 +114,57 @@ def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
         nodes_restart, exit_after_error, async_restart=async_restart
     )
 
-def pcsd_clear_auth(argv):
-    output = []
-    files = []
-    if os.geteuid() == 0:
-        pcsd_tokens_file = settings.pcsd_tokens_location
-    else:
-        pcsd_tokens_file = os.path.expanduser("~/.pcs/tokens")
-
-    if '--local' in utils.pcs_options:
-        files.append(pcsd_tokens_file)
-    if '--remote' in utils.pcs_options:
-        files.append(settings.pcsd_users_conf_location)
-
-    if len(files) == 0:
-        files.append(pcsd_tokens_file)
-        files.append(settings.pcsd_users_conf_location)
-
-    for f in files:
+def pcsd_deauth(argv):
+    filepath = settings.pcsd_users_conf_location
+    if len(argv) < 1:
         try:
-            os.remove(f)
-        except OSError as e:
-            if (e.errno != errno.ENOENT):
-                output.append(e.strerror + " (" + f + ")")
+            users_file = open(filepath, "w")
+            users_file.write(json.dumps([]))
+            users_file.close()
+        except EnvironmentError as e:
+            utils.err(
+                "Unable to edit data in {file}: {err}".format(
+                    file=filepath,
+                    err=e
+                )
+            )
+        return
 
-    if len(output) > 0:
-        for o in output:
-            print("Error: " + o)
-        sys.exit(1)
+    try:
+        tokens_to_remove = set(argv)
+        users_file = open(filepath, "r+")
+        old_data = json.loads(users_file.read())
+        new_data = []
+        removed_tokens = set()
+        for old_item in old_data:
+            if old_item["token"] in tokens_to_remove:
+                removed_tokens.add(old_item["token"])
+            else:
+                new_data.append(old_item)
+        tokens_not_found = sorted(tokens_to_remove - removed_tokens)
+        if tokens_not_found:
+            utils.err("Following tokens were not found: '{tokens}'".format(
+                tokens="', '".join(tokens_not_found)
+            ))
+        if removed_tokens:
+            users_file.seek(0)
+            users_file.truncate()
+            users_file.write(json.dumps(new_data, indent=2))
+        users_file.close()
+    except KeyError as e:
+        utils.err(
+            "Unable to parse data in {file}: missing key {key}".format(
+                file=filepath, key=e
+            )
+        )
+    except ValueError as e:
+        utils.err(
+            "Unable to parse data in {file}: {err}".format(file=filepath, err=e)
+        )
+    except EnvironmentError as e:
+        utils.err(
+            "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
+        )
 
 def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
     pcsd_data = {

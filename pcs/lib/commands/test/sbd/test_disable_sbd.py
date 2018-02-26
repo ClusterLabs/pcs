@@ -11,6 +11,7 @@ class DisableSbd(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync-3nodes.conf"
         self.node_list = ["rh7-1", "rh7-2", "rh7-3"]
+        self.config.env.set_known_nodes(self.node_list)
 
     def test_success(self):
         self.config.runner.corosync.version()

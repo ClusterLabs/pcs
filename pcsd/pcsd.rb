@@ -316,6 +316,18 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
+    ['host', 'auth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['host', 'deauth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['pcsd', 'deauth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
     ['pcsd', 'sync-certificates', '...'] => {
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
@@ -447,8 +459,6 @@ if not DISABLE_GUI
       return 400, "Unable to communicate with remote pcsd on node '#{node}'."
     end
 
-    warning_messages = []
-
     if status.has_key?("corosync_offline") and
       status.has_key?("corosync_online") then
       nodes = status["corosync_offline"] + status["corosync_online"]
@@ -464,34 +474,12 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
 
       # auth begin
-      retval, out = send_request_with_token(
-        PCSAuth.getSuperuserAuth(), node, '/get_cluster_tokens', false, {'with_ports' => '1'}
+      new_hosts, warning_messages = pcs_compatibility_layer_get_cluster_known_hosts(
+        status['cluster_name'], node
       )
-      if retval == 404 # backward compatibility layer
-        warning_messages << "Unable to do correct authentication of cluster because it is running old version of pcs/pcsd."
-      else
-        if retval != 200
-          return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
-        end
-        begin
-          data = JSON.parse(out)
-          expected_keys = ['tokens', 'ports']
-          if expected_keys.all? {|i| data.has_key?(i) and data[i].class == Hash}
-            # new format
-            new_tokens = data["tokens"] || {}
-            new_ports = data["ports"] || {}
-          else
-            # old format
-            new_tokens = data
-            new_ports = {}
-          end
-        rescue
-          return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
-        end
-
-        sync_config = Cfgsync::PcsdTokens.from_file()
-        pushed, _ = Cfgsync::save_sync_new_tokens(
-          sync_config, new_tokens, get_corosync_nodes(), $cluster_name, new_ports
+      if not new_hosts.empty?
+        pushed, _ = Cfgsync::save_sync_new_known_hosts(
+          new_hosts, [], get_corosync_nodes(), $cluster_name
         )
         if not pushed
           return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -553,23 +541,22 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     }
 
-    # first we need to authenticate nodes to each other
-    token_file_data = read_token_file()
-    tokens_data = add_prefix_to_keys(
-      token_file_data.tokens.select {|k,v| @nodes.include?(k)}, "node:"
-    )
-    ports_data = add_prefix_to_keys(
-      token_file_data.ports.select {|k,v| @nodes.include?(k)}, "port:"
-    )
-    @nodes.each {|n|
-      retval, out = send_request_with_token(
-        auth_user, n, "/save_tokens", true, tokens_data.merge(ports_data)
+    # First we need to authenticate future cluster nodes to each other. We use
+    # a dirty hack to achieve that. Since the GUI is already authorized (it had
+    # to check if the nodes can create a cluster) we will send those GUI tokens
+    # to the nodes.
+    known_hosts = get_known_hosts().select { |name, obj|
+      @nodes.include?(name)
+    }
+    @nodes.each { |future_node|
+      retval = pcs_compatibility_layer_known_hosts_add(
+        auth_user, false, future_node, known_hosts
       )
-      if retval == 404 # backward compatibility layer
-        warning_messages << "Unable to do correct authentication of cluster on node '#{n}', because it is running old version of pcs/pcsd."
+      if retval == 'not_supported'
+        warning_messages << "Unable to do correct authentication of cluster on node '#{future_node}', because it is running an old version of pcs/pcsd."
         break
-      elsif retval != 200
-        return 400, "Unable to authenticate all nodes on node '#{n}'."
+      elsif retval == 'error'
+        return 400, "Unable to authenticate all nodes on node '#{future_node}'."
       end
     }
 
@@ -637,21 +624,14 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
   end
 
-  get '/manage/check_pcsd_status' do
+  get '/manage/check_auth_against_nodes' do
     auth_user = PCSAuth.sessionToAuthUser(session)
     node_list = []
     if params[:nodes] != nil and params[:nodes] != ''
       node_list = params[:nodes].split(',')
     end
-    ports = {}
-    node_list.each { |node|
-      port = (params["port-#{node}"] || '').strip
-      ports[node] = port != '' ? port : nil
-    }
     node_results = {}
-    online, offline, notauthorized = check_gui_status_of_nodes(
-      auth_user, node_list, false, 10, ports
-    )
+    online, offline, notauthorized = is_auth_against_nodes(auth_user, node_list)
     online.each { |node|
       node_results[node] = 'Online'
     }
@@ -693,52 +673,38 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
   post '/manage/auth_gui_against_nodes' do
     auth_user = PCSAuth.sessionToAuthUser(session)
-    node_auth_error = {}
-    new_tokens = {}
-    new_ports = {}
     threads = []
-    params.each { |node|
+    new_hosts = {}
+    node_auth_error = {}
+
+    data = JSON.parse(params.fetch('data_json'))
+    data.fetch('nodes').each { |node_name, node_data|
       threads << Thread.new {
-        if node[0].end_with?("-pass") and node[0].length > 5
-          nodename = node[0][0..-6]
-          if params.has_key?("all")
-            pass = params["pass-all"]
-          else
-            pass = node[1]
-          end
-          port = (params["port-#{nodename}"] || '').strip
-          if port == ''
-            port = nil
-          end
-          data = {
-            'node-0' => nodename,
-            'username' => SUPERUSER,
-            'password' => pass,
-            'force' => 1,
-            "port-#{nodename}" => port,
-          }
-          node_auth_error[nodename] = 1
-          code, response = send_request(
-            auth_user, nodename, 'auth', true, data, true, nil, nil, nil, port
-          )
-          if 200 == code
-            token = response.strip
-            if not token.empty?
-              new_tokens[nodename] = token
-              new_ports[nodename] = port
-              node_auth_error[nodename] = 0
-            end
+        dest_list = node_data.fetch('dest_list')
+        addr = dest_list.fetch(0).fetch('addr')
+        port = dest_list.fetch(0).fetch('port')
+        request_data = {
+          :username => SUPERUSER,
+          :password => node_data.fetch('password'),
+        }
+        node_auth_error[node_name] = 1
+        code, response = send_request(
+          auth_user, addr, port, 'auth', true, request_data, true
+        )
+        if 200 == code
+          token = response.strip
+          if not token.empty?
+            new_hosts[node_name] = PcsKnownHost.new(node_name, token, dest_list)
+            node_auth_error[node_name] = 0
           end
         end
       }
     }
     threads.each { |t| t.join }
 
-    if not new_tokens.empty? or not new_ports.empty?
-      cluster_nodes = get_corosync_nodes()
-      tokens_cfg = Cfgsync::PcsdTokens.from_file()
-      sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-        tokens_cfg, new_tokens, cluster_nodes, $cluster_name, new_ports
+    if not new_hosts.empty?
+      _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
+        new_hosts.values(), [], get_corosync_nodes(), $cluster_name
       )
     end
 
@@ -1193,21 +1159,15 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     nodes = get_cluster_nodes(clustername)
-    token_file_data = read_token_file()
-    tokens_data = add_prefix_to_keys(
-      token_file_data.tokens.select {|k,v| nodes.include?(k)}, "node:"
+    known_hosts = get_known_hosts().select { |name, obj|
+      nodes.include?(name)
+    }
+    retval = pcs_compatibility_layer_known_hosts_add(
+      PCSAuth.getSuperuserAuth(), true, clustername, known_hosts
     )
-    ports_data = add_prefix_to_keys(
-      token_file_data.ports.select {|k,v| nodes.include?(k)}, "port:"
-    )
-
-    retval, out = send_cluster_request_with_token(
-      PCSAuth.getSuperuserAuth(), clustername, "/save_tokens", true,
-      tokens_data.merge(ports_data), true
-    )
-    if retval == 404
+    if retval == 'not_supported'
       return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
-    elsif retval != 200
+    elsif retval == 'error'
       return [400, "Authentication failed."]
     end
     return [200, "Auhentication of nodes in cluster should be fixed."]
@@ -1224,28 +1184,23 @@ already been added to pcsd.  You may not add two clusters with the same name int
       end
     end
 
-    token_file_data = read_token_file()
-    tokens = token_file_data.tokens
-
-    if not tokens.include? new_node
+    known_hosts = get_known_hosts()
+    if not known_hosts.include? new_node
       return [400, "New node is not authenticated."]
     end
 
     # Save the new node token on all nodes in a cluster the new node is beeing
     # added to. Send the token to one node and let the cluster nodes synchronize
     # it by themselves.
-    token_data = {
-      "node:#{new_node}" => tokens[new_node],
-      "port:#{new_node}" => token_file_data.ports[new_node],
-    }
-    retval, out = send_cluster_request_with_token(
+    new_node_known_hosts = {new_node => known_hosts[new_node]}
+    retval = pcs_compatibility_layer_known_hosts_add(
       # new node doesn't have config with permissions yet
-      PCSAuth.getSuperuserAuth(), clustername, '/save_tokens', true, token_data
+      PCSAuth.getSuperuserAuth(), true, clustername, new_node_known_hosts
     )
-    # If the cluster runs an old pcsd which doesn't support /save_tokens,
+    # If the cluster runs an old pcsd which doesn't support adding known hosts,
     # ignore 404 in order to not prevent the node to be added.
-    if retval != 404 and retval != 200
-      return [400, 'Failed to save the token of the new node in target cluster.']
+    if retval != 'not_supported' and retval != 'success'
+      return [400, 'Failed to save the token of the new node in the target cluster.']
     end
 
     retval, out = send_cluster_request_with_token(
@@ -1259,6 +1214,181 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     return [200, "Node added successfully."]
+  end
+
+  def pcs_compatibility_layer_known_hosts_add(
+    auth_user, is_cluster_request, target, known_hosts
+  )
+    # try the new endpoint provided by pcs-0.10
+    known_hosts_request_data = {}
+    known_hosts.each { |host_name, host_obj|
+      known_hosts_request_data[host_name] = {
+        'dest_list' => host_obj.dest_list,
+        'token' => host_obj.token,
+      }
+    }
+    request_data = {
+      'data_json' => JSON.generate(
+        {
+          'known_hosts_add' => known_hosts_request_data,
+          'known_hosts_remove' => [],
+        }
+      ),
+    }
+    if is_cluster_request
+      retval, _out = send_cluster_request_with_token(
+        auth_user, target, '/known_hosts_change', true, request_data
+      )
+    else
+      retval, _out = send_request_with_token(
+        auth_user, target, '/known_hosts_change', true, request_data
+      )
+    end
+
+    # a remote host supports the endpoint; success
+    if retval == 200
+      return 'success'
+    end
+
+    # a remote host supports the endpoint; error
+    if retval != 404
+      return 'error'
+    end
+
+    # a remote host does not support the endpoint
+    # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
+    request_data = {}
+    known_hosts.each { |host_name, host_obj|
+      addr = host_obj.first_dest()['addr']
+      port = host_obj.first_dest()['port']
+      request_data["node:#{host_name}"] = host_obj.token
+      request_data["port:#{host_name}"] = port
+      request_data["node:#{addr}"] = host_obj.token
+      request_data["port:#{addr}"] = port
+    }
+    if is_cluster_request
+      retval, _out = send_cluster_request_with_token(
+        auth_user, target, '/save_tokens', true, request_data
+      )
+    else
+      retval, _out = send_request_with_token(
+        auth_user, target, '/save_tokens', true, request_data
+      )
+    end
+
+    # a remote host supports the endpoint; success
+    if retval == 200
+      return 'success'
+    end
+
+    # a remote host supports the endpoint; error
+    if retval != 404
+      return 'error'
+    end
+
+    # a remote host does not support any of the endpoints
+    # there's nothing we can do about it
+    return 'not_supported'
+  end
+
+  def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
+    warning_messages = []
+    known_hosts = []
+    auth_user = PCSAuth.getSuperuserAuth()
+
+    # try the new endpoint provided by pcs-0.10
+    retval, out = send_request_with_token(
+      auth_user, target_node, '/get_cluster_known_hosts'
+    )
+    # a remote host supports /get_cluster_known_hosts; data downloaded
+    if retval == 200
+      begin
+        JSON.parse(out).each { |name, data|
+          known_hosts << PcsKnownHost.new(
+            name,
+            data.fetch('token'),
+            data.fetch('dest_list')
+          )
+        }
+      rescue => e
+        $logger.error "Unable to parse the response of /get_cluster_known_hosts: #{e}"
+        known_hosts = []
+        warning_messages << (
+          "Unable to automatically authenticate against cluster nodes: " +
+          "cannot get authentication info from cluster '#{cluster_name}'"
+        )
+      end
+      return known_hosts, warning_messages
+    end
+
+    # a remote host supports /get_cluster_known_hosts; an error occured
+    if retval != 404
+      warning_messages << (
+        "Unable to automatically authenticate against cluster nodes: " +
+        "cannot get authentication info from cluster '#{cluster_name}'"
+      )
+      return known_hosts, warning_messages
+    end
+
+    # a remote host does not support /get_cluster_known_hosts
+    # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
+    retval, out = send_request_with_token(
+      auth_user, target_node, '/get_cluster_tokens', false, {'with_ports' => '1'}
+    )
+
+    # a remote host supports /get_cluster_tokens; data downloaded
+    if retval == 200
+      begin
+        data = JSON.parse(out)
+        expected_keys = ['tokens', 'ports']
+        if expected_keys.all? {|i| data.has_key?(i) and data[i].class == Hash}
+          # new format
+          new_tokens = data["tokens"] || {}
+          new_ports = data["ports"] || {}
+        else
+          # old format
+          new_tokens = data
+          new_ports = {}
+        end
+        new_tokens.each { |name_addr, token|
+          known_hosts << PcsKnownHost.new(
+            name_addr,
+            token,
+            [
+              {
+                'addr' => name_addr,
+                'port' => (new_ports[name_addr] || PCSD_DEFAULT_PORT),
+              }
+            ]
+          )
+        }
+      rescue => e
+        $logger.error "Unable to parse the response of /get_cluster_tokens: #{e}"
+        known_hosts = []
+        warning_messages << (
+          "Unable to automatically authenticate against cluster nodes: " +
+          "cannot get authentication info from cluster '#{cluster_name}'"
+        )
+      end
+      return known_hosts, warning_messages
+    end
+
+    # a remote host supports /get_cluster_tokens; an error occured
+    if retval != 404
+      warning_messages << (
+        "Unable to automatically authenticate against cluster nodes: " +
+        "cannot get authentication info from cluster '#{cluster_name}'"
+      )
+      return known_hosts, warning_messages
+    end
+
+    # a remote host does not support /get_cluster_tokens
+    # there's nothing we can do about it
+    warning_messages << (
+      "Unable to automatically authenticate against cluster nodes: " +
+      "cluster '#{cluster_name}' is running an old version of pcs/pcsd"
+    )
+    return known_hosts, warning_messages
   end
 
   def pcs_0_9_142_resource_change_group(auth_user, params)

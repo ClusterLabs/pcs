@@ -1,7 +1,9 @@
 import json
 from urllib.parse import parse_qs
 
+from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import Destination
 from pcs.common.node_communicator import(
     RequestTarget,
     RequestData,
@@ -20,12 +22,14 @@ def log_request(request):
             ("data", parse_qs(request.data)),
         ]
 
-    if request.target.address_list != [request.target.label]:
-        label_data.append(("address_list", request.target.address_list))
-
-    if request.target.port != "2224":
-        label_data.append(("port", request.target.port))
-
+    if (
+        request.target.dest_list
+        !=
+        [Destination(request.target.label, settings.pcsd_default_port)]
+    ):
+        label_data.append(
+            ("dest_list", request.target.dest_list)
+        )
 
     return "  ".join([
         "{0}:'{1}'".format(key, value) for key, value in label_data
@@ -37,13 +41,21 @@ def log_response(response, indent=0):
         ("label", response.request.target.label),
     ]
 
-    if response.request.target.address_list != [response.request.target.label]:
-        label_data.append(("address_list", response.request.target.address_list))
+    if (
+        response.request.target.dest_list
+        !=
+        [
+            Destination(
+                response.request.target.label, settings.pcsd_default_port
+            ),
+        ]
+    ):
+        label_data.append((
+            "dest_list",
+            response.request.target.dest_list
+        ))
 
     label_data.append(("was_connected", response.was_connected))
-
-    if response.request.target.port != "2224":
-        label_data.append(("port", response.request.target.port))
 
     if response.was_connected:
         label_data.append(("respose_code", response.response_code))
@@ -92,8 +104,9 @@ def bad_request_list_content(errors):
         )
     )
 
+
 def _communication_to_response(
-    label, address_list, action, param_list, port, token, response_code,
+    label, dest_list, action, param_list, token, response_code,
     output, debug_output, was_connected, errno, error_msg
 ):
     return Response(
@@ -102,7 +115,7 @@ def _communication_to_response(
             output=output,
             debug_output=debug_output,
             request=Request(
-                RequestTarget(label, address_list, port, token),
+                RequestTarget(label, dest_list=dest_list, token=token),
                 RequestData(action, param_list),
             )
         ),
@@ -112,7 +125,7 @@ def _communication_to_response(
     )
 
 def create_communication(
-    communication_list, action="", param_list=None, port=None, token=None,
+    communication_list, action="", param_list=None, token=None,
     response_code=200, output="", debug_output="", was_connected=True,
     errno=0, error_msg_template=None
 ):
@@ -151,7 +164,6 @@ def create_communication(
     common = dict(
         action=action,
         param_list=param_list if param_list else (),
-        port=port,
         token=token,
         response_code=response_code,
         output=output,
@@ -160,8 +172,12 @@ def create_communication(
         errno=errno,
     )
     for communication in communication_list:
-        if "address_list" not in communication:
-            communication["address_list"] = [communication["label"]]
+        if "dest_list" not in communication:
+            communication["dest_list"] = [
+                Destination(
+                    communication["label"], settings.pcsd_default_port
+                ),
+            ]
 
         full = common.copy()
         full.update(communication)
@@ -329,10 +345,14 @@ class NodeCommunicator(object):
                     real_request.target.token
                 )
 
-            if expected_request.target.port != real_request.target.port:
-                diff["target.port"] = (
-                    expected_request.target.port,
-                    real_request.target.port
+            if (
+                expected_request.target.dest_list
+                !=
+                real_request.target.dest_list
+            ):
+                diff["target.dest_list"] = (
+                    expected_request.target.dest_list,
+                    real_request.target.dest_list
                 )
 
             if not _compare_request_data(

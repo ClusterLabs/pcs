@@ -234,6 +234,7 @@ class PushCorosyncConfLiveBase(TestCase):
         self.corosync_conf_facade.need_stopped_cluster = False
         self.corosync_conf_facade.need_qdevice_reload = False
         self.node_labels = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(self.node_labels)
 
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)

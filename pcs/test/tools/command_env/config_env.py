@@ -4,6 +4,17 @@ from pcs.test.tools.command_env.mock_push_corosync_conf import (
 )
 from pcs.test.tools.fixture_cib import modify_cib
 
+from pcs import settings
+from pcs.common.host import PcsKnownHost, Destination
+
+
+def _generic_known_host_fixture(name):
+    return PcsKnownHost(
+        name,
+        token=None,
+        dest_list=[Destination(name, settings.pcsd_default_port)]
+    )
+
 
 class EnvConfig(object):
     def __init__(self, call_collection):
@@ -12,7 +23,7 @@ class EnvConfig(object):
         self.__cib_tempfile = None
         self.__corosync_conf_data = None
         self.__booth = None
-
+        self.__known_hosts_getter = None
 
     def set_cib_data(self, cib_data, cib_tempfile="/fake/tmp/file"):
         self.__cib_data = cib_data
@@ -40,6 +51,18 @@ class EnvConfig(object):
     @property
     def corosync_conf_data(self):
         return self.__corosync_conf_data
+
+    def set_known_nodes(self, node_name_list):
+        self.__known_hosts_getter = lambda: {
+            name: _generic_known_host_fixture(name) for name in node_name_list
+        }
+
+    def set_known_hosts_getter(self, known_hosts_getter):
+        self.__known_hosts_getter = known_hosts_getter
+
+    @property
+    def known_hosts_getter(self):
+        return self.__known_hosts_getter
 
     def push_cib(
         self, modifiers=None, name="env.push_cib",

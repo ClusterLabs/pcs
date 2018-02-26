@@ -82,6 +82,9 @@ How often in seconds should pcsd ask other nodes if the synchronized files have 
 .B thread_paused_until
 Disable the synchronization until the set unix timestamp.
 
+.SS known-hosts
+This JSON file stores information about hosts known to the local pcsd which are used to login to remote instances of pcsd. Stored information include host addresses, pcsd ports and authentication tokens.
+
 .SS pcsd_settings.conf
 This JSON file contains web UI and cluster configuration such as clusters managed from web UI and cluster permissions.
 
@@ -93,9 +96,6 @@ Web UI cookie secret.
 
 .SS pcsd.crt, pcsd.key
 These files contain pcsd server certificate and private key.
-
-.SS tokens
-This JSON file stores authentication tokens which are used to login to remote instances of pcsd.
 
 .SH SEE ALSO
 .BR pcs (8)
