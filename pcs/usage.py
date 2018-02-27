@@ -614,7 +614,8 @@ Commands:
         --ipv6 will configure corosync to use ipv6 (instead of ipv4). This
             option is not supported on CMAN clusters.
         --token <timeout> sets time in milliseconds until a token loss is
-            declared after not receiving a token (default 1000 ms)
+            declared after not receiving a token (default 1000 ms;
+            10000 ms for CMAN clusters)
         --token_coefficient <timeout> sets time in milliseconds used for
             clusters with at least 3 nodes as a coefficient for real token
             timeout calculation

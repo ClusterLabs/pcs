@@ -213,7 +213,7 @@ Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR w
 
 \fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4).  This option is not supported on CMAN clusters.
 
-\fB\-\-token\fR <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms)
+\fB\-\-token\fR <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms; 10000 ms for CMAN clusters)
 
 \fB\-\-token_coefficient\fR <timeout> sets time in milliseconds used for clusters with at least 3 nodes as a coefficient for real token timeout calculation (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)  This option is not supported on CMAN clusters.
 
