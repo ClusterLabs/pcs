@@ -9,7 +9,7 @@
   versions has been removed.
 
 ### Changed
-- Authentication has been overhauled which brings several changes:
+- Authentication has been overhauled ([rhbz#1549535]):
   - The `pcs cluster auth` command only authenticates nodes in a local cluster
     and does not accept a node list.
   - The new command for authentication is `pcs host auth`. It allows to specify
@@ -18,8 +18,13 @@
     authenticated against each other. Now, `pcs host auth A B C` makes the
     local host authenticated against A, B and C. This allows better control of
     what is authenticated against what.
+  - The `pcs pcsd clear-auth` command has been replaced by `pcs pcsd deauth` and
+    `pcs host deauth` commands. The new commands allows to deauthenticate
+    a single host / token as well as all hosts / tokens.
   - These changes are not backward compatible. You should use the `pcs host
     auth` command to re-authenticate your hosts.
+
+[rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 
 
 ## [0.9.163] - 2018-02-20
