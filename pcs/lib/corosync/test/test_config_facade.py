@@ -540,7 +540,7 @@ quorum {
                 {
                     "option_name": "last_man_standing_window",
                     "option_value": "lmsw",
-                    "allowed_values": "positive integer",
+                    "allowed_values": "a positive integer",
                 }
             ),
             (
@@ -575,22 +575,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTIONS,
                 {
-                    "option_names": ["nonsense1"],
-                    "option_type": "quorum",
-                    "allowed": [
-                        "auto_tie_breaker",
-                        "last_man_standing",
-                        "last_man_standing_window",
-                        "wait_for_all"
-                    ],
-                    "allowed_patterns": [],
-                }
-            ),
-            (
-                severity.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["nonsense2"],
+                    "option_names": ["nonsense1", "nonsense2"],
                     "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
@@ -1297,7 +1282,7 @@ quorum {
                 {
                     "option_name": "model",
                     "option_value": "invalid",
-                    "allowed_values": ("net", ),
+                    "allowed_values": ["net", ],
                 },
                 report_codes.FORCE_QDEVICE_MODEL
             )
@@ -1336,7 +1321,7 @@ quorum {
                     {
                         "option_name": "model",
                         "option_value": "invalid",
-                        "allowed_values": ("net", ),
+                        "allowed_values": ["net", ],
                     },
                 )
             ]
@@ -1348,11 +1333,13 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.add_quorum_device(reporter, "net", {}, {}, {}),
-            (
-                severity.ERROR,
+            fixture.error(
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm", "host"]},
-                None
+                option_names=["algorithm"],
+            ),
+            fixture.error(
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                option_names=["host"],
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1361,6 +1348,7 @@ quorum {
 
     def test_bad_options_net(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        node_ids = ["1", "2", "3"] # it's in the config
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
@@ -1396,6 +1384,12 @@ quorum {
                     "exec_ls#bad": "test -f /tmp/test",
                 }
             ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="host",
+                option_value="",
+                allowed_values="a qdevice host address"
+            ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
@@ -1430,7 +1424,7 @@ quorum {
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
-                    "allowed_values": "1000-120000",
+                    "allowed_values": "1000..120000",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1446,16 +1440,11 @@ quorum {
             ),
             (
                 severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]}
-            ),
-            (
-                severity.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "port",
                     "option_value": "65537",
-                    "allowed_values": "1-65535",
+                    "allowed_values": "a port number (1-65535)",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1465,7 +1454,7 @@ quorum {
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
-                    "allowed_values": ["lowest", "highest", "valid node id"],
+                    "allowed_values": ["lowest", "highest"] + node_ids,
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1496,7 +1485,7 @@ quorum {
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
-                    "allowed_values": "positive integer",
+                    "allowed_values": "a positive integer",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1506,7 +1495,7 @@ quorum {
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
-                    "allowed_values": "positive integer",
+                    "allowed_values": "a positive integer",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1569,11 +1558,13 @@ quorum {
                 reporter, "net", {}, {}, {},
                 force_model=True, force_options=True
             ),
-            (
-                severity.ERROR,
+            fixture.error(
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm", "host"]},
-                None
+                option_names=["algorithm"],
+            ),
+            fixture.error(
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                option_names=["host"],
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1589,11 +1580,17 @@ quorum {
                 reporter, "net", {"host": "", "algorithm": ""}, {}, {},
                 force_model=True, force_options=True
             ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm", "host"]},
-                None
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="host",
+                option_value="",
+                allowed_values="a qdevice host address"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="algorithm",
+                option_value="",
+                allowed_values=("ffsplit", "lms")
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1642,6 +1639,7 @@ quorum {
 
     def test_bad_options_net_forced(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        node_ids = ["1", "2", "3"] # it's in the config
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
@@ -1741,7 +1739,7 @@ quorum {
                     {
                         "option_name": "connect_timeout",
                         "option_value": "-1",
-                        "allowed_values": "1000-120000",
+                        "allowed_values": "1000..120000",
                     }
                 ),
                 (
@@ -1759,7 +1757,7 @@ quorum {
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "1-65535",
+                        "allowed_values": "a port number (1-65535)",
                     }
                 ),
                 (
@@ -1768,7 +1766,7 @@ quorum {
                     {
                         "option_name": "tie_breaker",
                         "option_value": "125",
-                        "allowed_values": ["lowest", "highest", "valid node id"],
+                        "allowed_values": ["lowest", "highest"] + node_ids,
                     }
                 ),
                 (
@@ -1787,7 +1785,7 @@ quorum {
                     {
                         "option_name": "sync_timeout",
                         "option_value": "-3",
-                        "allowed_values": "positive integer",
+                        "allowed_values": "a positive integer",
                     }
                 ),
                 (
@@ -1796,7 +1794,7 @@ quorum {
                     {
                         "option_name": "timeout",
                         "option_value": "-2",
-                        "allowed_values": "positive integer",
+                        "allowed_values": "a positive integer",
                     }
                 ),
                 fixture.warn(
@@ -2064,21 +2062,17 @@ class UpdateQuorumDeviceTest(TestCase):
                 {},
                 {}
             ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm", "host"]},
-                None
-            ),
-            (
-                severity.ERROR,
+            fixture.error(
                 report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "algorithm",
-                    "option_value": "",
-                    "allowed_values": ("ffsplit", "lms")
-                },
-                report_codes.FORCE_OPTIONS
+                option_name="host",
+                option_value="",
+                allowed_values="a qdevice host address"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="algorithm",
+                option_value="",
+                allowed_values=("ffsplit", "lms")
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -2099,11 +2093,17 @@ class UpdateQuorumDeviceTest(TestCase):
                 {},
                 force_options=True
             ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm", "host"]},
-                None
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="host",
+                option_value="",
+                allowed_values="a qdevice host address"
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="algorithm",
+                option_value="",
+                allowed_values=("ffsplit", "lms")
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -2114,6 +2114,7 @@ class UpdateQuorumDeviceTest(TestCase):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        node_ids = ["1", "2", "3"] # it's in the config
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
@@ -2164,7 +2165,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
-                    "allowed_values": "1000-120000",
+                    "allowed_values": "1000..120000",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -2184,7 +2185,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 {
                     "option_name": "port",
                     "option_value": "65537",
-                    "allowed_values": "1-65535",
+                    "allowed_values": "a port number (1-65535)",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -2194,7 +2195,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
-                    "allowed_values": ["lowest", "highest", "valid node id"],
+                    "allowed_values": ["lowest", "highest"] + node_ids,
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -2207,6 +2208,7 @@ class UpdateQuorumDeviceTest(TestCase):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        node_ids = ["1", "2", "3"] # it's in the config
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -2274,7 +2276,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     {
                         "option_name": "connect_timeout",
                         "option_value": "-1",
-                        "allowed_values": "1000-120000",
+                        "allowed_values": "1000..120000",
                     },
                 ),
                 (
@@ -2292,7 +2294,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "1-65535",
+                        "allowed_values": "a port number (1-65535)",
                     },
                 ),
                 (
@@ -2301,7 +2303,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     {
                         "option_name": "tie_breaker",
                         "option_value": "125",
-                        "allowed_values": ["lowest", "highest", "valid node id"],
+                        "allowed_values": ["lowest", "highest"] + node_ids,
                     },
                 ),
             ]
@@ -2399,7 +2401,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
-                    "allowed_values": "positive integer",
+                    "allowed_values": "a positive integer",
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -2409,7 +2411,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
-                    "allowed_values": "positive integer",
+                    "allowed_values": "a positive integer",
                 },
                 report_codes.FORCE_OPTIONS
             )
@@ -2496,7 +2498,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     {
                         "option_name": "sync_timeout",
                         "option_value": "-3",
-                        "allowed_values": "positive integer",
+                        "allowed_values": "a positive integer",
                     },
                 ),
                 (
@@ -2505,7 +2507,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     {
                         "option_name": "timeout",
                         "option_value": "-2",
-                        "allowed_values": "positive integer",
+                        "allowed_values": "a positive integer",
                     },
                 )
             ]

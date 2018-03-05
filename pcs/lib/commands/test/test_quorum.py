@@ -749,7 +749,7 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="bad model",
-                    allowed_values=("net", )
+                    allowed_values=["net", ]
                 ),
             ]
         )
@@ -1520,7 +1520,7 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="bad_model",
-                    allowed_values=("net", ),
+                    allowed_values=["net", ],
                 ),
             ]
         )
@@ -1567,7 +1567,7 @@ class AddDeviceNetTest(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="model",
                 option_value="bad_model",
-                allowed_values=("net", ),
+                allowed_values=["net", ],
             ),
         ] + [
             fixture.info(
