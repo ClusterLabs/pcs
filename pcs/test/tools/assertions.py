@@ -265,7 +265,7 @@ def _expected_report_item_format(report_item_expectation):
         ),
         report_item_expectation[1],
         _format_report_item_info(report_item_expectation[2]),
-        report_item_expectation[3]
+        report_item_expectation[3] if len(report_item_expectation) > 3 else None
     )
 
 def _format_report_item(report_item):
