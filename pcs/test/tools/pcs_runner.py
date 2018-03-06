@@ -34,16 +34,13 @@ class PcsRunner(object):
         return pcs(self.cib_file, args_with_files)
 
 
-def pcs(testfile, args = ""):
+def pcs(testfile, args):
     """
     Run pcs with -f on specified file
     Return tuple with:
         shell stdoutdata
         shell returncode
     """
-    if args == "":
-        args = testfile
-        testfile = _temp_cib
     arg_split = args.split()
     arg_split_temp = []
     in_quote = False

@@ -171,11 +171,11 @@ Colocation Constraints:
 Ticket Constraints:
 """)
 
-        o,r = pcs("constraint remove location-C1-group")
+        o,r = pcs(temp_cib, "constraint remove location-C1-group")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint remove location-D4-rule")
+        o,r = pcs(temp_cib, "constraint remove location-D4-rule")
         ac(o,"")
         assert r == 0
 
@@ -241,15 +241,15 @@ Ticket Constraints:
         assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n", output
 
     def testMultipleOrderConstraints(self):
-        o,r = pcs("constraint order stop D1 then stop D2")
+        o,r = pcs(temp_cib, "constraint order stop D1 then stop D2")
         ac(o,"Adding D1 D2 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n")
         assert r == 0
 
-        o,r = pcs("constraint order start D1 then start D2")
+        o,r = pcs(temp_cib, "constraint order start D1 then start D2")
         ac(o,"Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
@@ -258,15 +258,15 @@ Ticket Constraints:
         "constraints with the require-all option"
     )
     def testOrderConstraintRequireAll(self):
-        o,r = pcs("cluster cib-upgrade")
+        o,r = pcs(temp_cib, "cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
-        o,r = pcs("constraint order start D1 then start D2 require-all=false")
+        o,r = pcs(temp_cib, "constraint order start D1 then start D2 require-all=false")
         ac(o,"Adding D1 D2 (kind: Mandatory) (Options: require-all=false first-action=start then-action=start)\n")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o, """\
 Location Constraints:
 Ordering Constraints:
@@ -543,23 +543,23 @@ Colocation Constraints:
 
     @skip_unless_location_resource_discovery
     def testConstraintResourceDiscoveryRules(self):
-        o,r = pcs("resource create crd ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create crd1 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create crd1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location crd rule resource-discovery=exclusive score=-INFINITY opsrole ne controller0 and opsrole ne controller1")
+        o,r = pcs(temp_cib, "constraint location crd rule resource-discovery=exclusive score=-INFINITY opsrole ne controller0 and opsrole ne controller1")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
-        o,r = pcs("constraint location crd1 rule resource-discovery=exclusive score=-INFINITY opsrole2 ne controller2")
+        o,r = pcs(temp_cib, "constraint location crd1 rule resource-discovery=exclusive score=-INFINITY opsrole2 ne controller2")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o, '\n'.join([
             'Location Constraints:',
             '  Resource: crd',
@@ -579,98 +579,98 @@ Colocation Constraints:
 
     @skip_unless_location_resource_discovery
     def testConstraintResourceDiscovery(self):
-        o,r = pcs("resource create crd ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create crd1 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create crd1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
+        o,r = pcs(temp_cib, "constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
-        o,r = pcs("constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")
+        o,r = pcs(temp_cib, "constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o,"Location Constraints:\n  Resource: crd\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)\n  Resource: crd1\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
-        o,r = pcs("constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test")
+        o,r = pcs(temp_cib, "constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test")
         ac(o,"Error: bad option 'bad-opt', use --force to override\n")
         assert r == 1
 
     def testOrderSetsRemoval(self):
-        o,r = pcs("resource create T0 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T0 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T1 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T2 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T2 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T3 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T3 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T4 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T4 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T5 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T5 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T6 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T6 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T7 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T7 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T8 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create T8 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("constraint order set T0 T1 T2")
+        o,r = pcs(temp_cib, "constraint order set T0 T1 T2")
         ac(o,"")
         assert r == 0
-        o,r = pcs("constraint order set T2 T3")
-        ac(o,"")
-        assert r == 0
-
-        o,r = pcs("constraint order remove T1")
+        o,r = pcs(temp_cib, "constraint order set T2 T3")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order remove T1")
+        o,r = pcs(temp_cib, "constraint order remove T1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "constraint order remove T1")
         ac(o,"Error: No matching resources found in ordering list\n")
         assert r == 1
 
-        o,r = pcs("constraint order")
+        o,r = pcs(temp_cib, "constraint order")
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n")
         assert r == 0
 
-        o,r = pcs("constraint order remove T2")
+        o,r = pcs(temp_cib, "constraint order remove T2")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order")
+        o,r = pcs(temp_cib, "constraint order")
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n")
         assert r == 0
 
-        o,r = pcs("constraint order remove T0")
+        o,r = pcs(temp_cib, "constraint order remove T0")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order")
+        o,r = pcs(temp_cib, "constraint order")
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T3\n")
         assert r == 0
 
-        o,r = pcs("constraint order remove T3")
+        o,r = pcs(temp_cib, "constraint order remove T3")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order")
+        o,r = pcs(temp_cib, "constraint order")
         ac(o,"Ordering Constraints:\n")
         assert r == 0
 
@@ -906,11 +906,11 @@ Colocation Constraints:
 Ticket Constraints:
 """)
 
-        o,r = pcs("constraint location D1 rule role=master")
+        o,r = pcs(temp_cib, "constraint location D1 rule role=master")
         ac (o,"Error: no rule expression was specified\n")
         assert r == 1
 
-        o,r = pcs("constraint location non-existant-resource rule role=master '#uname' eq rh7-1")
+        o,r = pcs(temp_cib, "constraint location non-existant-resource rule role=master '#uname' eq rh7-1")
         ac (o,"Error: Resource 'non-existant-resource' does not exist\n")
         assert r == 1
 
@@ -923,15 +923,15 @@ Ticket Constraints:
         assert returnVal == 1
 
     def testLocationBadRules(self):
-        o,r = pcs("resource create stateful0 ocf:heartbeat:Dummy --master")
+        o,r = pcs(temp_cib, "resource create stateful0 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location stateful0 rule role=master '#uname' eq rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location stateful0 rule role=master '#uname' eq rh7-1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o, """\
 Location Constraints:
   Resource: stateful0
@@ -944,31 +944,31 @@ Ticket Constraints:
 """)
         assert r == 0
 
-        o,r = pcs("resource create stateful1 ocf:heartbeat:Dummy --master")
+        o,r = pcs(temp_cib, "resource create stateful1 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location stateful1 rule rulename '#uname' eq rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location stateful1 rule rulename '#uname' eq rh7-1 --force")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n")
         assert r == 1
 
-        o,r = pcs("constraint location stateful1 rule role=master rulename '#uname' eq rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location stateful1 rule role=master rulename '#uname' eq rh7-1 --force")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n")
         assert r == 1
 
-        o,r = pcs("constraint location stateful1 rule role=master 25 --force")
+        o,r = pcs(temp_cib, "constraint location stateful1 rule role=master 25 --force")
         ac(o,"Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n")
         assert r == 1
 
-        o,r = pcs("constraint location D1 prefers rh7-1=foo")
+        o,r = pcs(temp_cib, "constraint location D1 prefers rh7-1=foo")
         ac(o,"Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n")
         assert r == 1
 
-        o,r = pcs("constraint location D1 avoids rh7-1=")
+        o,r = pcs(temp_cib, "constraint location D1 avoids rh7-1=")
         ac(o,"Error: invalid score '', use integer or INFINITY or -INFINITY\n")
         assert r == 1
 
-        o,r = pcs("constraint location add location1 D1 rh7-1 bar")
+        o,r = pcs(temp_cib, "constraint location add location1 D1 rh7-1 bar")
         ac(o,"Error: invalid score 'bar', use integer or INFINITY or -INFINITY\n")
         assert r == 1
 
@@ -979,17 +979,17 @@ Ticket Constraints:
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
-        o,r = pcs("resource create dummy1 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create dummy1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create stateful1 ocf:pacemaker:Stateful --master")
+        o,r = pcs(temp_cib, "resource create stateful1 ocf:pacemaker:Stateful --master")
         ac(o, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
         assert r == 0
 
-        o,r = pcs(
+        o,r = pcs(temp_cib,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
         )
         ac(o, """\
@@ -997,87 +997,87 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         assert r == 0
 
-        o,r = pcs("resource master statefulG")
+        o,r = pcs(temp_cib, "resource master statefulG")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location stateful1 prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location statefulG prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location statefulG prefers rh7-1")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location stateful1 rule #uname eq rh7-1")
+        o,r = pcs(temp_cib, "constraint location stateful1 rule #uname eq rh7-1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location statefulG rule #uname eq rh7-1")
+        o,r = pcs(temp_cib, "constraint location statefulG rule #uname eq rh7-1")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order stateful1 then dummy1")
+        o,r = pcs(temp_cib, "constraint order stateful1 then dummy1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order dummy1 then statefulG")
+        o,r = pcs(temp_cib, "constraint order dummy1 then statefulG")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order set stateful1 dummy1")
+        o,r = pcs(temp_cib, "constraint order set stateful1 dummy1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint order set dummy1 statefulG")
+        o,r = pcs(temp_cib, "constraint order set dummy1 statefulG")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation add stateful1 with dummy1")
+        o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation add dummy1 with statefulG")
+        o,r = pcs(temp_cib, "constraint colocation add dummy1 with statefulG")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation set dummy1 stateful1")
+        o,r = pcs(temp_cib, "constraint colocation set dummy1 stateful1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation set statefulG dummy1")
+        o,r = pcs(temp_cib, "constraint colocation set statefulG dummy1")
         ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
-        o,r = pcs("constraint location stateful1 prefers rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location statefulG rule #uname eq rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location statefulG rule #uname eq rh7-1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order stateful1 then dummy1 --force")
+        o,r = pcs(temp_cib, "constraint order stateful1 then dummy1 --force")
         ac(o,"Adding stateful1 dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
         assert r == 0
 
-        o,r = pcs("constraint order set stateful1 dummy1 --force")
+        o,r = pcs(temp_cib, "constraint order set stateful1 dummy1 --force")
         ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
         assert r == 0
 
-        o,r = pcs("constraint colocation add stateful1 with dummy1 --force")
+        o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint colocation set stateful1 dummy1 --force")
+        o,r = pcs(temp_cib, "constraint colocation set stateful1 dummy1 --force")
         ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o, """\
 Location Constraints:
   Resource: stateful1
@@ -1099,11 +1099,11 @@ Ticket Constraints:
         assert r == 0
 
     def testMasterSlaveConstraintAutocorrect(self):
-        output, returnVal = pcs("resource create dummy1 ocf:heartbeat:Dummy")
+        output, returnVal = pcs(temp_cib, "resource create dummy1 ocf:heartbeat:Dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "resource create stateful1 ocf:pacemaker:Stateful --master"
         )
         ac(output, """\
@@ -1111,7 +1111,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
         )
         ac(output, """\
@@ -1119,35 +1119,35 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("resource master statefulG")
+        output, returnVal = pcs(temp_cib, "resource master statefulG")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location stateful1 prefers rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location statefulG prefers rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location stateful1 rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location statefulG rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order stateful1 then dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1155,7 +1155,7 @@ Adding stateful1-master dummy1 (kind: Mandatory) (Options: first-action=start th
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order dummy1 then statefulG --autocorrect"
         )
         ac(output, """\
@@ -1163,43 +1163,43 @@ Adding dummy1 statefulG-master (kind: Mandatory) (Options: first-action=start th
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set stateful1 dummy1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set dummy1 statefulG --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stateful1 with dummy1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add dummy1 with statefulG --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 stateful1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set statefulG dummy1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full")
         ac(output, """\
 Location Constraints:
   Resource: stateful1-master
@@ -1228,7 +1228,7 @@ Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location stateful1 rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, """\
@@ -1239,13 +1239,13 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location stateful1 rule #uname eq rh7-1 --autocorrect --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order stateful1 then dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1254,7 +1254,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order stateful1 then dummy1 --autocorrect --force"
         )
         ac(output, """\
@@ -1262,7 +1262,7 @@ Adding stateful1-master dummy1 (kind: Mandatory) (Options: first-action=start th
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set stateful1 dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1271,7 +1271,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set stateful1 dummy1 --autocorrect --force"
         )
         ac(output, console_report(
@@ -1280,7 +1280,7 @@ Error: duplicate constraint already exists, use --force to override
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stateful1 with dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1289,13 +1289,13 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stateful1 with dummy1 --autocorrect --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 stateful1 --autocorrect"
         )
         ac(output, """\
@@ -1304,7 +1304,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 stateful1 --autocorrect --force"
         )
         ac(output, console_report(
@@ -1313,7 +1313,7 @@ Error: duplicate constraint already exists, use --force to override
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full")
         ac(output, """\
 Location Constraints:
   Resource: stateful1-master
@@ -1352,99 +1352,99 @@ Ticket Constraints:
     def testCloneConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
-        o,r = pcs("resource create dummy1 ocf:heartbeat:Dummy")
+        o,r = pcs(temp_cib, "resource create dummy1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create dummy ocf:heartbeat:Dummy --clone")
+        o,r = pcs(temp_cib, "resource create dummy ocf:heartbeat:Dummy --clone")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create dummy2 ocf:heartbeat:Dummy --group dummyG")
+        o,r = pcs(temp_cib, "resource create dummy2 ocf:heartbeat:Dummy --group dummyG")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource clone dummyG")
+        o,r = pcs(temp_cib, "resource clone dummyG")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location dummy prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location dummy prefers rh7-1")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location dummyG prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location dummyG prefers rh7-1")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location dummy rule #uname eq rh7-1")
+        o,r = pcs(temp_cib, "constraint location dummy rule #uname eq rh7-1")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint location dummyG rule #uname eq rh7-1")
+        o,r = pcs(temp_cib, "constraint location dummyG rule #uname eq rh7-1")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order dummy then dummy1")
+        o,r = pcs(temp_cib, "constraint order dummy then dummy1")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order dummy1 then dummyG")
+        o,r = pcs(temp_cib, "constraint order dummy1 then dummyG")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order set dummy1 dummy")
+        o,r = pcs(temp_cib, "constraint order set dummy1 dummy")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint order set dummyG dummy1")
+        o,r = pcs(temp_cib, "constraint order set dummyG dummy1")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation add dummy with dummy1")
+        o,r = pcs(temp_cib, "constraint colocation add dummy with dummy1")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation add dummy1 with dummyG")
+        o,r = pcs(temp_cib, "constraint colocation add dummy1 with dummyG")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation set dummy1 dummy")
+        o,r = pcs(temp_cib, "constraint colocation set dummy1 dummy")
         ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation set dummy1 dummyG")
+        o,r = pcs(temp_cib, "constraint colocation set dummy1 dummyG")
         ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n")
         assert r == 1
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
-        o,r = pcs("constraint location dummy prefers rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location dummy prefers rh7-1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location dummyG rule #uname eq rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location dummyG rule #uname eq rh7-1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order dummy then dummy1 --force")
+        o,r = pcs(temp_cib, "constraint order dummy then dummy1 --force")
         ac(o,"Adding dummy dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
         assert r == 0
 
-        o,r = pcs("constraint order set dummy1 dummy --force")
+        o,r = pcs(temp_cib, "constraint order set dummy1 dummy --force")
         ac(o,"Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n")
         assert r == 0
 
-        o,r = pcs("constraint colocation add dummy with dummy1 --force")
+        o,r = pcs(temp_cib, "constraint colocation add dummy with dummy1 --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint colocation set dummy1 dummy --force")
+        o,r = pcs(temp_cib, "constraint colocation set dummy1 dummy --force")
         ac(o,"Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n")
         assert r == 0
 
-        o,r = pcs("constraint --full")
+        o,r = pcs(temp_cib, "constraint --full")
         ac(o, """\
 Location Constraints:
   Resource: dummy
@@ -1466,51 +1466,51 @@ Ticket Constraints:
         assert r == 0
 
     def testCloneConstraintAutocorrect(self):
-        output, returnVal = pcs("resource create dummy1 ocf:heartbeat:Dummy")
+        output, returnVal = pcs(temp_cib, "resource create dummy1 ocf:heartbeat:Dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "resource create dummy ocf:heartbeat:Dummy --clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "resource create dummy2 ocf:heartbeat:Dummy --group dummyG"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("resource clone dummyG")
+        output, returnVal = pcs(temp_cib, "resource clone dummyG")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummy prefers rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummyG prefers rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummy rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummyG rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order dummy then dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1518,7 +1518,7 @@ Adding dummy-clone dummy1 (kind: Mandatory) (Options: first-action=start then-ac
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order dummy1 then dummyG --autocorrect"
         )
         ac(output, """\
@@ -1526,43 +1526,43 @@ Adding dummy1 dummyG-clone (kind: Mandatory) (Options: first-action=start then-a
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set dummy1 dummy --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set dummyG dummy1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add dummy with dummy1 --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add dummy1 with dummyG --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 dummy --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 dummyG --autocorrect"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full")
         ac(output, """\
 Location Constraints:
   Resource: dummy-clone
@@ -1591,7 +1591,7 @@ Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummy rule #uname eq rh7-1 --autocorrect"
         )
         ac(output, """\
@@ -1602,13 +1602,13 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location dummy rule #uname eq rh7-1 --autocorrect --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order dummy then dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1617,7 +1617,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order dummy then dummy1 --autocorrect --force"
         )
         ac(output, """\
@@ -1625,7 +1625,7 @@ Adding dummy-clone dummy1 (kind: Mandatory) (Options: first-action=start then-ac
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set dummy1 dummy --autocorrect"
         )
         ac(output, """\
@@ -1634,7 +1634,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order set dummy1 dummy --autocorrect --force"
         )
         ac(output, console_report(
@@ -1643,7 +1643,7 @@ Error: duplicate constraint already exists, use --force to override
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add dummy with dummy1 --autocorrect"
         )
         ac(output, """\
@@ -1652,13 +1652,13 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add dummy with dummy1 --autocorrect --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 dummy --autocorrect"
         )
         ac(output, """\
@@ -1667,7 +1667,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set dummy1 dummy --autocorrect --force"
         )
         ac(output, console_report(
@@ -1676,7 +1676,7 @@ Error: duplicate constraint already exists, use --force to override
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full")
         ac(output, """\
 Location Constraints:
   Resource: dummy-clone
@@ -1714,10 +1714,10 @@ Ticket Constraints:
 
     def testMissingRole(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
-        o,r = pcs("resource create stateful0 ocf:pacemaker:Stateful --master")
+        o,r = pcs(temp_cib, "resource create stateful0 ocf:pacemaker:Stateful --master")
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
-        o,r = pcs("constraint")
+        o,r = pcs(temp_cib, "constraint")
         ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
@@ -2108,26 +2108,26 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testDuplicateOrder(self):
-        output, returnVal = pcs("constraint order D1 then D2")
+        output, returnVal = pcs(temp_cib, "constraint order D1 then D2")
         ac(output, """\
 Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order D1 then D2")
+        output, returnVal = pcs(temp_cib, "constraint order D1 then D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint order D1 then D2 --force")
+        output, returnVal = pcs(temp_cib, "constraint order D1 then D2 --force")
         ac(output, """\
 Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order start D1 then start D2")
+        output, returnVal = pcs(temp_cib, "constraint order start D1 then start D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
@@ -2135,7 +2135,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order start D1 then start D2 --force"
         )
         ac(output, """\
@@ -2143,20 +2143,20 @@ Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order start D2 then start D5")
+        output, returnVal = pcs(temp_cib, "constraint order start D2 then start D5")
         ac(output, """\
 Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order start D2 then start D5")
+        output, returnVal = pcs(temp_cib, "constraint order start D2 then start D5")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint order start D2 then start D5 --force"
         )
         ac(output, """\
@@ -2164,20 +2164,20 @@ Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order stop D5 then stop D6")
+        output, returnVal = pcs(temp_cib, "constraint order stop D5 then stop D6")
         ac(output, """\
 Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order stop D5 then stop D6")
+        output, returnVal = pcs(temp_cib, "constraint order stop D5 then stop D6")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint order stop D5 then stop D6 --force")
+        output, returnVal = pcs(temp_cib, "constraint order stop D5 then stop D6 --force")
         ac(output, """\
 Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
 """)
@@ -2200,31 +2200,31 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testDuplicateColocation(self):
-        output, returnVal = pcs("constraint colocation add D1 with D2")
+        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint colocation add D1 with D2")
+        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint colocation add D1 with D2 50")
+        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D2 50")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add D1 with D2 50 --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add started D1 with started D2"
         )
         ac(output, """\
@@ -2234,25 +2234,25 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add started D1 with started D2 --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add started D2 with started D5"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stopped D2 with stopped D5"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stopped D2 with stopped D5"
         )
         ac(output, """\
@@ -2261,7 +2261,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation add stopped D2 with stopped D5 --force"
         )
         ac(output, "")
@@ -2282,36 +2282,36 @@ Ticket Constraints:
 """)
 
     def testDuplicateSetConstraints(self):
-        output, returnVal = pcs("constraint order set D1 D2")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order set D1 D2")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint order set D1 D2 --force")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2 --force")
         ac(output, console_report(
             "Warning: duplicate constraint already exists",
             "  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)",
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order set D1 D2 set D5 D6")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order set D1 D2 set D5 D6")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint order set D1 D2 set D5 D6 --force")
+        output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6 --force")
         ac(output, console_report(
             "Warning: duplicate constraint already exists",
             "  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)",
@@ -2319,36 +2319,36 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(0, returnVal)
 
 
-        output, returnVal = pcs("constraint colocation set D1 D2")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint colocation set D1 D2")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs("constraint colocation set D1 D2 --force")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 --force")
         ac(output, console_report(
             "Warning: duplicate constraint already exists",
             "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)"
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint colocation set D1 D2 set D5 D6")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 set D5 D6")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint colocation set D1 D2 set D5 D6")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 set D5 D6")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint colocation set D1 D2 set D5 D6 --force"
         )
         ac(output, console_report(
@@ -2358,11 +2358,11 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(0, returnVal)
 
 
-        output, returnVal = pcs("constraint colocation set D6 D1")
+        output, returnVal = pcs(temp_cib, "constraint colocation set D6 D1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint order set D6 D1")
+        output, returnVal = pcs(temp_cib, "constraint order set D6 D1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2388,11 +2388,11 @@ Ticket Constraints:
 """)
 
     def testDuplicateLocationRules(self):
-        output, returnVal = pcs("constraint location D1 rule #uname eq node1")
+        output, returnVal = pcs(temp_cib, "constraint location D1 rule #uname eq node1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint location D1 rule #uname eq node1")
+        output, returnVal = pcs(temp_cib, "constraint location D1 rule #uname eq node1")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D1
@@ -2401,23 +2401,23 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location D1 rule #uname eq node1 --force"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("constraint location D2 rule #uname eq node1")
+        output, returnVal = pcs(temp_cib, "constraint location D2 rule #uname eq node1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location D2 rule #uname eq node1 or #uname eq node2"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location D2 rule #uname eq node1 or #uname eq node2"
         )
         ac(output, """\
@@ -2429,7 +2429,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location D2 rule #uname eq node2 or #uname eq node1"
         )
         ac(output, """\
@@ -2441,7 +2441,7 @@ Error: duplicate constraint already exists, use --force to override
 """)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
+        output, returnVal = pcs(temp_cib,
             "constraint location D2 rule #uname eq node2 or #uname eq node1 --force"
         )
         ac(output, "")

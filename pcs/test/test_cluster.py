@@ -1461,6 +1461,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
             .format(corosync_conf_tmp)
         )
@@ -1468,6 +1469,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
         ac(o, "Error: --addr0 can only be used once\n")
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1478,6 +1480,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
         )
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
@@ -1537,6 +1540,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
             .format(corosync_conf_tmp)
         )
@@ -1596,6 +1600,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
@@ -1655,6 +1660,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1716,6 +1722,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1723,6 +1730,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1782,6 +1790,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1789,6 +1798,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
@@ -1847,6 +1857,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
             .format(corosync_conf_tmp)
         )
@@ -1854,17 +1865,22 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         ac(o,"Error: if one node is configured for RRP, all nodes must be configured for RRP\n")
         assert r == 1
 
-        o,r = pcs("cluster setup --force --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1")
+        o,r = pcs(
+            temp_cib,
+            "cluster setup --force --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1"
+        )
         ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
             .format(corosync_conf_tmp)
         )
@@ -1912,6 +1928,7 @@ logging {
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
@@ -1919,6 +1936,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
@@ -1926,6 +1944,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
@@ -1933,6 +1952,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
@@ -1940,6 +1960,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
@@ -1947,6 +1968,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
@@ -1954,6 +1976,7 @@ logging {
         assert r == 1
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
             .format(corosync_conf_tmp)
         )
@@ -2539,6 +2562,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
             return
 
         o,r = pcs(
+            temp_cib,
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
             .format(corosync_conf_tmp)
         )
@@ -2635,123 +2659,123 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
         if utils.is_rhel6():
             os.system("cp {0} {1}".format(cluster_conf_file, cluster_conf_tmp))
 
-            o,r = pcs("cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
 
-            o,r = pcs("cluster uidgid blah --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid blah --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid rm --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid add --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid add blah --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add blah --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
 
-            o,r = pcs("cluster uidgid rm blah --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm blah --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
 
-            o,r = pcs("cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             ac(o, "Error: unable to add uidgid\nError: uidgid entry already exists with uid=zzz, gid=\n")
 
-            o,r = pcs("cluster uidgid add gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid add uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid add uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\nUID/GID: gid=bbb, uid=aaa\n")
 
-            o,r = pcs("cluster uidgid rm gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 1
             ac(o, "Error: unable to remove uidgid\nError: unable to find uidgid with uid=, gid=bbb\n")
 
-            o,r = pcs("cluster uidgid rm uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\n")
 
-            o,r = pcs("cluster uidgid rm uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("config --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "config --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             assert o.find("UID/GID: gid=yyy, uid=") != -1
 
-            o,r = pcs("cluster uidgid rm gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "cluster uidgid rm gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("config --cluster_conf={0}".format(cluster_conf_tmp))
+            o,r = pcs(temp_cib, "config --cluster_conf={0}".format(cluster_conf_tmp))
             assert r == 0
             assert o.find("No uidgids") == -1
         else:
-            o,r = pcs("cluster uidgid")
+            o,r = pcs(temp_cib, "cluster uidgid")
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
 
-            o,r = pcs("cluster uidgid add")
+            o,r = pcs(temp_cib, "cluster uidgid add")
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid rm")
+            o,r = pcs(temp_cib, "cluster uidgid rm")
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid xx")
+            o,r = pcs(temp_cib, "cluster uidgid xx")
             assert r == 1
             assert o.startswith("\nUsage:")
 
-            o,r = pcs("cluster uidgid add uid=testuid gid=testgid")
+            o,r = pcs(temp_cib, "cluster uidgid add uid=testuid gid=testgid")
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid add uid=testuid gid=testgid")
+            o,r = pcs(temp_cib, "cluster uidgid add uid=testuid gid=testgid")
             assert r == 1
             ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
 
-            o,r = pcs("cluster uidgid rm uid=testuid2 gid=testgid2")
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid2 gid=testgid2")
             assert r == 1
             ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
 
-            o,r = pcs("cluster uidgid rm uid=testuid gid=testgid2")
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid gid=testgid2")
             assert r == 1
             ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
 
-            o,r = pcs("cluster uidgid rm uid=testuid2 gid=testgid")
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid2 gid=testgid")
             assert r == 1
             ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
 
-            o,r = pcs("cluster uidgid")
+            o,r = pcs(temp_cib, "cluster uidgid")
             assert r == 0
             ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
-            o,r = pcs("cluster uidgid rm uid=testuid gid=testgid")
+            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid gid=testgid")
             assert r == 0
             ac(o, "")
 
-            o,r = pcs("cluster uidgid")
+            o,r = pcs(temp_cib, "cluster uidgid")
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
 
@@ -2978,7 +3002,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
             assert data.find("pacemaker-1.2") != -1
             assert data.find("pacemaker-2.") == -1
 
-        o,r = pcs("cluster cib-upgrade")
+        o,r = pcs(temp_cib, "cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
@@ -2987,7 +3011,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
             assert data.find("pacemaker-1.2") == -1
             assert data.find("pacemaker-2.") != -1
 
-        o,r = pcs("cluster cib-upgrade")
+        o,r = pcs(temp_cib, "cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 

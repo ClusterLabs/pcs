@@ -1632,16 +1632,17 @@ Ticket Constraints:
 
     def testCloneRemove(self):
         o,r = pcs(
+            temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
         )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location D1-clone prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location D1-clone prefers rh7-1")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location D1 prefers rh7-1 --force")
+        o,r = pcs(temp_cib, "constraint location D1 prefers rh7-1 --force")
         ac(o,"")
         assert r == 0
 
@@ -1661,11 +1662,12 @@ Ticket Constraints:
             """
         ))
 
-        o,r = pcs("resource --full")
+        o,r = pcs(temp_cib, "resource --full")
         assert r == 0
         ac(o,"")
 
         o, r = pcs(
+            temp_cib,
             "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true"
         )
         ac(o, "")
@@ -2884,6 +2886,7 @@ Ticket Constraints:
 
     def testMasterOfGroupMove(self):
         o,r = pcs(
+            temp_cib,
             "resource create stateful ocf:pacemaker:Stateful --group group1"
         )
         ac(o, """\
@@ -2891,7 +2894,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         assert r == 0
 
-        o,r = pcs("resource master group1")
+        o,r = pcs(temp_cib, "resource master group1")
         ac(o,"")
         assert r == 0
 
@@ -2913,31 +2916,31 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         )
 
     def testDebugStartCloneGroup(self):
-        o,r = pcs("resource create D0 ocf:heartbeat:Dummy --group DGroup")
+        o,r = pcs(temp_cib, "resource create D0 ocf:heartbeat:Dummy --group DGroup")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D1 ocf:heartbeat:Dummy --group DGroup")
+        o,r = pcs(temp_cib, "resource create D1 ocf:heartbeat:Dummy --group DGroup")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D2 ocf:heartbeat:Dummy --clone")
+        o,r = pcs(temp_cib, "resource create D2 ocf:heartbeat:Dummy --clone")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D3 ocf:heartbeat:Dummy --master")
+        o,r = pcs(temp_cib, "resource create D3 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource debug-start DGroup")
+        o,r = pcs(temp_cib, "resource debug-start DGroup")
         ac(o,"Error: unable to debug-start a group, try one of the group's resource(s) (D0,D1)\n")
         assert r == 1
 
-        o,r = pcs("resource debug-start D2-clone")
+        o,r = pcs(temp_cib, "resource debug-start D2-clone")
         ac(o,"Error: unable to debug-start a clone, try the clone's resource: D2\n")
         assert r == 1
 
-        o,r = pcs("resource debug-start D3-master")
+        o,r = pcs(temp_cib, "resource debug-start D3-master")
         ac(o,"Error: unable to debug-start a master, try the master's resource: D3\n")
         assert r == 1
 
@@ -3538,7 +3541,7 @@ Error: Cannot remove more than one resource from cloned group
         )
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource group add DG D3")
+        o,r = pcs(temp_cib, "resource group add DG D3")
         ac(o,"")
         assert r == 0
         o,r = pcs(temp_cib, "resource unmanage DG")
@@ -3567,7 +3570,7 @@ Error: Cannot remove more than one resource from cloned group
         )
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource group add DG D4")
+        o,r = pcs(temp_cib, "resource group add DG D4")
         ac(o,"")
         assert r == 0
         o,r = pcs(temp_cib, "resource unmanage D4")
@@ -4058,59 +4061,62 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
     def testCloneMasterBadResources(self):
         self.setupClusterA(temp_cib)
-        o,r = pcs("resource clone ClusterIP4")
+        o,r = pcs(temp_cib, "resource clone ClusterIP4")
         ac(o,"Error: ClusterIP4 is already a clone resource\n")
         assert r == 1
 
-        o,r = pcs("resource clone ClusterIP5")
+        o,r = pcs(temp_cib, "resource clone ClusterIP5")
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
-        o,r = pcs("resource master ClusterIP4")
+        o,r = pcs(temp_cib, "resource master ClusterIP4")
         ac(o,"Error: ClusterIP4 is already a clone resource\n")
         assert r == 1
 
-        o,r = pcs("resource master ClusterIP5")
+        o,r = pcs(temp_cib, "resource master ClusterIP5")
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
     def groupMSAndClone(self):
         o,r = pcs(
+            temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
         )
         ac(o,"")
         assert r == 0
 
         o,r = pcs(
+            temp_cib,
             "resource create --no-default-ops D2 ocf:heartbeat:Dummy --master"
         )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource group add DG D1")
+        o,r = pcs(temp_cib, "resource group add DG D1")
         ac(o,"Error: cannot group clone resources\n")
         assert r == 1
 
-        o,r = pcs("resource group add DG D2")
+        o,r = pcs(temp_cib, "resource group add DG D2")
         ac(o,"Error: cannot group master/slave resources\n")
         assert r == 1
 
-        o,r = pcs("resource create --no-default-ops D3 ocf:heartbeat:Dummy --master --group xxx --clone")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy --master --group xxx --clone")
         ac(o,"Warning: --group ignored when creating a clone\nWarning: --master ignored when creating a clone\n")
         assert r == 0
 
-        o,r = pcs("resource create --no-default-ops D4 ocf:heartbeat:Dummy --master --group xxx")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D4 ocf:heartbeat:Dummy --master --group xxx")
         ac(o,"Warning: --group ignored when creating a master\n")
         assert r == 0
 
     def testResourceCloneGroup(self):
         o,r = pcs(
+            temp_cib,
             "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group"
         )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource clone group")
+        o,r = pcs(temp_cib, "resource clone group")
         ac(o,"")
         assert r == 0
 
