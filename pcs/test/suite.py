@@ -4,6 +4,13 @@ import os.path
 import sys
 import unittest
 
+try:
+    from testtools import ConcurrentTestSuite, iterate_tests
+    import concurrencytest
+    can_concurrency = True
+except ImportError:
+    can_concurrency = False
+
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 )))
@@ -63,6 +70,30 @@ def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
         ])
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
+def partition_tests(suite, count):
+    # Keep the same interface as the original concurrencytest.partition_tests
+    independent_old_modules = [
+        "pcs.test.test_constraints",
+        "pcs.test.test_resource",
+        "pcs.test.test_stonith",
+    ]
+    old_tests = [] # tests are not independent, cannot run in parallel
+    old_tests_independent = {} # independent modules
+    independent_tests = []
+    for test in iterate_tests(suite):
+        module = test.__class__.__module__
+        if not module.startswith("pcs.test."):
+            independent_tests.append(test)
+        elif module in independent_old_modules:
+            if module not in old_tests_independent:
+                old_tests_independent[module] = []
+            old_tests_independent[module].append(test)
+        else:
+            old_tests.append(test)
+    return [old_tests, independent_tests] + list(old_tests_independent.values())
+
+
+run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
 
 explicitly_enumerated_tests = [
     prepare_test_name(arg) for arg in sys.argv[1:] if arg not in (
@@ -71,7 +102,7 @@ explicitly_enumerated_tests = [
         "--fast-info", #show a traceback immediatelly after the test fails
         "--last-slash",
         "--list",
-        "--no-color", #deprecated, use --vanilla instead
+        "--no-parallel",
         "--traceback-highlight",
         "--traditional-verbose",
         "--vanilla",
@@ -87,18 +118,23 @@ if "--list" in sys.argv:
     print("{0} tests found".format(len(test_list)))
     sys.exit()
 
-if "--no-color" in sys.argv:
-    print("DEPRECATED: --no-color is deprecated, use --vanilla instead")
+tests_to_run = discovered_tests
+if run_concurrently:
+    # replace the partitioning function with our own
+    concurrencytest.partition_tests = partition_tests
+    tests_to_run = ConcurrentTestSuite(
+        discovered_tests,
+        # the number doesn't matter, we do our own partitioning which ignores it
+        concurrencytest.fork_for_tests(1)
+    )
+
 
 use_improved_result_class = (
     sys.stdout.isatty()
     and
     sys.stderr.isatty()
-    and (
-        "--vanilla" not in sys.argv
-        and
-        "--no-color" not in sys.argv #deprecated, use --vanilla instead
-    )
+    and
+    "--vanilla" not in sys.argv
 )
 
 resultclass = unittest.TextTestResult
@@ -106,7 +142,13 @@ if use_improved_result_class:
     from pcs.test.tools.color_text_runner import get_text_test_result_class
     resultclass = get_text_test_result_class(
         slash_last_fail_in_overview=("--last-slash" in sys.argv),
-        traditional_verbose=("--traditional-verbose" in sys.argv),
+        traditional_verbose=(
+            "--traditional-verbose" in sys.argv
+            or
+            # temporary workaround - our verbose writer is not compatible with
+            # running tests in parallel, use our traditional writer
+            (run_concurrently and "-v" in sys.argv)
+        ),
         traceback_highlight=("--traceback-highlight" in sys.argv),
         fast_info=("--fast-info" in sys.argv)
     )
@@ -115,7 +157,7 @@ testRunner = unittest.TextTestRunner(
     verbosity=2 if "-v" in sys.argv else 1,
     resultclass=resultclass
 )
-test_result =  testRunner.run(discovered_tests)
+test_result = testRunner.run(tests_to_run)
 if not test_result.wasSuccessful():
     sys.exit(1)
 

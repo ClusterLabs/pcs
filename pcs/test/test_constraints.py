@@ -19,7 +19,7 @@ from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
+temp_cib = rc("test_constraints/temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
 skip_unless_location_resource_discovery = skip_unless_pacemaker_version(
@@ -2664,7 +2664,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
-    temp_cib = rc("temp-cib.xml")
+    temp_cib = rc("test_constraints/temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -2833,7 +2833,7 @@ class ConstraintEffect(
         )
     )
 ):
-    temp_cib = rc("temp-cib.xml")
+    temp_cib = rc("test_constraints/temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):

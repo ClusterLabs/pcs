@@ -51,11 +51,12 @@ def format_module(test):
     return lightgrey(".").join(parts[:-1] + [format_module_name(parts[-1])])
 
 def format_test_method_name(test):
-    parts = test._testMethodName.split("_")
+    if not hasattr(test, "_testMethodName"):
+        return test.id()
 
+    parts = test._testMethodName.split("_")
     if parts[0].startswith("test"):
         parts[0] = lightgrey("test") + parts[0][len("test"):]
-
     return lightgrey("_").join(parts)
 
 def format_error_overview(errors, failures, slash_last):
@@ -75,6 +76,12 @@ def slash_errors(error_list, slash_last=True):
     return ["{0} \\".format(err) for err in error_list]
 
 def format_test_name(test):
+    if (
+        test.__class__.__module__ == "subunit"
+        and
+        test.__class__.__name__ == "RemotedTestCase"
+    ):
+        return format_test_method_name(test)
     return (
         format_module(test)
         + "." + test.__class__.__name__

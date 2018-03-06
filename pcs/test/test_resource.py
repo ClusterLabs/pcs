@@ -23,9 +23,9 @@ from pcs import utils
 from pcs import resource
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
+temp_cib = rc("test_resource/temp-cib.xml")
 large_cib = rc("cib-large.xml")
-temp_large_cib  = rc("temp-cib-large.xml")
+temp_large_cib  = rc("test_resource/temp-cib-large.xml")
 
 
 class ResourceDescribeTest(TestCase, AssertPcsMixin):
@@ -4843,7 +4843,7 @@ class BundleCommon(
         )
     )
 ):
-    temp_cib = rc("temp-cib.xml")
+    temp_cib = rc("test_resource/temp-cib.xml")
     empty_cib = rc("cib-empty-2.8.xml")
 
     def setUp(self):

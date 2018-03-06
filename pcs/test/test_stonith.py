@@ -21,7 +21,7 @@ from pcs.test.tools.pcs_runner import (
 
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
+temp_cib = rc("test_stonith/temp-cib.xml")
 
 # target-pattern attribute was added in pacemaker 1.1.13 with validate-with 2.3.
 # However in pcs this was implemented much later together with target-attribute
