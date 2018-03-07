@@ -14,7 +14,7 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "tie_breaker",
 )
 
-def quorum_options_update(options, has_qdevice):
+def update_quorum_options(options, has_qdevice):
     """
     Validate modifying quorum options, return list of report items
 
@@ -74,9 +74,8 @@ def quorum_options_update(options, has_qdevice):
             )
     return report_items
 
-def qdevice_add(
-    model, model_options, generic_options, heuristics_options,
-    has_qdevice, node_ids,
+def add_quorum_device(
+    model, model_options, generic_options, heuristics_options, node_ids,
     force_model=False, force_options=False
 ):
     """
@@ -86,13 +85,10 @@ def qdevice_add(
     dict model_options -- model specific options
     dict generic_options -- generic quorum device options
     dict heuristics_options -- heuristics options
-    bool has_qdevice -- is qdevice set in corosync.conf?
     list node_ids -- list of existing node ids
     bool force_model -- continue even if the model is not valid
     bool force_options -- turn forceable errors into warnings
     """
-    if has_qdevice:
-        return [reports.qdevice_already_defined()]
     report_items = []
 
     model_validators = {
@@ -125,9 +121,8 @@ def qdevice_add(
         _qdevice_add_heuristics_options(heuristics_options, force_options)
     )
 
-def qdevice_update(
-    model, model_options, generic_options, heuristics_options,
-    has_qdevice, node_ids,
+def update_quorum_device(
+    model, model_options, generic_options, heuristics_options, node_ids,
     force_options=False
 ):
     """
@@ -137,12 +132,9 @@ def qdevice_update(
     dict model_options -- model specific options
     dict generic_options -- generic quorum device options
     dict heuristics_options -- heuristics options
-    bool has_qdevice -- is qdevice set in corosync.conf?
     list node_ids -- list of existing node ids
     bool force_options -- turn forceable errors into warnings
     """
-    if not has_qdevice:
-        return [reports.qdevice_not_defined()]
     report_items = []
 
     model_validators = {
@@ -492,25 +484,10 @@ def _validate_heuristics_noexec_option_names(
 def _get_qdevice_model_net_options_validators(
     node_ids, allow_empty_values=False, force_options=False
 ):
-    allowed_algorithms = (
-        "ffsplit",
-        "lms",
-    )
     allow_extra_values = validate.allow_extra_values(
         report_codes.FORCE_OPTIONS, force_options
     )
-    # When adding: required options cannot be empty
-    # When updating: required options cannot be removed (by being empty)
-    required_options_validators = [
-        validate.value_not_empty("host", "a qdevice host address"),
-        validate.value_not_empty("algorithm", allowed_algorithms),
-    ]
     validators = {
-        "algorithm": validate.value_in(
-            "algorithm",
-            allowed_algorithms,
-            **allow_extra_values
-        ),
         "connect_timeout": validate.value_integer_in_range(
             "connect_timeout",
             1000,
@@ -533,9 +510,49 @@ def _get_qdevice_model_net_options_validators(
         ),
     }
     if not allow_empty_values:
-        # explicitely convert to a list for python 3
-        return required_options_validators + list(validators.values())
-    return required_options_validators + [
-        validate.value_empty_or_valid(option_name, validator)
-        for option_name, validator in validators.items()
-    ]
+        return (
+            [
+                validate.value_not_empty("host", "a qdevice host address"),
+                _validate_qdevice_net_algorithm(**allow_extra_values)
+            ]
+            +
+            # explicitely convert to a list for python 3
+            list(validators.values())
+        )
+    return (
+        [
+            validate.value_not_empty("host", "a qdevice host address"),
+            _validate_qdevice_net_algorithm(**allow_extra_values)
+        ]
+        +
+        [
+            validate.value_empty_or_valid(option_name, validator)
+            for option_name, validator in validators.items()
+        ]
+    )
+
+def _validate_qdevice_net_algorithm(
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
+    @validate._if_option_exists("algorithm")
+    def validate_func(option_dict):
+        allowed_algorithms = (
+            "ffsplit",
+            "lms",
+        )
+        value = validate.ValuePair.get(option_dict["algorithm"])
+        if validate.is_empty_string(value.normalized):
+            return [
+                reports.invalid_option_value(
+                    "algorithm",
+                    value.original,
+                    allowed_algorithms
+                )
+            ]
+        return validate.value_in(
+            "algorithm",
+            allowed_algorithms,
+            code_to_allow_extra_values=code_to_allow_extra_values,
+            allow_extra_values=allow_extra_values
+        )(option_dict)
+    return validate_func

@@ -707,9 +707,7 @@ def _enable_auto_tie_breaker_for_sbd(corosync_conf):
     try:
         corosync_facade = corosync_conf_facade(corosync_conf)
         if sbd.atb_has_to_be_enabled(cmd_runner(), corosync_facade):
-            corosync_facade.set_quorum_options(
-                get_report_processor(), {"auto_tie_breaker": "1"}
-            )
+            corosync_facade.set_quorum_options({"auto_tie_breaker": "1"})
     except LibraryError as e:
         process_library_reports(e.args)
 

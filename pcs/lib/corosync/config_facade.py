@@ -1,5 +1,5 @@
 from pcs.lib import reports
-from pcs.lib.corosync import config_parser, config_validators, constants
+from pcs.lib.corosync import config_parser, constants
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
@@ -82,17 +82,12 @@ class ConfigFacade(object):
                 ))
         return result
 
-    def set_quorum_options(self, report_processor, options):
+    def set_quorum_options(self, options):
         """
         Set options in quorum section
-        options quorum options dict
+
+        dict options -- quorum options
         """
-        report_processor.process_list(
-            config_validators.quorum_options_update(
-                options,
-                self.has_quorum_device()
-            )
-        )
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         self.__set_section_options(quorum_section_list, options)
         self.__update_two_node()
@@ -130,6 +125,12 @@ class ConfigFacade(object):
                     return True
         return False
 
+    def get_quorum_device_model(self):
+        """
+        Get quorum device model from quorum.device section
+        """
+        return self.get_quorum_device_settings()[0]
+
     def get_quorum_device_settings(self):
         """
         Get configurable options from quorum.device section
@@ -161,9 +162,22 @@ class ConfigFacade(object):
             heuristics_options,
         )
 
+    def is_quorum_device_heuristics_enabled_with_no_exec(self):
+        heuristics_options = self.get_quorum_device_settings()[3]
+        regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
+        exec_found = False
+        for name, value in heuristics_options.items():
+            if value and regexp.match(name):
+                exec_found = True
+                break
+        return (
+            not exec_found
+            and
+            heuristics_options.get("mode") in ("on", "sync")
+        )
+
     def add_quorum_device(
-        self, report_processor, model, model_options, generic_options,
-        heuristics_options, force_model=False, force_options=False,
+        self, model, model_options, generic_options, heuristics_options
     ):
         """
         Add quorum device configuration
@@ -172,24 +186,9 @@ class ConfigFacade(object):
         dict model_options -- model specific options
         dict generic_options -- generic quorum device options
         dict heuristics_options -- heuristics options
-        bool force_model -- continue even if the model is not valid
-        bool force_options -- continue even if options are not valid
         """
-        # validation
         if self.has_quorum_device():
             raise LibraryError(reports.qdevice_already_defined())
-        report_processor.process_list(
-            config_validators.qdevice_add(
-                model,
-                model_options,
-                generic_options,
-                heuristics_options,
-                self.has_quorum_device(),
-                [node.id for node in self.get_nodes()],
-                force_model,
-                force_options
-            )
-        )
 
         # configuration cleanup
         remove_need_stopped_cluster = dict([
@@ -233,18 +232,12 @@ class ConfigFacade(object):
         self.__set_section_options([new_heuristics], heuristics_options)
         new_device.add_section(new_heuristics)
 
-        if self.__is_heuristics_enabled_with_no_exec():
-            report_processor.process(
-                reports.corosync_quorum_heuristics_enabled_with_no_exec()
-            )
-
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
     def update_quorum_device(
-        self, report_processor, model_options, generic_options,
-        heuristics_options, force_options=False
+        self, model_options, generic_options, heuristics_options
     ):
         """
         Update existing quorum device configuration
@@ -252,27 +245,10 @@ class ConfigFacade(object):
         dict model_options -- model specific options
         dict generic_options -- generic quorum device options
         dict heuristics_options -- heuristics options
-        bool force_options -- continue even if options are not valid
         """
-        # validation
         if not self.has_quorum_device():
             raise LibraryError(reports.qdevice_not_defined())
-        model = None
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                for dummy_name, value in device.get_attributes("model"):
-                    model = value
-        report_processor.process_list(
-            config_validators.qdevice_update(
-                model,
-                model_options,
-                generic_options,
-                heuristics_options,
-                self.has_quorum_device(),
-                [node.id for node in self.get_nodes()],
-                force_options
-            )
-        )
+        model = self.get_quorum_device_model()
 
         # set new configuration
         device_sections = []
@@ -298,11 +274,6 @@ class ConfigFacade(object):
         self.__set_section_options(device_sections, generic_options)
         self.__set_section_options(model_sections, model_options)
         self.__set_section_options(heuristics_sections, heuristics_options)
-
-        if self.__is_heuristics_enabled_with_no_exec():
-            report_processor.process(
-                reports.corosync_quorum_heuristics_enabled_with_no_exec()
-            )
 
         self.__update_qdevice_votes()
         self.__update_two_node()
@@ -333,22 +304,6 @@ class ConfigFacade(object):
                 quorum.del_section(device)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-
-    def __is_heuristics_enabled_with_no_exec(self):
-        regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
-        mode = None
-        exec_found = False
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                for heuristics in device.get_sections("heuristics"):
-                    for name, value in heuristics.get_attributes():
-                        if name == "mode" and value:
-                            # Cannot break, must go through all modes, the last
-                            # one matters
-                            mode = value
-                        elif regexp.match(name) and value:
-                            exec_found = True
-        return not exec_found and mode in ("on", "sync")
 
     def __update_two_node(self):
         # get relevant status

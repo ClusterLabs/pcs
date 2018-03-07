@@ -7,6 +7,7 @@ from pcs.lib.communication import (
 )
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
+    config_validators as corosync_conf_validators,
     live as corosync_live,
     qdevice_net,
     qdevice_client
@@ -66,19 +67,28 @@ def _check_if_atb_can_be_disabled(
 def set_options(lib_env, options, skip_offline_nodes=False, force=False):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
-    lib_env LibraryEnvironment
-    options quorum options (dict)
-    skip_offline_nodes continue even if not all nodes are accessible
-    bool force force changes
+
+    LibraryEnvironment lib_env
+    dict options -- quorum options
+    bool skip_offline_nodes -- continue even if not all nodes are accessible
+    bool force -- force changes
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
-    atb_enabled = cfg.is_enabled_auto_tie_breaker()
-    cfg.set_quorum_options(lib_env.report_processor, options)
+    lib_env.report_processor.process_list(
+        corosync_conf_validators.update_quorum_options(
+            options,
+            cfg.has_quorum_device()
+        )
+    )
+    cfg.set_quorum_options(options)
     if lib_env.is_corosync_conf_live:
         _check_if_atb_can_be_disabled(
-            lib_env.cmd_runner(), lib_env.report_processor,
-            cfg, atb_enabled, force
+            lib_env.cmd_runner(),
+            lib_env.report_processor,
+            cfg,
+            cfg.is_enabled_auto_tie_breaker(),
+            force
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
@@ -115,17 +125,29 @@ def add_device(
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
-    # Try adding qdevice to corosync.conf. This validates all the options and
-    # makes sure qdevice is not defined in corosync.conf yet.
+    if cfg.has_quorum_device():
+        raise LibraryError(reports.qdevice_already_defined())
+    lib_env.report_processor.process_list(
+        corosync_conf_validators.add_quorum_device(
+            model,
+            model_options,
+            generic_options,
+            heuristics_options,
+            [node.id for node in cfg.get_nodes()],
+            force_model=force_model,
+            force_options=force_options
+        )
+    )
     cfg.add_quorum_device(
-        lib_env.report_processor,
         model,
         model_options,
         generic_options,
         heuristics_options,
-        force_model=force_model,
-        force_options=force_options
     )
+    if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
+        lib_env.report_processor.process(
+            reports.corosync_quorum_heuristics_enabled_with_no_exec()
+        )
 
     # First setup certificates for qdevice, then send corosync.conf to nodes.
     # If anything fails, nodes will not have corosync.conf with qdevice in it,
@@ -135,13 +157,15 @@ def add_device(
         target_list = target_factory.get_target_list(
             cfg.get_nodes().labels, skip_non_existing=skip_offline_nodes,
         )
-        # do model specific configuration
-        # if model is not known to pcs and was forced, do not configure antyhing
-        # else but corosync.conf, as we do not know what to do anyways
+        # Do model specific configuration.
+        # If the model is not known to pcs and was forced, do not configure
+        # anything else than corosync.conf, as we do not know what to do
+        # anyway.
         if model == "net":
             _add_device_model_net(
                 lib_env,
-                # we are sure it's there, it was validated in add_quorum_device
+                # We are sure the "host" key is there, it has been validated
+                # above.
                 target_factory.get_target_from_hostname(model_options["host"]),
                 cfg.get_cluster_name(),
                 target_list,
@@ -235,13 +259,27 @@ def update_device(
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
+    if not cfg.has_quorum_device():
+        raise LibraryError(reports.qdevice_not_defined())
+    lib_env.report_processor.process_list(
+        corosync_conf_validators.update_quorum_device(
+            cfg.get_quorum_device_model(),
+            model_options,
+            generic_options,
+            heuristics_options,
+            [node.id for node in cfg.get_nodes()],
+            force_options=force_options
+        )
+    )
     cfg.update_quorum_device(
-        lib_env.report_processor,
         model_options,
         generic_options,
-        heuristics_options,
-        force_options=force_options
+        heuristics_options
     )
+    if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
+        lib_env.report_processor.process(
+            reports.corosync_quorum_heuristics_enabled_with_no_exec()
+        )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def remove_device_heuristics(lib_env, skip_offline_nodes=False):
@@ -252,6 +290,8 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
+    if not cfg.has_quorum_device():
+        raise LibraryError(reports.qdevice_not_defined())
     cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
@@ -263,9 +303,9 @@ def remove_device(lib_env, skip_offline_nodes=False):
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
-    model, dummy_options, dummy_options, dummy_options = (
-        cfg.get_quorum_device_settings()
-    )
+    if not cfg.has_quorum_device():
+        raise LibraryError(reports.qdevice_not_defined())
+    model = cfg.get_quorum_device_model()
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:
@@ -275,9 +315,7 @@ def remove_device(lib_env, skip_offline_nodes=False):
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
             lib_env.report_processor.process(reports.sbd_requires_atb())
-            cfg.set_quorum_options(
-                lib_env.report_processor, {"auto_tie_breaker": "1"}
-            )
+            cfg.set_quorum_options({"auto_tie_breaker": "1"})
 
         # disable qdevice
         lib_env.report_processor.process(
