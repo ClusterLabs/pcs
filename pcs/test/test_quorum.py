@@ -237,7 +237,10 @@ class DeviceAddTest(TestBase):
     def test_missing_required_options(self):
         self.assert_pcs_fail_regardless_of_force(
             "quorum device add model net",
-            "Error: required options 'algorithm', 'host' are missing\n"
+            [
+                "Error: required quorum device model option 'algorithm' is missing",
+                "Error: required quorum device model option 'host' is missing",
+            ]
         )
 
     def test_bad_options(self):
@@ -247,8 +250,8 @@ class DeviceAddTest(TestBase):
             """\
 Error: 'x' is not a valid algorithm value, use ffsplit, lms, use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
+Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
-Error: '-1' is not a valid timeout value, use positive integer, use --force to override
 Error: 'bad' is not a valid mode value, use off, on, sync, use --force to override
 Error: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME, use --force to override
 """
@@ -260,8 +263,8 @@ Error: invalid heuristics option 'e', allowed options are: interval, mode, sync_
             """\
 Warning: 'x' is not a valid algorithm value, use ffsplit, lms
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
+Warning: '-1' is not a valid timeout value, use a positive integer
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
-Warning: '-1' is not a valid timeout value, use positive integer
 Warning: 'bad' is not a valid mode value, use off, on, sync
 Warning: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME
 """
@@ -485,7 +488,7 @@ class DeviceUpdateTest(TestBase):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail_regardless_of_force(
             "quorum device update model host=",
-            "Error: required option 'host' is missing\n"
+            "Error: '' is not a valid host value, use a qdevice host address\n"
         )
 
     def test_bad_options(self):
@@ -493,19 +496,19 @@ class DeviceUpdateTest(TestBase):
         self.assert_pcs_fail(
             "quorum device update a=b timeout=-1 model port=x c=d",
             """\
+Error: 'x' is not a valid port value, use a port number (1-65535), use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
-Error: 'x' is not a valid port value, use 1-65535, use --force to override
+Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
-Error: '-1' is not a valid timeout value, use positive integer, use --force to override
 """
         )
         self.assert_pcs_success(
             "quorum device update a=b timeout=-1 model port=x c=d --force",
             """\
+Warning: 'x' is not a valid port value, use a port number (1-65535)
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
-Warning: 'x' is not a valid port value, use 1-65535
+Warning: '-1' is not a valid timeout value, use a positive integer
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
-Warning: '-1' is not a valid timeout value, use positive integer
 """
         )
         self.assert_pcs_success(

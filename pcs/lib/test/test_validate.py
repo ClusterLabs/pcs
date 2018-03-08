@@ -581,6 +581,36 @@ class ValueIn(TestCase):
         )
 
 
+class ValueIntegerInRange(TestCase):
+    # The real code only calls value_cond and is_integer which are both heavily
+    # tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.value_integer_in_range("key", -5, 5)
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator()({"key": "2"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator()({"key": "6"}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "key",
+                        "option_value": "6",
+                        "allowed_values": "-5..5",
+                    },
+                    None
+                ),
+            ]
+        )
+
+
 class ValueNonnegativeInteger(TestCase):
     # The real code only calls value_cond => only basic tests here.
     def test_empty_report_on_valid_option(self):

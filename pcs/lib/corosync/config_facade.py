@@ -1,29 +1,12 @@
-import re
-
-from pcs.common import report_codes
-from pcs.lib import reports, validate
-from pcs.lib.errors import ReportItemSeverity, LibraryError
-from pcs.lib.corosync import config_parser
+from pcs.lib import reports
+from pcs.lib.corosync import config_parser, constants
+from pcs.lib.errors import LibraryError
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
 class ConfigFacade(object):
     """
     Provides high level access to a corosync config file
     """
-
-    QUORUM_OPTIONS = (
-        "auto_tie_breaker",
-        "last_man_standing",
-        "last_man_standing_window",
-        "wait_for_all",
-    )
-    QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE = (
-        "auto_tie_breaker",
-        "last_man_standing",
-        "last_man_standing_window",
-    )
-    __QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE = re.compile("^exec_[^.:{}#\s]+$")
-
     @classmethod
     def from_string(cls, config_string):
         """
@@ -99,14 +82,12 @@ class ConfigFacade(object):
                 ))
         return result
 
-    def set_quorum_options(self, report_processor, options):
+    def set_quorum_options(self, options):
         """
         Set options in quorum section
-        options quorum options dict
+
+        dict options -- quorum options
         """
-        report_processor.process_list(
-            self.__validate_quorum_options(options)
-        )
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         self.__set_section_options(quorum_section_list, options)
         self.__update_two_node()
@@ -120,7 +101,7 @@ class ConfigFacade(object):
         options = {}
         for section in self.config.get_sections("quorum"):
             for name, value in section.get_attributes():
-                if name in self.__class__.QUORUM_OPTIONS:
+                if name in constants.QUORUM_OPTIONS:
                     options[name] = value
         return options
 
@@ -134,50 +115,6 @@ class ConfigFacade(object):
                 auto_tie_breaker = attr[1]
         return auto_tie_breaker == "1"
 
-    def __validate_quorum_options(self, options):
-        report_items = []
-        has_qdevice = self.has_quorum_device()
-        qdevice_incompatible_options = []
-        for name, value in sorted(options.items()):
-            allowed_names = self.__class__.QUORUM_OPTIONS
-            if name not in allowed_names:
-                report_items.append(
-                    reports.invalid_options([name], allowed_names, "quorum")
-                )
-                continue
-
-            if value == "":
-                continue
-
-            if (
-                has_qdevice
-                and
-                name in self.__class__.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
-            ):
-                qdevice_incompatible_options.append(name)
-
-            if name == "last_man_standing_window":
-                if not value.isdigit():
-                    report_items.append(reports.invalid_option_value(
-                        name, value, "positive integer"
-                    ))
-
-            else:
-                allowed_values = ("0", "1")
-                if value not in allowed_values:
-                    report_items.append(reports.invalid_option_value(
-                        name, value, allowed_values
-                    ))
-
-        if qdevice_incompatible_options:
-            report_items.append(
-                reports.corosync_options_incompatible_with_qdevice(
-                    qdevice_incompatible_options
-                )
-            )
-
-        return report_items
-
     def has_quorum_device(self):
         """
         Check if quorum device is present in the config
@@ -187,6 +124,12 @@ class ConfigFacade(object):
                 if device.get_attributes("model"):
                     return True
         return False
+
+    def get_quorum_device_model(self):
+        """
+        Get quorum device model from quorum.device section
+        """
+        return self.get_quorum_device_settings()[0]
 
     def get_quorum_device_settings(self):
         """
@@ -219,9 +162,22 @@ class ConfigFacade(object):
             heuristics_options,
         )
 
+    def is_quorum_device_heuristics_enabled_with_no_exec(self):
+        heuristics_options = self.get_quorum_device_settings()[3]
+        regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
+        exec_found = False
+        for name, value in heuristics_options.items():
+            if value and regexp.match(name):
+                exec_found = True
+                break
+        return (
+            not exec_found
+            and
+            heuristics_options.get("mode") in ("on", "sync")
+        )
+
     def add_quorum_device(
-        self, report_processor, model, model_options, generic_options,
-        heuristics_options, force_model=False, force_options=False,
+        self, model, model_options, generic_options, heuristics_options
     ):
         """
         Add quorum device configuration
@@ -230,37 +186,14 @@ class ConfigFacade(object):
         dict model_options -- model specific options
         dict generic_options -- generic quorum device options
         dict heuristics_options -- heuristics options
-        bool force_model -- continue even if the model is not valid
-        bool force_options -- continue even if options are not valid
         """
-        # validation
         if self.has_quorum_device():
             raise LibraryError(reports.qdevice_already_defined())
-        report_processor.process_list(
-            self.__validate_quorum_device_model(model, force_model)
-            +
-            self.__validate_quorum_device_model_options(
-                model,
-                model_options,
-                need_required=True,
-                force=force_options
-            )
-            +
-            self.__validate_quorum_device_generic_options(
-                generic_options,
-                force=force_options
-            )
-            +
-            self.__validate_quorum_device_add_heuristics(
-                heuristics_options,
-                force_options=force_options
-            )
-        )
 
         # configuration cleanup
         remove_need_stopped_cluster = dict([
             (name, "")
-            for name in self.__class__.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
+            for name in constants.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
         ])
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
@@ -299,18 +232,12 @@ class ConfigFacade(object):
         self.__set_section_options([new_heuristics], heuristics_options)
         new_device.add_section(new_heuristics)
 
-        if self.__is_heuristics_enabled_with_no_exec():
-            report_processor.process(
-                reports.corosync_quorum_heuristics_enabled_with_no_exec()
-            )
-
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
     def update_quorum_device(
-        self, report_processor, model_options, generic_options,
-        heuristics_options, force_options=False
+        self, model_options, generic_options, heuristics_options
     ):
         """
         Update existing quorum device configuration
@@ -318,34 +245,10 @@ class ConfigFacade(object):
         dict model_options -- model specific options
         dict generic_options -- generic quorum device options
         dict heuristics_options -- heuristics options
-        bool force_options -- continue even if options are not valid
         """
-        # validation
         if not self.has_quorum_device():
             raise LibraryError(reports.qdevice_not_defined())
-        model = None
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                for dummy_name, value in device.get_attributes("model"):
-                    model = value
-        report_processor.process_list(
-            self.__validate_quorum_device_model_options(
-                model,
-                model_options,
-                need_required=False,
-                force=force_options
-            )
-            +
-            self.__validate_quorum_device_generic_options(
-                generic_options,
-                force=force_options
-            )
-            +
-            self.__validate_quorum_device_update_heuristics(
-                heuristics_options,
-                force_options=force_options
-            )
-        )
+        model = self.get_quorum_device_model()
 
         # set new configuration
         device_sections = []
@@ -371,11 +274,6 @@ class ConfigFacade(object):
         self.__set_section_options(device_sections, generic_options)
         self.__set_section_options(model_sections, model_options)
         self.__set_section_options(heuristics_sections, heuristics_options)
-
-        if self.__is_heuristics_enabled_with_no_exec():
-            report_processor.process(
-                reports.corosync_quorum_heuristics_enabled_with_no_exec()
-            )
 
         self.__update_qdevice_votes()
         self.__update_two_node()
@@ -406,345 +304,6 @@ class ConfigFacade(object):
                 quorum.del_section(device)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-
-    def __validate_quorum_device_model(self, model, force_model=False):
-        report_items = []
-
-        allowed_values = (
-            "net",
-        )
-        if model not in allowed_values:
-            report_items.append(reports.invalid_option_value(
-                "model",
-                model,
-                allowed_values,
-                severity=(
-                    ReportItemSeverity.WARNING if force_model
-                    else ReportItemSeverity.ERROR
-                ),
-                forceable=(
-                    None if force_model else report_codes.FORCE_QDEVICE_MODEL
-                )
-            ))
-
-        return report_items
-
-    def __validate_quorum_device_model_options(
-        self, model, model_options, need_required, force=False
-    ):
-        if model == "net":
-            return self.__validate_quorum_device_model_net_options(
-                model_options,
-                need_required,
-                force=force
-            )
-        return []
-
-    def __validate_quorum_device_model_net_options(
-        self, model_options, need_required, force=False
-    ):
-        required_options = frozenset(["host", "algorithm"])
-        optional_options = frozenset([
-            "connect_timeout",
-            "force_ip_version",
-            "port",
-            "tie_breaker",
-        ])
-        allowed_options = required_options | optional_options
-        model_options_names = frozenset(model_options.keys())
-        missing_options = []
-        report_items = []
-        severity = (
-            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
-        )
-        forceable = None if force else report_codes.FORCE_OPTIONS
-
-        if need_required:
-            missing_options += required_options - model_options_names
-
-        for name, value in sorted(model_options.items()):
-            if name not in allowed_options:
-                report_items.append(reports.invalid_options(
-                    [name],
-                    allowed_options,
-                    "quorum device model",
-                    severity=severity,
-                    forceable=forceable
-                ))
-                continue
-
-            if value == "":
-                # do not allow to remove required options
-                if name in required_options:
-                    missing_options.append(name)
-                else:
-                    continue
-
-            if name == "algorithm":
-                allowed_values = ("ffsplit", "lms")
-                if value not in allowed_values:
-                    report_items.append(reports.invalid_option_value(
-                        name,
-                        value,
-                        allowed_values,
-                        severity=severity,
-                        forceable=forceable
-                    ))
-
-            if name == "connect_timeout":
-                minimum, maximum = 1000, 2*60*1000
-                if not (value.isdigit() and minimum <= int(value) <= maximum):
-                    min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report_items.append(reports.invalid_option_value(
-                        name,
-                        value,
-                        min_max,
-                        severity=severity,
-                        forceable=forceable
-                    ))
-
-            if name == "force_ip_version":
-                allowed_values = ("0", "4", "6")
-                if value not in allowed_values:
-                    report_items.append(reports.invalid_option_value(
-                        name,
-                        value,
-                        allowed_values,
-                        severity=severity,
-                        forceable=forceable
-                    ))
-
-            if name == "port":
-                minimum, maximum = 1, 65535
-                if not (value.isdigit() and minimum <= int(value) <= maximum):
-                    min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report_items.append(reports.invalid_option_value(
-                        name,
-                        value,
-                        min_max,
-                        severity=severity,
-                        forceable=forceable
-                    ))
-
-            if name == "tie_breaker":
-                node_ids = [node.id for node in self.get_nodes()]
-                allowed_nonid = ["lowest", "highest"]
-                if value not in allowed_nonid + node_ids:
-                    allowed_values = allowed_nonid + ["valid node id"]
-                    report_items.append(reports.invalid_option_value(
-                        name,
-                        value,
-                        allowed_values,
-                        severity=severity,
-                        forceable=forceable
-                    ))
-
-        if missing_options:
-            report_items.append(
-                reports.required_option_is_missing(sorted(missing_options))
-            )
-
-        return report_items
-
-    def __validate_quorum_device_generic_options(
-        self, generic_options, force=False
-    ):
-        optional_options = frozenset([
-            "sync_timeout",
-            "timeout",
-        ])
-        allowed_options = optional_options
-        report_items = []
-        severity = (
-            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
-        )
-        forceable = None if force else report_codes.FORCE_OPTIONS
-
-        for name, value in sorted(generic_options.items()):
-            if name not in allowed_options:
-                # model is never allowed in generic options, it is passed
-                # in its own argument
-                report_items.append(reports.invalid_options(
-                    [name],
-                    allowed_options,
-                    "quorum device",
-                    severity=(
-                        severity if name != "model"
-                        else ReportItemSeverity.ERROR
-                    ),
-                    forceable=(forceable if name != "model" else None)
-                ))
-                continue
-
-            if value == "":
-                continue
-
-            if not value.isdigit():
-                report_items.append(reports.invalid_option_value(
-                    name,
-                    value,
-                    "positive integer",
-                    severity=severity,
-                    forceable=forceable
-                ))
-
-        return report_items
-
-    def __split_heuristics_exec_options(self, heuristics_options):
-        options_exec = dict()
-        options_nonexec = dict()
-        for name, value in heuristics_options.items():
-            if name.startswith("exec_"):
-                options_exec[name] = value
-            else:
-                options_nonexec[name] = value
-        return options_nonexec, options_exec
-
-    def __get_heuristics_options_validators(
-        self, allow_empty_values=False, force_options=False
-    ):
-        validators = {
-            "mode": validate.value_in(
-                "mode",
-                ("off", "on", "sync"),
-                code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-                allow_extra_values=force_options
-            ),
-            "interval": validate.value_positive_integer(
-                "interval",
-                code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-                allow_extra_values=force_options
-            ),
-            "sync_timeout": validate.value_positive_integer(
-                "sync_timeout",
-                code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-                allow_extra_values=force_options
-            ),
-            "timeout": validate.value_positive_integer(
-                "timeout",
-                code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-                allow_extra_values=force_options
-            ),
-        }
-        if not allow_empty_values:
-            # make sure to return a list even in python3 so we can call append
-            # on it
-            return list(validators.values())
-        return [
-            validate.value_empty_or_valid(option_name, validator)
-            for option_name, validator in validators.items()
-        ]
-
-    def __validate_heuristics_noexec_option_names(
-        self, options_nonexec, force_options=False
-    ):
-        return validate.names_in(
-            ("mode", "interval", "sync_timeout", "timeout"),
-            options_nonexec.keys(),
-            "heuristics",
-            report_codes.FORCE_OPTIONS,
-            allow_extra_names=force_options,
-            allowed_option_patterns=["exec_NAME"]
-        )
-
-    def __validate_heuristics_exec_option_names(self, options_exec):
-        # We must be strict and do not allow to override this validation,
-        # otherwise setting a cratfed exec_NAME could be misused for setting
-        # arbitrary corosync.conf settings.
-        regexp = self.__QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
-        report_list = []
-        valid_options = []
-        not_valid_options = []
-        for name in options_exec:
-            if regexp.match(name) is None:
-                not_valid_options.append(name)
-            else:
-                valid_options.append(name)
-        if not_valid_options:
-            report_list.append(
-                reports.invalid_userdefined_options(
-                    not_valid_options,
-                    "exec_NAME cannot contain '.:{}#' and whitespace characters",
-                    "heuristics",
-                    severity=ReportItemSeverity.ERROR,
-                    forceable=None
-                )
-            )
-        return report_list, valid_options
-
-    def __validate_quorum_device_add_heuristics(
-        self, heuristics_options, force_options=False
-    ):
-        report_list = []
-        options_nonexec, options_exec = self.__split_heuristics_exec_options(
-            heuristics_options
-        )
-        validators = self.__get_heuristics_options_validators(
-            force_options=force_options
-        )
-        exec_options_reports, valid_exec_options = (
-            self.__validate_heuristics_exec_option_names(options_exec)
-        )
-        for option in valid_exec_options:
-            validators.append(
-                validate.value_not_empty(option, "a command to be run")
-            )
-        report_list.extend(
-            validate.run_collection_of_option_validators(
-                heuristics_options, validators
-            )
-            +
-            self.__validate_heuristics_noexec_option_names(
-                options_nonexec, force_options=force_options
-            )
-            +
-            exec_options_reports
-        )
-        return report_list
-
-    def __validate_quorum_device_update_heuristics(
-        self, heuristics_options, force_options=False
-    ):
-        report_list = []
-        options_nonexec, options_exec = self.__split_heuristics_exec_options(
-            heuristics_options
-        )
-        validators = self.__get_heuristics_options_validators(
-            allow_empty_values=True, force_options=force_options
-        )
-        # no validation necessary for values of valid exec options - they are
-        # either empty (meaning they should be removed) or nonempty strings
-        exec_options_reports, dummy_valid_exec_options = (
-            self.__validate_heuristics_exec_option_names(options_exec)
-        )
-        report_list.extend(
-            validate.run_collection_of_option_validators(
-                heuristics_options, validators
-            )
-            +
-            self.__validate_heuristics_noexec_option_names(
-                options_nonexec, force_options=force_options
-            )
-            +
-            exec_options_reports
-        )
-        return report_list
-
-    def __is_heuristics_enabled_with_no_exec(self):
-        regexp = self.__QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
-        mode = None
-        exec_found = False
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                for heuristics in device.get_sections("heuristics"):
-                    for name, value in heuristics.get_attributes():
-                        if name == "mode" and value:
-                            # Cannot break, must go through all modes, the last
-                            # one matters
-                            mode = value
-                        elif regexp.match(name) and value:
-                            exec_found = True
-        return not exec_found and mode in ("on", "sync")
 
     def __update_two_node(self):
         # get relevant status

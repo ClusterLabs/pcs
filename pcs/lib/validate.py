@@ -333,6 +333,30 @@ def value_in(
         allow_extra_values=allow_extra_values,
     )
 
+def value_integer_in_range(
+    option_name, at_least, at_most, option_name_for_report=None,
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
+    """
+    Get a validator reporting INVALID_OPTION_VALUE when the value is not an
+    integer such that at_least <= value <= at_most
+
+    string option_name -- name of the option to check
+    int at_least -- minimal allowed value
+    int at_most -- maximal allowed value
+    string option_name_for_report -- substitued by the option_name if not set
+    string code_to_allow_extra_values -- create a report forceable by this code
+    bool allow_extra_values -- create a warning instead of an error if True
+    """
+    return value_cond(
+        option_name,
+        lambda value: is_integer(value, at_least, at_most),
+        "{min}..{max}".format(min=at_least, max=at_most),
+        option_name_for_report=option_name_for_report,
+        code_to_allow_extra_values=code_to_allow_extra_values,
+        allow_extra_values=allow_extra_values,
+    )
+
 def value_nonnegative_integer(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
@@ -516,6 +540,30 @@ def matches_regexp(value, regexp):
     if not hasattr(regexp, "match"):
         regexp = re.compile(regexp)
     return regexp.match(value) is not None
+
+def allow_extra_values(code_to_allow, allow):
+    """
+    A usefull shortcut for calling validators
+
+    string code_to_allow -- code to force an error
+    bool allow -- make extra values emit a warning
+    """
+    return {
+        "code_to_allow_extra_values": code_to_allow,
+        "allow_extra_values": allow,
+    }
+
+def allow_extra_names(code_to_allow, allow):
+    """
+    A usefull shortcut for calling validators
+
+    string code_to_allow -- code to force an error
+    bool allow -- make extra names emit a warning
+    """
+    return {
+        "code_to_allow_extra_names": code_to_allow,
+        "allow_extra_names": allow,
+    }
 
 def _if_option_exists(option_name):
     def params_wrapper(validate_func):

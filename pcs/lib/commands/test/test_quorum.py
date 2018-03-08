@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
@@ -715,6 +716,61 @@ class AddDeviceNetTest(TestCase):
             for node in self.cluster_nodes
         ]
 
+    def assert_success_heuristics_no_exec(self, mock_write_tmpfile, mode, warn):
+        tmpfile_instance = mock.MagicMock()
+        tmpfile_instance.name = rc("file.tmp")
+        mock_write_tmpfile.return_value = tmpfile_instance
+
+        expected_corosync_conf = open(
+                rc(self.corosync_conf_name)
+            ).read().replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+
+                        heuristics {
+                            mode: %mode%
+                        }
+                    }
+                """.replace("%mode%", mode)
+            )
+        )
+
+        self.fixture_config_success(
+            expected_corosync_conf,
+            tmpfile_instance.name
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            { "mode": mode}
+        )
+
+        mock_write_tmpfile.assert_called_once_with(
+            self.certs["signed_request"]["data"],
+            binary=True
+        )
+        expected_reports = self.fixture_reports_success()
+        if warn:
+            expected_reports += [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            ]
+        self.env_assist.assert_reports(expected_reports)
+
     def test_disabled_on_cman(self):
         self.config.runner.corosync.version(version="1.4.7")
         self.env_assist.assert_raise_library_error(
@@ -749,7 +805,7 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="bad model",
-                    allowed_values=("net", )
+                    allowed_values=["net", ]
                 ),
             ]
         )
@@ -950,61 +1006,18 @@ class AddDeviceNetTest(TestCase):
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_heuristics_no_exec(self, mock_write_tmpfile):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+    def test_success_heuristics_on_no_exec(self, mock_write_tmpfile):
+        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "on", True)
 
-        expected_corosync_conf = open(
-                rc(self.corosync_conf_name)
-            ).read().replace(
-            "    provider: corosync_votequorum\n",
-            outdent("""\
-                    provider: corosync_votequorum
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_heuristics_sync_no_exec(self, mock_write_tmpfile):
+        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "sync", True)
 
-                    device {
-                        model: net
-                        votes: 1
-
-                        net {
-                            algorithm: ffsplit
-                            host: qnetd-host
-                        }
-
-                        heuristics {
-                            mode: on
-                        }
-                    }
-                """
-            )
-        )
-
-        self.fixture_config_success(
-            expected_corosync_conf,
-            tmpfile_instance.name
-        )
-
-        lib.add_device(
-            self.env_assist.get_env(),
-            "net",
-            {"host": self.qnetd_host, "algorithm": "ffsplit"},
-            {},
-            { "mode": "on"}
-        )
-
-        mock_write_tmpfile.assert_called_once_with(
-            self.certs["signed_request"]["data"],
-            binary=True
-        )
-        self.env_assist.assert_reports(
-            self.fixture_reports_success()
-            +
-            [
-                fixture.warn(
-                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
-                )
-            ]
-        )
+    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
+    def test_success_heuristics_off_no_exec(self, mock_write_tmpfile):
+        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "off", False)
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
@@ -1520,7 +1533,7 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="bad_model",
-                    allowed_values=("net", ),
+                    allowed_values=["net", ],
                 ),
             ]
         )
@@ -1567,7 +1580,7 @@ class AddDeviceNetTest(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="model",
                 option_value="bad_model",
-                allowed_values=("net", ),
+                allowed_values=["net", ],
             ),
         ] + [
             fixture.info(
@@ -1985,6 +1998,18 @@ class RemoveDeviceHeuristics(TestCase):
 
         lib.remove_device_heuristics(self.env_assist.get_env())
 
+    def test_fail_if_device_not_set(self):
+        self.config.runner.corosync.version()
+        self.config.corosync_conf.load_content(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
+            expected_in_processor=False
+        )
 
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
@@ -2538,6 +2563,80 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
+    def assert_success_heuristics_add_no_exec(
+        self, mock_get_corosync, mock_push_corosync, mode, warn
+    ):
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.update_device(lib_env, {}, {}, {"mode": mode})
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            original_conf
+                .replace(
+                    "            host: 127.0.0.1\n",
+                    outdent("""\
+                                host: 127.0.0.1
+                            }
+
+                            heuristics {
+                                mode: %mode%
+                    """.replace("%mode%", mode))
+                )
+        )
+        expected_reports = []
+        if warn:
+            expected_reports += [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            ]
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            expected_reports
+        )
+
+    def assert_success_heuristics_update_no_exec(
+        self, mock_get_corosync, mock_push_corosync, mode, warn
+    ):
+        original_conf = open(
+            rc("corosync-3nodes-qdevice-heuristics.conf")
+        ).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.update_device(lib_env, {}, {}, {"mode": mode, "exec_ls": ""})
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        expected_config = re.sub(
+            re.compile(r"heuristics {[^}]*}\n", re.MULTILINE | re.DOTALL),
+            outdent("""\
+                heuristics {
+                            mode: %mode%
+                        }
+                """
+            ).replace("%mode%", mode),
+            original_conf
+        )
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            expected_config
+        )
+        expected_reports = []
+        if warn:
+            expected_reports += [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                )
+            ]
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            expected_reports
+        )
+
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -2621,37 +2720,104 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         self.assertEqual([], self.mock_reporter.report_item_list)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_success_heuristics_no_exec(
+    def test_success_heuristics_add_no_exec_on(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        self.assert_success_heuristics_add_no_exec(
+            mock_get_corosync, mock_push_corosync, "on", True
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_add_no_exec_sync(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        self.assert_success_heuristics_add_no_exec(
+            mock_get_corosync, mock_push_corosync, "sync", True
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_add_no_exec_off(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        self.assert_success_heuristics_add_no_exec(
+            mock_get_corosync, mock_push_corosync, "off", False
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_update_no_exec_on(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        self.assert_success_heuristics_update_no_exec(
+            mock_get_corosync, mock_push_corosync, "on", True
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_update_no_exec_sync(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        self.assert_success_heuristics_update_no_exec(
+            mock_get_corosync, mock_push_corosync, "sync", True
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_update_no_exec_off(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        self.assert_success_heuristics_update_no_exec(
+            mock_get_corosync, mock_push_corosync, "off", False
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_update_no_exec_present(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        original_conf = open(
+            rc("corosync-3nodes-qdevice-heuristics.conf")
+        ).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
-        lib.update_device(lib_env, {}, {}, {"mode": "on"})
+        lib.update_device(lib_env, {}, {}, {
+            "exec_ls": "",
+            "exec_ping": "ping example.com"
+        })
 
         self.assertEqual(1, len(mock_push_corosync.mock_calls))
         ac(
             mock_push_corosync.mock_calls[0][1][0].config.export(),
-            original_conf
-                .replace(
-                    "            host: 127.0.0.1\n",
-                    outdent("""\
-                                host: 127.0.0.1
-                            }
-
-                            heuristics {
-                                mode: on
-                    """)
-                )
+            original_conf.replace(
+                "exec_ls: /usr/bin/test -f /tmp/test",
+                "exec_ping: ping example.com"
+            )
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
-            [
-                fixture.warn(
-                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
-                )
-            ]
+            []
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_heuristics_update_no_exec_kept(
+        self, mock_get_corosync, mock_push_corosync
+    ):
+        original_conf = open(
+            rc("corosync-3nodes-qdevice-heuristics.conf")
+        ).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.update_device(lib_env, {}, {}, {"mode": "sync"})
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            original_conf.replace(
+                "mode: on",
+                "mode: sync",
+            )
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            []
         )
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
