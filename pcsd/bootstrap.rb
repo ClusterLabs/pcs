@@ -1,4 +1,11 @@
-require 'digest/sha2'
+begin
+  require 'openssl'
+  Object.send(:remove_const, :Digest)
+  Digest = OpenSSL::Digest
+rescue LoadError
+  require 'digest/sha2'
+end
+
 require 'logger'
 require 'open4'
 require 'pathname'
