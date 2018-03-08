@@ -321,6 +321,144 @@ class AddQuorumDevice(TestCase):
             ]
         )
 
+    def test_empty_options_net(self):
+        assert_report_item_list_equal(
+            config_validators.add_quorum_device(
+                "net",
+                {
+                    "host": "",
+                    "port": "",
+                    "algorithm": "",
+                    "connect_timeout": "",
+                    "force_ip_version": "",
+                    "tie_breaker": "",
+                },
+                {
+                    "timeout": "",
+                    "sync_timeout": "",
+                },
+                {
+                    "mode": "",
+                    "timeout": "",
+                    "sync_timeout": "",
+                    "interval": "",
+                    "exec_ping": "",
+                },
+                self.node_ids
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="host",
+                    option_value="",
+                    allowed_values="a qdevice host address"
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "algorithm",
+                        "option_value": "",
+                        "allowed_values": ("ffsplit", "lms"),
+                    },
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "connect_timeout",
+                        "option_value": "",
+                        "allowed_values": "1000..120000",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "force_ip_version",
+                        "option_value": "",
+                        "allowed_values": ("0", "4", "6"),
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "port",
+                        "option_value": "",
+                        "allowed_values": "a port number (1-65535)",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "tie_breaker",
+                        "option_value": "",
+                        "allowed_values": ["lowest", "highest"] + self.node_ids,
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "sync_timeout",
+                        "option_value": "",
+                        "allowed_values": "a positive integer",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "timeout",
+                        "option_value": "",
+                        "allowed_values": "a positive integer",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="mode",
+                    option_value="",
+                    allowed_values=("off", "on", "sync")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="interval",
+                    option_value="",
+                    allowed_values="a positive integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="sync_timeout",
+                    option_value="",
+                    allowed_values="a positive integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="timeout",
+                    option_value="",
+                    allowed_values="a positive integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="exec_ping",
+                    option_value="",
+                    allowed_values="a command to be run"
+                ),
+            ]
+        )
+
     def test_bad_options_net(self):
         assert_report_item_list_equal(
             config_validators.add_quorum_device(
