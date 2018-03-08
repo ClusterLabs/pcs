@@ -6,7 +6,6 @@ from pcs.common import report_codes
 from pcs.lib import reports, node_communication_format
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.tools import (
-    generate_binary_key,
     get_fencing_topology,
     get_resources,
 )
@@ -39,6 +38,7 @@ from pcs.lib.pacemaker.live import (
     verify as verify_cmd,
 )
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.tools import generate_binary_key
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
@@ -114,12 +114,14 @@ def verify(env, verbose=False):
 
 
 def setup(
-    env, cluster_name, nodes, transport_type, transport_options, link_list,
-    cryptio_options, totem_options, quorum_options,
-    wait=False, start=False, enable=False, force=False,
+    env, cluster_name, nodes,
+    transport_type=None, transport_options=None, link_list=None,
+    compression_options=None, crypto_options=None, totem_options=None,
+    quorum_options=None, wait=False, start=False, enable=False, force=False,
 ):
     # TODO: do some validations of inputs
-    node_name_list = list(nodes.keys())
+    # if node doesn't contain key 'name' validations of inputs should report it
+    node_name_list = [node["name"] for node in nodes if "name" in node]
     report_list, target_list = (
         env.get_node_target_factory().get_target_list_with_reports(
             node_name_list, allow_skip=False,

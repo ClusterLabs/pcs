@@ -54,32 +54,12 @@ def _parse_addr(addr):
     return url.hostname, (url.port if url.port else settings.pcsd_default_port)
 
 
-def _split_by_hosts(argv):
-    if "=" in argv[0]:
-        raise CmdLineInputError(
-            "Invalid character '=' in host name '{}'".format(argv[0])
-        )
-    cur_host = None
-    hosts = {}
-    for arg in argv:
-        if "=" in arg:
-            hosts[cur_host].append(arg)
-        else:
-            cur_host = arg
-            if cur_host in hosts:
-                raise CmdLineInputError(
-                    "Host '{}' defined multiple times".format(cur_host)
-                )
-            hosts[cur_host] = []
-    return hosts
-
-
 def auth_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("No host specified")
     host_dict = {
         host: _parse_host_options(host, opts)
-        for host, opts in _split_by_hosts(argv).items()
+        for host, opts in parse_args.split_by_identifiers(argv, "host").items()
     }
     username, password = utils.get_user_and_pass()
     for host_info in host_dict.values():

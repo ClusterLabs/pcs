@@ -185,6 +185,7 @@ def load_module(env, middleware_factory, name):
             ),
             {
                 "node_clear": cluster.node_clear,
+                "setup": cluster.setup,
                 "verify": cluster.verify,
             }
         )

@@ -25,6 +25,7 @@ from pcs import (
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
 from pcs.common.node_communicator import HostNotFound
+from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
@@ -92,6 +93,13 @@ def cluster_cmd(argv):
             utils.err(
                 "A cluster name (--name <name>) is required to setup a cluster"
             )
+    elif (sub_cmd == "new-setup"):
+        try:
+            new_cluster_setup(
+                utils.get_library_wrapper(), argv, utils.get_modifiers()
+            )
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):
@@ -2396,3 +2404,116 @@ def cluster_auth_cmd(lib, argv, modifiers):
         msgs = send_local_configs(cluster_node_list.labels, force=True)
         for msg in msgs:
             print("Warning: {0}".format(msg))
+
+
+def _parse_node_options(node, options):
+    ADDR_OPT_KEYWORD = "addrs"
+    supported_options = {ADDR_OPT_KEYWORD}
+    parsed_options = parse_args.prepare_options(options)
+    unknown_options = set(parsed_options.keys()) - supported_options
+    if unknown_options:
+        raise CmdLineInputError(
+            "Unknown options {} for node '{}'".format(
+                ", ".join(sorted(unknown_options)), node
+            )
+        )
+    parsed_options["name"] = node
+    parsed_options[ADDR_OPT_KEYWORD] = (
+        parsed_options[ADDR_OPT_KEYWORD].split(",")
+        if ADDR_OPT_KEYWORD in parsed_options
+        else []
+    )
+    return parsed_options
+
+
+def _transport_specific_parsing(options, specific_keywords):
+    DEFAULT_SECTION = "__default__"
+    LINK_KEYWORD = "link"
+    parsed_options = parse_args.group_by_keywords(
+        options,
+        specific_keywords | {LINK_KEYWORD},
+        implicit_first_group_key=DEFAULT_SECTION,
+        group_repeated_keywords=[LINK_KEYWORD],
+    )
+    base_options = parse_args.prepare_options(parsed_options[DEFAULT_SECTION])
+    other_options = {
+        section: parse_args.prepare_options(parsed_options[section])
+        for section in specific_keywords
+    }
+    other_options[LINK_KEYWORD] = [
+        parse_args.prepare_options(link_options)
+        for link_options in parsed_options[LINK_KEYWORD]
+    ]
+    return base_options, other_options
+
+
+TRANSPORT_KEYWORD = "transport"
+KNET_KEYWORD = "knet"
+SUPPORTED_TRANSPORT_TYPES = set([KNET_KEYWORD] + ["udp", "udpu"])
+def _parse_transport(transport_args):
+    if len(transport_args) < 1:
+        raise CmdLineInputError(
+            "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
+        )
+    other_options = {}
+    transport_type, *transport_options = transport_args
+    if transport_type not in SUPPORTED_TRANSPORT_TYPES:
+        raise CmdLineInputError(
+            "Unknown {0} type '{1}'. Supported {0} types are: {2}".format(
+                TRANSPORT_KEYWORD,
+                transport_type,
+                ", ".join(SUPPORTED_TRANSPORT_TYPES),
+            )
+        )
+    transport_specific_keywords = set()
+    if transport_type == KNET_KEYWORD:
+        transport_specific_keywords = {"compression", "crypto"}
+
+    transport_options_dict, other_options_dict = _transport_specific_parsing(
+        transport_options, transport_specific_keywords
+    )
+
+    return transport_type, transport_options_dict, other_options_dict
+
+
+def new_cluster_setup(lib, argv, modifiers):
+    DEFAULT_TRANSPORT_TYPE = KNET_KEYWORD
+    if len(argv) < 2:
+        raise CmdLineInputError()
+    cluster_name, *argv = argv
+    keywords = [TRANSPORT_KEYWORD, "totem", "quorum"]
+    parsed_args = parse_args.group_by_keywords(
+        argv, keywords,
+        implicit_first_group_key="nodes",
+        keyword_repeat_allowed=False,
+        only_found_keywords=True,
+    )
+    nodes = [
+        _parse_node_options(node, options)
+        for node, options in parse_args.split_by_identifiers(
+            parsed_args["nodes"], "node",
+        ).items()
+    ]
+
+    transport_type = DEFAULT_TRANSPORT_TYPE
+    transport_options = {}
+    other_options = {}
+
+    if TRANSPORT_KEYWORD in parsed_args:
+        transport_type, transport_options, other_options = _parse_transport(
+            parsed_args[TRANSPORT_KEYWORD]
+        )
+
+    lib.cluster.setup(
+        cluster_name,
+        nodes,
+        transport_type=transport_type,
+        transport_options=transport_options,
+        link_list=other_options.get("link", []),
+        compression_options=other_options.get("compression", {}),
+        crypto_options=other_options.get("crypto", {}),
+        totem_options=parse_args.prepare_options(parsed_args.get("totem", [])),
+        quorum_options=parse_args.prepare_options(
+            parsed_args.get("quorum", [])
+        ),
+    )
