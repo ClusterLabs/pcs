@@ -1994,11 +1994,18 @@ def getCorosyncNodesID(allow_failure=False):
             node_list_node_mapping[m.group(1)] = m.group(2)
 
     for line in output.rstrip().split("\n"):
-        m = re.match("nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", line)
-        # check if node id is in node_list_node_mapping - do not crash when
-        # node ids are not specified
+        # check if node name stored in corosync.conf under name in the nodelist
+        m = re.match("nodelist\.node\.(\d+)\.name.*= (.*)", line)
         if m and m.group(1) in node_list_node_mapping:
             cs_nodes[node_list_node_mapping[m.group(1)]] = m.group(2)
+            continue
+
+        # otherwise use ring0_addr as node name
+        m = re.match("nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", line)
+        if (m and m.group(1) in node_list_node_mapping and
+                not node_list_node_mapping[m.group(1)] in cs_nodes):
+            cs_nodes[node_list_node_mapping[m.group(1)]] = m.group(2)
+
     return cs_nodes
 
 # Warning, if a node has never started the hostname may be '(null)'
