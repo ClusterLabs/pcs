@@ -28,6 +28,19 @@ class ConfigFacade(object):
                 reports.corosync_config_parser_other_error()
             )
 
+    @classmethod
+    def create(cls, cluster_name, nodes, transport):
+        """
+        Create a minimal config
+
+        string cluster_name -- a name of a cluster
+        dict nodes -- key: nodename, value: dict (address list)
+        string transport -- corosync transport
+        """
+        root = config_parser.Section("")
+        # TODO actually create all required sections
+        return cls(root)
+
     def __init__(self, parsed_config):
         """
         Create a facade around a parsed corosync config file
@@ -82,9 +95,41 @@ class ConfigFacade(object):
                 ))
         return result
 
+    def add_link(self, options):
+        """
+        Add a new link
+
+        dict options -- link options
+        """
+
+    def set_transport_udp_options(self, options):
+        """
+        Set transport options for udp transports
+
+        dict options -- transport options
+        """
+
+    def set_transport_knet_options(
+        self, generic_options, compression_options, crypto_options
+    ):
+        """
+        Set transport options for knet transport
+
+        dict generic_options -- generic transport options
+        dict compression_options -- compression options
+        dict crypto_options -- crypto options
+        """
+
+    def set_totem_options(self, options):
+        """
+        Set options in the "totem" section
+
+        dict options -- totem options
+        """
+
     def set_quorum_options(self, options):
         """
-        Set options in quorum section
+        Set options in the "quorum" section
 
         dict options -- quorum options
         """
@@ -96,7 +141,7 @@ class ConfigFacade(object):
 
     def get_quorum_options(self):
         """
-        Get configurable options from quorum section
+        Get configurable options from the "quorum" section
         """
         options = {}
         for section in self.config.get_sections("quorum"):

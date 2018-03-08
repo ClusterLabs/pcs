@@ -14,6 +14,31 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "tie_breaker",
 )
 
+
+def create(cluster_name, nodes, transport):
+    report_items = []
+    return report_items
+
+def create_link_list(transport, link_list):
+    report_items = []
+    return report_items
+
+def create_transport_udp(options):
+    report_items = []
+    return report_items
+
+def create_transport_knet(generic_options, compression_options, crypto_options):
+    report_items = []
+    return report_items
+
+def create_totem(options):
+    report_items = []
+    return report_items
+
+def create_quorum(options):
+    report_items = []
+    return report_items
+
 def update_quorum_options(options, has_qdevice):
     """
     Validate modifying quorum options, return list of report items
