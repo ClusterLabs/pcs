@@ -2,13 +2,25 @@
 import os.path
 import sys
 
-PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# We prevent to import some module from this dir instead of e.g. standard module.
+# There is no reason to import anything from this module.
+sys.path.remove(CURRENT_DIR)
+
+# Add pcs package.
+PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.insert(0, PACKAGE_DIR)
 
-from pcs import (
-    app,
-    settings,
-)
 
-settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
-app.main(sys.argv[1:])
+if "-d" in sys.argv:
+    from pcs.daemon.app import main
+    main()
+else:
+    from pcs import (
+        app,
+        settings,
+    )
+
+    settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+    app.main(sys.argv[1:])

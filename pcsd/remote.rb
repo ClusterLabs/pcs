@@ -658,17 +658,6 @@ def set_certs(params, request, auth_user)
     end
   end
 
-  if params['cookie_secret']
-    cookie_secret = params['cookie_secret'].strip
-    if !cookie_secret.empty?
-      begin
-        write_file_lock(COOKIE_FILE, 0700, cookie_secret)
-      rescue => e
-        return [400, "cannot save cookie secret: #{e}"]
-      end
-    end
-  end
-
   return [200, 'success']
 end
 
@@ -1354,7 +1343,7 @@ def clusters_overview(params, request, auth_user)
 end
 
 def auth(params, request, auth_user)
-  return PCSAuth.validUser(params['username'], params['password'], true)
+  return PCSAuth.validUser(params['username'], params['password'])
 end
 
 def check_auth(params, request, auth_user)

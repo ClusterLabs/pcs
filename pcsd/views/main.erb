@@ -1208,16 +1208,16 @@ Use the 'Add' button to submit the form.">
                 <% end %>
               </td>
               <td style="padding-bottom:8px;">
-                <% if session[:username] %>
+                <% if @tornado_is_authenticated %>
                   <div style="float:right">
                     <div class="menuheader">
-                      <div id="dropdownr" class="label"><%=session[:username]%><div style="float:right;" class="downarrow sprites"></div></div>
+                      <div id="dropdownr" class="label"><%=@tornado_session_username%><div style="float:right;" class="downarrow sprites"></div></div>
                       <div style="width:100%" class="menu">
                         <a href="/logout" class="menu-item">Logout&nbsp;&nbsp;</a>
                       </div>
                     </div>
                     <!-- <div id="dropdownr">
-                      <%=session[:username]%><div style="float:right;" class="downarrow sprites"></div>
+                      <%=@tornado_session_username%><div style="float:right;" class="downarrow sprites"></div>
                     </div> -->
                   </div>
                 <% end %>

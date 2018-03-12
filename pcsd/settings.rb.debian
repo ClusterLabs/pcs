@@ -5,7 +5,6 @@ PCSD_DEFAULT_PORT = 2224
 
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'
-COOKIE_FILE = PCSD_VAR_LOCATION + 'pcsd.cookiesecret'
 
 PENGINE = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pengine"
 CIB_BINARY = '/usr/lib/DEB_HOST_MULTIARCH/pacemaker/cib'

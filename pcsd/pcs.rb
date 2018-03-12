@@ -1322,7 +1322,6 @@ def send_local_certs_to_nodes(auth_user, nodes)
     data = {
       'ssl_cert' => File.read(CRT_FILE),
       'ssl_key' => File.read(KEY_FILE),
-      'cookie_secret' => File.read(COOKIE_FILE),
     }
   rescue => e
     return {
@@ -1337,14 +1336,6 @@ def send_local_certs_to_nodes(auth_user, nodes)
     return {
       'status' => 'error',
       'text' => "Invalid certificate and/or key: #{crt_errors.join}",
-      'node_status' => {},
-    }
-  end
-  secret_errors = verify_cookie_secret(data['cookie_secret'])
-  if secret_errors and not secret_errors.empty?
-    return {
-      'status' => 'error',
-      'text' => "Invalid cookie secret: #{secret_errors.join}",
       'node_status' => {},
     }
   end
@@ -1541,13 +1532,6 @@ def verify_cert_key_pair(cert, key)
   end
 
   return errors
-end
-
-def verify_cookie_secret(secret)
-  if secret.empty?
-    return ['Cookie secret is empty']
-  end
-  return []
 end
 
 def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)

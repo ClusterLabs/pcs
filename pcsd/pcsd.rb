@@ -21,45 +21,12 @@ require 'auth.rb'
 require 'wizard.rb'
 require 'cfgsync.rb'
 require 'permissions.rb'
-require 'session.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
 set :app_file, __FILE__
-
-def generate_cookie_secret
-  return SecureRandom.hex(30)
-end
-
-begin
-  secret = File.read(COOKIE_FILE)
-  secret_errors = verify_cookie_secret(secret)
-  if secret_errors and not secret_errors.empty?
-    secret_errors.each { |err| $logger.error err }
-    $logger.error "Invalid cookie secret, using temporary one"
-    secret = generate_cookie_secret()
-  end
-rescue Errno::ENOENT
-  secret = generate_cookie_secret()
-  File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
-end
-
-session_lifetime = ENV['PCSD_SESSION_LIFETIME'].to_i()
-session_lifetime = 60 * 60 unless session_lifetime > 0
-use SessionPoolLifetime,
-  :expire_after => session_lifetime,
-  :secret => secret,
-  :secure => true, # only send over HTTPS
-  :httponly => true # don't provide to javascript
-
-# session storage instance
-# will be created by Rack later and fetched in "before" filter
-$session_storage = nil
-$session_storage_env = {}
-
-#use Rack::SSL
 
 if development?
   Dir["wizards/*.rb"].each {|file| also_reload file}
@@ -74,32 +41,24 @@ if development?
   also_reload 'cfgsync.rb'
 end
 
+def getAuthUser()
+  return {
+    :username => $tornado_username,
+    :usergroups => $tornado_groups,
+  }
+end
+
 before do
   # nobody is logged in yet
   @auth_user = nil
+  @tornado_session_username = $tornado_username
+  @tornado_session_groups = $tornado_groups
+  @tornado_is_authenticated = $tornado_is_authenticated
 
-  # get session storage instance from env
-  if not $session_storage and env[:__session_storage]
-    $session_storage = env[:__session_storage]
-    $session_storage_env = env
-  end
-  begin
-    $session_storage.drop_expired(request)
-  rescue => e
-    $logger.warn("Exception while removing expired sessions: #{e}")
-  end
-
-  # urls which are accesible for everybody including not logged in users
-  always_accessible = [
-    '/login',
-    '/logout',
-    '/login-status',
-    '/remote/auth',
-  ]
-  if not always_accessible.include?(request.path)
+  if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs'
     # Sets @auth_user to a hash containing info about logged in user or halts
     # the request processing if login credentials are incorrect.
-    protected!
+    protect_by_token!
   else
     # Set a sane default: nobody is logged in, but we do not need to check both
     # for nil and empty username (if auth_user and auth_user[:username])
@@ -166,32 +125,10 @@ helpers do
     return request.env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
   end
 
-  def protected!
-    gui_request = ( # these are URLs for web pages
-      request.path == '/' or
-      request.path == '/manage' or
-      request.path == '/permissions' or
-      request.path.match('/managec/.+/main')
-    )
-    if request.path.start_with?('/remote/') or request.path == '/run_pcs'
-      @auth_user = PCSAuth.loginByToken(cookies)
-      unless @auth_user
-        halt [401, '{"notauthorized":"true"}']
-      end
-    else #/managec/* /manage/* /permissions
-      if !gui_request and !is_ajax? then
-        # Accept non GUI requests only with header
-        # "X_REQUESTED_WITH: XMLHttpRequest". (check if they are send via AJAX).
-        # This prevents CSRF attack.
-        halt [401, '{"notauthorized":"true"}']
-      elsif not PCSAuth.isLoggedIn(session)
-        if gui_request
-          session[:pre_login_path] = request.path
-          redirect '/login'
-        else
-          halt [401, '{"notauthorized":"true"}']
-        end
-      end
+  def protect_by_token!
+    @auth_user = PCSAuth.loginByToken(cookies)
+    unless @auth_user
+      halt [401, '{"notauthorized":"true"}']
     end
   end
 
@@ -400,58 +337,6 @@ end
 if not DISABLE_GUI
   get('/login'){ erb :login, :layout => :main }
 
-  get '/logout' do
-    session.destroy
-    if is_ajax?
-      halt [200, "OK"]
-    else
-      redirect '/login'
-    end
-  end
-
-  get '/login-status' do
-    if PCSAuth.isLoggedIn(session)
-      halt [200, session[:random]]
-    else
-      halt [401, '{"notauthorized":"true"}']
-    end
-  end
-
-  post '/login' do
-    auth_user = PCSAuth.loginByPassword(
-      params['username'], params['password']
-    )
-    if auth_user
-      PCSAuth.authUserToSession(auth_user, session)
-      # Temporarily ignore pre_login_path until we come up with a list of valid
-      # paths to redirect to (to prevent status_all issues)
-      #    if session["pre_login_path"]
-      #      plp = session["pre_login_path"]
-      #      session.delete("pre_login_path")
-      #      pp "Pre Login Path: " + plp
-      #      if plp == "" or plp == "/"
-      #        plp = '/manage'
-      #      end
-      #      redirect plp
-      #    else
-      session.delete(:bad_login_name)
-      session[:random] = "#{Time.now.to_i}-#{rand(100)}"
-      if is_ajax?
-        halt [200, session[:random]]
-      else
-        redirect '/manage'
-      end
-      #    end
-    else
-      if is_ajax?
-        halt [401, '{"notauthorized":"true"}']
-      else
-        session[:bad_login_name] = params['username']
-        redirect '/login'
-      end
-    end
-  end
-
   post '/manage/existingcluster' do
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     node = params['node-name']
@@ -508,7 +393,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/manage/newcluster' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     if not allowed_for_superuser(auth_user)
       return 400, 'Permission denied.'
     end
@@ -630,7 +515,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/manage/check_auth_against_nodes' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     node_list = []
     if params[:nodes] != nil and params[:nodes] != ''
       node_list = params[:nodes].split(',')
@@ -650,7 +535,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/manage/get_nodes_sw_versions' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     if params[:nodes] != nil and params[:nodes] != ''
       nodes = params[:nodes].split(',')
       final_response = {}
@@ -677,7 +562,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/manage/auth_gui_against_nodes' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     threads = []
     new_hosts = {}
     node_auth_error = {}
@@ -722,7 +607,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/clusters_overview' do
-    clusters_overview(params, request, PCSAuth.sessionToAuthUser(session))
+    clusters_overview(params, request, getAuthUser())
   end
 
   get '/permissions/?' do
@@ -733,7 +618,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/permissions_cluster_form/:cluster/?' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     @cluster_name = params[:cluster]
     @error = nil
     @permission_types = []
@@ -775,7 +660,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/main' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     @cluster_name = params[:cluster]
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     @clusters = pcs_config.clusters
@@ -791,7 +676,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/managec/:cluster/permissions_save/?' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     new_params = {
       'json_data' => JSON.generate(params)
     }
@@ -801,17 +686,17 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/status_all' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     status_all(params, request, auth_user, get_cluster_nodes(params[:cluster]))
   end
 
   get '/managec/:cluster/cluster_status' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     cluster_status_gui(auth_user, params[:cluster])
   end
 
   get '/managec/:cluster/cluster_properties' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     cluster = params[:cluster]
     unless cluster
       return 200, {}
@@ -985,7 +870,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/get_resource_agent_metadata' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     cluster = params[:cluster]
     resource_agent = params[:agent]
     code, out = send_cluster_request_with_token(
@@ -1061,7 +946,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/get_fence_agent_metadata' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     cluster = params[:cluster]
     fence_agent = params[:agent]
     code, out = send_cluster_request_with_token(
@@ -1179,7 +1064,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/managec/:cluster/add_node_to_cluster' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     clustername = params[:cluster]
     new_node = params["new_nodename"]
 
@@ -1477,7 +1362,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/managec/:cluster/?*' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       request = "/" + params[:splat].join("/")
@@ -1563,7 +1448,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/?*' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
+    auth_user = getAuthUser()
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       send_cluster_request_with_token(
