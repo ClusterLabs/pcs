@@ -29,12 +29,12 @@ class ConfigFacade(object):
             )
 
     @classmethod
-    def create(cls, cluster_name, nodes, transport):
+    def create(cls, cluster_name, node_list, transport):
         """
         Create a minimal config
 
         string cluster_name -- a name of a cluster
-        dict nodes -- key: nodename, value: dict (address list)
+        list node_list -- list of dict: name, addrs
         string transport -- corosync transport
         """
         root = config_parser.Section("")
