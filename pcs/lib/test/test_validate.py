@@ -611,6 +611,42 @@ class ValueIntegerInRange(TestCase):
         )
 
 
+class ValueIpAddress(TestCase):
+    # The real code only calls value_cond and is_integer which are both heavily
+    # tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.value_ip_address("key")
+
+    def test_empty_report_on_ipv4(self):
+        assert_report_item_list_equal(
+            self.fixture_validator()({"key": "192.168.123.42"}),
+            []
+        )
+
+    def test_empty_report_on_ipv6(self):
+        assert_report_item_list_equal(
+            self.fixture_validator()({"key": "::192:168:123:42"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator()({"key": "abcd"}),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "key",
+                        "option_value": "abcd",
+                        "allowed_values": "an IP address",
+                    },
+                    None
+                ),
+            ]
+        )
+
+
 class ValueNonnegativeInteger(TestCase):
     # The real code only calls value_cond => only basic tests here.
     def test_empty_report_on_valid_option(self):
@@ -1014,6 +1050,30 @@ class IsInteger(TestCase):
         self.assertFalse(validate.is_integer(7, 4, 6))
         self.assertFalse(validate.is_integer("3", 4, 6))
         self.assertFalse(validate.is_integer("7", 4, 6))
+
+
+class IsIpv4Address(TestCase):
+    def test_valid(self):
+        self.assertTrue(validate.is_ipv4_address("192.168.1.1"))
+        self.assertTrue(validate.is_ipv4_address("1.2.3.4"))
+        self.assertTrue(validate.is_ipv4_address("255.255.255.255"))
+        self.assertTrue(validate.is_ipv4_address("0.0.0.0"))
+
+    def test_bad(self):
+        self.assertFalse(validate.is_ipv4_address("abcd"))
+        self.assertFalse(validate.is_ipv4_address("192 168 1 1"))
+        self.assertFalse(validate.is_ipv4_address("3232235521"))
+        self.assertFalse(validate.is_ipv4_address("::1"))
+
+
+class IsIpv6Address(TestCase):
+    def test_valid(self):
+        self.assertTrue(validate.is_ipv6_address("fe80::5054:ff:fec6:8eaf"))
+        self.assertTrue(validate.is_ipv6_address("::abc:7:def"))
+
+    def test_bad(self):
+        self.assertFalse(validate.is_ipv6_address("abcd"))
+        self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
 
 
 class IsPortNumber(TestCase):

@@ -32,6 +32,7 @@ TODO provide parameters to provide forceable error/warning for functions that
      does not support it
 """
 from collections import namedtuple
+import ipaddress
 import re
 
 from pcs.lib import reports
@@ -357,6 +358,28 @@ def value_integer_in_range(
         allow_extra_values=allow_extra_values,
     )
 
+def value_ip_address(
+    option_name, option_name_for_report=None,
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
+    """
+    Get a validator reporting INVALID_OPTION_VALUE when the value is not
+    an IP address
+
+    string option_name -- name of the option to check
+    string option_name_for_report -- substitued by the option_name if not set
+    string code_to_allow_extra_values -- create a report forceable by this code
+    bool allow_extra_values -- create a warning instead of an error if True
+    """
+    return value_cond(
+        option_name,
+        lambda value: is_ipv4_address(value) or is_ipv6_address(value),
+        "an IP address",
+        option_name_for_report=option_name_for_report,
+        code_to_allow_extra_values=code_to_allow_extra_values,
+        allow_extra_values=allow_extra_values,
+    )
+
 def value_nonnegative_integer(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
@@ -521,6 +544,40 @@ def is_integer(value, at_least=None, at_most=None):
     except ValueError:
         return False
     return True
+
+def is_ipv4_address(value):
+    """
+    Check if the specified value is an IPv4 address
+
+    string value -- value to check
+    """
+    try:
+        # ip_address accepts both strings and integers. We check for "." to
+        # make sure it is a string representation of an IP.
+        if "." in value:
+            ipaddress.IPv4Address(value)
+            return True
+        return False
+    except ValueError:
+        # not an IP address
+        return False
+
+def is_ipv6_address(value):
+    """
+    Check if the specified value is an IPv6 address
+
+    string value -- value to check
+    """
+    try:
+        # ip_address accepts both strings and integers. We check for ":" to
+        # make sure it is a string representation of an IP.
+        if ":" in value:
+            ipaddress.IPv6Address(value)
+            return True
+        return False
+    except ValueError:
+        # not an IP address
+        return False
 
 def is_port_number(value):
     """
