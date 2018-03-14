@@ -2457,7 +2457,6 @@ def _parse_transport(transport_args):
         raise CmdLineInputError(
             "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
         )
-    other_options = {}
     transport_type, *transport_options = transport_args
     if transport_type not in SUPPORTED_TRANSPORT_TYPES:
         raise CmdLineInputError(
