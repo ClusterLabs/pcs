@@ -181,8 +181,7 @@ def setup(
     com_cmd = cluster.Destroy(env.report_processor)
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
-    # TODO: create corosync conf (only in memory)
-    corosync_conf_text = ""
+
     corosync_authkey = generate_binary_key(random_bytes_count=128)
     pcmk_authkey = generate_binary_key(random_bytes_count=128)
     actions = {}
@@ -213,9 +212,24 @@ def setup(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
+    corosync_conf = config_facade.ConfigFacade.create(
+        cluster_name, nodes, transport_type
+    )
+    corosync_conf.set_totem_options(totem_options)
+    corosync_conf.set_quorum_options(quorum_options)
+    corosync_conf.create_link_list(link_list)
+    if transport_type == "knet":
+        corosync_conf.set_transport_knet_options(
+            transport_options, compression_options, crypto_options
+        )
+    elif transport_type in ("udp", "udpu"):
+        corosync_conf.set_transport_udp_options(transport_options)
+
     com_cmd = DistributeFilesWithoutForces(
         env.report_processor,
-        node_communication_format.corosync_conf_file(corosync_conf_text),
+        node_communication_format.corosync_conf_file(
+            corosync_conf.config.export()
+        ),
     )
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)

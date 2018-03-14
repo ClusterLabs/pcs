@@ -20,6 +20,8 @@ corosync_qdevice_net_client_certs_dir = os.path.join(
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
 corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
+# TODO: fix log file path for debian
+corosync_log_file = "/var/log/cluster/corosync.log"
 pacemaker_authkey_file = "/etc/pacemaker/authkey"
 booth_authkey_file_mode = 0o600
 cluster_conf_file = "/etc/cluster/cluster.conf"

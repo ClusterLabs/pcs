@@ -1,3 +1,4 @@
+from pcs import settings
 from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants
 from pcs.lib.errors import LibraryError
@@ -38,8 +39,37 @@ class ConfigFacade(object):
         string transport -- corosync transport
         """
         root = config_parser.Section("")
-        # TODO actually create all required sections
-        return cls(root)
+        totem_section = config_parser.Section("totem")
+        nodelist_section = config_parser.Section("nodelist")
+        quorum_section = config_parser.Section("quorum")
+        logging_section = config_parser.Section("logging")
+        root.add_section(totem_section)
+        root.add_section(nodelist_section)
+        root.add_section(quorum_section)
+        root.add_section(logging_section)
+
+        totem_section.add_attribute("version", "2")
+        totem_section.add_attribute("cluster_name", cluster_name)
+        totem_section.add_attribute("transport", transport)
+        quorum_section.add_attribute("provider", "corosync_votequorum")
+        logging_section.add_attribute("to_logfile", "yes")
+        logging_section.add_attribute("logfile", settings.corosync_log_file)
+        logging_section.add_attribute("to_syslog", "yes")
+
+        for node_id, node_options in enumerate(node_list, 1):
+            node_section = config_parser.Section("node")
+            nodelist_section.add_section(node_section)
+            for link_id, link_addr in enumerate(node_options["addrs"]):
+                node_section.add_attribute(
+                    "ring{}_addr".format(link_id), link_addr
+                )
+            node_section.add_attribute("name", node_options["name"])
+            node_section.add_attribute("nodeid", node_id)
+
+        self = cls(root)
+        self.__update_two_node()
+
+        return self
 
     def __init__(self, parsed_config):
         """
@@ -95,12 +125,45 @@ class ConfigFacade(object):
                 ))
         return result
 
+    def create_link_list(self, link_list):
+        # TODO: use constant from corosync constants module (TBC)
+        available_link_numbers = list(range(8))
+        linknumber_missing = []
+        links = []
+
+        for link in link_list:
+            if "linknumber" in link:
+                try:
+                    available_link_numbers.remove(int(link["linknumber"]))
+                except ValueError:
+                    raise AssertionError()
+                links.append(dict(link))
+            else:
+                linknumber_missing.append(link)
+
+        for link in linknumber_missing:
+            link = dict(link)
+            try:
+                link["linknumber"] = available_link_numbers.pop(0)
+            except IndexError:
+                raise AssertionError()
+            links.append(link)
+
+        for link in sorted(links, key=lambda item: item["linknumber"]):
+            self.add_link(link)
+
     def add_link(self, options):
         """
         Add a new link
 
         dict options -- link options
         """
+        # TODO: decide into which totem section interface should be added
+        totem_section = self.__ensure_section(self.config, "totem")[0]
+        new_link_section = config_parser.Section("interface")
+        self.__set_section_options([new_link_section], options)
+        totem_section.add_section(new_link_section)
+        self.__remove_empty_sections(self.config)
 
     def set_transport_udp_options(self, options):
         """
@@ -108,6 +171,7 @@ class ConfigFacade(object):
 
         dict options -- transport options
         """
+        self.set_totem_options(options)
 
     def set_transport_knet_options(
         self, generic_options, compression_options, crypto_options
@@ -119,6 +183,18 @@ class ConfigFacade(object):
         dict compression_options -- compression options
         dict crypto_options -- crypto options
         """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, generic_options)
+        self.__set_section_options(
+            totem_section_list,
+            _add_prefix_to_dict_keys("crypto_", crypto_options)
+        )
+        self.__set_section_options(
+            totem_section_list,
+            _add_prefix_to_dict_keys("knet_compression_", compression_options)
+        )
+        self.__remove_empty_sections(self.config)
+        self._need_stopped_cluster = True
 
     def set_totem_options(self, options):
         """
@@ -126,6 +202,10 @@ class ConfigFacade(object):
 
         dict options -- totem options
         """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, options)
+        self.__remove_empty_sections(self.config)
+        self._need_stopped_cluster = True
 
     def set_quorum_options(self, options):
         """
@@ -409,3 +489,7 @@ class ConfigFacade(object):
             self.__remove_empty_sections(section)
             if section.empty:
                 parent_section.del_section(section)
+
+
+def _add_prefix_to_dict_keys(data, prefix):
+    return {"{}{}".format(prefix, key): value for key, value in data.items()}
