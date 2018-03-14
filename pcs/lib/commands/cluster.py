@@ -23,6 +23,7 @@ from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
 )
+from pcs.lib.corosync import config_facade, config_validators
 from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import (
@@ -119,14 +120,53 @@ def setup(
     compression_options=None, crypto_options=None, totem_options=None,
     quorum_options=None, wait=False, start=False, enable=False, force=False,
 ):
-    # TODO: do some validations of inputs
-    # if node doesn't contain key 'name' validations of inputs should report it
+    transport_options = transport_options or {}
+    link_list = link_list or []
+    compression_options = compression_options or {}
+    crypto_options = crypto_options or {}
+    totem_options = totem_options or {}
+    quorum_options = quorum_options or {}
+
+    # Validate inputs.
+    report_list = config_validators.create(cluster_name, nodes, transport_type)
+    if transport_type == "knet":
+        max_link_number = max(
+            [len(node.get("addrs", [])) for node in nodes],
+            default=0
+        )
+        report_list.extend(
+            config_validators.create_transport_knet(
+                transport_options,
+                compression_options,
+                crypto_options
+            )
+            +
+            config_validators.create_link_list_knet(
+                link_list,
+                max_link_number
+            )
+        )
+    elif transport_type in ("udp", "udpu"):
+        report_list.extend(
+            config_validators.create_transport_udp(transport_options)
+            +
+            config_validators.create_link_list_udp(link_list)
+        )
+    report_list.extend(
+        config_validators.create_totem(totem_options)
+        +
+        # We are creating the config and we know there is no wdevice in it.
+        config_validators.create_quorum_options(quorum_options, False)
+    )
+    # Validate the nodes.
+    # If node doesn't contain key 'name' validations of inputs should report it.
     node_name_list = [node["name"] for node in nodes if "name" in node]
-    report_list, target_list = (
+    target_report_list, target_list = (
         env.get_node_target_factory().get_target_list_with_reports(
             node_name_list, allow_skip=False,
         )
     )
+    report_list.extend(target_report_list)
     com_cmd = GetHostInfo(env.report_processor)
     com_cmd.set_targets(target_list)
     host_info_dict = run_com(env.get_node_communicator(), com_cmd)
@@ -135,6 +175,8 @@ def setup(
     )
     if report_list:
         env.report_processor.process_list(report_list)
+    # Validation done. If errors occured, an exception has been raised and we
+    # don't get below this line.
 
     com_cmd = cluster.Destroy(env.report_processor)
     com_cmd.set_targets(target_list)
@@ -277,8 +319,8 @@ def _host_check_cluster_setup(host_info_dict, force):
         except KeyError:
             report_list.append(reports.invalid_response_format(host_name))
 
-    for service, version_dict in service_version_dict:
-        report_list.append(
+    for service, version_dict in service_version_dict.items():
+        report_list.extend(
             _check_for_not_matching_service_versions(service, version_dict)
         )
     return report_list
@@ -294,4 +336,6 @@ def _check_for_not_matching_service_versions(service, service_version_dict):
             if version == _version
         ] for version in unique_service_version_set
     }
-    return reports.service_version_mismatch(service, hosts_to_version_dict)
+    return [
+        reports.service_version_mismatch(service, hosts_to_version_dict)
+    ]

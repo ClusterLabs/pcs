@@ -65,12 +65,14 @@ def create(cluster_name, node_list, transport):
         report_items += name_report_items
         # Count occurences of each node name and number of each node's addresses
         if not name_report_items:
-            # Do not bother counting non-valid names. They must be fixed anyway.
+            # Do not bother counting non-valid names. They must be fixed
+            # anyway. We also know the "name" key is in the dict otherwise it
+            # would be reported.
             if node["name"] not in all_names_count:
                 all_names_count[node["name"]] = 0
             all_names_count[node["name"]] += 1
         # extract addresses info and validate addresses
-        addr_count = len(node["addrs"])
+        addr_count = len(node.get("addrs", []))
         if transport == "knet":
             if addr_count < _LINKS_KNET_MIN or addr_count > _LINKS_KNET_MAX:
                 # TODO report bad number of addresses for node i
@@ -81,7 +83,7 @@ def create(cluster_name, node_list, transport):
                 pass
         node_addr_count[i] = addr_count
         addr_types = []
-        for addr in node["addrs"]:
+        for addr in node.get("addrs", []):
             if addr not in all_addrs_count:
                 all_addrs_count[addr] = 0
             all_addrs_count[addr] += 1
@@ -94,13 +96,13 @@ def create(cluster_name, node_list, transport):
 
     # Report non-unique names and addresses.
     non_unique_names = [
-        name for name, count in all_names_count.values() if count > 1
+        name for name, count in all_names_count.items() if count > 1
     ]
     if non_unique_names:
         # TODO report
         pass
     non_unique_addrs = [
-        addr for addr, count in all_addrs_count.values() if count > 1
+        addr for addr, count in all_addrs_count.items() if count > 1
     ]
     if non_unique_addrs:
         # TODO report
@@ -223,7 +225,7 @@ def create_link_list_knet(link_list, max_link_number):
             validate.names_in(allowed_options, options.keys(), "link")
         )
     non_unique_linknumbers = [
-        number for number, count in used_link_number.values() if count > 1
+        number for number, count in used_link_number.items() if count > 1
     ]
     if non_unique_linknumbers:
         # TODO report
