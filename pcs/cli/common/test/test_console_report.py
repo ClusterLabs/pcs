@@ -1210,7 +1210,7 @@ class NodeAddressesUnresolvable(NameBuildTest):
     code = codes.NODE_ADDRESSES_UNRESOLVABLE
     def test_one_address(self):
         self.assert_message_from_info(
-            "Unable to resolve addresses: node1",
+            "Unable to resolve addresses: 'node1'",
             {
                 "address_list": ["node1",],
             }
@@ -1218,7 +1218,7 @@ class NodeAddressesUnresolvable(NameBuildTest):
 
     def test_more_address(self):
         self.assert_message_from_info(
-            "Unable to resolve addresses: node1, node2, node3",
+            "Unable to resolve addresses: 'node1', 'node2', 'node3'",
             {
                 "address_list": ["node1", "node2", "node3"],
             }
@@ -1934,7 +1934,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
     def test_node_name(self):
         self.assert_message_from_info(
             "At least 1 and at most 4 addresses can be specified for a node, "
-            "5 addresses specified for node node1",
+            "5 addresses specified for node 'node1'",
             {
                 "actual_count": 5,
                 "min_count": 1,
@@ -1946,7 +1946,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
     def test_node_id(self):
         self.assert_message_from_info(
             "At least 1 and at most 4 addresses can be specified for a node, "
-            "5 addresses specified for node 2",
+            "5 addresses specified for node '2'",
             {
                 "actual_count": 5,
                 "min_count": 1,
@@ -1958,7 +1958,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
     def test_node_name_and_id(self):
         self.assert_message_from_info(
             "At least 1 and at most 4 addresses can be specified for a node, "
-            "5 addresses specified for node node2",
+            "5 addresses specified for node 'node2'",
             {
                 "actual_count": 5,
                 "min_count": 1,
@@ -1994,9 +1994,9 @@ class CorosyncNodeAddressCountMismatch(NameBuildTest):
     def test_message(self):
         self.assert_message_from_info(
             "All nodes must have the same number of addresses; "
-                "nodes node1, node2, node6 have 3 addresses; "
-                "nodes node3, node4 have 1 address; "
-                "node node5 has 2 addresses"
+                "nodes 'node1', 'node2', 'node6' have 3 addresses; "
+                "nodes 'node3', 'node4' have 1 address; "
+                "node 'node5' has 2 addresses"
             ,
             {
                 "node_addr_count": {
@@ -2015,7 +2015,9 @@ class CorosyncNodeAddressDuplication(NameBuildTest):
     code = codes.COROSYNC_NODE_ADDRESS_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
-            "Node addresses must be unique, duplicate addresses: node1, node3",
+            "Node addresses must be unique, duplicate addresses: "
+                "'node1', 'node3'"
+            ,
             {
                 "address_list": ["node1", "node3"],
             }
@@ -2026,7 +2028,7 @@ class CorosyncNodeNameDuplication(NameBuildTest):
     code = codes.COROSYNC_NODE_NAME_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
-            "Node names must be unique, duplicate names: node1, node3",
+            "Node names must be unique, duplicate names: 'node1', 'node3'",
             {
                 "name_list": ["node1", "node3"],
             }

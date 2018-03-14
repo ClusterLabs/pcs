@@ -181,7 +181,7 @@ def corosync_node_address_count_mismatch(info):
         parts.append(
             "node{s} {nodes} {have} {count} address{es}".format(
             s=("s" if len(nodes) > 1 else ""),
-            nodes=", ".join(nodes),
+            nodes=", ".join(["'{}'".format(x) for x in nodes]),
             have=("have" if len(nodes) > 1 else "has"),
             count=count,
             es=("es" if count > 1 else "")
@@ -584,9 +584,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "{_node_desc}"
         ).format(
             _node_desc=(
-                " for node {}".format(info["node_name"]) if "node_name" in info
+                " for node '{}'".format(info["node_name"])
+                if "node_name" in info
                 else
-                " for node {}".format(info["node_id"]) if "node_id" in info
+                " for node '{}'".format(info["node_id"])
+                if "node_id" in info
                 else ""
             ),
             **info
@@ -610,7 +612,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
         "Node addresses must be unique, duplicate addresses: {_addrs}".format(
-            _addrs=", ".join(info["address_list"]),
+            _addrs=", ".join(["'{0}'".format(x) for x in info["address_list"]]),
             **info
         )
     ,
@@ -621,7 +623,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
         "Node names must be unique, duplicate names: {_names}".format(
-            _names=", ".join(info["name_list"]),
+            _names=", ".join(["'{}'".format(x) for x in info["name_list"]]),
             **info
         )
     ,
@@ -934,7 +936,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
         "Unable to resolve addresses: {_addrs}".format(
-            _addrs=(", ".join(info["address_list"])),
+            _addrs=(", ".join(
+                ["'{}'".format(x) for x in info["address_list"]]
+            )),
             **info
         )
     ,
