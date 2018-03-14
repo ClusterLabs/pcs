@@ -132,6 +132,13 @@ def setup(
     totem_options = totem_options or {}
     quorum_options = quorum_options or {}
 
+    # Use a node name as an address if no addresses specified. This allows
+    # users not to specify node addresses at all which simplifies the whole
+    # cluster setup command / form significantly.
+    for node in nodes:
+        if node.get("addrs") is None and node.get("name") is not None:
+            node["addrs"] = [node["name"]]
+
     # Validate inputs.
     report_list = config_validators.create(
         cluster_name, nodes, transport_type,

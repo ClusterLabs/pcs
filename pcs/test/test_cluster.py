@@ -3062,7 +3062,7 @@ class NodeRemove(unittest.TestCase, AssertPcsMixin):
 def node_dict_fixture(node_name, addrs=None):
     return dict(
         name=node_name,
-        addrs=addrs if addrs else [],
+        addrs=addrs if addrs else None,
     )
 
 DEFAULT_TRANSPORT_TYPE = "knet"

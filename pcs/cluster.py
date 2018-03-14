@@ -2423,7 +2423,7 @@ def _parse_node_options(node, options):
     parsed_options[ADDR_OPT_KEYWORD] = (
         parsed_options[ADDR_OPT_KEYWORD].split(",")
         if ADDR_OPT_KEYWORD in parsed_options
-        else []
+        else None
     )
     return parsed_options
 
