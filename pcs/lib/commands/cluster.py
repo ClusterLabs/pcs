@@ -267,6 +267,8 @@ def setup(
 
     # TODO: distribute and reload pcsd certs
 
+    env.report_processor.process(reports.cluster_setup_success())
+
     # Optionally enable and start cluster services.
     if enable:
         com_cmd = EnableCluster(env.report_processor)
@@ -355,7 +357,7 @@ def _host_check_cluster_setup(host_info_dict, force):
             ]
             running_service_list = [
                 service for service in required_as_stopped_service_list
-                if service[service]["running"]
+                if services[service]["running"]
             ]
             if missing_service_list:
                 report_list.append(reports.service_not_installed(

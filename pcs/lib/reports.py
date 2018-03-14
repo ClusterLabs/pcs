@@ -3197,3 +3197,7 @@ def cluster_will_be_destroyed():
         report_codes.CLUSTER_WILL_BE_DESTROYED,
         forceable=report_codes.FORCE_ALREADY_IN_CLUSTER,
     )
+
+
+def cluster_setup_success():
+    return ReportItem.info(report_codes.CLUSTER_SETUP_SUCCESS)

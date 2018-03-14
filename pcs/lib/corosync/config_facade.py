@@ -148,7 +148,7 @@ class ConfigFacade(object):
         for link in linknumber_missing:
             link = dict(link)
             try:
-                link["linknumber"] = available_link_numbers.pop(0)
+                link["linknumber"] = str(available_link_numbers.pop(0))
             except IndexError as e:
                 raise AssertionError(
                     "Link number no longer available: {}".format(e)
@@ -167,7 +167,7 @@ class ConfigFacade(object):
         totem_section = self.__ensure_section(self.config, "totem")[-1]
         new_link_section = config_parser.Section("interface")
         options_to_set = {}
-        for name, value in options:
+        for name, value in options.items():
             if name == "broadcast":
                 # If broadcast == 1, transform it to broadcast == yes. Else do
                 # not put the option to the config at all.
@@ -203,11 +203,11 @@ class ConfigFacade(object):
         self.__set_section_options(totem_section_list, generic_options)
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("crypto_", crypto_options)
+            _add_prefix_to_dict_keys("knet_compression_", compression_options)
         )
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("knet_compression_", compression_options)
+            _add_prefix_to_dict_keys("crypto_", crypto_options)
         )
         self.__remove_empty_sections(self.config)
         self._need_stopped_cluster = True
@@ -512,5 +512,5 @@ class ConfigFacade(object):
                 parent_section.del_section(section)
 
 
-def _add_prefix_to_dict_keys(data, prefix):
+def _add_prefix_to_dict_keys(prefix, data):
     return {"{}{}".format(prefix, key): value for key, value in data.items()}

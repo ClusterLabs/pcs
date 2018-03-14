@@ -23,7 +23,7 @@ class PcsKnownHost(
         return (
             self.name,
             dict(
-                name=self.name,
+                # name=self.name,
                 token=self.token,
                 dest_list=[
                     dict(

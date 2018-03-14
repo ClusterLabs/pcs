@@ -186,7 +186,7 @@ class RunActionBase(
         results = node_communication_format.response_to_result(
             results,
             self._response_key,
-            self._action_definition.keys(),
+            list(self._action_definition.keys()),
             target.label
         )
         for key, item_response in sorted(results.items()):
@@ -206,7 +206,7 @@ class RunActionBase(
 
     def before(self):
         self._report(self._start_report(
-            self._action_definition.keys(),
+            list(self._action_definition.keys()),
             [target.label for target in self._target_list],
             self._description
         ))

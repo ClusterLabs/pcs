@@ -1609,4 +1609,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Some nodes are already in a cluster. Enforcing this will destroy "
         "existing cluster on these nodes."
     ,
+    codes.CLUSTER_SETUP_SUCCESS:
+        "Cluster has been successfully set up."
+    ,
 }

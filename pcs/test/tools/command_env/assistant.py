@@ -64,7 +64,8 @@ def patch_env(call_queue, config, init_env):
 
         patch_lib_env(
             "get_node_communicator",
-            lambda env:
+            # TODO: use request_timeout
+            lambda env, request_timeout=None:
                 NodeCommunicator(call_queue) if not config.spy
                 else spy.NodeCommunicator(get_node_communicator())
         )
