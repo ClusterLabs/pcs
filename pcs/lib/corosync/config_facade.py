@@ -126,8 +126,7 @@ class ConfigFacade(object):
         return result
 
     def create_link_list(self, link_list):
-        # TODO: use constant from corosync constants module (TBC)
-        available_link_numbers = list(range(8))
+        available_link_numbers = list(range(constants.LINKS_KNET_MAX))
         linknumber_missing = []
         links = []
 
@@ -135,8 +134,8 @@ class ConfigFacade(object):
             if "linknumber" in link:
                 try:
                     available_link_numbers.remove(int(link["linknumber"]))
-                except ValueError:
-                    raise AssertionError()
+                except ValueError as e:
+                    raise AssertionError("Invalid link number: {}".format(e))
                 links.append(dict(link))
             else:
                 linknumber_missing.append(link)
@@ -145,8 +144,10 @@ class ConfigFacade(object):
             link = dict(link)
             try:
                 link["linknumber"] = available_link_numbers.pop(0)
-            except IndexError:
-                raise AssertionError()
+            except IndexError as e:
+                raise AssertionError(
+                    "Link number no longer available: {}".format(e)
+                )
             links.append(link)
 
         for link in sorted(links, key=lambda item: item["linknumber"]):

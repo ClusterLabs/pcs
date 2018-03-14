@@ -226,11 +226,11 @@ def setup(
     corosync_conf.set_totem_options(totem_options)
     corosync_conf.set_quorum_options(quorum_options)
     corosync_conf.create_link_list(link_list)
-    if transport_type == "knet":
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
         corosync_conf.set_transport_knet_options(
             transport_options, compression_options, crypto_options
         )
-    elif transport_type in ("udp", "udpu"):
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
         corosync_conf.set_transport_udp_options(transport_options)
 
     com_cmd = DistributeFilesWithoutForces(
