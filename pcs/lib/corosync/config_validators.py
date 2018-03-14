@@ -17,12 +17,9 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "port",
     "tie_breaker",
 )
-_LINKS_UDP = 1
-_LINKS_KNET_MIN = 1
-_LINKS_KNET_MAX = 8
 
 
-def create(cluster_name, node_list, transport):
+def create(cluster_name, node_list, transport, force_unresolvable=False):
     """
     Validate creating a new minimalistic corosync.conf
 
@@ -33,7 +30,7 @@ def create(cluster_name, node_list, transport):
     # cluster name and transport validation
     validators = [
         validate.value_not_empty("name", "a cluster name", "cluster name"),
-        validate.value_in("transport", ("udp", "udpu", "knet"))
+        validate.value_in("transport", constants.TRANSPORTS_ALL)
     ]
     report_items = validate.run_collection_of_option_validators(
         {
@@ -48,6 +45,7 @@ def create(cluster_name, node_list, transport):
     all_addrs_count = {}
     node_addr_count = {}
     node_addr_types = {}
+    unresolvable_addresses = set()
     for i, node in enumerate(node_list, 1):
         # Validate each node on its own
         name_validators = [
@@ -73,14 +71,26 @@ def create(cluster_name, node_list, transport):
             all_names_count[node["name"]] += 1
         # extract addresses info and validate addresses
         addr_count = len(node.get("addrs", []))
-        if transport == "knet":
-            if addr_count < _LINKS_KNET_MIN or addr_count > _LINKS_KNET_MAX:
-                # TODO report bad number of addresses for node i
-                pass
-        else:
-            if addr_count != _LINKS_UDP:
-                # TODO report bad number of addresses for node i
-                pass
+        if transport in (constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP):
+            if transport in constants.TRANSPORTS_KNET:
+                min_addr_count = constants.LINKS_KNET_MIN
+                max_addr_count = constants.LINKS_KNET_MAX
+            else:
+                min_addr_count = constants.LINKS_UDP_MIN
+                max_addr_count = constants.LINKS_UDP_MAX
+            if (
+                addr_count < min_addr_count
+                or
+                addr_count > max_addr_count
+            ):
+                report_items.append(
+                    reports.corosync_bad_node_addresses_count(
+                        addr_count,
+                        min_addr_count,
+                        max_addr_count,
+                        node_id=i
+                    )
+                )
         node_addr_count[i] = addr_count
         addr_types = []
         for addr in node.get("addrs", []):
@@ -90,11 +100,23 @@ def create(cluster_name, node_list, transport):
             addr_type = _get_address_type(addr)
             addr_types.append(addr_type)
             if addr_type == "unresolvable":
-                # TODO report forceable error
-                pass
+                unresolvable_addresses.add(addr)
         node_addr_types[i] = addr_types
 
-    # Report non-unique names and addresses.
+    # Report names and addresses errors spanning multiple nodes.
+    if unresolvable_addresses:
+        severity = ReportItemSeverity.ERROR
+        forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
+        if force_unresolvable:
+            severity = ReportItemSeverity.WARNING
+            forceable = None
+        report_items.append(
+            reports.node_addresses_unresolvable(
+                unresolvable_addresses,
+                severity,
+                forceable
+            )
+        )
     non_unique_names = [
         name for name, count in all_names_count.items() if count > 1
     ]
@@ -107,11 +129,11 @@ def create(cluster_name, node_list, transport):
     if non_unique_addrs:
         # TODO report
         pass
-    # Check if all nodes have the same number of addresses. No need to chek
+    # Check if all nodes have the same number of addresses. No need to check
     # that if udp or udpu is used as they can only use one address and that has
     # already been checked above.
     if (
-        transport == "knet"
+        transport in constants.TRANSPORTS_KNET
         and len(Counter(node_addr_count.values()).keys()) > 1
     ):
         #TODO report addr count does not match
@@ -141,12 +163,13 @@ def create_link_list_udp(link_list):
 
     iterable link_list -- list of link options
     """
-    if len(link_list) != _LINKS_UDP:
+    if not link_list:
+        # It is not mandatory to set link options. If an empty link list is
+        # provided, everything is fine and we have nothing to validate.
+        return
+    if len(link_list) > constants.LINKS_UDP_MAX:
         # TODO report
         pass
-    if not link_list:
-        # an empty link list -> nothing to validate
-        return
 
     allowed_options = [
         "bindnetaddr",
@@ -180,12 +203,17 @@ def create_link_list_knet(link_list, max_link_number):
     iterable link_list -- list of link options
     integer max_link_number -- number of links allowed (0..7)
     """
+    if not link_list:
+        # It is not mandatory to set link options. If an empty link list is
+        # provided, everything is fine and we have nothing to validate. It is
+        # also possible to set link options for only some of the links.
+        return
     max_link_number = max(
-        (_LINKS_KNET_MIN - 1),
-        min((_LINKS_KNET_MAX - 1), max_link_number)
+        0,
+        min((constants.LINKS_KNET_MAX - 1), max_link_number)
     )
     link_count = len(link_list)
-    if link_count < _LINKS_KNET_MIN or link_count > _LINKS_KNET_MAX:
+    if link_count > constants.LINKS_KNET_MAX:
         # TODO report bad number of links, use "link_count" in the report
         pass
     allowed_options = [
@@ -342,13 +370,14 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         )
     )
     if (
-        # default values taken from man corosync.conf
+        # default values taken from `man corosync.conf`
         crypto_options.get("cipher", "aes256") != "none"
         and
         crypto_options.get("hash", "sha1") == "none"
     ):
-        # TODO report: Enabling crypto_cipher, requires also enabling of crypto_hash.
-        pass
+        report_items.append(
+            reports.corosync_crypto_cipher_without_crypto_hash()
+        )
     return report_items
 
 def create_totem(options):

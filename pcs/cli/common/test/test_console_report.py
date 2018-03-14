@@ -1205,6 +1205,26 @@ class nolive_skip_service_command_on_nodes(NameBuildTest):
             }
         )
 
+
+class NodeAddressesUnresolvable(NameBuildTest):
+    code = codes.NODE_ADDRESSES_UNRESOLVABLE
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Unable to resolve addresses: node1",
+            {
+                "address_list": ["node1",],
+            }
+        )
+
+    def test_more_address(self):
+        self.assert_message_from_info(
+            "Unable to resolve addresses: node1, node2, node3",
+            {
+                "address_list": ["node1", "node2", "node3"],
+            }
+        )
+
+
 class NodeNotFound(NameBuildTest):
     code = codes.NODE_NOT_FOUND
     def test_build_messages(self):
@@ -1895,6 +1915,66 @@ class CibLoadErrorBadFormat(NameBuildTest):
             {
                 "reason": "something wrong"
             }
+        )
+
+
+class CorosyncBadNodeAddressesCount(NameBuildTest):
+    code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
+    def test_no_node_info(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+            }
+        )
+
+    def test_node_name(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node node1",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_name": "node1",
+            }
+        )
+
+    def test_node_id(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node 2",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_id": 2,
+            }
+        )
+
+    def test_node_name_and_id(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node node2",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
+
+class CorosyncCryptoCipherWwithoutCryptoHhash(NameBuildTest):
+    code = codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
+    def test_message(self):
+        self.assert_message_from_info(
+            "When crypto cipher is enabled, crypto hash must be enabled as "
+            "well; please, specify crypto hash"
         )
 
 

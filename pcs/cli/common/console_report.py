@@ -561,6 +561,27 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to parse corosync config"
     ,
 
+    codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT: lambda info:
+        (
+            "At least {min_count} and at most {max_count} addresses can be "
+            "specified for a node, {actual_count} addresses specified"
+            "{_node_desc}"
+        ).format(
+            _node_desc=(
+                " for node {}".format(info["node_name"]) if "node_name" in info
+                else
+                " for node {}".format(info["node_id"]) if "node_id" in info
+                else ""
+            ),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH:
+        "When crypto cipher is enabled, crypto hash must be enabled as well; "
+        "please, specify crypto hash"
+    ,
+
     codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
         "These options cannot be set when the cluster uses a quorum device: {0}"
         .format(", ".join(sorted(info["options_names"])))
@@ -865,6 +886,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             " Re-run with '--monitor' to enable them."
         )
         .format(**info)
+    ,
+
+    codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
+        "Unable to resolve addresses: {_addrs}".format(
+            _addrs=(", ".join(info.get("address_list", []))),
+            **info
+        )
     ,
 
     codes.NODE_NOT_FOUND: lambda info:

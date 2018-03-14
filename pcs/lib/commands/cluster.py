@@ -23,7 +23,11 @@ from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
 )
-from pcs.lib.corosync import config_facade, config_validators
+from pcs.lib.corosync import (
+    config_facade,
+    config_validators,
+    constants as corosync_constants
+)
 from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import (
@@ -119,6 +123,7 @@ def setup(
     transport_type=None, transport_options=None, link_list=None,
     compression_options=None, crypto_options=None, totem_options=None,
     quorum_options=None, wait=False, start=False, enable=False, force=False,
+    force_unresolvable=False
 ):
     transport_options = transport_options or {}
     link_list = link_list or []
@@ -128,8 +133,11 @@ def setup(
     quorum_options = quorum_options or {}
 
     # Validate inputs.
-    report_list = config_validators.create(cluster_name, nodes, transport_type)
-    if transport_type == "knet":
+    report_list = config_validators.create(
+        cluster_name, nodes, transport_type,
+        force_unresolvable=force_unresolvable
+    )
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(
             [len(node.get("addrs", [])) for node in nodes],
             default=0
@@ -146,7 +154,7 @@ def setup(
                 max_link_number
             )
         )
-    elif transport_type in ("udp", "udpu"):
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
         report_list.extend(
             config_validators.create_transport_udp(transport_options)
             +

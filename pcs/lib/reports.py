@@ -918,6 +918,37 @@ def corosync_options_incompatible_with_qdevice(options):
         }
     )
 
+def corosync_bad_node_addresses_count(
+    actual_count, min_count, max_count, node_name=None, node_id=None
+):
+    """
+    Wrong number of addresses set for a corosync node.
+
+    int actual_count -- how many addresses set for a node
+    int min_count -- minimal allowed addresses count
+    int max_count -- maximal allowed addresses count
+    string node_name -- optionally specify node name (if available)
+    string node_id -- optionally specify node index or id (if available)
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+        info={
+            "actual_count": actual_count,
+            "min_count": min_count,
+            "max_count": max_count,
+            "node_name": node_name,
+            "node_id": node_id,
+        }
+    )
+
+def corosync_crypto_cipher_without_crypto_hash():
+    """
+    Trying to enable cipher when hash is disabled, which is not allowed.
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
+    )
+
 def qdevice_already_defined():
     """
     qdevice is already set up in a cluster, when it was expected not to be
@@ -2855,6 +2886,25 @@ def tmp_file_write(file_path, content):
         }
     )
 
+def node_addresses_unresolvable(
+    address_list,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Unable to resolve addresses of cluster nodes to be added
+
+    iterable address -- a list of unresolvable addresses
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what cathegory?
+    """
+    return ReportItem(
+        report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+        severity,
+        forceable,
+        info={
+            "address_list": address_list,
+        }
+    )
 
 def unable_to_perform_operation_on_any_node():
     """

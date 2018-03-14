@@ -1,5 +1,14 @@
 import re
 
+TRANSPORTS_KNET = ("knet", )
+TRANSPORTS_UDP = ("udp", "udpu")
+TRANSPORTS_ALL = TRANSPORTS_KNET + TRANSPORTS_UDP
+
+LINKS_UDP_MIN = 1
+LINKS_UDP_MAX = 1
+LINKS_KNET_MIN = 1
+LINKS_KNET_MAX = 8
+
 QUORUM_OPTIONS = (
     "auto_tie_breaker",
     "last_man_standing",
