@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections import defaultdict, Iterable
 from functools import partial
 import sys
 
@@ -171,6 +171,22 @@ def invalid_options(info):
         plural_allowed=("s are:" if len(info["allowed"]) > 1 else " is"),
         **info
     )
+
+def corosync_node_address_count_mismatch(info):
+    count_node = defaultdict(list)
+    for node_name, count in info["node_addr_count"].items():
+        count_node[count].append(node_name)
+    parts = ["All nodes must have the same number of addresses"]
+    for count, nodes in count_node.items():
+        parts.append(
+            "node{s} {nodes} {have} {count} address{es}".format(
+            s=("s" if len(nodes) > 1 else ""),
+            nodes=", ".join(nodes),
+            have=("have" if len(nodes) > 1 else "has"),
+            count=count,
+            es=("es" if count > 1 else "")
+        ))
+    return "; ".join(parts)
 
 def build_node_description(node_types):
     if not node_types:
@@ -578,8 +594,36 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH:
-        "When crypto cipher is enabled, crypto hash must be enabled as well; "
-        "please, specify crypto hash"
+        "When a crypto cipher is enabled, a crypto hash must be enabled as "
+        "well; please, specify a crypto hash"
+    ,
+
+    codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
+        (
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+            "either IPv4 or IPv6 in links {_links}"
+        ).format(
+            _links=", ".join([str(x) for x in info["link_numbers"]]),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
+        "Node addresses must be unique, duplicate addresses: {_addrs}".format(
+            _addrs=", ".join(info["address_list"]),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH:
+        corosync_node_address_count_mismatch
+    ,
+
+    codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
+        "Node names must be unique, duplicate names: {_names}".format(
+            _names=", ".join(info["name_list"]),
+            **info
+        )
     ,
 
     codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
@@ -890,7 +934,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
         "Unable to resolve addresses: {_addrs}".format(
-            _addrs=(", ".join(info.get("address_list", []))),
+            _addrs=(", ".join(info["address_list"])),
             **info
         )
     ,

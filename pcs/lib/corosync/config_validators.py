@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import zip_longest
 import socket
 
@@ -41,35 +41,33 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     )
 
     # nodelist validation
-    all_names_count = {}
-    all_addrs_count = {}
-    node_addr_count = {}
-    node_addr_types = {}
-    unresolvable_addresses = set()
+    all_names_usable = True # can names be used to identifying nodes?
+    all_names_count = defaultdict(int)
+    all_addrs_count = defaultdict(int)
+    all_addrs_type = {}
+    addr_types_per_node = []
+    # First, validate each node on its own.
     for i, node in enumerate(node_list, 1):
-        # Validate each node on its own
         name_validators = [
             validate.is_required("name", "node {}".format(i)),
             validate.value_not_empty(
                 "name",
-                "a string",
+                "a non-empty string",
                 option_name_for_report="node {} name".format(i)
             )
         ]
-        name_report_items = validate.run_collection_of_option_validators(
-            node,
-            name_validators
+        report_items.extend(
+            validate.run_collection_of_option_validators(
+                node,
+                name_validators
+            )
         )
-        report_items += name_report_items
-        # Count occurences of each node name and number of each node's addresses
-        if not name_report_items:
-            # Do not bother counting non-valid names. They must be fixed
-            # anyway. We also know the "name" key is in the dict otherwise it
-            # would be reported.
-            if node["name"] not in all_names_count:
-                all_names_count[node["name"]] = 0
+        if "name" not in node or not node["name"]:
+            all_names_usable = False
+        else:
+            # Count occurences of each node name. Do not bother counting
+            # missing or empty names. They must be fixed anyway.
             all_names_count[node["name"]] += 1
-        # extract addresses info and validate addresses
         addr_count = len(node.get("addrs", []))
         if transport in (constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP):
             if transport in constants.TRANSPORTS_KNET:
@@ -88,22 +86,22 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                         addr_count,
                         min_addr_count,
                         max_addr_count,
+                        node_name=node.get("name"),
                         node_id=i
                     )
                 )
-        node_addr_count[i] = addr_count
         addr_types = []
         for addr in node.get("addrs", []):
-            if addr not in all_addrs_count:
-                all_addrs_count[addr] = 0
             all_addrs_count[addr] += 1
-            addr_type = _get_address_type(addr)
-            addr_types.append(addr_type)
-            if addr_type == "unresolvable":
-                unresolvable_addresses.add(addr)
-        node_addr_types[i] = addr_types
+            if addr not in all_addrs_type:
+                all_addrs_type[addr] = _get_address_type(addr)
+            addr_types.append(all_addrs_type[addr])
+        addr_types_per_node.append(addr_types)
 
-    # Report names and addresses errors spanning multiple nodes.
+    unresolvable_addresses = set([
+        addr for addr, addr_type in all_addrs_type.items()
+        if addr_type == "unresolvable"
+    ])
     if unresolvable_addresses:
         severity = ReportItemSeverity.ERROR
         forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
@@ -117,32 +115,48 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                 forceable
             )
         )
-    non_unique_names = [
+    non_unique_names = set([
         name for name, count in all_names_count.items() if count > 1
-    ]
+    ])
     if non_unique_names:
-        # TODO report
-        pass
-    non_unique_addrs = [
+        all_names_usable = False
+        report_items.append(
+            reports.corosync_node_name_duplication(non_unique_names)
+        )
+    non_unique_addrs = set([
         addr for addr, count in all_addrs_count.items() if count > 1
-    ]
+    ])
     if non_unique_addrs:
-        # TODO report
-        pass
-    # Check if all nodes have the same number of addresses. No need to check
-    # that if udp or udpu is used as they can only use one address and that has
-    # already been checked above.
-    if (
-        transport in constants.TRANSPORTS_KNET
-        and len(Counter(node_addr_count.values()).keys()) > 1
-    ):
-        #TODO report addr count does not match
-        pass
-    # Check mixing IPv4 and IPv6 in one link
-    for i, addr_types in enumerate(zip_longest(*node_addr_types.values())):
+        report_items.append(
+            reports.corosync_node_address_duplication(non_unique_addrs)
+        )
+
+    # Now check for errors using node names in their reports. If node names are
+    # ambiguous then such issues cannot be comprehensibly reported so the
+    # checks are skipped.
+    if all_names_usable:
+        node_addr_count = {}
+        for node in node_list:
+            node_addr_count[node["name"]] = len(node.get("addrs", []))
+        # Check if all nodes have the same number of addresses. No need to
+        # check that if udp or udpu transport is used as they can only use one
+        # address and that has already been checked above.
+        if (
+            transport not in constants.TRANSPORTS_UDP
+            and
+            len(Counter(node_addr_count.values()).keys()) > 1
+        ):
+            reports.corosync_node_address_count_mismatch(node_addr_count)
+
+    # Check mixing IPv4 and IPv6 in one link, node names are not relevant
+    links_ip_mismatch = []
+    for link, addr_types in enumerate(zip_longest(*addr_types_per_node)):
         if "IPv6" in addr_types and "IPv4" in addr_types:
-            # TODO report mixed addrs in link i
-            pass
+            links_ip_mismatch.append(link)
+    if links_ip_mismatch:
+        report_items.append(
+            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+        )
 
     return report_items
 
@@ -166,7 +180,7 @@ def create_link_list_udp(link_list):
     if not link_list:
         # It is not mandatory to set link options. If an empty link list is
         # provided, everything is fine and we have nothing to validate.
-        return
+        return []
     if len(link_list) > constants.LINKS_UDP_MAX:
         # TODO report
         pass
@@ -207,7 +221,7 @@ def create_link_list_knet(link_list, max_link_number):
         # It is not mandatory to set link options. If an empty link list is
         # provided, everything is fine and we have nothing to validate. It is
         # also possible to set link options for only some of the links.
-        return
+        return []
     max_link_number = max(
         0,
         min((constants.LINKS_KNET_MAX - 1), max_link_number)

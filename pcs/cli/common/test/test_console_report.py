@@ -1973,8 +1973,63 @@ class CorosyncCryptoCipherWwithoutCryptoHhash(NameBuildTest):
     code = codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
     def test_message(self):
         self.assert_message_from_info(
-            "When crypto cipher is enabled, crypto hash must be enabled as "
-            "well; please, specify crypto hash"
+            "When a crypto cipher is enabled, a crypto hash must be enabled as "
+            "well; please, specify a crypto hash"
+        )
+
+class CorosyncIpVersionMismatchInLinks(NameBuildTest):
+    code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
+    def test_message(self):
+        self.assert_message_from_info(
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+                "either IPv4 or IPv6 in links 0, 3, 4"
+            ,
+            {
+                "link_numbers": [0, 3, 4]
+            }
+        )
+
+class CorosyncNodeAddressCountMismatch(NameBuildTest):
+    code = codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH
+    def test_message(self):
+        self.assert_message_from_info(
+            "All nodes must have the same number of addresses; "
+                "nodes node1, node2, node6 have 3 addresses; "
+                "nodes node3, node4 have 1 address; "
+                "node node5 has 2 addresses"
+            ,
+            {
+                "node_addr_count": {
+                    "node1": 3,
+                    "node2": 3,
+                    "node3": 1,
+                    "node4": 1,
+                    "node5": 2,
+                    "node6": 3,
+                },
+            }
+        )
+
+
+class CorosyncNodeAddressDuplication(NameBuildTest):
+    code = codes.COROSYNC_NODE_ADDRESS_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Node addresses must be unique, duplicate addresses: node1, node3",
+            {
+                "address_list": ["node1", "node3"],
+            }
+        )
+
+
+class CorosyncNodeNameDuplication(NameBuildTest):
+    code = codes.COROSYNC_NODE_NAME_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Node names must be unique, duplicate names: node1, node3",
+            {
+                "name_list": ["node1", "node3"],
+            }
         )
 
 

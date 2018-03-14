@@ -949,6 +949,56 @@ def corosync_crypto_cipher_without_crypto_hash():
         report_codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
     )
 
+def corosync_ip_version_mismatch_in_links(link_numbers):
+    """
+    Mixing IPv4 and IPv6 in one or more links, which is not allowed
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+        info={
+            "link_numbers": link_numbers,
+        }
+    )
+
+def corosync_node_address_count_mismatch(node_addr_count):
+    """
+    Nodes do not have the same number of addresses
+
+    dict node_addr_count -- key: node name, value: number of addresses
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+        info={
+            "node_addr_count": node_addr_count,
+        }
+    )
+
+def corosync_node_address_duplication(address_list):
+    """
+    Trying to set one address for more nodes or links, addresses must be unique
+
+    iterable address_list -- list of nonunique addresses
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+        info={
+            "address_list": sorted(address_list),
+        }
+    )
+
+def corosync_node_name_duplication(name_list):
+    """
+    Trying to set one node name for more nodes, node names must be unique
+
+    iterable name_list -- list of nonunique node names
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+        info={
+            "name_list": sorted(name_list),
+        }
+    )
+
 def qdevice_already_defined():
     """
     qdevice is already set up in a cluster, when it was expected not to be
@@ -2902,7 +2952,7 @@ def node_addresses_unresolvable(
         severity,
         forceable,
         info={
-            "address_list": address_list,
+            "address_list": sorted(address_list),
         }
     )
 
