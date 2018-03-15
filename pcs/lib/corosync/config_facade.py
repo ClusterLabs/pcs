@@ -159,10 +159,18 @@ class ConfigFacade(object):
 
         dict options -- link options
         """
-        # TODO: decide into which totem section interface should be added
-        totem_section = self.__ensure_section(self.config, "totem")[0]
+        totem_section = self.__ensure_section(self.config, "totem")[-1]
         new_link_section = config_parser.Section("interface")
-        self.__set_section_options([new_link_section], options)
+        options_to_set = {}
+        for name, value in options:
+            if name == "broadcast":
+                # If broadcast == 1, transform it to broadcast == yes. Else do
+                # not put the option to the config at all.
+                if value in ("1", 1):
+                    options_to_set[name] = "yes"
+                continue
+            options_to_set[name] = value
+        self.__set_section_options([new_link_section], options_to_set)
         totem_section.add_section(new_link_section)
         self.__remove_empty_sections(self.config)
 
@@ -172,7 +180,9 @@ class ConfigFacade(object):
 
         dict options -- transport options
         """
-        self.set_totem_options(options)
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, options)
+        self._need_stopped_cluster = True
 
     def set_transport_knet_options(
         self, generic_options, compression_options, crypto_options
@@ -206,7 +216,12 @@ class ConfigFacade(object):
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, options)
         self.__remove_empty_sections(self.config)
-        self._need_stopped_cluster = True
+        # The totem section contains quite a lot of options. Pcs reduces the
+        # number by moving some of them virtually into other "sections". The
+        # move is only visible for pcs users (in CLI, web UI), those moved
+        # options are still written to the totem section. The options which pcs
+        # keeps in the totem section for users do not currently need the
+        # cluster to be stopped when updating them.
 
     def set_quorum_options(self, options):
         """
