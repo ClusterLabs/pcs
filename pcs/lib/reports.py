@@ -3010,18 +3010,17 @@ def host_not_found(
     host_list, severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    Hosts with names in name_list are not included in pcs known hosts,
-    therefore it is not possible to sommunicate with them.
+    Hosts with names in host_list are not included in pcs known hosts,
+    therefore it is not possible to communicate with them.
     """
     return ReportItem(
         report_codes.HOST_NOT_FOUND,
         severity,
         info=dict(
-            host_list=host_list,
+            host_list=sorted(host_list),
         ),
         forceable=forceable,
     )
-
 
 def none_host_found():
     return ReportItem.error(report_codes.NONE_HOST_FOUND)
@@ -3039,7 +3038,7 @@ def cluster_destroy_started(host_name_list):
     return ReportItem.info(
         report_codes.CLUSTER_DESTROY_STARTED,
         info=dict(
-            host_name_list=host_name_list,
+            host_name_list=sorted(host_name_list),
         ),
     )
 
@@ -3057,7 +3056,7 @@ def cluster_enable_started(host_name_list):
     return ReportItem.info(
         report_codes.CLUSTER_ENABLE_STARTED,
         info=dict(
-            host_name_list=host_name_list,
+            host_name_list=sorted(host_name_list),
         ),
     )
 
@@ -3075,7 +3074,7 @@ def cluster_start_started(host_name_list):
     return ReportItem.info(
         report_codes.CLUSTER_START_STARTED,
         info=dict(
-            host_name_list=host_name_list,
+            host_name_list=sorted(host_name_list),
         ),
     )
 
@@ -3097,31 +3096,16 @@ def service_not_installed(
         severity,
         info=dict(
             node=node,
-            service_list=service_list,
+            service_list=sorted(service_list),
         ),
         forceable=forceable,
     )
 
-
-def service_running_unexpectedly(
-    node, service_list, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    return ReportItem(
-        report_codes.SERVICE_RUNNING_UNEXPECTEDLY,
-        severity,
-        info=dict(
-            node=node,
-            service_list=service_list,
-        ),
-        forceable=forceable,
-    )
-
-
-def host_already_in_cluster(
+def host_already_in_cluster_config(
     host_name, severity=ReportItemSeverity.ERROR, forceable=None
 ):
     return ReportItem(
-        report_codes.HOST_ALREADY_IN_CLUSTER,
+        report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
         severity,
         info=dict(
             host_name=host_name,
@@ -3129,9 +3113,21 @@ def host_already_in_cluster(
         forceable=forceable,
     )
 
+def host_already_in_cluster_services(
+    host_name, service_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+        severity,
+        info=dict(
+            host_name=host_name,
+            service_list=sorted(service_list),
+        ),
+        forceable=forceable,
+    )
 
 def service_version_mismatch(
-    service, version_host_names_dict,
+    service, hosts_version,
     severity=ReportItemSeverity.ERROR, forceable=None,
 ):
     return ReportItem(
@@ -3139,7 +3135,7 @@ def service_version_mismatch(
         severity,
         info=dict(
             service=service,
-            version_host_names_dict=version_host_names_dict,
+            hosts_version=hosts_version,
         ),
         forceable=forceable,
     )
@@ -3149,7 +3145,7 @@ def wait_for_node_startup_started(node_name_list):
     return ReportItem.info(
         report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
         info=dict(
-            node_name_list=node_name_list,
+            node_name_list=sorted(node_name_list),
         )
     )
 

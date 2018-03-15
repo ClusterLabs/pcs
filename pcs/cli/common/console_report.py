@@ -51,6 +51,11 @@ def format_fencing_level_target(target_type, target_value):
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
+def format_list(a_list):
+    return ", ".join([
+        "'{0}'".format(x) for x in sorted(a_list)
+    ])
+
 def service_operation_started(operation, info):
     return "{operation} {service}{instance_suffix}...".format(
         operation=operation,
@@ -177,14 +182,41 @@ def corosync_node_address_count_mismatch(info):
     for node_name, count in info["node_addr_count"].items():
         count_node[count].append(node_name)
     parts = ["All nodes must have the same number of addresses"]
-    for count, nodes in count_node.items():
+    # List most common number of addresses first.
+    for count, nodes in sorted(
+        count_node.items(),
+        key=lambda pair: len(pair[1]),
+        reverse=True
+    ):
         parts.append(
             "node{s} {nodes} {have} {count} address{es}".format(
             s=("s" if len(nodes) > 1 else ""),
-            nodes=", ".join(["'{}'".format(x) for x in nodes]),
+            nodes=format_list(nodes),
             have=("have" if len(nodes) > 1 else "has"),
             count=count,
             es=("es" if count > 1 else "")
+        ))
+    return "; ".join(parts)
+
+def service_version_mismatch(info):
+    version_host = defaultdict(list)
+    for host_name, version in info["hosts_version"].items():
+        version_host[version].append(host_name)
+    parts = [
+        "Hosts do not have the same version of '{}'".format(info["service"])
+    ]
+    # List most common versions first.
+    for version, hosts in sorted(
+        version_host.items(),
+        key=lambda pair: len(pair[1]),
+        reverse=True
+    ):
+        parts.append(
+            "host{s} {hosts} {have} version {version}".format(
+            s=("s" if len(hosts) > 1 else ""),
+            hosts=format_list(hosts),
+            have=("have" if len(hosts) > 1 else "has"),
+            version=version
         ))
     return "; ".join(parts)
 
@@ -609,24 +641,19 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "Using both IPv4 and IPv6 in one link is not allowed; please, use "
             "either IPv4 or IPv6 in links {_links}"
         ).format(
-            _links=", ".join([str(x) for x in info["link_numbers"]]),
-            **info
+            _links=format_list(info["link_numbers"])
         )
     ,
 
     codes.COROSYNC_LINK_NUMBER_DUPLICATION: lambda info:
         "Link numbers must be unique, duplicate link numbers: {_nums}".format(
-            _nums=", ".join([
-                "'{0}'".format(x) for x in info["link_number_list"]
-            ]),
-            **info
+            _nums=format_list(info["link_number_list"])
         )
     ,
 
     codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
         "Node addresses must be unique, duplicate addresses: {_addrs}".format(
-            _addrs=", ".join(["'{0}'".format(x) for x in info["address_list"]]),
-            **info
+            _addrs=format_list(info["address_list"])
         )
     ,
 
@@ -636,8 +663,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
         "Node names must be unique, duplicate names: {_names}".format(
-            _names=", ".join(["'{}'".format(x) for x in info["name_list"]]),
-            **info
+            _names=format_list(info["name_list"])
         )
     ,
 
@@ -959,10 +985,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
         "Unable to resolve addresses: {_addrs}".format(
-            _addrs=(", ".join(
-                ["'{}'".format(x) for x in info["address_list"]]
-            )),
-            **info
+            _addrs=format_list(info["address_list"])
         )
     ,
 
@@ -1491,11 +1514,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.HOST_NOT_FOUND: lambda info:
         (
-            "Host(s) {host_list_comma_str} not found. Try to authenticate hosts using "
-            "'pcs host auth {host_list_space_str}' command."
+            "Host{_s} {_hosts_comma} not found. Try to authenticate the "
+            "host{_s} using 'pcs host auth {_hosts_space}' command."
         ).format(
-            host_list_comma_str=", ".join(sorted(info["host_list"])),
-            host_list_space_str=" ".join(sorted(info["host_list"])),
+            _hosts_comma=format_list(info["host_list"]),
+            _hosts_space=" ".join(sorted(info["host_list"])),
+            _s=("s" if len(info["host_list"]) > 1 else "")
         )
     ,
     codes.NONE_HOST_FOUND: "None of hosts found.",
@@ -1503,66 +1527,58 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "{host_name}: Already authorized".format(**info)
     ,
     codes.CLUSTER_DESTROY_STARTED: lambda info:
-        "Destroying cluster on host(s) {host_name_list_str} ...".format(
-            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        "Destroying cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
         )
     ,
     codes.CLUSTER_DESTROY_SUCCESS: lambda info:
         "{node}: Successfully destroyed cluster".format(**info)
     ,
     codes.CLUSTER_ENABLE_STARTED: lambda info:
-        "Enabling cluster on host(s) {host_name_list_str} ...".format(
-            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        "Enabling cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
         )
     ,
     codes.CLUSTER_ENABLE_SUCCESS: lambda info:
-        "{node}: Cluster Enabled".format(**info)
+        "{node}: Cluster enabled".format(**info)
     ,
     codes.CLUSTER_START_STARTED: lambda info:
-        "Starting cluster on host(s) {host_name_list_str} ...".format(
-            host_name_list_str=", ".join(sorted(info["host_name_list"]))
+        "Starting cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
         )
     ,
     codes.CLUSTER_START_SUCCESS: lambda info:
-        "{node}: Started".format(**info)
+        "{node}: Cluster started".format(**info)
     ,
     codes.SERVICE_NOT_INSTALLED: lambda info:
-        "{node}: Service(s) not installed: {service_list_str}".format(
-            service_list_str=", ".join(sorted(info["service_list"])), **info
+        "{node}: Required cluster services not installed: {_services}".format(
+            _services=format_list(info["service_list"]),
+            **info
         )
     ,
-    codes.SERVICE_RUNNING_UNEXPECTEDLY: lambda info:
+
+    codes.HOST_ALREADY_IN_CLUSTER_CONFIG: lambda info:
         (
-            "{node}: Services {service_list_str} are running. Is host part of "
-            "a cluster?"
-        ).format(
-            service_list_str=", ".join(sorted(info["service_list"])), **info
-        )
+            "{host_name}: Cluster configuration files found. Is the host "
+            "already in a cluster?"
+        ).format(**info)
     ,
-    codes.HOST_ALREADY_IN_CLUSTER: lambda info:
-        "{host_name}: Already in a cluster.".format(**info)
-    ,
-    codes.SERVICE_VERSION_MISMATCH: lambda info:
+
+    codes.HOST_ALREADY_IN_CLUSTER_SERVICES: lambda info:
         (
-            "Version of '{service}' doesn't match on the hosts ({versions_str})"
+            "{host_name}: Running cluster services: {_services}. Is the host "
+            "already in a cluster?"
         ).format(
-            service=info["version"],
-            versions_str="; ".join(
-                [
-                    "version {version}: {host_list_str}".format(
-                        version=version,
-                        host_list_str=", ".join(sorted(host_list)),
-                    )
-                    for version, host_list in sorted(
-                        info["version_host_names_dict"].items()
-                    )
-                ]
-            ),
+            _services=format_list(info["service_list"]),
+            **info
         )
     ,
+
+    codes.SERVICE_VERSION_MISMATCH: service_version_mismatch,
+
     codes.WAIT_FOR_NODE_STARTUP_STARTED: lambda info:
-        "Waiting for node(s) {node_name_list_str} to start ...".format(
-            node_name_list_str=", ".join(sorted(info["node_name_list"]))
+        "Waiting for nodes to start: {_nodes}...".format(
+            _nodes=format_list(info["node_name_list"])
         )
     ,
     codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Waiting timeout",

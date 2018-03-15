@@ -340,11 +340,16 @@ def _host_check_cluster_setup(host_info_dict, force):
                     host_name, missing_service_list
                 ))
             if running_service_list:
-                report_list.append(reports.service_running_unexpectedly(
-                    host_name, running_service_list
-                ))
+                report_list.append(
+                    reports.host_already_in_cluster_services(
+                        host_name,
+                        running_service_list
+                    )
+                )
             if host_info["cluster_configuration_exist"]:
-                report_list.append(reports.host_already_in_cluster(host_name))
+                report_list.append(
+                    reports.host_already_in_cluster_config(host_name)
+                )
         except KeyError:
             report_list.append(reports.invalid_response_format(host_name))
 
@@ -356,15 +361,8 @@ def _host_check_cluster_setup(host_info_dict, force):
 
 
 def _check_for_not_matching_service_versions(service, service_version_dict):
-    unique_service_version_set = set(service_version_dict.values())
-    if len(unique_service_version_set) <= 1:
+    if len(set(service_version_dict.values())) <= 1:
         return []
-    hosts_to_version_dict = {
-        version: [
-            host_name for host_name, _version in service_version_dict.items()
-            if version == _version
-        ] for version in unique_service_version_set
-    }
     return [
-        reports.service_version_mismatch(service, hosts_to_version_dict)
+        reports.service_version_mismatch(service, service_version_dict)
     ]
