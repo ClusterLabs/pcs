@@ -59,7 +59,10 @@ def auth_cmd(lib, argv, modifiers):
         raise CmdLineInputError("No host specified")
     host_dict = {
         host: _parse_host_options(host, opts)
-        for host, opts in parse_args.split_by_identifiers(argv, "host").items()
+        for host, opts in parse_args.split_by_identifiers(
+            argv,
+            "host name"
+        ).items()
     }
     username, password = utils.get_user_and_pass()
     for host_info in host_dict.values():

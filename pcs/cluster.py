@@ -2491,8 +2491,9 @@ def new_cluster_setup(lib, argv, modifiers):
     )
     nodes = [
         _parse_node_options(node, options)
-        for node, options in parse_args.split_by_identifiers(
-            parsed_args["nodes"], "node",
+        for node, options in parse_args.split_list_by_any_keywords(
+            parsed_args["nodes"],
+            "node name",
         ).items()
     ]
 

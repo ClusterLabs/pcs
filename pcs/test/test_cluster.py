@@ -3109,7 +3109,7 @@ class NewClusterSetup(unittest.TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd([node])
         self.assertEqual(
-            "Invalid character '=' in {} identifier '{}'".format("node", node),
+            "Invalid character '=' in node name '{}'".format(node),
             cm.exception.message,
         )
 
@@ -3118,7 +3118,7 @@ class NewClusterSetup(unittest.TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd([node, node])
         self.assertEqual(
-            "Node '{}' defined multiple times".format(node),
+            "Node name '{}' defined multiple times".format(node),
             cm.exception.message,
         )
 
