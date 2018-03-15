@@ -130,7 +130,7 @@ class NodeTargetLibFactory(NodeTargetFactory):
         self._report_processor = report_processor
 
     def get_target_list_with_reports(
-        self, host_name_list, skip_non_existing=False, allow_skip=False
+        self, host_name_list, skip_non_existing=False, allow_skip=True
     ):
         target_list = []
         unknown_host_list = []

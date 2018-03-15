@@ -314,7 +314,14 @@ class CheckPacemakerStarted(
         if report is None:
             try:
                 parsed_response = json.loads(response.data)
-                if not parsed_response["online"] or parsed_response["pending"]:
+                # If the node is offline, we only get the "offline" key. Asking
+                # for any other in that case results in KeyError which is not
+                # what we want.
+                if (
+                    parsed_response.get("pending", True)
+                    or
+                    not parsed_response.get("online", False)
+                ):
                     self._not_yet_started_target_list.append(target)
                     return
                 else:

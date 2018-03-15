@@ -174,11 +174,13 @@ def setup(
         config_validators.create_quorum_options(quorum_options, False)
     )
     # Validate the nodes.
-    # If node doesn't contain key 'name' validations of inputs should report it.
-    node_name_list = [node["name"] for node in nodes if "name" in node]
+    # If a node doesn't contain the 'name key, validation of inputs reports it.
+    # That means we don't report missing names but cannot rely on them being
+    # present either.
     target_report_list, target_list = (
         env.get_node_target_factory().get_target_list_with_reports(
-            node_name_list, allow_skip=False,
+            [node["name"] for node in nodes if "name" in node],
+            allow_skip=False,
         )
     )
     report_list.extend(target_report_list)
@@ -193,20 +195,12 @@ def setup(
     # Validation done. If errors occured, an exception has been raised and we
     # don't get below this line.
 
+    # Destroy cluster on all nodes.
     com_cmd = cluster.Destroy(env.report_processor)
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-    corosync_authkey = generate_binary_key(random_bytes_count=128)
-    pcmk_authkey = generate_binary_key(random_bytes_count=128)
-    actions = {}
-    actions.update(
-        node_communication_format.corosync_authkey_file(corosync_authkey)
-    )
-    actions.update(
-        node_communication_format.pcmk_authkey_file(pcmk_authkey)
-    )
-
+    # Distribute auth tokens.
     com_cmd = UpdateKnownHosts(
         env.report_processor,
         known_hosts_to_add=env.get_known_hosts(
@@ -217,16 +211,31 @@ def setup(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
+    # Distribute configuration files except corosync.conf. Sending
+    # corosync.conf serves as a "commit" as its presence on a node marks the
+    # node as a part of a cluster.
+    corosync_authkey = generate_binary_key(random_bytes_count=128)
+    pcmk_authkey = generate_binary_key(random_bytes_count=128)
+    actions = {}
+    actions.update(
+        node_communication_format.corosync_authkey_file(corosync_authkey)
+    )
+    actions.update(
+        node_communication_format.pcmk_authkey_file(pcmk_authkey)
+    )
     com_cmd = DistributeFilesWithoutForces(env.report_processor, actions)
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
-
+    # TODO This should be in the previous call but so far we don't have a call
+    # which allows to save and delete files at the same time.
     com_cmd = RemoveFilesWithoutForces(
         env.report_processor, {"pcsd settings": {"type": "pcsd_settings"}},
     )
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
+    # Create and distribute corosync.conf. Once a node saves corosync.conf it
+    # is considered to be in a cluster.
     corosync_conf = config_facade.ConfigFacade.create(
         cluster_name, nodes, transport_type
     )
@@ -251,6 +260,7 @@ def setup(
 
     # TODO: distribute and reload pcsd certs
 
+    # Optionally enable and start cluster services.
     if enable:
         com_cmd = EnableCluster(env.report_processor)
         com_cmd.set_targets(target_list)
@@ -271,7 +281,8 @@ def setup(
         com_cmd = StartCluster(env.report_processor)
         com_cmd.set_targets(target_list)
         run_and_raise(
-            env.get_node_communicator(request_timeout=timeout), com_cmd
+            env.get_node_communicator(request_timeout=timeout),
+            com_cmd
         )
         if wait:
             env.report_processor.process_list(
@@ -346,7 +357,7 @@ def _host_check_cluster_setup(host_info_dict, force):
                         running_service_list
                     )
                 )
-            if host_info["cluster_configuration_exist"]:
+            if host_info["cluster_configuration_exists"]:
                 report_list.append(
                     reports.host_already_in_cluster_config(host_name)
                 )

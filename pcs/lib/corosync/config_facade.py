@@ -126,6 +126,11 @@ class ConfigFacade(object):
         return result
 
     def create_link_list(self, link_list):
+        """
+        Add a link list to a config without one
+
+        iterable link_list -- list of dicts with link_list options
+        """
         available_link_numbers = list(range(constants.LINKS_KNET_MAX))
         linknumber_missing = []
         links = []

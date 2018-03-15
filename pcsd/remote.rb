@@ -3130,7 +3130,7 @@ def check_host(params, reqest, auth_user)
   }
   output = {
     :services => {},
-    :cluster_configuration_exist => (
+    :cluster_configuration_exists => (
       File.exist?(Cfgsync::CorosyncConf.file_path) or File.exist?(CIB_PATH)
     )
   }

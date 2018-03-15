@@ -46,7 +46,8 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     all_addrs_count = defaultdict(int)
     all_addrs_type = {}
     addr_types_per_node = []
-    # First, validate each node on its own.
+    # First, validate each node on its own. Also extract some info which will
+    # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
         name_validators = [
             validate.is_required("name", "node {}".format(i)),
@@ -65,7 +66,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         if "name" not in node or not node["name"]:
             all_names_usable = False
         else:
-            # Count occurences of each node name. Do not bother counting
+            # Count occurrences of each node name. Do not bother counting
             # missing or empty names. They must be fixed anyway.
             all_names_count[node["name"]] += 1
         addr_count = len(node.get("addrs", []))
@@ -97,7 +98,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                 all_addrs_type[addr] = _get_address_type(addr)
             addr_types.append(all_addrs_type[addr])
         addr_types_per_node.append(addr_types)
-
+    # Report all unresolvable addresses at once instead on each own.
     unresolvable_addresses = set([
         addr for addr, addr_type in all_addrs_type.items()
         if addr_type == "unresolvable"
@@ -115,6 +116,9 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                 forceable
             )
         )
+
+    # Reporting single-node errors finished.
+    # Now report nodelist and inter-node errors.
     non_unique_names = set([
         name for name, count in all_names_count.items() if count > 1
     ])
@@ -130,11 +134,10 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         report_items.append(
             reports.corosync_node_address_duplication(non_unique_addrs)
         )
-
-    # Now check for errors using node names in their reports. If node names are
-    # ambiguous then such issues cannot be comprehensibly reported so the
-    # checks are skipped.
     if all_names_usable:
+        # Check for errors using node names in their reports. If node names are
+        # ambiguous then such issues cannot be comprehensibly reported so the
+        # checks are skipped.
         node_addr_count = {}
         for node in node_list:
             node_addr_count[node["name"]] = len(node.get("addrs", []))
@@ -147,7 +150,6 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
             len(Counter(node_addr_count.values()).keys()) > 1
         ):
             reports.corosync_node_address_count_mismatch(node_addr_count)
-
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
     for link, addr_types in enumerate(zip_longest(*addr_types_per_node)):

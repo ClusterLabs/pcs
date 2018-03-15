@@ -2451,21 +2451,12 @@ def _transport_specific_parsing(options, specific_keywords):
 
 TRANSPORT_KEYWORD = "transport"
 KNET_KEYWORD = "knet"
-SUPPORTED_TRANSPORT_TYPES = set([KNET_KEYWORD] + ["udp", "udpu"])
 def _parse_transport(transport_args):
     if len(transport_args) < 1:
         raise CmdLineInputError(
             "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
         )
     transport_type, *transport_options = transport_args
-    if transport_type not in SUPPORTED_TRANSPORT_TYPES:
-        raise CmdLineInputError(
-            "Unknown {0} type '{1}'. Supported {0} types are: {2}".format(
-                TRANSPORT_KEYWORD,
-                transport_type,
-                ", ".join(SUPPORTED_TRANSPORT_TYPES),
-            )
-        )
     transport_specific_keywords = set()
     if transport_type == KNET_KEYWORD:
         transport_specific_keywords = {"compression", "crypto"}
@@ -2484,7 +2475,8 @@ def new_cluster_setup(lib, argv, modifiers):
     cluster_name, *argv = argv
     keywords = [TRANSPORT_KEYWORD, "totem", "quorum"]
     parsed_args = parse_args.group_by_keywords(
-        argv, keywords,
+        argv,
+        keywords,
         implicit_first_group_key="nodes",
         keyword_repeat_allowed=False,
         only_found_keywords=True,

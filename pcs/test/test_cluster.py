@@ -3068,10 +3068,10 @@ def node_dict_fixture(node_name, addrs=None):
 DEFAULT_TRANSPORT_TYPE = "knet"
 class NewClusterSetup(unittest.TestCase):
     def setUp(self):
-       self.lib = mock.Mock(spec_set=["cluster"])
-       self.cluster = mock.Mock(spec_set=["setup"])
-       self.lib.cluster = self.cluster
-       self.cluster_name = "cluster_name"
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.cluster = mock.Mock(spec_set=["setup"])
+        self.lib.cluster = self.cluster
+        self.cluster_name = "cluster_name"
 
     def assert_setup_called_with(self, node_list, **kwargs):
         default_kwargs = dict(
@@ -3183,17 +3183,24 @@ class NewClusterSetup(unittest.TestCase):
 
     def test_transport_type_unknown(self):
         node = "node"
-        transport_type = "unknown"
+        self.call_cmd([
+            node, "transport", "unknown", "a=1", "link", "b=2", "c=3",
+        ])
+        self.assert_setup_called_with(
+            [node_dict_fixture(node)],
+            transport_type="unknown",
+            transport_options=dict(a="1"),
+            link_list=[
+                dict(b="2", c="3"),
+            ]
+        )
+
+    def test_transport_with_unknown_keywords(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd([node, "transport", transport_type])
+            self.call_cmd(["node", "transport", "udp", "crypto", "a=1"])
         self.assertEqual(
-            (
-                "Unknown transport type '{}'. Supported transport types "
-                "are: {}"
-            ).format(
-                transport_type, ", ".join(cluster.SUPPORTED_TRANSPORT_TYPES)
-            ),
-            cm.exception.message,
+            "missing value of 'crypto' option",
+            cm.exception.message
         )
 
     def test_transport_independent_options(self):

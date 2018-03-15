@@ -1,4 +1,5 @@
 from pcs.settings_default import *
+corosync_log_file = "/var/log/corosync/corosync.log"
 pengine_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pengine"
 crmd_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/crmd"
 cib_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/cib"
