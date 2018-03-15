@@ -941,12 +941,20 @@ def corosync_bad_node_addresses_count(
         }
     )
 
-def corosync_crypto_cipher_without_crypto_hash():
+def corosync_crypto_cipher_requires_crypto_hash():
     """
     Trying to enable cipher when hash is disabled, which is not allowed.
     """
     return ReportItem.error(
-        report_codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
+        report_codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH
+    )
+
+def corosync_enabled_broadcast_disallows_mcastaddr():
+    """
+    Cannot set mcastaddr when broadcast is enabled
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR
     )
 
 def corosync_ip_version_mismatch_in_links(link_numbers):
@@ -957,6 +965,19 @@ def corosync_ip_version_mismatch_in_links(link_numbers):
         report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
         info={
             "link_numbers": link_numbers,
+        }
+    )
+
+def corosync_link_number_duplication(number_list):
+    """
+    Trying to set one link_number for more links, link numbers must be unique
+
+    iterable number_list -- list of nonunique link numbers
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
+        info={
+            "link_number_list": sorted(number_list),
         }
     )
 
@@ -996,6 +1017,23 @@ def corosync_node_name_duplication(name_list):
         report_codes.COROSYNC_NODE_NAME_DUPLICATION,
         info={
             "name_list": sorted(name_list),
+        }
+    )
+
+def corosync_too_many_links(actual_count, max_count, transport):
+    """
+    Trying to set more links than the selected transport supports
+
+    int actual_count -- how many links user wants to set
+    int max_count -- maximal allowed number of links
+    string transport -- selected transport
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_TOO_MANY_LINKS,
+        info={
+            "actual_count": actual_count,
+            "max_count": max_count,
+            "transport": transport,
         }
     )
 

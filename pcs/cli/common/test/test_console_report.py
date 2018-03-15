@@ -1969,13 +1969,22 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
         )
 
 
-class CorosyncCryptoCipherWwithoutCryptoHhash(NameBuildTest):
-    code = codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH
+class CorosyncCryptoCipherRequiresCryptoHash(NameBuildTest):
+    code = codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH
     def test_message(self):
         self.assert_message_from_info(
             "When a crypto cipher is enabled, a crypto hash must be enabled as "
             "well; please, specify a crypto hash"
         )
+
+
+class CorosyncEnabledBroadcastDisallowsMcastaddr(NameBuildTest):
+    code = codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR
+    def test_message(self):
+        self.assert_message_from_info(
+            "Cannot set mcastaddr when broadcast is enabled"
+        )
+
 
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
     code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
@@ -1988,6 +1997,7 @@ class CorosyncIpVersionMismatchInLinks(NameBuildTest):
                 "link_numbers": [0, 3, 4]
             }
         )
+
 
 class CorosyncNodeAddressCountMismatch(NameBuildTest):
     code = codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH
@@ -2007,6 +2017,17 @@ class CorosyncNodeAddressCountMismatch(NameBuildTest):
                     "node5": 2,
                     "node6": 3,
                 },
+            }
+        )
+
+
+class CorosyncLinkNumberDuplication(NameBuildTest):
+    code = codes.COROSYNC_LINK_NUMBER_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Link numbers must be unique, duplicate link numbers: '1', '3'",
+            {
+                "link_number_list": ["1", "3"],
             }
         )
 
@@ -2041,6 +2062,29 @@ class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
         self.assert_message_from_info(
             "No exec_NAME options are specified, so heuristics are effectively "
                 "disabled"
+        )
+
+
+class CorosyncTooManyLinks(NameBuildTest):
+    code = codes.COROSYNC_TOO_MANY_LINKS
+    def test_udp(self):
+        self.assert_message_from_info(
+            "Cannot set 2 links, udp/udpu transport supports up to 1 link",
+            {
+                "actual_count": 2,
+                "max_count": 1,
+                "transport": "udp/udpu",
+            }
+        )
+
+    def test_knet(self):
+        self.assert_message_from_info(
+            "Cannot set 9 links, knet transport supports up to 8 links",
+            {
+                "actual_count": 9,
+                "max_count": 8,
+                "transport": "knet",
+            }
         )
 
 

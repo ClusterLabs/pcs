@@ -595,9 +595,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_CRYPTO_CIPHER_WITHOUT_CRYPTO_HASH:
+    codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH:
         "When a crypto cipher is enabled, a crypto hash must be enabled as "
         "well; please, specify a crypto hash"
+    ,
+
+    codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR:
+        "Cannot set mcastaddr when broadcast is enabled"
     ,
 
     codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
@@ -606,6 +610,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "either IPv4 or IPv6 in links {_links}"
         ).format(
             _links=", ".join([str(x) for x in info["link_numbers"]]),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_LINK_NUMBER_DUPLICATION: lambda info:
+        "Link numbers must be unique, duplicate link numbers: {_nums}".format(
+            _nums=", ".join([
+                "'{0}'".format(x) for x in info["link_number_list"]
+            ]),
             **info
         )
     ,
@@ -631,6 +644,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
         "These options cannot be set when the cluster uses a quorum device: {0}"
         .format(", ".join(sorted(info["options_names"])))
+    ,
+
+    codes.COROSYNC_TOO_MANY_LINKS: lambda info:
+        (
+            "Cannot set {actual_count} links, {transport} transport supports "
+            "up to {max_count} link{_s}"
+        ).format(
+            _s=("s" if info["max_count"] > 1 else ""),
+            **info
+        )
     ,
 
     codes.QDEVICE_ALREADY_DEFINED:

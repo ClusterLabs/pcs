@@ -181,9 +181,6 @@ def create_link_list_udp(link_list):
         # It is not mandatory to set link options. If an empty link list is
         # provided, everything is fine and we have nothing to validate.
         return []
-    if len(link_list) > constants.LINKS_UDP_MAX:
-        # TODO report
-        pass
 
     allowed_options = [
         "bindnetaddr",
@@ -206,8 +203,18 @@ def create_link_list_udp(link_list):
         validate.names_in(allowed_options, options.keys(), "link")
     )
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
-        # TODO report
-        pass
+        report_items.append(
+            reports.corosync_enabled_broadcast_disallows_mcastaddr()
+        )
+    link_count = len(link_list)
+    if link_count > constants.LINKS_UDP_MAX:
+        report_items.append(
+            reports.corosync_too_many_links(
+                link_count,
+                constants.LINKS_UDP_MAX,
+                "udp/udpu"
+            )
+        )
     return report_items
 
 def create_link_list_knet(link_list, max_link_number):
@@ -226,10 +233,6 @@ def create_link_list_knet(link_list, max_link_number):
         0,
         min((constants.LINKS_KNET_MAX - 1), max_link_number)
     )
-    link_count = len(link_list)
-    if link_count > constants.LINKS_KNET_MAX:
-        # TODO report bad number of links, use "link_count" in the report
-        pass
     allowed_options = [
         "ip_version", # It tells knet which IP to prefer.
         "linknumber",
@@ -255,11 +258,9 @@ def create_link_list_knet(link_list, max_link_number):
         validate.value_in("transport", ("sctp", "udp")),
     ]
     report_items = []
-    used_link_number = {}
+    used_link_number = defaultdict(int)
     for options in link_list:
         if "linknumber" in options:
-            if not options["linknumber"] in used_link_number:
-                used_link_number[options["linknumber"]] = 0
             used_link_number[options["linknumber"]] += 1
         report_items += (
             validate.run_collection_of_option_validators(options, validators)
@@ -270,8 +271,18 @@ def create_link_list_knet(link_list, max_link_number):
         number for number, count in used_link_number.items() if count > 1
     ]
     if non_unique_linknumbers:
-        # TODO report
-        pass
+        report_items.append(
+            reports.corosync_link_number_duplication(non_unique_linknumbers)
+        )
+    link_count = len(link_list)
+    if link_count > constants.LINKS_KNET_MAX:
+        report_items.append(
+            reports.corosync_too_many_links(
+                link_count,
+                constants.LINKS_KNET_MAX,
+                "knet"
+            )
+        )
     return report_items
 
 def create_transport_udp(options):
@@ -390,7 +401,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         crypto_options.get("hash", "sha1") == "none"
     ):
         report_items.append(
-            reports.corosync_crypto_cipher_without_crypto_hash()
+            reports.corosync_crypto_cipher_requires_crypto_hash()
         )
     return report_items
 
