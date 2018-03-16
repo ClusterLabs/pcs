@@ -1037,6 +1037,21 @@ def corosync_too_many_links(actual_count, max_count, transport):
         }
     )
 
+def corosync_transport_unsupported_options(
+    option_type, actual_transport, required_transports
+):
+    """
+    A type of options is not supported with the given transport
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+        info={
+            "option_type": option_type,
+            "actual_transport": actual_transport,
+            "required_transport_list": required_transports,
+        }
+    )
+
 def qdevice_already_defined():
     """
     qdevice is already set up in a cluster, when it was expected not to be

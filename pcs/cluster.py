@@ -2428,44 +2428,35 @@ def _parse_node_options(node, options):
     return parsed_options
 
 
-def _transport_specific_parsing(options, specific_keywords):
-    DEFAULT_SECTION = "__default__"
-    LINK_KEYWORD = "link"
-    parsed_options = parse_args.group_by_keywords(
-        options,
-        specific_keywords | {LINK_KEYWORD},
-        implicit_first_group_key=DEFAULT_SECTION,
-        group_repeated_keywords=[LINK_KEYWORD],
-    )
-    base_options = parse_args.prepare_options(parsed_options[DEFAULT_SECTION])
-    other_options = {
-        section: parse_args.prepare_options(parsed_options[section])
-        for section in specific_keywords
-    }
-    other_options[LINK_KEYWORD] = [
-        parse_args.prepare_options(link_options)
-        for link_options in parsed_options[LINK_KEYWORD]
-    ]
-    return base_options, other_options
-
-
 TRANSPORT_KEYWORD = "transport"
+TRANSPORT_DEFAULT_SECTION = "__default__"
 KNET_KEYWORD = "knet"
+LINK_KEYWORD = "link"
 def _parse_transport(transport_args):
     if len(transport_args) < 1:
         raise CmdLineInputError(
             "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
         )
     transport_type, *transport_options = transport_args
-    transport_specific_keywords = set()
-    if transport_type == KNET_KEYWORD:
-        transport_specific_keywords = {"compression", "crypto"}
 
-    transport_options_dict, other_options_dict = _transport_specific_parsing(
-        transport_options, transport_specific_keywords
+    keywords = {"compression", "crypto", LINK_KEYWORD}
+    parsed_options = parse_args.group_by_keywords(
+        transport_options,
+        keywords,
+        implicit_first_group_key=TRANSPORT_DEFAULT_SECTION,
+        group_repeated_keywords=[LINK_KEYWORD],
     )
+    options = {
+        section: parse_args.prepare_options(parsed_options[section])
+        for section in keywords | {TRANSPORT_DEFAULT_SECTION}
+        if section != LINK_KEYWORD
+    }
+    options[LINK_KEYWORD] = [
+        parse_args.prepare_options(link_options)
+        for link_options in parsed_options[LINK_KEYWORD]
+    ]
 
-    return transport_type, transport_options_dict, other_options_dict
+    return transport_type, options
 
 
 def new_cluster_setup(lib, argv, modifiers):
@@ -2491,10 +2482,9 @@ def new_cluster_setup(lib, argv, modifiers):
 
     transport_type = DEFAULT_TRANSPORT_TYPE
     transport_options = {}
-    other_options = {}
 
     if TRANSPORT_KEYWORD in parsed_args:
-        transport_type, transport_options, other_options = _parse_transport(
+        transport_type, transport_options = _parse_transport(
             parsed_args[TRANSPORT_KEYWORD]
         )
 
@@ -2502,10 +2492,10 @@ def new_cluster_setup(lib, argv, modifiers):
         cluster_name,
         nodes,
         transport_type=transport_type,
-        transport_options=transport_options,
-        link_list=other_options.get("link", []),
-        compression_options=other_options.get("compression", {}),
-        crypto_options=other_options.get("crypto", {}),
+        transport_options=transport_options.get(TRANSPORT_DEFAULT_SECTION, {}),
+        link_list=transport_options.get(LINK_KEYWORD, []),
+        compression_options=transport_options.get("compression", {}),
+        crypto_options=transport_options.get("crypto", {}),
         totem_options=parse_args.prepare_options(parsed_args.get("totem", [])),
         quorum_options=parse_args.prepare_options(
             parsed_args.get("quorum", [])

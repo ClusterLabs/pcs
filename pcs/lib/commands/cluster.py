@@ -163,7 +163,11 @@ def setup(
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
         report_list.extend(
-            config_validators.create_transport_udp(transport_options)
+            config_validators.create_transport_udp(
+                transport_options,
+                compression_options,
+                crypto_options
+            )
             +
             config_validators.create_link_list_udp(link_list)
         )

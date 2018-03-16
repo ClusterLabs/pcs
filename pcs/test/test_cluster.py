@@ -3196,11 +3196,12 @@ class NewClusterSetup(unittest.TestCase):
         )
 
     def test_transport_with_unknown_keywords(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(["node", "transport", "udp", "crypto", "a=1"])
-        self.assertEqual(
-            "missing value of 'crypto' option",
-            cm.exception.message
+        node = "node"
+        self.call_cmd(["node", "transport", "udp", "crypto", "a=1"])
+        self.assert_setup_called_with(
+            [node_dict_fixture(node)],
+            transport_type="udp",
+            crypto_options=dict(a="1"),
         )
 
     def test_transport_independent_options(self):

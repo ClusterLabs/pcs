@@ -2088,6 +2088,21 @@ class CorosyncTooManyLinks(NameBuildTest):
         )
 
 
+class CorosyncTransportUnsupportedOptions(NameBuildTest):
+    code = codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS
+    def test_udp(self):
+        self.assert_message_from_info(
+            "The udp/udpu transport does not support 'crypto' options, use "
+                "'knet' transport"
+            ,
+            {
+                "option_type": "crypto",
+                "actual_transport": "udp/udpu",
+                "required_transport_list": ["knet"],
+            }
+        )
+
+
 class ResourceCleanupError(NameBuildTest):
     code = codes.RESOURCE_CLEANUP_ERROR
 

@@ -287,11 +287,13 @@ def create_link_list_knet(link_list, max_link_number):
         )
     return report_items
 
-def create_transport_udp(options):
+def create_transport_udp(generic_options, compression_options, crypto_options):
     """
     Validate creating udp/udpu transport options
 
-    dict options -- transport options
+    dict generic_options -- generic transport options
+    dict compression_options -- compression options
+    dict crypto_options -- crypto options
     """
     # No need to support force:
     # * values are either an enum or numbers with no range set - nothing to force
@@ -307,18 +309,48 @@ def create_transport_udp(options):
         validate.value_positive_integer("netmtu"),
     ]
     report_items = (
-        validate.run_collection_of_option_validators(options, validators)
+        validate.run_collection_of_option_validators(
+            generic_options,
+            validators
+        )
         +
-        validate.names_in(allowed_options, options.keys(), "udp/udpu transport")
+        validate.names_in(
+            allowed_options,
+            generic_options.keys(),
+            "udp/udpu transport"
+        )
     )
+    if compression_options:
+        report_items.append(
+            reports.corosync_transport_unsupported_options(
+                "compression",
+                "udp/udpu",
+                ["knet"]
+            )
+        )
+    if crypto_options:
+        report_items.append(
+            reports.corosync_transport_unsupported_options(
+                "crypto",
+                "udp/udpu",
+                ["knet"]
+            )
+        )
     return report_items
 
 def create_transport_knet(generic_options, compression_options, crypto_options):
     """
     Validate creating knet transport options
 
-    dict options -- transport options
+    dict generic_options -- generic transport options
+    dict compression_options -- compression options
+    dict crypto_options -- crypto options
     """
+    # No need to support force:
+    # * values are either an enum or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
     generic_allowed = [
         "ip_version", # It tells knet which IP to prefer.
         "knet_pmtud_interval",

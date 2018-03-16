@@ -682,6 +682,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS: lambda info:
+        (
+            "The {actual_transport} transport does not support '{option_type}' "
+            "options, use {_required_transports} transport"
+        ).format(
+            _required_transports=format_list(info["required_transport_list"]),
+            **info
+        )
+    ,
+
     codes.QDEVICE_ALREADY_DEFINED:
         "quorum device is already defined"
     ,
