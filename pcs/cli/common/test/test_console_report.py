@@ -2056,6 +2056,16 @@ class CorosyncNodeNameDuplication(NameBuildTest):
         )
 
 
+class CorosyncNodesMissing(NameBuildTest):
+    code = codes.COROSYNC_NODES_MISSING
+    def test_message(self):
+        self.assert_message_from_info(
+            "No nodes have been specified",
+            {
+            }
+        )
+
+
 class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
     code = codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
     def test_message(self):

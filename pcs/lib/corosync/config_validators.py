@@ -119,6 +119,8 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
 
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
+    if len(node_list) < 1:
+        report_items.append(reports.corosync_nodes_missing())
     non_unique_names = set([
         name for name, count in all_names_count.items() if count > 1
     ])

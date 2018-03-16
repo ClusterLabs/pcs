@@ -1020,6 +1020,16 @@ def corosync_node_name_duplication(name_list):
         }
     )
 
+def corosync_nodes_missing():
+    """
+    No nodes have been specified
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODES_MISSING,
+        info={
+        }
+    )
+
 def corosync_too_many_links(actual_count, max_count, transport):
     """
     Trying to set more links than the selected transport supports

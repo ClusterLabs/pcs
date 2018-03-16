@@ -667,6 +667,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.COROSYNC_NODES_MISSING:
+        "No nodes have been specified"
+    ,
+
     codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
         "These options cannot be set when the cluster uses a quorum device: {0}"
         .format(", ".join(sorted(info["options_names"])))
