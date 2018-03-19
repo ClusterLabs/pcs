@@ -278,7 +278,7 @@ def setup(
         # 17 - 24 nodes: 3 * timeout
         # and so on ...
         # Users can override this and set their own timeout by specifying
-        # the --request-timeout option (see utils.sendHTTPRequest).
+        # the --request-timeout option.
         timeout = int(
             settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
         )

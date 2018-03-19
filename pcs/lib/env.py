@@ -400,8 +400,10 @@ class LibraryEnvironment(object):
     def communicator_factory(self):
         return self._communicator_factory
 
-    def get_node_communicator(self):
-        return self.communicator_factory.get_communicator()
+    def get_node_communicator(self, request_timeout=None):
+        return self.communicator_factory.get_communicator(
+            request_timeout=request_timeout
+        )
 
     def get_node_target_factory(self):
         return NodeTargetLibFactory(
