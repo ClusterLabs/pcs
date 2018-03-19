@@ -324,3 +324,11 @@ class SkipOfflineMixin(object):
             severity=self._failure_severity,
             forceable=self._failure_forceable,
         )
+
+
+class NotSupportedHandlerMixin(object):
+    def _get_response_report(self, response):
+        report = super()._get_response_report(response)
+        if response.was_connected and response.response_code == 404:
+            report = reports.pcsd_version_too_old(response.request.target.label)
+        return report

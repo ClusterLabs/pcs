@@ -6,6 +6,7 @@ from pcs.lib import reports, node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
+    NotSupportedHandlerMixin,
     RunRemotelyBase,
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
@@ -76,7 +77,10 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         return self._not_authorized_host_name_list
 
 
-class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
+class GetHostInfo(
+    NotSupportedHandlerMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    RunRemotelyBase,
+):
     _responses = None
 
     def _get_request_data(self):

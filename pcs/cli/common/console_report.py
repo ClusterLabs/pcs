@@ -1599,4 +1599,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.WAIT_FOR_NODE_STARTUP_ERROR:
         "Unable to verify all nodes have started"
     ,
+    codes.PCSD_VERSION_TOO_OLD: lambda info:
+        (
+            "{node}: Old version of pcsd is running on the node, therefore it "
+            "is unable to perform the action"
+        ).format(**info)
+    ,
 }

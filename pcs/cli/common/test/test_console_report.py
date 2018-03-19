@@ -2518,3 +2518,16 @@ class WaitForNodeStartupStarted(NameBuildTest):
                 "node_name_list": ["node1", "node3", "node2"],
             }
         )
+
+class PcsdVersionTooOld(NameBuildTest):
+    code = codes.PCSD_VERSION_TOO_OLD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "node1: Old version of pcsd is running on the node, therefore "
+                "it is unable to perform the action"
+            ),
+            {
+                "node": "node1",
+            }
+        )

@@ -3181,3 +3181,12 @@ def wait_for_node_startup_timed_out():
 
 def wait_for_node_startup_error():
     return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)
+
+
+def pcsd_version_too_old(node):
+    return ReportItem.error(
+        report_codes.PCSD_VERSION_TOO_OLD,
+        info=dict(
+            node=node,
+        )
+    )
