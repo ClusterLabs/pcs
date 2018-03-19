@@ -29,7 +29,10 @@ from pcs.lib.corosync import (
     constants as corosync_constants
 )
 from pcs.lib.env_tools import get_nodes
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity,
+)
 from pcs.lib.node import (
     node_addresses_contain_name,
     node_addresses_contain_host,
@@ -337,6 +340,10 @@ def _host_check_cluster_setup(host_info_dict, force):
     required_as_stopped_service_list = (
         required_service_list + ["pacemaker_remote"]
     )
+    report_severity = (
+        ReportItemSeverity.ERROR if not force else ReportItemSeverity.WARNING
+    )
+    cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
         try:
             services = host_info["services"]
@@ -355,15 +362,21 @@ def _host_check_cluster_setup(host_info_dict, force):
                     host_name, missing_service_list
                 ))
             if running_service_list:
+                cluster_exists_on_nodes = True
                 report_list.append(
                     reports.host_already_in_cluster_services(
                         host_name,
-                        running_service_list
+                        running_service_list,
+                        severity=report_severity,
                     )
                 )
             if host_info["cluster_configuration_exists"]:
+                cluster_exists_on_nodes = True
                 report_list.append(
-                    reports.host_already_in_cluster_config(host_name)
+                    reports.host_already_in_cluster_config(
+                        host_name,
+                        severity=report_severity,
+                    )
                 )
         except KeyError:
             report_list.append(reports.invalid_response_format(host_name))
@@ -372,6 +385,9 @@ def _host_check_cluster_setup(host_info_dict, force):
         report_list.extend(
             _check_for_not_matching_service_versions(service, version_dict)
         )
+
+    if cluster_exists_on_nodes and not force:
+        report_list.append(reports.cluster_will_be_destroyed())
     return report_list
 
 

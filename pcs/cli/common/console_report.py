@@ -1605,4 +1605,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "is unable to perform the action"
         ).format(**info)
     ,
+    codes.CLUSTER_WILL_BE_DESTROYED:
+        "Some nodes are already in a cluster. Enforcing this will destroy "
+        "existing cluster on these nodes."
+    ,
 }

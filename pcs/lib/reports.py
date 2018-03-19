@@ -3190,3 +3190,10 @@ def pcsd_version_too_old(node):
             node=node,
         )
     )
+
+
+def cluster_will_be_destroyed():
+    return ReportItem.error(
+        report_codes.CLUSTER_WILL_BE_DESTROYED,
+        forceable=report_codes.FORCE_ALREADY_IN_CLUSTER,
+    )
