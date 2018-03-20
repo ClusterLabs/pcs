@@ -369,10 +369,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         "threshold",
     ]
     compression_validators = [
-        validate.value_not_empty(
-            "level",
-            "a compression level e.g. 0..9"
-        ),
+        validate.value_nonnegative_integer("level"),
         validate.value_not_empty(
             "model",
             "a compression model e.g. zlib, lz4 or bzip2"
