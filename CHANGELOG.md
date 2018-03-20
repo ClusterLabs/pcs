@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Security
+- CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
+  ([rhbz#1557366])
+
+[rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
+
+
 ## [0.9.163] - 2018-02-20
 
 ### Added
