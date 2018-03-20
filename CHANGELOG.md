@@ -27,8 +27,11 @@
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
   ([rhbz#1557366])
+- CVE-2018-1079: Privilege escalation via authorized user malicious REST call
+  ([rhbz#1550243])
 
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
+[rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 
 

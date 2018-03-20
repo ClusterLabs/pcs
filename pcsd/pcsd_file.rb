@@ -104,6 +104,11 @@ module PcsdFile
       if @file[:name].empty?
         raise PcsdExchangeFormat::Error.for_item('file', @id, "'name' is empty")
       end
+      if @file[:name].include?('/')
+        raise PcsdExchangeFormat::Error.for_item(
+          'file', @id, "'name' cannot contain '/'"
+        )
+      end
     end
 
     def dir()
