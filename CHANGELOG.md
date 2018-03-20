@@ -24,7 +24,12 @@
   - These changes are not backward compatible. You should use the `pcs host
     auth` command to re-authenticate your hosts.
 
+### Security
+- CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
+  ([rhbz#1557366])
+
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
+[rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 
 
 ## [0.9.163] - 2018-02-20
