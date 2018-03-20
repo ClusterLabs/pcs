@@ -268,6 +268,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL: lambda info:
+        (
+            "If {_opt_desc}option '{option_name}' is enabled, "
+            "{_pre_desc}option '{prerequisite_name}' must be enabled as well"
+        ).format(
+            _opt_desc=format_optional(info.get("option_type"), "{0} "),
+            _pre_desc=format_optional(info.get("prerequisite_type"), "{0} "),
+            **info
+        )
+    ,
+
     codes.PREREQUISITE_OPTION_IS_MISSING: lambda info:
         (
             "If {opt_desc}option '{option_name}' is specified, "
@@ -625,11 +636,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             ),
             **info
         )
-    ,
-
-    codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH:
-        "When a crypto cipher is enabled, a crypto hash must be enabled as "
-        "well; please, specify a crypto hash"
     ,
 
     codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR:

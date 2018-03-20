@@ -7,14 +7,25 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 
-class QuorumOptionsUpdate(TestCase):
+class BaseQuorumOptions():
+    def test_no_options(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            self.validator(
+                {
+                },
+                has_qdevice
+            ),
+            []
+        )
+
     def test_all_valid(self):
         has_qdevice = False
         assert_report_item_list_equal(
-            config_validators.update_quorum_options(
+            self.validator(
                 {
-                    "auto_tie_breaker": "1",
-                    "last_man_standing": "0",
+                    "auto_tie_breaker": "0",
+                    "last_man_standing": "1",
                     "last_man_standing_window": "1000",
                     "wait_for_all": "0",
                 },
@@ -26,7 +37,7 @@ class QuorumOptionsUpdate(TestCase):
     def test_invalid_all_values(self):
         has_qdevice = False
         assert_report_item_list_equal(
-            config_validators.update_quorum_options(
+            self.validator(
                 {
                     "auto_tie_breaker": "atb",
                     "last_man_standing": "lms",
@@ -78,7 +89,7 @@ class QuorumOptionsUpdate(TestCase):
     def test_invalid_option(self):
         has_qdevice = False
         assert_report_item_list_equal(
-            config_validators.update_quorum_options(
+            self.validator(
                 {
                     "auto_tie_breaker": "1",
                     "nonsense1": "0",
@@ -108,7 +119,7 @@ class QuorumOptionsUpdate(TestCase):
     def test_qdevice_incompatible_options(self):
         has_qdevice = True
         assert_report_item_list_equal(
-            config_validators.update_quorum_options(
+            self.validator(
                 {
                     "auto_tie_breaker": "1",
                     "last_man_standing": "1",
@@ -135,13 +146,106 @@ class QuorumOptionsUpdate(TestCase):
     def test_qdevice_compatible_options(self):
         has_qdevice = True
         assert_report_item_list_equal(
-            config_validators.update_quorum_options(
+            self.validator(
                 {
                     "wait_for_all": "1",
                 },
                 has_qdevice
             ),
             []
+        )
+
+    def test_last_man_standing_required(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            self.validator(
+                {
+                    "last_man_standing_window": "1000",
+                },
+                has_qdevice
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="last_man_standing_window",
+                    option_type="quorum",
+                    prerequisite_name="last_man_standing",
+                    prerequisite_type="quorum"
+                )
+            ]
+        )
+
+    def test_last_man_standing_required_enabled(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            self.validator(
+                {
+                    "last_man_standing": "0",
+                    "last_man_standing_window": "1000",
+                },
+                has_qdevice
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="last_man_standing_window",
+                    option_type="quorum",
+                    prerequisite_name="last_man_standing",
+                    prerequisite_type="quorum"
+                )
+            ]
+        )
+
+
+class CreateQuorumOptions(BaseQuorumOptions, TestCase):
+    def setUp(self):
+        self.validator = config_validators.create_quorum_options
+
+
+class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
+    def setUp(self):
+        self.validator = (
+            lambda options, has_qdevice:
+            config_validators.update_quorum_options(options, has_qdevice, {})
+        )
+
+    def test_last_man_standing_required_currently_disabled(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            config_validators.update_quorum_options(
+                {
+                    "last_man_standing_window": "1000",
+                },
+                has_qdevice,
+                {
+                    "last_man_standing": "0",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="last_man_standing_window",
+                    option_type="quorum",
+                    prerequisite_name="last_man_standing",
+                    prerequisite_type="quorum"
+                )
+            ]
+        )
+
+    def test_last_man_standing_required_currently_enabled(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            config_validators.update_quorum_options(
+                {
+                    "last_man_standing_window": "1000",
+                },
+                has_qdevice,
+                {
+                    "last_man_standing": "1",
+                }
+            ),
+            [
+            ]
         )
 
 

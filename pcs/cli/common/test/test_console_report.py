@@ -946,6 +946,32 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
             }
         )
 
+
+class PrerequisiteOptionMustBeEnabledAsWell(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "If option 'a' is enabled, option 'b' must be enabled as well",
+            {
+                "option_name": "a",
+                "prerequisite_name": "b",
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "If some option 'a' is enabled, "
+                "other option 'b' must be enabled as well"
+            ,
+            {
+                "option_name": "a",
+                "option_type": "some",
+                "prerequisite_name": "b",
+                "prerequisite_type": "other",
+            }
+        )
+
+
 class PrerequisiteOptionIsMissing(NameBuildTest):
     code = codes.PREREQUISITE_OPTION_IS_MISSING
     def test_without_type(self):
@@ -1966,15 +1992,6 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "node_name": "node2",
                 "node_id": 2,
             }
-        )
-
-
-class CorosyncCryptoCipherRequiresCryptoHash(NameBuildTest):
-    code = codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH
-    def test_message(self):
-        self.assert_message_from_info(
-            "When a crypto cipher is enabled, a crypto hash must be enabled as "
-            "well; please, specify a crypto hash"
         )
 
 

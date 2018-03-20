@@ -177,6 +177,7 @@ def prerequisite_option_is_missing(
 ):
     """
     if the option_name is specified, the prerequisite_option must be specified
+
     string option_name -- an option which depends on the prerequisite_option
     string prerequisite_name -- the prerequisite option
     string option_type -- describes the option
@@ -184,6 +185,27 @@ def prerequisite_option_is_missing(
     """
     return ReportItem.error(
         report_codes.PREREQUISITE_OPTION_IS_MISSING,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
+def prerequisite_option_must_be_enabled_as_well(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    If the option_name is enabled, the prerequisite_option must be also enabled
+
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
         info={
             "option_name": option_name,
             "option_type": option_type,
@@ -939,14 +961,6 @@ def corosync_bad_node_addresses_count(
             "node_name": node_name,
             "node_id": node_id,
         }
-    )
-
-def corosync_crypto_cipher_requires_crypto_hash():
-    """
-    Trying to enable cipher when hash is disabled, which is not allowed.
-    """
-    return ReportItem.error(
-        report_codes.COROSYNC_CRYPTO_CIPHER_REQUIRES_CRYPTO_HASH
     )
 
 def corosync_enabled_broadcast_disallows_mcastaddr():

@@ -256,8 +256,18 @@ def create_link_list_knet(link_list, max_link_number):
         validate.value_nonnegative_integer("ping_interval"),
         validate.value_nonnegative_integer("ping_precision"),
         validate.value_nonnegative_integer("ping_timeout"),
-        validate.depends_on_option("ping_interval", "ping_timeout"),
-        validate.depends_on_option("ping_timeout", "ping_interval"),
+        validate.depends_on_option(
+            "ping_interval",
+            "ping_timeout",
+            option_type="link",
+            prerequisite_type="link"
+        ),
+        validate.depends_on_option(
+            "ping_timeout",
+            "ping_interval",
+            option_type="link",
+            prerequisite_type="link"
+        ),
         validate.value_nonnegative_integer("pong_count"),
         validate.value_in("transport", ("sctp", "udp")),
     ]
@@ -434,7 +444,12 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         crypto_options.get("hash", "sha1") == "none"
     ):
         report_items.append(
-            reports.corosync_crypto_cipher_requires_crypto_hash()
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "cipher",
+                "hash",
+                option_type="crypto",
+                prerequisite_type="crypto"
+            )
         )
     return report_items
 
@@ -508,34 +523,64 @@ def create_quorum_options(options, has_qdevice):
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
-    validators = [
-        validate.depends_on_option(
-            "last_man_standing_window",
-            "last_man_standing"
-        ),
-    ]
-    report_items = (
-        validate.run_collection_of_option_validators(options, validators)
-    )
-    return _validate_quorum_options(
+    report_items = _validate_quorum_options(
         options, has_qdevice, allow_empty_values=False
-    ) + report_items
+    )
+    if (
+        # Default value in corosync is 10 ms. However, that would always fail
+        # the validation, so we use the default value of 0.
+        options.get("last_man_standing_window", "0") != "0"
+        and
+        # default value taken from `man corosync.conf`
+        options.get("last_man_standing", "0") == "0"
+    ):
+        report_items.append(
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "last_man_standing_window",
+                "last_man_standing",
+                option_type="quorum",
+                prerequisite_type="quorum"
+            )
+        )
+    return report_items
 
-def update_quorum_options(options, has_qdevice):
+def update_quorum_options(options, has_qdevice, current_options):
     """
     Validate modifying quorum options
 
     dict options -- quorum options to set
     bool has_qdevice -- is a qdevice set in corosync.conf?
+    dict current_options -- currently set quorum options
     """
     # No need to support force:
     # * values are either bool or numbers with no range set - nothing to force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
-    return _validate_quorum_options(
+    report_items = _validate_quorum_options(
         options, has_qdevice, allow_empty_values=True
     )
+    effective_lms = options.get(
+        "last_man_standing",
+        # default value taken from `man corosync.conf`
+        current_options.get("last_man_standing", "0")
+    )
+    if (
+        # Default value in corosync is 10 ms. However, that would always fail
+        # the validation, so we use the default value of 0.
+        options.get("last_man_standing_window", "0") != "0"
+        and
+        effective_lms == "0"
+    ):
+        report_items.append(
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "last_man_standing_window",
+                "last_man_standing",
+                option_type="quorum",
+                prerequisite_type="quorum"
+            )
+        )
+    return report_items
 
 def _validate_quorum_options(options, has_qdevice, allow_empty_values):
     validators = _get_quorum_options_validators(allow_empty_values)
