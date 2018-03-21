@@ -7,6 +7,82 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 
+class CreateTotem(TestCase):
+    allowed_options = [
+        "consensus",
+        "downcheck",
+        "fail_recv_const",
+        "heartbeat_failures_allowed",
+        "hold",
+        "join",
+        "max_messages",
+        "max_network_delay",
+        "merge",
+        "miss_count_const",
+        "send_join",
+        "seqno_unchanged_const",
+        "token",
+        "token_coefficient",
+        "token_retransmit",
+        "token_retransmits_before_loss_const",
+        "window_size",
+    ]
+    def test_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_totem({}),
+            []
+        )
+
+    def test_all_valid(self):
+        assert_report_item_list_equal(
+            config_validators.create_totem(
+                {
+                    name: value
+                    for value, name in enumerate(self.allowed_options)
+                }
+            ),
+            []
+        )
+
+    def test_invalid_all_values(self):
+        assert_report_item_list_equal(
+            config_validators.create_totem(
+                {
+                    name: "x"
+                    for name in self.allowed_options
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="x",
+                    option_name=name,
+                    allowed_values="a non-negative integer"
+                )
+                for name in self.allowed_options
+            ]
+        )
+
+    def test_invalid_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_totem(
+                {
+                    "nonsense1": "0",
+                    "nonsense2": "doesnt matter",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["nonsense1", "nonsense2"],
+                    option_type="totem",
+                    allowed=self.allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+
 class BaseQuorumOptions():
     def test_no_options(self):
         has_qdevice = False
