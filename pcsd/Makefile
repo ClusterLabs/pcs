@@ -22,7 +22,7 @@ build_gems_without_bundler:
 	vendor/cache/multi_json-1.12.2.gem \
 	vendor/cache/open4-1.3.4.gem \
 	vendor/cache/rack-1.6.4.gem \
-	vendor/cache/rack-protection-1.5.3.gem \
+	vendor/cache/rack-protection-1.5.5.gem \
 	vendor/cache/rack-test-0.7.0.gem \
 	vendor/cache/rpam-ruby19-1.2.1.gem \
 	vendor/cache/sinatra-1.4.8.gem \

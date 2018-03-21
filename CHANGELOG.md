@@ -7,7 +7,10 @@
   ([rhbz#1557366])
 - CVE-2018-1079: Privilege escalation via authorized user malicious REST call
   ([rhbz#1550243])
+- CVE-2018-1000119 rack-protection: Timing attack in authenticity_token.rb
+  ([rhbz#1534027])
 
+[rhbz#1534027]: https://bugzilla.redhat.com/show_bug.cgi?id=1534027
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 
