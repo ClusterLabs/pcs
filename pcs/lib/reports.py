@@ -214,6 +214,27 @@ def prerequisite_option_must_be_enabled_as_well(
         }
     )
 
+def prerequisite_option_must_be_disabled(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    If the option_name is enabled, the prerequisite_option must be disabled
+
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
 def required_option_of_alternatives_is_missing(
     option_names, option_type=None
 ):
@@ -961,14 +982,6 @@ def corosync_bad_node_addresses_count(
             "node_name": node_name,
             "node_id": node_id,
         }
-    )
-
-def corosync_enabled_broadcast_disallows_mcastaddr():
-    """
-    Cannot set mcastaddr when broadcast is enabled
-    """
-    return ReportItem.error(
-        report_codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR
     )
 
 def corosync_ip_version_mismatch_in_links(link_numbers):

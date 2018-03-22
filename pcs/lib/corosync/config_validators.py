@@ -206,9 +206,15 @@ def create_link_list_udp(link_list):
         +
         validate.names_in(allowed_options, options.keys(), "link")
     )
+    # default values taken from `man corosync.conf`
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
         report_items.append(
-            reports.corosync_enabled_broadcast_disallows_mcastaddr()
+            reports.prerequisite_option_must_be_disabled(
+                "mcastaddr",
+                "broadcast",
+                option_type="link",
+                prerequisite_type="link"
+            )
         )
     link_count = len(link_list)
     if link_count > constants.LINKS_UDP_MAX:
@@ -226,17 +232,15 @@ def create_link_list_knet(link_list, max_link_number):
     Validate creating knet link (interface) list options
 
     iterable link_list -- list of link options
-    integer max_link_number -- number of links allowed (0..7)
+    integer max_link_number -- highest allowed linknumber
     """
     if not link_list:
         # It is not mandatory to set link options. If an empty link list is
         # provided, everything is fine and we have nothing to validate. It is
         # also possible to set link options for only some of the links.
         return []
-    max_link_number = max(
-        0,
-        min((constants.LINKS_KNET_MAX - 1), max_link_number)
-    )
+    max_link_number = max(0, min(constants.LINKS_KNET_MAX - 1, max_link_number))
+    max_link_count = max_link_number + 1
     allowed_options = [
         "ip_version", # It tells knet which IP to prefer.
         "linknumber",
@@ -289,13 +293,9 @@ def create_link_list_knet(link_list, max_link_number):
             reports.corosync_link_number_duplication(non_unique_linknumbers)
         )
     link_count = len(link_list)
-    if link_count > constants.LINKS_KNET_MAX:
+    if link_count > max_link_count:
         report_items.append(
-            reports.corosync_too_many_links(
-                link_count,
-                constants.LINKS_KNET_MAX,
-                "knet"
-            )
+            reports.corosync_too_many_links(link_count, max_link_count, "knet")
         )
     return report_items
 

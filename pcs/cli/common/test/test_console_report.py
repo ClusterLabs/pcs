@@ -947,6 +947,29 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
         )
 
 
+class PrerequisiteOptionMustBeDisabled(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_MUST_BE_DISABLED
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "If option 'a' is enabled, option 'b' must be disabled",
+            {
+                "option_name": "a",
+                "prerequisite_name": "b",
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "If some option 'a' is enabled, other option 'b' must be disabled",
+            {
+                "option_name": "a",
+                "option_type": "some",
+                "prerequisite_name": "b",
+                "prerequisite_type": "other",
+            }
+        )
+
+
 class PrerequisiteOptionMustBeEnabledAsWell(NameBuildTest):
     code = codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL
     def test_without_type(self):
@@ -1992,14 +2015,6 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "node_name": "node2",
                 "node_id": 2,
             }
-        )
-
-
-class CorosyncEnabledBroadcastDisallowsMcastaddr(NameBuildTest):
-    code = codes.COROSYNC_ENABLED_BROADCAST_DISALLOWS_MCASTADDR
-    def test_message(self):
-        self.assert_message_from_info(
-            "Cannot set mcastaddr when broadcast is enabled"
         )
 
 

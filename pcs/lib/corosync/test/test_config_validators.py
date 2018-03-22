@@ -7,6 +7,533 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 
+class CreateLinkListUdp(TestCase):
+    def test_no_links(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp([]),
+            []
+        )
+
+    def test_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp([{}]),
+            []
+        )
+
+    def test_all_valid(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "bindnetaddr": "10.0.0.1",
+                        "broadcast": "0",
+                        "mcastaddr": "225.0.0.1",
+                        "mcastport": "5405",
+                        "ttl": "12",
+                    }
+                ]
+            ),
+            []
+        )
+
+    def test_invalid_all_values(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "bindnetaddr": "my-network",
+                        "broadcast": "yes",
+                        "mcastaddr": "my-group",
+                        "mcastport": "0",
+                        "ttl": "256",
+                    }
+                ]
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="my-network",
+                    option_name="bindnetaddr",
+                    allowed_values="an IP address"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="yes",
+                    option_name="broadcast",
+                    allowed_values=("0", "1")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="my-group",
+                    option_name="mcastaddr",
+                    allowed_values="an IP address"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0",
+                    option_name="mcastport",
+                    allowed_values="a port number (1-65535)"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="256",
+                    option_name="ttl",
+                    allowed_values="0..255"
+                ),
+            ]
+        )
+
+    def test_invalid_options(self):
+        allowed_options = [
+        "bindnetaddr",
+        "broadcast",
+        "mcastaddr",
+        "mcastport",
+        "ttl",
+        ]
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "linknumber": "0",
+                        "nonsense": "doesnt matter",
+                    }
+                ]
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["linknumber", "nonsense"],
+                    option_type="link",
+                    allowed=allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_more_links(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {"ttl": "64"},
+                    {"ttl": "64"},
+                ]
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_TOO_MANY_LINKS,
+                    actual_count=2,
+                    max_count=1,
+                    transport="udp/udpu"
+                )
+            ]
+        )
+
+    def test_broadcast_default_mcastaddr_set(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "mcastaddr": "225.0.0.1"
+                    }
+                ]
+            ),
+            [
+            ]
+        )
+
+    def test_broadcast_disabled_mcastaddr_set(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "broadcast": "0",
+                        "mcastaddr": "225.0.0.1"
+                    }
+                ]
+            ),
+            [
+            ]
+        )
+
+    def test_broadcast_enabled_mcastaddr_set(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "broadcast": "1",
+                        "mcastaddr": "225.0.0.1"
+                    }
+                ]
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
+                    option_name="mcastaddr",
+                    option_type="link",
+                    prerequisite_name="broadcast",
+                    prerequisite_type="link"
+                ),
+            ]
+        )
+
+
+class CreateLinkListKnet(TestCase):
+    def test_no_links(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet([], 8),
+            []
+        )
+
+    def test_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet([{}], 8),
+            []
+        )
+
+    def test_all_valid(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ip_version": "ipv4",
+                        "linknumber": "0",
+                        "link_priority": "20",
+                        "mcastport": "5405",
+                        "ping_interval": "250",
+                        "ping_precision": "15",
+                        "ping_timeout": "750",
+                        "pong_count": "10",
+                        "transport": "sctp",
+                    },
+                    {
+                        "ip_version": "ipv6",
+                        "linknumber": "1",
+                        "link_priority": "10",
+                        "mcastport": "5415",
+                        "ping_interval": "2500",
+                        "ping_precision": "150",
+                        "ping_timeout": "7500",
+                        "pong_count": "100",
+                        "transport": "udp",
+                    }
+                ],
+                2
+            ),
+            []
+        )
+
+    def test_invalid_all_values(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ip_version": "ipv5",
+                        "linknumber": "-1",
+                        "link_priority": "256",
+                        "mcastport": "65536",
+                        "transport": "tcp",
+                    },
+                    {
+                        "ping_interval": "-250",
+                        "ping_precision": "-15",
+                        "ping_timeout": "-750",
+                        "pong_count": "-10",
+                        "transport": "udpu",
+                    }
+                ],
+                3
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="ipv5",
+                    option_name="ip_version",
+                    allowed_values=("ipv4", "ipv6")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-1",
+                    option_name="linknumber",
+                    allowed_values="0..3"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="256",
+                    option_name="link_priority",
+                    allowed_values="0..255"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="65536",
+                    option_name="mcastport",
+                    allowed_values="a port number (1-65535)"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="tcp",
+                    option_name="transport",
+                    allowed_values=("sctp", "udp")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-250",
+                    option_name="ping_interval",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-15",
+                    option_name="ping_precision",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-750",
+                    option_name="ping_timeout",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-10",
+                    option_name="pong_count",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udpu",
+                    option_name="transport",
+                    allowed_values=("sctp", "udp")
+                ),
+            ]
+        )
+
+    def test_invalid_options(self):
+        allowed_options = [
+            "ip_version",
+            "link_priority",
+            "linknumber",
+            "mcastport",
+            "ping_interval",
+            "ping_precision",
+            "ping_timeout",
+            "pong_count",
+            "transport",
+        ]
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "nonsense1": "0",
+                        "nonsense2": "doesnt matter",
+                    },
+                    {
+                        "nonsense3": "who cares",
+                    }
+                ],
+                3
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["nonsense1", "nonsense2"],
+                    option_type="link",
+                    allowed=allowed_options,
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["nonsense3"],
+                    option_type="link",
+                    allowed=allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_ping_dependencies(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ping_interval": "250",
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "250",
+                    },
+                    {
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "",
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "250",
+                        "ping_timeout": "",
+                    },
+                ],
+                5
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    option_name="ping_interval",
+                    option_type="link",
+                    prerequisite_name="ping_timeout",
+                    prerequisite_type="link"
+                ),
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    option_name="ping_timeout",
+                    option_type="link",
+                    prerequisite_name="ping_interval",
+                    prerequisite_type="link"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="ping_interval",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="ping_timeout",
+                    allowed_values="a non-negative integer"
+                ),
+            ]
+        )
+
+    def test_linknumber_within_range(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [{"linknumber": "2"}],
+                2
+            ),
+            []
+        )
+
+    def test_linknumber_to_high(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [{"linknumber": "3"}],
+                2
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="3",
+                    option_name="linknumber",
+                    allowed_values="0..2"
+                ),
+            ]
+        )
+
+    def test_link_count_in_range(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    { "ip_version": "ipv4"},
+                    { "ip_version": "ipv4"},
+                ],
+                1
+            ),
+            [
+            ]
+        )
+
+    def test_link_count_too_high(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                ],
+                1
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_TOO_MANY_LINKS,
+                    actual_count=3,
+                    max_count=2,
+                    transport="knet"
+                )
+            ]
+        )
+
+    def test_linknumber_not_unique(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {"linknumber": "2"},
+                    {"linknumber": "0"},
+                    {"linknumber": "0"},
+                    {"linknumber": "1"},
+                    {"linknumber": "2"},
+                ],
+                4
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
+                    link_number_list=["0", "2"]
+                )
+            ]
+        )
+
+    def test_max_link_number_too_low(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ip_version": "ipv4",
+                        "linknumber": "0",
+                    },
+                ],
+                -1
+            ),
+            []
+        )
+
+    def test_max_link_number_too_high(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ip_version": "ipv4",
+                        "linknumber": "8",
+                    },
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                ],
+                8
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="8",
+                    option_name="linknumber",
+                    allowed_values="0..7"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_TOO_MANY_LINKS,
+                    actual_count=9,
+                    max_count=8,
+                    transport="knet"
+                )
+            ]
+        )
+
+
 class CreateTransportUdp(TestCase):
     def test_no_options(self):
         assert_report_item_list_equal(
