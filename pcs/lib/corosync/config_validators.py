@@ -337,7 +337,7 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
             reports.corosync_transport_unsupported_options(
                 "compression",
                 "udp/udpu",
-                ["knet"]
+                ("knet", )
             )
         )
     if crypto_options:
@@ -345,7 +345,7 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
             reports.corosync_transport_unsupported_options(
                 "crypto",
                 "udp/udpu",
-                ["knet"]
+                ("knet", )
             )
         )
     return report_items
@@ -412,7 +412,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         validate.names_in(
             generic_allowed,
             generic_options.keys(),
-            "transport"
+            "knet transport"
         )
         +
         validate.run_collection_of_option_validators(

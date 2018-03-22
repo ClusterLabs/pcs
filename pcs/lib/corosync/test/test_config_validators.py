@@ -7,6 +7,350 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 
+class CreateTransportUdp(TestCase):
+    def test_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_udp({}, {}, {}),
+            []
+        )
+
+    def test_all_valid(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_udp(
+                {
+                    "ip_version": "ipv4",
+                    "netmtu": "1234",
+                },
+                {},
+                {}
+            ),
+            []
+        )
+
+    def test_invalid_all_values(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_udp(
+                {
+                    "ip_version": "ipv5",
+                    "netmtu": "-5",
+                },
+                {},
+                {}
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="ipv5",
+                    option_name="ip_version",
+                    allowed_values=("ipv4", "ipv6")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="-5",
+                    option_name="netmtu",
+                    allowed_values="a positive integer"
+                ),
+            ]
+        )
+
+    def test_invalid_option(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_udp(
+                {
+                    "knet_pmtud_interval": "1234",
+                    "link_mode": "active",
+                },
+                {
+                    "level": "5",
+                    "model": "zlib",
+                    "threshold": "1234",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                    "model": "nss",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["knet_pmtud_interval", "link_mode"],
+                    option_type="udp/udpu transport",
+                    allowed=["ip_version", "netmtu"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    option_type="compression",
+                    actual_transport="udp/udpu",
+                    required_transport_list=("knet", )
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    option_type="crypto",
+                    actual_transport="udp/udpu",
+                    required_transport_list=("knet", )
+                ),
+            ]
+        )
+
+
+
+class CreateTransportKnet(TestCase):
+    def test_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet({}, {}, {}),
+            []
+        )
+
+    def test_all_valid(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {
+                    "ip_version": "ipv4",
+                    "knet_pmtud_interval": "1234",
+                    "link_mode": "active",
+                },
+                {
+                    "level": "5",
+                    "model": "zlib",
+                    "threshold": "1234",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                    "model": "nss",
+                }
+            ),
+            []
+        )
+
+    def test_invalid_all_values(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {
+                    "ip_version": "ipv5",
+                    "knet_pmtud_interval": "a minute",
+                    "link_mode": "random",
+                },
+                {
+                    "level": "maximum",
+                    "model": "",
+                    "threshold": "reasonable",
+                },
+                {
+                    "cipher": "strongest",
+                    "hash": "fastest",
+                    "model": "best",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="ipv5",
+                    option_name="ip_version",
+                    allowed_values=("ipv4", "ipv6")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="a minute",
+                    option_name="knet_pmtud_interval",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="random",
+                    option_name="link_mode",
+                    allowed_values=("active", "passive", "rr")
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="maximum",
+                    option_name="level",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="model",
+                    allowed_values="a compression model e.g. zlib, lz4 or bzip2"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="reasonable",
+                    option_name="threshold",
+                    allowed_values="a non-negative integer"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="strongest",
+                    option_name="cipher",
+                    allowed_values=(
+                        "none", "aes256", "aes192", "aes128", "3des"
+                    )
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="fastest",
+                    option_name="hash",
+                    allowed_values=(
+                        "none", "md5", "sha1", "sha256", "sha384", "sha512"
+                    )
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="best",
+                    option_name="model",
+                    allowed_values=("nss", "openssl")
+                ),
+            ]
+        )
+
+    def test_invalid_options(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {
+                    "level": "5",
+                    "netmtu": "1500",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                },
+                {
+                    "ip_version": "ipv4",
+                    "link_mode": "active",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["level", "netmtu"],
+                    option_type="knet transport",
+                    allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["cipher", "hash"],
+                    option_type="compression",
+                    allowed=["level", "model", "threshold"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["ip_version", "link_mode"],
+                    option_type="crypto",
+                    allowed=["cipher", "hash", "model"],
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_crypto_disabled(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                    "hash": "none",
+                }
+            ),
+            []
+        )
+
+    def test_crypto_enabled_cipher_disabled_hash(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "cipher": "aes256",
+                    "hash": "none",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="cipher",
+                    option_type="crypto",
+                    prerequisite_name="hash",
+                    prerequisite_type="crypto"
+                )
+            ]
+        )
+
+    def test_crypto_enabled_cipher_default_hash(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "cipher": "aes256",
+                }
+            ),
+            []
+        )
+
+    def test_crypto_disabled_cipher_default_hash(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                }
+            ),
+            []
+        )
+
+    def test_crypto_enabled_hash_disabled_cipher(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                    "hash": "sha256",
+                }
+            ),
+            []
+        )
+
+    def test_crypto_enabled_hash_default_cipher(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "hash": "sha256",
+                }
+            ),
+            []
+        )
+
+    def test_crypto_disabled_hash_default_cipher(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {},
+                {},
+                {
+                    "hash": "none",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="cipher",
+                    option_type="crypto",
+                    prerequisite_name="hash",
+                    prerequisite_type="crypto"
+                )
+            ]
+        )
+
+
 class CreateTotem(TestCase):
     allowed_options = [
         "consensus",
