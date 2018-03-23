@@ -1,10 +1,8 @@
-import socket
-
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.misc import outdent
+from pcs.test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
 from pcs.common import report_codes
@@ -130,21 +128,6 @@ def corosync_conf_fixture(
         ),
     )
 
-def _get_addr_resolver(resolvable_addr_list):
-    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-        if host not in resolvable_addr_list:
-            raise socket.gaierror(1, "")
-    return socket_getaddrinfo
-
-
-def _patch_getaddrinfo(test_case, addr_list):
-    # TODO: add comments
-    patcher = mock.patch("socket.getaddrinfo", _get_addr_resolver(addr_list))
-    patcher.start()
-    test_case.addCleanup(patcher.stop)
-    return addr_list
-
-
 def reports_success_minimal_fixture():
     auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
     pcsd_settings_file = "pcsd settings"
@@ -229,7 +212,7 @@ class SetupSuccessMinimal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
-        _patch_getaddrinfo(self, NODE_LIST)
+        patch_getaddrinfo(self, NODE_LIST)
         services_status = {
             service: dict(
                 installed=True, enabled=False, running=False, version="1.0",
@@ -440,7 +423,7 @@ class TransportKnetSuccess(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         self.transport_type = "knet"
-        self.resolvable_hosts = _patch_getaddrinfo(self, [])
+        self.resolvable_hosts = patch_getaddrinfo(self, [])
         services_status = {
             service: dict(
                 installed=True, enabled=False, running=False, version="1.0",
@@ -580,7 +563,7 @@ class TransportUdpSuccess(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         self.transport_type = "udp"
-        self.resolvable_hosts = _patch_getaddrinfo(self, [])
+        self.resolvable_hosts = patch_getaddrinfo(self, [])
         services_status = {
             service: dict(
                 installed=True, enabled=False, running=False, version="1.0",
