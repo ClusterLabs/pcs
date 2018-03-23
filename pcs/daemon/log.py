@@ -20,3 +20,5 @@ def setup():
     general_log = logging.getLogger("tornado.general")
     general_log.addHandler(handler)
     general_log.setLevel(logging.INFO)
+
+pcsd = logging.getLogger("pcs.daemon")

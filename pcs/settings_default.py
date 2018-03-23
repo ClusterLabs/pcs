@@ -58,4 +58,7 @@ default_request_timeout = 60
 pcs_bundled_dir = "/usr/lib/pcs/bundled/"
 pcs_bundled_pacakges_dir = os.path.join(pcs_bundled_dir, "packages")
 
+default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"
+default_ssl_extra_options = "OP_NO_SSLv2,OP_NO_SSLv3,OP_NO_TLSv1,OP_NO_TLSv1_1"
+
 gui_session_lifetime_seconds=60 * 60

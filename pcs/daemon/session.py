@@ -102,10 +102,7 @@ class Session:
         self.__username = username
         self.__groups = groups
         self.__is_authenticated = True
-        self.__ajax_id = "{}-{}".format(
-            int(now()),
-            random.randint(1, 100)
-        )
+        self.__ajax_id = f"{int(now())}-{random.randint(1, 100)}"
 
     def failed_login_attempt(self, username):
         self.refresh()

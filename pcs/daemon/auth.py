@@ -6,12 +6,9 @@ from concurrent.futures import ProcessPoolExecutor
 from pam import pam
 from tornado.gen import coroutine
 
-import logging
-
+from pcs.daemon import log
 # TODO use pacemaker_gname (??? + explanation why pacemaker_gname)
 HA_ADM_GROUP = "haclient"
-
-LOG = logging.getLogger("pcs.daemon")
 
 IdentifiedUser = namedtuple("IdentifiedUser", "name groups")
 
@@ -19,12 +16,12 @@ class UserAuthorizationError(Exception):
     pass
 
 def login_fail(username, reason, *args):
-    LOG.info("Failed login by '%s' ({})".format(reason), username, *args)
+    log.pcsd.info(f"Failed login by '%s' ({reason})", username, *args)
     return None
 
 
 def authorize_user_sync(username, password):
-    LOG.info("Attempting login by %s", username)
+    log.pcsd.info("Attempting login by %s", username)
 
     if not pam().authenticate(username, password, service="pcsd"):
         return login_fail(username, "bad username or password")
@@ -32,7 +29,11 @@ def authorize_user_sync(username, password):
     try:
         groups = get_user_groups_sync(username)
     except KeyError as e:
-        LOG.info("Unable to determine groups of user '%s': %s", username, e)
+        log.pcsd.info(
+            "Unable to determine groups of user '%s': %s",
+            username,
+            e
+        )
         return login_fail(username, "unable to determine user's groups")
 
     if HA_ADM_GROUP not in groups:
