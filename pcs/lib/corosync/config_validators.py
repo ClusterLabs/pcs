@@ -29,7 +29,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     """
     # cluster name and transport validation
     validators = [
-        validate.value_not_empty("name", "a cluster name", "cluster name"),
+        validate.value_not_empty("name", "a non-empty string", "cluster name"),
         validate.value_in("transport", constants.TRANSPORTS_ALL)
     ]
     report_items = validate.run_collection_of_option_validators(
@@ -50,18 +50,17 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
         name_validators = [
-            validate.is_required("name", "node {}".format(i)),
+            validate.is_required("name", f"node {i}"),
             validate.value_not_empty(
                 "name",
                 "a non-empty string",
-                option_name_for_report="node {} name".format(i)
+                option_name_for_report=f"node {i} name"
             )
         ]
         report_items.extend(
-            validate.run_collection_of_option_validators(
-                node,
-                name_validators
-            )
+            validate.run_collection_of_option_validators(node, name_validators)
+            +
+            validate.names_in(["addrs", "name"], node.keys(), "node")
         )
         if "name" not in node or not node["name"]:
             all_names_usable = False
@@ -151,7 +150,9 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
             and
             len(Counter(node_addr_count.values()).keys()) > 1
         ):
-            reports.corosync_node_address_count_mismatch(node_addr_count)
+            report_items.append(
+                reports.corosync_node_address_count_mismatch(node_addr_count)
+            )
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
     for link, addr_types in enumerate(zip_longest(*addr_types_per_node)):

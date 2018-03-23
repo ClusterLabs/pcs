@@ -5,6 +5,592 @@ from pcs.lib.corosync import config_validators
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
+from pcs.test.tools.custom_mock import patch_getaddrinfo
+
+
+class Create(TestCase):
+    def setUp(self):
+        self.known_addrs = patch_getaddrinfo(
+            self,
+            [f"addr{i:02d}" for i in range(1, 20)]
+            +
+            [f"10.0.0.{i}" for i in range(1, 20)]
+            +
+            [f"::ffff:10:0:0:{i}" for i in range(1, 20)]
+        )
+
+    def test_all_valid_one_node(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                ],
+                "udp"
+            ),
+            []
+        )
+
+    def test_all_valid_udp(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                ],
+                "udp"
+            ),
+            []
+        )
+
+    def test_all_valid_knet(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {
+                        "name": "node1",
+                        "addrs": ["addr01", "10.0.0.1", "::ffff:10:0:0:1"]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": ["addr02", "10.0.0.2", "::ffff:10:0:0:2"]
+                    },
+                ],
+                "knet"
+            ),
+            []
+        )
+
+    def test_clustername_transport_invalid(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                ],
+                "tcp"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="cluster name",
+                    allowed_values="a non-empty string"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="tcp",
+                    option_name="transport",
+                    allowed_values=("knet", "udp", "udpu")
+                ),
+            ]
+        )
+
+    def test_nodelist_empty(self):
+        assert_report_item_list_equal(
+            config_validators.create("test-cluster", [], "udp"),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_NODES_MISSING
+                )
+            ]
+        )
+
+    def test_empty_node(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    option_names=["name"],
+                    option_type="node 2"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=1,
+                    node_name=None,
+                    node_id=2
+                ),
+            ]
+        )
+
+    def test_node_options_invalid(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {"name": "node2", "addrs": ["addr02"], "nonsense": "abc"},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["nonsense"],
+                    option_type="node",
+                    allowed=["addrs", "name"],
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_nodename_invalid(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "", "addrs": ["addr01"]},
+                    {"addrs": ["addr02"]},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="node 1 name",
+                    allowed_values="a non-empty string"
+                ),
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    option_names=["name"],
+                    option_type="node 2"
+                ),
+            ]
+        )
+
+    def test_nodename_not_unique(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                    {"name": "node2", "addrs": ["addr03"]},
+                    {"name": "node3", "addrs": ["addr04"]},
+                    {"name": "node1", "addrs": ["addr05"]},
+                    # invalid nodes are not reported as duplicate
+                    {"name": "", "addrs": ["addr06"]},
+                    {"name": "", "addrs": ["addr07"]},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="node 6 name",
+                    allowed_values="a non-empty string"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="node 7 name",
+                    allowed_values="a non-empty string"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+                    name_list=["node1", "node2"]
+                )
+            ]
+        )
+
+    def test_node_addrs_missing_udp(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1"},
+                    {"name": "node2", "addrs": []},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node1",
+                    node_id=1
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node2",
+                    node_id=2
+                ),
+            ]
+        )
+
+    def test_node_addrs_missing_knet(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1"},
+                    {"name": "node2", "addrs": []},
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=8,
+                    node_name="node1",
+                    node_id=1
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=8,
+                    node_name="node2",
+                    node_id=2
+                ),
+            ]
+        )
+
+    def test_node_addrs_to_many_udp(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01", "addr03"]},
+                    {"name": "node2", "addrs": ["addr02", "addr04"]},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=2,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node1",
+                    node_id=1
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=2,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node2",
+                    node_id=2
+                ),
+            ]
+        )
+
+    def test_node_addrs_to_many_knet(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {
+                        "name": "node1",
+                        "addrs": [f"addr{i:02d}" for i in range(1, 10)]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": [f"addr{i:02d}" for i in range(11, 20)]
+                    },
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=9,
+                    min_count=1,
+                    max_count=8,
+                    node_name="node1",
+                    node_id=1
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=9,
+                    min_count=1,
+                    max_count=8,
+                    node_name="node2",
+                    node_id=2
+                ),
+            ]
+        )
+
+    def test_node_addrs_unresolvable(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    # Duplicated addresses reported only once but they trigger
+                    # a duplicate addresses report.
+                    {"name": "node1", "addrs": ["addr01", "addrX2"]},
+                    {"name": "node2", "addrs": ["addrX2", "addr05"]},
+                    {"name": "node3", "addrs": ["addr03", "addrX1"]},
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addrX1", "addrX2"]
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+                    address_list=["addrX2"]
+                ),
+            ]
+        )
+
+    def test_node_addrs_unresolvable_forced(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    # Duplicated addresses reported only once but they trigger
+                    # a duplicate addresses report.
+                    {"name": "node1", "addrs": ["addr01", "addrX2"]},
+                    {"name": "node2", "addrs": ["addrX2", "addr05"]},
+                    {"name": "node3", "addrs": ["addr03", "addrX1"]},
+                ],
+                "knet",
+                force_unresolvable=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addrX1", "addrX2"]
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+                    address_list=["addrX2"]
+                ),
+            ]
+        )
+
+    def test_node_addrs_not_unique(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {
+                        "name": "node1",
+                        "addrs": ["addr01", "10.0.0.1", "::ffff:10:0:0:1"]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": ["addr02", "10.0.0.2", "::ffff:10:0:0:2"]
+                    },
+                    {
+                        "name": "node3",
+                        "addrs": ["addr02", "10.0.0.1", "::ffff:10:0:0:4"]
+                    },
+                    {
+                        "name": "node4",
+                        "addrs": ["addr04", "10.0.0.1", "::ffff:10:0:0:4"]
+                    },
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+                    address_list=["10.0.0.1", "::ffff:10:0:0:4", "addr02"]
+                )
+            ]
+        )
+
+    def test_node_addrs_count_mismatch_udp(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01", "addr11"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                    {"name": "node3", "addrs": ["addr03", "addr13"]},
+                    {"name": "node4", "addrs": ["addr04"]},
+                    {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
+                ],
+                "udp"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=2,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node1",
+                    node_id=1
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=2,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node3",
+                    node_id=3
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=3,
+                    min_count=1,
+                    max_count=1,
+                    node_name="node5",
+                    node_id=5
+                ),
+            ]
+        )
+
+    def test_node_addrs_count_mismatch_knet(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01", "addr11"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                    {"name": "node3", "addrs": ["addr03", "addr13"]},
+                    {"name": "node4", "addrs": ["addr04"]},
+                    {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+                    node_addr_count={
+                        "node1": 2,
+                        "node2": 1,
+                        "node3": 2,
+                        "node4": 1,
+                        "node5": 3,
+                    }
+                )
+            ]
+        )
+
+    def test_node_addrs_count_mismatch_knet_invalid_names(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01", "addr11"]},
+                    {"name": "", "addrs": ["addr02"]},
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="node 2 name",
+                    allowed_values="a non-empty string"
+                ),
+            ]
+        )
+
+    def test_node_addrs_count_mismatch_knet_duplicate_names(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["addr01", "addr11"]},
+                    {"name": "node1", "addrs": ["addr02"]},
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+                    name_list=["node1"]
+                )
+            ]
+        )
+
+    def test_node_addrs_ip_version_mismatch(self):
+        # test setup:
+        # * links 0..2: match
+        # * link 3, 5: one node has names, other nodes have IPs, match
+        # * link 4: one node has names, other nodes have IPs, mismatch
+        # * link 6: all nodes have IPs, mismatch
+        # * link 7: one node missing, two nodes have IPs, mismatch
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {
+                        "name": "node1",
+                        "addrs": [
+                            "addr01",
+                            "10.0.0.1",
+                            "::ffff:10:0:0:1",
+                            "addr03",
+                            "addr04",
+                            "addr05",
+                            "10.0.0.4",
+                            "::ffff:10:0:0:5",
+                        ]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": [
+                            "addr02",
+                            "10.0.0.2",
+                            "::ffff:10:0:0:2",
+                            "10.0.0.3",
+                            "10.0.0.9",
+                            "::ffff:10:0:0:3",
+                            "::ffff:10:0:0:4",
+                            "10.0.0.5",
+                        ]
+                    },
+                    {
+                        "name": "node3",
+                        "addrs": [
+                            "addr10",
+                            "10.0.0.12",
+                            "::ffff:10:0:0:12",
+                            "10.0.0.13",
+                            "::ffff:10:0:0:11",
+                            "::ffff:10:0:0:13",
+                            "::ffff:10:0:0:14",
+                        ]
+                    },
+                ],
+                "knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+                    node_addr_count={
+                        "node1": 8,
+                        "node2": 8,
+                        "node3": 7,
+                    }
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    link_numbers=[4, 6, 7]
+                )
+            ]
+        )
 
 
 class CreateLinkListUdp(TestCase):
