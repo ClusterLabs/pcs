@@ -1,14 +1,16 @@
 import os
 import signal
 import socket
+from functools import partial
 
 from tornado.ioloop import IOLoop
 
 from pcs import settings
 from pcs.daemon import log, systemd
 from pcs.daemon.app import make_app
-from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.env import EnvPrepare
+from pcs.daemon.http_server import HttpsServerManage
+from pcs.daemon.session import SessionStorage
 
 class SignalInfo:
     server_manage = None
@@ -50,7 +52,7 @@ def main():
     env = env_prepare.env
     try:
         SignalInfo.server_manage = HttpsServerManage(
-            make_app,
+            partial(make_app, SessionStorage()),
             server_name=socket.gethostname(),
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,

@@ -7,8 +7,6 @@ from pcs import settings
 PCSD_SESSION = "rack.session"
 
 class SessionStorage:
-    __instance = None
-
     def __init__(self):
         self.__sessions = {}
 
@@ -42,16 +40,9 @@ class SessionStorage:
         for sid in obsolete_sid_list:
             del self.__sessions[sid]
 
-
     def destroy(self, sid):
         if sid in self.__sessions:
             del self.__sessions[sid]
-
-    @classmethod
-    def instance(cls):
-        if cls.__instance is None:
-            cls.__instance = cls()
-        return cls.__instance
 
 class Session:
     def __init__(self, sid):
@@ -125,13 +116,16 @@ class SessionMixin:
     """
     Mixin for tornado.web.RequestHandler
     """
+    def initialize(self, session_storage: SessionStorage):
+        self.__session_storage = session_storage
+
     @property
     def session(self):
         if self.__session is None:
             # It is needed to cache session or the sid. Because from client can
             # come no sid or an invalid sid. In such case every call would
             # provide new session. But want to have here the first provided.
-            self.__session = SessionStorage.instance().provide(
+            self.__session = self.__session_storage.provide(
                 self.__sid_from_client
             )
         return self.__session
@@ -141,17 +135,17 @@ class SessionMixin:
         Expired sessions are removed before each request that uses sessions (it
         means before each request that is handled by descendant of this mixin).
         """
-        SessionStorage.instance().drop_expired(
+        self.__session_storage.drop_expired(
             lifetime_seconds=settings.gui_session_lifetime_seconds
         )
 
     def session_logout(self):
         if self.__session is not None:
-            SessionStorage.instance().destroy(self.__session.sid)
+            self.__session_storage.destroy(self.__session.sid)
             self.__session = None
 
         elif self.__sid_from_client is not None:
-            SessionStorage.instance().destroy(self.__sid_from_client)
+            self.__session_storage.destroy(self.__sid_from_client)
 
     def session_login(self, username, groups=None):
         self.session.login(username, groups)

@@ -9,7 +9,7 @@ from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
-from pcs.daemon.session import SessionMixin
+from pcs.daemon.session import SessionMixin, SessionStorage
 
 # abstract method `data_received` does need to be overriden. This method should
 # be implemented to handle streamed request data.
@@ -239,7 +239,6 @@ class Logout(Sinatra, EnhnceHeadersMixin, AjaxMixin):
             self.redirect_temporary("/login")
 
 class RegenerateCertHandler(RequestHandler):
-    #pylint: disable=abstract-method
     def initialize(self, https_server_manage: HttpsServerManage):
         #pylint: disable=arguments-differ
         self.https_server_manage = https_server_manage
@@ -266,16 +265,22 @@ def static_route(url_prefix, public_subdir):
         )
     )
 
-def make_app(https_server_manage: HttpsServerManage):
+def make_app(
+    session_storage: SessionStorage,
+    https_server_manage: HttpsServerManage
+):
+    session_route = lambda pattern, handler: (pattern, handler, dict(
+        session_storage=session_storage
+    ))
     return Application(
         [
             static_route("/css/", "css"),
             static_route("/js/", "js"),
             static_route("/images/", "images"),
             # Urls protected by tokens. It is stil done by ruby.
-            (r"/run_pcs", Sinatra),
-            (r"/remote/.*", Sinatra),
-            (r"/remote/auth", Sinatra),
+            session_route(r"/run_pcs", Sinatra),
+            session_route(r"/remote/.*", Sinatra),
+            session_route(r"/remote/auth", Sinatra),
 
             (
                 r"/daemon-maintenance/reload-cert",
@@ -283,15 +288,18 @@ def make_app(https_server_manage: HttpsServerManage):
                 {"https_server_manage": https_server_manage},
             ),
 
-            (r"/login", Login),
-            (r"/login-status", LoginStatus),
-            (r"/logout", Logout),
+            session_route(r"/login", Login),
+            session_route(r"/login-status", LoginStatus),
+            session_route(r"/logout", Logout),
 
             #The protection by session was moved from ruby code to python code
             #(tornado).
-            (r"/($|manage$|permissions$|managec/.+/main)", SinatraGuiProtected),
+            session_route(
+                r"/($|manage$|permissions$|managec/.+/main)",
+                SinatraGuiProtected,
+            ),
 
-            (r"/.*", SinatraAjaxProtected),
+            session_route(r"/.*", SinatraAjaxProtected),
         ],
         debug=True,
     )
