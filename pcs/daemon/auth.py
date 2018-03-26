@@ -12,13 +12,9 @@ HA_ADM_GROUP = "haclient"
 
 IdentifiedUser = namedtuple("IdentifiedUser", "name groups")
 
-class UserAuthorizationError(Exception):
-    pass
-
 def login_fail(username, reason, *args):
     log.pcsd.info(f"Failed login by '%s' ({reason})", username, *args)
     return None
-
 
 def authorize_user_sync(username, password):
     log.pcsd.info("Attempting login by %s", username)

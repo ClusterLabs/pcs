@@ -4,18 +4,12 @@ require "base64"
 orig_std_out = STDOUT.clone
 request_json = ARGF.read()
 
-
-
-# request_json = '{"config": {"user_pass_dir": "/root/pcs/pcsd/"}, "env": {"PATH_INFO": "/manage", "QUERY_STRING": "tornado.session.username=hacluster", "REMOTE_ADDR": "192.168.122.51", "REMOTE_HOST": "abe:3224", "REQUEST_METHOD": "GET", "REQUEST_URI": "https://abe:3224/manage", "SCRIPT_NAME": "", "SERVER_NAME": "abe", "SERVER_PORT": 3224, "SERVER_PROTOCOL": "HTTP/1.1", "HTTP_HOST": "abe:3224", "HTTP_ACCEPT": "*/*", "HTTP_COOKIE": "rack.session=7okzyqaa5vgpgvcip11pyvke8pfs6qoyiptrhorz2nke1e4bmmrdh24yxjxlucs6", "HTTPS": "on", "SSL_CLIENT_CERT": "", "SSL_CIPHER": "DHE-RSA-AES256-GCM-SHA384", "SSL_PROTOCOL": "TLSv1/SSLv3", "SSL_CIPHER_USEKEYSIZE": "256", "SSL_CIPHER_ALGKEYSIZE": "256", "HTTP_VERSION": "HTTP/1.1", "REQUEST_PATH": "/manage"}}'
-
 begin
   request = JSON.parse(request_json)
 rescue => e
   puts e
   exit
 end
-
-
 
 require 'pcsd'
 $user_pass_file = request["config"]["user_pass_dir"] + $user_pass_file
