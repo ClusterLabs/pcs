@@ -330,7 +330,7 @@ def _wait_for_pacemaker_to_start(
     error_report_list = []
     while target_list:
         if time.time() > stop_at:
-            report_processor.process(reports.wait_for_node_startup_timed_out())
+            error_report_list.append(reports.wait_for_node_startup_timed_out())
             break
         time.sleep(interval)
         com_cmd = CheckPacemakerStarted(report_processor)

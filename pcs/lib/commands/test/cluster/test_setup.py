@@ -1,5 +1,6 @@
 from copy import deepcopy
 import json
+
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
@@ -1327,3 +1328,340 @@ class TransportUdpSuccess(TestCase):
             quorum_options=QUORUM_OPTIONS,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+
+def get_time_mock(step=1):
+    _counter = 0
+    def time():
+        nonlocal _counter
+        _counter += step
+        return _counter
+    return time
+
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class SetupWithWait(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
+        patch_getaddrinfo(self, NODE_LIST)
+        services_status = {
+            service: dict(
+                installed=True, enabled=False, running=False, version="1.0",
+            ) for service in SERVICE_LIST
+        }
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=dict(
+                    services=services_status,
+                    cluster_configuration_exists=False,
+                ),
+            )
+            .http.host.cluster_destroy(NODE_LIST)
+            .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
+            .http.files.put_files(
+                NODE_LIST,
+                pcmk_authkey=RANDOM_KEY,
+                corosync_authkey=RANDOM_KEY,
+            )
+            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
+            .http.files.put_files(
+                NODE_LIST,
+                corosync_conf=corosync_conf_fixture(
+                    {node: [node] for node in NODE_LIST}
+                ),
+                name="distribute_corosync_conf",
+            )
+            .http.host.start_cluster(NODE_LIST)
+        )
+
+    @mock.patch("time.sleep", lambda secs: None)
+    @mock.patch("time.time", get_time_mock())
+    def test_some_success(self):
+        self.config.http.host.check_pacemaker_started(
+            pacemaker_started_node_list=NODE_LIST[:1],
+            pacemaker_not_started_node_list=NODE_LIST[1:],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                start=True,
+                wait=1,
+            ),
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+            ]
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    node_name_list=NODE_LIST,
+                ),
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST[:1]
+            ]
+        )
+
+    @mock.patch("time.sleep", lambda secs: None)
+    @mock.patch("time.time", get_time_mock(step=2))
+    def test_timed_out_right_away(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                start=True,
+                wait=1,
+            ),
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+            ]
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    node_name_list=NODE_LIST,
+                ),
+            ]
+        )
+
+    @mock.patch("time.sleep", lambda secs: None)
+    @mock.patch("time.time", get_time_mock())
+    def test_multiple_tries(self):
+        (self.config
+            .http.host.check_pacemaker_started(
+                pacemaker_started_node_list=NODE_LIST[:1],
+                pacemaker_not_started_node_list=NODE_LIST[1:],
+            )
+            .http.host.check_pacemaker_started(
+                pacemaker_not_started_node_list=NODE_LIST[1:],
+                name="pcmk_status_check_1"
+            )
+            .http.host.check_pacemaker_started(
+                pacemaker_started_node_list=NODE_LIST[1:2],
+                pacemaker_not_started_node_list=NODE_LIST[2:],
+                name="pcmk_status_check_2"
+            )
+            .http.host.check_pacemaker_started(
+                pacemaker_started_node_list=NODE_LIST[2:3],
+                name="pcmk_status_check_3"
+            )
+        )
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [dict(name=node, addrs=None) for node in NODE_LIST],
+            transport_type=DEFAULT_TRANSPORT_TYPE,
+            start=True,
+            wait=5,
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    node_name_list=NODE_LIST,
+                ),
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST
+            ]
+        )
+
+    @mock.patch("time.sleep", lambda secs: None)
+    @mock.patch("time.time", get_time_mock())
+    def test_fails(self):
+        node_not_started = dict(
+            label=NODE_LIST[2],
+            output=json.dumps(dict(
+                pending=True,
+                online=False,
+            )),
+        )
+        (self.config
+            .http.host.check_pacemaker_started(
+                communication_list=[
+                    dict(
+                        label=NODE_LIST[0],
+                        was_connected=False,
+                        error_msg="error"
+                    ),
+                    dict(
+                        label=NODE_LIST[1],
+                        output="not json"
+                    ),
+                    node_not_started,
+                ],
+            )
+            .http.host.check_pacemaker_started(
+                communication_list=[
+                    dict(
+                        label=NODE_LIST[0],
+                        response_code=400,
+                    ),
+                    node_not_started,
+                ],
+                name="pcmk_status_check_2"
+            )
+            .http.host.check_pacemaker_started(
+                pacemaker_started_node_list=NODE_LIST[2:3],
+                name="pcmk_status_check_3"
+            )
+        )
+        error_reports = [
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
+            ),
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                node=NODE_LIST[0],
+                command="remote/pacemaker_node_status",
+                reason="",
+            ),
+        ]
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                start=True,
+                wait=5,
+            ),
+            (
+                [fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)]
+                +
+                error_reports
+            ),
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    node_name_list=NODE_LIST,
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=NODE_LIST[0],
+                    command="remote/pacemaker_node_status",
+                    reason="error",
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST[2:3]
+            ]
+            +
+            error_reports
+        )
+
+    @mock.patch("time.sleep", lambda secs: None)
+    @mock.patch("time.time", get_time_mock())
+    def test_fails_and_timed_out(self):
+        (self.config
+            .http.host.check_pacemaker_started(
+                communication_list=[
+                    dict(
+                        label=NODE_LIST[0],
+                        was_connected=False,
+                        error_msg="error"
+                    ),
+                    dict(
+                        label=NODE_LIST[1],
+                        output="not json"
+                    ),
+                    dict(
+                        label=NODE_LIST[2],
+                        output=json.dumps(dict(
+                            pending=True,
+                            online=False,
+                        )),
+                    ),
+                ],
+            )
+            .http.host.check_pacemaker_started(
+                pacemaker_started_node_list=[NODE_LIST[0]],
+                pacemaker_not_started_node_list=[NODE_LIST[2]],
+                name="pcmk_status_check_1"
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                start=True,
+                wait=2,
+            ),
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
+                ),
+            ]
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    node_name_list=NODE_LIST,
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=NODE_LIST[0],
+                    command="remote/pacemaker_node_status",
+                    reason="error",
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[1],
+                ),
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST[:1]
+            ]
+        )

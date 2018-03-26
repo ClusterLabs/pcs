@@ -2,7 +2,8 @@ import json
 
 from pcs import settings
 from pcs.test.tools.command_env.mock_node_communicator import (
-    place_multinode_call
+    place_communication,
+    place_multinode_call,
 )
 
 def dest_dict_fixture(addr, port=settings.pcsd_default_port):
@@ -126,20 +127,45 @@ class HostShortcuts(object):
         )
 
     def check_pacemaker_started(
-        self, node_labels=None, communication_list=None,
+        self, pacemaker_started_node_list=(),
+        pacemaker_not_started_node_list=(), communication_list=None,
         name="http.host.check_pacemaker_started",
     ):
         """
         # TODO
         """
-        place_multinode_call(
+        if (
+            bool(pacemaker_started_node_list or pacemaker_not_started_node_list)
+            ==
+            bool(communication_list)
+        ):
+            raise AssertionError(
+                "Exactly one of 'pacemaker_started_node_list and/or "
+                "pacemaker_not_started_node_list', 'communication_list' must "
+                "be specified"
+            )
+        if not communication_list:
+            communication_list = [
+                dict(
+                    label=node,
+                    output=json.dumps(dict(
+                        pending=False,
+                        online=True,
+                    ))
+                ) for node in pacemaker_started_node_list
+            ] + [
+                dict(
+                    label=node,
+                    output=json.dumps(dict(
+                        pending=True,
+                        online=False,
+                    ))
+                ) for node in pacemaker_not_started_node_list
+            ]
+
+        place_communication(
             self.__calls,
             name,
-            node_labels,
             communication_list,
             action="remote/pacemaker_node_status",
-            output=json.dumps(dict(
-                pending=False,
-                online=True,
-            ))
         )

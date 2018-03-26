@@ -335,6 +335,9 @@ class CheckPacemakerStarted(
         else:
             if not response.was_connected:
                 self._not_yet_started_target_list.append(target)
+                report = response_to_report_item(
+                    response, severity=ReportItemSeverity.WARNING
+                )
         self._report(report)
 
     def before(self):
