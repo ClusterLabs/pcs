@@ -88,22 +88,25 @@ def different_request_lists(expected_request_list, request_list):
 
 def bad_request_list_content(errors):
     return AssertionError(
-        "Method add_request of NodeCommunicator get different requests"
-        " than expected (key: (expected, real)): \n  {0}".format(
-            "\n  ".join([
-                "{0}:\n    {1}".format(
-                    index,
-                    "\n    ".join([
-                        "{0}:\n      {1}\n      {2}"
-                        .format(key, pair[0], pair[1])
-                        for key, pair in value.items()
-                    ])
-                )
-                for index, value in errors.items()
-            ]),
-        )
+        "NodeCommunicator.add_request got different requests than expected:{0}"
+        .format("".join([
+            "\n  call index {call_index}:{call_details}".format(
+                call_index=call_index,
+                call_details="".join([
+                    "\n    mismatch in {option_name}:"
+                    "\n      expected: {expected_value}"
+                    "\n      real:     {real_value}"
+                    .format(
+                        option_name=option_name,
+                        expected_value=pair[0],
+                        real_value=pair[1]
+                    )
+                    for option_name, pair in value.items()
+                ])
+            )
+            for call_index, value in errors.items()
+        ]))
     )
-
 
 def _communication_to_response(
     label, dest_list, action, param_list, token, response_code,
