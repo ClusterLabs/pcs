@@ -215,6 +215,7 @@ class Create(TestCase):
                 [
                     {"name": "node1"},
                     {"name": "node2", "addrs": []},
+                    {"name": "node3", "addrs": None},
                 ],
                 "udp"
             ),
@@ -224,17 +225,10 @@ class Create(TestCase):
                     actual_count=0,
                     min_count=1,
                     max_count=1,
-                    node_name="node1",
-                    node_id=1
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=0,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node2",
-                    node_id=2
-                ),
+                    node_name=name,
+                    node_id=id
+                )
+                for id, name in enumerate(["node1", "node2", "node3"], 1)
             ]
         )
 
@@ -245,6 +239,7 @@ class Create(TestCase):
                 [
                     {"name": "node1"},
                     {"name": "node2", "addrs": []},
+                    {"name": "node3", "addrs": None},
                 ],
                 "knet"
             ),
@@ -254,17 +249,10 @@ class Create(TestCase):
                     actual_count=0,
                     min_count=1,
                     max_count=8,
-                    node_name="node1",
-                    node_id=1
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=0,
-                    min_count=1,
-                    max_count=8,
-                    node_name="node2",
-                    node_id=2
-                ),
+                    node_name=name,
+                    node_id=id
+                )
+                for id, name in enumerate(["node1", "node2", "node3"], 1)
             ]
         )
 

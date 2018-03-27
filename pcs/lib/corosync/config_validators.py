@@ -68,7 +68,9 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
             # Count occurrences of each node name. Do not bother counting
             # missing or empty names. They must be fixed anyway.
             all_names_count[node["name"]] += 1
-        addr_count = len(node.get("addrs", []))
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        addr_count = len(node.get("addrs") or [])
         if transport in (constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP):
             if transport in constants.TRANSPORTS_KNET:
                 min_addr_count = constants.LINKS_KNET_MIN
@@ -91,7 +93,9 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                     )
                 )
         addr_types = []
-        for addr in node.get("addrs", []):
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        for addr in (node.get("addrs") or []):
             all_addrs_count[addr] += 1
             if addr not in all_addrs_type:
                 all_addrs_type[addr] = _get_address_type(addr)
@@ -141,7 +145,9 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         # checks are skipped.
         node_addr_count = {}
         for node in node_list:
-            node_addr_count[node["name"]] = len(node.get("addrs", []))
+            # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+            # the get returns None and len(None) raises an exception.
+            node_addr_count[node["name"]] = len(node.get("addrs") or [])
         # Check if all nodes have the same number of addresses. No need to
         # check that if udp or udpu transport is used as they can only use one
         # address and that has already been checked above.

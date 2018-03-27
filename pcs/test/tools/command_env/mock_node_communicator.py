@@ -133,9 +133,10 @@ def create_communication(
     list of dict communication_list -- is setting for one request - response
         it accepts keys:
             label -- required, see RequestTarget
+            dest_list -- list of pcs.common.host.Destination
             action -- pcsd url, see RequestData
             param_list -- list of pairs, see RequestData
-            port -- see RequestTarget
+            port -- see RequestTarget; deprecated, use dest_list instead
             token=None -- see RequestTarget
             response_code -- http response code
             output -- http response output
@@ -208,7 +209,7 @@ def place_multinode_call(
     **kwargs -- see __module__.create_communication
     """
     if (
-        (not node_labels and not communication_list)
+        (node_labels is None and communication_list is None)
         or
         (node_labels and communication_list)
     ):
@@ -231,6 +232,15 @@ def place_responses(calls, name, response_list):
 
 
 def place_communication(calls, name, communication_list, **kwargs):
+    if len(communication_list) < 1:
+        # If code runs a communication command with no targets specified, the
+        # whole communicator and CURL machinery gets started. It doesn't
+        # actually send any HTTP requests but it adds an empty list of requests
+        # to CURL and starts the CURL loop. And the mock must do the same.
+        place_requests(calls, "{0}_requests".format(name), [])
+        place_responses(calls, "{0}_responses".format(name), [])
+        return
+
     if isinstance(communication_list[0], dict):
         communication_list = [communication_list]
 

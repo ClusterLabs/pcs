@@ -139,6 +139,10 @@ def setup(
     # users not to specify node addresses at all which simplifies the whole
     # cluster setup command / form significantly.
     for node in nodes:
+        # If node["addrs"] == None then node.get("addrs", []) returns None.
+        # We need it to return a list.
+        if "addrs" in node and node["addrs"] is None:
+            del node["addrs"]
         if node.get("addrs") is None and node.get("name") is not None:
             node["addrs"] = [node["name"]]
 
@@ -177,7 +181,7 @@ def setup(
     report_list.extend(
         config_validators.create_totem(totem_options)
         +
-        # We are creating the config and we know there is no wdevice in it.
+        # We are creating the config and we know there is no qdevice in it.
         config_validators.create_quorum_options(quorum_options, False)
     )
     # Validate the nodes.

@@ -12,7 +12,8 @@ from pcs.lib.corosync import constants
 DEFAULT_TRANSPORT_TYPE = "knet"
 RANDOM_KEY = "I'm so random!".encode()
 CLUSTER_NAME = "myCluster"
-NODE_LIST = ["rh7-1", "rh7-2", "rh7-3"]
+NODE_LIST = ["node1", "node2", "node3"]
+COROSYNC_NODE_LIST = {node: [node] for node in NODE_LIST}
 SERVICE_LIST = [
     "pacemaker", "pacemaker_remote", "corosync", "pcsd", "sbd", "qdevice",
     "booth",
@@ -128,6 +129,35 @@ def corosync_conf_fixture(
         ),
     )
 
+def config_succes_minimal_fixture(config, corosync_conf=None):
+    services_status = {
+        service: dict(
+            installed=True, enabled=False, running=False, version="1.0",
+        ) for service in SERVICE_LIST
+    }
+    (config
+        .http.host.get_host_info(
+            NODE_LIST,
+            output_data=dict(
+                services=services_status,
+                cluster_configuration_exists=False,
+            ),
+        )
+        .http.host.cluster_destroy(NODE_LIST)
+        .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
+        .http.files.put_files(
+            NODE_LIST,
+            pcmk_authkey=RANDOM_KEY,
+            corosync_authkey=RANDOM_KEY,
+        )
+        .http.files.remove_files(NODE_LIST, pcsd_settings=True)
+        .http.files.put_files(
+            NODE_LIST,
+            corosync_conf=corosync_conf,
+            name="distribute_corosync_conf",
+        )
+    )
+
 def reports_success_minimal_fixture():
     auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
     pcsd_settings_file = "pcsd settings"
@@ -213,34 +243,9 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         patch_getaddrinfo(self, NODE_LIST)
-        services_status = {
-            service: dict(
-                installed=True, enabled=False, running=False, version="1.0",
-            ) for service in SERVICE_LIST
-        }
-        (self.config
-            .http.host.get_host_info(
-                NODE_LIST,
-                output_data=dict(
-                    services=services_status,
-                    cluster_configuration_exists=False,
-                ),
-            )
-            .http.host.cluster_destroy(NODE_LIST)
-            .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
-            .http.files.put_files(
-                NODE_LIST,
-                pcmk_authkey=RANDOM_KEY,
-                corosync_authkey=RANDOM_KEY,
-            )
-            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
-            .http.files.put_files(
-                NODE_LIST,
-                corosync_conf=corosync_conf_fixture(
-                    {node: [node] for node in NODE_LIST}
-                ),
-                name="distribute_corosync_conf",
-            )
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
         )
 
     def test_minimal(self):
@@ -388,6 +393,187 @@ class SetupSuccessMinimal(TestCase):
             ]
         )
 
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class Validation(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(["node1", "node2", "node3", "node4"])
+        self.resolvable_hosts = patch_getaddrinfo(self, [])
+        self.services_status_ok = {
+            service: {
+                "installed": True,
+                "enabled": False,
+                "running": False,
+                "version": "1.0",
+            } for service in SERVICE_LIST
+        }
+
+    def test_default_node_addrs(self):
+        (self.config
+            .http.host.get_host_info(
+                ["node1", "node2", "node3", "node4"],
+                output_data={
+                    "services": self.services_status_ok,
+                    "cluster_configuration_exists": False,
+                }
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    # no change, addrs defined
+                    {"name": "node1", "addrs": ["addr1"]},
+                    # no change, addrs defined even though empty
+                    {"name": "node2", "addrs": []},
+                    # use the name as an address
+                    {"name": "node3", "addrs": None},
+                    # use the name as an address
+                    {"name": "node4"},
+                    # no name defined, keep addrs undefined
+                    {"addrs": None},
+                ],
+                transport_type="knet"
+            ),
+            [
+                # no addrs defined
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=8,
+                    node_name="node2",
+                    node_id=2
+                ),
+                # no addrs and no name defined
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=8,
+                    node_name=None,
+                    node_id=5
+                ),
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    option_names=["name"],
+                    option_type="node 5"
+                ),
+                # we use this to verify what addrs have been used
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr1", "node3", "node4"]
+                )
+            ]
+        )
+
+    def test_corosync_validator_basics(self):
+        # The validators have their own tests. In here, we are only concerned
+        # about calling the validators so we test that all provided options
+        # have been validated.
+        self.config.http.host.get_host_info([])
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                "",
+                [],
+                transport_type="tcp"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="cluster name",
+                    allowed_values="a non-empty string"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="tcp",
+                    option_name="transport",
+                    allowed_values=("knet", "udp", "udpu")
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NODES_MISSING
+                )
+            ]
+        )
+
+    def test_unresolvable_addrs(self):
+        (self.config
+            .http.host.get_host_info(
+                # This is where pcs connects to, it has no relation to the
+                # nodelist passed to cluster.setup - that holds addresses for
+                # corosync.
+                ["node1", "node2", "node3"],
+                output_data={
+                    "services": self.services_status_ok,
+                    "cluster_configuration_exists": False,
+                }
+            )
+        )
+        self.resolvable_hosts.extend(["addr1", "addr3"])
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    {"name": "node1", "addrs": ["addr1"]},
+                    {"name": "node2", "addrs": ["addr2"]},
+                    {"name": "node3", "addrs": ["addr3"]},
+                ],
+                transport_type="knet"
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr2"]
+                )
+            ]
+        )
+
+    def test_unresolvable_addrs_forced(self):
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(
+                {"node1": ["addr1"], "node2": ["addr2"], "node3": ["addr3"]}
+            ),
+        )
+        self.resolvable_hosts.extend(["addr1", "addr3"])
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [
+                {"name": "node1", "addrs": ["addr1"]},
+                {"name": "node2", "addrs": ["addr2"]},
+                {"name": "node3", "addrs": ["addr3"]},
+            ],
+            transport_type="knet",
+            force_unresolvable=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr2"]
+                )
+            ]
+            +
+            reports_success_minimal_fixture()
+        )
+
+
+
 TOTEM_OPTIONS = dict(
     consensus="0",
     downcheck="1",
@@ -424,28 +610,6 @@ class TransportKnetSuccess(TestCase):
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         self.transport_type = "knet"
         self.resolvable_hosts = patch_getaddrinfo(self, [])
-        services_status = {
-            service: dict(
-                installed=True, enabled=False, running=False, version="1.0",
-            ) for service in SERVICE_LIST
-        }
-        (self.config
-            .http.host.get_host_info(
-                NODE_LIST,
-                output_data=dict(
-                    services=services_status,
-                    cluster_configuration_exists=False,
-                ),
-            )
-            .http.host.cluster_destroy(NODE_LIST)
-            .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
-            .http.files.put_files(
-                NODE_LIST,
-                pcmk_authkey=RANDOM_KEY,
-                corosync_authkey=RANDOM_KEY,
-            )
-            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
-        )
 
     def test_basic(self):
         node_addrs = {
@@ -453,13 +617,14 @@ class TransportKnetSuccess(TestCase):
             for node in NODE_LIST
         }
         self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        self.config.http.files.put_files(
-            NODE_LIST,
+        config_succes_minimal_fixture(
+            self.config,
             corosync_conf=corosync_conf_fixture(
-                node_addrs, transport_type=self.transport_type
+                node_addrs,
+                transport_type=self.transport_type
             ),
-            name="distribute_corosync_conf",
         )
+
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
@@ -519,8 +684,8 @@ class TransportKnetSuccess(TestCase):
             hash="sha512",
             model="openssl",
         )
-        self.config.http.files.put_files(
-            NODE_LIST,
+        config_succes_minimal_fixture(
+            self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs,
                 transport_type=self.transport_type,
@@ -532,8 +697,8 @@ class TransportKnetSuccess(TestCase):
                 compression_options=compression_options,
                 crypto_options=crypto_options,
             ),
-            name="distribute_corosync_conf",
         )
+
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
@@ -564,39 +729,18 @@ class TransportUdpSuccess(TestCase):
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         self.transport_type = "udp"
         self.resolvable_hosts = patch_getaddrinfo(self, [])
-        services_status = {
-            service: dict(
-                installed=True, enabled=False, running=False, version="1.0",
-            ) for service in SERVICE_LIST
-        }
-        (self.config
-            .http.host.get_host_info(
-                NODE_LIST,
-                output_data=dict(
-                    services=services_status,
-                    cluster_configuration_exists=False,
-                ),
-            )
-            .http.host.cluster_destroy(NODE_LIST)
-            .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
-            .http.files.put_files(
-                NODE_LIST,
-                pcmk_authkey=RANDOM_KEY,
-                corosync_authkey=RANDOM_KEY,
-            )
-            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
-        )
 
     def test_basic(self):
         node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
         self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        self.config.http.files.put_files(
-            NODE_LIST,
+        config_succes_minimal_fixture(
+            self.config,
             corosync_conf=corosync_conf_fixture(
-                node_addrs, transport_type=self.transport_type
+                node_addrs,
+                transport_type=self.transport_type
             ),
-            name="distribute_corosync_conf",
         )
+
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
@@ -623,8 +767,8 @@ class TransportUdpSuccess(TestCase):
             ip_version="ipv6",
             netmtu="1"
         )
-        self.config.http.files.put_files(
-            NODE_LIST,
+        config_succes_minimal_fixture(
+            self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs,
                 transport_type=self.transport_type,
@@ -633,8 +777,8 @@ class TransportUdpSuccess(TestCase):
                 transport_options=transport_options,
                 totem_options=TOTEM_OPTIONS,
             ),
-            name="distribute_corosync_conf",
         )
+
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
