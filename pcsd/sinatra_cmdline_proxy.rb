@@ -14,13 +14,17 @@ end
 
 require 'pcsd'
 
-if !request.include?("config") or !request["config"].include?("type")
-  result = {:error => "Unknown type: '#{request["config"]["type"]}'"}
-elsif request["config"]["type"] == "sinatra_request"
+if !request.include?("type")
+  result = {:error => "Type not specified"}
+
+elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
   $user_pass_file = request["config"]["user_pass_dir"] + $user_pass_file
-  $tornado_username = request["config"]["username"]
-  $tornado_groups = request["config"]["groups"]
-  $tornado_is_authenticated = request["config"]["is_authenticated"]
+
+  if request["type"] == "sinatra_gui"
+    $tornado_username = request["session"]["username"]
+    $tornado_groups = request["session"]["groups"]
+    $tornado_is_authenticated = request["session"]["is_authenticated"]
+  end
 
   set :logging, true
   set :run, false
@@ -46,12 +50,12 @@ elsif request["config"]["type"] == "sinatra_request"
   }
   result[:body] = Base64.encode64(full_body)
 
-elsif request["config"]["type"] == "sync_configs"
+elsif request["type"] == "sync_configs"
   result = {
     :next => Time.now.to_i + run_cfgsync()
   }
 else
-  result = {:error => "Unknown type: '#{request["config"]["type"]}'"}
+  result = {:error => "Unknown type: '#{request["type"]}'"}
 end
 
 STDOUT.reopen(orig_std_out)

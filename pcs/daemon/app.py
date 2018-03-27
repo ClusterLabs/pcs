@@ -71,18 +71,12 @@ class AjaxMixin:
         self.write('{"notauthorized":"true"}')
         return Finish()
 
-def build_pcsd_request(request, session=None):
+def build_old_pcsd_request(type, request, specific_settings=None):
     host, port = split_host_and_port(request.host)
-    return {
+    old_pcsd_request = {
+        "type": type,
         "config": {
-            "type": "sinatra_request",
             "user_pass_dir": PCSD_DIR,
-            # Session was taken from ruby. However, some session information is
-            # needed for ruby code (e.g. rendering some parts of templates). So
-            # this information must be sent to ruby by another way.
-            "username": session.username,
-            "groups": session.groups,
-            "is_authenticated": session.is_authenticated,
         },
         "env": {
             "PATH_INFO": request.path,
@@ -105,6 +99,9 @@ def build_pcsd_request(request, session=None):
             "REQUEST_PATH": request.uri,
         }
     }
+    if specific_settings:
+        old_pcsd_request.update(specific_settings)
+    return old_pcsd_request
 
 async def run_pscd(request):
     pcsd_ruby = Subprocess(
@@ -122,7 +119,7 @@ async def run_pscd(request):
     ])
     return result_json
 
-class Sinatra(SessionMixin, RequestHandler):
+class Sinatra(RequestHandler):
     def _process_pcsd_result(self, result_json):
         try:
             result = json.loads(result_json)
@@ -135,12 +132,12 @@ class Sinatra(SessionMixin, RequestHandler):
         self.set_status(result["status"])
         self.write(base64.b64decode(result["body"]))
 
-    async def proxy_to_sinatra(self):
-        request = build_pcsd_request(self.request, self.session)
-        self._process_pcsd_result(await convert_yielded(run_pscd(request)))
+    def build_old_pcsd_request(self):
+        raise NotImplementedError()
 
-    async def get(self, *args, **kwargs):
-        await self.proxy_to_sinatra()
+    async def proxy_to_sinatra(self):
+        request = self.build_old_pcsd_request()
+        self._process_pcsd_result(await convert_yielded(run_pscd(request)))
 
     def redirect_temporary(self, url):
         self.redirect(url, status=302)
@@ -148,7 +145,29 @@ class Sinatra(SessionMixin, RequestHandler):
     def redirect_post_to_get_resource(self, url):
         self.redirect(url, status=303)
 
-class SinatraGuiProtected(Sinatra, EnhnceHeadersMixin):
+class SinatraGui(SessionMixin, Sinatra):
+    def build_old_pcsd_request(self):
+        return build_old_pcsd_request("sinatra_gui", self.request, {
+            "session": {
+                # Session was taken from ruby. However, some session
+                # information is needed for ruby code (e.g. rendering some
+                # parts of templates). So this information must be sent to ruby
+                # by another way.
+                "username": self.session.username,
+                "groups": self.session.groups,
+                "is_authenticated": self.session.is_authenticated,
+            },
+        })
+
+class SinatraRemote(Sinatra):
+    def build_old_pcsd_request(self):
+        return build_old_pcsd_request("sinatra_remote", self.request)
+
+    async def get(self, *args, **kwargs):
+        await self.proxy_to_sinatra()
+
+
+class SinatraGuiProtected(SinatraGui, EnhnceHeadersMixin):
     async def get(self, *args, **kwargs):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
@@ -162,7 +181,7 @@ class SinatraGuiProtected(Sinatra, EnhnceHeadersMixin):
 
         await self.proxy_to_sinatra()
 
-class SinatraAjaxProtected(Sinatra, EnhnceHeadersMixin, AjaxMixin):
+class SinatraAjaxProtected(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
     @property
     def is_authorized(self):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
@@ -177,7 +196,7 @@ class SinatraAjaxProtected(Sinatra, EnhnceHeadersMixin, AjaxMixin):
             raise self.unauthorized()
         await self.proxy_to_sinatra()
 
-class Login(Sinatra, EnhnceHeadersMixin, AjaxMixin):
+class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
     async def get(self, *args, **kwargs):
         #TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
@@ -227,7 +246,7 @@ class LoginStatus(SessionMixin, RequestHandler, EnhnceHeadersMixin, AjaxMixin):
             self.put_request_cookies_sid_to_response_cookies_sid()
         self.write(self.session.ajax_id)
 
-class Logout(Sinatra, EnhnceHeadersMixin, AjaxMixin):
+class Logout(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
     def get(self, *args, **kwargs):
         self.session_logout()
         self.ensure_session()
@@ -284,14 +303,13 @@ async def sync_configs(sync_config_lock: SyncConfigLock):
 
     with sync_config_lock.lock():
         result_json = await convert_yielded(run_pscd(
-            {"config": {"type": "sync_configs"}}
+            {"type": "sync_configs"}
         ))
         return json.loads(result_json)["next"]
 
-class SyncConfigMutualExclusive(Sinatra):
-    def initialize(self, sync_config_lock, session_storage):
+class SyncConfigMutualExclusive(SinatraRemote):
+    def initialize(self, sync_config_lock):
         #pylint: disable=arguments-differ
-        super().initialize(session_storage)
         self.sync_config_lock = sync_config_lock
 
     async def get(self, *args, **kwargs):
@@ -315,17 +333,16 @@ def make_app(
             static_route("/js/", "js"),
             static_route("/images/", "images"),
             # Urls protected by tokens. It is stil done by ruby.
-            session_route(r"/run_pcs", Sinatra),
-            session_route(r"/remote/auth", Sinatra),
+            (r"/run_pcs", SinatraRemote),
+            (r"/remote/auth", SinatraRemote),
             (
                 r"/remote/(set_sync_options|set_configs)",
                 SyncConfigMutualExclusive,
                 dict(
-                    session_storage=session_storage,
                     sync_config_lock=sync_config_lock,
                 )
             ),
-            session_route(r"/remote/.*", Sinatra),
+            (r"/remote/.*", SinatraRemote),
 
             (
                 r"/daemon-maintenance/reload-cert",
