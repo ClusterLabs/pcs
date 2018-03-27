@@ -342,13 +342,10 @@ module Cfgsync
       return self.save(data)
     end
 
-    def self.sync_thread_pause(semaphore_cfgsync, seconds=300)
-      # wait for the thread to finish current run and disable it
-      semaphore_cfgsync.synchronize {
-        data = self.load()
-        data['thread_paused_until'] = Time.now.to_i() + seconds.to_i()
-        return self.save(data)
-      }
+    def self.sync_thread_pause(seconds=300)
+      data = self.load()
+      data['thread_paused_until'] = Time.now.to_i() + seconds.to_i()
+      return self.save(data)
     end
 
     def self.sync_thread_resume()
@@ -360,13 +357,10 @@ module Cfgsync
       return true
     end
 
-    def self.sync_thread_disable(semaphore_cfgsync)
-      # wait for the thread to finish current run and disable it
-      semaphore_cfgsync.synchronize {
-        data = self.load()
-        data['thread_disabled'] = true
-        return self.save(data)
-      }
+    def self.sync_thread_disable()
+      data = self.load()
+      data['thread_disabled'] = true
+      return self.save(data)
     end
 
     def self.sync_thread_enable()

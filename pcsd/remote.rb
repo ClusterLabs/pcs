@@ -521,7 +521,7 @@ def set_sync_options(params, request, auth_user)
   end
 
   if params['sync_thread_disable']
-    if Cfgsync::ConfigSyncControl.sync_thread_disable($semaphore_cfgsync)
+    if Cfgsync::ConfigSyncControl.sync_thread_disable()
       return 'sync thread disabled'
     else
       return [400, 'sync thread disable error']
@@ -545,9 +545,7 @@ def set_sync_options(params, request, auth_user)
   end
 
   if params['sync_thread_pause']
-    if Cfgsync::ConfigSyncControl.sync_thread_pause(
-        $semaphore_cfgsync, params['sync_thread_pause']
-      )
+    if Cfgsync::ConfigSyncControl.sync_thread_pause(params['sync_thread_pause'])
       return 'sync thread paused'
     else
       return [400, 'sync thread pause error']
@@ -596,36 +594,34 @@ def set_configs(params, request, auth_user)
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end
 
-  $semaphore_cfgsync.synchronize {
-    force = configs_json['force']
-    remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
-    local_configs = Cfgsync::get_configs_local
+  force = configs_json['force']
+  remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
+  local_configs = Cfgsync::get_configs_local
 
-    result = {}
-    unknown_cfg_names.each { |name| result[name] = 'not_supported' }
-    remote_configs.each { |name, remote_cfg|
-      begin
-        # Save a remote config if it is a newer version than local. If the config
-        # is not present on a local node, the node is beeing added to a cluster,
-        # so we need to save the config as well.
-        if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
-          local_configs[name].class.backup() if local_configs.key?(name)
-          remote_cfg.save()
-          result[name] = 'accepted'
-        elsif remote_cfg == local_configs[name]
-          # Someone wants this node to have a config that it already has.
-          # So the desired state is met and the result is a success then.
-          result[name] = 'accepted'
-        else
-          result[name] = 'rejected'
-        end
-      rescue => e
-        $logger.error("Error saving config '#{name}': #{e}")
-        result[name] = 'error'
+  result = {}
+  unknown_cfg_names.each { |name| result[name] = 'not_supported' }
+  remote_configs.each { |name, remote_cfg|
+    begin
+      # Save a remote config if it is a newer version than local. If the config
+      # is not present on a local node, the node is beeing added to a cluster,
+      # so we need to save the config as well.
+      if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
+        local_configs[name].class.backup() if local_configs.key?(name)
+        remote_cfg.save()
+        result[name] = 'accepted'
+      elsif remote_cfg == local_configs[name]
+        # Someone wants this node to have a config that it already has.
+        # So the desired state is met and the result is a success then.
+        result[name] = 'accepted'
+      else
+        result[name] = 'rejected'
       end
-    }
-    return JSON.generate({'status' => 'ok', 'result' => result})
+    rescue => e
+      $logger.error("Error saving config '#{name}': #{e}")
+      result[name] = 'error'
+    end
   }
+  return JSON.generate({'status' => 'ok', 'result' => result})
 end
 
 def set_certs(params, request, auth_user)

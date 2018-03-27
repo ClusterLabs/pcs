@@ -1,8 +1,10 @@
 import base64
 import json
+from contextlib import contextmanager
 from os.path import dirname, realpath, abspath, join as join_path
+from time import time
 
-from tornado.gen import Task, multi, convert_yielded
+from tornado.gen import Task, multi, convert_yielded, sleep
 from tornado.httputil import split_host_and_port
 from tornado.process import Subprocess
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
@@ -21,6 +23,7 @@ from pcs.daemon.session import SessionMixin, SessionStorage
 
 PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
 PUBLIC_DIR = join_path(PCSD_DIR, "public")
+PCSD_CMD =  "sinatra_cmdline_proxy.rb"
 
 class EnhnceHeadersMixin:
     def set_header_nosniff_content_type(self):
@@ -72,6 +75,7 @@ def build_pcsd_request(request, session=None):
     host, port = split_host_and_port(request.host)
     return {
         "config": {
+            "type": "sinatra_request",
             "user_pass_dir": PCSD_DIR,
             # Session was taken from ruby. However, some session information is
             # needed for ruby code (e.g. rendering some parts of templates). So
@@ -104,11 +108,7 @@ def build_pcsd_request(request, session=None):
 
 async def run_pscd(request):
     pcsd_ruby = Subprocess(
-        [
-            "ruby",
-            "-I", PCSD_DIR,
-            join_path(PCSD_DIR, "sinatra_cmdline_proxy.rb")
-        ],
+        ["ruby", "-I", PCSD_DIR, join_path(PCSD_DIR, PCSD_CMD)],
         stdin=Subprocess.STREAM,
         stdout=Subprocess.STREAM,
         stderr=Subprocess.STREAM,
@@ -116,11 +116,11 @@ async def run_pscd(request):
 
     await Task(pcsd_ruby.stdin.write, str.encode(json.dumps(request)))
     pcsd_ruby.stdin.close()
-    result_json, error = await multi([
+    result_json, dummy_error = await multi([
         Task(pcsd_ruby.stdout.read_until_close),
         Task(pcsd_ruby.stderr.read_until_close),
     ])
-    return result_json, error
+    return result_json
 
 class Sinatra(SessionMixin, RequestHandler):
     def _process_pcsd_result(self, result_json):
@@ -137,8 +137,7 @@ class Sinatra(SessionMixin, RequestHandler):
 
     async def proxy_to_sinatra(self):
         request = build_pcsd_request(self.request, self.session)
-        result_json, dummy_err = await convert_yielded(run_pscd(request))
-        self._process_pcsd_result(result_json)
+        self._process_pcsd_result(await convert_yielded(run_pscd(request)))
 
     async def get(self, *args, **kwargs):
         await self.proxy_to_sinatra()
@@ -265,8 +264,46 @@ def static_route(url_prefix, public_subdir):
         )
     )
 
+class SyncConfigLock:
+    def __init__(self):
+        self.__is_locked = False
+
+    @property
+    def is_locked(self):
+        return self.__is_locked
+
+    @contextmanager
+    def lock(self):
+        self.__is_locked = True
+        yield
+        self.__is_locked = False
+
+async def sync_configs(sync_config_lock: SyncConfigLock):
+    if sync_config_lock.is_locked:
+        return int(time())
+
+    with sync_config_lock.lock():
+        result_json = await convert_yielded(run_pscd(
+            {"config": {"type": "sync_configs"}}
+        ))
+        return json.loads(result_json)["next"]
+
+class SyncConfigMutualExclusive(Sinatra):
+    def initialize(self, sync_config_lock, session_storage):
+        #pylint: disable=arguments-differ
+        super().initialize(session_storage)
+        self.sync_config_lock = sync_config_lock
+
+    async def get(self, *args, **kwargs):
+        #TODO avoid infinity
+        while self.sync_config_lock.is_locked:
+            await sleep(0.1)
+        with self.sync_config_lock.lock():
+            await self.proxy_to_sinatra()
+
 def make_app(
     session_storage: SessionStorage,
+    sync_config_lock: SyncConfigLock,
     https_server_manage: HttpsServerManage
 ):
     session_route = lambda pattern, handler: (pattern, handler, dict(
@@ -279,8 +316,16 @@ def make_app(
             static_route("/images/", "images"),
             # Urls protected by tokens. It is stil done by ruby.
             session_route(r"/run_pcs", Sinatra),
-            session_route(r"/remote/.*", Sinatra),
             session_route(r"/remote/auth", Sinatra),
+            (
+                r"/remote/(set_sync_options|set_configs)",
+                SyncConfigMutualExclusive,
+                dict(
+                    session_storage=session_storage,
+                    sync_config_lock=sync_config_lock,
+                )
+            ),
+            session_route(r"/remote/.*", Sinatra),
 
             (
                 r"/daemon-maintenance/reload-cert",

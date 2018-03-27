@@ -7,7 +7,7 @@ from tornado.ioloop import IOLoop
 
 from pcs import settings
 from pcs.daemon import log, systemd
-from pcs.daemon.app import make_app
+from pcs.daemon.app import make_app, sync_configs, SyncConfigLock
 from pcs.daemon.env import EnvPrepare
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.session import SessionStorage
@@ -36,6 +36,12 @@ async def notify_systemd(env):
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
+def get_config_synchronization(sync_config_lock: SyncConfigLock):
+    async def config_synchronization():
+        next_run_time = await sync_configs(sync_config_lock)
+        IOLoop.current().call_at(next_run_time, config_synchronization)
+    return config_synchronization
+
 def main():
     log.setup()
 
@@ -50,9 +56,10 @@ def main():
         raise SystemExit(1)
 
     env = env_prepare.env
+    sync_config_lock = SyncConfigLock()
     try:
         SignalInfo.server_manage = HttpsServerManage(
-            partial(make_app, SessionStorage()),
+            partial(make_app, SessionStorage(), sync_config_lock),
             server_name=socket.gethostname(),
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,
@@ -62,10 +69,13 @@ def main():
             key_location=settings.pcsd_key_location,
         )
 
+
         IOLoop.current().add_callback(notify_systemd, env)
         IOLoop.current().add_callback(sign_ioloop_started)
+        IOLoop.current().add_callback(
+            get_config_synchronization(sync_config_lock)
+        )
         IOLoop.current().start()
-
     except OSError as e:
         log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")
         raise SystemExit(1)

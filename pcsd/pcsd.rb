@@ -78,7 +78,6 @@ configure do
   STDOUT.sync = true
   STDERR.sync = true
   $logger = configure_logger('/var/log/pcsd/pcsd.log')
-  $semaphore_cfgsync = Mutex.new
 
   capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze
@@ -88,37 +87,33 @@ end
 set :logging, true
 set :run, false
 
-$thread_cfgsync = Thread.new {
-  while true
-    $semaphore_cfgsync.synchronize {
-      $logger.debug('Config files sync thread started')
-      if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
-        begin
-          # do not sync if this host is not in a cluster
-          cluster_name = get_cluster_name()
-          cluster_nodes = get_corosync_nodes()
-          if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
-            $logger.debug('Config files sync thread fetching')
-            fetcher = Cfgsync::ConfigFetcher.new(
-              PCSAuth.getSuperuserAuth(),
-              Cfgsync::get_cfg_classes(),
-              cluster_nodes,
-              cluster_name
-            )
-            cfgs_to_save, _ = fetcher.fetch()
-            cfgs_to_save.each { |cfg_to_save|
-              cfg_to_save.save()
-            }
-          end
-        rescue => e
-          $logger.warn("Config files sync thread exception: #{e}")
-        end
+def run_cfgsync
+  $logger.debug('Config files sync started')
+  if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
+    begin
+      # do not sync if this host is not in a cluster
+      cluster_name = get_cluster_name()
+      cluster_nodes = get_corosync_nodes()
+      if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
+        $logger.debug('Config files sync fetching')
+        fetcher = Cfgsync::ConfigFetcher.new(
+          PCSAuth.getSuperuserAuth(),
+          Cfgsync::get_cfg_classes(),
+          cluster_nodes,
+          cluster_name
+        )
+        cfgs_to_save, _ = fetcher.fetch()
+        cfgs_to_save.each { |cfg_to_save|
+          cfg_to_save.save()
+        }
       end
-      $logger.debug('Config files sync thread finished')
-    }
-    sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+    rescue => e
+      $logger.warn("Config files sync exception: #{e}")
+    end
   end
-}
+  $logger.debug('Config files sync finished')
+  return Cfgsync::ConfigSyncControl.sync_thread_interval()
+end
 
 helpers do
   def is_ajax?
