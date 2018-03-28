@@ -26,14 +26,6 @@ def handle_signal(incomming_signal, frame):
         IOLoop.current().stop()
     raise SystemExit(1)
 
-async def notify_systemd(env):
-    if systemd.is_systemd() and env.NOTIFY_SOCKET:
-        try:
-            await systemd.notify(env.NOTIFY_SOCKET)
-        except systemd.NotifyError as e:
-            log.pcsd.error(f"Unable to notify systemd: {e}")
-            raise SystemExit(1)
-
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
@@ -76,13 +68,12 @@ def main():
             key_location=settings.pcsd_key_location,
         )
 
-
-        IOLoop.current().add_callback(notify_systemd, env)
-        IOLoop.current().add_callback(sign_ioloop_started)
-        IOLoop.current().add_callback(
-            get_config_synchronization(sync_config_lock)
-        )
-        IOLoop.current().start()
+        ioloop = IOLoop.current()
+        ioloop.add_callback(sign_ioloop_started)
+        if systemd.is_systemd() and env.NOTIFY_SOCKET:
+            ioloop.add_callback(systemd.notify_or_exit, env.NOTIFY_SOCKET)
+        ioloop.add_callback(get_config_synchronization(sync_config_lock))
+        ioloop.start()
     except OSError as e:
         log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")
         raise SystemExit(1)
