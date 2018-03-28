@@ -245,7 +245,8 @@ class SyncConfigMutualExclusive(SinatraRemote):
 def make_app(
     session_storage: session.Storage,
     sync_config_lock: SyncConfigLock,
-    https_server_manage: HttpsServerManage
+    https_server_manage: HttpsServerManage,
+    debug=False
 ):
     session_route = lambda pattern, handler: (pattern, handler, dict(
         session_storage=session_storage
@@ -286,5 +287,5 @@ def make_app(
 
             session_route(r"/.*", SinatraAjaxProtected),
         ],
-        debug=True,
+        debug=debug,
     )

@@ -60,7 +60,12 @@ def main():
     sync_config_lock = SyncConfigLock()
     try:
         SignalInfo.server_manage = HttpsServerManage(
-            partial(make_app, session.Storage(), sync_config_lock),
+            partial(
+                make_app,
+                session.Storage(),
+                sync_config_lock,
+                debug=env.DEBUG
+            ),
             server_name=socket.gethostname(),
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,

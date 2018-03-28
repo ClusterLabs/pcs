@@ -10,6 +10,7 @@ PCSD_SSL_CIPHERS = "PCSD_SSL_CIPHERS"
 PCSD_SSL_OPTIONS = "PCSD_SSL_OPTIONS"
 PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
+DEBUG = "DEBUG"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -17,6 +18,7 @@ Env = namedtuple("Env", [
     PCSD_SSL_OPTIONS,
     PCSD_BIND_ADDR,
     NOTIFY_SOCKET,
+    DEBUG,
 ])
 
 class EnvPrepare:
@@ -43,7 +45,8 @@ class EnvPrepare:
                 self.__ssl_ciphers(),
                 self.__ssl_options(),
                 self.__bind_addresses(port),
-                self.__os_environ.get(NOTIFY_SOCKET, None)
+                self.__os_environ.get(NOTIFY_SOCKET, None),
+                self.__os_environ.get(DEBUG, "").lower() == "true",
             )
 
     def __err(self, message):
