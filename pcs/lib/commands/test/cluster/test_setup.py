@@ -1665,3 +1665,598 @@ class SetupWithWait(TestCase):
                 ) for node in NODE_LIST[:1]
             ]
         )
+
+
+REASON = "error msg"
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class Failures(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
+        self.nodes_failed = NODE_LIST[:1]
+        self.nodes_offline = NODE_LIST[1:2]
+        self.nodes_success = NODE_LIST[2:]
+        self.communication_list = [
+            dict(
+                label=node,
+                response_code=400,
+                output=REASON,
+            ) for node in self.nodes_failed
+        ] + [
+            dict(
+                label=node,
+                was_connected=False,
+                error_msg=REASON,
+            ) for node in self.nodes_offline
+        ] + [
+            dict(label=node) for node in self.nodes_success
+        ]
+        patch_getaddrinfo(self, NODE_LIST)
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
+        )
+
+    def _get_failure_reports(self, command):
+        return [
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                node=node,
+                command=command,
+                reason=REASON,
+            ) for node in self.nodes_failed
+        ] + [
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                node=node,
+                command=command,
+                reason=REASON,
+            ) for node in self.nodes_offline
+        ]
+
+    def test_start_failure(self):
+        (self.config
+            .http.host.enable_cluster(NODE_LIST)
+            .http.host.start_cluster(
+                communication_list=self.communication_list,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            +
+            [
+                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                for node in NODE_LIST
+            ]
+            +
+            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            +
+            self._get_failure_reports("remote/cluster_start")
+        )
+
+    def test_enable_failure(self):
+        self.config.http.host.enable_cluster(
+            communication_list=self.communication_list,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            +
+            self._get_failure_reports("remote/cluster_enable")
+            +
+            [
+                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                for node in self.nodes_success
+            ]
+        )
+
+    def _remove_calls(self, n):
+        for name in self.config.calls.names[-n:]:
+            self.config.calls.remove(name)
+
+    def test_corosync_conf_distribution_communication_failure(self):
+        self._remove_calls(2)
+        self.config.http.files.put_files(
+            communication_list=self.communication_list,
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
+            name="distribute_corosync_conf",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-4]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    file_description="corosync.conf",
+                    node=node,
+                ) for node in self.nodes_success
+            ]
+            +
+            self._get_failure_reports("remote/put_file")
+        )
+
+    def test_corosync_conf_distribution_failure(self):
+        self._remove_calls(2)
+        self.config.http.files.put_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output=json.dumps(dict(
+                        files={
+                            "corosync.conf": dict(
+                                code="unexpected",
+                                message=REASON
+                            )
+                        }
+                    ))
+                )
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ],
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
+            name="distribute_corosync_conf",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-4]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    file_description="corosync.conf",
+                    node=node,
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    file_description="corosync.conf",
+                    node=NODE_LIST[0],
+                    reason=REASON,
+                )
+            ]
+        )
+
+    def test_corosync_conf_distribution_invalid_response(self):
+        self._remove_calls(2)
+        self.config.http.files.put_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                )
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ],
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
+            name="distribute_corosync_conf",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-4]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    file_description="corosync.conf",
+                    node=node,
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
+                )
+            ]
+        )
+
+    def test_removing_files_communication_failure(self):
+        self._remove_calls(4)
+        self.config.http.files.remove_files(
+            communication_list=self.communication_list,
+            pcsd_settings=True,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    node=node,
+                    file_description="pcsd settings",
+                ) for node in self.nodes_success
+            ]
+            +
+            self._get_failure_reports("remote/remove_file")
+        )
+
+    def test_removing_files_failure(self):
+        self._remove_calls(4)
+        self.config.http.files.remove_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output=json.dumps(dict(
+                        files={
+                            "pcsd settings": dict(
+                                code="unexpected",
+                                message=REASON
+                            )
+                        }
+                    ))
+                )
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ],
+            pcsd_settings=True,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    node=node,
+                    file_description="pcsd settings",
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_REMOVE_FROM_NODE_ERROR,
+                    node=NODE_LIST[0],
+                    file_description="pcsd settings",
+                    reason=REASON,
+                )
+            ]
+        )
+
+    def test_removing_files_invalid_response(self):
+        self._remove_calls(4)
+        self.config.http.files.remove_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                )
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ],
+            pcsd_settings=True,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    node=node,
+                    file_description="pcsd settings",
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
+                )
+            ]
+        )
+
+    def test_distibution_of_authkey_files_communication_failure(self):
+        self._remove_calls(6)
+        self.config.http.files.put_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output=json.dumps(dict(
+                        files={
+                            "pacemaker_remote authkey": dict(
+                                code="unexpected",
+                                message=REASON
+                            ),
+                            "corosync authkey": dict(
+                                code="written",
+                                message=""
+                            ),
+                        }
+                    ))
+                ),
+                dict(
+                    label=NODE_LIST[1],
+                    output=json.dumps(dict(
+                        files={
+                            "pacemaker_remote authkey": dict(
+                                code="written",
+                                message=""
+                            ),
+                            "corosync authkey": dict(
+                                code="unexpected",
+                                message=REASON
+                            ),
+                        }
+                    ))
+                ),
+            ] + [
+                dict(label=node) for node in NODE_LIST[2:]
+            ],
+            pcmk_authkey=RANDOM_KEY,
+            corosync_authkey=RANDOM_KEY,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-15]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=file,
+                )
+                for node in NODE_LIST[2:]
+                for file in ["corosync authkey", "pacemaker_remote authkey"]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    node=NODE_LIST[0],
+                    reason=REASON,
+                    file_description="pacemaker_remote authkey",
+                ),
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=NODE_LIST[0],
+                    file_description="corosync authkey",
+                ),
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=NODE_LIST[1],
+                    file_description="pacemaker_remote authkey",
+                ),
+                fixture.error(
+                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    node=NODE_LIST[1],
+                    reason=REASON,
+                    file_description="corosync authkey",
+                ),
+            ]
+        )
+
+    def test_distibution_of_authkey_files_invalid_response(self):
+        self._remove_calls(6)
+        self.config.http.files.put_files(
+            communication_list=[
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                ),
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ],
+            pcmk_authkey=RANDOM_KEY,
+            corosync_authkey=RANDOM_KEY,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-15]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=file,
+                )
+                for node in NODE_LIST[1:]
+                for file in ["corosync authkey", "pacemaker_remote authkey"]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
+                ),
+            ]
+        )
+
+    def test_distibution_of_authkey_files_failure(self):
+        self._remove_calls(6)
+        self.config.http.files.put_files(
+            communication_list=self.communication_list,
+            pcmk_authkey=RANDOM_KEY,
+            corosync_authkey=RANDOM_KEY,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-15]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=file,
+                )
+                for node in self.nodes_success
+                for file in ["corosync authkey", "pacemaker_remote authkey"]
+            ]
+            +
+            self._get_failure_reports("remote/put_file")
+        )
+
+    def test_distibution_known_hosts_failure(self):
+        self._remove_calls(8)
+        self.config.http.host.update_known_hosts(
+            communication_list=self.communication_list,
+            to_add=NODE_LIST,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-16]
+            +
+            self._get_failure_reports("remote/known_hosts_change")
+        )
+
+    def test_cluster_destroy_failure(self):
+        self._remove_calls(10)
+        self.config.http.host.cluster_destroy(
+            communication_list=self.communication_list,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+                enable=True,
+                start=True,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-19]
+            +
+            [
+                fixture.info(
+                    report_codes.CLUSTER_DESTROY_SUCCESS,
+                    node=node
+                )
+                for node in self.nodes_success
+            ]
+            +
+            self._get_failure_reports("remote/cluster_destroy")
+        )

@@ -153,8 +153,8 @@ class RunActionBase(
         skip_offline_targets=False, allow_fails=False, description="",
     ):
         super(RunActionBase, self).__init__(report_processor)
-        self._init_properties()
         self._set_skip_offline(skip_offline_targets)
+        self._init_properties()
         self._action_error_force = _force(self._force_code, allow_fails)
         self._action_definition = action_definition
         self._description = description
