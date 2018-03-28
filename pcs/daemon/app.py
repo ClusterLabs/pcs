@@ -53,7 +53,7 @@ class AjaxMixin:
     @property
     def is_ajax(self):
         return (
-            self.request.headers.get("X_Requested_With", default=None)
+            self.request.headers.get("X-Requested-With", default=None)
             ==
             "XMLHttpRequest"
         )
