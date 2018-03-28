@@ -198,11 +198,19 @@ def setup(
     com_cmd = GetHostInfo(env.report_processor)
     com_cmd.set_targets(target_list)
     host_info_dict = run_com(env.get_node_communicator(), com_cmd)
-    report_list.extend(
-        com_cmd.error_list + _host_check_cluster_setup(host_info_dict, force)
-    )
-    if report_list:
-        env.report_processor.process_list(report_list)
+    report_list.extend(_host_check_cluster_setup(host_info_dict, force))
+
+    # Reporting:
+    # GetHostInfo command may already reported some issues directly into the
+    # report_processor. In order not to report them twice, all the gathered
+    # report items are put into the report_processor using its report_list
+    # method. This method does not raise a LibraryError on errors, instead it
+    # returns all the errors. This allows us to exit by raising a LibraryError
+    # if any errors occurred.
+    errors = env.report_processor.report_list(report_list)
+    if errors or com_cmd.error_list:
+        raise LibraryError()
+
     # Validation done. If errors occured, an exception has been raised and we
     # don't get below this line.
 
@@ -337,6 +345,9 @@ def _wait_for_pacemaker_to_start(
 
 def _host_check_cluster_setup(host_info_dict, force):
     report_list = []
+    # We only care about services which matter for creating a cluster. It does
+    # not make sense to check e.g. booth when a) it will never be used b) it
+    # will be used in a year - which means we should do the check in a year.
     service_version_dict = {
         "pacemaker": {},
         "corosync": {},
@@ -359,14 +370,14 @@ def _host_check_cluster_setup(host_info_dict, force):
                 service for service in required_service_list
                 if not services[service]["installed"]
             ]
-            running_service_list = [
-                service for service in required_as_stopped_service_list
-                if services[service]["running"]
-            ]
             if missing_service_list:
                 report_list.append(reports.service_not_installed(
                     host_name, missing_service_list
                 ))
+            running_service_list = [
+                service for service in required_as_stopped_service_list
+                if services[service]["running"]
+            ]
             if running_service_list:
                 cluster_exists_on_nodes = True
                 report_list.append(

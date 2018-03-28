@@ -50,7 +50,7 @@ class HostShortcuts(object):
             node_labels,
             communication_list,
             action="remote/check_host",
-            output=json.dumps(output_data) if output_data else None,
+            output=json.dumps(output_data) if output_data else "",
         )
 
     def cluster_destroy(

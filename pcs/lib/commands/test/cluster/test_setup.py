@@ -1,7 +1,12 @@
+from copy import deepcopy
+import json
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
+from pcs.test.tools.command_env.mock_node_communicator import (
+    create_communication
+)
 from pcs.test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
@@ -13,6 +18,7 @@ DEFAULT_TRANSPORT_TYPE = "knet"
 RANDOM_KEY = "I'm so random!".encode()
 CLUSTER_NAME = "myCluster"
 NODE_LIST = ["node1", "node2", "node3"]
+COMMAND_NODE_LIST = [dict(name=node, addrs=None) for node in NODE_LIST]
 COROSYNC_NODE_LIST = {node: [node] for node in NODE_LIST}
 SERVICE_LIST = [
     "pacemaker", "pacemaker_remote", "corosync", "pcsd", "sbd", "qdevice",
@@ -252,7 +258,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
@@ -262,7 +268,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
         )
@@ -282,7 +288,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
             start=True,
         )
@@ -301,7 +307,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
             start=True,
             wait=True,
@@ -333,7 +339,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
             start=True,
@@ -361,7 +367,7 @@ class SetupSuccessMinimal(TestCase):
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
-            [dict(name=node, addrs=None) for node in NODE_LIST],
+            COMMAND_NODE_LIST,
             transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
             start=True,
@@ -403,23 +409,48 @@ class Validation(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3", "node4"])
         self.resolvable_hosts = patch_getaddrinfo(self, [])
-        self.services_status_ok = {
-            service: {
-                "installed": True,
-                "enabled": False,
-                "running": False,
-                "version": "1.0",
-            } for service in SERVICE_LIST
+        self.get_host_info_ok = {
+            "services": {
+                service: {
+                    "installed": True,
+                    "enabled": False,
+                    "running": False,
+                    "version": "1.0",
+                } for service in SERVICE_LIST
+            },
+            "cluster_configuration_exists": False,
         }
+        self.totem_allowed_options = [
+            "consensus",
+            "downcheck",
+            "fail_recv_const",
+            "heartbeat_failures_allowed",
+            "hold",
+            "join",
+            "max_messages",
+            "max_network_delay",
+            "merge",
+            "miss_count_const",
+            "send_join",
+            "seqno_unchanged_const",
+            "token",
+            "token_coefficient",
+            "token_retransmit",
+            "token_retransmits_before_loss_const",
+            "window_size",
+        ]
+        self.quorum_allowed_options = [
+            "auto_tie_breaker",
+            "last_man_standing",
+            "last_man_standing_window",
+            "wait_for_all",
+        ]
 
     def test_default_node_addrs(self):
         (self.config
             .http.host.get_host_info(
                 ["node1", "node2", "node3", "node4"],
-                output_data={
-                    "services": self.services_status_ok,
-                    "cluster_configuration_exists": False,
-                }
+                output_data=self.get_host_info_ok
             )
         )
 
@@ -440,7 +471,9 @@ class Validation(TestCase):
                     {"addrs": None},
                 ],
                 transport_type="knet"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 # no addrs defined
                 fixture.error(
@@ -486,7 +519,9 @@ class Validation(TestCase):
                 "",
                 [],
                 transport_type="tcp"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -513,10 +548,7 @@ class Validation(TestCase):
                 # nodelist passed to cluster.setup - that holds addresses for
                 # corosync.
                 ["node1", "node2", "node3"],
-                output_data={
-                    "services": self.services_status_ok,
-                    "cluster_configuration_exists": False,
-                }
+                output_data=self.get_host_info_ok
             )
         )
         self.resolvable_hosts.extend(["addr1", "addr3"])
@@ -531,7 +563,9 @@ class Validation(TestCase):
                     {"name": "node3", "addrs": ["addr3"]},
                 ],
                 transport_type="knet"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
@@ -572,6 +606,504 @@ class Validation(TestCase):
             reports_success_minimal_fixture()
         )
 
+    def assert_corosync_validators_udp_udpu(self, transport):
+        # The validators have their own tests. In here, we are only concerned
+        # about calling the validators so we test that all provided options
+        # have been validated.
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type=transport,
+                transport_options={"a": "A"},
+                link_list=[{"b": "B"}],
+                compression_options={"c": "C"},
+                crypto_options={"d": "D"},
+                totem_options={"e": "E"},
+                quorum_options={"f": "F"}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["a"],
+                    option_type="udp/udpu transport",
+                    allowed=["ip_version", "netmtu"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    option_type="compression",
+                    actual_transport="udp/udpu",
+                    required_transport_list=("knet", )
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    option_type="crypto",
+                    actual_transport="udp/udpu",
+                    required_transport_list=("knet", )
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["b"],
+                    option_type="link",
+                    allowed=[
+                        "bindnetaddr",
+                        "broadcast",
+                        "mcastaddr",
+                        "mcastport",
+                        "ttl",
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["e"],
+                    option_type="totem",
+                    allowed=self.totem_allowed_options,
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["f"],
+                    option_type="quorum",
+                    allowed=self.quorum_allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_corosync_validators_udp(self):
+        self.assert_corosync_validators_udp_udpu("udp")
+
+    def test_corosync_validators_udpu(self):
+        self.assert_corosync_validators_udp_udpu("udpu")
+
+    def test_corosync_validators_knet(self):
+        # The validators have their own tests. In here, we are only concerned
+        # about calling the validators so we test that all provided options
+        # have been validated.
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type="knet",
+                transport_options={"a": "A"},
+                link_list=[{"b": "B"}],
+                compression_options={"c": "C"},
+                crypto_options={"d": "D"},
+                totem_options={"e": "E"},
+                quorum_options={"f": "F"}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["a"],
+                    option_type="knet transport",
+                    allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["c"],
+                    option_type="compression",
+                    allowed=["level", "model", "threshold"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["d"],
+                    option_type="crypto",
+                    allowed=["cipher", "hash", "model"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["b"],
+                    option_type="link",
+                    allowed=[
+                        "ip_version",
+                        "link_priority",
+                        "linknumber",
+                        "mcastport",
+                        "ping_interval",
+                        "ping_precision",
+                        "ping_timeout",
+                        "pong_count",
+                        "transport",
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["e"],
+                    option_type="totem",
+                    allowed=self.totem_allowed_options,
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["f"],
+                    option_type="quorum",
+                    allowed=self.quorum_allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_too_many_addrs_knet(self):
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        nodelist = []
+        for i, node in enumerate(NODE_LIST, 1):
+            addrs = [f"addr{i}-{j}" for j in range(10)]
+            self.resolvable_hosts.extend(addrs)
+            nodelist.append({"name": node, "addrs": addrs})
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                nodelist,
+                transport_type="knet",
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=10,
+                    min_count=1,
+                    max_count=8,
+                    node_name=name,
+                    node_id=id
+                )
+                for id, name in enumerate(NODE_LIST, 1)
+            ]
+        )
+
+    def test_all_nodes_unknown(self):
+        self.config.env.set_known_nodes([])
+        self.config.http.host.get_host_info([])
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type="knet",
+                force=True
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=NODE_LIST
+                ),
+                fixture.error(report_codes.NONE_HOST_FOUND),
+            ]
+        )
+
+    def test_some_nodes_unknown(self):
+        # This also tests that corosync addresses do not matter for pcs-pcsd
+        # communication.
+        self.config.env.set_known_nodes(["node1"]) # pcs does not know addrX
+        self.config.http.host.get_host_info(
+            ["node1"],
+            output_data=self.get_host_info_ok
+        )
+        self.resolvable_hosts.extend(["addr1", "addr2"])
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    {"name": "node1", "addrs": ["addr1"]},
+                    {"name": "node2", "addrs": ["addr2"]},
+                ],
+                transport_type="knet",
+                force=True
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=["node2"]
+                ),
+            ]
+        )
+
+    def test_node_ready_check(self):
+        node3_response = deepcopy(self.get_host_info_ok)
+        node3_response["cluster_configuration_exists"] = True
+        node4_response = deepcopy(self.get_host_info_ok)
+        for service_info in node4_response["services"].values():
+            service_info["installed"] = False
+        node5_response = deepcopy(self.get_host_info_ok)
+        node5_response["services"]["corosync"]["running"] = True
+        node5_response["services"]["pacemaker"]["running"] = True
+        node6_response = deepcopy(self.get_host_info_ok)
+        node6_response["services"]["pacemaker_remote"]["running"] = True
+        node7_response = deepcopy(self.get_host_info_ok)
+        for service_info in node7_response["services"].values():
+            service_info["version"] = "1.1"
+
+        nodelist = [f"node{i}" for i in range(10)]
+        self.config.env.set_known_nodes(nodelist)
+        self.config.http.host.get_host_info(
+            communication_list=[
+                {"label": "node0", "output": "bad json"},
+                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
+                {"label": "node2", "output": json.dumps({"services": {}})},
+                {"label": "node3", "output": json.dumps(node3_response)},
+                {"label": "node4", "output": json.dumps(node4_response)},
+                {"label": "node5", "output": json.dumps(node5_response)},
+                {"label": "node6", "output": json.dumps(node6_response)},
+                {"label": "node7", "output": json.dumps(node7_response)},
+                {"label": "node8", "response_code": 400, "output": "errA"},
+                {"label": "node9", "was_connected": False, "error_msg": "errB"},
+            ]
+        )
+        self.resolvable_hosts.extend(nodelist)
+        host_version = {
+            node: "1.0"
+            for node in ["node1", "node3", "node4", "node5", "node6"]
+        }
+        host_version["node7"] = "1.1"
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [{"name": name, "addrs": None} for name in nodelist],
+                transport_type="knet"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node0"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node8",
+                    command="remote/check_host",
+                    reason="errA"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node9",
+                    command="remote/check_host",
+                    reason="errB"
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node2"
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name="node3"
+                ),
+                fixture.error(
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node="node4",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="node5",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="node6",
+                    service_list=["pacemaker_remote"]
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="pcsd",
+                    hosts_version=host_version
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="corosync",
+                    hosts_version=host_version
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="pacemaker",
+                    hosts_version=host_version
+                ),
+                fixture.error(
+                    report_codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                ),
+            ]
+        )
+
+    def test_node_ready_check_nonforceable(self):
+        node3_response = deepcopy(self.get_host_info_ok)
+        for service_info in node3_response["services"].values():
+            service_info["installed"] = False
+        node4_response = deepcopy(self.get_host_info_ok)
+        for service_info in node4_response["services"].values():
+            service_info["version"] = "1.1"
+
+        nodelist = [f"node{i}" for i in range(7)]
+        self.config.env.set_known_nodes(nodelist)
+        self.config.http.host.get_host_info(
+            communication_list=[
+                {"label": "node0", "output": "bad json"},
+                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
+                {"label": "node2", "output": json.dumps({"services": {}})},
+                {"label": "node3", "output": json.dumps(node3_response)},
+                {"label": "node4", "output": json.dumps(node4_response)},
+                {"label": "node5", "response_code": 400, "output": "errA"},
+                {"label": "node6", "was_connected": False, "error_msg": "errB"},
+            ]
+        )
+        self.resolvable_hosts.extend(nodelist)
+        host_version = {node: "1.0" for node in ["node1", "node3"]}
+        host_version["node4"] = "1.1"
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [{"name": name, "addrs": None} for name in nodelist],
+                transport_type="knet",
+                force=True
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node0"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node5",
+                    command="remote/check_host",
+                    reason="errA"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node6",
+                    command="remote/check_host",
+                    reason="errB"
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node2"
+                ),
+                fixture.error(
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node="node3",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="pcsd",
+                    hosts_version=host_version
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="corosync",
+                    hosts_version=host_version
+                ),
+                fixture.error(
+                    report_codes.SERVICE_VERSION_MISMATCH,
+                    service="pacemaker",
+                    hosts_version=host_version
+                ),
+            ]
+        )
+
+    def test_node_ready_check_forceable_forced(self):
+        node1_response = deepcopy(self.get_host_info_ok)
+        node1_response["cluster_configuration_exists"] = True
+        node2_response = deepcopy(self.get_host_info_ok)
+        node2_response["services"]["corosync"]["running"] = True
+        node2_response["services"]["pacemaker"]["running"] = True
+        node3_response = deepcopy(self.get_host_info_ok)
+        node3_response["services"]["pacemaker_remote"]["running"] = True
+
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST)
+        )
+        dummy_requests, get_host_info_responses = create_communication(
+            [
+                {"label": "node1", "output": json.dumps(node1_response)},
+                {"label": "node2", "output": json.dumps(node2_response)},
+                {"label": "node3", "output": json.dumps(node3_response)},
+            ],
+            action="remote/check_host"
+        )
+        self.config.calls.get(
+            "http.host.get_host_info_responses"
+        ).response_list = get_host_info_responses
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+            transport_type="knet",
+            force=True
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name="node1"
+                ),
+                fixture.warn(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="node2",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.warn(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="node3",
+                    service_list=["pacemaker_remote"]
+                ),
+            ]
+            +
+            reports_success_minimal_fixture()
+        )
 
 
 TOTEM_OPTIONS = dict(

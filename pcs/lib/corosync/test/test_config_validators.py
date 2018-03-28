@@ -659,11 +659,11 @@ class CreateLinkListUdp(TestCase):
 
     def test_invalid_options(self):
         allowed_options = [
-        "bindnetaddr",
-        "broadcast",
-        "mcastaddr",
-        "mcastport",
-        "ttl",
+            "bindnetaddr",
+            "broadcast",
+            "mcastaddr",
+            "mcastport",
+            "ttl",
         ]
         assert_report_item_list_equal(
             config_validators.create_link_list_udp(
