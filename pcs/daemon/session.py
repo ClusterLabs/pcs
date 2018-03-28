@@ -6,7 +6,7 @@ from pcs import settings
 
 PCSD_SESSION = "rack.session"
 
-class SessionStorage:
+class Storage:
     def __init__(self):
         self.__sessions = {}
 
@@ -111,12 +111,12 @@ class Session:
         return now() > self.__last_access + seconds
 
 
-class SessionMixin:
+class Mixin:
     __session = None
     """
     Mixin for tornado.web.RequestHandler
     """
-    def initialize(self, session_storage: SessionStorage):
+    def initialize(self, session_storage: Storage):
         self.__session_storage = session_storage
 
     @property

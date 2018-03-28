@@ -5,10 +5,9 @@ from time import time
 from tornado.gen import sleep
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
-from pcs.daemon import ruby_pcsd_proxy
+from pcs.daemon import ruby_pcsd_proxy, session
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
-from pcs.daemon.session import SessionMixin, SessionStorage
 
 # abstract method `data_received` does need to be overriden. This method should
 # be implemented to handle streamed request data.
@@ -71,7 +70,7 @@ class Sinatra(RequestHandler):
         self.set_status(result.status)
         self.write(result.body)
 
-class SinatraGui(SessionMixin, Sinatra):
+class SinatraGui(session.Mixin, Sinatra):
     can_use_sinatra = True
     def before_sinatra_use(self):
         pass
@@ -161,7 +160,7 @@ class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
         self.session_login_failed(username)
         self.redirect_post_to_get_resource("/login")
 
-class LoginStatus(SessionMixin, RequestHandler, EnhnceHeadersMixin, AjaxMixin):
+class LoginStatus(session.Mixin, RequestHandler, EnhnceHeadersMixin, AjaxMixin):
     # This is for ajax. However no-ajax requests are allowed. It is how it works
     # in ruby.
     def get(self, *args, **kwargs):
@@ -244,7 +243,7 @@ class SyncConfigMutualExclusive(SinatraRemote):
             await super().get(*args, **kwargs)
 
 def make_app(
-    session_storage: SessionStorage,
+    session_storage: session.Storage,
     sync_config_lock: SyncConfigLock,
     https_server_manage: HttpsServerManage
 ):
