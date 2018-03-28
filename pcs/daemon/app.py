@@ -246,33 +246,37 @@ def make_app(
     session_storage: session.Storage,
     sync_config_lock: SyncConfigLock,
     https_server_manage: HttpsServerManage,
+    disable_gui=False,
     debug=False
 ):
     session_route = lambda pattern, handler: (pattern, handler, dict(
         session_storage=session_storage
     ))
-    return Application(
-        [
+    routes = [
+        # Urls protected by tokens. It is stil done by ruby.
+        (r"/run_pcs", SinatraRemote),
+        (r"/remote/auth", SinatraRemote),
+        (
+            r"/remote/(set_sync_options|set_configs)",
+            SyncConfigMutualExclusive,
+            dict(
+                sync_config_lock=sync_config_lock,
+            )
+        ),
+        (r"/remote/.*", SinatraRemote),
+
+        (
+            r"/daemon-maintenance/reload-cert",
+            RegenerateCertHandler,
+            {"https_server_manage": https_server_manage},
+        ),
+    ]
+
+    if not disable_gui:
+        routes.extend([
             static_route("/css/", "css"),
             static_route("/js/", "js"),
             static_route("/images/", "images"),
-            # Urls protected by tokens. It is stil done by ruby.
-            (r"/run_pcs", SinatraRemote),
-            (r"/remote/auth", SinatraRemote),
-            (
-                r"/remote/(set_sync_options|set_configs)",
-                SyncConfigMutualExclusive,
-                dict(
-                    sync_config_lock=sync_config_lock,
-                )
-            ),
-            (r"/remote/.*", SinatraRemote),
-
-            (
-                r"/daemon-maintenance/reload-cert",
-                RegenerateCertHandler,
-                {"https_server_manage": https_server_manage},
-            ),
 
             session_route(r"/login", Login),
             session_route(r"/login-status", LoginStatus),
@@ -286,6 +290,6 @@ def make_app(
             ),
 
             session_route(r"/.*", SinatraAjaxProtected),
-        ],
-        debug=debug,
-    )
+        ])
+
+    return Application(routes, debug=debug)

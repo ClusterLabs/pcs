@@ -11,6 +11,7 @@ PCSD_SSL_OPTIONS = "PCSD_SSL_OPTIONS"
 PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
 DEBUG = "DEBUG"
+DISABLE_GUI = "DISABLE_GUI"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -19,6 +20,7 @@ Env = namedtuple("Env", [
     PCSD_BIND_ADDR,
     NOTIFY_SOCKET,
     DEBUG,
+    DISABLE_GUI,
 ])
 
 class EnvPrepare:
@@ -47,6 +49,7 @@ class EnvPrepare:
                 self.__bind_addresses(port),
                 self.__os_environ.get(NOTIFY_SOCKET, None),
                 self.__os_environ.get(DEBUG, "").lower() == "true",
+                self.__os_environ.get(DISABLE_GUI, "").lower() == "true",
             )
 
     def __err(self, message):

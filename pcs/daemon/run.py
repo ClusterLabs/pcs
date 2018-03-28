@@ -64,6 +64,7 @@ def main():
                 make_app,
                 session.Storage(),
                 sync_config_lock,
+                disable_gui=env.DISABLE_GUI,
                 debug=env.DEBUG
             ),
             server_name=socket.gethostname(),
