@@ -21,4 +21,5 @@ def setup():
     general_log.addHandler(handler)
     general_log.setLevel(logging.INFO)
 
+#pylint:disable=invalid-name
 pcsd = logging.getLogger("pcs.daemon")

@@ -164,6 +164,8 @@ class Mixin:
         If sid came in the request cookies put it into response cookies. But do
         not start new one.
         """
+        #TODO this method should exists temporarily (for sinatra compatibility)
+        #pylint: disable=invalid-name
         if self.__sid_from_client is not None:
             self.set_cookie(PCSD_SESSION, self.__sid_from_client)
 

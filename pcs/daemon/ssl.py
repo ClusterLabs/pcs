@@ -49,11 +49,11 @@ def _open_ssl_file(label, path, errors):
 
 def check_cert_key(cert_path, key_path):
     errors = []
-    with _open_ssl_file("certificate", cert_path, errors) as f:
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+    with _open_ssl_file("certificate", cert_path, errors) as ssl_file:
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, ssl_file.read())
 
-    with _open_ssl_file("key", key_path, errors) as f:
-        key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
+    with _open_ssl_file("key", key_path, errors) as ssl_file:
+        key = crypto.load_privatekey(crypto.FILETYPE_PEM, ssl_file.read())
 
     if errors:
         return errors

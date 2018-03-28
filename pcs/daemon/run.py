@@ -12,11 +12,13 @@ from pcs.daemon.env import EnvPrepare
 from pcs.daemon.http_server import HttpsServerManage
 
 class SignalInfo:
+    #pylint: disable=too-few-public-methods
     server_manage = None
     ioloop_started = False
 
-def handle_signal(signal, frame):
-    log.pcsd.warning('Caught signal: %s, shutting down', signal)
+def handle_signal(incomming_signal, frame):
+    #pylint: disable=unused-argument
+    log.pcsd.warning('Caught signal: %s, shutting down', incomming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
     if SignalInfo.ioloop_started:

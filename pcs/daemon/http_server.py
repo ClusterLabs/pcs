@@ -7,7 +7,7 @@ from pcs.daemon import log
 
 class HttpsServerManage:
     #TODO
-    #pylint: disable=too-many-instance-attributes
+    #pylint: disable=too-many-instance-attributes, too-many-arguments
     def __init__(
         self,
         make_app,

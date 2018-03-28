@@ -10,11 +10,11 @@ from tornado.process import Subprocess
 
 PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
 PUBLIC_DIR = join_path(PCSD_DIR, "public")
-PCSD_CMD =  "sinatra_cmdline_proxy.rb"
+PCSD_CMD = "sinatra_cmdline_proxy.rb"
 
-def get_ruby_request(type):
+def get_ruby_request(request_type):
     return {
-        "type": type,
+        "type": request_type,
         "config": {
             "user_pass_dir": PCSD_DIR,
         },
@@ -36,8 +36,8 @@ async def run_ruby(request):
     ])
     return result_json
 
-def get_sinatra_request(type, request):
-    sinatra_request = get_ruby_request(type)
+def get_sinatra_request(request_type, request):
+    sinatra_request = get_ruby_request(request_type)
 
     host, port = split_host_and_port(request.host)
     sinatra_request.update({
