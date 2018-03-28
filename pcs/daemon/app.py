@@ -1,14 +1,11 @@
-import base64
-import json
+import os.path
 from contextlib import contextmanager
-from os.path import dirname, realpath, abspath, join as join_path
 from time import time
 
-from tornado.gen import Task, multi, convert_yielded, sleep
-from tornado.httputil import split_host_and_port
-from tornado.process import Subprocess
+from tornado.gen import sleep
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
+from pcs.daemon import ruby_pcsd_proxy
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 from pcs.daemon.session import SessionMixin, SessionStorage
@@ -20,10 +17,6 @@ from pcs.daemon.session import SessionMixin, SessionStorage
 # * in other handlers we currently do not plan to use it:
 # SO:
 #pylint: disable=abstract-method
-
-PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
-PUBLIC_DIR = join_path(PCSD_DIR, "public")
-PCSD_CMD =  "sinatra_cmdline_proxy.rb"
 
 class EnhnceHeadersMixin:
     def set_header_nosniff_content_type(self):
@@ -71,73 +64,28 @@ class AjaxMixin:
         self.write('{"notauthorized":"true"}')
         return Finish()
 
-def build_old_pcsd_request(type, request, specific_settings=None):
-    host, port = split_host_and_port(request.host)
-    old_pcsd_request = {
-        "type": type,
-        "config": {
-            "user_pass_dir": PCSD_DIR,
-        },
-        "env": {
-            "PATH_INFO": request.path,
-            "QUERY_STRING": request.query,
-            "REMOTE_ADDR": request.remote_ip,
-            "REMOTE_HOST": request.host,
-            "REQUEST_METHOD": request.method,
-            "REQUEST_URI": f"{request.protocol}://{request.host}{request.uri}",
-            "SCRIPT_NAME": "",
-            "SERVER_NAME": host,
-            "SERVER_PORT": port,
-            "SERVER_PROTOCOL": request.version,
-            "HTTP_HOST": request.host,
-            "HTTP_ACCEPT": "*/*",
-            "HTTP_COOKIE": ";".join([
-                v.OutputString() for v in request.cookies.values()
-            ]),
-            "HTTPS": "on" if request.protocol == "https" else "off",
-            "HTTP_VERSION": request.version,
-            "REQUEST_PATH": request.uri,
-        }
-    }
-    if specific_settings:
-        old_pcsd_request.update(specific_settings)
-    return old_pcsd_request
-
-async def run_pscd(request):
-    pcsd_ruby = Subprocess(
-        ["ruby", "-I", PCSD_DIR, join_path(PCSD_DIR, PCSD_CMD)],
-        stdin=Subprocess.STREAM,
-        stdout=Subprocess.STREAM,
-        stderr=Subprocess.STREAM,
-    )
-
-    await Task(pcsd_ruby.stdin.write, str.encode(json.dumps(request)))
-    pcsd_ruby.stdin.close()
-    result_json, dummy_error = await multi([
-        Task(pcsd_ruby.stdout.read_until_close),
-        Task(pcsd_ruby.stderr.read_until_close),
-    ])
-    return result_json
-
 class Sinatra(RequestHandler):
-    def _process_pcsd_result(self, result_json):
-        try:
-            result = json.loads(result_json)
-        except Exception as e:
-            raise e
-
-        for name, value in result["headers"].items():
+    def send_sinatra_result(self, result: ruby_pcsd_proxy.SinatraResult):
+        for name, value in result.headers.items():
             self.set_header(name, value)
+        self.set_status(result.status)
+        self.write(result.body)
 
-        self.set_status(result["status"])
-        self.write(base64.b64decode(result["body"]))
+class SinatraGui(SessionMixin, Sinatra):
+    can_use_sinatra = True
+    def before_sinatra_use(self):
+        pass
 
-    def build_old_pcsd_request(self):
-        raise NotImplementedError()
-
-    async def proxy_to_sinatra(self):
-        request = self.build_old_pcsd_request()
-        self._process_pcsd_result(await convert_yielded(run_pscd(request)))
+    async def get(self, *args, **kwargs):
+        self.before_sinatra_use()
+        if self.can_use_sinatra:
+            sinatra_result = await ruby_pcsd_proxy.request_gui(
+                self.request,
+                self.session.username,
+                self.session.groups,
+                self.session.is_authenticated,
+            )
+            self.send_sinatra_result(sinatra_result)
 
     def redirect_temporary(self, url):
         self.redirect(url, status=302)
@@ -145,30 +93,13 @@ class Sinatra(RequestHandler):
     def redirect_post_to_get_resource(self, url):
         self.redirect(url, status=303)
 
-class SinatraGui(SessionMixin, Sinatra):
-    def build_old_pcsd_request(self):
-        return build_old_pcsd_request("sinatra_gui", self.request, {
-            "session": {
-                # Session was taken from ruby. However, some session
-                # information is needed for ruby code (e.g. rendering some
-                # parts of templates). So this information must be sent to ruby
-                # by another way.
-                "username": self.session.username,
-                "groups": self.session.groups,
-                "is_authenticated": self.session.is_authenticated,
-            },
-        })
-
 class SinatraRemote(Sinatra):
-    def build_old_pcsd_request(self):
-        return build_old_pcsd_request("sinatra_remote", self.request)
-
     async def get(self, *args, **kwargs):
-        await self.proxy_to_sinatra()
-
+        sinatra_result = await ruby_pcsd_proxy.request_remote(self.request)
+        self.send_sinatra_result(sinatra_result)
 
 class SinatraGuiProtected(SinatraGui, EnhnceHeadersMixin):
-    async def get(self, *args, **kwargs):
+    def before_sinatra_use(self):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
         # to send this cookies.
@@ -177,9 +108,7 @@ class SinatraGuiProtected(SinatraGui, EnhnceHeadersMixin):
         if not self.session.is_authenticated:
             self.enhance_headers()
             self.redirect_temporary("/login")
-            return
-
-        await self.proxy_to_sinatra()
+            self.can_use_sinatra = False
 
 class SinatraAjaxProtected(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
     @property
@@ -187,21 +116,19 @@ class SinatraAjaxProtected(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
         return self.is_ajax and self.session.is_authenticated
 
-    async def get(self, *args, **kwargs):
+    def before_sinatra_use(self):
         #TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
             self.put_request_cookies_sid_to_response_cookies_sid()
         if not self.is_authorized:
             self.enhance_headers()
             raise self.unauthorized()
-        await self.proxy_to_sinatra()
 
 class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
-    async def get(self, *args, **kwargs):
+    def before_sinatra_use(self):
         #TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
             self.put_request_cookies_sid_to_response_cookies_sid()
-        await self.proxy_to_sinatra()
 
     async def post(self, *args, **kwargs):
         # This is the way of old (ruby) pcs. Post login generate session cookie.
@@ -279,7 +206,7 @@ def static_route(url_prefix, public_subdir):
         rf"{url_prefix}(.*)",
         StaticFile,
         dict(
-            path=join_path(PUBLIC_DIR, public_subdir)
+            path=os.path.join(ruby_pcsd_proxy.PUBLIC_DIR, public_subdir)
         )
     )
 
@@ -302,10 +229,7 @@ async def sync_configs(sync_config_lock: SyncConfigLock):
         return int(time())
 
     with sync_config_lock.lock():
-        result_json = await convert_yielded(run_pscd(
-            {"type": "sync_configs"}
-        ))
-        return json.loads(result_json)["next"]
+        return await ruby_pcsd_proxy.request_sync_configs()
 
 class SyncConfigMutualExclusive(SinatraRemote):
     def initialize(self, sync_config_lock):
@@ -317,7 +241,7 @@ class SyncConfigMutualExclusive(SinatraRemote):
         while self.sync_config_lock.is_locked:
             await sleep(0.1)
         with self.sync_config_lock.lock():
-            await self.proxy_to_sinatra()
+            await super().get(*args, **kwargs)
 
 def make_app(
     session_storage: SessionStorage,
