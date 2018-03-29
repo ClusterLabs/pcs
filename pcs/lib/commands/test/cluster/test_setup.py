@@ -165,7 +165,8 @@ def config_succes_minimal_fixture(config, corosync_conf=None):
         )
     )
 
-def reports_success_minimal_fixture():
+def reports_success_minimal_fixture(node_list=None):
+    node_list = node_list or NODE_LIST
     auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
     pcsd_settings_file = "pcsd settings"
     corosync_conf_file = "corosync.conf"
@@ -173,7 +174,7 @@ def reports_success_minimal_fixture():
         [
             fixture.info(
                 report_codes.CLUSTER_DESTROY_STARTED,
-                host_name_list=NODE_LIST,
+                host_name_list=node_list,
             ),
         ]
         +
@@ -181,14 +182,14 @@ def reports_success_minimal_fixture():
             fixture.info(
                 report_codes.CLUSTER_DESTROY_SUCCESS,
                 node=node
-            ) for node in NODE_LIST
+            ) for node in node_list
         ]
         +
         [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
                 file_list=auth_file_list,
-                node_list=NODE_LIST,
+                node_list=node_list,
                 description="",
             )
         ]
@@ -198,14 +199,14 @@ def reports_success_minimal_fixture():
                 report_codes.FILE_DISTRIBUTION_SUCCESS,
                 node=node,
                 file_description=file,
-            ) for node in NODE_LIST for file in auth_file_list
+            ) for node in node_list for file in auth_file_list
         ]
         +
         [
             fixture.info(
                 report_codes.FILES_REMOVE_FROM_NODE_STARTED,
                 file_list=[pcsd_settings_file],
-                node_list=NODE_LIST,
+                node_list=node_list,
                 description="",
             )
         ]
@@ -215,14 +216,14 @@ def reports_success_minimal_fixture():
                 report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
                 node=node,
                 file_description=pcsd_settings_file,
-            ) for node in NODE_LIST
+            ) for node in node_list
         ]
         +
         [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
                 file_list=[corosync_conf_file],
-                node_list=NODE_LIST,
+                node_list=node_list,
                 description="",
             )
         ]
@@ -232,7 +233,7 @@ def reports_success_minimal_fixture():
                 report_codes.FILE_DISTRIBUTION_SUCCESS,
                 file_description=corosync_conf_file,
                 node=node,
-            ) for node in NODE_LIST
+            ) for node in node_list
         ]
         +
         [
@@ -398,6 +399,81 @@ class SetupSuccessMinimal(TestCase):
                     node=node,
                 ) for node in NODE_LIST
             ]
+        )
+
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class Setup2NodeSuccessMinimal(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.node_list = NODE_LIST[:2]
+        self.config.env.set_known_nodes(self.node_list)
+        patch_getaddrinfo(self, self.node_list)
+        services_status = {
+            service: dict(
+                installed=True, enabled=False, running=False, version="1.0",
+            ) for service in SERVICE_LIST
+        }
+        (self.config
+            .http.host.get_host_info(
+                self.node_list,
+                output_data=dict(
+                    services=services_status,
+                    cluster_configuration_exists=False,
+                ),
+            )
+            .http.host.cluster_destroy(self.node_list)
+            .http.host.update_known_hosts(self.node_list, to_add=self.node_list)
+            .http.files.put_files(
+                self.node_list,
+                pcmk_authkey=RANDOM_KEY,
+                corosync_authkey=RANDOM_KEY,
+            )
+            .http.files.remove_files(self.node_list, pcsd_settings=True)
+        )
+
+    def test_two_node(self):
+        corosync_conf = corosync_conf_fixture(
+            {node: [node] for node in self.node_list},
+            quorum_options=dict(two_node="1"),
+        )
+        self.config.http.files.put_files(
+            self.node_list,
+            corosync_conf=corosync_conf,
+            name="distribute_corosync_conf",
+        )
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [dict(name=node, addrs=None) for node in self.node_list],
+            transport_type=DEFAULT_TRANSPORT_TYPE,
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture(node_list=self.node_list)
+        )
+
+    def test_auto_tie_breaker(self):
+        corosync_conf = corosync_conf_fixture(
+            {node: [node] for node in self.node_list},
+            quorum_options=dict(auto_tie_breaker="1"),
+        )
+        self.config.http.files.put_files(
+            self.node_list,
+            corosync_conf=corosync_conf,
+            name="distribute_corosync_conf",
+        )
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [dict(name=node, addrs=None) for node in self.node_list],
+            transport_type=DEFAULT_TRANSPORT_TYPE,
+            quorum_options=dict(auto_tie_breaker="1")
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture(node_list=self.node_list)
         )
 
 
