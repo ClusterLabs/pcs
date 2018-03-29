@@ -43,7 +43,12 @@ class HostShortcuts(object):
         name="http.host.get_host_info",
     ):
         """
-        # TODO
+        Create a call for getting overall info about a host
+
+        node_labels list -- create success responses from these nodes
+        output_data dict -- default output data which will be converted to JSON
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         place_multinode_call(
             self.__calls,
@@ -59,7 +64,11 @@ class HostShortcuts(object):
         name="http.host.cluster_destroy",
     ):
         """
-        # TODO
+        Create a call for destroying a cluster on the hosts
+
+        node_labels list -- create success responses from these nodes
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         place_multinode_call(
             self.__calls,
@@ -74,7 +83,12 @@ class HostShortcuts(object):
         name="http.host.update_known_hosts",
     ):
         """
-        # TODO
+        Create a call for updating known hosts on the hosts.
+
+        node_labels list -- create success responses from these nodes
+        to_add list of strings -- list of host name which should be added
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         place_multinode_call(
             self.__calls,
@@ -101,7 +115,11 @@ class HostShortcuts(object):
         name="http.host.enable_cluster",
     ):
         """
-        # TODO
+        Create a call for enabling cluster on the nodes.
+
+        node_labels list -- create success responses from these nodes
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         place_multinode_call(
             self.__calls,
@@ -116,7 +134,11 @@ class HostShortcuts(object):
         name="http.host.start_cluster",
     ):
         """
-        # TODO
+        Create a call for starting cluster on the nodes.
+
+        node_labels list -- create success responses from these nodes
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         place_multinode_call(
             self.__calls,
@@ -132,7 +154,14 @@ class HostShortcuts(object):
         name="http.host.check_pacemaker_started",
     ):
         """
-        # TODO
+        Create a call for checking pacemaker status on nodes.
+
+        pacemaker_started_node_list list -- list of node names on which
+            pacemaker is fully running
+        pacemaker_not_started_node_list list -- listof node names on which
+            pacemaker is not fully started yet
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         if (
             bool(pacemaker_started_node_list or pacemaker_not_started_node_list)

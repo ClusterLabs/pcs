@@ -15,7 +15,14 @@ class FilesShortcuts(object):
         name="http.files.put_files",
     ):
         """
-        # TODO
+        Create a call for the files distribution to the nodes.
+
+        node_labels list -- create success responses from these nodes
+        pcmk_authkey bytes -- content of pacemaker authkey file
+        corosync_authkey bytes -- content of corosync authkey file
+        corosync_conf string -- content of corosync.conf
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         input_data = {}
         output_data = {}
@@ -65,7 +72,12 @@ class FilesShortcuts(object):
         name="http.files.remove_files"
     ):
         """
-        # TODO
+        Create a call for removing the files on the nodes.
+
+        node_labels list -- create success responses from these nodes
+        pcsd_settings bool -- if True, remove file pcsd_settings
+        communication_list list -- create custom responses
+        name string -- the key of this call
         """
         input_data = {}
         output_data = {}

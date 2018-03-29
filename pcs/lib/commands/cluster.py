@@ -128,6 +128,37 @@ def setup(
     quorum_options=None, wait=False, start=False, enable=False, force=False,
     force_unresolvable=False
 ):
+    """
+    Set up cluster on specified nodes.
+    Validation of the inputs is done here. Possible existing clusters are
+    destroyed (when using force). Authkey files for corosync and pacemaer,
+    known hosts and and newly generated corosync.conf are distributed to all
+    nodes.
+    Raise LibraryError on any error.
+
+    env LibraryEnvironment
+    cluster_name string -- name of a cluster to set up
+    nodes list -- list of dicts which represents node.
+        Supported keys are: name (required), addrs
+    transport_type string -- transport type of a cluster
+    transport_options dict -- transport specific options
+    link_list list of dict -- list of links, depends of transport_type
+    compression_options dict -- only available for transport_type == 'knet'. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options dict -- only available for transport_type == 'knet'. In
+        corosync.conf they are prefixed 'crypto_'
+    totem_options dict -- options of section 'totem' in corosync.conf
+    quorum_options dict -- options of section 'quorum' in corosync.conf
+    wait -- specifies if command should try to wait for cluster to start up.
+        Has no effect start is False. If set to False command will not wait for
+        cluster to start. If None command will wait for some default timeout.
+        If int wait set timeout to int value of seconds.
+    start bool -- if True start cluster when it is set up
+    enable bool -- if True enable cluster when it is set up
+    force bool -- if True some validations errors are treated as warnings
+    force_unresolvable bool -- if True not resolvable addresses of nodes are
+        treated as warnings
+    """
     transport_options = transport_options or {}
     link_list = link_list or []
     compression_options = compression_options or {}
