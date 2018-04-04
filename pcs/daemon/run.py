@@ -25,7 +25,7 @@ def handle_signal(incomming_signal, frame):
     if SignalInfo.ioloop_started:
         log.pcsd.warning("IOLOOP stop")
         IOLoop.current().stop()
-    raise SystemExit(1)
+    raise SystemExit(0)
 
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
