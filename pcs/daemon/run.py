@@ -55,7 +55,7 @@ def main():
         SignalInfo.server_manage = HttpsServerManage(
             partial(
                 make_app,
-                session.Storage(),
+                session.Storage(env.PCSD_SESSION_LIFETIME),
                 sync_config_lock,
                 disable_gui=env.DISABLE_GUI,
                 debug=env.DEBUG

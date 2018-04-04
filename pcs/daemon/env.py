@@ -12,6 +12,7 @@ PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
 DEBUG = "DEBUG"
 DISABLE_GUI = "DISABLE_GUI"
+PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -21,6 +22,7 @@ Env = namedtuple("Env", [
     NOTIFY_SOCKET,
     DEBUG,
     DISABLE_GUI,
+    PCSD_SESSION_LIFETIME,
 ])
 
 class EnvPrepare:
@@ -50,6 +52,10 @@ class EnvPrepare:
                 self.__os_environ.get(NOTIFY_SOCKET, None),
                 self.__os_environ.get(DEBUG, "").lower() == "true",
                 self.__os_environ.get(DISABLE_GUI, "").lower() == "true",
+                self.__os_environ.get(
+                    PCSD_SESSION_LIFETIME,
+                    settings.gui_session_lifetime_seconds
+                )
             )
 
     def __err(self, message):

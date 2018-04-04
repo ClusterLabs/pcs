@@ -2,13 +2,12 @@ import random
 import string
 from time import time as now
 
-from pcs import settings
-
 PCSD_SESSION = "rack.session"
 
 class Storage:
-    def __init__(self):
+    def __init__(self, lifetime_seconds):
         self.__sessions = {}
+        self.__lifetime_seconds = lifetime_seconds
 
     def provide(self, sid=None):
         if sid is None or sid not in self.__sessions:
@@ -32,10 +31,10 @@ class Storage:
         #TODO what to do?
         raise Exception("Cannot generate unique sid")
 
-    def drop_expired(self, lifetime_seconds):
+    def drop_expired(self):
         obsolete_sid_list = [
             sid for sid, session in self.__sessions.items()
-            if session.was_unused_last(lifetime_seconds)
+            if session.was_unused_last(self.__lifetime_seconds)
         ]
         for sid in obsolete_sid_list:
             del self.__sessions[sid]
@@ -135,9 +134,7 @@ class Mixin:
         Expired sessions are removed before each request that uses sessions (it
         means before each request that is handled by descendant of this mixin).
         """
-        self.__session_storage.drop_expired(
-            lifetime_seconds=settings.gui_session_lifetime_seconds
-        )
+        self.__session_storage.drop_expired()
 
     def session_logout(self):
         if self.__session is not None:
