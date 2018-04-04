@@ -4,10 +4,11 @@ import socket
 from functools import partial
 
 from tornado.ioloop import IOLoop
+from tornado.locks import Lock
 
 from pcs import settings
 from pcs.daemon import log, systemd, session
-from pcs.daemon.app import make_app, sync_configs, SyncConfigLock
+from pcs.daemon.app import make_app, sync_configs
 from pcs.daemon.env import EnvPrepare
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -29,7 +30,7 @@ def handle_signal(incomming_signal, frame):
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
-def get_config_synchronization(sync_config_lock: SyncConfigLock):
+def get_config_synchronization(sync_config_lock: Lock):
     async def config_synchronization():
         next_run_time = await sync_configs(sync_config_lock)
         IOLoop.current().call_at(next_run_time, config_synchronization)
@@ -49,7 +50,7 @@ def main():
         raise SystemExit(1)
 
     env = env_prepare.env
-    sync_config_lock = SyncConfigLock()
+    sync_config_lock = Lock()
     try:
         SignalInfo.server_manage = HttpsServerManage(
             partial(

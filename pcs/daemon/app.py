@@ -1,8 +1,6 @@
 import os.path
-from contextlib import contextmanager
-from time import time
 
-from tornado.gen import sleep
+from tornado.locks import Lock
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
 from pcs.daemon import ruby_pcsd_proxy, session
@@ -209,42 +207,22 @@ def static_route(url_prefix, public_subdir):
         )
     )
 
-class SyncConfigLock:
-    def __init__(self):
-        self.__is_locked = False
-
-    @property
-    def is_locked(self):
-        return self.__is_locked
-
-    @contextmanager
-    def lock(self):
-        self.__is_locked = True
-        yield
-        self.__is_locked = False
-
-async def sync_configs(sync_config_lock: SyncConfigLock):
-    if sync_config_lock.is_locked:
-        return int(time())
-
-    with sync_config_lock.lock():
+async def sync_configs(sync_config_lock: Lock):
+    async with sync_config_lock:
         return await ruby_pcsd_proxy.request_sync_configs()
 
 class SyncConfigMutualExclusive(SinatraRemote):
-    def initialize(self, sync_config_lock):
+    def initialize(self, sync_config_lock: Lock):
         #pylint: disable=arguments-differ
         self.sync_config_lock = sync_config_lock
 
     async def get(self, *args, **kwargs):
-        #TODO avoid infinity
-        while self.sync_config_lock.is_locked:
-            await sleep(0.1)
-        with self.sync_config_lock.lock():
+        async with self.sync_config_lock:
             await super().get(*args, **kwargs)
 
 def make_app(
     session_storage: session.Storage,
-    sync_config_lock: SyncConfigLock,
+    sync_config_lock: Lock,
     https_server_manage: HttpsServerManage,
     disable_gui=False,
     debug=False
