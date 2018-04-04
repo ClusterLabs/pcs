@@ -169,6 +169,10 @@ module PcsdFile
       @full_file_name ||= COROSYNC_CONF
     end
 
+    def binary?()
+      return false
+    end
+
     def permissions()
       return 0644
     end

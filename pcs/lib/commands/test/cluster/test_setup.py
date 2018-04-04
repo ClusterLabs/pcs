@@ -1182,6 +1182,75 @@ class Validation(TestCase):
             reports_success_minimal_fixture()
         )
 
+    def test_wait_not_valid(self):
+        self.config.http.host.get_host_info(
+            NODE_LIST,
+            output_data=self.get_host_info_ok
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type="knet",
+                wait="abcd"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE,
+                    timeout="abcd"
+                )
+            ]
+        )
+
+    def test_errors_from_all_validators(self):
+        node3_response = deepcopy(self.get_host_info_ok)
+        node3_response["cluster_configuration_exists"] = True
+        self.config.http.host.get_host_info(
+            communication_list=[
+                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
+                {"label": "node2", "output": json.dumps(self.get_host_info_ok)},
+                {"label": "node3", "output": json.dumps(node3_response)},
+            ]
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type="tcp",
+                wait="abcd"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="tcp",
+                    option_name="transport",
+                    allowed_values=("knet", "udp", "udpu")
+                ),
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE,
+                    timeout="abcd"
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name="node3"
+                ),
+                fixture.error(
+                    report_codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                ),
+            ]
+        )
+
 
 TOTEM_OPTIONS = dict(
     consensus="0",

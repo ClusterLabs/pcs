@@ -46,6 +46,7 @@ from pcs.lib.pacemaker.live import (
     verify as verify_cmd,
 )
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import generate_binary_key
 
 
@@ -215,6 +216,15 @@ def setup(
         # We are creating the config and we know there is no qdevice in it.
         config_validators.create_quorum_options(quorum_options, False)
     )
+
+    try:
+        if wait is False:
+            wait_timeout = False
+        else:
+            wait_timeout = get_valid_timeout_seconds(wait)
+    except LibraryError as e:
+        report_list.extend(e.args)
+
     # Validate the nodes.
     # If a node doesn't contain the 'name key, validation of inputs reports it.
     # That means we don't report missing names but cannot rely on them being
@@ -336,13 +346,13 @@ def setup(
             env.get_node_communicator(request_timeout=timeout),
             com_cmd
         )
-        if wait:
+        if wait_timeout is not False:
             env.report_processor.process_list(
                 _wait_for_pacemaker_to_start(
                     env.get_node_communicator(),
                     env.report_processor,
                     target_list,
-                    wait if wait is not True else None,
+                    timeout=wait_timeout, # wait_timeout is either None or a timeout
                 )
             )
 

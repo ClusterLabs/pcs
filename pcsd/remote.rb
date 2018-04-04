@@ -3138,7 +3138,10 @@ def check_host(params, reqest, auth_user)
     output[:services][service] = get_service_info(service.to_s)
   end
   service_version_getter.each do |service, version_getter|
-    output[:services][service][:version] = version_getter.call()
+    version = version_getter.call()
+    output[:services][service][:version] = (
+      version == nil ? version : version.join('.')
+    )
   end
   return [200, JSON.generate(output)]
 end

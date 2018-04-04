@@ -3082,17 +3082,32 @@ class NewClusterSetup(unittest.TestCase):
             crypto_options={},
             totem_options={},
             quorum_options={},
+            wait=False,
+            start=False,
+            enable=False,
+            force=False,
+            force_unresolvable=False
         )
         default_kwargs.update(kwargs)
         self.cluster.setup.assert_called_once_with(
             self.cluster_name, node_list, **default_kwargs
         )
 
-    def call_cmd_without_cluster_name(self, argv):
-        cluster.new_cluster_setup(self.lib, argv, {})
+    def call_cmd_without_cluster_name(self, argv, modifiers=None):
+        all_modifiers = {
+            "enable": False,
+            "force": False,
+            "start": False,
+            "wait": False,
+        }
+        all_modifiers.update(modifiers or {})
+        cluster.new_cluster_setup(self.lib, argv, all_modifiers)
 
-    def call_cmd(self, argv):
-        self.call_cmd_without_cluster_name([self.cluster_name] + argv)
+    def call_cmd(self, argv, modifiers=None):
+        self.call_cmd_without_cluster_name(
+            [self.cluster_name] + argv,
+            modifiers
+        )
 
     def test_no_cluster_name(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -3321,3 +3336,78 @@ class NewClusterSetup(unittest.TestCase):
 
     def test_full_udpu(self):
         self.assert_with_all_options("udpu")
+
+    def test_enable(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"enable": True})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            enable=True
+        )
+
+    def test_start(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"start": True})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            start=True
+        )
+
+    def test_enable_start(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"enable": True, "start": True})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            enable=True,
+            start=True
+        )
+
+    def test_wait(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"wait": "10"})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            wait="10"
+        )
+
+    def test_start_wait(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"start": True, "wait": None})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            start=True,
+            wait=None
+        )
+
+    def test_start_wait_timeout(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"start": True, "wait": "10"})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            start=True,
+            wait="10"
+        )
+
+    def test_force(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"force": True})
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            force=True,
+            force_unresolvable=True
+        )
+
+    def test_all_modifiers(self):
+        node_name = "node"
+        self.call_cmd(
+            [node_name],
+            {"force": True, "enable": True, "start": True, "wait": "15"}
+        )
+        self.assert_setup_called_with(
+            [node_dict_fixture(node_name)],
+            enable=True,
+            start=True,
+            wait="15",
+            force=True,
+            force_unresolvable=True
+        )

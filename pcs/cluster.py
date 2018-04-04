@@ -99,7 +99,7 @@ def cluster_cmd(argv):
                 utils.get_library_wrapper(), argv, utils.get_modifiers()
             )
         except LibraryError as e:
-            utils.process_library_reports(e.args)
+            process_library_reports(e.args)
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "sync"):
@@ -2500,4 +2500,9 @@ def new_cluster_setup(lib, argv, modifiers):
         quorum_options=parse_args.prepare_options(
             parsed_args.get("quorum", [])
         ),
+        wait=modifiers["wait"],
+        start=modifiers["start"],
+        enable=modifiers["enable"],
+        force=modifiers["force"],
+        force_unresolvable=modifiers["force"]
     )
