@@ -227,9 +227,13 @@ def make_app(
     disable_gui=False,
     debug=False
 ):
-    session_route = lambda pattern, handler: (pattern, handler, dict(
-        session_storage=session_storage
-    ))
+    session_route = lambda pattern, handler: (
+        pattern,
+        handler,
+        dict(
+            session_storage=session_storage
+        )
+    )
     routes = [
         # Urls protected by tokens. It is stil done by ruby.
         (r"/run_pcs", SinatraRemote),

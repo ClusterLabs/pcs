@@ -67,7 +67,7 @@ class EnvPrepare:
             settings.default_ssl_ciphers
         )
         if not ssl.are_valid_ciphers(ssl_ciphers):
-            self.__err(f"Invalid ciphers")
+            self.__err("Invalid ciphers")
         return ssl_ciphers
 
     def __ssl_options(self):
@@ -98,7 +98,7 @@ class EnvPrepare:
         if not raw_bind_addresses.strip():
             return [""]
 
-        bind_addresses = [a.strip() for a in raw_bind_addresses.split(",")]
+        bind_addresses = set([a.strip() for a in raw_bind_addresses.split(",")])
         for address in bind_addresses:
             try:
                 socket.getaddrinfo(address, port)
