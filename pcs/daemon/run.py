@@ -72,7 +72,7 @@ def main():
         ioloop = IOLoop.current()
         ioloop.add_callback(sign_ioloop_started)
         if systemd.is_systemd() and env.NOTIFY_SOCKET:
-            ioloop.add_callback(systemd.notify_or_exit, env.NOTIFY_SOCKET)
+            ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
         ioloop.add_callback(get_config_synchronization(sync_config_lock))
         ioloop.start()
     except OSError as e:

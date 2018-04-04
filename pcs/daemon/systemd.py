@@ -13,7 +13,7 @@ SYSTEMD_PATHS = [
 def is_systemd():
     return any([isdir(path) for path in SYSTEMD_PATHS])
 
-async def notify_or_exit(socket_name):
+async def notify(socket_name):
     if socket_name[0] == '@':
         # abstract namespace socket
         socket_name = '\0' + socket_name[1:]
@@ -25,5 +25,4 @@ async def notify_or_exit(socket_name):
         await stream.write(b'READY=1')
         stream.close()
     except Exception as e:
-        log.pcsd.error(f"Unable to notify systemd: {e}")
-        raise SystemExit(1)
+        log.pcsd.error(f"Unable to notify systemd on '{socket_name}': {e}")
