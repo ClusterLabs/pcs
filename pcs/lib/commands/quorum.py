@@ -78,7 +78,8 @@ def set_options(lib_env, options, skip_offline_nodes=False, force=False):
     lib_env.report_processor.process_list(
         corosync_conf_validators.update_quorum_options(
             options,
-            cfg.has_quorum_device()
+            cfg.has_quorum_device(),
+            cfg.get_quorum_options()
         )
     )
     cfg.set_quorum_options(options)

@@ -3,6 +3,7 @@ import pprint
 
 from pcs.test.tools.command_env.config_http_booth import BoothShortcuts
 from pcs.test.tools.command_env.config_http_corosync import CorosyncShortcuts
+from pcs.test.tools.command_env.config_http_files import FilesShortcuts
 from pcs.test.tools.command_env.config_http_host import HostShortcuts
 from pcs.test.tools.command_env.config_http_pcmk import PcmkShortcuts
 from pcs.test.tools.command_env.config_http_sbd import SbdShortcuts
@@ -36,6 +37,7 @@ class HttpConfig(object):
 
         self.booth = wrap_helper(BoothShortcuts(self.__calls))
         self.corosync = wrap_helper(CorosyncShortcuts(self.__calls))
+        self.files = wrap_helper(FilesShortcuts(self.__calls))
         self.host = wrap_helper(HostShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))

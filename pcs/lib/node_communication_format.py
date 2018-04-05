@@ -47,6 +47,17 @@ def corosync_authkey_file(authkey_content):
         "corosync authkey": corosync_authkey_format(authkey_content)
     }
 
+def corosync_conf_format(corosync_conf_content):
+    return {
+        "type": "corosync_conf",
+        "data": corosync_conf_content,
+    }
+
+def corosync_conf_file(corosync_conf_content):
+    return {
+        "corosync.conf": corosync_conf_format(corosync_conf_content)
+    }
+
 def service_cmd_format(service, command):
     """
     Return a dict usable in the communication with a remote/run_action

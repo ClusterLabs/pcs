@@ -131,8 +131,7 @@ REPORTS = (fixture.ReportStore()
     .info(
         "authkey_distribution_started" ,
         report_codes.FILES_DISTRIBUTION_STARTED,
-        #python 3 has dict_keys so list is not the right structure
-        file_list={"pacemaker_remote authkey": None}.keys(),
+        file_list=["pacemaker_remote authkey"],
         description="remote node configuration files",
     )
     .info(
@@ -143,11 +142,10 @@ REPORTS = (fixture.ReportStore()
     .info(
         "pcmk_remote_start_enable_started",
         report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        #python 3 has dict_keys so list is not the right structure
-        action_list={
-            "pacemaker_remote start": None,
-            "pacemaker_remote enable": None,
-        }.keys(),
+        action_list=[
+            "pacemaker_remote start",
+            "pacemaker_remote enable",
+        ],
         description="start of service pacemaker_remote",
     )
     .info(

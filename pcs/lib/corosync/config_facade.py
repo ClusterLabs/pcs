@@ -1,3 +1,4 @@
+from pcs import settings
 from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants
 from pcs.lib.errors import LibraryError
@@ -27,6 +28,48 @@ class ConfigFacade(object):
             raise LibraryError(
                 reports.corosync_config_parser_other_error()
             )
+
+    @classmethod
+    def create(cls, cluster_name, node_list, transport):
+        """
+        Create a minimal config
+
+        string cluster_name -- a name of a cluster
+        list node_list -- list of dict: name, addrs
+        string transport -- corosync transport
+        """
+        root = config_parser.Section("")
+        totem_section = config_parser.Section("totem")
+        nodelist_section = config_parser.Section("nodelist")
+        quorum_section = config_parser.Section("quorum")
+        logging_section = config_parser.Section("logging")
+        root.add_section(totem_section)
+        root.add_section(nodelist_section)
+        root.add_section(quorum_section)
+        root.add_section(logging_section)
+
+        totem_section.add_attribute("version", "2")
+        totem_section.add_attribute("cluster_name", cluster_name)
+        totem_section.add_attribute("transport", transport)
+        quorum_section.add_attribute("provider", "corosync_votequorum")
+        logging_section.add_attribute("to_logfile", "yes")
+        logging_section.add_attribute("logfile", settings.corosync_log_file)
+        logging_section.add_attribute("to_syslog", "yes")
+
+        for node_id, node_options in enumerate(node_list, 1):
+            node_section = config_parser.Section("node")
+            nodelist_section.add_section(node_section)
+            for link_id, link_addr in enumerate(node_options["addrs"]):
+                node_section.add_attribute(
+                    "ring{}_addr".format(link_id), link_addr
+                )
+            node_section.add_attribute("name", node_options["name"])
+            node_section.add_attribute("nodeid", node_id)
+
+        self = cls(root)
+        self.__update_two_node()
+
+        return self
 
     def __init__(self, parsed_config):
         """
@@ -82,9 +125,112 @@ class ConfigFacade(object):
                 ))
         return result
 
+    def create_link_list(self, link_list):
+        """
+        Add a link list to a config without one
+
+        iterable link_list -- list of dicts with link_list options
+        """
+        available_link_numbers = list(range(constants.LINKS_KNET_MAX))
+        linknumber_missing = []
+        links = []
+
+        for link in link_list:
+            if "linknumber" in link:
+                try:
+                    available_link_numbers.remove(int(link["linknumber"]))
+                except ValueError as e:
+                    raise AssertionError("Invalid link number: {}".format(e))
+                links.append(dict(link))
+            else:
+                linknumber_missing.append(link)
+
+        for link in linknumber_missing:
+            link = dict(link)
+            try:
+                link["linknumber"] = str(available_link_numbers.pop(0))
+            except IndexError as e:
+                raise AssertionError(
+                    "Link number no longer available: {}".format(e)
+                )
+            links.append(link)
+
+        for link in sorted(links, key=lambda item: item["linknumber"]):
+            self.add_link(link)
+
+    def add_link(self, options):
+        """
+        Add a new link
+
+        dict options -- link options
+        """
+        totem_section = self.__ensure_section(self.config, "totem")[-1]
+        new_link_section = config_parser.Section("interface")
+        options_to_set = {}
+        for name, value in options.items():
+            if name == "broadcast":
+                # If broadcast == 1, transform it to broadcast == yes. Else do
+                # not put the option to the config at all.
+                if value in ("1", 1):
+                    options_to_set[name] = "yes"
+                continue
+            options_to_set[name] = value
+        self.__set_section_options([new_link_section], options_to_set)
+        totem_section.add_section(new_link_section)
+        self.__remove_empty_sections(self.config)
+
+    def set_transport_udp_options(self, options):
+        """
+        Set transport options for udp transports
+
+        dict options -- transport options
+        """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, options)
+        self._need_stopped_cluster = True
+
+    def set_transport_knet_options(
+        self, generic_options, compression_options, crypto_options
+    ):
+        """
+        Set transport options for knet transport
+
+        dict generic_options -- generic transport options
+        dict compression_options -- compression options
+        dict crypto_options -- crypto options
+        """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, generic_options)
+        self.__set_section_options(
+            totem_section_list,
+            _add_prefix_to_dict_keys("knet_compression_", compression_options)
+        )
+        self.__set_section_options(
+            totem_section_list,
+            _add_prefix_to_dict_keys("crypto_", crypto_options)
+        )
+        self.__remove_empty_sections(self.config)
+        self._need_stopped_cluster = True
+
+    def set_totem_options(self, options):
+        """
+        Set options in the "totem" section
+
+        dict options -- totem options
+        """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(totem_section_list, options)
+        self.__remove_empty_sections(self.config)
+        # The totem section contains quite a lot of options. Pcs reduces the
+        # number by moving some of them virtually into other "sections". The
+        # move is only visible for pcs users (in CLI, web UI), those moved
+        # options are still written to the totem section. The options which pcs
+        # keeps in the totem section for users do not currently need the
+        # cluster to be stopped when updating them.
+
     def set_quorum_options(self, options):
         """
-        Set options in quorum section
+        Set options in the "quorum" section
 
         dict options -- quorum options
         """
@@ -96,7 +242,7 @@ class ConfigFacade(object):
 
     def get_quorum_options(self):
         """
-        Get configurable options from quorum section
+        Get configurable options from the "quorum" section
         """
         options = {}
         for section in self.config.get_sections("quorum"):
@@ -364,3 +510,7 @@ class ConfigFacade(object):
             self.__remove_empty_sections(section)
             if section.empty:
                 parent_section.del_section(section)
+
+
+def _add_prefix_to_dict_keys(prefix, data):
+    return {"{}{}".format(prefix, key): value for key, value in data.items()}

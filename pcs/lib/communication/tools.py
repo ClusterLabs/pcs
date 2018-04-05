@@ -255,6 +255,11 @@ class AllSameDataMixin(object):
         """
         return list(self.__target_list)
 
+    @property
+    def _target_label_list(self):
+        return [target.label for target in self.__target_list]
+
+
 
 class SimpleResponseProcessingMixin(object):
     """
@@ -298,14 +303,17 @@ class SkipOfflineMixin(object):
     skip_offline_targets.
     """
     _failure_severity = ReportItemSeverity.ERROR
-    _failure_forceable = report_codes.SKIP_OFFLINE_NODES
+    _failure_forceable = None
 
-    def _set_skip_offline(self, skip_offline_targets):
+    def _set_skip_offline(
+        self, skip_offline_targets, force_code=report_codes.SKIP_OFFLINE_NODES
+    ):
         """
         Set value of skip_offline_targets flag.
 
         boolean skip_offline_targets
         """
+        self._failure_forceable = force_code
         if skip_offline_targets:
             self._failure_severity = ReportItemSeverity.WARNING
             self._failure_forceable = None
@@ -316,3 +324,11 @@ class SkipOfflineMixin(object):
             severity=self._failure_severity,
             forceable=self._failure_forceable,
         )
+
+
+class NotSupportedHandlerMixin(object):
+    def _get_response_report(self, response):
+        report = super()._get_response_report(response)
+        if response.was_connected and response.response_code == 404:
+            report = reports.pcsd_version_too_old(response.request.target.label)
+        return report

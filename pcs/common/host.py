@@ -19,6 +19,20 @@ class PcsKnownHost(
             raise KeyError("no destination defined")
         return cls(name, token=known_host_dict["token"], dest_list=dest_list)
 
+    def to_known_host_dict(self):
+        return (
+            self.name,
+            dict(
+                token=self.token,
+                dest_list=[
+                    dict(
+                        addr=dest.addr,
+                        port=dest.port,
+                    ) for dest in self.dest_list
+                ]
+            )
+        )
+
     @property
     def dest(self):
         if self.dest_list:

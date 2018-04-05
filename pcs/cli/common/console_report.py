@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections import defaultdict, Iterable
 from functools import partial
 import sys
 
@@ -50,6 +50,11 @@ def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
+
+def format_list(a_list):
+    return ", ".join([
+        "'{0}'".format(x) for x in sorted(a_list)
+    ])
 
 def service_operation_started(operation, info):
     return "{operation} {service}{instance_suffix}...".format(
@@ -172,6 +177,49 @@ def invalid_options(info):
         **info
     )
 
+def corosync_node_address_count_mismatch(info):
+    count_node = defaultdict(list)
+    for node_name, count in info["node_addr_count"].items():
+        count_node[count].append(node_name)
+    parts = ["All nodes must have the same number of addresses"]
+    # List most common number of addresses first.
+    for count, nodes in sorted(
+        count_node.items(),
+        key=lambda pair: len(pair[1]),
+        reverse=True
+    ):
+        parts.append(
+            "node{s} {nodes} {have} {count} address{es}".format(
+            s=("s" if len(nodes) > 1 else ""),
+            nodes=format_list(nodes),
+            have=("have" if len(nodes) > 1 else "has"),
+            count=count,
+            es=("es" if count > 1 else "")
+        ))
+    return "; ".join(parts)
+
+def service_version_mismatch(info):
+    version_host = defaultdict(list)
+    for host_name, version in info["hosts_version"].items():
+        version_host[version].append(host_name)
+    parts = [
+        "Hosts do not have the same version of '{}'".format(info["service"])
+    ]
+    # List most common versions first.
+    for version, hosts in sorted(
+        version_host.items(),
+        key=lambda pair: len(pair[1]),
+        reverse=True
+    ):
+        parts.append(
+            "host{s} {hosts} {have} version {version}".format(
+            s=("s" if len(hosts) > 1 else ""),
+            hosts=format_list(hosts),
+            have=("have" if len(hosts) > 1 else "has"),
+            version=version
+        ))
+    return "; ".join(parts)
+
 def build_node_description(node_types):
     if not node_types:
         return  "Node"
@@ -217,6 +265,28 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 "are" if len(info["option_names"]) > 1
                 else "is"
             )
+        )
+    ,
+
+    codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL: lambda info:
+        (
+            "If {_opt_desc}option '{option_name}' is enabled, "
+            "{_pre_desc}option '{prerequisite_name}' must be enabled as well"
+        ).format(
+            _opt_desc=format_optional(info.get("option_type"), "{0} "),
+            _pre_desc=format_optional(info.get("prerequisite_type"), "{0} "),
+            **info
+        )
+    ,
+
+    codes.PREREQUISITE_OPTION_MUST_BE_DISABLED: lambda info:
+        (
+            "If {_opt_desc}option '{option_name}' is enabled, "
+            "{_pre_desc}option '{prerequisite_name}' must be disabled"
+        ).format(
+            _opt_desc=format_optional(info.get("option_type"), "{0} "),
+            _pre_desc=format_optional(info.get("prerequisite_type"), "{0} "),
+            **info
         )
     ,
 
@@ -561,9 +631,82 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to parse corosync config"
     ,
 
+    codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT: lambda info:
+        (
+            "At least {min_count} and at most {max_count} addresses can be "
+            "specified for a node, {actual_count} addresses specified"
+            "{_node_desc}"
+        ).format(
+            _node_desc=(
+                " for node '{}'".format(info["node_name"])
+                if "node_name" in info
+                else
+                " for node '{}'".format(info["node_id"])
+                if "node_id" in info
+                else ""
+            ),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
+        (
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+            "either IPv4 or IPv6 in links {_links}"
+        ).format(
+            _links=format_list(info["link_numbers"])
+        )
+    ,
+
+    codes.COROSYNC_LINK_NUMBER_DUPLICATION: lambda info:
+        "Link numbers must be unique, duplicate link numbers: {_nums}".format(
+            _nums=format_list(info["link_number_list"])
+        )
+    ,
+
+    codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
+        "Node addresses must be unique, duplicate addresses: {_addrs}".format(
+            _addrs=format_list(info["address_list"])
+        )
+    ,
+
+    codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH:
+        corosync_node_address_count_mismatch
+    ,
+
+    codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
+        "Node names must be unique, duplicate names: {_names}".format(
+            _names=format_list(info["name_list"])
+        )
+    ,
+
+    codes.COROSYNC_NODES_MISSING:
+        "No nodes have been specified"
+    ,
+
     codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
         "These options cannot be set when the cluster uses a quorum device: {0}"
         .format(", ".join(sorted(info["options_names"])))
+    ,
+
+    codes.COROSYNC_TOO_MANY_LINKS: lambda info:
+        (
+            "Cannot set {actual_count} links, {transport} transport supports "
+            "up to {max_count} link{_s}"
+        ).format(
+            _s=("s" if info["max_count"] > 1 else ""),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS: lambda info:
+        (
+            "The {actual_transport} transport does not support '{option_type}' "
+            "options, use {_required_transports} transport"
+        ).format(
+            _required_transports=format_list(info["required_transport_list"]),
+            **info
+        )
     ,
 
     codes.QDEVICE_ALREADY_DEFINED:
@@ -865,6 +1008,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             " Re-run with '--monitor' to enable them."
         )
         .format(**info)
+    ,
+
+    codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
+        "Unable to resolve addresses: {_addrs}".format(
+            _addrs=format_list(info["address_list"])
+        )
     ,
 
     codes.NODE_NOT_FOUND: lambda info:
@@ -1392,15 +1541,91 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.HOST_NOT_FOUND: lambda info:
         (
-            "Host(s) {host_list_comma_str} not found. Try to authenticate hosts using "
-            "'pcs host auth {host_list_space_str}' command."
+            "Host{_s} {_hosts_comma} not found. Try to authenticate the "
+            "host{_s} using 'pcs host auth {_hosts_space}' command."
         ).format(
-            host_list_comma_str=", ".join(sorted(info["host_list"])),
-            host_list_space_str=" ".join(sorted(info["host_list"])),
+            _hosts_comma=format_list(info["host_list"]),
+            _hosts_space=" ".join(sorted(info["host_list"])),
+            _s=("s" if len(info["host_list"]) > 1 else "")
         )
     ,
     codes.NONE_HOST_FOUND: "None of hosts found.",
     codes.HOST_ALREADY_AUTHORIZED: lambda info:
         "{host_name}: Already authorized".format(**info)
+    ,
+    codes.CLUSTER_DESTROY_STARTED: lambda info:
+        "Destroying cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
+        )
+    ,
+    codes.CLUSTER_DESTROY_SUCCESS: lambda info:
+        "{node}: Successfully destroyed cluster".format(**info)
+    ,
+    codes.CLUSTER_ENABLE_STARTED: lambda info:
+        "Enabling cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
+        )
+    ,
+    codes.CLUSTER_ENABLE_SUCCESS: lambda info:
+        "{node}: Cluster enabled".format(**info)
+    ,
+    codes.CLUSTER_START_STARTED: lambda info:
+        "Starting cluster on hosts: {_hosts}...".format(
+            _hosts=format_list(info["host_name_list"])
+        )
+    ,
+    codes.CLUSTER_START_SUCCESS: lambda info:
+        "{node}: Cluster started".format(**info)
+    ,
+    codes.SERVICE_NOT_INSTALLED: lambda info:
+        "{node}: Required cluster services not installed: {_services}".format(
+            _services=format_list(info["service_list"]),
+            **info
+        )
+    ,
+
+    codes.HOST_ALREADY_IN_CLUSTER_CONFIG: lambda info:
+        (
+            "{host_name}: Cluster configuration files found. Is the host "
+            "already in a cluster?"
+        ).format(**info)
+    ,
+
+    codes.HOST_ALREADY_IN_CLUSTER_SERVICES: lambda info:
+        (
+            "{host_name}: Running cluster services: {_services}. Is the host "
+            "already in a cluster?"
+        ).format(
+            _services=format_list(info["service_list"]),
+            **info
+        )
+    ,
+
+    codes.SERVICE_VERSION_MISMATCH: service_version_mismatch,
+
+    codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START:
+        "Cannot specify '--wait' without specifying '--start'"
+    ,
+    codes.WAIT_FOR_NODE_STARTUP_STARTED: lambda info:
+        "Waiting for nodes to start: {_nodes}...".format(
+            _nodes=format_list(info["node_name_list"])
+        )
+    ,
+    codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Waiting timeout",
+    codes.WAIT_FOR_NODE_STARTUP_ERROR:
+        "Unable to verify all nodes have started"
+    ,
+    codes.PCSD_VERSION_TOO_OLD: lambda info:
+        (
+            "{node}: Old version of pcsd is running on the node, therefore it "
+            "is unable to perform the action"
+        ).format(**info)
+    ,
+    codes.CLUSTER_WILL_BE_DESTROYED:
+        "Some nodes are already in a cluster, enforcing this will destroy "
+        "existing cluster on those nodes"
+    ,
+    codes.CLUSTER_SETUP_SUCCESS:
+        "Cluster has been successfully set up."
     ,
 }

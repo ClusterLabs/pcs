@@ -164,11 +164,26 @@ module PcsdFile
     end
   end
 
+  class PutFileCorosyncConf < PutFile
+    def full_file_name
+      @full_file_name ||= COROSYNC_CONF
+    end
+
+    def binary?()
+      return false
+    end
+
+    def permissions()
+      return 0644
+    end
+  end
+
   TYPES = {
     "booth_authfile" => PutFileBoothAuthfile,
     "booth_config" => PutFileBoothConfig,
     "pcmk_remote_authkey" => PutFilePcmkRemoteAuthkey,
     "corosync_authkey" => PutFileCorosyncAuthkey,
+    "corosync_conf" => PutFileCorosyncConf,
   }
 end
 

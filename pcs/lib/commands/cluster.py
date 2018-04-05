@@ -1,12 +1,38 @@
+import math
+import time
+
+from pcs import settings
 from pcs.common import report_codes
-from pcs.lib import reports
+from pcs.lib import reports, node_communication_format
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,
     get_resources,
 )
+from pcs.lib.communication import cluster
+from pcs.lib.communication.nodes import (
+    CheckPacemakerStarted,
+    DistributeFilesWithoutForces,
+    EnableCluster,
+    GetHostInfo,
+    RemoveFilesWithoutForces,
+    StartCluster,
+    UpdateKnownHosts,
+)
+from pcs.lib.communication.tools import (
+    run as run_com,
+    run_and_raise,
+)
+from pcs.lib.corosync import (
+    config_facade,
+    config_validators,
+    constants as corosync_constants
+)
 from pcs.lib.env_tools import get_nodes
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity,
+)
 from pcs.lib.node import (
     node_addresses_contain_name,
     node_addresses_contain_host,
@@ -20,6 +46,8 @@ from pcs.lib.pacemaker.live import (
     verify as verify_cmd,
 )
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.pacemaker.values import get_valid_timeout_seconds
+from pcs.lib.tools import generate_binary_key
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
@@ -92,3 +120,342 @@ def verify(env, verbose=False):
     )
     #can raise
     env.report_processor.send()
+
+
+def setup(
+    env, cluster_name, nodes,
+    transport_type=None, transport_options=None, link_list=None,
+    compression_options=None, crypto_options=None, totem_options=None,
+    quorum_options=None, wait=False, start=False, enable=False, force=False,
+    force_unresolvable=False
+):
+    """
+    Set up cluster on specified nodes.
+    Validation of the inputs is done here. Possible existing clusters are
+    destroyed (when using force). Authkey files for corosync and pacemaer,
+    known hosts and and newly generated corosync.conf are distributed to all
+    nodes.
+    Raise LibraryError on any error.
+
+    env LibraryEnvironment
+    cluster_name string -- name of a cluster to set up
+    nodes list -- list of dicts which represents node.
+        Supported keys are: name (required), addrs
+    transport_type string -- transport type of a cluster
+    transport_options dict -- transport specific options
+    link_list list of dict -- list of links, depends of transport_type
+    compression_options dict -- only available for transport_type == 'knet'. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options dict -- only available for transport_type == 'knet'. In
+        corosync.conf they are prefixed 'crypto_'
+    totem_options dict -- options of section 'totem' in corosync.conf
+    quorum_options dict -- options of section 'quorum' in corosync.conf
+    wait -- specifies if command should try to wait for cluster to start up.
+        Has no effect start is False. If set to False command will not wait for
+        cluster to start. If None command will wait for some default timeout.
+        If int wait set timeout to int value of seconds.
+    start bool -- if True start cluster when it is set up
+    enable bool -- if True enable cluster when it is set up
+    force bool -- if True some validations errors are treated as warnings
+    force_unresolvable bool -- if True not resolvable addresses of nodes are
+        treated as warnings
+    """
+    transport_options = transport_options or {}
+    link_list = link_list or []
+    compression_options = compression_options or {}
+    crypto_options = crypto_options or {}
+    totem_options = totem_options or {}
+    quorum_options = quorum_options or {}
+
+    # Use a node name as an address if no addresses specified. This allows
+    # users not to specify node addresses at all which simplifies the whole
+    # cluster setup command / form significantly.
+    for node in nodes:
+        # If node["addrs"] == None then node.get("addrs", []) returns None.
+        # We need it to return a list.
+        if "addrs" in node and node["addrs"] is None:
+            del node["addrs"]
+        if node.get("addrs") is None and node.get("name") is not None:
+            node["addrs"] = [node["name"]]
+
+    # Validate inputs.
+    report_list = config_validators.create(
+        cluster_name, nodes, transport_type,
+        force_unresolvable=force_unresolvable
+    )
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
+        max_link_number = max(
+            [len(node.get("addrs", [])) for node in nodes],
+            default=0
+        )
+        report_list.extend(
+            config_validators.create_transport_knet(
+                transport_options,
+                compression_options,
+                crypto_options
+            )
+            +
+            config_validators.create_link_list_knet(
+                link_list,
+                max_link_number
+            )
+        )
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
+        report_list.extend(
+            config_validators.create_transport_udp(
+                transport_options,
+                compression_options,
+                crypto_options
+            )
+            +
+            config_validators.create_link_list_udp(link_list)
+        )
+    report_list.extend(
+        config_validators.create_totem(totem_options)
+        +
+        # We are creating the config and we know there is no qdevice in it.
+        config_validators.create_quorum_options(quorum_options, False)
+    )
+
+    try:
+        if wait is False:
+            wait_timeout = False
+        else:
+            if not start:
+                report_list.append(
+                    reports.wait_for_node_startup_without_start()
+                )
+            wait_timeout = get_valid_timeout_seconds(wait)
+    except LibraryError as e:
+        report_list.extend(e.args)
+
+    # Validate the nodes.
+    # If a node doesn't contain the 'name key, validation of inputs reports it.
+    # That means we don't report missing names but cannot rely on them being
+    # present either.
+    target_report_list, target_list = (
+        env.get_node_target_factory().get_target_list_with_reports(
+            [node["name"] for node in nodes if "name" in node],
+            allow_skip=False,
+        )
+    )
+    report_list.extend(target_report_list)
+    com_cmd = GetHostInfo(env.report_processor)
+    com_cmd.set_targets(target_list)
+    host_info_dict = run_com(env.get_node_communicator(), com_cmd)
+    report_list.extend(_host_check_cluster_setup(host_info_dict, force))
+
+    # Reporting:
+    # GetHostInfo command may already reported some issues directly into the
+    # report_processor. In order not to report them twice, all the gathered
+    # report items are put into the report_processor using its report_list
+    # method. This method does not raise a LibraryError on errors, instead it
+    # returns all the errors. This allows us to exit by raising a LibraryError
+    # if any errors occurred.
+    errors = env.report_processor.report_list(report_list)
+    if errors or com_cmd.error_list:
+        raise LibraryError()
+
+    # Validation done. If errors occured, an exception has been raised and we
+    # don't get below this line.
+
+    # Destroy cluster on all nodes.
+    com_cmd = cluster.Destroy(env.report_processor)
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # Distribute auth tokens.
+    com_cmd = UpdateKnownHosts(
+        env.report_processor,
+        known_hosts_to_add=env.get_known_hosts(
+            [target.label for target in target_list]
+        ),
+        known_hosts_to_remove=[],
+    )
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # Distribute configuration files except corosync.conf. Sending
+    # corosync.conf serves as a "commit" as its presence on a node marks the
+    # node as a part of a cluster.
+    corosync_authkey = generate_binary_key(random_bytes_count=128)
+    pcmk_authkey = generate_binary_key(random_bytes_count=128)
+    actions = {}
+    actions.update(
+        node_communication_format.corosync_authkey_file(corosync_authkey)
+    )
+    actions.update(
+        node_communication_format.pcmk_authkey_file(pcmk_authkey)
+    )
+    com_cmd = DistributeFilesWithoutForces(env.report_processor, actions)
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+    # TODO This should be in the previous call but so far we don't have a call
+    # which allows to save and delete files at the same time.
+    com_cmd = RemoveFilesWithoutForces(
+        env.report_processor, {"pcsd settings": {"type": "pcsd_settings"}},
+    )
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # Create and distribute corosync.conf. Once a node saves corosync.conf it
+    # is considered to be in a cluster.
+    corosync_conf = config_facade.ConfigFacade.create(
+        cluster_name, nodes, transport_type
+    )
+    corosync_conf.set_totem_options(totem_options)
+    corosync_conf.set_quorum_options(quorum_options)
+    corosync_conf.create_link_list(link_list)
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
+        corosync_conf.set_transport_knet_options(
+            transport_options, compression_options, crypto_options
+        )
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
+        corosync_conf.set_transport_udp_options(transport_options)
+
+    com_cmd = DistributeFilesWithoutForces(
+        env.report_processor,
+        node_communication_format.corosync_conf_file(
+            corosync_conf.config.export()
+        ),
+    )
+    com_cmd.set_targets(target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # TODO: distribute and reload pcsd certs
+
+    env.report_processor.process(reports.cluster_setup_success())
+
+    # Optionally enable and start cluster services.
+    if enable:
+        com_cmd = EnableCluster(env.report_processor)
+        com_cmd.set_targets(target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
+
+    if start:
+        # Large clusters take longer time to start up. So we make the timeout
+        # longer for each 8 nodes:
+        #  1 -  8 nodes: 1 * timeout
+        #  9 - 16 nodes: 2 * timeout
+        # 17 - 24 nodes: 3 * timeout
+        # and so on ...
+        # Users can override this and set their own timeout by specifying
+        # the --request-timeout option.
+        timeout = int(
+            settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
+        )
+        com_cmd = StartCluster(env.report_processor)
+        com_cmd.set_targets(target_list)
+        run_and_raise(
+            env.get_node_communicator(request_timeout=timeout),
+            com_cmd
+        )
+        if wait_timeout is not False:
+            env.report_processor.process_list(
+                _wait_for_pacemaker_to_start(
+                    env.get_node_communicator(),
+                    env.report_processor,
+                    target_list,
+                    timeout=wait_timeout, # wait_timeout is either None or a timeout
+                )
+            )
+
+
+def _wait_for_pacemaker_to_start(
+    node_communicator, report_processor, target_list, timeout=None
+):
+    timeout = 60 * 15 if timeout is None else timeout
+    interval = 2
+    stop_at = time.time() + timeout
+    report_processor.process(
+        reports.wait_for_node_startup_started(
+            [target.label for target in target_list]
+        )
+    )
+    error_report_list = []
+    while target_list:
+        if time.time() > stop_at:
+            error_report_list.append(reports.wait_for_node_startup_timed_out())
+            break
+        time.sleep(interval)
+        com_cmd = CheckPacemakerStarted(report_processor)
+        com_cmd.set_targets(target_list)
+        target_list = run_com(node_communicator, com_cmd)
+        error_report_list.extend(com_cmd.error_list)
+
+    if error_report_list:
+        error_report_list.append(reports.wait_for_node_startup_error())
+    return error_report_list
+
+
+def _host_check_cluster_setup(host_info_dict, force):
+    report_list = []
+    # We only care about services which matter for creating a cluster. It does
+    # not make sense to check e.g. booth when a) it will never be used b) it
+    # will be used in a year - which means we should do the check in a year.
+    service_version_dict = {
+        "pacemaker": {},
+        "corosync": {},
+        "pcsd": {},
+    }
+    required_service_list = ["pacemaker", "corosync"]
+    required_as_stopped_service_list = (
+        required_service_list + ["pacemaker_remote"]
+    )
+    report_severity = (
+        ReportItemSeverity.ERROR if not force else ReportItemSeverity.WARNING
+    )
+    cluster_exists_on_nodes = False
+    for host_name, host_info in host_info_dict.items():
+        try:
+            services = host_info["services"]
+            for service, version_dict in service_version_dict.items():
+                version_dict[host_name] = services[service]["version"]
+            missing_service_list = [
+                service for service in required_service_list
+                if not services[service]["installed"]
+            ]
+            if missing_service_list:
+                report_list.append(reports.service_not_installed(
+                    host_name, missing_service_list
+                ))
+            running_service_list = [
+                service for service in required_as_stopped_service_list
+                if services[service]["running"]
+            ]
+            if running_service_list:
+                cluster_exists_on_nodes = True
+                report_list.append(
+                    reports.host_already_in_cluster_services(
+                        host_name,
+                        running_service_list,
+                        severity=report_severity,
+                    )
+                )
+            if host_info["cluster_configuration_exists"]:
+                cluster_exists_on_nodes = True
+                report_list.append(
+                    reports.host_already_in_cluster_config(
+                        host_name,
+                        severity=report_severity,
+                    )
+                )
+        except KeyError:
+            report_list.append(reports.invalid_response_format(host_name))
+
+    for service, version_dict in service_version_dict.items():
+        report_list.extend(
+            _check_for_not_matching_service_versions(service, version_dict)
+        )
+
+    if cluster_exists_on_nodes and not force:
+        report_list.append(reports.cluster_will_be_destroyed())
+    return report_list
+
+
+def _check_for_not_matching_service_versions(service, service_version_dict):
+    if len(set(service_version_dict.values())) <= 1:
+        return []
+    return [
+        reports.service_version_mismatch(service, service_version_dict)
+    ]

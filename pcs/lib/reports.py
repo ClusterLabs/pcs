@@ -177,6 +177,7 @@ def prerequisite_option_is_missing(
 ):
     """
     if the option_name is specified, the prerequisite_option must be specified
+
     string option_name -- an option which depends on the prerequisite_option
     string prerequisite_name -- the prerequisite option
     string option_type -- describes the option
@@ -184,6 +185,48 @@ def prerequisite_option_is_missing(
     """
     return ReportItem.error(
         report_codes.PREREQUISITE_OPTION_IS_MISSING,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
+def prerequisite_option_must_be_enabled_as_well(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    If the option_name is enabled, the prerequisite_option must be also enabled
+
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
+def prerequisite_option_must_be_disabled(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    If the option_name is enabled, the prerequisite_option must be disabled
+
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
         info={
             "option_name": option_name,
             "option_type": option_type,
@@ -915,6 +958,134 @@ def corosync_options_incompatible_with_qdevice(options):
         report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
         info={
             "options_names": options,
+        }
+    )
+
+def corosync_bad_node_addresses_count(
+    actual_count, min_count, max_count, node_name=None, node_id=None
+):
+    """
+    Wrong number of addresses set for a corosync node.
+
+    int actual_count -- how many addresses set for a node
+    int min_count -- minimal allowed addresses count
+    int max_count -- maximal allowed addresses count
+    string node_name -- optionally specify node name (if available)
+    string node_id -- optionally specify node index or id (if available)
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+        info={
+            "actual_count": actual_count,
+            "min_count": min_count,
+            "max_count": max_count,
+            "node_name": node_name,
+            "node_id": node_id,
+        }
+    )
+
+def corosync_ip_version_mismatch_in_links(link_numbers):
+    """
+    Mixing IPv4 and IPv6 in one or more links, which is not allowed
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+        info={
+            "link_numbers": link_numbers,
+        }
+    )
+
+def corosync_link_number_duplication(number_list):
+    """
+    Trying to set one link_number for more links, link numbers must be unique
+
+    iterable number_list -- list of nonunique link numbers
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
+        info={
+            "link_number_list": sorted(number_list),
+        }
+    )
+
+def corosync_node_address_count_mismatch(node_addr_count):
+    """
+    Nodes do not have the same number of addresses
+
+    dict node_addr_count -- key: node name, value: number of addresses
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+        info={
+            "node_addr_count": node_addr_count,
+        }
+    )
+
+def corosync_node_address_duplication(address_list):
+    """
+    Trying to set one address for more nodes or links, addresses must be unique
+
+    iterable address_list -- list of nonunique addresses
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+        info={
+            "address_list": sorted(address_list),
+        }
+    )
+
+def corosync_node_name_duplication(name_list):
+    """
+    Trying to set one node name for more nodes, node names must be unique
+
+    iterable name_list -- list of nonunique node names
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+        info={
+            "name_list": sorted(name_list),
+        }
+    )
+
+def corosync_nodes_missing():
+    """
+    No nodes have been specified
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NODES_MISSING,
+        info={
+        }
+    )
+
+def corosync_too_many_links(actual_count, max_count, transport):
+    """
+    Trying to set more links than the selected transport supports
+
+    int actual_count -- how many links user wants to set
+    int max_count -- maximal allowed number of links
+    string transport -- selected transport
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_TOO_MANY_LINKS,
+        info={
+            "actual_count": actual_count,
+            "max_count": max_count,
+            "transport": transport,
+        }
+    )
+
+def corosync_transport_unsupported_options(
+    option_type, actual_transport, required_transports
+):
+    """
+    A type of options is not supported with the given transport
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+        info={
+            "option_type": option_type,
+            "actual_transport": actual_transport,
+            "required_transport_list": required_transports,
         }
     )
 
@@ -2855,6 +3026,25 @@ def tmp_file_write(file_path, content):
         }
     )
 
+def node_addresses_unresolvable(
+    address_list,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Unable to resolve addresses of cluster nodes to be added
+
+    iterable address -- a list of unresolvable addresses
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what cathegory?
+    """
+    return ReportItem(
+        report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+        severity,
+        forceable,
+        info={
+            "address_list": sorted(address_list),
+        }
+    )
 
 def unable_to_perform_operation_on_any_node():
     """
@@ -2872,18 +3062,17 @@ def host_not_found(
     host_list, severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    Hosts with names in name_list are not included in pcs known hosts,
-    therefore it is not possible to sommunicate with them.
+    Hosts with names in host_list are not included in pcs known hosts,
+    therefore it is not possible to communicate with them.
     """
     return ReportItem(
         report_codes.HOST_NOT_FOUND,
         severity,
         info=dict(
-            host_list=host_list,
+            host_list=sorted(host_list),
         ),
         forceable=forceable,
     )
-
 
 def none_host_found():
     return ReportItem.error(report_codes.NONE_HOST_FOUND)
@@ -2895,3 +3084,153 @@ def host_already_authorized(host_name):
             host_name=host_name,
         )
     )
+
+
+def cluster_destroy_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_DESTROY_STARTED,
+        info=dict(
+            host_name_list=sorted(host_name_list),
+        ),
+    )
+
+
+def cluster_destroy_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_DESTROY_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def cluster_enable_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_ENABLE_STARTED,
+        info=dict(
+            host_name_list=sorted(host_name_list),
+        ),
+    )
+
+
+def cluster_enable_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_ENABLE_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def cluster_start_started(host_name_list):
+    return ReportItem.info(
+        report_codes.CLUSTER_START_STARTED,
+        info=dict(
+            host_name_list=sorted(host_name_list),
+        ),
+    )
+
+
+def cluster_start_success(node):
+    return ReportItem.info(
+        report_codes.CLUSTER_START_SUCCESS,
+        info=dict(
+            node=node,
+        ),
+    )
+
+
+def service_not_installed(
+    node, service_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.SERVICE_NOT_INSTALLED,
+        severity,
+        info=dict(
+            node=node,
+            service_list=sorted(service_list),
+        ),
+        forceable=forceable,
+    )
+
+def host_already_in_cluster_config(
+    host_name, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+        severity,
+        info=dict(
+            host_name=host_name,
+        ),
+        forceable=forceable,
+    )
+
+def host_already_in_cluster_services(
+    host_name, service_list, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    return ReportItem(
+        report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+        severity,
+        info=dict(
+            host_name=host_name,
+            service_list=sorted(service_list),
+        ),
+        forceable=forceable,
+    )
+
+def service_version_mismatch(
+    service, hosts_version,
+    severity=ReportItemSeverity.ERROR, forceable=None,
+):
+    return ReportItem(
+        report_codes.SERVICE_VERSION_MISMATCH,
+        severity,
+        info=dict(
+            service=service,
+            hosts_version=hosts_version,
+        ),
+        forceable=forceable,
+    )
+
+
+def wait_for_node_startup_started(node_name_list):
+    return ReportItem.info(
+        report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+        info=dict(
+            node_name_list=sorted(node_name_list),
+        )
+    )
+
+
+def wait_for_node_startup_timed_out():
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT)
+
+
+def wait_for_node_startup_error():
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)
+
+def wait_for_node_startup_without_start():
+    """
+    User requested waiting for nodes to start without instructing pcs to start
+    the nodes
+    """
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)
+
+def pcsd_version_too_old(node):
+    return ReportItem.error(
+        report_codes.PCSD_VERSION_TOO_OLD,
+        info=dict(
+            node=node,
+        )
+    )
+
+
+def cluster_will_be_destroyed():
+    return ReportItem.error(
+        report_codes.CLUSTER_WILL_BE_DESTROYED,
+        forceable=report_codes.FORCE_ALREADY_IN_CLUSTER,
+    )
+
+
+def cluster_setup_success():
+    return ReportItem.info(report_codes.CLUSTER_SETUP_SUCCESS)

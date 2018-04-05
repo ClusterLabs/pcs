@@ -1,3 +1,7 @@
+from collections import Counter, defaultdict
+from itertools import zip_longest
+import socket
+
 from pcs.common import report_codes
 from pcs.lib import reports, validate
 from pcs.lib.corosync import constants
@@ -14,52 +18,583 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "tie_breaker",
 )
 
-def update_quorum_options(options, has_qdevice):
-    """
-    Validate modifying quorum options, return list of report items
 
-    dict options -- quorum options to set
-    bool has_qdevice -- is a qdevice set in corosync.conf?
+def create(cluster_name, node_list, transport, force_unresolvable=False):
     """
-    allowed_bool = ("0", "1")
-    report_items = []
+    Validate creating a new minimalistic corosync.conf
+
+    string cluster_name -- the name of the new cluster
+    list node_list -- nodes of the new cluster; dict: name, addrs
+    string transport -- corosync transport used in the new cluster
+    """
+    # cluster name and transport validation
     validators = [
-        validate.value_empty_or_valid(
-            "auto_tie_breaker",
-            validate.value_in(
-                "auto_tie_breaker",
-                allowed_bool
+        validate.value_not_empty("name", "a non-empty string", "cluster name"),
+        validate.value_in("transport", constants.TRANSPORTS_ALL)
+    ]
+    report_items = validate.run_collection_of_option_validators(
+        {
+            "name": cluster_name,
+            "transport": transport
+        },
+        validators
+    )
+
+    # nodelist validation
+    all_names_usable = True # can names be used to identifying nodes?
+    all_names_count = defaultdict(int)
+    all_addrs_count = defaultdict(int)
+    all_addrs_type = {}
+    addr_types_per_node = []
+    # First, validate each node on its own. Also extract some info which will
+    # be needed when validating the nodelist and inter-node dependencies.
+    for i, node in enumerate(node_list, 1):
+        name_validators = [
+            validate.is_required("name", f"node {i}"),
+            validate.value_not_empty(
+                "name",
+                "a non-empty string",
+                option_name_for_report=f"node {i} name"
             )
-        ),
-        validate.value_empty_or_valid(
-            "last_man_standing",
-            validate.value_in(
-                "last_man_standing",
-                allowed_bool
+        ]
+        report_items.extend(
+            validate.run_collection_of_option_validators(node, name_validators)
+            +
+            validate.names_in(["addrs", "name"], node.keys(), "node")
+        )
+        if "name" not in node or not node["name"]:
+            all_names_usable = False
+        else:
+            # Count occurrences of each node name. Do not bother counting
+            # missing or empty names. They must be fixed anyway.
+            all_names_count[node["name"]] += 1
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        addr_count = len(node.get("addrs") or [])
+        if transport in (constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP):
+            if transport in constants.TRANSPORTS_KNET:
+                min_addr_count = constants.LINKS_KNET_MIN
+                max_addr_count = constants.LINKS_KNET_MAX
+            else:
+                min_addr_count = constants.LINKS_UDP_MIN
+                max_addr_count = constants.LINKS_UDP_MAX
+            if (
+                addr_count < min_addr_count
+                or
+                addr_count > max_addr_count
+            ):
+                report_items.append(
+                    reports.corosync_bad_node_addresses_count(
+                        addr_count,
+                        min_addr_count,
+                        max_addr_count,
+                        node_name=node.get("name"),
+                        node_id=i
+                    )
+                )
+        addr_types = []
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        for addr in (node.get("addrs") or []):
+            all_addrs_count[addr] += 1
+            if addr not in all_addrs_type:
+                all_addrs_type[addr] = _get_address_type(addr)
+            addr_types.append(all_addrs_type[addr])
+        addr_types_per_node.append(addr_types)
+    # Report all unresolvable addresses at once instead on each own.
+    unresolvable_addresses = set([
+        addr for addr, addr_type in all_addrs_type.items()
+        if addr_type == "unresolvable"
+    ])
+    if unresolvable_addresses:
+        severity = ReportItemSeverity.ERROR
+        forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
+        if force_unresolvable:
+            severity = ReportItemSeverity.WARNING
+            forceable = None
+        report_items.append(
+            reports.node_addresses_unresolvable(
+                unresolvable_addresses,
+                severity,
+                forceable
             )
-        ),
-        validate.value_empty_or_valid(
-            "last_man_standing_window",
-            validate.value_positive_integer(
-                "last_man_standing_window"
+        )
+
+    # Reporting single-node errors finished.
+    # Now report nodelist and inter-node errors.
+    if len(node_list) < 1:
+        report_items.append(reports.corosync_nodes_missing())
+    non_unique_names = set([
+        name for name, count in all_names_count.items() if count > 1
+    ])
+    if non_unique_names:
+        all_names_usable = False
+        report_items.append(
+            reports.corosync_node_name_duplication(non_unique_names)
+        )
+    non_unique_addrs = set([
+        addr for addr, count in all_addrs_count.items() if count > 1
+    ])
+    if non_unique_addrs:
+        report_items.append(
+            reports.corosync_node_address_duplication(non_unique_addrs)
+        )
+    if all_names_usable:
+        # Check for errors using node names in their reports. If node names are
+        # ambiguous then such issues cannot be comprehensibly reported so the
+        # checks are skipped.
+        node_addr_count = {}
+        for node in node_list:
+            # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+            # the get returns None and len(None) raises an exception.
+            node_addr_count[node["name"]] = len(node.get("addrs") or [])
+        # Check if all nodes have the same number of addresses. No need to
+        # check that if udp or udpu transport is used as they can only use one
+        # address and that has already been checked above.
+        if (
+            transport not in constants.TRANSPORTS_UDP
+            and
+            len(Counter(node_addr_count.values()).keys()) > 1
+        ):
+            report_items.append(
+                reports.corosync_node_address_count_mismatch(node_addr_count)
             )
-        ),
-        validate.value_empty_or_valid(
-            "wait_for_all",
-            validate.value_in(
-                "wait_for_all",
-                allowed_bool
+    # Check mixing IPv4 and IPv6 in one link, node names are not relevant
+    links_ip_mismatch = []
+    for link, addr_types in enumerate(zip_longest(*addr_types_per_node)):
+        if "IPv6" in addr_types and "IPv4" in addr_types:
+            links_ip_mismatch.append(link)
+    if links_ip_mismatch:
+        report_items.append(
+            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+        )
+
+    return report_items
+
+def _get_address_type(address):
+    if validate.is_ipv4_address(address):
+        return "IPv4"
+    if validate.is_ipv6_address(address):
+        return "IPv6"
+    try:
+        socket.getaddrinfo(address, None)
+    except socket.gaierror:
+        return "unresolvable"
+    return "FQDN"
+
+def create_link_list_udp(link_list):
+    """
+    Validate creating udp/udpu link (interface) list options
+
+    iterable link_list -- list of link options
+    """
+    if not link_list:
+        # It is not mandatory to set link options. If an empty link list is
+        # provided, everything is fine and we have nothing to validate.
+        return []
+
+    allowed_options = [
+        "bindnetaddr",
+        "broadcast",
+        "mcastaddr",
+        "mcastport",
+        "ttl",
+    ]
+    validators = [
+        validate.value_ip_address("bindnetaddr"),
+        validate.value_in("broadcast", ("0", "1")),
+        validate.value_ip_address("mcastaddr"),
+        validate.value_port_number("mcastport"),
+        validate.value_integer_in_range("ttl", 0, 255),
+    ]
+    options = link_list[0]
+    report_items = (
+        validate.run_collection_of_option_validators(options, validators)
+        +
+        validate.names_in(allowed_options, options.keys(), "link")
+    )
+    # default values taken from `man corosync.conf`
+    if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
+        report_items.append(
+            reports.prerequisite_option_must_be_disabled(
+                "mcastaddr",
+                "broadcast",
+                option_type="link",
+                prerequisite_type="link"
             )
+        )
+    link_count = len(link_list)
+    if link_count > constants.LINKS_UDP_MAX:
+        report_items.append(
+            reports.corosync_too_many_links(
+                link_count,
+                constants.LINKS_UDP_MAX,
+                "udp/udpu"
+            )
+        )
+    return report_items
+
+def create_link_list_knet(link_list, max_link_number):
+    """
+    Validate creating knet link (interface) list options
+
+    iterable link_list -- list of link options
+    integer max_link_number -- highest allowed linknumber
+    """
+    if not link_list:
+        # It is not mandatory to set link options. If an empty link list is
+        # provided, everything is fine and we have nothing to validate. It is
+        # also possible to set link options for only some of the links.
+        return []
+    max_link_number = max(0, min(constants.LINKS_KNET_MAX - 1, max_link_number))
+    max_link_count = max_link_number + 1
+    allowed_options = [
+        "ip_version", # It tells knet which IP to prefer.
+        "linknumber",
+        "link_priority",
+        "mcastport",
+        "ping_interval",
+        "ping_precision",
+        "ping_timeout",
+        "pong_count",
+        "transport",
+    ]
+    validators = [
+        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_integer_in_range("linknumber", 0, max_link_number),
+        validate.value_integer_in_range("link_priority", 0, 255),
+        validate.value_port_number("mcastport"),
+        validate.value_nonnegative_integer("ping_interval"),
+        validate.value_nonnegative_integer("ping_precision"),
+        validate.value_nonnegative_integer("ping_timeout"),
+        validate.depends_on_option(
+            "ping_interval",
+            "ping_timeout",
+            option_type="link",
+            prerequisite_type="link"
         ),
+        validate.depends_on_option(
+            "ping_timeout",
+            "ping_interval",
+            option_type="link",
+            prerequisite_type="link"
+        ),
+        validate.value_nonnegative_integer("pong_count"),
+        validate.value_in("transport", ("sctp", "udp")),
+    ]
+    report_items = []
+    used_link_number = defaultdict(int)
+    for options in link_list:
+        if "linknumber" in options:
+            used_link_number[options["linknumber"]] += 1
+        report_items += (
+            validate.run_collection_of_option_validators(options, validators)
+            +
+            validate.names_in(allowed_options, options.keys(), "link")
+        )
+    non_unique_linknumbers = [
+        number for number, count in used_link_number.items() if count > 1
+    ]
+    if non_unique_linknumbers:
+        report_items.append(
+            reports.corosync_link_number_duplication(non_unique_linknumbers)
+        )
+    link_count = len(link_list)
+    if link_count > max_link_count:
+        report_items.append(
+            reports.corosync_too_many_links(link_count, max_link_count, "knet")
+        )
+    return report_items
+
+def create_transport_udp(generic_options, compression_options, crypto_options):
+    """
+    Validate creating udp/udpu transport options
+
+    dict generic_options -- generic transport options
+    dict compression_options -- compression options
+    dict crypto_options -- crypto options
+    """
+    # No need to support force:
+    # * values are either an enum or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
+    allowed_options = [
+        "ip_version",
+        "netmtu",
+    ]
+    validators = [
+        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_positive_integer("netmtu"),
+    ]
+    report_items = (
+        validate.run_collection_of_option_validators(
+            generic_options,
+            validators
+        )
+        +
+        validate.names_in(
+            allowed_options,
+            generic_options.keys(),
+            "udp/udpu transport"
+        )
+    )
+    if compression_options:
+        report_items.append(
+            reports.corosync_transport_unsupported_options(
+                "compression",
+                "udp/udpu",
+                ("knet", )
+            )
+        )
+    if crypto_options:
+        report_items.append(
+            reports.corosync_transport_unsupported_options(
+                "crypto",
+                "udp/udpu",
+                ("knet", )
+            )
+        )
+    return report_items
+
+def create_transport_knet(generic_options, compression_options, crypto_options):
+    """
+    Validate creating knet transport options
+
+    dict generic_options -- generic transport options
+    dict compression_options -- compression options
+    dict crypto_options -- crypto options
+    """
+    # No need to support force:
+    # * values are either an enum or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
+    generic_allowed = [
+        "ip_version", # It tells knet which IP to prefer.
+        "knet_pmtud_interval",
+        "link_mode",
+    ]
+    generic_validators = [
+        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_nonnegative_integer("knet_pmtud_interval"),
+        validate.value_in("link_mode", ("active", "passive", "rr")),
+    ]
+    compression_allowed = [
+        "level",
+        "model",
+        "threshold",
+    ]
+    compression_validators = [
+        validate.value_nonnegative_integer("level"),
+        validate.value_not_empty(
+            "model",
+            "a compression model e.g. zlib, lz4 or bzip2"
+        ),
+        validate.value_nonnegative_integer("threshold"),
+    ]
+    crypto_type = "crypto"
+    crypto_allowed = [
+        "cipher",
+        "hash",
+        "model",
+    ]
+    crypto_validators = [
+        validate.value_in(
+            "cipher",
+            ("none", "aes256", "aes192", "aes128", "3des")
+        ),
+        validate.value_in(
+            "hash",
+            ("none", "md5", "sha1", "sha256", "sha384", "sha512")
+        ),
+        validate.value_in("model", ("nss", "openssl")),
+    ]
+    report_items = (
+        validate.run_collection_of_option_validators(
+            generic_options,
+            generic_validators
+        )
+        +
+        validate.names_in(
+            generic_allowed,
+            generic_options.keys(),
+            "knet transport"
+        )
+        +
+        validate.run_collection_of_option_validators(
+            compression_options,
+            compression_validators
+        )
+        +
+        validate.names_in(
+            compression_allowed,
+            compression_options.keys(),
+            "compression"
+        )
+        +
+        validate.run_collection_of_option_validators(
+            crypto_options,
+            crypto_validators
+        )
+        +
+        validate.names_in(
+            crypto_allowed,
+            crypto_options.keys(),
+            crypto_type
+        )
+    )
+    if (
+        # default values taken from `man corosync.conf`
+        crypto_options.get("cipher", "aes256") != "none"
+        and
+        crypto_options.get("hash", "sha1") == "none"
+    ):
+        report_items.append(
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "cipher",
+                "hash",
+                option_type="crypto",
+                prerequisite_type="crypto"
+            )
+        )
+    return report_items
+
+def create_totem(options):
+    """
+    Validate creating the "totem" section
+
+    dict options -- totem options
+    """
+    # No need to support force:
+    # * values are either bool or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
+    allowed_options = [
+        "consensus",
+        "downcheck",
+        "fail_recv_const",
+        "heartbeat_failures_allowed",
+        "hold",
+        "join",
+        "max_messages",
+        "max_network_delay",
+        "merge",
+        "miss_count_const",
+        "send_join",
+        "seqno_unchanged_const",
+        "token",
+        "token_coefficient",
+        "token_retransmit",
+        "token_retransmits_before_loss_const",
+        "window_size",
+    ]
+    validators = [
+        validate.value_nonnegative_integer("consensus"),
+        validate.value_nonnegative_integer("downcheck"),
+        validate.value_nonnegative_integer("fail_recv_const"),
+        validate.value_nonnegative_integer("heartbeat_failures_allowed"),
+        validate.value_nonnegative_integer("hold"),
+        validate.value_nonnegative_integer("join"),
+        validate.value_nonnegative_integer("max_messages"),
+        validate.value_nonnegative_integer("max_network_delay"),
+        validate.value_nonnegative_integer("merge"),
+        validate.value_nonnegative_integer("miss_count_const"),
+        validate.value_nonnegative_integer("send_join"),
+        validate.value_nonnegative_integer("seqno_unchanged_const"),
+        validate.value_nonnegative_integer("token"),
+        validate.value_nonnegative_integer("token_coefficient"),
+        validate.value_nonnegative_integer("token_retransmit"),
+        validate.value_nonnegative_integer(
+            "token_retransmits_before_loss_const"
+        ),
+        validate.value_nonnegative_integer("window_size"),
     ]
     report_items = (
         validate.run_collection_of_option_validators(options, validators)
         +
-        validate.names_in(
-            constants.QUORUM_OPTIONS,
-            options.keys(),
-            "quorum",
+        validate.names_in(allowed_options, options.keys(), "totem")
+    )
+    return report_items
+
+def create_quorum_options(options, has_qdevice):
+    """
+    Validate creating quorum options
+
+    dict options -- quorum options to set
+    bool has_qdevice -- is a qdevice set in corosync.conf?
+    """
+    # No need to support force:
+    # * values are either bool or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
+    report_items = _validate_quorum_options(
+        options, has_qdevice, allow_empty_values=False
+    )
+    if (
+        # Default value in corosync is 10 ms. However, that would always fail
+        # the validation, so we use the default value of 0.
+        options.get("last_man_standing_window", "0") != "0"
+        and
+        # default value taken from `man corosync.conf`
+        options.get("last_man_standing", "0") == "0"
+    ):
+        report_items.append(
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "last_man_standing_window",
+                "last_man_standing",
+                option_type="quorum",
+                prerequisite_type="quorum"
+            )
         )
+    return report_items
+
+def update_quorum_options(options, has_qdevice, current_options):
+    """
+    Validate modifying quorum options
+
+    dict options -- quorum options to set
+    bool has_qdevice -- is a qdevice set in corosync.conf?
+    dict current_options -- currently set quorum options
+    """
+    # No need to support force:
+    # * values are either bool or numbers with no range set - nothing to force
+    # * names are strictly set as we cannot risk the user overwrites some
+    #   setting they should not to
+    # * changes to names and values in corosync are very rare
+    report_items = _validate_quorum_options(
+        options, has_qdevice, allow_empty_values=True
+    )
+    effective_lms = options.get(
+        "last_man_standing",
+        # default value taken from `man corosync.conf`
+        current_options.get("last_man_standing", "0")
+    )
+    if (
+        # Default value in corosync is 10 ms. However, that would always fail
+        # the validation, so we use the default value of 0.
+        options.get("last_man_standing_window", "0") != "0"
+        and
+        effective_lms == "0"
+    ):
+        report_items.append(
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "last_man_standing_window",
+                "last_man_standing",
+                option_type="quorum",
+                prerequisite_type="quorum"
+            )
+        )
+    return report_items
+
+def _validate_quorum_options(options, has_qdevice, allow_empty_values):
+    validators = _get_quorum_options_validators(allow_empty_values)
+    report_items = (
+        validate.run_collection_of_option_validators(options, validators)
+        +
+        validate.names_in( constants.QUORUM_OPTIONS, options.keys(), "quorum")
     )
     if has_qdevice:
         qdevice_incompatible_options = [
@@ -73,6 +608,34 @@ def update_quorum_options(options, has_qdevice):
                 )
             )
     return report_items
+
+def _get_quorum_options_validators(allow_empty_values=False):
+    allowed_bool = ("0", "1")
+    validators = {
+        "auto_tie_breaker": validate.value_in(
+            "auto_tie_breaker",
+            allowed_bool
+        ),
+        "last_man_standing": validate.value_in(
+            "last_man_standing",
+            allowed_bool
+        ),
+        "last_man_standing_window": validate.value_positive_integer(
+            "last_man_standing_window"
+        ),
+        "wait_for_all": validate.value_in(
+            "wait_for_all",
+            allowed_bool
+        ),
+    }
+    if not allow_empty_values:
+        # make sure to return a list even in python3 so we can call append
+        # on it
+        return list(validators.values())
+    return [
+        validate.value_empty_or_valid(option_name, validator)
+        for option_name, validator in validators.items()
+    ]
 
 def add_quorum_device(
     model, model_options, generic_options, heuristics_options, node_ids,

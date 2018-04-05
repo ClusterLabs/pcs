@@ -129,7 +129,7 @@ class NodeTargetLibFactory(NodeTargetFactory):
         super(NodeTargetLibFactory, self).__init__(known_hosts)
         self._report_processor = report_processor
 
-    def get_target_list(
+    def get_target_list_with_reports(
         self, host_name_list, skip_non_existing=False, allow_skip=True
     ):
         target_list = []
@@ -158,6 +158,14 @@ class NodeTargetLibFactory(NodeTargetFactory):
             # we want to create this report only if there was at least one
             # required address specified
             report_list.append(reports.none_host_found())
+        return report_list, target_list
+
+    def get_target_list(
+        self, host_name_list, skip_non_existing=False, allow_skip=True
+    ):
+        report_list, target_list = self.get_target_list_with_reports(
+            host_name_list, skip_non_existing, allow_skip
+        )
         if report_list:
             self._report_processor.process_list(report_list)
         return target_list

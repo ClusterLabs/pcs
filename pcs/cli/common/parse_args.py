@@ -38,6 +38,37 @@ def split_list(arg_list, separator):
     bounds = zip([0]+[i+1 for i in separator_indexes], separator_indexes+[None])
     return [arg_list[i:j] for i, j in bounds]
 
+def split_list_by_any_keywords(arg_list, keyword_label):
+    """
+    Return a list of lists of args using any arg not containing = as a delimiter
+
+    iterable arg_list -- (part of) argv
+    string keyword_label -- description of all keywords
+    """
+    if "=" in arg_list[0]:
+        raise CmdLineInputError(
+            "Invalid character '=' in {} '{}'".format(
+                keyword_label,
+                arg_list[0],
+            )
+        )
+    current_keyword = None
+    groups = {}
+    for arg in arg_list:
+        if "=" in arg:
+            groups[current_keyword].append(arg)
+        else:
+            current_keyword = arg
+            if current_keyword in groups:
+                raise CmdLineInputError(
+                    "{} '{}' defined multiple times".format(
+                        keyword_label.capitalize(),
+                        current_keyword
+                    )
+                )
+            groups[current_keyword] = []
+    return groups
+
 def split_option(arg):
     """
     Get (key, value) from a key=value commandline argument.

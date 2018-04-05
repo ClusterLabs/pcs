@@ -400,13 +400,23 @@ class LibraryEnvironment(object):
     def communicator_factory(self):
         return self._communicator_factory
 
-    def get_node_communicator(self):
-        return self.communicator_factory.get_communicator()
+    def get_node_communicator(self, request_timeout=None):
+        return self.communicator_factory.get_communicator(
+            request_timeout=request_timeout
+        )
 
     def get_node_target_factory(self):
         return NodeTargetLibFactory(
             self.__get_known_hosts(), self.report_processor
         )
+
+    def get_known_hosts(self, host_name_list):
+        known_hosts = self.__get_known_hosts()
+        return [
+            known_hosts[host_name]
+            for host_name in host_name_list
+            if host_name in known_hosts
+        ]
 
     # deprecated, use communicator_factory or get_node_communicator()
     def node_communicator(self):

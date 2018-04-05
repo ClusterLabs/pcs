@@ -1,9 +1,31 @@
 import io
+import socket
+from unittest import mock
 
 from pcs.cli.common.reports import LibraryReportProcessorToConsole
 import pcs.common.pcs_pycurl as pycurl
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.test.tools.assertions import  assert_report_item_list_equal
+
+
+def get_getaddrinfo_mock(resolvable_addr_list):
+    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        if host not in resolvable_addr_list:
+            raise socket.gaierror(1, "")
+    return socket_getaddrinfo
+
+def patch_getaddrinfo(test_case, addr_list):
+    """
+    class MyTest(TestCase):
+        def setUp(self):
+            self.resolvable_hosts = patch_getaddrinfo(self, [])
+        def test_something(self):
+            self.resolvable_hosts.extend(["node1", "node2"])
+    """
+    patcher = mock.patch("socket.getaddrinfo", get_getaddrinfo_mock(addr_list))
+    patcher.start()
+    test_case.addCleanup(patcher.stop)
+    return addr_list
 
 
 class MockLibraryReportProcessor(LibraryReportProcessorToConsole):

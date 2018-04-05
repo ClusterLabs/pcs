@@ -99,7 +99,10 @@ class LibraryReportProcessorToConsole(object):
         for report_item in report_item_list:
             if report_item.severity == ReportItemSeverity.ERROR:
                 if print_errors:
-                    error(build_report_message(report_item))
+                    error(build_report_message(
+                        report_item,
+                        _prepare_force_text(report_item)
+                    ))
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
                 warn(build_report_message(report_item))

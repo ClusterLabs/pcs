@@ -946,6 +946,55 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
             }
         )
 
+
+class PrerequisiteOptionMustBeDisabled(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_MUST_BE_DISABLED
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "If option 'a' is enabled, option 'b' must be disabled",
+            {
+                "option_name": "a",
+                "prerequisite_name": "b",
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "If some option 'a' is enabled, other option 'b' must be disabled",
+            {
+                "option_name": "a",
+                "option_type": "some",
+                "prerequisite_name": "b",
+                "prerequisite_type": "other",
+            }
+        )
+
+
+class PrerequisiteOptionMustBeEnabledAsWell(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL
+    def test_without_type(self):
+        self.assert_message_from_info(
+            "If option 'a' is enabled, option 'b' must be enabled as well",
+            {
+                "option_name": "a",
+                "prerequisite_name": "b",
+            }
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_info(
+            "If some option 'a' is enabled, "
+                "other option 'b' must be enabled as well"
+            ,
+            {
+                "option_name": "a",
+                "option_type": "some",
+                "prerequisite_name": "b",
+                "prerequisite_type": "other",
+            }
+        )
+
+
 class PrerequisiteOptionIsMissing(NameBuildTest):
     code = codes.PREREQUISITE_OPTION_IS_MISSING
     def test_without_type(self):
@@ -1204,6 +1253,26 @@ class nolive_skip_service_command_on_nodes(NameBuildTest):
                 "nodes": ["node1", "node2"]
             }
         )
+
+
+class NodeAddressesUnresolvable(NameBuildTest):
+    code = codes.NODE_ADDRESSES_UNRESOLVABLE
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Unable to resolve addresses: 'node1'",
+            {
+                "address_list": ["node1",],
+            }
+        )
+
+    def test_more_address(self):
+        self.assert_message_from_info(
+            "Unable to resolve addresses: 'node1', 'node2', 'node3'",
+            {
+                "address_list": ["node1", "node2", "node3"],
+            }
+        )
+
 
 class NodeNotFound(NameBuildTest):
     code = codes.NODE_NOT_FOUND
@@ -1898,12 +1967,181 @@ class CibLoadErrorBadFormat(NameBuildTest):
         )
 
 
+class CorosyncBadNodeAddressesCount(NameBuildTest):
+    code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
+    def test_no_node_info(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+            }
+        )
+
+    def test_node_name(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node 'node1'",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_name": "node1",
+            }
+        )
+
+    def test_node_id(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node '2'",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_id": 2,
+            }
+        )
+
+    def test_node_name_and_id(self):
+        self.assert_message_from_info(
+            "At least 1 and at most 4 addresses can be specified for a node, "
+            "5 addresses specified for node 'node2'",
+            {
+                "actual_count": 5,
+                "min_count": 1,
+                "max_count": 4,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
+
+class CorosyncIpVersionMismatchInLinks(NameBuildTest):
+    code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
+    def test_message(self):
+        self.assert_message_from_info(
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+                "either IPv4 or IPv6 in links '0', '3', '4'"
+            ,
+            {
+                "link_numbers": [3, 0, 4]
+            }
+        )
+
+
+class CorosyncNodeAddressCountMismatch(NameBuildTest):
+    code = codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH
+    def test_message(self):
+        self.assert_message_from_info(
+            "All nodes must have the same number of addresses; "
+                "nodes 'node3', 'node4', 'node6' have 1 address; "
+                "nodes 'node2', 'node5' have 3 addresses; "
+                "node 'node1' has 2 addresses"
+            ,
+            {
+                "node_addr_count": {
+                    "node1": 2,
+                    "node2": 3,
+                    "node3": 1,
+                    "node4": 1,
+                    "node5": 3,
+                    "node6": 1,
+                },
+            }
+        )
+
+
+class CorosyncLinkNumberDuplication(NameBuildTest):
+    code = codes.COROSYNC_LINK_NUMBER_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Link numbers must be unique, duplicate link numbers: '1', '3'",
+            {
+                "link_number_list": ["1", "3"],
+            }
+        )
+
+
+class CorosyncNodeAddressDuplication(NameBuildTest):
+    code = codes.COROSYNC_NODE_ADDRESS_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Node addresses must be unique, duplicate addresses: "
+                "'node1', 'node3'"
+            ,
+            {
+                "address_list": ["node1", "node3"],
+            }
+        )
+
+
+class CorosyncNodeNameDuplication(NameBuildTest):
+    code = codes.COROSYNC_NODE_NAME_DUPLICATION
+    def test_message(self):
+        self.assert_message_from_info(
+            "Node names must be unique, duplicate names: 'node1', 'node3'",
+            {
+                "name_list": ["node1", "node3"],
+            }
+        )
+
+
+class CorosyncNodesMissing(NameBuildTest):
+    code = codes.COROSYNC_NODES_MISSING
+    def test_message(self):
+        self.assert_message_from_info(
+            "No nodes have been specified",
+            {
+            }
+        )
+
+
 class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
     code = codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
     def test_message(self):
         self.assert_message_from_info(
             "No exec_NAME options are specified, so heuristics are effectively "
                 "disabled"
+        )
+
+
+class CorosyncTooManyLinks(NameBuildTest):
+    code = codes.COROSYNC_TOO_MANY_LINKS
+    def test_udp(self):
+        self.assert_message_from_info(
+            "Cannot set 2 links, udp/udpu transport supports up to 1 link",
+            {
+                "actual_count": 2,
+                "max_count": 1,
+                "transport": "udp/udpu",
+            }
+        )
+
+    def test_knet(self):
+        self.assert_message_from_info(
+            "Cannot set 9 links, knet transport supports up to 8 links",
+            {
+                "actual_count": 9,
+                "max_count": 8,
+                "transport": "knet",
+            }
+        )
+
+
+class CorosyncTransportUnsupportedOptions(NameBuildTest):
+    code = codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS
+    def test_udp(self):
+        self.assert_message_from_info(
+            "The udp/udpu transport does not support 'crypto' options, use "
+                "'knet' transport"
+            ,
+            {
+                "option_type": "crypto",
+                "actual_transport": "udp/udpu",
+                "required_transport_list": ["knet"],
+            }
         )
 
 
@@ -2101,7 +2339,7 @@ class HostNotFound(NameBuildTest):
     def test_single_host(self):
         self.assert_message_from_info(
             (
-                "Host(s) unknown_host not found. Try to authenticate hosts "
+                "Host 'unknown_host' not found. Try to authenticate the host "
                 "using 'pcs host auth unknown_host' command."
             ),
             {
@@ -2112,8 +2350,8 @@ class HostNotFound(NameBuildTest):
     def test_multiple_hosts(self):
         self.assert_message_from_info(
             (
-                "Host(s) another_one, unknown_host not found. Try to "
-                "authenticate hosts using 'pcs host auth another_one "
+                "Hosts 'another_one', 'unknown_host' not found. Try to "
+                "authenticate the hosts using 'pcs host auth another_one "
                 "unknown_host' command."
             ),
             {
@@ -2142,5 +2380,186 @@ class NodeCommunicationErrorNotAuthorized(NameBuildTest):
             {
                 "node": "node1",
                 "reason": "some error",
+            }
+        )
+
+class ClusterDestroyStarted(NameBuildTest):
+    code = codes.CLUSTER_DESTROY_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Destroying cluster on hosts: 'node1', 'node2', 'node3'...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Destroying cluster on hosts: 'node1'...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ClusterDestroySuccess(NameBuildTest):
+    code = codes.CLUSTER_DESTROY_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Successfully destroyed cluster",
+            {
+                "node": "node1",
+            }
+        )
+
+class ClusterEnableStarted(NameBuildTest):
+    code = codes.CLUSTER_ENABLE_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Enabling cluster on hosts: 'node1', 'node2', 'node3'...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Enabling cluster on hosts: 'node1'...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ClusterEnableSuccess(NameBuildTest):
+    code = codes.CLUSTER_ENABLE_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Cluster enabled",
+            {
+                "node": "node1",
+            }
+        )
+
+class ClusterStartStarted(NameBuildTest):
+    code = codes.CLUSTER_START_STARTED
+    def test_multiple_hosts(self):
+        self.assert_message_from_info(
+            "Starting cluster on hosts: 'node1', 'node2', 'node3'...",
+            {
+                "host_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+    def test_single_host(self):
+        self.assert_message_from_info(
+            "Starting cluster on hosts: 'node1'...",
+            {
+                "host_name_list": ["node1"],
+            }
+        )
+
+class ServiceNotInstalled(NameBuildTest):
+    code = codes.SERVICE_NOT_INSTALLED
+    def test_multiple_services(self):
+        self.assert_message_from_info(
+            "node1: Required cluster services not installed: 'service1', "
+                "'service2', 'service3'"
+            ,
+            {
+                "service_list": ["service1", "service3", "service2"],
+                "node": "node1",
+            }
+        )
+
+    def test_single_service(self):
+        self.assert_message_from_info(
+            "node1: Required cluster services not installed: 'service'",
+            {
+                "service_list": ["service"],
+                "node": "node1",
+            }
+        )
+
+
+class HostAlreadyInClusterConfig(NameBuildTest):
+    code = codes.HOST_ALREADY_IN_CLUSTER_CONFIG
+    def test_success(self):
+        self.assert_message_from_info(
+            "host: Cluster configuration files found. Is the host already in "
+                "a cluster?"
+            ,
+            {
+                "host_name": "host",
+            }
+        )
+
+
+class HostAlreadyInClusterServices(NameBuildTest):
+    code = codes.HOST_ALREADY_IN_CLUSTER_SERVICES
+    def test_multiple_services(self):
+        self.assert_message_from_info(
+            (
+                "node1: Running cluster services: 'service1', 'service2', "
+                "'service3'. Is the host already in a cluster?"
+            ),
+            {
+                "service_list": ["service1", "service3", "service2"],
+                "host_name": "node1",
+            }
+        )
+
+    def test_single_service(self):
+        self.assert_message_from_info(
+            "node1: Running cluster services: 'service'. Is the host already "
+                "in a cluster?"
+            ,
+            {
+                "service_list": ["service"],
+                "host_name": "node1",
+            }
+        )
+
+
+class ServiceVersionMismatch(NameBuildTest):
+    code = codes.SERVICE_VERSION_MISMATCH
+    def test_success(self):
+        self.assert_message_from_info(
+            "Hosts do not have the same version of 'service'; "
+                "hosts 'host4', 'host5', 'host6' have version 2.0; "
+                "hosts 'host1', 'host3' have version 1.0; "
+                "host 'host2' has version 1.2"
+            ,
+            {
+                "service": "service",
+                "hosts_version": {
+                    "host1": 1.0,
+                    "host2": 1.2,
+                    "host3": 1.0,
+                    "host4": 2.0,
+                    "host5": 2.0,
+                    "host6": 2.0,
+                }
+            }
+        )
+
+class WaitForNodeStartupStarted(NameBuildTest):
+    code = codes.WAIT_FOR_NODE_STARTUP_STARTED
+    def test_success(self):
+        self.assert_message_from_info(
+            "Waiting for nodes to start: 'node1', 'node2', 'node3'...",
+            {
+                "node_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+class PcsdVersionTooOld(NameBuildTest):
+    code = codes.PCSD_VERSION_TOO_OLD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "node1: Old version of pcsd is running on the node, therefore "
+                "it is unable to perform the action"
+            ),
+            {
+                "node": "node1",
             }
         )

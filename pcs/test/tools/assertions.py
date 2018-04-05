@@ -292,7 +292,7 @@ def _unexpected_report_given(
     return AssertionError(
         (
             "\n  Unexpected real report given:"
-            "\n  =============================\n  {0}\n"
+            "\n  =============================\n    {0}\n"
             "\n  remaining expected reports ({1}) are:"
             "\n  ------------------------------------\n    {2}\n"
             "\n  all expected reports ({3}) are:"
