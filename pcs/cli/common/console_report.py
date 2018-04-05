@@ -1603,6 +1603,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.SERVICE_VERSION_MISMATCH: service_version_mismatch,
 
+    codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START:
+        "Cannot specify '--wait' without specifying '--start'"
+    ,
     codes.WAIT_FOR_NODE_STARTUP_STARTED: lambda info:
         "Waiting for nodes to start: {_nodes}...".format(
             _nodes=format_list(info["node_name_list"])

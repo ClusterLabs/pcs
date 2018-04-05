@@ -221,6 +221,10 @@ def setup(
         if wait is False:
             wait_timeout = False
         else:
+            if not start:
+                report_list.append(
+                    reports.wait_for_node_startup_without_start()
+                )
             wait_timeout = get_valid_timeout_seconds(wait)
     except LibraryError as e:
         report_list.extend(e.args)

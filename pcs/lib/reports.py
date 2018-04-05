@@ -3209,6 +3209,12 @@ def wait_for_node_startup_timed_out():
 def wait_for_node_startup_error():
     return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)
 
+def wait_for_node_startup_without_start():
+    """
+    User requested waiting for nodes to start without instructing pcs to start
+    the nodes
+    """
+    return ReportItem.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)
 
 def pcsd_version_too_old(node):
     return ReportItem.error(

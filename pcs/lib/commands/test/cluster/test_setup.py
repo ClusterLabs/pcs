@@ -1195,6 +1195,7 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 COMMAND_NODE_LIST,
                 transport_type="knet",
+                start=True,
                 wait="abcd"
             )
         )
@@ -1203,6 +1204,30 @@ class Validation(TestCase):
                 fixture.error(
                     report_codes.INVALID_TIMEOUT_VALUE,
                     timeout="abcd"
+                )
+            ]
+        )
+
+    def test_wait_without_start(self):
+        self.config.http.host.get_host_info(
+            NODE_LIST,
+            output_data=self.get_host_info_ok
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type="knet",
+                wait="10"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,
                 )
             ]
         )
@@ -1235,6 +1260,9 @@ class Validation(TestCase):
                     option_value="tcp",
                     option_name="transport",
                     allowed_values=("knet", "udp", "udpu")
+                ),
+                fixture.error(
+                    report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,
                 ),
                 fixture.error(
                     report_codes.INVALID_TIMEOUT_VALUE,
