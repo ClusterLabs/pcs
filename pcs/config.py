@@ -397,8 +397,9 @@ def config_restore_local(infile_name, infile_obj):
                     tmp_dir = tempfile.mkdtemp()
                 tarball.extractall(tmp_dir, [tar_member_info])
                 path_full = extract_info["path"]
-                os.rename(
-                    os.path.join(tmp_dir, tar_member_info.name), path_full
+                shutil.move(
+                    os.path.join(tmp_dir, tar_member_info.name),
+                    path_full
                 )
             else:
                 dir_path = os.path.dirname(extract_info["path"])
