@@ -3144,26 +3144,26 @@ class NewClusterSetup(unittest.TestCase):
 
     def test_one_node_empty_addrs(self):
         node_name = "node"
-        self.call_cmd([node_name, "addrs="])
+        self.call_cmd([node_name, "addr="])
         self.assert_setup_called_with([node_dict_fixture(node_name, [''])])
 
     def test_one_node_with_single_address(self):
         node_name = "node"
         addr = "node_addr"
-        self.call_cmd([node_name, "addrs={}".format(addr)])
+        self.call_cmd([node_name, "addr={}".format(addr)])
         self.assert_setup_called_with([node_dict_fixture(node_name, [addr])])
 
     def test_one_node_with_multiple_addresses(self):
         node_name = "node"
         addr_list = ["addr{}".format(i) for i in range(3)]
-        self.call_cmd([node_name, "addrs={}".format(",".join(addr_list))])
+        self.call_cmd([node_name] + [f"addr={addr}" for addr in addr_list])
         self.assert_setup_called_with([node_dict_fixture(node_name, addr_list)])
 
     def test_node_unknown_options(self):
         node_name = "node"
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(
-                [node_name, "unknown=option", "another=one", "addrs=addr"]
+                [node_name, "unknown=option", "another=one", "addr=addr"]
             )
         self.assertEqual(
             "Unknown options {} for node '{}'".format(
@@ -3174,7 +3174,7 @@ class NewClusterSetup(unittest.TestCase):
 
     def test_multiple_nodes(self):
         self.call_cmd(
-            ["node1", "addrs=addr1,addr2", "node2", "node3", "addrs=addr"]
+            ["node1", "addr=addr1", "addr=addr2", "node2", "node3", "addr=addr"]
         )
         self.assert_setup_called_with(
             [
@@ -3283,7 +3283,7 @@ class NewClusterSetup(unittest.TestCase):
 
     def test_full_knet(self):
         self.call_cmd([
-            "node0", "node2", "addrs=addr0", "node1", "addrs=addr1,addr2",
+            "node0", "node2", "addr=addr0", "node1", "addr=addr1", "addr=addr2",
             "totem", "a=1", "b=1", "quorum", "c=1", "d=1", "transport", "knet",
             "a=a", "b=b", "compression", "a=1", "b=2", "c=3", "crypto", "d=4",
             "e=5", "link", "aa=1", "link", "ba=1", "bb=2", "link", "ca=1",
@@ -3310,7 +3310,7 @@ class NewClusterSetup(unittest.TestCase):
 
     def assert_with_all_options(self, transport_type):
         self.call_cmd([
-            "node0", "node2", "addrs=addr0", "node1", "addrs=addr1,addr2",
+            "node0", "node2", "addr=addr0", "node1", "addr=addr1", "addr=addr2",
             "totem", "a=1", "b=1", "quorum", "c=1", "d=1", "transport",
             transport_type, "a=a", "b=b", "link", "aa=1", "link", "ba=1",
             "bb=2",

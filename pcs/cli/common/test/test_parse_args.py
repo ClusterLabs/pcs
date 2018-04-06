@@ -39,8 +39,28 @@ class PrepareOptionsTest(TestCase):
             CmdLineInputError, lambda: prepare_options(['a=a', "a=b"])
         )
 
-    def test_accept_options_with_ssame_key_and_same_value(self):
+    def test_accept_options_with_same_key_and_same_value(self):
         self.assertEqual({'a': '1'}, prepare_options(["a=1", "a=1"]))
+
+    def test_allow_repeatable(self):
+        self.assertEqual(
+            {'a': ['1', '2']},
+            prepare_options(["a=1", "a=2"], allowed_repeatable_options=("a"))
+        )
+
+    def test_allow_repeatable_only_once(self):
+        self.assertEqual(
+            {'a': ['1']},
+            prepare_options(["a=1"], allowed_repeatable_options=("a"))
+        )
+
+    def test_allow_repeatable_multiple(self):
+        self.assertEqual(
+            {'a': ['1', '3', '2', '4']},
+            prepare_options(
+                ["a=1", "a=3", "a=2", "a=4"], allowed_repeatable_options=("a")
+            )
+        )
 
 
 class SplitListTest(TestCase):
