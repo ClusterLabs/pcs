@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Pcsd option to reject client initiated SSL/TLS renegotiation ([rhbz#1566382])
+
+[rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
+
+
 ## [0.9.164] - 2018-04-09
 
 ### Security
@@ -7,7 +15,7 @@
   ([rhbz#1557366])
 - CVE-2018-1079: Privilege escalation via authorized user malicious REST call
   ([rhbz#1550243])
-- CVE-2018-1000119 rack-protection: Timing attack in authenticity_token.rb
+- CVE-2018-1000119 rack-protection: Timing attack in authenticity\_token.rb
   ([rhbz#1534027])
 
 [rhbz#1534027]: https://bugzilla.redhat.com/show_bug.cgi?id=1534027

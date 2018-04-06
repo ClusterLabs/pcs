@@ -76,6 +76,29 @@ def run_server(server, webrick_options, secondary_addrs)
     server.run(Sinatra::Application, webrick_options) { |server_instance|
       # configure ssl options
       server_instance.ssl_context.ciphers = ciphers
+      if ENV['PCSD_REJECT_SSL_RENEG'] and ENV['PCSD_REJECT_SSL_RENEG'].downcase == "true" then
+        # reject ssl/tls renegotiation
+        negotiation_counter = Hash.new
+        server_instance.ssl_context.renegotiation_cb = lambda do |ssl_socket|
+          # This callback is called for every negotiation including the first
+          # one for a new connection. remove all closed sockets from the
+          # counter to clean it up
+          negotiation_counter.delete_if { |key, val| key.io.closed? }
+          # sign our socket in
+          if negotiation_counter.key?(ssl_socket)
+            negotiation_counter[ssl_socket] += 1
+          else
+            negotiation_counter[ssl_socket] = 0
+          end
+          # The only way to disallow the renegotiation is to raise an exception.
+          if negotiation_counter[ssl_socket] > 0
+            $logger.error("Client renegotiation disabled, closing connection")
+            raise RuntimeError.new(
+              "Client renegotiation disabled, closing connection"
+            )
+          end
+        end
+      end
       # set listening addresses
       secondary_addrs.each { |addr|
         $logger.info("Adding listener on #{addr} port #{port}")
