@@ -68,12 +68,12 @@ class Sinatra(RequestHandler):
         self.set_status(result.status)
         self.write(result.body)
 
-class SinatraGui(session.Mixin, Sinatra):
+class SinatraGui(session.Mixin, EnhnceHeadersMixin, Sinatra):
     can_use_sinatra = True
     def before_sinatra_use(self):
         pass
 
-    async def get(self, *args, **kwargs):
+    async def handle_sinatra_request(self):
         self.before_sinatra_use()
         if self.can_use_sinatra:
             sinatra_result = await ruby_pcsd_proxy.request_gui(
@@ -84,18 +84,24 @@ class SinatraGui(session.Mixin, Sinatra):
             )
             self.send_sinatra_result(sinatra_result)
 
-    def redirect_temporary(self, url):
-        self.redirect(url, status=302)
+    async def get(self, *args, **kwargs):
+        await self.handle_sinatra_request()
 
-    def redirect_post_to_get_resource(self, url):
-        self.redirect(url, status=303)
+    async def post(self, *args, **kwargs):
+        await self.handle_sinatra_request()
 
 class SinatraRemote(Sinatra):
-    async def get(self, *args, **kwargs):
+    async def handle_sinatra_request(self):
         sinatra_result = await ruby_pcsd_proxy.request_remote(self.request)
         self.send_sinatra_result(sinatra_result)
 
-class SinatraGuiProtected(SinatraGui, EnhnceHeadersMixin):
+    async def get(self, *args, **kwargs):
+        await self.handle_sinatra_request()
+
+    async def post(self, *args, **kwargs):
+        await self.handle_sinatra_request()
+
+class SinatraGuiProtected(SinatraGui):
     def before_sinatra_use(self):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
@@ -104,10 +110,10 @@ class SinatraGuiProtected(SinatraGui, EnhnceHeadersMixin):
 
         if not self.session.is_authenticated:
             self.enhance_headers()
-            self.redirect_temporary("/login")
+            self.redirect("/login", status=302) #redirect temporary (302)
             self.can_use_sinatra = False
 
-class SinatraAjaxProtected(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
+class SinatraAjaxProtected(SinatraGui, AjaxMixin):
     @property
     def is_authorized(self):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
@@ -121,7 +127,7 @@ class SinatraAjaxProtected(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
             self.enhance_headers()
             raise self.unauthorized()
 
-class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
+class Login(SinatraGui, AjaxMixin):
     def before_sinatra_use(self):
         #TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
@@ -148,7 +154,7 @@ class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
         if self.is_ajax:
             self.write(self.session.ajax_id)
         else:
-            self.redirect_post_to_get_resource("/manage")
+            self.redirect("/manage", status=303) #post -> get resource (303)
 
     def __failed_response(self, username):
         if self.is_ajax:
@@ -156,9 +162,9 @@ class Login(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
 
         self.ensure_session()
         self.session_login_failed(username)
-        self.redirect_post_to_get_resource("/login")
+        self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(session.Mixin, RequestHandler, EnhnceHeadersMixin, AjaxMixin):
+class LoginStatus(session.Mixin, EnhnceHeadersMixin, AjaxMixin, RequestHandler):
     # This is for ajax. However no-ajax requests are allowed. It is how it works
     # in ruby.
     def get(self, *args, **kwargs):
@@ -170,7 +176,7 @@ class LoginStatus(session.Mixin, RequestHandler, EnhnceHeadersMixin, AjaxMixin):
             self.put_request_cookies_sid_to_response_cookies_sid()
         self.write(self.session.ajax_id)
 
-class Logout(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
+class Logout(session.Mixin, EnhnceHeadersMixin, AjaxMixin, RequestHandler):
     def get(self, *args, **kwargs):
         self.session_logout()
         self.ensure_session()
@@ -178,7 +184,7 @@ class Logout(SinatraGui, EnhnceHeadersMixin, AjaxMixin):
         if self.is_ajax:
             self.write("OK")
         else:
-            self.redirect_temporary("/login")
+            self.redirect("/login", status=302) #redirect temporary (302)
 
 class RegenerateCertHandler(RequestHandler):
     def initialize(self, https_server_manage: HttpsServerManage):

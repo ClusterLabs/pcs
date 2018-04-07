@@ -34,7 +34,7 @@ elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
   app = [Sinatra::Application][0]
 
   env = request["env"]
-  env["rack.input"] = StringIO.new("")
+  env["rack.input"] = StringIO.new(env["rack.input"])
 
   status, headers, body = app.call(env)
 

@@ -61,6 +61,7 @@ def get_sinatra_request(request_type, request):
             "HTTPS": "on" if request.protocol == "https" else "off",
             "HTTP_VERSION": request.version,
             "REQUEST_PATH": request.uri,
+            "rack.input": request.body.decode("utf8"),
         }
     })
     return sinatra_request
