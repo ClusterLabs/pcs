@@ -16,6 +16,7 @@ def get_ruby_request(request_type):
     return {
         "type": request_type,
         "config": {
+            # TODO in real server it is /var/lib/pcsd/
             "user_pass_dir": PCSD_DIR,
         },
     }

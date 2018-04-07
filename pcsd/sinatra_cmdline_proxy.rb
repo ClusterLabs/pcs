@@ -21,7 +21,7 @@ elsif !request.include?("config") or !request["config"].include?("user_pass_dir"
   result = {:error => "user_pass_dir not specified"}
 
 elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
-  $user_pass_file = request["config"]["user_pass_dir"] + $user_pass_file
+  $user_pass_file = request["config"]["user_pass_dir"] + "/" + $user_pass_file
 
   if request["type"] == "sinatra_gui"
     $tornado_username = request["session"]["username"]
