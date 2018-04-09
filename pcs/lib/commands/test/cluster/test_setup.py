@@ -634,8 +634,6 @@ class Validation(TestCase):
                     {"name": "node3", "addrs": None},
                     # use the name as an address
                     {"name": "node4"},
-                    # no name defined, keep addrs undefined
-                    {"addrs": None},
                 ],
                 transport_type="knet"
             )
@@ -651,26 +649,21 @@ class Validation(TestCase):
                     node_name="node2",
                     node_id=2
                 ),
-                # no addrs and no name defined
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=0,
-                    min_count=1,
-                    max_count=8,
-                    node_name=None,
-                    node_id=5
-                ),
-                fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    option_names=["name"],
-                    option_type="node 5"
-                ),
                 # we use this to verify what addrs have been used
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["addr1", "node3", "node4"]
-                )
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+                    node_addr_count={
+                        "node1": 1,
+                        "node2": 0,
+                        "node3": 1,
+                        "node4": 1,
+                    }
+                ),
             ]
         )
 

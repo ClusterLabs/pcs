@@ -117,6 +117,11 @@ def verify(env, verbose=False):
     env.report_processor.send()
 
 
+def _normalize_dict(input_dict, required_keys):
+    for key in required_keys:
+        if key not in input_dict:
+            input_dict[key] = None
+
 def setup(
     env, cluster_name, nodes,
     transport_type=None, transport_options=None, link_list=None,
@@ -161,16 +166,14 @@ def setup(
     crypto_options = crypto_options or {}
     totem_options = totem_options or {}
     quorum_options = quorum_options or {}
+    for node in nodes:
+        _normalize_dict(node, {"addrs"})
 
     # Use a node name as an address if no addresses specified. This allows
     # users not to specify node addresses at all which simplifies the whole
     # cluster setup command / form significantly.
     for node in nodes:
-        # If node["addrs"] == None then node.get("addrs", []) returns None.
-        # We need it to return a list.
-        if "addrs" in node and node["addrs"] is None:
-            del node["addrs"]
-        if node.get("addrs") is None and node.get("name") is not None:
+        if node["addrs"] is None:
             node["addrs"] = [node["name"]]
 
     # Validate inputs.
@@ -180,7 +183,7 @@ def setup(
     )
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(
-            [len(node.get("addrs", [])) for node in nodes],
+            [len(node["addrs"]) for node in nodes],
             default=0
         )
         report_list.extend(
