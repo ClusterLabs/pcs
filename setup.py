@@ -17,7 +17,7 @@ class CleanCommand(Command):
 
 setup(
     name='pcs',
-    version='0.9.163',
+    version='0.9.164',
     description='Pacemaker Configuration System',
     author='Chris Feist',
     author_email='cfeist@redhat.com',

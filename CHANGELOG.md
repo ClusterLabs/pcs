@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.164] - 2018-04-09
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
