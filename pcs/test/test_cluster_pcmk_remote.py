@@ -154,8 +154,8 @@ class NodeAddGuest(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -284,8 +284,8 @@ class NodeAddGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -329,8 +329,8 @@ class NodeAddGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -478,8 +478,8 @@ class NodeRemoveGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="NODE-ID-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="NODE-ID-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -504,8 +504,8 @@ class NodeRemoveGuest(ResourceTest):
                     type="Dummy"
                 >
                     <operations>
-                        <op id="NODE-ID-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="NODE-ID-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>

@@ -201,7 +201,7 @@ class ResourceTest(TestCase, AssertPcsMixin):
     def testAddResourcesLargeCib(self):
         output, returnVal = pcs(
             temp_large_cib,
-            "resource create dummy0 ocf:heartbeat:Dummy"
+            "resource create dummy0 ocf:heartbeat:Dummy --no-default-ops"
         )
         ac(output, '')
         assert returnVal == 0
@@ -211,12 +211,7 @@ class ResourceTest(TestCase, AssertPcsMixin):
         ac(output, outdent(
             """\
              Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: migrate_from interval=0s timeout=20 (dummy0-migrate_from-interval-0s)
-                          migrate_to interval=0s timeout=20 (dummy0-migrate_to-interval-0s)
-                          monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
-                          reload interval=0s timeout=20 (dummy0-reload-interval-0s)
-                          start interval=0s timeout=20 (dummy0-start-interval-0s)
-                          stop interval=0s timeout=20 (dummy0-stop-interval-0s)
+              Operations: monitor interval=10s timeout=20s (dummy0-monitor-interval-10s)
             """
         ))
 
@@ -436,7 +431,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         self.assert_pcs_success("resource show OPTest6", outdent(
             """\
              Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (OPTest6-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (OPTest6-monitor-interval-10s)
                           monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest6-monitor-interval-30s)
             """
         ))
@@ -480,7 +475,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                 Error: operation monitor already specified for OCFTest1, use --force to override:
-                monitor interval=10 timeout=20 (OCFTest1-monitor-interval-10)
+                monitor interval=10s timeout=20s (OCFTest1-monitor-interval-10s)
                 """
             )
         )
@@ -498,7 +493,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                  Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (OCFTest1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (OCFTest1-monitor-interval-10s)
                               monitor interval=31s (OCFTest1-monitor-interval-31s)
                               monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)
                 """
@@ -751,13 +746,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success("resource show A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: migrate_from interval=0s timeout=20 (A-migrate_from-interval-0s)
-                          migrate_to interval=0s timeout=20 (A-migrate_to-interval-0s)
+              Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
+                          migrate_to interval=0s timeout=20s (A-migrate_to-interval-0s)
                           monitor interval=10 (A-monitor-interval-10)
                           monitor interval=20 (A-monitor-interval-20)
-                          reload interval=0s timeout=20 (A-reload-interval-0s)
-                          start interval=0s timeout=20 (A-start-interval-0s)
-                          stop interval=0s timeout=20 (A-stop-interval-0s)
+                          reload interval=0s timeout=20s (A-reload-interval-0s)
+                          start interval=0s timeout=20s (A-start-interval-0s)
+                          stop interval=0s timeout=20s (A-stop-interval-0s)
             """
         ))
 
@@ -781,13 +776,13 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success("resource show A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: migrate_from interval=0s timeout=20 (A-migrate_from-interval-0s)
-                          migrate_to interval=0s timeout=20 (A-migrate_to-interval-0s)
+              Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
+                          migrate_to interval=0s timeout=20s (A-migrate_to-interval-0s)
                           monitor interval=11 (A-monitor-interval-11)
                           monitor interval=20 (A-monitor-interval-20)
-                          reload interval=0s timeout=20 (A-reload-interval-0s)
-                          start interval=0s timeout=20 (A-start-interval-0s)
-                          stop interval=0s timeout=20 (A-stop-interval-0s)
+                          reload interval=0s timeout=20s (A-reload-interval-0s)
+                          start interval=0s timeout=20s (A-start-interval-0s)
+                          stop interval=0s timeout=20s (A-stop-interval-0s)
             """
         ))
 
@@ -800,12 +795,14 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource op remove B-monitor-interval-10")
+        self.assert_pcs_success("resource op remove B-monitor-interval-10s")
 
         output, returnVal = pcs(temp_cib, "resource show B")
-        ac(output, """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-""")
+        ac(output, outdent(
+            """\
+             Resource: B (class=ocf provider=heartbeat type=Dummy)
+            """
+        ))
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -995,15 +992,15 @@ monitor interval=20 (A-monitor-interval-20)
             """\
              Group: AGroup
               Resource: A1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A1-monitor-interval-10s)
               Resource: A2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A2-monitor-interval-10s)
               Resource: A3 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A3-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A3-monitor-interval-10s)
               Resource: A4 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A4-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A4-monitor-interval-10s)
               Resource: A5 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A5-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A5-monitor-interval-10s)
             """
         ))
 
@@ -1017,19 +1014,21 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o, """\
- ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
- Resource Group: TestGroup1
-     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped
- Clone Set: ClusterIP4-clone [ClusterIP4]
- Master/Slave Set: Master [ClusterIP5]
- Resource Group: AGroup
-     A2\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
- A1\t(ocf::heartbeat:Dummy):\tStopped
- A3\t(ocf::heartbeat:Dummy):\tStopped
-""")
+        ac(o, outdent(
+            """\
+             ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
+             Resource Group: TestGroup1
+                 ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped
+             Clone Set: ClusterIP4-clone [ClusterIP4]
+             Master/Slave Set: Master [ClusterIP5]
+             Resource Group: AGroup
+                 A2\t(ocf::heartbeat:Dummy):\tStopped
+                 A4\t(ocf::heartbeat:Dummy):\tStopped
+                 A5\t(ocf::heartbeat:Dummy):\tStopped
+             A1\t(ocf::heartbeat:Dummy):\tStopped
+             A3\t(ocf::heartbeat:Dummy):\tStopped
+            """
+        ))
 
         o,r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
         assert r == 0
@@ -1041,14 +1040,16 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o, """\
-Location Constraints:
-  Resource: AGroup
-    Enabled on: rh7-1 (score:INFINITY)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
+        ac(o, outdent(
+            """\
+            Location Constraints:
+              Resource: AGroup
+                Enabled on: rh7-1 (score:INFINITY)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+        ))
 
         o,r = pcs(temp_cib, "resource ungroup AGroup")
         assert r == 0
@@ -1061,15 +1062,15 @@ Ticket Constraints:
         self.assert_pcs_success("resource show A1 A2 A3 A4 A5", outdent(
             """\
              Resource: A1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A1-monitor-interval-10s)
              Resource: A2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A2-monitor-interval-10s)
              Resource: A3 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A3-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A3-monitor-interval-10s)
              Resource: A4 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A4-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A4-monitor-interval-10s)
              Resource: A5 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A5-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A5-monitor-interval-10s)
             """
         ))
 
@@ -1650,7 +1651,7 @@ Ticket Constraints:
             """\
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -1958,9 +1959,9 @@ Ticket Constraints:
              Master: GroupMaster
               Group: Group
                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -2036,10 +2037,10 @@ Ticket Constraints:
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
              Clone: dummy2-clone
               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2051,9 +2052,9 @@ Ticket Constraints:
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
              Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2071,9 +2072,9 @@ Ticket Constraints:
              Clone: gr-clone
               Group: gr
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2085,9 +2086,9 @@ Ticket Constraints:
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2101,9 +2102,9 @@ Ticket Constraints:
              Clone: gr-clone
               Group: gr
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2115,9 +2116,9 @@ Ticket Constraints:
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2131,9 +2132,9 @@ Ticket Constraints:
              Clone: gr-clone
               Group: gr
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2148,9 +2149,9 @@ Ticket Constraints:
              Clone: gr-clone
               Group: gr
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
              Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
             """
         ))
 
@@ -2161,9 +2162,9 @@ Ticket Constraints:
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
              Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
             """
         ))
 
@@ -2489,13 +2490,13 @@ Ticket Constraints:
             """\
              Clone: D0-clone
               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
              Master: D1-master-custom
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Master: D2-master
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
@@ -2522,11 +2523,11 @@ Ticket Constraints:
             """\
              Master: D1-master-custom
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
@@ -2874,13 +2875,13 @@ Ticket Constraints:
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D0-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Master: D2-master
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
@@ -3055,10 +3056,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-clone-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
              Clone: dummy-clone-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3077,10 +3078,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-clone-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
              Clone: dummy-clone-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3106,10 +3107,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-master-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
              Master: dummy-master-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3128,10 +3129,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-master-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
              Master: dummy-master0
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3150,10 +3151,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-master-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
              Master: dummy-master-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3169,7 +3170,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             """\
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3183,7 +3184,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
              Clone: D1-clone
               Meta Attrs: foo=bar 
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3195,7 +3196,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
              Clone: D1-clone
               Meta Attrs: foo=bar bar=baz 
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3209,7 +3210,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
              Clone: D1-clone
               Meta Attrs: bar=baz 
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3237,9 +3238,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
              Resource: B (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (B-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (B-monitor-interval-10s)
             """
         ))
 
@@ -3324,7 +3325,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             """\
              Master: AGMaster
               Resource: A (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
         ))
 
@@ -3352,9 +3353,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
              Clone: DG-clone
               Group: DG
                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
                Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
@@ -3372,15 +3373,17 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         )
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG")
-        ac(output, """\
-Error: Cannot remove more than one resource from cloned group
-""")
+        ac(
+            output,
+            "Error: Cannot remove more than one resource from cloned group\n"
+        )
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG D1 D2")
-        ac(output, """\
-Error: Cannot remove more than one resource from cloned group
-""")
+        ac(
+            output,
+            "Error: Cannot remove more than one resource from cloned group\n"
+        )
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG D1")
@@ -3392,9 +3395,9 @@ Error: Cannot remove more than one resource from cloned group
              Clone: DG-clone
               Group: DG
                Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3406,9 +3409,9 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: DG-clone
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3436,7 +3439,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: target-role=Stopped 
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3447,7 +3450,7 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success("resource show D1", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
 
@@ -3475,12 +3478,12 @@ Error: Cannot remove more than one resource from cloned group
              Clone: group0-clone
               Group: group0
                Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-                Operations: migrate_from interval=0s timeout=20 (dummy0-migrate_from-interval-0s)
-                            migrate_to interval=0s timeout=20 (dummy0-migrate_to-interval-0s)
-                            monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
-                            reload interval=0s timeout=20 (dummy0-reload-interval-0s)
-                            start interval=0s timeout=20 (dummy0-start-interval-0s)
-                            stop interval=0s timeout=20 (dummy0-stop-interval-0s)
+                Operations: migrate_from interval=0s timeout=20s (dummy0-migrate_from-interval-0s)
+                            migrate_to interval=0s timeout=20s (dummy0-migrate_to-interval-0s)
+                            monitor interval=10s timeout=20s (dummy0-monitor-interval-10s)
+                            reload interval=0s timeout=20s (dummy0-reload-interval-0s)
+                            start interval=0s timeout=20s (dummy0-start-interval-0s)
+                            stop interval=0s timeout=20s (dummy0-stop-interval-0s)
             """
         ))
         assert retVal == 0
@@ -3611,7 +3614,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3628,7 +3631,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3649,7 +3652,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3670,7 +3673,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3685,7 +3688,7 @@ Error: Cannot remove more than one resource from cloned group
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped 
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3697,7 +3700,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3714,7 +3717,7 @@ Error: Cannot remove more than one resource from cloned group
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped 
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -3726,7 +3729,7 @@ Error: Cannot remove more than one resource from cloned group
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
@@ -4031,9 +4034,9 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assert_pcs_success("resource show --full", outdent(
             """\
              Resource: B (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (B-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (B-monitor-interval-10s)
              Resource: C (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (C-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (C-monitor-interval-10s)
             """
         ))
 
@@ -4051,7 +4054,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
               Operations: monitor interval=30s (B-monitor-interval-30s)
                           monitor interval=31s role=Master (B-monitor-interval-31s)
              Resource: C (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (C-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (C-monitor-interval-10s)
             """
         ))
 
@@ -4179,13 +4182,13 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
               Attributes: ip=3.3.3.3
               Operations: monitor interval=10s timeout=20s (myip2-monitor-interval-10s)
              Resource: myfs (class=ocf provider=heartbeat type=Filesystem)
-              Operations: monitor interval=20 timeout=40 (myfs-monitor-interval-20)
+              Operations: monitor interval=20s timeout=40s (myfs-monitor-interval-20s)
              Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)
               Attributes: device=x directory=y
-              Operations: monitor interval=20 timeout=40 (myfs2-monitor-interval-20)
+              Operations: monitor interval=20s timeout=40s (myfs2-monitor-interval-20s)
              Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)
               Attributes: device=x directory=y fstype=z
-              Operations: monitor interval=20 timeout=40 (myfs3-monitor-interval-20)
+              Operations: monitor interval=20s timeout=40s (myfs3-monitor-interval-20s)
             """
         ))
 
@@ -4218,11 +4221,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
              Clone: dummies-clone
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
             """
         ))
 
@@ -4230,12 +4233,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource show")
-        ac(output, """\
- Resource Group: dummies
-     dummy1\t(ocf::heartbeat:Dummy):\tStopped
-     dummy2\t(ocf::heartbeat:Dummy):\tStopped
-     dummy3\t(ocf::heartbeat:Dummy):\tStopped
-""")
+        ac(output, outdent(
+            """\
+             Resource Group: dummies
+                 dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                 dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                 dummy3\t(ocf::heartbeat:Dummy):\tStopped
+            """
+        ))
         assert retVal == 0
 
         output, retVal = pcs(temp_cib, "resource clone dummies")
@@ -4247,11 +4252,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
              Clone: dummies-clone
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
             """
         ))
 
@@ -4296,11 +4301,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
              Master: dummies-master
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
             """
         ))
 
@@ -4308,12 +4313,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource show")
-        ac(output, """\
- Resource Group: dummies
-     dummy1\t(ocf::heartbeat:Dummy):\tStopped
-     dummy2\t(ocf::heartbeat:Dummy):\tStopped
-     dummy3\t(ocf::heartbeat:Dummy):\tStopped
-""")
+        ac(output, outdent(
+            """\
+             Resource Group: dummies
+                 dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                 dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                 dummy3\t(ocf::heartbeat:Dummy):\tStopped
+            """
+        ))
         assert retVal == 0
 
         output, retVal = pcs(temp_cib, "resource master dummies")
@@ -4325,11 +4332,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
              Master: dummies-master
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
             """
         ))
 
@@ -4742,12 +4749,12 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
-                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
-                           start interval=0s timeout=20 (dummy-start-interval-0s)
-                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
+                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
+                           start interval=0s timeout=20s (dummy-start-interval-0s)
+                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
             """
         ))
         self.assert_pcs_fail(
@@ -4762,12 +4769,12 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
-                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
-                           start interval=0s timeout=20 (dummy-start-interval-0s)
-                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
+                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
+                           start interval=0s timeout=20s (dummy-start-interval-0s)
+                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
             """
         ))
 
@@ -4779,12 +4786,12 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             """\
              Master: dummy-master
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
-                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
-                           start interval=0s timeout=20 (dummy-start-interval-0s)
-                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
+                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
+                           start interval=0s timeout=20s (dummy-start-interval-0s)
+                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
             """
         ))
         self.assert_pcs_fail(
@@ -4799,12 +4806,12 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             """\
              Master: dummy-master
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20 (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20 (dummy-migrate_to-interval-0s)
-                           monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-                           reload interval=0s timeout=20 (dummy-reload-interval-0s)
-                           start interval=0s timeout=20 (dummy-start-interval-0s)
-                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
+                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
+                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
+                           start interval=0s timeout=20s (dummy-start-interval-0s)
+                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
             """
         ))
 

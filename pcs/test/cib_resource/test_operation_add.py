@@ -55,8 +55,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -74,8 +74,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op description="test-description" name="start"
                             id="R-start-interval-20s" interval="20s"
@@ -100,8 +100,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -115,8 +115,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -135,8 +135,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="abcd" interval="0s" name="start" timeout="30" />
                     </operations>

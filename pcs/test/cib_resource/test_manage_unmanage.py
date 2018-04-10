@@ -28,15 +28,15 @@ class ManageUnmanage(
                     />
                 </meta_attributes>
                 <operations>
-                    <op id="A-monitor-interval-10" interval="10"
-                        name="monitor" timeout="20"
+                    <op id="A-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
                     />
                 </operations>
             </primitive>
             <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                 <operations>
-                    <op id="B-monitor-interval-10" interval="10"
-                        name="monitor" timeout="20"
+                    <op id="B-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
                     />
                 </operations>
             </primitive>
@@ -96,8 +96,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20" enabled="false"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s" enabled="false"
                         />
                     </operations>
                 </primitive>
@@ -118,8 +118,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -135,8 +135,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -152,8 +152,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20" enabled="false"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s" enabled="false"
                         />
                     </operations>
                 </primitive>
@@ -177,8 +177,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -189,8 +189,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="B-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="B-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -207,15 +207,15 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="B-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="B-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -235,8 +235,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -261,8 +261,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
