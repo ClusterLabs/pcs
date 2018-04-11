@@ -1,5 +1,6 @@
 from pcs.common import report_codes
 from pcs.common.node_communicator import Request
+from pcs.common.reports import SimpleReportProcessorInterface
 from pcs.lib import reports
 from pcs.lib.node_communication import response_to_report_item
 from pcs.lib.errors import (
@@ -86,8 +87,8 @@ class RunRemotelyBase(CommunicationCommandInterface):
     reporting.
     """
     #pylint: disable=abstract-method
-    def __init__(self, report_processor):
-        self._report_processor = report_processor
+    def __init__(self, report_processor: SimpleReportProcessorInterface):
+        self.__report_processor = report_processor
         self._error_list = []
 
     def _get_response_report(self, response):
@@ -105,7 +106,9 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
         list report_list -- list of ReportItem objects
         """
-        self._error_list.extend(self._report_processor.report_list(report_list))
+        self._error_list.extend(
+            self.__report_processor.report_list(report_list)
+        )
 
     def _report(self, report):
         """

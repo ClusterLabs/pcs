@@ -3,6 +3,7 @@ import time
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.tools import (
@@ -169,6 +170,8 @@ def setup(
     for node in nodes:
         _normalize_dict(node, {"addrs"})
 
+    _report_processor = SimpleReportProcessor(env.report_processor)
+
     # Use a node name as an address if no addresses specified. This allows
     # users not to specify node addresses at all which simplifies the whole
     # cluster setup command / form significantly.
@@ -177,16 +180,16 @@ def setup(
             node["addrs"] = [node["name"]]
 
     # Validate inputs.
-    report_list = config_validators.create(
+    _report_processor.report_list(config_validators.create(
         cluster_name, nodes, transport_type,
         force_unresolvable=force_unresolvable
-    )
+    ))
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(
             [len(node["addrs"]) for node in nodes],
             default=0
         )
-        report_list.extend(
+        _report_processor.report_list(
             config_validators.create_transport_knet(
                 transport_options,
                 compression_options,
@@ -199,7 +202,7 @@ def setup(
             )
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        report_list.extend(
+        _report_processor.report_list(
             config_validators.create_transport_udp(
                 transport_options,
                 compression_options,
@@ -208,7 +211,7 @@ def setup(
             +
             config_validators.create_link_list_udp(link_list)
         )
-    report_list.extend(
+    _report_processor.report_list(
         config_validators.create_totem(totem_options)
         +
         # We are creating the config and we know there is no qdevice in it.
@@ -220,12 +223,12 @@ def setup(
             wait_timeout = False
         else:
             if not start:
-                report_list.append(
+                _report_processor.report(
                     reports.wait_for_node_startup_without_start()
                 )
             wait_timeout = get_valid_timeout_seconds(wait)
     except LibraryError as e:
-        report_list.extend(e.args)
+        _report_processor.report_list(e.args)
 
     # Validate the nodes.
     # If a node doesn't contain the 'name key, validation of inputs reports it.
@@ -237,21 +240,16 @@ def setup(
             allow_skip=False,
         )
     )
-    report_list.extend(target_report_list)
-    com_cmd = GetHostInfo(env.report_processor)
+    _report_processor.report_list(target_report_list)
+    com_cmd = GetHostInfo(_report_processor)
     com_cmd.set_targets(target_list)
-    host_info_dict = run_com(env.get_node_communicator(), com_cmd)
-    report_list.extend(_host_check_cluster_setup(host_info_dict, force))
+    _report_processor.report_list(
+        _host_check_cluster_setup(
+            run_com(env.get_node_communicator(), com_cmd), force
+        )
+    )
 
-    # Reporting:
-    # GetHostInfo command may already reported some issues directly into the
-    # report_processor. In order not to report them twice, all the gathered
-    # report items are put into the report_processor using its report_list
-    # method. This method does not raise a LibraryError on errors, instead it
-    # returns all the errors. This allows us to exit by raising a LibraryError
-    # if any errors occurred.
-    errors = env.report_processor.report_list(report_list)
-    if errors or com_cmd.error_list:
+    if _report_processor.has_errors:
         raise LibraryError()
 
     # Validation done. If errors occured, an exception has been raised and we
