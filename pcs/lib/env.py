@@ -7,7 +7,6 @@ from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
 from pcs.lib.pacemaker.env import PacemakerEnv
-from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
@@ -284,7 +283,7 @@ class LibraryEnvironment(object):
         if self.is_corosync_conf_live:
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    corosync_conf_facade.get_nodes().labels,
+                    corosync_conf_facade.get_nodes_names(),
                     skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,
@@ -334,10 +333,6 @@ class LibraryEnvironment(object):
         if self.is_cluster_conf_live:
             return get_local_cluster_conf()
         return self._cluster_conf_data
-
-
-    def get_cluster_conf(self):
-        return ClusterConfFacade.from_string(self.get_cluster_conf_data())
 
 
     @property

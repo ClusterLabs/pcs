@@ -11,7 +11,6 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
 from pcs.common.node_communicator import RequestTarget
-from pcs.lib.node import NodeAddresses, NodeAddressesList
 from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
 from pcs.lib.external import NodeCommunicator, NodeConnectionException
 import pcs.lib.booth.sync as lib
@@ -26,9 +25,7 @@ class SyncConfigInCluster(TestCase):
     def setUp(self):
         self.mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
         self.mock_reporter = MockLibraryReportProcessor()
-        self.node_list = NodeAddressesList(
-            [NodeAddresses("node" + str(i) for i in range(5))]
-        )
+        self.node_list = ["node" + str(i) for i in range(5)]
 
     def test_without_authfile(self, mock_parallel):
         lib.send_config_to_all_nodes(

@@ -125,6 +125,19 @@ class ConfigFacade(object):
                 ))
         return result
 
+    def get_nodes_names(self):
+        """
+        Get names of all defined nodes
+        """
+        result = []
+        for nodelist in self.config.get_sections("nodelist"):
+            for node in nodelist.get_sections("node"):
+                names = node.get_attributes("name")
+                if names:
+                    # get the value ([1]) of the last ([-1]) name attribute
+                    result.append(names[-1][1])
+        return result
+
     def create_link_list(self, link_list):
         """
         Add a link list to a config without one

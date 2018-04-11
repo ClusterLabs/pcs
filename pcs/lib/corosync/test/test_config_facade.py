@@ -47,7 +47,7 @@ class FromStringTest(TestCase):
         )
 
 
-class GetClusterNametest(TestCase):
+class GetClusterNameTest(TestCase):
     def test_no_name(self):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
@@ -168,6 +168,97 @@ nodelist {
             ],
             nodes
         )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+
+class GetNodesNames(TestCase):
+    def test_no_nodelist(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        nodes_names = facade.get_nodes_names()
+        self.assertEqual([], nodes_names)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_empty_nodelist(self):
+        config = outdent("""\
+            nodelist {
+            }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        nodes_names = facade.get_nodes_names()
+        self.assertEqual([], nodes_names)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_one_nodelist(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    name: n1n
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: n2a
+                    ring1_addr: n2b
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        nodes_names = facade.get_nodes_names()
+        self.assertEqual(["n1n", "n2n"], nodes_names)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_more_nodelists(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    nodeid: 1
+                    name: n1n
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: n2a
+                    ring1_addr: n2b
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        nodes_names = facade.get_nodes_names()
+        self.assertEqual(["n1n", "n2n"], nodes_names)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_missing_name(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: n2a
+                    ring1_addr: n2b
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        nodes_names = facade.get_nodes_names()
+        self.assertEqual(["n2n"], nodes_names)
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 

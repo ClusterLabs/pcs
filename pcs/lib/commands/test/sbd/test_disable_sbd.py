@@ -14,7 +14,6 @@ class DisableSbd(TestCase):
         self.config.env.set_known_nodes(self.node_list)
 
     def test_success(self):
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
@@ -43,7 +42,6 @@ class DisableSbd(TestCase):
 
     def test_node_offline(self):
         err_msg = "Failed connect to rh7-3:2224; No route to host"
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(
             communication_list=[
@@ -75,7 +73,6 @@ class DisableSbd(TestCase):
     def test_success_node_offline_skip_offline(self):
         err_msg = "Failed connect to rh7-3:2224; No route to host"
         online_nodes_list = ["rh7-2", "rh7-3"]
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(
             communication_list=[
@@ -117,7 +114,6 @@ class DisableSbd(TestCase):
 
     def test_set_stonith_watchdog_timeout_fails_on_some_nodes(self):
         err_msg = "Error"
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
@@ -174,7 +170,6 @@ class DisableSbd(TestCase):
 
     def test_set_stonith_watchdog_timeout_fails_on_all_nodes(self):
         err_msg = "Error"
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
@@ -206,7 +201,6 @@ class DisableSbd(TestCase):
 
     def test_disable_failed(self):
         err_msg = "Error"
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(

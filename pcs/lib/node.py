@@ -1,6 +1,3 @@
-class NodeNotFound(Exception):
-    pass
-
 def node_addresses_contain_host(node_addresses_list, host):
     return (
         host in [node.ring0 for node in node_addresses_list]

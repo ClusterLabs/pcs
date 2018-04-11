@@ -68,8 +68,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
-from pcs.lib.env_tools import get_nodes
-from pcs.lib.node import NodeAddresses, NodeAddressesList
+from pcs.lib.env_tools import get_nodes_names
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import (
@@ -438,9 +437,7 @@ def cluster_setup(argv):
             )
             com_cmd.set_targets(
                 lib_env.get_node_target_factory().get_target_list(
-                    NodeAddressesList(
-                        [NodeAddresses(node) for node in primary_addr_list]
-                    ).labels,
+                    primary_addr_list,
                     skip_non_existing=modifiers["skip_offline_nodes"],
                 )
             )
@@ -1509,7 +1506,7 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
             )
             com_cmd.set_targets(
                 lib_env.get_node_target_factory().get_target_list(
-                    corosync_conf.get_nodes().labels,
+                    corosync_conf.get_nodes_names(),
                     skip_non_existing=skip_offline_nodes,
                 )
             )
@@ -1627,11 +1624,10 @@ def node_add(lib_env, node0, node1, modifiers):
             "cluster is not configured for RRP, "
             "you must not specify ring 1 address for the node"
         )
-    node_addr = NodeAddresses(node0, node1)
     new_node_target = None
     try:
         new_node_target = lib_env.get_node_target_factory().get_target(
-            node_addr.label
+            node0
         )
     except HostNotFound as e:
         utils.err("Host '{}' is not authenticated".format(e.host_name))
@@ -1663,7 +1659,7 @@ def node_add(lib_env, node0, node1, modifiers):
                     lib_env,
                     qdevice_model_options["host"],
                     conf_facade.get_cluster_name(),
-                    [node_addr],
+                    [node0],
                     skip_offline_nodes=False
                 )
 
@@ -1751,8 +1747,8 @@ def node_add(lib_env, node0, node1, modifiers):
         # if the cluster is stopped, we cannot get the cib anyway
         _share_authkey(
             lib_env,
-            get_nodes(lib_env.get_corosync_conf()),
-            node_addr,
+            get_nodes_names(lib_env.get_corosync_conf()),
+            node0,
             skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_incomplete_distribution=modifiers["skip_offline_nodes"]
         )
@@ -2103,7 +2099,7 @@ def cluster_destroy(argv):
             )
         if cib is not None:
             try:
-                all_remote_nodes = get_nodes(tree=cib)
+                all_remote_nodes = get_nodes_names(tree=cib)
                 if len(all_remote_nodes) > 0:
                     _destroy_pcmk_remote_env(
                         lib_env,

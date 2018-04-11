@@ -156,7 +156,7 @@ def add_device(
     if lib_env.is_corosync_conf_live:
         target_factory = lib_env.get_node_target_factory()
         target_list = target_factory.get_target_list(
-            cfg.get_nodes().labels, skip_non_existing=skip_offline_nodes,
+            cfg.get_nodes_names(), skip_non_existing=skip_offline_nodes,
         )
         # Do model specific configuration.
         # If the model is not known to pcs and was forced, do not configure
@@ -204,7 +204,7 @@ def _add_device_model_net(
     setup cluster nodes for using qdevice model net
     string qnetd_host address of qdevice provider (qnetd host)
     string cluster_name name of the cluster to which qdevice is being added
-    NodeAddressesList cluster_nodes list of cluster nodes addresses
+    list cluster_nodes_target_list list of cluster nodes names
     bool skip_offline_nodes continue even if not all nodes are accessible
     """
     runner = lib_env.cmd_runner()
@@ -311,7 +311,7 @@ def remove_device(lib_env, skip_offline_nodes=False):
 
     if lib_env.is_corosync_conf_live:
         target_list = lib_env.get_node_target_factory().get_target_list(
-            cfg.get_nodes().labels, skip_non_existing=skip_offline_nodes,
+            cfg.get_nodes_names(), skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):

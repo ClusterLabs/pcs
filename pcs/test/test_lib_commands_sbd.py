@@ -18,10 +18,6 @@ from pcs.lib.errors import (
     ReportItem,
 )
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.node import (
-    NodeAddresses,
-    NodeAddressesList,
-)
 import pcs.lib.commands.sbd as cmd_sbd
 
 
@@ -358,17 +354,17 @@ class ValidateSbdOptionsTest(TestCase):
 class ValidateWatchdogDictTest(TestCase):
     def test_all_ok(self):
         watchdog_dict = {
-            NodeAddresses("node1"): "/dev/watchdog1",
-            NodeAddresses("node2"): "/dev/watchdog2",
+            "node1": "/dev/watchdog1",
+            "node2": "/dev/watchdog2",
         }
         self.assertEqual([], cmd_sbd._validate_watchdog_dict(watchdog_dict))
 
     def test_some_not_ok(self):
         watchdog_dict = {
-            NodeAddresses("node1"): "",
-            NodeAddresses("node2"): None,
-            NodeAddresses("node3"): "/dev/watchdog",
-            NodeAddresses("node4"): "../dev/watchdog",
+            "node1": "",
+            "node2": None,
+            "node3": "/dev/watchdog",
+            "node4": "../dev/watchdog",
         }
         assert_report_item_list_equal(
             cmd_sbd._validate_watchdog_dict(watchdog_dict),

@@ -341,11 +341,11 @@ def resumeConfigSyncing(node):
 def canAddNodeToCluster(node_communicator, target):
     """
     Return tuple with two parts. The first part is information if the node can
-    be added to a cluster. The second part is a relevant explanation for first
-    part.
+    be added to a cluster. The second part is a relevant explanation for the
+    first part.
 
-    NodeCommunicator node_communicator provide connection to the node
-    NodeAddresses node contain destination for request
+    NodeCommunicator node_communicator -- provides connection to the node
+    string target -- the request's destination
     """
     report_list = []
     com_cmd = PrecheckNewNode(report_list, availability_checker_node)
@@ -2893,5 +2893,3 @@ def get_user_and_pass():
     else:
         password = get_terminal_password()
     return username, password
-
-

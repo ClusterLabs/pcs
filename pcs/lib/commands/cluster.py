@@ -28,14 +28,10 @@ from pcs.lib.corosync import (
     config_validators,
     constants as corosync_constants
 )
-from pcs.lib.env_tools import get_nodes
+from pcs.lib.env_tools import get_nodes_names
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
-)
-from pcs.lib.node import (
-    node_addresses_contain_name,
-    node_addresses_contain_host,
 )
 from pcs.lib.pacemaker.live import (
     get_cib,
@@ -67,12 +63,8 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
     if mocked_envs:
         raise LibraryError(reports.live_environment_required(mocked_envs))
 
-    current_nodes = get_nodes(env.get_corosync_conf(), env.get_cib())
-    if(
-        node_addresses_contain_name(current_nodes, node_name)
-        or
-        node_addresses_contain_host(current_nodes, node_name)
-    ):
+    current_nodes = get_nodes_names(env.get_corosync_conf(), env.get_cib())
+    if node_name in current_nodes:
         env.report_processor.process(
             reports.get_problem_creator(
                 report_codes.FORCE_CLEAR_CLUSTER_NODE,

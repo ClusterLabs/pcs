@@ -13,7 +13,6 @@ from pcs.lib.communication.sbd import (
     SetStonithWatchdogTimeoutToZero,
 )
 from pcs.lib.communication.nodes import GetOnlineTargets
-from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
@@ -92,7 +91,7 @@ def _validate_watchdog_dict(watchdog_dict):
     Validates if all watchdogs are specified by absolute path.
     Returns list of ReportItem.
 
-    watchdog_dict -- dictionary with NodeAddresses as keys and value as watchdog
+    watchdog_dict -- dictionary with node names as keys and value as watchdog
     """
     return [
         reports.invalid_watchdog_path(watchdog)
@@ -108,7 +107,7 @@ def _validate_device_dict(node_device_dict):
     have to be specified with absolute path.
     Returns list of ReportItem
 
-    node_device_dict -- dictionary with NodeAddresses as keys and list of
+    node_device_dict -- dictionary with node names as keys and list of
         devices as values
     """
     report_item_list = []
@@ -168,10 +167,10 @@ def enable_sbd(
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
     """
-    # TODO: do not load corosync conf multiple times
-    node_list = _get_cluster_nodes(lib_env)
+    corosync_conf = lib_env.get_corosync_conf()
+    node_list = corosync_conf.get_nodes_names()
     target_list = lib_env.get_node_target_factory().get_target_list(
-        node_list.labels, skip_non_existing=ignore_offline_nodes,
+        node_list, skip_non_existing=ignore_offline_nodes,
     )
     using_devices = not (
         default_device_list is None and node_device_dict is None
@@ -197,7 +196,7 @@ def enable_sbd(
             for node in (
                 set(list(watchdog_dict.keys()) + list(node_device_dict.keys()))
                 -
-                set(node_list.labels)
+                set(node_list)
             )
         ]
         +
@@ -225,8 +224,7 @@ def enable_sbd(
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # enable ATB if neede
-    if not lib_env.is_cman_cluster and not using_devices:
-        corosync_conf = lib_env.get_corosync_conf()
+    if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.process(reports.sbd_requires_atb())
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
@@ -275,18 +273,11 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     )
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env).labels,
+            lib_env.get_corosync_conf().get_nodes_names(),
             skip_non_existing=ignore_offline_nodes,
         )
     )
     online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)
-
-    if lib_env.is_cman_cluster:
-        com_cmd = CheckCorosyncOffline(
-            lib_env.report_processor, skip_offline_targets=ignore_offline_nodes,
-        )
-        com_cmd.set_targets(online_nodes)
-        run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     com_cmd = SetStonithWatchdogTimeoutToZero(lib_env.report_processor)
     com_cmd.set_targets(online_nodes)
@@ -296,10 +287,9 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     com_cmd.set_targets(online_nodes)
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    if not lib_env.is_cman_cluster:
-        lib_env.report_processor.process(
-            reports.cluster_restart_required_to_apply_changes()
-        )
+    lib_env.report_processor.process(
+        reports.cluster_restart_required_to_apply_changes()
+    )
 
 
 def get_cluster_sbd_status(lib_env):
@@ -319,7 +309,8 @@ def get_cluster_sbd_status(lib_env):
     com_cmd = GetSbdStatus(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env).labels, skip_non_existing=True
+            lib_env.get_corosync_conf().get_nodes_names(),
+            skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)
@@ -344,10 +335,12 @@ def get_cluster_sbd_config(lib_env):
     com_cmd = GetSbdConfig(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            _get_cluster_nodes(lib_env).labels, skip_non_existing=True
+            lib_env.get_corosync_conf().get_nodes_names(),
+            skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)
+
 
 def get_local_sbd_config(lib_env):
     """
@@ -356,12 +349,6 @@ def get_local_sbd_config(lib_env):
     lib_env -- LibraryEnvironment
     """
     return environment_file_to_dict(sbd.get_local_sbd_config())
-
-
-def _get_cluster_nodes(lib_env):
-    if lib_env.is_cman_cluster:
-        return lib_env.get_cluster_conf().get_nodes()
-    return lib_env.get_corosync_conf().get_nodes()
 
 
 def initialize_block_devices(lib_env, device_list, option_dict):

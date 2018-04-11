@@ -7,12 +7,14 @@ class CorosyncConf(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
 
-    def load_content(self, content, name="corosync_conf.load_content"):
-        self.__calls.place(name, Call(content))
+    def load_content(
+        self, content, name="corosync_conf.load_content", instead=None
+    ):
+        self.__calls.place(name, Call(content), instead=instead)
 
     def load(
         self, node_name_list=None, name="corosync_conf.load",
-        filename="corosync.conf", auto_tie_breaker=None
+        filename="corosync.conf", auto_tie_breaker=None, instead=None
     ):
         content = open(rc(filename)).read()
         corosync_conf = None
@@ -27,6 +29,7 @@ class CorosyncConf(object):
                 node_section = Section("node")
                 node_section.add_attribute("ring0_addr", node_name)
                 node_section.add_attribute("nodeid", i)
+                node_section.add_attribute("name", node_name)
                 nodelist_section.add_section(node_section)
 
 
@@ -44,4 +47,4 @@ class CorosyncConf(object):
         if corosync_conf:
             content = corosync_conf.export()
 
-        self.load_content(content, name)
+        self.load_content(content, name=name, instead=instead)

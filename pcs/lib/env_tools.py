@@ -3,6 +3,9 @@ from pcs.lib.xml_tools import get_root
 from pcs.lib.node import NodeAddressesList
 
 
+def get_nodes_names(corosync_conf=None, tree=None):
+    return get_nodes(corosync_conf, tree).labels
+
 def get_nodes(corosync_conf=None, tree=None):
     return NodeAddressesList(
         (

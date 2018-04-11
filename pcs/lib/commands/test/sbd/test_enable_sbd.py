@@ -157,7 +157,6 @@ class OddNumOfNodesSuccess(TestCase):
             node: "/dev/watchdog-{0}".format(node) for node in self.node_list
         }
         self.config.env.set_known_nodes(self.node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
 
@@ -210,9 +209,6 @@ class OddNumOfNodesSuccess(TestCase):
                 ) for node in self.node_list
             ]
         )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
-        )
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
         )
@@ -247,7 +243,6 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         """)
         self.watchdog = "/dev/watchdog"
         self.config.env.set_known_nodes(self.node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
 
@@ -292,9 +287,6 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
                 for node in self.node_list
             ]
         )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
-        )
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
         )
@@ -329,7 +321,6 @@ class EvenNumOfNodes(TestCase):
         """)
         self.watchdog = "/dev/watchdog"
         self.config.env.set_known_nodes(self.node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
 
@@ -375,9 +366,6 @@ class EvenNumOfNodes(TestCase):
                 for node in self.node_list
             ]
         )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
-        )
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.node_list
         )
@@ -409,15 +397,16 @@ class EvenNumOfNodes(TestCase):
         config_generator = lambda node: self.sbd_config_template.format(
             node_name=node, devices="",
         )
+        self.config.corosync_conf.load(
+            filename=self.corosync_conf_name,
+            auto_tie_breaker=True,
+            instead="corosync_conf.load",
+        )
         self.config.http.sbd.check_sbd(
             communication_list=[
                 _check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
-        )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
-            auto_tie_breaker=True,
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
@@ -440,14 +429,15 @@ class EvenNumOfNodes(TestCase):
         config_generator = lambda node: self.sbd_config_template.format(
             node_name=node, devices="",
         )
+        self.config.corosync_conf.load(
+            filename="corosync-qdevice.conf",
+            instead="corosync_conf.load",
+        )
         self.config.http.sbd.check_sbd(
             communication_list=[
                 _check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
-        )
-        self.config.corosync_conf.load(
-            filename="corosync-qdevice.conf", name="corosync_conf.load2",
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
@@ -498,7 +488,6 @@ class OfflineNodes(TestCase):
             ]
         )
         self.config.env.set_known_nodes(node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(
             communication_list=self.offline_communication_list
@@ -527,14 +516,15 @@ class OfflineNodes(TestCase):
         )
 
     def test_ignore_offline_nodes(self):
+        self.config.corosync_conf.load(
+            filename="corosync-qdevice.conf",
+            instead="corosync_conf.load",
+        )
         self.config.http.sbd.check_sbd(
             communication_list=[
                 _check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.online_node_list
             ]
-        )
-        self.config.corosync_conf.load(
-            filename="corosync-qdevice.conf", name="corosync_conf.load2",
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=self.sbd_config_generator,
@@ -569,9 +559,6 @@ class OfflineNodes(TestCase):
                 _check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.online_node_list
             ]
-        )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
         )
         self.config.http.corosync.check_corosync_offline(
             communication_list=self.offline_communication_list
@@ -612,7 +599,6 @@ class Validations(TestCase):
         self.corosync_conf_name = "corosync.conf"
         self.node_list = ["rh7-1", "rh7-2"]
         self.config.env.set_known_nodes(self.node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
 
     def test_non_existing_node_in_watchdogs(self):
@@ -1102,7 +1088,6 @@ class FailureHandling(TestCase):
             )
         ]
         self.config.env.set_known_nodes(self.node_list)
-        self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.sbd.check_sbd(
@@ -1110,9 +1095,6 @@ class FailureHandling(TestCase):
                 _check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
-        )
-        self.config.corosync_conf.load(
-            filename=self.corosync_conf_name, name="corosync_conf.load2",
         )
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.node_list
@@ -1520,7 +1502,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_invalid_data_format(self):
-        self._remove_calls(12)
+        self._remove_calls(11)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1560,7 +1542,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_failure(self):
-        self._remove_calls(12)
+        self._remove_calls(11)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1603,7 +1585,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_not_connected(self):
-        self._remove_calls(12)
+        self._remove_calls(11)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1647,7 +1629,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_failed(self):
-        self._remove_calls(14)
+        self._remove_calls(13)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_failure
         )
@@ -1672,7 +1654,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_not_connected(self):
-        self._remove_calls(14)
+        self._remove_calls(13)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_not_connected
         )
@@ -1704,10 +1686,7 @@ class UnknownHosts(TestCase):
         self.node_list = ["rh7-1", "rh7-2"]
         self.known_hosts = self.node_list[:-1]
         self.unknown_hosts = self.node_list[-1:]
-        (self.config
-            .runner.corosync.version()
-            .corosync_conf.load()
-        )
+        self.config.corosync_conf.load()
 
     def test_one_node_not_auth(self):
         self.config.env.set_known_nodes(self.known_hosts)
@@ -1741,6 +1720,10 @@ class UnknownHosts(TestCase):
         SBD_WATCHDOG_TIMEOUT=5
         """).format
         (self.config
+            .corosync_conf.load(
+                filename="corosync-qdevice.conf",
+                instead="corosync_conf.load"
+            )
             .env.set_known_nodes(self.known_hosts)
             .http.host.check_auth(self.known_hosts)
             .http.sbd.check_sbd(
@@ -1748,9 +1731,6 @@ class UnknownHosts(TestCase):
                     _check_sbd_comm_success_fixture(node, "/dev/watchdog", [])
                     for node in self.known_hosts
                 ]
-            )
-            .corosync_conf.load(
-                filename="corosync-qdevice.conf", name="corosync_conf.load2",
             )
             .http.sbd.set_sbd_config(
                 config_generator=sbd_config_generator,

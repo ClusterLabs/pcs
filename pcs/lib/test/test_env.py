@@ -1,21 +1,15 @@
 from functools import partial
 import logging
-from lxml import etree
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
-from pcs.test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
-)
+from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc, create_patcher
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes
-from pcs.lib.node import NodeAddresses, NodeAddressesList
-from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.errors import ReportItemSeverity as severity
 
@@ -88,19 +82,6 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertEqual("data", env.get_cluster_conf_data())
         self.assertEqual(0, mock_get_local_cluster_conf.call_count)
-
-    @mock.patch.object(
-        LibraryEnvironment,
-        "get_cluster_conf_data",
-        lambda self: "<cluster/>"
-    )
-    def test_get_cluster_conf(self):
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        facade_obj = env.get_cluster_conf()
-        self.assertTrue(isinstance(facade_obj, ClusterConfFacade))
-        assert_xml_equal(
-            '<cluster/>', etree.tostring(facade_obj._config).decode()
-        )
 
     def test_is_cluster_conf_live_live(self):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -227,10 +208,10 @@ class PushCorosyncConfLiveBase(TestCase):
         self.corosync_conf_facade.config.export.return_value = (
             self.corosync_conf_text
         )
-        self.corosync_conf_facade.get_nodes.return_value = NodeAddressesList([
-            NodeAddresses("node-1"),
-            NodeAddresses("node-2"),
-        ])
+        self.corosync_conf_facade.get_nodes_names.return_value = [
+            "node-1",
+            "node-2",
+        ]
         self.corosync_conf_facade.need_stopped_cluster = False
         self.corosync_conf_facade.need_qdevice_reload = False
         self.node_labels = ["node-1", "node-2"]

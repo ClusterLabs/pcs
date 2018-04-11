@@ -538,15 +538,6 @@ class NodeCommunicator(object):
                 else self._request_timeout
         )
 
-    def call_node(self, node_addr, request, data, request_timeout=None):
-        """
-        Send a request to a node
-        node_addr destination node, instance of NodeAddresses
-        request command to be run on the node
-        data command parameters, encoded by format_data_* method
-        """
-        return self.call_host(node_addr.ring0, request, data, request_timeout)
-
     def call_host(self, host, request, data, request_timeout=None):
         """
         Send a request to a host

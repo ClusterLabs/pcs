@@ -39,16 +39,16 @@ def _ensure_can_add_node_to_remote_cluster(
     env.report_processor.process_list(report_items)
 
 def _share_authkey(
-    env, current_nodes, candidate_node_addresses,
+    env, current_nodes_names, candidate_node_name,
     skip_offline_nodes=False,
     allow_incomplete_distribution=False
 ):
     if env.pacemaker.has_authkey:
         authkey_content = env.pacemaker.get_authkey_content()
-        node_addresses_list = NodeAddressesList([candidate_node_addresses])
+        node_names_list = [candidate_node_name]
     else:
         authkey_content = generate_key()
-        node_addresses_list = current_nodes + [candidate_node_addresses]
+        node_names_list = current_nodes_names + [candidate_node_name]
 
     com_cmd = DistributeFiles(
         env.report_processor,
@@ -59,14 +59,14 @@ def _share_authkey(
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            node_addresses_list.labels,
+            node_names_list,
             skip_non_existing=skip_offline_nodes,
         )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 def _start_and_enable_pacemaker_remote(
-    env, node_list, skip_offline_nodes=False, allow_fails=False
+    env, nodes_names, skip_offline_nodes=False, allow_fails=False
 ):
     com_cmd = ServiceAction(
         env.report_processor,
@@ -80,14 +80,14 @@ def _start_and_enable_pacemaker_remote(
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            NodeAddressesList(node_list).labels,
+            nodes_names,
             skip_non_existing=skip_offline_nodes,
         )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 def _prepare_pacemaker_remote_environment(
-    env, current_nodes, node_host, skip_offline_nodes,
+    env, current_nodes_names, node_host, skip_offline_nodes,
     allow_incomplete_distribution, allow_fails
 ):
     if not env.is_corosync_conf_live:
@@ -117,14 +117,14 @@ def _prepare_pacemaker_remote_environment(
     )
     _share_authkey(
         env,
-        current_nodes,
-        candidate_node,
+        current_nodes_names,
+        candidate_node.label,
         skip_offline_nodes,
         allow_incomplete_distribution
     )
     _start_and_enable_pacemaker_remote(
         env,
-        [candidate_node],
+        [candidate_node.label],
         skip_offline_nodes,
         allow_fails
     )
@@ -232,7 +232,7 @@ def node_add_remote(
 
     _prepare_pacemaker_remote_environment(
         env,
-        current_nodes,
+        current_nodes.labels,
         host,
         skip_offline_nodes,
         allow_incomplete_distribution,
@@ -298,7 +298,7 @@ def node_add_guest(
 
     _prepare_pacemaker_remote_environment(
         env,
-        current_nodes,
+        current_nodes.labels,
         guest_node.get_host_from_options(node_name, options),
         skip_offline_nodes,
         allow_incomplete_distribution,
