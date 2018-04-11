@@ -59,6 +59,19 @@ pcs_bundled_dir = "/usr/lib/pcs/bundled/"
 pcs_bundled_pacakges_dir = os.path.join(pcs_bundled_dir, "packages")
 
 default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"
-default_ssl_extra_options = "OP_NO_SSLv2,OP_NO_SSLv3,OP_NO_TLSv1,OP_NO_TLSv1_1"
+
+# Ssl options are based on default options in python (maybe with some extra
+# options). Format here is the same as the PCSD_SSL_OPTIONS environment
+# variable format (string with coma as a delimiter).
+default_ssl_options = ",".join([
+    "OP_NO_COMPRESSION",
+    "OP_CIPHER_SERVER_PREFERENCE",
+    "OP_SINGLE_DH_USE",
+    "OP_SINGLE_ECDH_USE",
+    "OP_NO_SSLv2",
+    "OP_NO_SSLv3",
+    "OP_NO_TLSv1",
+    "OP_NO_TLSv1_1",
+])
 
 gui_session_lifetime_seconds=60 * 60

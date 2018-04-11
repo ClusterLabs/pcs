@@ -78,25 +78,6 @@ def regenerate_cert_key(server_name, cert_path, key_path):
     with open(key_path, "wb") as key_file:
         key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
 
-def string_to_option(raw_option):
-    option = raw_option.strip()
-    if not option.startswith("OP_") or not hasattr(ssl, option):
-        raise NameError(f"unknown SSL option '{option}'")
-    return getattr(ssl, option)
-
-def default_context():
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.verify_mode = ssl.CERT_NONE
-    return context
-
-def are_valid_ciphers(ciphers):
-    ssl_ctx = default_context()
-    try:
-        ssl_ctx.set_ciphers(ciphers)
-        return True
-    except ssl.SSLError:
-        return False
-
 class PcsdSSL:
     def __init__(self, cert_file_path, key_file_path):
         self.__cert_file_path = cert_file_path
@@ -113,8 +94,8 @@ class PcsdSSL:
         return check_cert_key(self.__cert_file_path, self.__key_file_path)
 
     def create_context(self, ssl_options, ssl_ciphers):
-        ssl_ctx = default_context()
-        ssl_ctx.set_ciphers(ssl_ciphers)
-        ssl_ctx.options = ssl_options
-        ssl_ctx.load_cert_chain(self.__cert_file_path, self.__key_file_path)
-        return ssl_ctx
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.set_ciphers(ssl_ciphers)
+        ssl_context.options = ssl_options
+        ssl_context.load_cert_chain(self.__cert_file_path, self.__key_file_path)
+        return ssl_context

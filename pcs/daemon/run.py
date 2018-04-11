@@ -43,10 +43,8 @@ def main():
     signal.signal(signal.SIGINT, handle_signal)
 
     env_prepare = EnvPrepare(os.environ)
-
-    if env_prepare.errors:
-        for error in env_prepare.errors:
-            log.pcsd.error(error)
+    env_prepare.log_only_once(log.pcsd)
+    if env_prepare.has_errors:
         raise SystemExit(1)
 
     env = env_prepare.env
