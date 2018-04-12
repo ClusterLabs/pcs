@@ -1466,9 +1466,10 @@ def cluster_push(argv):
         if error.strip():
             utils.err("unable to diff the CIBs:\n" + error)
         if not patch.strip():
-            utils.err(
+            print(
                 "The new CIB is the same as the original CIB, nothing to push."
             )
+            sys.exit(0)
 
         command = ["cibadmin", "--patch", "--xml-pipe"]
         output, error, retval = runner.run(command, patch)
