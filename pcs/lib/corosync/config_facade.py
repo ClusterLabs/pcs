@@ -1,6 +1,6 @@
 from pcs import settings
 from pcs.lib import reports
-from pcs.lib.corosync import config_parser, constants
+from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
@@ -122,6 +122,38 @@ class ConfigFacade(object):
                     node_data["ring1_addr"],
                     node_data["name"],
                     node_data["nodeid"]
+                ))
+        return result
+
+    def new_get_nodes(self):
+        """
+        Get all defined nodes
+        """
+        data_names = set(
+            ["name", "nodeid"]
+            +
+            [f"ring{i}_addr" for i in range(constants.LINKS_MAX)]
+        )
+        result = []
+        for nodelist in self.config.get_sections("nodelist"):
+            for node_section in nodelist.get_sections("node"):
+                # first, load all the nodes key-value pairs so that the last
+                # value for each key wins
+                node_data = {}
+                for attr_name, attr_value in node_section.get_attributes():
+                    if attr_name in data_names:
+                        node_data[attr_name] = attr_value
+                if not node_data:
+                    continue
+                # add the node data to the resulting list
+                result.append(node.CorosyncNode(
+                    node_data.get("name"),
+                    [
+                        node.CorosyncNodeAddress(node_data[f"ring{i}_addr"], i)
+                        for i in range(constants.LINKS_MAX)
+                        if node_data.get(f"ring{i}_addr")
+                    ],
+                    node_data.get("nodeid")
                 ))
         return result
 
