@@ -7,8 +7,7 @@ from tornado.ioloop import IOLoop
 from tornado.locks import Lock
 
 from pcs import settings
-from pcs.daemon import log, systemd, session
-from pcs.daemon.app import make_app, sync_configs
+from pcs.daemon import log, systemd, session, ruby_pcsd, app
 from pcs.daemon.env import EnvPrepare
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -30,9 +29,12 @@ def handle_signal(incomming_signal, frame):
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
-def get_config_synchronization(sync_config_lock: Lock):
+def config_sync(
+    sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
+):
     async def config_synchronization():
-        next_run_time = await sync_configs(sync_config_lock)
+        async with sync_config_lock:
+            next_run_time = await ruby_pcsd_wrapper.sync_configs()
         IOLoop.current().call_at(next_run_time, config_synchronization)
     return config_synchronization
 
@@ -46,18 +48,22 @@ def main():
     env_prepare.log_only_once(log.pcsd)
     if env_prepare.has_errors:
         raise SystemExit(1)
-
     env = env_prepare.env
+    print(env)
+
     sync_config_lock = Lock()
+    ruby_pcsd_wrapper = ruby_pcsd.Wrapper(gem_home=env.GEM_HOME)
+    make_app = partial(
+        app.make_app,
+        session.Storage(env.PCSD_SESSION_LIFETIME),
+        ruby_pcsd_wrapper,
+        sync_config_lock,
+        disable_gui=env.DISABLE_GUI,
+        debug=env.DEBUG,
+    )
     try:
         SignalInfo.server_manage = HttpsServerManage(
-            partial(
-                make_app,
-                session.Storage(env.PCSD_SESSION_LIFETIME),
-                sync_config_lock,
-                disable_gui=env.DISABLE_GUI,
-                debug=env.DEBUG
-            ),
+            make_app,
             server_name=socket.gethostname(),
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,
@@ -71,7 +77,7 @@ def main():
         ioloop.add_callback(sign_ioloop_started)
         if systemd.is_systemd() and env.NOTIFY_SOCKET:
             ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
-        ioloop.add_callback(get_config_synchronization(sync_config_lock))
+        ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
         ioloop.start()
     except OSError as e:
         log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")

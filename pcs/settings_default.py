@@ -73,5 +73,6 @@ default_ssl_options = ",".join([
     "OP_NO_TLSv1",
     "OP_NO_TLSv1_1",
 ])
+pcsd_gem_path = "vendor/bundle/ruby"
 
 gui_session_lifetime_seconds=60 * 60

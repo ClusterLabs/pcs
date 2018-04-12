@@ -3,7 +3,7 @@ import os.path
 from tornado.locks import Lock
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
-from pcs.daemon import ruby_pcsd_proxy, session
+from pcs.daemon import ruby_pcsd, session
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 
@@ -15,7 +15,7 @@ from pcs.daemon.auth import authorize_user
 # SO:
 #pylint: disable=abstract-method
 
-class EnhnceHeadersMixin:
+class EnhanceHeadersMixin:
     def set_header_nosniff_content_type(self):
         # The X-Content-Type-Options response HTTP header is a marker used by
         # the server to indicate that the MIME types advertised in the
@@ -62,27 +62,41 @@ class AjaxMixin:
         return Finish()
 
 class Sinatra(RequestHandler):
-    def send_sinatra_result(self, result: ruby_pcsd_proxy.SinatraResult):
+    def initialize(self, ruby_pcsd_wrapper):
+        #pylint: disable=arguments-differ
+        self.__ruby_pcsd_wrapper = ruby_pcsd_wrapper
+
+    def send_sinatra_result(self, result: ruby_pcsd.SinatraResult):
         for name, value in result.headers.items():
             self.set_header(name, value)
         self.set_status(result.status)
         self.write(result.body)
 
-class SinatraGui(session.Mixin, EnhnceHeadersMixin, Sinatra):
+    @property
+    def ruby_pcsd_wrapper(self):
+        return self.__ruby_pcsd_wrapper
+
+class SinatraGui(session.Mixin, EnhanceHeadersMixin, Sinatra):
     can_use_sinatra = True
+
+    def initialize(self, session_storage, ruby_pcsd_wrapper):
+        #pylint: disable=arguments-differ
+        session.Mixin.initialize(self, session_storage)
+        Sinatra.initialize(self, ruby_pcsd_wrapper)
+
     def before_sinatra_use(self):
         pass
 
     async def handle_sinatra_request(self):
         self.before_sinatra_use()
         if self.can_use_sinatra:
-            sinatra_result = await ruby_pcsd_proxy.request_gui(
+            result = await self.ruby_pcsd_wrapper.request_gui(
                 self.request,
                 self.session.username,
                 self.session.groups,
                 self.session.is_authenticated,
             )
-            self.send_sinatra_result(sinatra_result)
+            self.send_sinatra_result(result)
 
     async def get(self, *args, **kwargs):
         await self.handle_sinatra_request()
@@ -92,8 +106,8 @@ class SinatraGui(session.Mixin, EnhnceHeadersMixin, Sinatra):
 
 class SinatraRemote(Sinatra):
     async def handle_sinatra_request(self):
-        sinatra_result = await ruby_pcsd_proxy.request_remote(self.request)
-        self.send_sinatra_result(sinatra_result)
+        result = await self.ruby_pcsd_wrapper.request_remote(self.request)
+        self.send_sinatra_result(result)
 
     async def get(self, *args, **kwargs):
         await self.handle_sinatra_request()
@@ -164,7 +178,7 @@ class Login(SinatraGui, AjaxMixin):
         self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(session.Mixin, EnhnceHeadersMixin, AjaxMixin, RequestHandler):
+class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
     # This is for ajax. However no-ajax requests are allowed. It is how it works
     # in ruby.
     def get(self, *args, **kwargs):
@@ -176,7 +190,7 @@ class LoginStatus(session.Mixin, EnhnceHeadersMixin, AjaxMixin, RequestHandler):
             self.put_request_cookies_sid_to_response_cookies_sid()
         self.write(self.session.ajax_id)
 
-class Logout(session.Mixin, EnhnceHeadersMixin, AjaxMixin, RequestHandler):
+class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
     def get(self, *args, **kwargs):
         self.session_logout()
         self.ensure_session()
@@ -195,8 +209,9 @@ class RegenerateCertHandler(RequestHandler):
         self.https_server_manage.regenerate_certificate()
         self.write("CERTIFICATE_RELOADED")
 
-class StaticFile(EnhnceHeadersMixin, StaticFileHandler):
+class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     def initialize(self, path, default_filename=None):
+        #pylint: disable=arguments-differ
         super().initialize(path, default_filename)
         # In ruby server the header X-Content-Type-Options was sent and we
         # keep it here to keep compatibility for simplifying testing. There is
@@ -209,54 +224,49 @@ def static_route(url_prefix, public_subdir):
         rf"{url_prefix}(.*)",
         StaticFile,
         dict(
-            path=os.path.join(ruby_pcsd_proxy.PUBLIC_DIR, public_subdir)
+            path=os.path.join(ruby_pcsd.PUBLIC_DIR, public_subdir)
         )
     )
 
-async def sync_configs(sync_config_lock: Lock):
-    async with sync_config_lock:
-        return await ruby_pcsd_proxy.request_sync_configs()
-
 class SyncConfigMutualExclusive(SinatraRemote):
-    def initialize(self, sync_config_lock: Lock):
+    def initialize(
+        self, sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
+    ):
         #pylint: disable=arguments-differ
-        self.sync_config_lock = sync_config_lock
+        super().initialize(ruby_pcsd_wrapper)
+        self.__sync_config_lock = sync_config_lock
 
     async def get(self, *args, **kwargs):
-        async with self.sync_config_lock:
+        async with self.__sync_config_lock:
             await super().get(*args, **kwargs)
 
 def make_app(
     session_storage: session.Storage,
+    ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
     https_server_manage: HttpsServerManage,
     disable_gui=False,
     debug=False
 ):
-    session_route = lambda pattern, handler: (
-        pattern,
-        handler,
-        dict(
-            session_storage=session_storage
-        )
-    )
+    ruby_wrapper = dict(ruby_pcsd_wrapper=ruby_pcsd_wrapper)
+    lock= dict(sync_config_lock=sync_config_lock)
+    server_manage = dict(https_server_manage=https_server_manage)
+    sessions = dict(session_storage=session_storage)
+
     routes = [
         # Urls protected by tokens. It is stil done by ruby.
-        (r"/run_pcs", SinatraRemote),
-        (r"/remote/auth", SinatraRemote),
+        (r"/run_pcs", SinatraRemote, ruby_wrapper),
+        (r"/remote/auth", SinatraRemote, ruby_wrapper),
         (
             r"/remote/(set_sync_options|set_configs)",
             SyncConfigMutualExclusive,
-            dict(
-                sync_config_lock=sync_config_lock,
-            )
+            {**ruby_wrapper, **lock}
         ),
-        (r"/remote/.*", SinatraRemote),
-
+        (r"/remote/.*", SinatraRemote, ruby_wrapper),
         (
             r"/daemon-maintenance/reload-cert",
             RegenerateCertHandler,
-            {"https_server_manage": https_server_manage},
+            server_manage,
         ),
     ]
 
@@ -266,18 +276,19 @@ def make_app(
             static_route("/js/", "js"),
             static_route("/images/", "images"),
 
-            session_route(r"/login", Login),
-            session_route(r"/login-status", LoginStatus),
-            session_route(r"/logout", Logout),
+            (r"/login", Login, {**sessions, **ruby_wrapper}),
+            (r"/login-status", LoginStatus, sessions),
+            (r"/logout", Logout, sessions),
 
             #The protection by session was moved from ruby code to python code
             #(tornado).
-            session_route(
+            (
                 r"/($|manage$|permissions$|managec/.+/main)",
                 SinatraGuiProtected,
+                {**sessions, **ruby_wrapper}
             ),
 
-            session_route(r"/.*", SinatraAjaxProtected),
+            (r"/.*", SinatraAjaxProtected, {**sessions, **ruby_wrapper}),
         ])
 
     return Application(routes, debug=debug)

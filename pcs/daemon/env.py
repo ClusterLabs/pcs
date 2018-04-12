@@ -1,6 +1,7 @@
-from collections import namedtuple
 import socket
 import ssl
+from collections import namedtuple
+from os.path import dirname, realpath, abspath
 
 from pcs import settings
 from pcs.lib.validate import is_port_number
@@ -13,6 +14,8 @@ NOTIFY_SOCKET = "NOTIFY_SOCKET"
 DEBUG = "DEBUG"
 DISABLE_GUI = "DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
+GEM_HOME = "GEM_HOME"
+PCSD_DEV = "PCSD_DEV"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -23,6 +26,7 @@ Env = namedtuple("Env", [
     DEBUG,
     DISABLE_GUI,
     PCSD_SESSION_LIFETIME,
+    GEM_HOME,
 ])
 
 class EnvPrepare:
@@ -52,25 +56,33 @@ class EnvPrepare:
 
     def __prepare(self):
         port = self.__port()
+        pcsd_dir = self.__pcsd_dir()
         return Env(
             port,
             self.__ssl_ciphers(),
             self.__ssl_options(),
             self.__bind_addresses(port),
             self.__os_environ.get(NOTIFY_SOCKET, None),
-            self.__os_environ.get(DEBUG, "").lower() == "true",
-            self.__os_environ.get(DISABLE_GUI, "").lower() == "true",
+            self.__debug(),
+            self.__has_true_in_environ(DISABLE_GUI),
             self.__os_environ.get(
                 PCSD_SESSION_LIFETIME,
                 settings.gui_session_lifetime_seconds
-            )
+            ),
+            self.__gem_home(pcsd_dir),
         )
+
+    def __has_true_in_environ(self, environ_key):
+        return self.__os_environ.get(environ_key, "").lower() == "true"
 
     def __port(self):
         port = self.__os_environ.get(PCSD_PORT, settings.pcsd_default_port)
         if not is_port_number(port):
             self.__errors.append(f"Invalid port number '{port}'")
         return port
+
+    def __pcsd_dir(self):
+        return realpath(dirname(abspath(__file__))+ "/../../pcsd")
 
     def __ssl_ciphers(self):
         ssl_ciphers = self.__os_environ.get(
@@ -128,3 +140,17 @@ class EnvPrepare:
             except socket.gaierror as e:
                 self.__errors.append(f"Invalid bind address '{address}': '{e}'")
         return bind_addresses
+
+    def __debug(self):
+        if DEBUG in self.__os_environ:
+            return self.__os_environ[DEBUG].lower() == "true"
+        return self.__has_true_in_environ(PCSD_DEV)
+
+    def __gem_home(self, pcsd_dir):
+        return  "{}/{}".format(
+            pcsd_dir
+                if self.__has_true_in_environ(PCSD_DEV) else
+                realpath(settings.pcsd_exec_location)
+            ,
+            settings.pcsd_gem_path
+        )
