@@ -9,7 +9,7 @@ from tornado.locks import Lock
 
 from pcs import settings
 from pcs.daemon import log, systemd, session, ruby_pcsd, app
-from pcs.daemon.env import EnvPrepare
+from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
 PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
@@ -48,11 +48,9 @@ def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
-    env_prepare = EnvPrepare(os.environ)
-    env_prepare.log_only_once(log.pcsd)
-    if env_prepare.has_errors:
+    env = prepare_env(os.environ, PCSD_DIR, log.pcsd)
+    if env.has_errors:
         raise SystemExit(1)
-    env = env_prepare.env
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
