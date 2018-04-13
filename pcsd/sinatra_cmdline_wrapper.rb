@@ -29,12 +29,7 @@ require 'pcsd'
 if !request.include?("type")
   result = {:error => "Type not specified"}
 
-elsif !request["config"].include?("user_pass_dir")
-  result = {:error => "user_pass_dir not specified"}
-
 elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
-  $user_pass_file = request["config"]["user_pass_dir"] + "/" + $user_pass_file
-
   if request["type"] == "sinatra_gui"
     $tornado_username = request["session"]["username"]
     $tornado_groups = request["session"]["groups"]
@@ -66,7 +61,6 @@ elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
   result[:body] = Base64.encode64(full_body)
 
 elsif request["type"] == "sync_configs"
-  $user_pass_file = request["config"]["user_pass_dir"] + $user_pass_file
   result = {
     :next => Time.now.to_i + run_cfgsync()
   }

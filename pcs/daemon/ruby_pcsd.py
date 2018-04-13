@@ -42,8 +42,6 @@ class Wrapper:
         return {
             "type": request_type,
             "config": {
-                # TODO in real server it is /var/lib/pcsd/
-                "user_pass_dir": PCSD_DIR,
                 "debug": self.__debug,
             },
         }

@@ -15,18 +15,10 @@ def known_hosts_file_path()
   return File.join(File.expand_path('~/.pcs'), KNOWN_HOSTS_FILE_NAME)
 end
 
-def settings_file_path()
-  current_dir = File.expand_path(File.dirname(__FILE__))
-  if PCSD_EXEC_LOCATION == current_dir or PCSD_EXEC_LOCATION == (current_dir + '/')
-    return File.join(PCSD_VAR_LOCATION, 'pcs_settings.conf')
-  else
-    return File.join(current_dir, 'pcs_settings.conf')
-  end
-end
-
+# trick with defined? allows to prefill this constants in tests
 CFG_COROSYNC_CONF = COROSYNC_CONF unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
-CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
+CFG_PCSD_SETTINGS = PCSD_SETTINGS_CONF_LOCATION unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_KNOWN_HOSTS = known_hosts_file_path() unless defined? CFG_PCSD_KNOWN_HOSTS
 
 CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
