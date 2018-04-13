@@ -1,21 +1,16 @@
 import base64
 import json
+import os.path
 from collections import namedtuple
-from os.path import dirname, realpath, abspath, join as join_path
 
 from tornado.gen import Task, multi, convert_yielded
 from tornado.httputil import split_host_and_port, HTTPServerRequest
 from tornado.process import Subprocess
 
 
-PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
-PUBLIC_DIR = join_path(PCSD_DIR, "public")
-PCSD_CMD = "sinatra_cmdline_wrapper.rb"
-
 SINATRA_GUI = "sinatra_gui"
 SINATRA_REMOTE = "sinatra_remote"
 SYNC_CONFIGS = "sync_configs"
-
 
 SinatraResult = namedtuple("SinatraResult", "headers, status, body")
 
@@ -33,8 +28,9 @@ def json_to_sinatra_result(result_json) -> SinatraResult:
     )
 
 class Wrapper:
-    def __init__(self, gem_home, debug=False, ruby_executable="ruby"):
+    def __init__(self, gem_home, pcsd_dir, debug=False, ruby_executable="ruby"):
         self.__gem_home = gem_home
+        self.__pcsd_dir = pcsd_dir
         self.__ruby_executable = ruby_executable
         self.__debug = debug
 
@@ -79,8 +75,8 @@ class Wrapper:
         pcsd_ruby = Subprocess(
             [
                 self.__ruby_executable, "-I",
-                PCSD_DIR,
-                join_path(PCSD_DIR, PCSD_CMD)
+                self.__pcsd_dir,
+                os.path.join(self.__pcsd_dir, "sinatra_cmdline_wrapper.rb")
             ],
             stdin=Subprocess.STREAM,
             stdout=Subprocess.STREAM,

@@ -219,15 +219,6 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
         # future.
         self.set_header_nosniff_content_type()
 
-def static_route(url_prefix, public_subdir):
-    return (
-        rf"{url_prefix}(.*)",
-        StaticFile,
-        dict(
-            path=os.path.join(ruby_pcsd.PUBLIC_DIR, public_subdir)
-        )
-    )
-
 class SyncConfigMutualExclusive(SinatraRemote):
     def initialize(
         self, sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
@@ -244,6 +235,7 @@ def make_app(
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
+    public_dir,
     https_server_manage: HttpsServerManage,
     disable_gui=False,
     debug=False
@@ -271,10 +263,11 @@ def make_app(
     ]
 
     if not disable_gui:
+        static_path = lambda dir: dict(path=os.path.join(public_dir, dir))
         routes.extend([
-            static_route("/css/", "css"),
-            static_route("/js/", "js"),
-            static_route("/images/", "images"),
+            ("/css/(.*)", StaticFile, static_path("css")),
+            ("/js/(.*)", StaticFile, static_path("js")),
+            ("/images/(.*)", StaticFile, static_path("images")),
 
             (r"/login", Login, {**sessions, **ruby_wrapper}),
             (r"/login-status", LoginStatus, sessions),
