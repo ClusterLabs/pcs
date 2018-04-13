@@ -101,7 +101,7 @@ class ConfigFacade(object):
                 cluster_name = attrs[1]
         return cluster_name
 
-    def get_nodes(self):
+    def old_get_nodes(self):
         """
         Get all defined nodes
         """
@@ -125,7 +125,7 @@ class ConfigFacade(object):
                 ))
         return result
 
-    def new_get_nodes(self):
+    def get_nodes(self):
         """
         Get all defined nodes
         """

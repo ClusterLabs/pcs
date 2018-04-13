@@ -9,7 +9,7 @@ def get_nodes_names(corosync_conf=None, tree=None):
 def get_nodes(corosync_conf=None, tree=None):
     return NodeAddressesList(
         (
-            corosync_conf.get_nodes() if corosync_conf
+            corosync_conf.old_get_nodes() if corosync_conf
             else NodeAddressesList([])
         )
         +

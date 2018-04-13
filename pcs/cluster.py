@@ -1748,7 +1748,7 @@ def node_add(lib_env, node0, node1, modifiers):
         # if the cluster is stopped, we cannot get the cib anyway
         _share_authkey(
             lib_env,
-            get_nodes_names(lib_env.get_corosync_conf()),
+            lib_env.get_corosync_conf().get_nodes_names(),
             node0,
             skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_incomplete_distribution=modifiers["skip_offline_nodes"]
@@ -2364,7 +2364,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
-    cluster_node_list = lib_env.get_corosync_conf().get_nodes()
+    cluster_node_list = lib_env.get_corosync_conf().old_get_nodes()
     target_list = []
     not_authorized_node_name_list = []
     for node_name in cluster_node_list.labels:

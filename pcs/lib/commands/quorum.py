@@ -134,7 +134,7 @@ def add_device(
             model_options,
             generic_options,
             heuristics_options,
-            [node.id for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes()],
             force_model=force_model,
             force_options=force_options
         )
@@ -268,7 +268,7 @@ def update_device(
             model_options,
             generic_options,
             heuristics_options,
-            [node.id for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes()],
             force_options=force_options
         )
     )

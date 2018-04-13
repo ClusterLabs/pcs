@@ -84,7 +84,7 @@ class GetClusterNameTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
 
-class GetNodesTest(TestCase):
+class OldGetNodesTest(TestCase):
     def assert_equal_nodelist(self, expected_nodes, real_nodelist):
         real_nodes = [
             {"ring0": n.ring0, "ring1": n.ring1, "label": n.label, "id": n.id}
@@ -95,7 +95,7 @@ class GetNodesTest(TestCase):
     def test_no_nodelist(self):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        nodes = facade.old_get_nodes()
         self.assertEqual(0, len(nodes))
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -106,7 +106,7 @@ nodelist {
 }
 """
         facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        nodes = facade.old_get_nodes()
         self.assertEqual(0, len(nodes))
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -128,7 +128,7 @@ nodelist {
 }
 """
         facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        nodes = facade.old_get_nodes()
         self.assertEqual(2, len(nodes))
         self.assert_equal_nodelist(
             [
@@ -159,7 +159,7 @@ nodelist {
 }
 """
         facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        nodes = facade.old_get_nodes()
         self.assertEqual(2, len(nodes))
         self.assert_equal_nodelist(
             [
@@ -172,7 +172,7 @@ nodelist {
         self.assertFalse(facade.need_qdevice_reload)
 
 
-class NewGetNodesTest(TestCase):
+class GetNodesTest(TestCase):
     def assert_equal_nodelist(self, expected, real):
         real_nodes = [
             {
@@ -186,7 +186,7 @@ class NewGetNodesTest(TestCase):
 
     def nodes_from_config(self, config):
         facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.new_get_nodes()
+        nodes = facade.get_nodes()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         return nodes
