@@ -66,9 +66,9 @@ if not defined? $cur_node_name
   $cur_node_name = `hostname`.chomp
 end
 
-def configure_logger(log_device)
+def configure_logger(log_device, enforce_debug=false)
   logger = Logger.new(log_device)
-  if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
+  if enforce_debug or (ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true") then
     logger.level = Logger::DEBUG
     logger.info "PCSD Debugging enabled"
   else

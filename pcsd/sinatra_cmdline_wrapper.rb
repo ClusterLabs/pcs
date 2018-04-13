@@ -12,12 +12,24 @@ rescue => e
   exit
 end
 
+
+if !request.include?("config")
+  STDOUT.reopen(orig_std_out)
+  result = {:error => "config not specified"}
+  print result.to_json
+  exit
+end
+
+if request["config"].include?("debug")
+  $tornado_debug = request["config"]["debug"]
+end
+
 require 'pcsd'
 
 if !request.include?("type")
   result = {:error => "Type not specified"}
 
-elsif !request.include?("config") or !request["config"].include?("user_pass_dir")
+elsif !request["config"].include?("user_pass_dir")
   result = {:error => "user_pass_dir not specified"}
 
 elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])

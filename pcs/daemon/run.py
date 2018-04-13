@@ -49,10 +49,13 @@ def main():
     if env_prepare.has_errors:
         raise SystemExit(1)
     env = env_prepare.env
-    print(env)
 
     sync_config_lock = Lock()
-    ruby_pcsd_wrapper = ruby_pcsd.Wrapper(gem_home=env.GEM_HOME)
+    ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
+        gem_home=env.GEM_HOME,
+        debug=env.DEBUG,
+        ruby_executable=settings.ruby_executable
+    )
     make_app = partial(
         app.make_app,
         session.Storage(env.PCSD_SESSION_LIFETIME),

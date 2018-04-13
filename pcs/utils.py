@@ -1066,7 +1066,7 @@ def run_pcsdcli(command, data=None):
     gem_home = os.path.join(pcsd_dir_path, settings.pcsd_gem_path)
     env_var["GEM_HOME"] = gem_home
     stdout, dummy_stderr, retval = cmd_runner().run(
-        ["/usr/bin/ruby", "-I" + pcsd_dir_path, pcsdcli_path, command],
+        [settings.ruby_executable, "-I" + pcsd_dir_path, pcsdcli_path, command],
         json.dumps(data),
         env_var
     )

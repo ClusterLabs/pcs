@@ -77,7 +77,7 @@ configure do
   STDERR.reopen(logger)
   STDOUT.sync = true
   STDERR.sync = true
-  $logger = configure_logger('/var/log/pcsd/pcsd.log')
+  $logger = configure_logger('/var/log/pcsd/pcsd.log', $tornado_debug)
 
   capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze

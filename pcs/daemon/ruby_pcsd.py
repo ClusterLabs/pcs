@@ -12,43 +12,10 @@ PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
 PUBLIC_DIR = join_path(PCSD_DIR, "public")
 PCSD_CMD = "sinatra_cmdline_wrapper.rb"
 
-def get_ruby_request(request_type):
-    return {
-        "type": request_type,
-        "config": {
-            # TODO in real server it is /var/lib/pcsd/
-            "user_pass_dir": PCSD_DIR,
-        },
-    }
+SINATRA_GUI = "sinatra_gui"
+SINATRA_REMOTE = "sinatra_remote"
+SYNC_CONFIGS = "sync_configs"
 
-def get_sinatra_request(request_type, request: HTTPServerRequest):
-    sinatra_request = get_ruby_request(request_type)
-
-    host, port = split_host_and_port(request.host)
-    sinatra_request.update({
-        "env": {
-            "PATH_INFO": request.path,
-            "QUERY_STRING": request.query,
-            "REMOTE_ADDR": request.remote_ip,
-            "REMOTE_HOST": request.host,
-            "REQUEST_METHOD": request.method,
-            "REQUEST_URI": f"{request.protocol}://{request.host}{request.uri}",
-            "SCRIPT_NAME": "",
-            "SERVER_NAME": host,
-            "SERVER_PORT": port,
-            "SERVER_PROTOCOL": request.version,
-            "HTTP_HOST": request.host,
-            "HTTP_ACCEPT": "*/*",
-            "HTTP_COOKIE": ";".join([
-                v.OutputString() for v in request.cookies.values()
-            ]),
-            "HTTPS": "on" if request.protocol == "https" else "off",
-            "HTTP_VERSION": request.version,
-            "REQUEST_PATH": request.uri,
-            "rack.input": request.body.decode("utf8"),
-        }
-    })
-    return sinatra_request
 
 SinatraResult = namedtuple("SinatraResult", "headers, status, body")
 
@@ -66,9 +33,49 @@ def json_to_sinatra_result(result_json) -> SinatraResult:
     )
 
 class Wrapper:
-    def __init__(self, gem_home, ruby_executable="ruby"):
+    def __init__(self, gem_home, debug=False, ruby_executable="ruby"):
         self.__gem_home = gem_home
         self.__ruby_executable = ruby_executable
+        self.__debug = debug
+
+    def get_ruby_request(self, request_type):
+        return {
+            "type": request_type,
+            "config": {
+                # TODO in real server it is /var/lib/pcsd/
+                "user_pass_dir": PCSD_DIR,
+                "debug": self.__debug,
+            },
+        }
+
+    def get_sinatra_request(self, request_type, request: HTTPServerRequest):
+        sinatra_request = self.get_ruby_request(request_type)
+
+        host, port = split_host_and_port(request.host)
+        sinatra_request.update({
+            "env": {
+                "PATH_INFO": request.path,
+                "QUERY_STRING": request.query,
+                "REMOTE_ADDR": request.remote_ip,
+                "REMOTE_HOST": request.host,
+                "REQUEST_METHOD": request.method,
+                "REQUEST_URI": f"{request.protocol}://{request.host}{request.uri}",
+                "SCRIPT_NAME": "",
+                "SERVER_NAME": host,
+                "SERVER_PORT": port,
+                "SERVER_PROTOCOL": request.version,
+                "HTTP_HOST": request.host,
+                "HTTP_ACCEPT": "*/*",
+                "HTTP_COOKIE": ";".join([
+                    v.OutputString() for v in request.cookies.values()
+                ]),
+                "HTTPS": "on" if request.protocol == "https" else "off",
+                "HTTP_VERSION": request.version,
+                "REQUEST_PATH": request.uri,
+                "rack.input": request.body.decode("utf8"),
+            }
+        })
+        return sinatra_request
 
     async def run_ruby(self, request: HTTPServerRequest):
         pcsd_ruby = Subprocess(
@@ -96,7 +103,7 @@ class Wrapper:
     async def request_gui(
         self, request: HTTPServerRequest, user, groups, is_authenticated
     ) -> SinatraResult:
-        sinatra_request = get_sinatra_request("sinatra_gui", request)
+        sinatra_request = self.get_sinatra_request(SINATRA_GUI, request)
         # Session was taken from ruby. However, some session information is needed
         # for ruby code (e.g. rendering some parts of templates). So this
         # information must be sent to ruby by another way.
@@ -111,12 +118,12 @@ class Wrapper:
         return json_to_sinatra_result(result_json)
 
     async def request_remote(self, request: HTTPServerRequest) -> SinatraResult:
-        sinatra_request = get_sinatra_request("sinatra_remote", request)
+        sinatra_request = self.get_sinatra_request(SINATRA_REMOTE, request)
         result_json = await convert_yielded(self.run_ruby(sinatra_request))
         return json_to_sinatra_result(result_json)
 
     async def sync_configs(self):
         result_json = await convert_yielded(
-            self.run_ruby(get_ruby_request("sync_configs"))
+            self.run_ruby(self.get_ruby_request(SYNC_CONFIGS))
         )
         return json.loads(result_json)["next"]
