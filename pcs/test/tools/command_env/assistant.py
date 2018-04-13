@@ -5,6 +5,7 @@ import os.path
 import sys
 from unittest import mock
 
+from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.lib.env import LibraryEnvironment
 from pcs.test.tools.assertions import assert_raise_library_error, prepare_diff
 from pcs.test.tools.case_analysis import test_failed
@@ -43,7 +44,13 @@ def patch_env(call_queue, config, init_env):
 
     get_cmd_runner = init_env.cmd_runner
     get_node_communicator = init_env.get_node_communicator
-
+    mock_communicator_factory = mock.Mock(spec_set=NodeCommunicatorFactory)
+    mock_communicator_factory.get_communicator = (
+        # TODO: use request_timeout
+        lambda request_timeout=None:
+            NodeCommunicator(call_queue) if not config.spy
+            else spy.NodeCommunicator(get_node_communicator())
+    )
     patcher_list = [
         patch_lib_env(
             "cmd_runner",
@@ -62,13 +69,7 @@ def patch_env(call_queue, config, init_env):
                 else spy.get_local_corosync_conf
         ),
 
-        patch_lib_env(
-            "get_node_communicator",
-            # TODO: use request_timeout
-            lambda env, request_timeout=None:
-                NodeCommunicator(call_queue) if not config.spy
-                else spy.NodeCommunicator(get_node_communicator())
-        )
+        patch_lib_env("communicator_factory", mock_communicator_factory)
     ]
 
     if is_fs_call_in(call_queue):
