@@ -1,8 +1,8 @@
 import logging
 from tornado.log import enable_pretty_logging
 
-def setup():
-    handler = logging.FileHandler("/var/log/pcsd/pcsd.log")
+def setup(log_file):
+    handler = logging.FileHandler(log_file)
     enable_pretty_logging()
 
     pcsd_log = logging.getLogger("pcs.daemon")

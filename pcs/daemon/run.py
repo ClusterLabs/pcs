@@ -39,7 +39,7 @@ def config_sync(
     return config_synchronization
 
 def main():
-    log.setup()
+    log.setup(settings.pcsd_log_location)
 
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
@@ -52,6 +52,7 @@ def main():
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         gem_home=env.GEM_HOME,
         pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
+        log_file_location=settings.pcsd_log_location,
         debug=env.DEBUG,
         ruby_executable=settings.ruby_executable
     )

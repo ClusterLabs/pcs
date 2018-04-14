@@ -20,16 +20,25 @@ if !request.include?("config")
   exit
 end
 
-if request["config"].include?("debug")
-  $tornado_debug = request["config"]["debug"]
+if !request["config"].include?("log_location")
+  STDOUT.reopen(orig_std_out)
+  result = {:error => "log location not specified"}
+  print result.to_json
+  exit
 end
+
+if !request.include?("type")
+  STDOUT.reopen(orig_std_out)
+  result = {:error => "Type not specified"}
+  print result.to_json
+  exit
+end
+
+$tornado_log_location = request["config"]["log_location"]
 
 require 'pcsd'
 
-if !request.include?("type")
-  result = {:error => "Type not specified"}
-
-elsif ["sinatra_gui", "sinatra_remote"].include?(request["type"])
+if ["sinatra_gui", "sinatra_remote"].include?(request["type"])
   if request["type"] == "sinatra_gui"
     $tornado_username = request["session"]["username"]
     $tornado_groups = request["session"]["groups"]

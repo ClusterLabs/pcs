@@ -29,11 +29,13 @@ def json_to_sinatra_result(result_json) -> SinatraResult:
 
 class Wrapper:
     def __init__(
-        self, gem_home, pcsd_cmdline_entry, debug=False, ruby_executable="ruby"
+        self, gem_home, pcsd_cmdline_entry, log_file_location,
+        debug=False, ruby_executable="ruby"
     ):
         self.__gem_home = gem_home
         self.__pcsd_cmdline_entry = pcsd_cmdline_entry
         self.__pcsd_dir = os.path.dirname(pcsd_cmdline_entry)
+        self.__log_file_location = log_file_location
         self.__ruby_executable = ruby_executable
         self.__debug = debug
 
@@ -41,7 +43,7 @@ class Wrapper:
         return {
             "type": request_type,
             "config": {
-                "debug": self.__debug,
+                "log_location": self.__log_file_location,
             },
         }
 
@@ -74,7 +76,7 @@ class Wrapper:
         })
         return sinatra_request
 
-    async def run_ruby(self, request: HTTPServerRequest):
+    async def run_ruby(self, request):
         pcsd_ruby = Subprocess(
             [
                 self.__ruby_executable, "-I",
@@ -86,6 +88,7 @@ class Wrapper:
             stderr=Subprocess.STREAM,
             env={
                 "GEM_HOME": self.__gem_home,
+                "PCSD_DEBUG": "true" if self.__debug else "false"
             }
         )
 

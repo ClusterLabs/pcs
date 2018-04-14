@@ -72,12 +72,12 @@ configure do
     ENV['PCSD_DISABLE_GUI'] and ENV['PCSD_DISABLE_GUI'].downcase == 'true'
   )
   PCS = get_pcs_path()
-  logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)
+  logger = File.open($tornado_log_location, "a+", 0600)
   STDOUT.reopen(logger)
   STDERR.reopen(logger)
   STDOUT.sync = true
   STDERR.sync = true
-  $logger = configure_logger('/var/log/pcsd/pcsd.log', $tornado_debug)
+  $logger = configure_logger($tornado_log_location)
 
   capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze
@@ -88,6 +88,7 @@ set :logging, true
 set :run, false
 
 def run_cfgsync
+  $logger = configure_logger($tornado_log_location)
   $logger.debug('Config files sync started')
   if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
     begin

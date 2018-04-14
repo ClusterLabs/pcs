@@ -66,19 +66,13 @@ if not defined? $cur_node_name
   $cur_node_name = `hostname`.chomp
 end
 
-def configure_logger(log_device, enforce_debug=false)
+def configure_logger(log_device)
   logger = Logger.new(log_device)
-  if enforce_debug or (ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true") then
+  if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
     logger.level = Logger::DEBUG
     logger.info "PCSD Debugging enabled"
   else
     logger.level = Logger::INFO
-  end
-
-  if ISRHEL6
-    logger.debug "Detected RHEL 6"
-  else
-    logger.debug "Did not detect RHEL 6"
   end
 
   if ISSYSTEMCTL
