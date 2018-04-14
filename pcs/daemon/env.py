@@ -1,11 +1,23 @@
-import os.path
 import socket
 import ssl
 from collections import namedtuple
 from functools import lru_cache
+from os.path import (
+    dirname,
+    realpath,
+    abspath,
+    exists as path_exists,
+    join as join_path,
+)
 
 from pcs import settings
 from pcs.lib.validate import is_port_number
+
+# Relative location instead of system location is used for development purposes.
+PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
+
+PCSD_CMDLINE_ENTRY_RB_SCRIPT = "sinatra_cmdline_wrapper.rb"
+PCSD_STATIC_FILES_DIR_NAME = "public"
 
 PCSD_PORT = "PCSD_PORT"
 PCSD_SSL_CIPHERS = "PCSD_SSL_CIPHERS"
@@ -17,6 +29,8 @@ DISABLE_GUI = "DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 GEM_HOME = "GEM_HOME"
 PCSD_DEV = "PCSD_DEV"
+PCSD_CMDLINE_ENTRY = "PCSD_CMDLINE_ENTRY"
+PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -28,11 +42,13 @@ Env = namedtuple("Env", [
     DISABLE_GUI,
     PCSD_SESSION_LIFETIME,
     GEM_HOME,
+    PCSD_CMDLINE_ENTRY,
+    PCSD_STATIC_FILES_DIR,
     "has_errors",
 ])
 
-def prepare_env(environ, pcsd_dir, logger=None):
-    loader = EnvLoader(environ, pcsd_dir)
+def prepare_env(environ, logger=None):
+    loader = EnvLoader(environ)
     env = Env(
         loader.port(),
         loader.ssl_ciphers(),
@@ -43,6 +59,8 @@ def prepare_env(environ, pcsd_dir, logger=None):
         loader.disable_gui(),
         loader.session_lifetime(),
         loader.gem_home(),
+        loader.pcsd_cmdline_entry(),
+        loader.pcsd_static_files_dir(),
         loader.has_errors(),
     )
     if logger:
@@ -53,11 +71,10 @@ def prepare_env(environ, pcsd_dir, logger=None):
     return env
 
 class EnvLoader:
-    def __init__(self, environ, pcsd_dir):
+    def __init__(self, environ):
         self.environ = environ
         self.errors = []
         self.warnings = []
-        self.pcsd_dir = pcsd_dir
 
     def has_errors(self):
         return len(self.errors) > 0
@@ -143,13 +160,36 @@ class EnvLoader:
         return self.__has_true_in_environ(PCSD_DEV)
 
     def gem_home(self):
-        return os.path.join(
-            self.pcsd_dir
-                if self.__has_true_in_environ(PCSD_DEV)
-                else os.path.realpath(settings.pcsd_exec_location)
-            ,
-            settings.pcsd_gem_path
+        return self.__in_pcsd_path(
+            settings.pcsd_gem_path,
+            "Ruby gem location"
         )
+
+    def pcsd_cmdline_entry(self):
+        return self.__in_pcsd_path(
+            PCSD_CMDLINE_ENTRY_RB_SCRIPT,
+            "Ruby handlers entrypoint"
+        )
+
+    def pcsd_static_files_dir(self):
+        return self.__in_pcsd_path(
+            PCSD_STATIC_FILES_DIR_NAME,
+            "Directory with web UI assets",
+            existence_required=not self.disable_gui()
+        )
+
+    def __in_pcsd_path(self, path, description="", existence_required=True):
+        pcsd_dir = (
+            settings.pcsd_exec_location
+            if not self.__has_true_in_environ(PCSD_DEV) else
+            PCSD_LOCAL_DIR
+        )
+
+        in_pcsd_path =join_path(pcsd_dir, path)
+        if existence_required and not path_exists(in_pcsd_path):
+            self.errors.append(f"{description} '{in_pcsd_path}' does not exist")
+        return in_pcsd_path
+
 
     def __has_true_in_environ(self, environ_key):
         return self.environ.get(environ_key, "").lower() == "true"

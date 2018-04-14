@@ -28,9 +28,12 @@ def json_to_sinatra_result(result_json) -> SinatraResult:
     )
 
 class Wrapper:
-    def __init__(self, gem_home, pcsd_dir, debug=False, ruby_executable="ruby"):
+    def __init__(
+        self, gem_home, pcsd_cmdline_entry, debug=False, ruby_executable="ruby"
+    ):
         self.__gem_home = gem_home
-        self.__pcsd_dir = pcsd_dir
+        self.__pcsd_cmdline_entry = pcsd_cmdline_entry
+        self.__pcsd_dir = os.path.dirname(pcsd_cmdline_entry)
         self.__ruby_executable = ruby_executable
         self.__debug = debug
 
@@ -76,7 +79,7 @@ class Wrapper:
             [
                 self.__ruby_executable, "-I",
                 self.__pcsd_dir,
-                os.path.join(self.__pcsd_dir, "sinatra_cmdline_wrapper.rb")
+                self.__pcsd_cmdline_entry
             ],
             stdin=Subprocess.STREAM,
             stdout=Subprocess.STREAM,

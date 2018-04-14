@@ -2,7 +2,6 @@ import os
 import signal
 import socket
 from functools import partial
-from os.path import dirname, realpath, abspath, join as join_path
 
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
@@ -11,9 +10,6 @@ from pcs import settings
 from pcs.daemon import log, systemd, session, ruby_pcsd, app
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
-
-PCSD_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
-PUBLIC_DIR = join_path(PCSD_DIR, "public")
 
 class SignalInfo:
     #pylint: disable=too-few-public-methods
@@ -48,14 +44,14 @@ def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
-    env = prepare_env(os.environ, PCSD_DIR, log.pcsd)
+    env = prepare_env(os.environ, log.pcsd)
     if env.has_errors:
         raise SystemExit(1)
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         gem_home=env.GEM_HOME,
-        pcsd_dir=PCSD_DIR,
+        pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
         debug=env.DEBUG,
         ruby_executable=settings.ruby_executable
     )
@@ -64,7 +60,7 @@ def main():
         session.Storage(env.PCSD_SESSION_LIFETIME),
         ruby_pcsd_wrapper,
         sync_config_lock,
-        PUBLIC_DIR,
+        env.PCSD_STATIC_FILES_DIR,
         disable_gui=env.DISABLE_GUI,
         debug=env.DEBUG,
     )
