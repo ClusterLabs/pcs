@@ -5,6 +5,11 @@
 ### Added
 - Pcsd option to reject client initiated SSL/TLS renegotiation ([rhbz#1566382])
 
+### Fixed
+- `pcs cib-push diff-against=` does not consider an empty diff as an error
+  ([ghpull#166])
+
+[ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 
 
