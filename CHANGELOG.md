@@ -8,9 +8,12 @@
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
   ([ghpull#166])
+- `pcs resource update` does not create an empty meta\_attributes element any
+  more ([rhbz#1568353])
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
+[rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 
 
 ## [0.9.164] - 2018-04-09
