@@ -2584,6 +2584,9 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
         )
 
 def dom_update_meta_attr(dom_element, attributes):
+    if not attributes:
+        return
+
     meta_attributes = dom_prepare_child_element(
         dom_element,
         "meta_attributes",
