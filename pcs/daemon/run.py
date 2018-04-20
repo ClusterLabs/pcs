@@ -39,10 +39,10 @@ def config_sync(
     return config_synchronization
 
 def main():
-    log.setup(settings.pcsd_log_location)
-
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
+
+    log.setup(settings.pcsd_log_location)
 
     env = prepare_env(os.environ, log.pcsd)
     if env.has_errors:
