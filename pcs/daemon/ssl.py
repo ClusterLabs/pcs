@@ -1,5 +1,4 @@
 import ssl
-from contextlib import contextmanager
 from time import time, gmtime, strftime
 
 from OpenSSL import crypto, SSL
@@ -34,26 +33,22 @@ def generate_cert(key, server_name):
 
     return cert
 
-@contextmanager
-def _open_ssl_file(label, path, errors):
-    try:
-        with open(path) as ssl_file:
-            yield ssl_file
-    except EnvironmentError as e:
-        errors.append(f"Unable to read {label}: '{e}'")
-    except crypto.Error as e:
-        msg = ""
-        if e.args and e.args[0] and e.args[0][0]:
-            msg = f": '{':'.join(e.args[0][0])}'"
-        errors.append(f"Invalid {label}{msg}")
-
 def check_cert_key(cert_path, key_path):
     errors = []
-    with _open_ssl_file("certificate", cert_path, errors) as ssl_file:
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, ssl_file.read())
+    def load(load_ssl_file, label, path):
+        try:
+            with open(path) as ssl_file:
+                return load_ssl_file(crypto.FILETYPE_PEM, ssl_file.read())
+        except EnvironmentError as e:
+            errors.append(f"Unable to read {label}: '{e}'")
+        except crypto.Error as e:
+            msg = ""
+            if e.args and e.args[0] and e.args[0][0]:
+                msg = f": '{':'.join(e.args[0][0])}'"
+            errors.append(f"Invalid {label}{msg}")
 
-    with _open_ssl_file("key", key_path, errors) as ssl_file:
-        key = crypto.load_privatekey(crypto.FILETYPE_PEM, ssl_file.read())
+    cert = load(crypto.load_certificate, "certificate", cert_path)
+    key = load(crypto.load_privatekey, "key", key_path)
 
     if errors:
         return errors
@@ -64,7 +59,8 @@ def check_cert_key(cert_path, key_path):
     try:
         context.check_privatekey()
     except crypto.Error:
-        return ["Certificate does not match the key"]
+        errors.append("Certificate does not match the key")
+    return errors
 
 def regenerate_cert_key(server_name, cert_path, key_path):
     key = generate_key()

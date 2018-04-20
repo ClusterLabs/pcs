@@ -61,5 +61,8 @@ class HttpsServerManage:
         if error_list:
             for error in error_list:
                 log.pcsd.error(error)
+            log.pcsd.error(
+                "Invalid certificate and/or key, using temporary ones"
+            )
             self.__ssl.regenerate_cert_key(self.__server_name)
         self.__start_new_server()
