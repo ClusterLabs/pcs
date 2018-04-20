@@ -21,19 +21,17 @@
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 DESC="pcs daemon"
 NAME=pcsd
-EXEC=ruby
-SUB_EXEC=/usr/share/pcsd/ssl.rb
+EXEC=pcsd
 DAEMON_USER=root
-DAEMON=/usr/bin/ruby
-DAEMON_ARGS="-C/var/lib/pcsd -I/usr/share/pcsd -- /usr/share/pcsd/ssl.rb"
+DAEMON=/usr/sbin/pcsd
+DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 LOGFILE=/var/log/$NAME/$NAME.log
 SLEEP_DURATION=2
 
-# Exit if ruby is not installed
+# Exit if pcsd is not installed
 [ -x $(which $EXEC) ] || echo "$EXEC was not found. Is it installed?"
-[ -x $(which $SUB_EXEC) ] || echo "$SUB_EXEC not found. Is pcs installed?"
 
 # Read configuration variable file if it is present
 set -a
@@ -129,7 +127,7 @@ case "$1" in
   status|monitor)
     status_of_proc \
       -p "$PIDFILE" \
-      "$SUB_EXEC" \
+      "$DAEMON" \
       "$NAME" \
       && exit 0 \
       || exit $?

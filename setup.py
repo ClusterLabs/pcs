@@ -7,6 +7,7 @@ from setuptools import setup, Command, find_packages
 class CleanCommand(Command):
     user_options = []
     def initialize_options(self):
+        #pylint: disable=attribute-defined-outside-init
         self.cwd = None
     def finalize_options(self):
         #pylint: disable=attribute-defined-outside-init
@@ -35,6 +36,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pcs = pcs.app:main',
+            'pcsd = pcs.daemon.run:main',
             'pcs_snmp_agent = pcs.snmp.pcs_snmp_agent:main',
         ],
     },
