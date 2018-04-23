@@ -85,91 +85,183 @@ class GetClusterNameTest(TestCase):
 
 
 class GetNodesTest(TestCase):
-    def assert_equal_nodelist(self, expected_nodes, real_nodelist):
+    def assert_equal_nodelist(self, expected, real):
         real_nodes = [
-            {"ring0": n.ring0, "ring1": n.ring1, "label": n.label, "id": n.id}
-            for n in real_nodelist
+            {
+                "name": node.name,
+                "id": node.nodeid,
+                "addrs": [(addr.link, addr.addr) for addr in node.addrs],
+            }
+            for node in real
         ]
-        self.assertEqual(expected_nodes, real_nodes)
+        self.assertEqual(expected, real_nodes)
+
+    def nodes_from_config(self, config):
+        facade = lib.ConfigFacade.from_string(config)
+        nodes = facade.get_nodes()
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        return nodes
 
     def test_no_nodelist(self):
         config = ""
-        facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        nodes = self.nodes_from_config(config)
         self.assertEqual(0, len(nodes))
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_empty_nodelist(self):
-        config = """\
-nodelist {
-}
-"""
-        facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
+        config = outdent("""\
+            nodelist {
+            }
+        """)
+        nodes = self.nodes_from_config(config)
         self.assertEqual(0, len(nodes))
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_one_nodelist(self):
-        config = """\
-nodelist {
-    node {
-        ring0_addr: n1a
-        nodeid: 1
-    }
-
-    node {
-        ring0_addr: n2a
-        ring1_addr: n2b
-        name: n2n
-        nodeid: 2
-    }
-}
-"""
-        facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
-        self.assertEqual(2, len(nodes))
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    nodeid: 1
+                    name: n1n
+                }
+                node {
+                    ring0_addr: n2a
+                    ring1_addr: n2b
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
-                {"ring0": "n1a", "ring1": None, "label": "n1a", "id": "1"},
-                {"ring0": "n2a", "ring1": "n2b", "label": "n2n", "id": "2"},
+                {"id": "1", "name": "n1n", "addrs": [(0, "n1a")]},
+                {"id": "2", "name": "n2n", "addrs": [(0, "n2a"), (1, "n2b")]}
             ],
             nodes
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_nodelists(self):
-        config = """\
-nodelist {
-    node {
-        ring0_addr: n1a
-        nodeid: 1
-    }
-}
-
-nodelist {
-    node {
-        ring0_addr: n2a
-        ring1_addr: n2b
-        name: n2n
-        nodeid: 2
-    }
-}
-"""
-        facade = lib.ConfigFacade.from_string(config)
-        nodes = facade.get_nodes()
-        self.assertEqual(2, len(nodes))
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    nodeid: 1
+                    name: n1n
+                }
+            }
+            nodelist {
+                node {
+                    ring0_addr: n2a
+                    ring1_addr: n2b
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
-                {"ring0": "n1a", "ring1": None, "label": "n1a", "id": "1"},
-                {"ring0": "n2a", "ring1": "n2b", "label": "n2n", "id": "2"},
+                {"id": "1", "name": "n1n", "addrs": [(0, "n1a")]},
+                {"id": "2", "name": "n2n", "addrs": [(0, "n2a"), (1, "n2b")]}
             ],
             nodes
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_missing_values(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: n1a
+                    nodeid: 1
+                }
+                node {
+                    ring0_addr: n2a
+                    name: n2n
+                }
+                node {
+                    nodeid: 3
+                    name: n3n
+                }
+                node {
+                }
+                node {
+                    ring1_addr: n4b
+                    nodeid: 4
+                    name: n4n
+                }
+                node {
+                    ring1_addr: n5b
+                    ring2_addr: 
+                    ring3_addr: n5d
+                    nodeid: 5
+                    name: n5n
+                }
+            }
+        """)
+        nodes = self.nodes_from_config(config)
+        self.assert_equal_nodelist(
+            [
+                {"id": "1", "name": None, "addrs": [(0, "n1a")]},
+                {"id": None, "name": "n2n", "addrs": [(0, "n2a")]},
+                {"id": "3", "name": "n3n", "addrs": []},
+                {"id": "4", "name": "n4n", "addrs": [(1, "n4b")]},
+                {"id": "5", "name": "n5n", "addrs": [(1, "n5b"), (3, "n5d")]},
+            ],
+            nodes
+        )
+        self.assertEqual(["n1a"], nodes[0].addrs_plain)
+        self.assertEqual(["n2a"], nodes[1].addrs_plain)
+        self.assertEqual([], nodes[2].addrs_plain)
+        self.assertEqual(["n4b"], nodes[3].addrs_plain)
+        self.assertEqual(["n5b", "n5d"], nodes[4].addrs_plain)
+
+    def test_sort_rings(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring3_addr: n1d
+                    ring0_addr: n1a
+                    ring1_addr: n1b
+                    nodeid: 1
+                    name: n1n
+                }
+            }
+        """)
+        nodes = self.nodes_from_config(config)
+        self.assert_equal_nodelist(
+            [
+                {
+                    "id": "1",
+                    "name": "n1n",
+                    "addrs": [(0, "n1a"), (1, "n1b"), (3, "n1d")]
+                },
+            ],
+            nodes
+        )
+
+    def test_addr_type(self):
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: 10.0.0.1
+                    ring1_addr: node1b
+                    nodeid: 1
+                    name: n1n
+                }
+                node {
+                    ring0_addr: node2a
+                    ring1_addr: ::192:168:123:42
+                    name: n2n
+                    nodeid: 2
+                }
+            }
+        """)
+        nodes = self.nodes_from_config(config)
+        self.assertEqual(nodes[0].addrs[0].type, "IPv4")
+        self.assertEqual(nodes[0].addrs[1].type, "FQDN")
+        self.assertEqual(nodes[1].addrs[0].type, "FQDN")
+        self.assertEqual(nodes[1].addrs[1].type, "IPv6")
 
 
 class GetNodesNames(TestCase):

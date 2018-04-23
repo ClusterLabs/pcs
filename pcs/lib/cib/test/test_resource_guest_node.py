@@ -2,6 +2,7 @@ from lxml import etree
 from unittest import TestCase
 
 from pcs.common import report_codes
+from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import guest_node
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
@@ -9,7 +10,6 @@ from pcs.test.tools.assertions import(
     assert_report_item_list_equal,
 )
 from pcs.test.tools.misc import create_setup_patch_mixin
-from pcs.lib.node import NodeAddresses
 
 
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
@@ -47,13 +47,14 @@ class ValidateHostConflicts(TestCase):
                 </configuration>
             </cib>
         """)
-        nodes = [
-            NodeAddresses("RING0", "RING1", name="R1"),
-            NodeAddresses("REMOTE_CONFLICT", name="B"),
-            NodeAddresses("GUEST_CONFLICT", name="GUEST_CONFLICT"),
-            NodeAddresses("GUEST_ADDR_CONFLICT", name="some"),
+        existing_nodes_names = ["R1", "B", "GUEST_CONFLICT", "some"]
+        existing_nodes_addrs = [
+            "RING0", "RING1", "REMOTE_CONFLICT", "GUEST_CONFLICT",
+            "GUEST_ADDR_CONFLICT"
         ]
-        return guest_node.validate_conflicts(tree, nodes, node_name, options)
+        return guest_node.validate_conflicts(
+            tree, existing_nodes_names, existing_nodes_addrs, node_name, options
+        )
 
     def assert_already_exists_error(
         self, conflict_name, node_name, options=None
@@ -113,11 +114,8 @@ class ValidateOptions(TestCase):
     def validate(self, options, name="some_name"):
         return guest_node.validate_set_as_guest(
             etree.fromstring('<cib/>'),
-            [NodeAddresses(
-                "EXISTING-HOST-RING0",
-                "EXISTING-HOST-RING0",
-                name="EXISTING-HOST-NAME"
-            )],
+            ["EXISTING-HOST-NAME"],
+            ["EXISTING-HOST-RING0", "EXISTING-HOST-RING0"],
             name,
             options
         )
@@ -178,7 +176,7 @@ class ValidateOptions(TestCase):
         )
 
 
-class ValidateInNotGuest(TestCase):
+class ValidateIsNotGuest(TestCase):
     #guest_node.is_guest_node is tested here as well
     def test_no_report_on_non_guest(self):
         self.assertEqual(
@@ -271,25 +269,17 @@ class UnsetGuest(TestCase):
 
 
 class FindNodeList(TestCase, SetupPatchMixin):
-    def assert_find_meta_attributes(self, xml, meta_attributes_xml_list):
-        get_node = self.setup_patch("get_node", return_value=None)
-
+    def assert_nodes_equals(self, xml, expected_nodes):
         self.assertEqual(
-            [None] * len(meta_attributes_xml_list),
+            expected_nodes,
             guest_node.find_node_list(etree.fromstring(xml))
         )
 
-        for i, call in enumerate(get_node.mock_calls):
-            assert_xml_equal(
-                meta_attributes_xml_list[i],
-                etree.tostring(call[1][0]).decode()
-            )
-
     def test_get_no_nodes_when_no_primitives(self):
-        self.assert_find_meta_attributes("<resources/>", [])
+        self.assert_nodes_equals("<resources/>", [])
 
     def test_get_no_nodes_when_no_meta_remote_node(self):
-        self.assert_find_meta_attributes(
+        self.assert_nodes_equals(
             """
             <resources>
                 <primitive>
@@ -299,11 +289,12 @@ class FindNodeList(TestCase, SetupPatchMixin):
                 </primitive>
             </resources>
             """,
-            []
+            [
+            ]
         )
 
     def test_get_multiple_nodes(self):
-        self.assert_find_meta_attributes(
+        self.assert_nodes_equals(
             """
             <resources>
                 <primitive>
@@ -320,61 +311,20 @@ class FindNodeList(TestCase, SetupPatchMixin):
             </resources>
             """,
             [
-                """
-                <meta_attributes>
-                    <nvpair name="remote-node" value="G1"/>
-                    <nvpair name="remote-addr" value="G1addr"/>
-                </meta_attributes>
-                """,
-                """
-                <meta_attributes>
-                    <nvpair name="remote-node" value="G2"/>
-                </meta_attributes>
-                """,
+                PacemakerNode("G1", "G1addr"),
+                PacemakerNode("G2", "G2"),
             ]
         )
 
-class GetNode(TestCase):
-    def assert_node(self, xml, expected_node):
-        node = guest_node.get_node(etree.fromstring(xml))
-        self.assertEqual(expected_node, (node.ring0, node.name))
-
-    def test_return_none_when_is_not_guest_node(self):
-        self.assertIsNone(guest_node.get_node(etree.fromstring(
-            """
-            <meta_attributes>
-                <nvpair name="remote-addr" value="G1"/>
-            </meta_attributes>
-            """
-        )))
-
-    def test_return_same_host_and_name_when_remote_node_only(self):
-        self.assert_node(
-            """
-            <meta_attributes>
-                <nvpair name="remote-node" value="G1"/>
-            </meta_attributes>
-            """,
-            ("G1", "G1")
+class GetNodeNameFromResource(TestCase):
+    def assert_find_name(self, name, xml):
+        self.assertEqual(
+            name,
+            guest_node.get_node_name_from_resource(etree.fromstring(xml))
         )
 
-    def test_return_different_host_and_name_when_remote_addr_there(self):
-        self.assert_node(
-            """
-            <meta_attributes>
-                <nvpair name="remote-node" value="G1"/>
-                <nvpair name="remote-addr" value="G1addr"/>
-            </meta_attributes>
-            """,
-            ("G1addr", "G1")
-        )
-
-class GetHost(TestCase):
-    def assert_find_host(self, host, xml):
-        self.assertEqual(host, guest_node.get_host(etree.fromstring(xml)))
-
-    def test_return_host_from_remote_addr(self):
-        self.assert_find_host("HOST", """
+    def test_return_name_ignore_remote_addr(self):
+        self.assert_find_name("NODE", """
             <primitive>
                 <meta_attributes>
                     <nvpair name="remote-node" value="NODE" />
@@ -383,8 +333,8 @@ class GetHost(TestCase):
             </primitive>
         """)
 
-    def test_return_host_from_remote_node(self):
-        self.assert_find_host("HOST", """
+    def test_return_name_from_remote_node(self):
+        self.assert_find_name("HOST", """
             <primitive>
                 <meta_attributes>
                     <nvpair name="remote-node" value="HOST" />
@@ -393,7 +343,7 @@ class GetHost(TestCase):
         """)
 
     def test_return_none(self):
-        self.assert_find_host(None, """
+        self.assert_find_name(None, """
             <primitive>
                 <meta_attributes>
                     <nvpair name="any" value="HOST" />
@@ -402,22 +352,29 @@ class GetHost(TestCase):
         """)
 
 class FindNodeResources(TestCase):
-    def assert_return_resources(self, identifier):
-        resources_section = etree.fromstring("""
-            <resources>
-                <primitive id="RESOURCE_ID">
-                    <meta_attributes>
-                        <nvpair name="remote-node" value="NODE_NAME" />
-                        <nvpair name="remote-addr" value="NODE_HOST" />
-                    </meta_attributes>
-                </primitive>
-            </resources>
-        """)
-        self.assertEqual(
-            "RESOURCE_ID",
-            guest_node.find_node_resources(resources_section, identifier)[0]
-                .attrib["id"]
+    def assert_return_resources(
+        self, identifier, resources_section_xml=None, found=True
+    ):
+        if resources_section_xml is None:
+            resources_section_xml = """
+                <resources>
+                    <primitive id="RESOURCE_ID">
+                        <meta_attributes>
+                            <nvpair name="remote-node" value="NODE_NAME" />
+                            <nvpair name="remote-addr" value="NODE_HOST" />
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            """
+        resources_section = etree.fromstring(resources_section_xml)
+        resources = guest_node.find_node_resources(
+            resources_section, identifier
         )
+        if not found:
+            self.assertEqual([], resources)
+        else:
+            self.assertTrue(len(resources) > 0)
+            self.assertEqual("RESOURCE_ID", resources[0].attrib["id"])
 
     def test_return_resources_by_resource_id(self):
         self.assert_return_resources("RESOURCE_ID")
@@ -429,10 +386,66 @@ class FindNodeResources(TestCase):
         self.assert_return_resources("NODE_HOST")
 
     def test_no_result_when_no_guest_nodes(self):
-        resources_section = etree.fromstring(
-            '<resources><primitive id="RESOURCE_ID"/></resources>'
+        self.assert_return_resources(
+            "RESOURCE_ID",
+            '<resources><primitive id="RESOURCE_ID"/></resources>',
+            found=False
         )
-        self.assertEqual([], guest_node.find_node_resources(
-            resources_section,
-            "RESOURCE_ID"
-        ))
+
+    def test_remote_node_meta_is_enough_1(self):
+        self.assert_return_resources(
+            "RESOURCE_ID",
+            """
+                <resources>
+                    <primitive id="RESOURCE_ID">
+                        <meta_attributes>
+                            <nvpair name="remote-node" value="NODE_NAME" />
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def test_remote_node_meta_is_enough_2(self):
+        self.assert_return_resources(
+            "NODE_NAME",
+            """
+                <resources>
+                    <primitive id="RESOURCE_ID">
+                        <meta_attributes>
+                            <nvpair name="remote-node" value="NODE_NAME" />
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def test_remote_addr_is_not_enough_1(self):
+        self.assert_return_resources(
+            "RESOURCE_ID",
+            """
+                <resources>
+                    <primitive id="RESOURCE_ID">
+                        <meta_attributes>
+                            <nvpair name="remote-addr" value="NODE_HOST" />
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            """,
+            found=False
+        )
+
+    def test_remote_addr_is_not_enough_2(self):
+        self.assert_return_resources(
+            "NODE_NAME",
+            """
+                <resources>
+                    <primitive id="RESOURCE_ID">
+                        <meta_attributes>
+                            <nvpair name="remote-addr" value="NODE_HOST" />
+                        </meta_attributes>
+                    </primitive>
+                </resources>
+            """,
+            found=False
+        )

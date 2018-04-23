@@ -11,7 +11,7 @@ from pcs.lib.cib.tools import (
     get_resources,
     IdProvider,
 )
-from pcs.lib.env_tools import get_nodes
+from pcs.lib.env_tools import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import (
@@ -52,7 +52,7 @@ def _ensure_disabled_after_wait(disabled_after_wait):
     return inner
 
 def _validate_remote_connection(
-    resource_agent, nodes_to_validate_against, resource_id, instance_attributes,
+    resource_agent, existing_nodes_addrs, resource_id, instance_attributes,
     allow_not_suitable_command
 ):
     if resource_agent.get_name() != remote_node.AGENT_NAME.full_name:
@@ -68,7 +68,7 @@ def _validate_remote_connection(
 
     report_list.extend(
         remote_node.validate_host_not_conflicts(
-            nodes_to_validate_against,
+            existing_nodes_addrs,
             resource_id,
             instance_attributes
         )
@@ -76,7 +76,7 @@ def _validate_remote_connection(
     return report_list
 
 def _validate_guest_change(
-    tree, nodes_to_validate_against, meta_attributes,
+    tree, existing_nodes_names, existing_nodes_addrs, meta_attributes,
     allow_not_suitable_command, detect_remove=False
 ):
     if not guest_node.is_node_name_in_options(meta_attributes):
@@ -99,7 +99,8 @@ def _validate_guest_change(
     report_list.extend(
         guest_node.validate_conflicts(
             tree,
-            nodes_to_validate_against,
+            existing_nodes_names,
+            existing_nodes_addrs,
             node_name,
             meta_attributes
         )
@@ -116,9 +117,9 @@ def _get_nodes_to_validate_against(env, tree):
     if not env.is_cib_live and env.is_corosync_conf_live:
         #we do not try to get corosync.conf from live cluster when cib is not
         #taken from live cluster
-        return get_nodes(tree=tree)
+        return get_existing_nodes_names_addrs(cib=tree)
 
-    return get_nodes(env.get_corosync_conf(), tree)
+    return get_existing_nodes_names_addrs(env.get_corosync_conf(), cib=tree)
 
 
 def _check_special_cases(
@@ -134,7 +135,7 @@ def _check_special_cases(
         #is needed for getting nodes to validate against
         return
 
-    nodes_to_validate_against = _get_nodes_to_validate_against(
+    existing_nodes_names, existing_nodes_addrs = _get_nodes_to_validate_against(
         env,
         resources_section
     )
@@ -142,14 +143,15 @@ def _check_special_cases(
     report_list = []
     report_list.extend(_validate_remote_connection(
         resource_agent,
-        nodes_to_validate_against,
+        existing_nodes_addrs,
         resource_id,
         instance_attributes,
         allow_not_suitable_command,
     ))
     report_list.extend(_validate_guest_change(
         resources_section,
-        nodes_to_validate_against,
+        existing_nodes_names,
+        existing_nodes_addrs,
         meta_attributes,
         allow_not_suitable_command,
     ))
@@ -188,7 +190,7 @@ def create(
     bool use_default_operations is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
@@ -266,7 +268,7 @@ def _create_as_clone_common(
     bool use_default_operations is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
@@ -350,7 +352,7 @@ def create_in_group(
     string adjacent_resource_id identify neighbor of a newly created resource
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent resource
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
@@ -434,7 +436,7 @@ def create_into_bundle(
     bool use_default_operations is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(

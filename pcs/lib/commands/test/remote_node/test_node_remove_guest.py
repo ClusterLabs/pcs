@@ -275,15 +275,15 @@ class MultipleResults(TestCase):
             .local.destroy_pacemaker_remote(
                 communication_list=[
                     dict(label="B-NAME", dest_list=self.dest_list_b_name),
-                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                     dict(label=NODE_NAME, dest_list=self.dest_list_node),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                 ],
             )
             .local.remove_authkey(
                 communication_list=[
                     dict(label="B-NAME", dest_list=self.dest_list_b_name),
-                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                     dict(label=NODE_NAME, dest_list=self.dest_list_node),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                 ],
             )
             .env.push_cib(remove=[
@@ -292,8 +292,8 @@ class MultipleResults(TestCase):
                 ".//meta_attributes[@id='C-M']",
             ])
             .runner.pcmk.remove_node("B-NAME", name="runner.pcmk.remove_node3")
-            .runner.pcmk.remove_node(REMOTE_HOST)
             .runner.pcmk.remove_node(NODE_NAME, name="runner.pcmk.remove_node2")
+            .runner.pcmk.remove_node(REMOTE_HOST)
         )
         node_remove_guest(
             self.env_assist.get_env(),
@@ -304,7 +304,7 @@ class MultipleResults(TestCase):
             REPORTS
                 .adapt(
                     "pcmk_remote_disable_stop_started",
-                    node_list=["B-NAME", REMOTE_HOST, NODE_NAME]
+                    node_list=["B-NAME", NODE_NAME, REMOTE_HOST]
                 )
                 .copy(
                     "pcmk_remote_disable_success",
@@ -328,7 +328,7 @@ class MultipleResults(TestCase):
                 )
                 .adapt(
                     "authkey_remove_started",
-                    node_list=["B-NAME", REMOTE_HOST, NODE_NAME]
+                    node_list=["B-NAME", NODE_NAME, REMOTE_HOST]
                 )
                 .copy(
                     "authkey_remove_success",

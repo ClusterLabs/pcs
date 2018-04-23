@@ -256,14 +256,14 @@ class MultipleResults(TestCase):
         (self.config
             .local.destroy_pacemaker_remote(
                 communication_list=[
-                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                     dict(label=NODE_NAME, dest_list=self.dest_list_node),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                 ]
             )
             .local.remove_authkey(
                 communication_list=[
-                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                     dict(label=NODE_NAME, dest_list=self.dest_list_node),
+                    dict(label=REMOTE_HOST, dest_list=self.dest_list_remote),
                 ],
             )
          )
@@ -277,7 +277,7 @@ class MultipleResults(TestCase):
             REPORTS
                 .adapt(
                     "pcmk_remote_disable_stop_started",
-                    node_list=[REMOTE_HOST, NODE_NAME]
+                    node_list=[NODE_NAME, REMOTE_HOST]
                 )
                 .copy(
                     "pcmk_remote_disable_success",
@@ -291,7 +291,7 @@ class MultipleResults(TestCase):
                 )
                 .adapt(
                     "authkey_remove_started",
-                    node_list=[REMOTE_HOST, NODE_NAME]
+                    node_list=[NODE_NAME, REMOTE_HOST]
                 )
                 .copy(
                     "authkey_remove_success",

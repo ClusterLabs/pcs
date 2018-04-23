@@ -13,7 +13,6 @@ from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 
 
-REMOTE_HOST = "remote-host"
 NODE_NAME = "node-name"
 NODE_1 = "node-1"
 NODE_2 = "node-2"
@@ -25,7 +24,7 @@ def node_add_remote(
     operations = operations or []
     meta_attributes = meta_attributes or {}
     instance_attributes = instance_attributes or {}
-    host = host or REMOTE_HOST
+    host = host or "remote-host"
     node_name = node_name or NODE_NAME
 
     node_add_remote_orig(
@@ -44,11 +43,11 @@ class LocalConfig(EnvConfigMixin):
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
 REPORTS = (FIXTURE_REPORTS
-    .adapt("authkey_distribution_started", node_list=[REMOTE_HOST])
-    .adapt("authkey_distribution_success", node=REMOTE_HOST)
-    .adapt("pcmk_remote_start_enable_started", node_list=[REMOTE_HOST])
-    .adapt("pcmk_remote_enable_success", node=REMOTE_HOST)
-    .adapt("pcmk_remote_start_success", node=REMOTE_HOST)
+    .adapt("authkey_distribution_started", node_list=[NODE_NAME])
+    .adapt("authkey_distribution_success", node=NODE_NAME)
+    .adapt("pcmk_remote_start_enable_started", node_list=[NODE_NAME])
+    .adapt("pcmk_remote_enable_success", node=NODE_NAME)
+    .adapt("pcmk_remote_start_success", node=NODE_NAME)
 )
 EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
     [
@@ -65,7 +64,7 @@ EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
         "authkey_distribution_failed",
         "authkey_distribution_failed_warn",
     ],
-    node=REMOTE_HOST
+    node=NODE_NAME
 ))
 
 
@@ -107,14 +106,14 @@ FIXTURE_RESOURCES = """
 class AddRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
+        self.config.env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
 
     def test_success_base(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
-            .local.push_existing_authkey_to_remote(REMOTE_HOST)
-            .local.run_pacemaker_remote(REMOTE_HOST)
+            .local.check_node_availability(NODE_NAME, result=True)
+            .local.push_existing_authkey_to_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
@@ -124,32 +123,32 @@ class AddRemote(TestCase):
         #validation and creation of resource is covered in resource create tests
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
-            .local.push_existing_authkey_to_remote(REMOTE_HOST)
-            .local.run_pacemaker_remote(REMOTE_HOST)
+            .local.check_node_availability(NODE_NAME, result=True)
+            .local.push_existing_authkey_to_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME)
             .env.push_cib(
                 resources="""
                     <resources>
-                        <primitive class="ocf" id="remote-host"
+                        <primitive class="ocf" id="node-name"
                             provider="pacemaker" type="remote"
                         >
                             <operations>
-                                <op id="remote-host-migrate_from-interval-0s"
+                                <op id="node-name-migrate_from-interval-0s"
                                     interval="0s" name="migrate_from" timeout="60"
                                 />
-                                <op id="remote-host-migrate_to-interval-0s"
+                                <op id="node-name-migrate_to-interval-0s"
                                     interval="0s" name="migrate_to" timeout="60"
                                 />
-                                <op id="remote-host-monitor-interval-60s"
+                                <op id="node-name-monitor-interval-60s"
                                     interval="60s" name="monitor" timeout="30"
                                 />
-                                <op id="remote-host-reload-interval-0s"
+                                <op id="node-name-reload-interval-0s"
                                   interval="0s" name="reload" timeout="60"
                                 />
-                                <op id="remote-host-start-interval-0s"
+                                <op id="node-name-start-interval-0s"
                                     interval="0s" name="start" timeout="60"
                                 />
-                                <op id="remote-host-stop-interval-0s"
+                                <op id="node-name-stop-interval-0s"
                                     interval="0s" name="stop" timeout="60"
                                 />
                             </operations>
@@ -158,7 +157,7 @@ class AddRemote(TestCase):
                 """
             )
         )
-        node_add_remote(self.env_assist.get_env(), node_name=REMOTE_HOST)
+        node_add_remote(self.env_assist.get_env(), host=NODE_NAME)
         self.env_assist.assert_reports(REPORTS)
 
     def test_node_name_conflict_report_is_unique(self):
@@ -167,7 +166,7 @@ class AddRemote(TestCase):
                 resources="""
                     <resources>
                         <primitive class="ocf" id="node-name"
-                            provider="pacemaker" type="remote"
+                            provider="pacemaker" type="Dummy"
                         />
                     </resources>
                 """
@@ -191,17 +190,17 @@ class AddRemote(TestCase):
         generate_key.return_value = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
+            .local.check_node_availability(NODE_NAME, result=True)
             .local.authkey_exists(return_value=False)
             .local.distribute_authkey(
                 communication_list=[
                     dict(label=NODE_1),
                     dict(label=NODE_2),
-                    dict(label=REMOTE_HOST),
+                    dict(label=NODE_NAME),
                 ],
                 pcmk_authkey_content=generate_key.return_value,
             )
-            .local.run_pacemaker_remote(REMOTE_HOST)
+            .local.run_pacemaker_remote(NODE_NAME)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
@@ -210,7 +209,7 @@ class AddRemote(TestCase):
             REPORTS
                 .adapt(
                     "authkey_distribution_started",
-                    node_list=[NODE_1, NODE_2, REMOTE_HOST]
+                    node_list=[NODE_1, NODE_2, NODE_NAME]
                 )
                 .copy(
                     "authkey_distribution_success",
@@ -228,15 +227,15 @@ class AddRemote(TestCase):
         pcmk_authkey_content = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, **FAIL_HTTP_KWARGS)
+            .local.check_node_availability(NODE_NAME, **FAIL_HTTP_KWARGS)
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=REMOTE_HOST)],
+                communication_list=[dict(label=NODE_NAME)],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
-            .local.run_pacemaker_remote(REMOTE_HOST, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(NODE_NAME, **FAIL_HTTP_KWARGS)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env(), skip_offline_nodes=True)
@@ -256,14 +255,14 @@ class AddRemote(TestCase):
     def test_fails_when_remote_node_is_not_prepared(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=False)
+            .local.check_node_availability(NODE_NAME, result=False)
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER,
-                    node=REMOTE_HOST,
+                    node=NODE_NAME,
                 )
             ]
         )
@@ -271,14 +270,14 @@ class AddRemote(TestCase):
     def test_fails_when_remote_node_returns_invalid_output(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, output="INVALID_OUTPUT")
+            .local.check_node_availability(NODE_NAME, output="INVALID_OUTPUT")
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes.INVALID_RESPONSE_FORMAT,
-                    node=REMOTE_HOST,
+                    node=NODE_NAME,
                 )
             ]
         )
@@ -286,7 +285,7 @@ class AddRemote(TestCase):
     def test_open_failed(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
+            .local.check_node_availability(NODE_NAME, result=True)
             .local.authkey_exists(return_value=True)
             .local.open_authkey(fail=True)
         )
@@ -329,12 +328,12 @@ class WithWait(TestCase):
         self. wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
+            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
             .runner.pcmk.can_wait()
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
-            .local.push_existing_authkey_to_remote(REMOTE_HOST)
-            .local.run_pacemaker_remote(REMOTE_HOST)
+            .local.check_node_availability(NODE_NAME, result=True)
+            .local.push_existing_authkey_to_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME)
             .env.push_cib(resources=FIXTURE_RESOURCES, wait=self.wait)
          )
 
@@ -381,15 +380,15 @@ class AddRemotePcmkRemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
+            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
-            .local.push_existing_authkey_to_remote(REMOTE_HOST)
+            .local.check_node_availability(NODE_NAME, result=True)
+            .local.push_existing_authkey_to_remote(NODE_NAME)
         )
 
     def test_fails_when_offline(self):
         (self.config
-            .local.run_pacemaker_remote(label=REMOTE_HOST, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(label=NODE_NAME, **FAIL_HTTP_KWARGS)
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env())
@@ -403,7 +402,7 @@ class AddRemotePcmkRemoteService(TestCase):
 
     def test_fail_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(REMOTE_HOST, result={
+            .local.run_pacemaker_remote(NODE_NAME, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -420,7 +419,7 @@ class AddRemotePcmkRemoteService(TestCase):
 
     def test_forceable_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(REMOTE_HOST, result={
+            .local.run_pacemaker_remote(NODE_NAME, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -442,9 +441,9 @@ class AddRemoteAuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([REMOTE_HOST, NODE_1, NODE_2])
+            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(REMOTE_HOST, result=True)
+            .local.check_node_availability(NODE_NAME, result=True)
         )
 
     def test_fails_when_offline(self):
@@ -453,7 +452,7 @@ class AddRemoteAuthkeyDistribution(TestCase):
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=REMOTE_HOST)],
+                communication_list=[dict(label=NODE_NAME)],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
@@ -473,7 +472,7 @@ class AddRemoteAuthkeyDistribution(TestCase):
     def test_fail_when_remotely_fail(self):
         (self.config
             .local.push_existing_authkey_to_remote(
-                REMOTE_HOST,
+                NODE_NAME,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
@@ -494,13 +493,13 @@ class AddRemoteAuthkeyDistribution(TestCase):
     def test_forceable_when_remotely_fail(self):
         (self.config
             .local.push_existing_authkey_to_remote(
-                REMOTE_HOST,
+                NODE_NAME,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
                 }
             )
-            .local.run_pacemaker_remote(REMOTE_HOST)
+            .local.run_pacemaker_remote(NODE_NAME)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
 

@@ -28,7 +28,7 @@ from pcs.lib.corosync import (
     config_validators,
     constants as corosync_constants
 )
-from pcs.lib.env_tools import get_nodes_names
+from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
@@ -63,7 +63,10 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
     if mocked_envs:
         raise LibraryError(reports.live_environment_required(mocked_envs))
 
-    current_nodes = get_nodes_names(env.get_corosync_conf(), env.get_cib())
+    current_nodes = get_existing_nodes_names(
+        env.get_corosync_conf(),
+        env.get_cib()
+    )
     if node_name in current_nodes:
         env.report_processor.process(
             reports.get_problem_creator(

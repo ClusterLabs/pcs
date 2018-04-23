@@ -68,7 +68,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
-from pcs.lib.env_tools import get_nodes_names
+from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import (
@@ -1748,7 +1748,7 @@ def node_add(lib_env, node0, node1, modifiers):
         # if the cluster is stopped, we cannot get the cib anyway
         _share_authkey(
             lib_env,
-            get_nodes_names(lib_env.get_corosync_conf()),
+            lib_env.get_corosync_conf().get_nodes_names(),
             node0,
             skip_offline_nodes=modifiers["skip_offline_nodes"],
             allow_incomplete_distribution=modifiers["skip_offline_nodes"]
@@ -2100,7 +2100,7 @@ def cluster_destroy(argv):
             )
         if cib is not None:
             try:
-                all_remote_nodes = get_nodes_names(tree=cib)
+                all_remote_nodes = get_existing_nodes_names(tree=cib)
                 if len(all_remote_nodes) > 0:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -2352,22 +2352,28 @@ def send_local_configs(
     return err_msgs
 
 
-def _get_node_address_by_label(node_address_list, label):
-    for node_address in node_address_list:
-        if label == node_address.label:
-            return node_address
-    return None
-
-
 def cluster_auth_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
     cluster_node_list = lib_env.get_corosync_conf().get_nodes()
+    cluster_node_names = []
+    missing_name = False
+    for node in cluster_node_list:
+        if node.name:
+            cluster_node_names.append(node.name)
+        else:
+            missing_name = True
+    if missing_name:
+        print(
+            "Warning: Skipping nodes which do not have their name defined in "
+            "corosync.conf, use the 'pcs host auth' command to authenticate "
+            "them"
+        )
     target_list = []
     not_authorized_node_name_list = []
-    for node_name in cluster_node_list.labels:
+    for node_name in cluster_node_names:
         try:
             target_list.append(target_factory.get_target(node_name))
         except HostNotFound:
@@ -2383,24 +2389,32 @@ def cluster_auth_cmd(lib, argv, modifiers):
             ", ".join(not_authorized_node_name_list)
         ))
         username, password = utils.get_user_and_pass()
-        not_auth_node_address_list = [
-            _get_node_address_by_label(cluster_node_list, node_name)
-            for node_name in not_authorized_node_name_list
-        ]
+        not_auth_node_list = []
+        for node_name in not_authorized_node_name_list:
+            for node in cluster_node_list:
+                if node.name == node_name:
+                    if node.addrs_plain:
+                        not_auth_node_list.append(node)
+                    else:
+                        print(
+                            f"{node.name}: No addresses defined in "
+                            "corosync.conf, use the 'pcs host auth' command to "
+                            "authenticate the node"
+                        )
         nodes_to_auth_data = {
-            node_address.label: dict(
+            node.name: dict(
                 username=username,
                 password=password,
                 dest_list=[dict(
-                    addr=node_address.ring0,
+                    addr=node.addrs_plain[0],
                     port=settings.pcsd_default_port,
                 )],
-            ) for node_address in not_auth_node_address_list
+            ) for node in not_auth_node_list
         }
         utils.auth_hosts(nodes_to_auth_data)
     else:
         print("Sending cluster config files to the nodes...")
-        msgs = send_local_configs(cluster_node_list.labels, force=True)
+        msgs = send_local_configs(cluster_node_names, force=True)
         for msg in msgs:
             print("Warning: {0}".format(msg))
 

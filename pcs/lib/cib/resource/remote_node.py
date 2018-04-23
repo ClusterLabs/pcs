@@ -1,12 +1,8 @@
 from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
+from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
-from pcs.lib.node import(
-    NodeAddresses,
-    node_addresses_contain_host,
-    node_addresses_contain_name,
-)
 from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name,
     ResourceAgentName,
@@ -33,15 +29,18 @@ _HAS_SERVER_XPATH_SNIPPET = """
     ]
 """
 
+def find_node_list(tree):
+    """
+    Return list of remote nodes from the specified element tree
 
-
-def find_node_list(resources_section):
+    etree.Element tree -- an element to search remote nodes in
+    """
     node_list = [
-        NodeAddresses(
-            nvpair.attrib["value"],
-            name=nvpair.getparent().getparent().attrib["id"]
+        PacemakerNode(
+            nvpair.getparent().getparent().attrib["id"],
+            nvpair.attrib["value"]
         )
-        for nvpair in resources_section.xpath(
+        for nvpair in tree.xpath(
             ".//primitive[{is_remote}]/{has_server}"
             .format(
                 is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
@@ -51,8 +50,8 @@ def find_node_list(resources_section):
     ]
 
     node_list.extend([
-        NodeAddresses(primitive.attrib["id"], name=primitive.attrib["id"])
-        for primitive in resources_section.xpath(
+        PacemakerNode(primitive.attrib["id"], primitive.attrib["id"])
+        for primitive in tree.xpath(
             ".//primitive[{is_remote} and not({has_server})]"
             .format(
                 is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
@@ -91,10 +90,9 @@ def find_node_resources(resources_section, node_identifier):
         )
     )
 
-def get_host(resource_element):
+def get_node_name_from_resource(resource_element):
     """
-    Return first host from resource element if is there. Return None if host is
-    not there.
+    Return the node name from a remote node resource, None for other resources
 
     etree.Element resource_element
     """
@@ -106,13 +104,6 @@ def get_host(resource_element):
         resource_element.attrib.get("type", "") == AGENT_NAME.type
     ):
         return None
-
-
-    host_list = resource_element.xpath(
-        "./{has_server}/@value".format(has_server=_HAS_SERVER_XPATH_SNIPPET)
-    )
-    if host_list:
-        return host_list[0]
     return resource_element.attrib["id"]
 
 def _validate_server_not_used(agent, option_dict):
@@ -128,32 +119,38 @@ def _validate_server_not_used(agent, option_dict):
     return []
 
 
-def validate_host_not_conflicts(nodes, node_name, instance_attributes):
+def validate_host_not_conflicts(
+    existing_nodes_addrs, node_name, instance_attributes
+):
     host = instance_attributes.get("server", node_name)
-    if node_addresses_contain_host(nodes, host):
+    if host in existing_nodes_addrs:
         return [reports.id_already_exists(host)]
     return []
 
 def validate_create(
-    nodes, resource_agent, host, node_name, instance_attributes
+    existing_nodes_names, existing_nodes_addrs, resource_agent, new_node_name,
+    new_node_addr, instance_attributes
 ):
     """
     validate inputs for create
 
-    list of NodeAddresses nodes -- nodes already used
-    string node_name -- name of future node
-    dict instance_attributes -- data for future resource instance attributes
+    list of string existing_nodes_names -- node names already in use
+    list of string existing_nodes_addrs -- node addresses already in use
+    ResourceAgent resource_agent -- pacemaker_remote resource agent
+    string new_node_name -- the name of the future node
+    string new_node_addr -- the address of the future node
+    dict instance_attributes -- data for the future resource instance attributes
     """
     report_list = _validate_server_not_used(resource_agent, instance_attributes)
 
-    host_is_used = False
-    if node_addresses_contain_host(nodes, host):
-        report_list.append(reports.id_already_exists(host))
-        host_is_used = True
+    addr_is_used = False
+    if new_node_addr in existing_nodes_addrs:
+        report_list.append(reports.id_already_exists(new_node_addr))
+        addr_is_used = True
 
-    if not host_is_used or host != node_name:
-        if node_addresses_contain_name(nodes, node_name):
-            report_list.append(reports.id_already_exists(node_name))
+    if not addr_is_used or new_node_addr != new_node_name:
+        if new_node_name in existing_nodes_names:
+            report_list.append(reports.id_already_exists(new_node_name))
 
     return report_list
 

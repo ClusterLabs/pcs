@@ -38,7 +38,7 @@ def create(
     bool use_default_operations is a flag for stopping stopping of adding
         default cib operations (specified in a stonith agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     """
     stonith_agent = get_agent(
         env.report_processor,
@@ -110,7 +110,7 @@ def create_in_group(
     string adjacent_resource_id identify neighbor of a newly created stonith
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent stonith
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    mixed wait is flag for controlling waiting for pacemaker idle mechanism
     """
     stonith_agent = get_agent(
         env.report_processor,

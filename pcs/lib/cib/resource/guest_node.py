@@ -1,14 +1,10 @@
 from pcs.lib import reports, validate
 from pcs.lib.cib.tools import does_id_exist
+from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.nvpair import(
     has_meta_attribute,
     arrange_first_meta_attributes,
     get_meta_attribute_value,
-)
-from pcs.lib.node import (
-    NodeAddresses,
-    node_addresses_contain_host,
-    node_addresses_contain_name,
 )
 from pcs.lib.xml_tools import remove_when_pointless
 
@@ -21,16 +17,18 @@ GUEST_OPTIONS = [
     'remote-connect-timeout',
 ]
 
-def validate_conflicts(tree, nodes, node_name, options):
+def validate_conflicts(
+    tree, existing_nodes_names, existing_nodes_addrs, node_name, options
+):
     report_list = []
     if(
         does_id_exist(tree, node_name)
         or
-        node_addresses_contain_name(nodes, node_name)
+        node_name in existing_nodes_names
         or (
             "remote-addr" not in options
             and
-            node_addresses_contain_host(nodes, node_name)
+            node_name in existing_nodes_addrs
         )
     ):
         report_list.append(reports.id_already_exists(node_name))
@@ -38,7 +36,7 @@ def validate_conflicts(tree, nodes, node_name, options):
     if(
         "remote-addr" in options
         and
-        node_addresses_contain_host(nodes, options["remote-addr"])
+        options["remote-addr"] in existing_nodes_addrs
     ):
         report_list.append(reports.id_already_exists(options["remote-addr"]))
     return report_list
@@ -49,8 +47,9 @@ def is_node_name_in_options(options):
 def get_guest_option_value(options, default=None):
     return options.get("remote-node", default)
 
-
-def validate_set_as_guest(tree, nodes, node_name, options):
+def validate_set_as_guest(
+    tree, existing_nodes_names, existing_nodes_addrs, node_name, options
+):
     report_list = validate.names_in(
         GUEST_OPTIONS,
         options.keys(),
@@ -61,13 +60,14 @@ def validate_set_as_guest(tree, nodes, node_name, options):
         validate.value_time_interval("remote-connect-timeout"),
         validate.value_port_number("remote-port"),
     ]
-
     report_list.extend(
         validate.run_collection_of_option_validators(options, validator_list)
     )
 
     report_list.extend(
-        validate_conflicts(tree, nodes, node_name, options)
+        validate_conflicts(
+            tree, existing_nodes_names, existing_nodes_addrs, node_name, options
+        )
     )
 
     if not node_name.strip():
@@ -140,31 +140,6 @@ def unset_guest(resource_element):
         meta_attributes.remove(nvpair)
         remove_when_pointless(meta_attributes)
 
-def get_node(meta_attributes):
-    """
-    Return NodeAddresses with corresponding to guest node in meta_attributes.
-    Return None if meta_attributes does not mean guest node
-
-    etree.Element meta_attributes is a researched element
-    """
-    host = None
-    name = None
-    for nvpair in meta_attributes:
-        if nvpair.attrib.get("name", "") == "remote-addr":
-            host = nvpair.attrib["value"]
-        if nvpair.attrib.get("name", "") == "remote-node":
-            name = nvpair.attrib["value"]
-            if host is None:
-                host = name
-    return NodeAddresses(host, name=name) if name else None
-
-def get_host_from_options(node_name, meta_options):
-    """
-    Return host from node_name meta options.
-    dict meta_options
-    """
-    return meta_options.get("remote-addr", node_name)
-
 def get_node_name_from_options(meta_options, default=None):
     """
     Return node_name from meta options.
@@ -172,22 +147,22 @@ def get_node_name_from_options(meta_options, default=None):
     """
     return meta_options.get("remote-node", default)
 
+def get_node_name_from_resource(resource_element):
+    """
+    Return the node name from a remote node resource, None for other resources
 
-def get_host(resource_element):
-    host = get_meta_attribute_value(resource_element, "remote-addr")
-    if host:
-        return host
-
+    etree.Element resource_element
+    """
     return get_meta_attribute_value(resource_element, "remote-node")
 
-def find_node_list(resources_section):
+def find_node_list(tree):
     """
-    Return list of nodes from resources_section
+    Return list of guest nodes from the specified element tree
 
-    etree.Element resources_section is a researched element
+    etree.Element tree -- an element to search guest nodes in
     """
-    return [
-        get_node(meta_attrs) for meta_attrs in resources_section.xpath("""
+    node_list = []
+    for meta_attrs in tree.xpath("""
             .//primitive
                 /meta_attributes[
                     nvpair[
@@ -196,8 +171,22 @@ def find_node_list(resources_section):
                         string-length(@value) > 0
                     ]
                 ]
-        """)
-    ]
+        """):
+        host = None
+        name = None
+        for nvpair in meta_attrs:
+            if nvpair.attrib.get("name", "") == "remote-addr":
+                host = nvpair.attrib["value"]
+            if nvpair.attrib.get("name", "") == "remote-node":
+                name = nvpair.attrib["value"]
+                if host is None:
+                    host = name
+        if name:
+            # The name is never empty as we only loop through elements with
+            # non-empty names. It's just we loop through nvpairs instead of
+            # reading the name directly.
+            node_list.append(PacemakerNode(name, host))
+    return node_list
 
 def find_node_resources(resources_section, node_identifier):
     """
@@ -221,6 +210,12 @@ def find_node_resources(resources_section, node_identifier):
             )
             or
             meta_attributes[
+                nvpair[
+                    @name="remote-node"
+                    and
+                    string-length(@value) > 0
+                ]
+                and
                 nvpair[
                     (
                         @name="remote-addr"
