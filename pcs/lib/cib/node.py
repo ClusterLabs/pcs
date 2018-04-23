@@ -1,9 +1,19 @@
+from collections import namedtuple
 from lxml import etree
 
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import update_nvset
 from pcs.lib.cib.tools import get_nodes, find_unique_id
 from pcs.lib.errors import LibraryError
+
+
+class PacemakerNode(
+    namedtuple("PacemakerNode", "name addr")
+):
+    """
+    A class for transporting a node name and address for purposes of network
+    communication and checking if node name / address is in use.
+    """
 
 
 def update_node_instance_attrs(cib, node_name, attrs, state_nodes=None):

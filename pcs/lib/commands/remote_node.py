@@ -1,9 +1,5 @@
 from pcs.common import report_codes
 from pcs.lib import reports, node_communication_format
-from pcs.lib.node import(
-    NodeAddresses,
-    NodeAddressesList,
-)
 from pcs.lib.tools import generate_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
@@ -15,13 +11,13 @@ from pcs.lib.communication.nodes import (
     ServiceAction,
 )
 from pcs.lib.communication.tools import run, run_and_raise
-from pcs.lib.env_tools import get_nodes, get_nodes_remote, get_nodes_guest
+from pcs.lib.env_tools import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 
 def _ensure_can_add_node_to_remote_cluster(
-    env, node_addresses, warn_on_communication_exception=False
+    env, new_node_name, warn_on_communication_exception=False
 ):
     report_items = []
     com_cmd = PrecheckNewNode(
@@ -31,7 +27,7 @@ def _ensure_can_add_node_to_remote_cluster(
     )
     com_cmd.add_request(
         env.get_node_target_factory().get_target_list(
-            [node_addresses.label],
+            [new_node_name],
             skip_non_existing=warn_on_communication_exception,
         )[0]
     )
@@ -87,44 +83,43 @@ def _start_and_enable_pacemaker_remote(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 def _prepare_pacemaker_remote_environment(
-    env, current_nodes_names, node_host, skip_offline_nodes,
+    env, current_nodes_names, new_node_name, skip_offline_nodes,
     allow_incomplete_distribution, allow_fails
 ):
     if not env.is_corosync_conf_live:
         env.report_processor.process_list([
             reports.nolive_skip_files_distribution(
                 ["pacemaker authkey"],
-                [node_host]
+                [new_node_name]
             ),
             reports.nolive_skip_service_command_on_nodes(
                 "pacemaker_remote",
                 "start",
-                [node_host]
+                [new_node_name]
             ),
             reports.nolive_skip_service_command_on_nodes(
                 "pacemaker_remote",
                 "enable",
-                [node_host]
+                [new_node_name]
             ),
         ])
         return
 
-    candidate_node = NodeAddresses(node_host)
     _ensure_can_add_node_to_remote_cluster(
         env,
-        candidate_node,
+        new_node_name,
         skip_offline_nodes
     )
     _share_authkey(
         env,
         current_nodes_names,
-        candidate_node.label,
+        new_node_name,
         skip_offline_nodes,
         allow_incomplete_distribution
     )
     _start_and_enable_pacemaker_remote(
         env,
-        [candidate_node.label],
+        [new_node_name],
         skip_offline_nodes,
         allow_fails
     )
@@ -138,14 +133,13 @@ def _ensure_consistently_live_env(env):
     if env.is_cib_live and env.is_corosync_conf_live:
         return
 
-    #we accept is as well, we need it for tests
+    #we accept this as well, we need it for tests
     if not env.is_cib_live and not env.is_corosync_conf_live:
         return
 
     raise LibraryError(reports.live_environment_required([
         "CIB" if not env.is_cib_live else "COROSYNC_CONF"
     ]))
-
 
 def node_add_remote(
     env, host, node_name, operations, meta_attributes, instance_attributes,
@@ -158,45 +152,59 @@ def node_add_remote(
     wait=False,
 ):
     """
-    create resource ocf:pacemaker:remote and use it as remote node
+    create an ocf:pacemaker:remote resource and use it as a remote node
 
-    LibraryEnvironment env provides all for communication with externals
-    list of dict operations contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
-        primitive/instance_attributes
-    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
-    bool allow_incomplete_distribution -- is a flag for allowing successfully
-        finish this command even if is file distribution not succeeded
-    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
-        successfully finish this command even if starting/enabling
-        pacemaker_remote not succeeded
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    LibraryEnvironment env -- provides all for communication with externals
+    list of dict operations -- attributes for each entered operation
+    dict meta_attributes -- attributes for primitive/meta_attributes
+    dict instance_attributes -- attributes for primitive/instance_attributes
+    bool skip_offline_nodes -- if True, ignore when some nodes are offline
+    bool allow_incomplete_distribution -- if True, allow this command to
+        finish successfully even if file distribution did not succeed
+    bool allow_pacemaker_remote_service_fail -- if True, allow this command to
+        finish successfully even if starting/enabling pacemaker_remote did not
+        succeed
+    bool allow_invalid_operation -- if True, allow to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
-        instance attributes that are not listed in a resource agent metadata
-        or for allowing to not use the instance_attributes that are required in
-        resource agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
-        default cib operations (specified in a resource agent)
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    bool allow_invalid_instance_attributes -- if True, allow to use instance
+        attributes that are not listed in a resource agent metadata and allow to
+        omit required instance_attributes
+    bool use_default_operations -- if True, add operations specified in
+        a resource agent metadata to the resource
+    mixed wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
+    # TODO
+    # * make the node name mandatory and the node address optional
+    #   * in this function interface and comment
+    #   * in cli - do not fill the addr if not specified
+    #   * in usage and man page
+    # * get a target factory from lib.env
+    # * use the factory to turn node names to targets
+    #   * this will create reports for unknown node names (not authenticated)
+    # * if the node addr is not specified, use the first addr from the matching
+    #   target
+    # * pass the target to communication functions instead of the node name
+    #   * do not create targets again and again in each function
+
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
     cib = env.get_cib()
-    current_nodes = get_nodes(env.get_corosync_conf(), cib)
-
+    existing_nodes_names, existing_nodes_addrs = get_existing_nodes_names_addrs(
+       env.get_corosync_conf(),
+       cib
+    )
     resource_agent = remote_node.get_agent(
         env.report_processor,
         env.cmd_runner()
     )
 
     report_list = remote_node.validate_create(
-        current_nodes,
+        existing_nodes_names,
+        existing_nodes_addrs,
         resource_agent,
-        host,
         node_name,
+        host,
         instance_attributes
     )
 
@@ -232,8 +240,8 @@ def node_add_remote(
 
     _prepare_pacemaker_remote_environment(
         env,
-        current_nodes.labels,
-        host,
+        existing_nodes_names,
+        node_name,
         skip_offline_nodes,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
@@ -248,31 +256,47 @@ def node_add_guest(
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False, wait=False,
 ):
-
     """
-    setup resource (resource_id) as guest node and setup node as guest
+    Make a guest node from the specified resource
 
-    LibraryEnvironment env provides all for communication with externals
-    string resource_id -- specifies resource that should be guest node
-    dict options could contain keys remote-node, remote-port, remote-addr,
-        remote-connect-timeout
-    bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
-    bool allow_incomplete_distribution -- is a flag for allowing successfully
-        finish this command even if is file distribution not succeeded
-    bool allow_pacemaker_remote_service_fail -- is a flag for allowing
-        successfully finish this command even if starting/enabling
-        pacemaker_remote not succeeded
-    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    LibraryEnvironment env -- provides all for communication with externals
+    string resource_id -- specifies resource that should become a guest node
+    dict options -- guest node options (remote-port, remote-addr,
+        remote-connect-timeout)
+    bool skip_offline_nodes -- if True, ignore when some nodes are offline
+    bool allow_incomplete_distribution -- if True, allow this command to
+        finish successfully even if file distribution did not succeed
+    bool allow_pacemaker_remote_service_fail -- if True, allow this command to
+        finish successfully even if starting/enabling pacemaker_remote did not
+        succeed
+    mixed wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
+    # TODO
+    # * make the node name mandatory and the node address optional
+    #   * in this function interface and comment
+    #   * in cli - do not fill the addr if not specified
+    #   * in usage and man page
+    # * get a target factory from lib.env
+    # * use the factory to turn node names to targets
+    #   * this will create reports for unknown node names (not authenticated)
+    # * if the node addr is not specified, use the first addr from the matching
+    #   target
+    # * pass the target to communication functions instead of the node name
+    #   * do not create targets again and again in each function
+
     _ensure_consistently_live_env(env)
     env.ensure_wait_satisfiable(wait)
 
     cib = env.get_cib()
-    current_nodes = get_nodes(env.get_corosync_conf(), cib)
+    existing_nodes_names, existing_nodes_addrs = get_existing_nodes_names_addrs(
+       env.get_corosync_conf(),
+       cib
+    )
 
     report_list = guest_node.validate_set_as_guest(
         cib,
-        current_nodes,
+        existing_nodes_names,
+        existing_nodes_addrs,
         node_name,
         options
     )
@@ -298,8 +322,8 @@ def node_add_guest(
 
     _prepare_pacemaker_remote_environment(
         env,
-        current_nodes.labels,
-        guest_node.get_host_from_options(node_name, options),
+        existing_nodes_names,
+        node_name,
         skip_offline_nodes,
         allow_incomplete_distribution,
         allow_pacemaker_remote_service_fail,
@@ -334,17 +358,8 @@ def _find_resources_to_remove(
 
     return resource_element_list
 
-def _get_node_addresses_from_resources(nodes, resource_element_list, get_host):
-    node_addresses_set = set()
-    for resource_element in resource_element_list:
-        for node in nodes:
-            #remote nodes uses ring0 only
-            if get_host(resource_element) == node.ring0:
-                node_addresses_set.add(node)
-    return sorted(node_addresses_set, key=lambda node: node.ring0)
-
 def _destroy_pcmk_remote_env(
-    env, node_addresses_list, skip_offline_nodes, allow_fails
+    env, node_names_list, skip_offline_nodes, allow_fails
 ):
     actions = node_communication_format.create_pcmk_remote_actions([
         "stop",
@@ -354,7 +369,7 @@ def _destroy_pcmk_remote_env(
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
     target_list = env.get_node_target_factory().get_target_list(
-        NodeAddressesList(node_addresses_list).labels,
+        node_names_list,
         skip_non_existing=skip_offline_nodes,
     )
 
@@ -378,22 +393,19 @@ def _destroy_pcmk_remote_env(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-
-def _report_skip_live_parts_in_remove(node_addresses_list):
-    #remote nodes uses ring0 only
-    node_host_list = [addresses.ring0 for addresses in node_addresses_list]
+def _report_skip_live_parts_in_remove(node_names_list):
     return [
         reports.nolive_skip_service_command_on_nodes(
             "pacemaker_remote",
             "stop",
-            node_host_list
+            node_names_list
         ),
         reports.nolive_skip_service_command_on_nodes(
             "pacemaker_remote",
             "disable",
-            node_host_list
+            node_names_list
         ),
-        reports.nolive_skip_files_remove(["pacemaker authkey"], node_host_list)
+        reports.nolive_skip_files_remove(["pacemaker authkey"], node_names_list)
     ]
 
 def node_remove_remote(
@@ -427,20 +439,19 @@ def node_remove_remote(
         remote_node.find_node_resources,
     )
 
-    node_addresses_list = _get_node_addresses_from_resources(
-        get_nodes_remote(cib),
-        resource_element_list,
-        remote_node.get_host,
-    )
+    node_names_list = sorted(set([
+        remote_node.get_node_name_from_resource(node_element)
+        for node_element in resource_element_list
+    ]))
 
     if not env.is_corosync_conf_live:
         env.report_processor.process_list(
-            _report_skip_live_parts_in_remove(node_addresses_list)
+            _report_skip_live_parts_in_remove(node_names_list)
         )
     else:
         _destroy_pcmk_remote_env(
             env,
-            node_addresses_list,
+            node_names_list,
             skip_offline_nodes,
             allow_pacemaker_remote_service_fail
         )
@@ -485,20 +496,19 @@ def node_remove_guest(
         guest_node.find_node_resources,
     )
 
-    node_addresses_list = _get_node_addresses_from_resources(
-        get_nodes_guest(cib),
-        resource_element_list,
-        guest_node.get_host,
-    )
+    node_names_list = sorted(set([
+        guest_node.get_node_name_from_resource(node_element)
+        for node_element in resource_element_list
+    ]))
 
     if not env.is_corosync_conf_live:
         env.report_processor.process_list(
-            _report_skip_live_parts_in_remove(node_addresses_list)
+            _report_skip_live_parts_in_remove(node_names_list)
         )
     else:
         _destroy_pcmk_remote_env(
             env,
-            node_addresses_list,
+            node_names_list,
             skip_offline_nodes,
             allow_pacemaker_remote_service_fail
         )
@@ -510,5 +520,5 @@ def node_remove_guest(
 
     #remove node from pcmk caches
     if env.is_cib_live:
-        for node_addresses in node_addresses_list:
-            remove_node(env.cmd_runner(), node_addresses.name)
+        for node_name in node_names_list:
+            remove_node(env.cmd_runner(), node_name)

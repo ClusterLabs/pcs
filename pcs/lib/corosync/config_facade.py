@@ -2,7 +2,6 @@ from pcs import settings
 from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
-from pcs.lib.node import NodeAddresses, NodeAddressesList
 
 class ConfigFacade(object):
     """
@@ -100,30 +99,6 @@ class ConfigFacade(object):
             for attrs in totem.get_attributes("cluster_name"):
                 cluster_name = attrs[1]
         return cluster_name
-
-    def old_get_nodes(self):
-        """
-        Get all defined nodes
-        """
-        result = NodeAddressesList()
-        for nodelist in self.config.get_sections("nodelist"):
-            for node in nodelist.get_sections("node"):
-                node_data = {
-                    "ring0_addr": None,
-                    "ring1_addr": None,
-                    "name": None,
-                    "nodeid": None,
-                }
-                for attr_name, attr_value in node.get_attributes():
-                    if attr_name in node_data:
-                        node_data[attr_name] = attr_value
-                result.append(NodeAddresses(
-                    node_data["ring0_addr"],
-                    node_data["ring1_addr"],
-                    node_data["name"],
-                    node_data["nodeid"]
-                ))
-        return result
 
     def get_nodes(self):
         """

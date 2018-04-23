@@ -68,7 +68,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
-from pcs.lib.env_tools import get_nodes_names
+from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib import node_communication_format
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import (
@@ -2100,7 +2100,7 @@ def cluster_destroy(argv):
             )
         if cib is not None:
             try:
-                all_remote_nodes = get_nodes_names(tree=cib)
+                all_remote_nodes = get_existing_nodes_names(tree=cib)
                 if len(all_remote_nodes) > 0:
                     _destroy_pcmk_remote_env(
                         lib_env,

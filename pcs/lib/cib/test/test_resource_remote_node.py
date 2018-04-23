@@ -2,9 +2,9 @@ from lxml import etree
 from unittest import mock, TestCase
 
 from pcs.common import report_codes
+from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import remote_node
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.lib.node import NodeAddresses
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 
@@ -12,11 +12,9 @@ class FindNodeList(TestCase):
     def assert_nodes_equals(self, xml, expected_nodes):
         self.assertEqual(
             expected_nodes,
-            [
-                (node.ring0, node.name)
-                for node in remote_node.find_node_list(etree.fromstring(xml))
-            ]
+            remote_node.find_node_list(etree.fromstring(xml))
         )
+
     def test_find_multiple_nodes(self):
         self.assert_nodes_equals(
             """
@@ -38,8 +36,8 @@ class FindNodeList(TestCase):
             </resources>
             """,
             [
-                ("H1", "R1"),
-                ("H2", "R2"),
+                PacemakerNode("R1", "H1"),
+                PacemakerNode("R2", "H2"),
             ]
         )
 
@@ -68,7 +66,7 @@ class FindNodeList(TestCase):
             </resources>
             """,
             [
-                ("R1", "R1"),
+                PacemakerNode("R1", "R1"),
             ]
         )
 
@@ -88,7 +86,7 @@ class FindNodeList(TestCase):
             </resources>
             """,
             [
-                ("R1", "R1"),
+                PacemakerNode("R1", "R1"),
             ]
         )
 
@@ -151,11 +149,20 @@ class FindNodeResources(TestCase):
         )
 
 
-class GetHost(TestCase):
-    def test_return_host_when_there(self):
+class GetNodeNameFromResource(TestCase):
+    def test_return_name(self):
         self.assertEqual(
-            "HOST",
-            remote_node.get_host(etree.fromstring("""
+            "R",
+            remote_node.get_node_name_from_resource(etree.fromstring("""
+                <primitive class="ocf" id="R" provider="pacemaker" type="remote"
+                />
+            """))
+        )
+
+    def test_return_name_ignore_host(self):
+        self.assertEqual(
+            "R",
+            remote_node.get_node_name_from_resource(etree.fromstring("""
                 <primitive class="ocf" id="R" provider="pacemaker" type="remote"
                 >
                     <instance_attributes>
@@ -165,11 +172,6 @@ class GetHost(TestCase):
             """))
         )
 
-    def test_return_none_when_host_not_found(self):
-        self.assertIsNone(remote_node.get_host(etree.fromstring("""
-            <primitive class="ocf" id="R" provider="heartbeat" type="dummy"/>
-        """)))
-
     def test_return_none_when_primitive_is_without_agent(self):
         case_list = [
             '<primitive id="R"/>',
@@ -178,33 +180,32 @@ class GetHost(TestCase):
         ]
         for case in case_list:
             self.assertIsNone(
-                remote_node.get_host(etree.fromstring(case)),
+                remote_node.get_node_name_from_resource(etree.fromstring(case)),
                 "for '{0}' is not returned None".format(case)
             )
 
-    def test_return_host_from_resource_id(self):
-        self.assertEqual(
-            "R",
-            remote_node.get_host(etree.fromstring("""
-                <primitive class="ocf" id="R" provider="pacemaker"
-                    type="remote"
+    def test_return_none_when_primitive_is_not_pacemaker_remote(self):
+        self.assertIsNone(
+            remote_node.get_node_name_from_resource(etree.fromstring("""
+                <primitive class="ocf" id="R" provider="heartbeat" type="dummy"
                 />
             """))
         )
+
 
 class Validate(TestCase):
     def validate(
         self, instance_attributes=None, node_name="NODE-NAME", host="node-host"
     ):
-        nodes = [
-            NodeAddresses("RING0", "RING1", name="R"),
-        ]
+        existing_nodes_names = ["R"]
+        existing_nodes_addrs = ["RING0", "RING1"]
         resource_agent = mock.MagicMock()
         return remote_node.validate_create(
-            nodes,
+            existing_nodes_names,
+            existing_nodes_addrs,
             resource_agent,
-            host,
             node_name,
+            host,
             instance_attributes if instance_attributes else {},
         )
 

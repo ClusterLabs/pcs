@@ -1,13 +1,13 @@
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.misc import outdent
 
-fixture_nolive_add_report = outdent(
-    """\
-    the distribution of 'pacemaker authkey' to 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
-    running 'pacemaker_remote start' on 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-    running 'pacemaker_remote enable' on 'node-host' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-    """
-)
+def fixture_nolive_add_report(node_name):
+    return outdent(f"""\
+        the distribution of 'pacemaker authkey' to '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+        running 'pacemaker_remote start' on '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+        running 'pacemaker_remote enable' on '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+        """
+    )
 
 def fixture_nolive_remove_report(host_list):
     return outdent(
@@ -83,7 +83,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report
+            output=fixture_nolive_add_report("node-name")
         )
 
     def test_success_no_default_ops(self):
@@ -105,7 +105,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report
+            output=fixture_nolive_add_report("node-name")
         )
 
     def test_fail_when_server_already_used(self):
@@ -127,7 +127,7 @@ class NodeAddRemote(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report
+            output=fixture_nolive_add_report("A")
         )
         self.assert_pcs_fail(
             "cluster node add-remote node-host B",
@@ -140,7 +140,7 @@ class NodeAddRemote(ResourceTest):
         )
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
-            fixture_nolive_add_report
+            fixture_nolive_add_report("node-host")
         )
         self.assert_pcs_fail(
             "cluster node add-remote node-host B",
@@ -241,7 +241,7 @@ class NodeAddGuest(ResourceTest):
         self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
-            fixture_nolive_add_report
+            fixture_nolive_add_report("node-host")
         )
         self.assert_pcs_fail(
             "cluster node add-guest node-host H",
@@ -290,7 +290,7 @@ class NodeAddGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report
+            output=fixture_nolive_add_report("node-host")
         )
 
     def test_success_when_guest_node_matches_with_existing_guest(self):
@@ -300,7 +300,7 @@ class NodeAddGuest(ResourceTest):
         self.create_resource()
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
-            fixture_nolive_add_report
+            fixture_nolive_add_report("node-host")
         )
         self.assert_pcs_success(
             "resource update G meta remote-node=node-host",
@@ -335,7 +335,7 @@ class NodeAddGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report
+            output=fixture_nolive_add_report("node-name")
         )
 
 class NodeRemoveRemote(ResourceTest):
@@ -414,7 +414,7 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_effect(
             "cluster node remove-remote NODE-HOST",
             "<resources/>",
-            fixture_nolive_remove_report(["NODE-HOST"]) + outdent(
+            fixture_nolive_remove_report(["NODE-NAME"]) + outdent(
                 """\
                 Deleting Resource - NODE-NAME
                 """
@@ -426,7 +426,7 @@ class NodeRemoveRemote(ResourceTest):
         self.assert_effect(
             "cluster node remove-remote NODE-NAME",
             "<resources/>",
-            fixture_nolive_remove_report(["NODE-HOST"]) + outdent(
+            fixture_nolive_remove_report(["NODE-NAME"]) + outdent(
                 """\
                 Deleting Resource - NODE-NAME
                 """
@@ -436,7 +436,7 @@ class NodeRemoveRemote(ResourceTest):
     def test_refuse_on_duplicit(self):
         self.fixture_multiple_remote_nodes()
         self.assert_pcs_fail(
-            "cluster node remove-remote HOST-A", #
+            "cluster node remove-remote HOST-A",
             "Error: multiple resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME', use --force to override\n"
         )
@@ -449,7 +449,7 @@ class NodeRemoveRemote(ResourceTest):
 
             "Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'\n"
             +
-            fixture_nolive_remove_report(["HOST-A", "HOST-B"])
+            fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
             +
             outdent(
                 """\
@@ -510,7 +510,7 @@ class NodeRemoveGuest(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            fixture_nolive_remove_report(["NODE-HOST"])
+            fixture_nolive_remove_report(["NODE-NAME"])
         )
 
     def test_success_remove_by_node_name(self):
