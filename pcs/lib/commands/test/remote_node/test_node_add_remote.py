@@ -2,6 +2,7 @@ from functools import partial
 from unittest import mock, TestCase
 
 from pcs.common import report_codes, env_file_role_codes
+from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
 from pcs.lib.commands.test.remote_node.fixtures_add import(
     EnvConfigMixin,
@@ -14,8 +15,16 @@ from pcs.test.tools.command_env import get_env_tools
 
 
 NODE_NAME = "node-name"
+NODE_DEST_LIST = [Destination("node-addr", 2224)]
 NODE_1 = "node-1"
+NODE_1_DEST_LIST = [Destination("node-1-addr", 2224)]
 NODE_2 = "node-2"
+NODE_2_DEST_LIST = [Destination("node-2-addr", 2224)]
+KNOWN_HOSTS_DESTS = {
+    NODE_NAME: NODE_DEST_LIST,
+    NODE_1: NODE_1_DEST_LIST,
+    NODE_2: NODE_2_DEST_LIST,
+}
 
 def node_add_remote(
     env, host=None, node_name=None, operations=None, meta_attributes=None,
@@ -106,14 +115,14 @@ FIXTURE_RESOURCES = """
 class AddRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
+        self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
 
     def test_success_base(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
@@ -123,9 +132,9 @@ class AddRemote(TestCase):
         #validation and creation of resource is covered in resource create tests
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(
                 resources="""
                     <resources>
@@ -190,17 +199,17 @@ class AddRemote(TestCase):
         generate_key.return_value = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
             .local.authkey_exists(return_value=False)
             .local.distribute_authkey(
                 communication_list=[
-                    dict(label=NODE_1),
-                    dict(label=NODE_2),
-                    dict(label=NODE_NAME),
+                    dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
+                    dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
                 ],
                 pcmk_authkey_content=generate_key.return_value,
             )
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
@@ -227,15 +236,21 @@ class AddRemote(TestCase):
         pcmk_authkey_content = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.check_node_availability(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=NODE_NAME)],
+                communication_list=[
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+                ],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
-            .local.run_pacemaker_remote(NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env(), skip_offline_nodes=True)
@@ -255,7 +270,9 @@ class AddRemote(TestCase):
     def test_fails_when_remote_node_is_not_prepared(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=False)
+            .local.check_node_availability(
+                NODE_NAME, NODE_DEST_LIST, result=False
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env()),
@@ -270,7 +287,9 @@ class AddRemote(TestCase):
     def test_fails_when_remote_node_returns_invalid_output(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, output="INVALID_OUTPUT")
+            .local.check_node_availability(
+                NODE_NAME, NODE_DEST_LIST, output="INVALID_OUTPUT"
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env()),
@@ -285,7 +304,7 @@ class AddRemote(TestCase):
     def test_open_failed(self):
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
             .local.authkey_exists(return_value=True)
             .local.open_authkey(fail=True)
         )
@@ -328,12 +347,12 @@ class WithWait(TestCase):
         self. wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .runner.pcmk.can_wait()
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES, wait=self.wait)
          )
 
@@ -380,15 +399,17 @@ class AddRemotePcmkRemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
         )
 
     def test_fails_when_offline(self):
         (self.config
-            .local.run_pacemaker_remote(label=NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env())
@@ -402,7 +423,7 @@ class AddRemotePcmkRemoteService(TestCase):
 
     def test_fail_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(NODE_NAME, result={
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -419,7 +440,7 @@ class AddRemotePcmkRemoteService(TestCase):
 
     def test_forceable_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(NODE_NAME, result={
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -441,9 +462,9 @@ class AddRemoteAuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_NAME, NODE_1, NODE_2])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
         )
 
     def test_fails_when_offline(self):
@@ -452,7 +473,9 @@ class AddRemoteAuthkeyDistribution(TestCase):
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=NODE_NAME)],
+                communication_list=[
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+                ],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
@@ -473,6 +496,7 @@ class AddRemoteAuthkeyDistribution(TestCase):
         (self.config
             .local.push_existing_authkey_to_remote(
                 NODE_NAME,
+                NODE_DEST_LIST,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
@@ -494,12 +518,13 @@ class AddRemoteAuthkeyDistribution(TestCase):
         (self.config
             .local.push_existing_authkey_to_remote(
                 NODE_NAME,
+                NODE_DEST_LIST,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
                 }
             )
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
 

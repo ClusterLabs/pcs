@@ -109,8 +109,8 @@ def bad_request_list_content(errors):
     )
 
 def _communication_to_response(
-    label, dest_list, action, param_list, token, response_code,
-    output, debug_output, was_connected, errno, error_msg
+    label, dest_list, action, param_list, response_code, output, debug_output,
+    was_connected, errno, error_msg
 ):
     return Response(
         MockCurlSimple(
@@ -118,7 +118,14 @@ def _communication_to_response(
             output=output,
             debug_output=debug_output,
             request=Request(
-                RequestTarget(label, dest_list=dest_list, token=token),
+                # We do not need to check if token is the right one in tests:
+                # 1) Library commands tests do not care about tokens. That
+                #    should be covered once in a specialized test, not in every
+                #    single library command test.
+                # 2) If we need to test teh case when a token is not accepted
+                #    by pcsd, we will do so by setting an appropriate response.
+                #    The actual token value doesn't matter.
+                RequestTarget(label, dest_list=dest_list, token=None),
                 RequestData(action, param_list),
             )
         ),
@@ -128,34 +135,29 @@ def _communication_to_response(
     )
 
 def create_communication(
-    communication_list, action="", param_list=None, token=None,
-    response_code=200, output="", debug_output="", was_connected=True,
-    errno=0, error_msg_template=None
+    communication_list, action="", param_list=None, response_code=200,
+    output="", debug_output="", was_connected=True, errno=0,
+    error_msg=None
 ):
     """
-    list of dict communication_list -- is setting for one request - response
+    list of dict communication_list -- each dict describes one request-response
         it accepts keys:
-            label -- required, see RequestTarget
-            dest_list -- list of pcs.common.host.Destination
-            action -- pcsd url, see RequestData
-            param_list -- list of pairs, see RequestData
-            port -- see RequestTarget; deprecated, use dest_list instead
-            token=None -- see RequestTarget
-            response_code -- http response code
-            output -- http response output
-            debug_output -- pycurl debug output
-            was_connected -- see Response
-            errno -- see Response
-            error_msg -- see Response
+            string label -- required, the label of a node to talk with
+            dest_list -- list of pcs.common.host.Destination where to send
+                a request, defaults to [(label, default_pcsd_port)]
+            string action -- pcsd url, see RequestData
+            list of pairs param_list -- see RequestData
+            int response_code -- http response code
+            string output -- http response output
+            string debug_output -- pycurl debug output
+            bool was_connected -- see Response
+            int errno -- see Response
+            string error_msg -- see Response
         if some key is not present, it is put here from common values - rest
         args of this fuction(except name, communication_list,
         error_msg_template)
-    string error_msg_template -- template, the keys for format function will
-        be taken from appropriate item of communication_list
     string action -- pcsd url, see RequestData
     list of pairs (tuple) param_list -- see RequestData
-    string port -- see RequestTarget
-    string token=None -- see RequestTarget
     string response_code -- http response code
     string output -- http response output
     string debug_output -- pycurl debug output
@@ -163,40 +165,29 @@ def create_communication(
     int errno -- see Response
     string error_msg -- see Response
     """
-    response_list = []
-
+    # We don't care about tokens, see _communication_to_response.
     common = dict(
         action=action,
         param_list=param_list if param_list else (),
-        token=token,
         response_code=response_code,
         output=output,
         debug_output=debug_output,
         was_connected=was_connected,
         errno=errno,
+        error_msg=error_msg,
     )
+
+    response_list = []
     for communication in communication_list:
         if "dest_list" not in communication:
             communication["dest_list"] = [
-                Destination(
-                    communication["label"], settings.pcsd_default_port
-                ),
+                Destination(communication["label"], settings.pcsd_default_port)
             ]
-
         full = common.copy()
         full.update(communication)
-
-        if "error_msg" not in full:
-            full["error_msg"] = (
-                "" if not error_msg_template
-                else error_msg_template.format(**full)
-            )
-        response_list.append(
-            _communication_to_response(**full)
-        )
+        response_list.append(_communication_to_response(**full))
 
     request_list = [response.request for response in response_list]
-
     return request_list, response_list
 
 def place_multinode_call(
@@ -337,25 +328,17 @@ class NodeCommunicator(object):
 
         errors = {}
         for i, real_request in enumerate(request_list):
+            # We don't care about tokens, see _communication_to_response.
             expected_request = add_request_call.request_list[i]
 
             diff = {}
             if expected_request.action != real_request.action:
-                diff["action"] = (
-                    expected_request.action,
-                    real_request.action
-                )
+                diff["action"] = (expected_request.action, real_request.action)
 
             if expected_request.target.label != real_request.target.label:
                 diff["target.label"] = (
                     expected_request.target.label,
                     real_request.target.label
-                )
-
-            if expected_request.target.token != real_request.target.token:
-                diff["target.token"] = (
-                    expected_request.target.token,
-                    real_request.target.token
                 )
 
             if (

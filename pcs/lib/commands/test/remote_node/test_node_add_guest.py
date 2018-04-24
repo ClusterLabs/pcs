@@ -2,6 +2,7 @@ from functools import partial
 from unittest import mock, TestCase
 
 from pcs.common import report_codes
+from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_guest as node_add_guest_orig
 from pcs.lib.commands.test.remote_node.fixtures_add import(
     EnvConfigMixin,
@@ -14,10 +15,18 @@ from pcs.test.tools.command_env import get_env_tools
 
 
 NODE_NAME = "node-name"
+NODE_DEST_LIST = [Destination("node-addr", 2224)]
 REMOTE_HOST = "remote-host"
 VIRTUAL_MACHINE_ID = "virtual_machine_id"
 NODE_1 = "node-1"
+NODE_1_DEST_LIST = [Destination("node-1-addr", 2224)]
 NODE_2 = "node-2"
+NODE_2_DEST_LIST = [Destination("node-2-addr", 2224)]
+KNOWN_HOSTS_DESTS = {
+    NODE_NAME: NODE_DEST_LIST,
+    NODE_1: NODE_1_DEST_LIST,
+    NODE_2: NODE_2_DEST_LIST,
+}
 
 def node_add_guest(
     env, node_name=NODE_NAME, resource_id=VIRTUAL_MACHINE_ID, options=None,
@@ -95,15 +104,15 @@ EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
 class AddGuest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes([NODE_1, NODE_2, NODE_NAME])
+        self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
 
     def test_success_base(self):
         (self.config
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib()
         )
         node_add_guest(self.env_assist.get_env())
@@ -116,17 +125,17 @@ class AddGuest(TestCase):
         (self.config
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, result=True)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
             .local.authkey_exists(return_value=False)
             .local.distribute_authkey(
                 communication_list=[
-                    dict(label=NODE_1),
-                    dict(label=NODE_2),
-                    dict(label=NODE_NAME),
+                    dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
+                    dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
                 ],
                 pcmk_authkey_content=generate_key.return_value,
             )
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib()
         )
         node_add_guest(self.env_assist.get_env())
@@ -154,15 +163,21 @@ class AddGuest(TestCase):
         (self.config
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.check_node_availability(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=NODE_NAME)],
+                communication_list=[
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+                ],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
-            .local.run_pacemaker_remote(NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
             .local.push_cib()
         )
         node_add_guest(self.env_assist.get_env(), skip_offline_nodes=True)
@@ -199,9 +214,9 @@ class AddGuest(TestCase):
         (self.config
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib(meta_attributes=meta_attributes)
         )
         # Since options are set, the default remote-addr == REMOTE_HOST is not
@@ -269,13 +284,13 @@ class WithWait(TestCase):
         self.wait = 1
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_1, NODE_2, NODE_NAME])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .runner.pcmk.can_wait()
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib(wait=self.wait)
         )
 
@@ -322,15 +337,17 @@ class RemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_1, NODE_2, NODE_NAME])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME)
-            .local.push_existing_authkey_to_remote(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
+            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
         )
     def test_fails_when_offline(self):
         (self.config
-            .local.run_pacemaker_remote(label=NODE_NAME, **FAIL_HTTP_KWARGS)
+            .local.run_pacemaker_remote(
+                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env()),
@@ -344,7 +361,7 @@ class RemoteService(TestCase):
 
     def test_fail_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(NODE_NAME, result={
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -361,7 +378,7 @@ class RemoteService(TestCase):
 
     def test_forceable_when_remotely_fail(self):
         (self.config
-            .local.run_pacemaker_remote(NODE_NAME, result={
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
                 "code": "fail",
                 "message": "Action failed",
             })
@@ -383,10 +400,10 @@ class AuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         (self.config
-            .env.set_known_nodes([NODE_1, NODE_2, NODE_NAME])
+            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.check_node_availability(NODE_NAME)
+            .local.check_node_availability(NODE_NAME, NODE_DEST_LIST)
         )
 
     def test_fails_when_offline(self):
@@ -395,7 +412,9 @@ class AuthkeyDistribution(TestCase):
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=NODE_NAME)],
+                communication_list=[
+                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+                ],
                 pcmk_authkey_content=pcmk_authkey_content,
                 **FAIL_HTTP_KWARGS
             )
@@ -414,6 +433,7 @@ class AuthkeyDistribution(TestCase):
         (self.config
             .local.push_existing_authkey_to_remote(
                 NODE_NAME,
+                NODE_DEST_LIST,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
@@ -435,12 +455,13 @@ class AuthkeyDistribution(TestCase):
         (self.config
             .local.push_existing_authkey_to_remote(
                 NODE_NAME,
+                NODE_DEST_LIST,
                 distribution_result={
                     "code": "conflict",
                     "message": "",
                 }
             )
-            .local.run_pacemaker_remote(NODE_NAME)
+            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib()
         )
 

@@ -11,7 +11,7 @@ FAIL_HTTP_KWARGS = dict(
     output="",
     was_connected=False,
     errno='6',
-    error_msg_template=OFFLINE_ERROR_MSG,
+    error_msg=OFFLINE_ERROR_MSG,
 )
 
 class EnvConfigMixin(object):
@@ -51,13 +51,13 @@ class EnvConfigMixin(object):
             **kwargs
         )
 
-    def check_node_availability(self, label, result=True, **kwargs):
+    def check_node_availability(self, label, dest_list, result=True, **kwargs):
         if "output" not in kwargs:
             kwargs["output"] = json.dumps({"node_available": result})
 
         self.config.http.place_multinode_call(
             "node_available",
-            communication_list=[dict(label=label)],
+            communication_list=[dict(label=label, dest_list=dest_list)],
             action="remote/node_available",
             **kwargs
         )
@@ -81,20 +81,20 @@ class EnvConfigMixin(object):
         )
 
     def push_existing_authkey_to_remote(
-        self, remote_host, distribution_result=None
+        self, host_name, dest_list, distribution_result=None
     ):
         pcmk_authkey_content = b"password"
         (self.config
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
-                communication_list=[dict(label=remote_host)],
+                communication_list=[dict(label=host_name, dest_list=dest_list)],
                 pcmk_authkey_content=pcmk_authkey_content,
                 result=distribution_result
             )
          )
 
-    def run_pacemaker_remote(self, label, result=None, **kwargs):
+    def run_pacemaker_remote(self, label, dest_list, result=None, **kwargs):
         if kwargs.get("was_connected", True):
             result = result if result is not None else {
                 "code": "success",
@@ -111,7 +111,7 @@ class EnvConfigMixin(object):
             )
 
         self.config.http.manage_services(
-            communication_list=[dict(label=label)],
+            communication_list=[dict(label=label, dest_list=dest_list)],
             action_map={
                 "pacemaker_remote enable": {
                     "type": "service_command",

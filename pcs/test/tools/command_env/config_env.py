@@ -8,14 +8,6 @@ from pcs import settings
 from pcs.common.host import PcsKnownHost, Destination
 
 
-def _generic_known_host_fixture(name):
-    return PcsKnownHost(
-        name,
-        token=None,
-        dest_list=[Destination(name, settings.pcsd_default_port)]
-    )
-
-
 class EnvConfig(object):
     def __init__(self, call_collection):
         self.__calls = call_collection
@@ -52,12 +44,34 @@ class EnvConfig(object):
     def corosync_conf_data(self):
         return self.__corosync_conf_data
 
-    def set_known_nodes(self, node_name_list):
+    def set_known_nodes(self, host_name_list):
+        """
+        Set known hosts so that each host's address equals to the host's name
+        list host_name_list -- list of host names
+        """
         self.__known_hosts_getter = lambda: {
-            name: _generic_known_host_fixture(name) for name in node_name_list
+            name: PcsKnownHost(
+                name,
+                token=None,
+                dest_list=[Destination(name, settings.pcsd_default_port)]
+            )
+            for name in host_name_list
+        }
+
+    def set_known_hosts_dests(self, know_hosts_dests):
+        """
+        Set known hosts so for each host a name and dest_list is specified
+        dict know_hosts_dests -- key: host name, value: list of Destination
+        """
+        self.__known_hosts_getter = lambda: {
+            name: PcsKnownHost(name, token=None, dest_list=dest_list)
+            for name, dest_list in know_hosts_dests.items()
         }
 
     def set_known_hosts_getter(self, known_hosts_getter):
+        """
+        Set a function providing known hosts
+        """
         self.__known_hosts_getter = known_hosts_getter
 
     @property
