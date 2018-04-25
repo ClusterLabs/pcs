@@ -3234,3 +3234,15 @@ def cluster_will_be_destroyed():
 
 def cluster_setup_success():
     return ReportItem.info(report_codes.CLUSTER_SETUP_SUCCESS)
+
+def using_known_host_address_for_host(host_name, address):
+    """
+    When no address was specified for a host, its known-host address was used
+    """
+    return ReportItem.info(
+        report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+        info={
+            "host_name": host_name,
+            "address": address
+        }
+    )

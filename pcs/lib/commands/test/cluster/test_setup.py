@@ -194,12 +194,22 @@ def config_succes_minimal_fixture(
         )
     )
 
-def reports_success_minimal_fixture(node_list=None):
+def reports_success_minimal_fixture(
+    node_list=None, using_known_hosts_addresses=True
+):
     node_list = node_list or NODE_LIST
     auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
     pcsd_settings_file = "pcsd settings"
     corosync_conf_file = "corosync.conf"
     return (
+        [
+            fixture.info(
+                report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                host_name=node,
+                address=node
+            ) for node in node_list if using_known_hosts_addresses
+        ]
+        +
         [
             fixture.info(
                 report_codes.CLUSTER_DESTROY_STARTED,
@@ -486,7 +496,9 @@ class SetupSuccessAddresses(TestCase):
             ],
             transport_type=DEFAULT_TRANSPORT_TYPE,
         )
-        self.env_assist.assert_reports(reports_success_minimal_fixture())
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
 
 
 @mock.patch(
@@ -575,7 +587,13 @@ class Validation(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3", "node4"])
-        self.resolvable_hosts = patch_getaddrinfo(self, [])
+        self.resolvable_hosts = patch_getaddrinfo(
+            self,
+            [f"{node}.addr" for node in NODE_LIST]
+        )
+        self.command_node_list = [
+            dict(name=node, addrs=[f"{node}.addr"]) for node in NODE_LIST
+        ]
         self.get_host_info_ok = {
             "services": {
                 service: {
@@ -630,9 +648,9 @@ class Validation(TestCase):
                     {"name": "node1", "addrs": ["addr1"]},
                     # no change, addrs defined even though empty
                     {"name": "node2", "addrs": []},
-                    # use the name as an address
+                    # use a default address
                     {"name": "node3", "addrs": None},
-                    # use the name as an address
+                    # use a default address
                     {"name": "node4"},
                 ],
                 transport_type="knet"
@@ -640,7 +658,14 @@ class Validation(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                # no addrs defined
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node
+                ) for node in ["node3", "node4"]
+            ]
+            +
+            [
                 fixture.error(
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=0,
@@ -649,7 +674,6 @@ class Validation(TestCase):
                     node_name="node2",
                     node_id=2
                 ),
-                # we use this to verify what addrs have been used
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
@@ -742,6 +766,7 @@ class Validation(TestCase):
                 {"node1": ["addr1"], "node2": ["addr2"], "node3": ["addr3"]}
             ),
         )
+        self.resolvable_hosts.clear()
         self.resolvable_hosts.extend(["addr1", "addr3"])
 
         cluster.setup(
@@ -763,7 +788,7 @@ class Validation(TestCase):
                 )
             ]
             +
-            reports_success_minimal_fixture()
+            reports_success_minimal_fixture(using_known_hosts_addresses=False)
         )
 
     def assert_corosync_validators_udp_udpu(self, transport):
@@ -782,7 +807,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type=transport,
                 transport_options={"a": "A"},
                 link_list=[{"b": "B"}],
@@ -865,7 +890,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type="knet",
                 transport_options={"a": "A"},
                 link_list=[{"b": "B"}],
@@ -976,7 +1001,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type="knet",
                 force=True
             )
@@ -1069,6 +1094,14 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node
+                ) for node in nodelist
+            ]
+            +
             [
                 fixture.error(
                     report_codes.INVALID_RESPONSE_FORMAT,
@@ -1166,6 +1199,14 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node
+                ) for node in nodelist
+            ]
+            +
             [
                 fixture.error(
                     report_codes.INVALID_RESPONSE_FORMAT,
@@ -1276,7 +1317,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type="knet",
                 start=True,
                 wait="abcd"
@@ -1302,7 +1343,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type="knet",
                 wait="10"
             )
@@ -1331,7 +1372,7 @@ class Validation(TestCase):
             lambda: cluster.setup(
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
-                COMMAND_NODE_LIST,
+                self.command_node_list,
                 transport_type="tcp",
                 wait="abcd"
             )
@@ -1425,7 +1466,9 @@ class TransportKnetSuccess(TestCase):
             ],
             transport_type=self.transport_type,
         )
-        self.env_assist.assert_reports(reports_success_minimal_fixture())
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
 
     def test_all_options(self):
         node_addrs = {
@@ -1505,7 +1548,9 @@ class TransportKnetSuccess(TestCase):
             totem_options=TOTEM_OPTIONS,
             quorum_options=QUORUM_OPTIONS,
         )
-        self.env_assist.assert_reports(reports_success_minimal_fixture())
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
 
 
 @mock.patch(
@@ -1541,7 +1586,9 @@ class TransportUdpSuccess(TestCase):
             ],
             transport_type=self.transport_type,
         )
-        self.env_assist.assert_reports(reports_success_minimal_fixture())
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
 
     def test_all_options(self):
         node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
@@ -1583,7 +1630,9 @@ class TransportUdpSuccess(TestCase):
             totem_options=TOTEM_OPTIONS,
             quorum_options=QUORUM_OPTIONS,
         )
-        self.env_assist.assert_reports(reports_success_minimal_fixture())
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
 
 
 def get_time_mock(step=1):

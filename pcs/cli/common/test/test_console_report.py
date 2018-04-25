@@ -2563,3 +2563,14 @@ class PcsdVersionTooOld(NameBuildTest):
                 "node": "node1",
             }
         )
+
+class UsingKnownHostAddressForHost(NameBuildTest):
+    code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
+    def test_success(self):
+        self.assert_message_from_info(
+            "No addresses specified for host 'node-name', using 'node-addr'",
+            {
+                "host_name": "node-name",
+                "address": "node-addr"
+            }
+        )

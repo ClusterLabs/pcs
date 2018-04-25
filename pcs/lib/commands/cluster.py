@@ -117,12 +117,6 @@ def verify(env, verbose=False):
     #can raise
     env.report_processor.send()
 
-
-def _normalize_dict(input_dict, required_keys):
-    for key in required_keys:
-        if key not in input_dict:
-            input_dict[key] = None
-
 def setup(
     env, cluster_name, nodes,
     transport_type=None, transport_options=None, link_list=None,
@@ -167,17 +161,36 @@ def setup(
     crypto_options = crypto_options or {}
     totem_options = totem_options or {}
     quorum_options = quorum_options or {}
-    for node in nodes:
-        _normalize_dict(node, {"addrs"})
+    nodes = [
+        _normalize_dict(node, {"addrs"}) for node in nodes
+    ]
 
     _report_processor = SimpleReportProcessor(env.report_processor)
+    target_factory = env.get_node_target_factory()
 
-    # Use a node name as an address if no addresses specified. This allows
-    # users not to specify node addresses at all which simplifies the whole
-    # cluster setup command / form significantly.
-    for node in nodes:
-        if node["addrs"] is None:
-            node["addrs"] = [node["name"]]
+    # Get targets for all nodes and report unknown (== not-authorized) nodes.
+    # If a node doesn't contain the 'name' key, validation of inputs reports it.
+    # That means we don't report missing names but cannot rely on them being
+    # present either.
+    target_report_list, target_list = (
+        target_factory.get_target_list_with_reports(
+            [node["name"] for node in nodes if "name" in node],
+            allow_skip=False,
+        )
+    )
+    _report_processor.report_list(target_report_list)
+
+    # Use an address defined in known-hosts for each node with no addresses
+    # specified. This allows users not to specify node addresses at all which
+    # simplifies the whole cluster setup command / form significantly.
+    addrs_defaulter = _get_addrs_defaulter(
+        _report_processor,
+        {target.label: target for target in target_list}
+    )
+    nodes = [
+        _set_defaults_in_dict(node, {"addrs": addrs_defaulter})
+        for node in nodes
+    ]
 
     # Validate inputs.
     _report_processor.report_list(config_validators.create(
@@ -231,16 +244,6 @@ def setup(
         _report_processor.report_list(e.args)
 
     # Validate the nodes.
-    # If a node doesn't contain the 'name key, validation of inputs reports it.
-    # That means we don't report missing names but cannot rely on them being
-    # present either.
-    target_report_list, target_list = (
-        env.get_node_target_factory().get_target_list_with_reports(
-            [node["name"] for node in nodes if "name" in node],
-            allow_skip=False,
-        )
-    )
-    _report_processor.report_list(target_report_list)
     com_cmd = GetHostInfo(_report_processor)
     com_cmd.set_targets(target_list)
     _report_processor.report_list(
@@ -455,3 +458,34 @@ def _check_for_not_matching_service_versions(service, service_version_dict):
     return [
         reports.service_version_mismatch(service, service_version_dict)
     ]
+
+def _normalize_dict(input_dict, required_keys):
+    normalized = dict(input_dict)
+    for key in required_keys:
+        if key not in normalized:
+            normalized[key] = None
+    return normalized
+
+def _set_defaults_in_dict(input_dict, defaults):
+    completed = dict(input_dict)
+    for key, factory in defaults.items():
+        if completed[key] is None:
+            completed[key] = factory(input_dict)
+    return completed
+
+def _get_addrs_defaulter(
+    report_processor: SimpleReportProcessor, targets_dict
+):
+    def defaulter(node):
+        if "name" not in node:
+            return []
+        target = targets_dict.get(node["name"])
+        if target:
+            report_processor.report(
+                reports.using_known_host_address_for_host(
+                    node["name"], target.first_addr
+                )
+            )
+            return [target.first_addr]
+        return []
+    return defaulter

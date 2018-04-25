@@ -1628,4 +1628,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CLUSTER_SETUP_SUCCESS:
         "Cluster has been successfully set up."
     ,
+    codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST: lambda info:
+        "No addresses specified for host '{host_name}', using '{address}'"
+        .format(**info)
+    ,
 }
