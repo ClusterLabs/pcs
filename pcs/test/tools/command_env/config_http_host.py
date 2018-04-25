@@ -6,12 +6,6 @@ from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call,
 )
 
-def dest_dict_fixture(addr, port=settings.pcsd_default_port):
-    return dict(
-        addr=addr,
-        port=port,
-    )
-
 
 class HostShortcuts(object):
     def __init__(self, calls):
@@ -79,17 +73,36 @@ class HostShortcuts(object):
         )
 
     def update_known_hosts(
-        self, node_labels=None, to_add=None, communication_list=None,
-        name="http.host.update_known_hosts",
+        self, node_labels=None, to_add=None, to_add_hosts=None,
+        communication_list=None, name="http.host.update_known_hosts",
     ):
         """
         Create a call for updating known hosts on the hosts.
 
         node_labels list -- create success responses from these nodes
-        to_add list of strings -- list of host name which should be added
+        dict to_add -- records to add:
+                {host_name: {dest_list: [{"addr": , "port": ,}]}}
+        list to_add_hosts -- constructs to_add from host names
         communication_list list -- create custom responses
         name string -- the key of this call
         """
+        if to_add_hosts and to_add:
+            raise AssertionError(
+                "Cannot specify both 'to_add_hosts' and 'to_add'"
+            )
+        if to_add_hosts:
+            to_add = {
+                name: {
+                    "dest_list": [
+                        {"addr": name, "port": settings.pcsd_default_port}
+                    ]
+                }
+                for name in to_add_hosts
+            }
+        add_with_token = {
+            name: dict(data, token=None)
+            for name, data in to_add.items()
+        }
         place_multinode_call(
             self.__calls,
             name,
@@ -99,12 +112,7 @@ class HostShortcuts(object):
             param_list=[(
                 "data_json",
                 json.dumps(dict(
-                    known_hosts_add={
-                        host: dict(
-                            dest_list=[dest_dict_fixture(host)],
-                            token=None,
-                        ) for host in to_add
-                    },
+                    known_hosts_add=add_with_token,
                     known_hosts_remove={}
                 ))
             )],

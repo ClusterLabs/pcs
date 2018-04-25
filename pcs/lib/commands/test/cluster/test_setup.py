@@ -12,6 +12,7 @@ from pcs.test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.host import Destination
 from pcs.lib.commands import cluster
 from pcs.lib.corosync import constants
 
@@ -136,7 +137,21 @@ def corosync_conf_fixture(
         ),
     )
 
-def config_succes_minimal_fixture(config, corosync_conf=None):
+def config_succes_minimal_fixture(
+    config, corosync_conf=None, node_labels=None, communication_list=None,
+    known_hosts=None
+):
+    if node_labels is None and communication_list is None:
+        node_labels = NODE_LIST
+    if known_hosts is None:
+        known_hosts = {
+            name: {
+                "dest_list": [
+                    {"addr": name, "port": settings.pcsd_default_port}
+                ]
+            }
+            for name in node_labels
+        }
     services_status = {
         service: dict(
             installed=True, enabled=False, running=False, version="1.0",
@@ -144,24 +159,38 @@ def config_succes_minimal_fixture(config, corosync_conf=None):
     }
     (config
         .http.host.get_host_info(
-            NODE_LIST,
+            node_labels=node_labels,
             output_data=dict(
                 services=services_status,
                 cluster_configuration_exists=False,
             ),
+            communication_list=communication_list,
         )
-        .http.host.cluster_destroy(NODE_LIST)
-        .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
+        .http.host.cluster_destroy(
+            node_labels=node_labels,
+            communication_list=communication_list,
+        )
+        .http.host.update_known_hosts(
+            node_labels=node_labels,
+            to_add=known_hosts,
+            communication_list=communication_list,
+        )
         .http.files.put_files(
-            NODE_LIST,
+            node_labels=node_labels,
             pcmk_authkey=RANDOM_KEY,
             corosync_authkey=RANDOM_KEY,
+            communication_list=communication_list,
         )
-        .http.files.remove_files(NODE_LIST, pcsd_settings=True)
+        .http.files.remove_files(
+            node_labels=node_labels,
+            pcsd_settings=True,
+            communication_list=communication_list,
+        )
         .http.files.put_files(
-            NODE_LIST,
+            node_labels=node_labels,
             corosync_conf=corosync_conf,
             name="distribute_corosync_conf",
+            communication_list=communication_list,
         )
     )
 
@@ -406,6 +435,64 @@ class SetupSuccessMinimal(TestCase):
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+class SetupSuccessAddresses(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.node_names = ["node1", "node2", "node3"]
+        self.node_dests = [
+            [Destination("node1-addr", 2225)],
+            [Destination("node2-addr", 2226)],
+            [Destination("node3-addr", 2227)],
+        ]
+        self.node_coros = ["node1-corosync", "node2-corosync", "node3-corosync"]
+        self.config.env.set_known_hosts_dests({
+            name: dest
+            for name, dest in zip(self.node_names, self.node_dests)
+        })
+        patch_getaddrinfo(self, self.node_coros)
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture({
+                name: [addr]
+                for name, addr in zip(self.node_names, self.node_coros)
+            }),
+            communication_list=[
+                {"label": name, "dest_list": dest}
+                for name, dest in zip(self.node_names, self.node_dests)
+            ],
+            known_hosts={
+                name: {
+                    "dest_list": [
+                        {"addr": dest.addr, "port": dest.port}
+                        for dest in dest_list
+                    ]
+                }
+                for name, dest_list in zip(self.node_names, self.node_dests)
+            }
+        )
+
+    def test_communication_addresses(self):
+        # Test that addresses don't mix up:
+        # - node names are put into corosync.conf and used to get pcs addresses
+        #   from known-hosts
+        # - pcs addresses are used for pcs node-to-node communication
+        # - corosync addresses are put into corosync.conf
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [
+                {"name": name, "addrs": [addr]}
+                for name, addr in zip(self.node_names, self.node_coros)
+            ],
+            transport_type=DEFAULT_TRANSPORT_TYPE,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
 class Setup2NodeSuccessMinimal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -426,7 +513,10 @@ class Setup2NodeSuccessMinimal(TestCase):
                 ),
             )
             .http.host.cluster_destroy(self.node_list)
-            .http.host.update_known_hosts(self.node_list, to_add=self.node_list)
+            .http.host.update_known_hosts(
+                self.node_list,
+                to_add_hosts=self.node_list
+            )
             .http.files.put_files(
                 self.node_list,
                 pcmk_authkey=RANDOM_KEY,
@@ -1535,7 +1625,7 @@ class SetupWithWait(TestCase):
                 ),
             )
             .http.host.cluster_destroy(NODE_LIST)
-            .http.host.update_known_hosts(NODE_LIST, to_add=NODE_LIST)
+            .http.host.update_known_hosts(NODE_LIST, to_add_hosts=NODE_LIST)
             .http.files.put_files(
                 NODE_LIST,
                 pcmk_authkey=RANDOM_KEY,
@@ -2385,7 +2475,7 @@ class Failures(TestCase):
         self._remove_calls(8)
         self.config.http.host.update_known_hosts(
             communication_list=self.communication_list,
-            to_add=NODE_LIST,
+            to_add_hosts=NODE_LIST
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(

@@ -60,7 +60,7 @@ class EnvConfig(object):
 
     def set_known_hosts_dests(self, know_hosts_dests):
         """
-        Set known hosts so for each host a name and dest_list is specified
+        Set known hosts so for each host a name and a dest_list is specified
         dict know_hosts_dests -- key: host name, value: list of Destination
         """
         self.__known_hosts_getter = lambda: {
