@@ -91,6 +91,11 @@ class RequestTarget(namedtuple(
             dest_list=known_host.dest_list,
         )
 
+    @property
+    def first_addr(self):
+        # __new__ ensures there is always at least one item in self.dest_list
+        return self.dest_list[0].addr
+
 
 class Request(object):
     """

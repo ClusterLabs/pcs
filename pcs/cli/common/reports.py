@@ -14,6 +14,7 @@ from pcs.cli.constraint_all.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
 )
 from pcs.common import report_codes as codes
+from pcs.common.reports import SimpleReportProcessorInterface
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
@@ -60,7 +61,8 @@ def build_message_from_report(code_builder_map, report_item, force_text=""):
 
 build_report_message = partial(build_message_from_report, __CODE_BUILDER_MAP)
 
-class LibraryReportProcessorToConsole(object):
+
+class LibraryReportProcessorToConsole(SimpleReportProcessorInterface):
     def __init__(self, debug=False):
         self.debug = debug
         self.items = []
@@ -79,9 +81,6 @@ class LibraryReportProcessorToConsole(object):
             item for item in self.items
             if item.severity == ReportItemSeverity.ERROR
         ])
-
-    def report(self, report_item):
-        return self.report_list([report_item])
 
     def report_list(self, report_item_list):
         return self._send(report_item_list)

@@ -84,13 +84,18 @@ def split_option(arg):
         raise CmdLineInputError("missing key in '{0}' option".format(arg))
     return arg.split("=", 1)
 
-def prepare_options(cmdline_args):
+def prepare_options(cmdline_args, allowed_repeatable_options=()):
     """return dictionary of options from commandline key=value args"""
     options = dict()
     for arg in cmdline_args:
         name, value = split_option(arg)
         if name not in options:
-            options[name] = value
+            if name in allowed_repeatable_options:
+                options[name] = [value]
+            else:
+                options[name] = value
+        elif name in allowed_repeatable_options:
+            options[name].append(value)
         elif options[name] != value:
             raise CmdLineInputError(
                 "duplicate option '{0}' with different values '{1}' and '{2}'"

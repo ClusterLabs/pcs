@@ -2420,9 +2420,11 @@ def cluster_auth_cmd(lib, argv, modifiers):
 
 
 def _parse_node_options(node, options):
-    ADDR_OPT_KEYWORD = "addrs"
+    ADDR_OPT_KEYWORD = "addr"
     supported_options = {ADDR_OPT_KEYWORD}
-    parsed_options = parse_args.prepare_options(options)
+    parsed_options = parse_args.prepare_options(
+        options, allowed_repeatable_options={ADDR_OPT_KEYWORD}
+    )
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:
         raise CmdLineInputError(
@@ -2431,11 +2433,11 @@ def _parse_node_options(node, options):
             )
         )
     parsed_options["name"] = node
-    parsed_options[ADDR_OPT_KEYWORD] = (
-        parsed_options[ADDR_OPT_KEYWORD].split(",")
-        if ADDR_OPT_KEYWORD in parsed_options
-        else None
-    )
+    if ADDR_OPT_KEYWORD in parsed_options:
+        parsed_options["addrs"] = parsed_options[ADDR_OPT_KEYWORD]
+        del parsed_options[ADDR_OPT_KEYWORD]
+    else:
+        parsed_options["addrs"] = None
     return parsed_options
 
 

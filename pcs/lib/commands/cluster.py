@@ -3,6 +3,7 @@ import time
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.tools import (
@@ -116,7 +117,6 @@ def verify(env, verbose=False):
     #can raise
     env.report_processor.send()
 
-
 def setup(
     env, cluster_name, nodes,
     transport_type=None, transport_options=None, link_list=None,
@@ -161,29 +161,48 @@ def setup(
     crypto_options = crypto_options or {}
     totem_options = totem_options or {}
     quorum_options = quorum_options or {}
+    nodes = [
+        _normalize_dict(node, {"addrs"}) for node in nodes
+    ]
 
-    # Use a node name as an address if no addresses specified. This allows
-    # users not to specify node addresses at all which simplifies the whole
-    # cluster setup command / form significantly.
-    for node in nodes:
-        # If node["addrs"] == None then node.get("addrs", []) returns None.
-        # We need it to return a list.
-        if "addrs" in node and node["addrs"] is None:
-            del node["addrs"]
-        if node.get("addrs") is None and node.get("name") is not None:
-            node["addrs"] = [node["name"]]
+    _report_processor = SimpleReportProcessor(env.report_processor)
+    target_factory = env.get_node_target_factory()
+
+    # Get targets for all nodes and report unknown (== not-authorized) nodes.
+    # If a node doesn't contain the 'name' key, validation of inputs reports it.
+    # That means we don't report missing names but cannot rely on them being
+    # present either.
+    target_report_list, target_list = (
+        target_factory.get_target_list_with_reports(
+            [node["name"] for node in nodes if "name" in node],
+            allow_skip=False,
+        )
+    )
+    _report_processor.report_list(target_report_list)
+
+    # Use an address defined in known-hosts for each node with no addresses
+    # specified. This allows users not to specify node addresses at all which
+    # simplifies the whole cluster setup command / form significantly.
+    addrs_defaulter = _get_addrs_defaulter(
+        _report_processor,
+        {target.label: target for target in target_list}
+    )
+    nodes = [
+        _set_defaults_in_dict(node, {"addrs": addrs_defaulter})
+        for node in nodes
+    ]
 
     # Validate inputs.
-    report_list = config_validators.create(
+    _report_processor.report_list(config_validators.create(
         cluster_name, nodes, transport_type,
         force_unresolvable=force_unresolvable
-    )
+    ))
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(
-            [len(node.get("addrs", [])) for node in nodes],
+            [len(node["addrs"]) for node in nodes],
             default=0
         )
-        report_list.extend(
+        _report_processor.report_list(
             config_validators.create_transport_knet(
                 transport_options,
                 compression_options,
@@ -196,7 +215,7 @@ def setup(
             )
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        report_list.extend(
+        _report_processor.report_list(
             config_validators.create_transport_udp(
                 transport_options,
                 compression_options,
@@ -205,7 +224,7 @@ def setup(
             +
             config_validators.create_link_list_udp(link_list)
         )
-    report_list.extend(
+    _report_processor.report_list(
         config_validators.create_totem(totem_options)
         +
         # We are creating the config and we know there is no qdevice in it.
@@ -217,38 +236,23 @@ def setup(
             wait_timeout = False
         else:
             if not start:
-                report_list.append(
+                _report_processor.report(
                     reports.wait_for_node_startup_without_start()
                 )
             wait_timeout = get_valid_timeout_seconds(wait)
     except LibraryError as e:
-        report_list.extend(e.args)
+        _report_processor.report_list(e.args)
 
     # Validate the nodes.
-    # If a node doesn't contain the 'name key, validation of inputs reports it.
-    # That means we don't report missing names but cannot rely on them being
-    # present either.
-    target_report_list, target_list = (
-        env.get_node_target_factory().get_target_list_with_reports(
-            [node["name"] for node in nodes if "name" in node],
-            allow_skip=False,
+    com_cmd = GetHostInfo(_report_processor)
+    com_cmd.set_targets(target_list)
+    _report_processor.report_list(
+        _host_check_cluster_setup(
+            run_com(env.get_node_communicator(), com_cmd), force
         )
     )
-    report_list.extend(target_report_list)
-    com_cmd = GetHostInfo(env.report_processor)
-    com_cmd.set_targets(target_list)
-    host_info_dict = run_com(env.get_node_communicator(), com_cmd)
-    report_list.extend(_host_check_cluster_setup(host_info_dict, force))
 
-    # Reporting:
-    # GetHostInfo command may already reported some issues directly into the
-    # report_processor. In order not to report them twice, all the gathered
-    # report items are put into the report_processor using its report_list
-    # method. This method does not raise a LibraryError on errors, instead it
-    # returns all the errors. This allows us to exit by raising a LibraryError
-    # if any errors occurred.
-    errors = env.report_processor.report_list(report_list)
-    if errors or com_cmd.error_list:
+    if _report_processor.has_errors:
         raise LibraryError()
 
     # Validation done. If errors occured, an exception has been raised and we
@@ -454,3 +458,34 @@ def _check_for_not_matching_service_versions(service, service_version_dict):
     return [
         reports.service_version_mismatch(service, service_version_dict)
     ]
+
+def _normalize_dict(input_dict, required_keys):
+    normalized = dict(input_dict)
+    for key in required_keys:
+        if key not in normalized:
+            normalized[key] = None
+    return normalized
+
+def _set_defaults_in_dict(input_dict, defaults):
+    completed = dict(input_dict)
+    for key, factory in defaults.items():
+        if completed[key] is None:
+            completed[key] = factory(input_dict)
+    return completed
+
+def _get_addrs_defaulter(
+    report_processor: SimpleReportProcessor, targets_dict
+):
+    def defaulter(node):
+        if "name" not in node:
+            return []
+        target = targets_dict.get(node["name"])
+        if target:
+            report_processor.report(
+                reports.using_known_host_address_for_host(
+                    node["name"], target.first_addr
+                )
+            )
+            return [target.first_addr]
+        return []
+    return defaulter

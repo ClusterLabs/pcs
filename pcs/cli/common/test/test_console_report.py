@@ -2017,6 +2017,58 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
             }
         )
 
+    def test_one_address_allowed(self):
+        self.assert_message_from_info(
+            "At least 0 and at most 1 address can be specified for a node, "
+            "2 addresses specified for node 'node2'",
+            {
+                "actual_count": 2,
+                "min_count": 0,
+                "max_count": 1,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
+    def test_one_address_specified(self):
+        self.assert_message_from_info(
+            "At least 2 and at most 4 addresses can be specified for a node, "
+            "1 address specified for node 'node2'",
+            {
+                "actual_count": 1,
+                "min_count": 2,
+                "max_count": 4,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
+    def test_exactly_one_address_allowed(self):
+        self.assert_message_from_info(
+            "1 address can be specified for a node, "
+            "2 addresses specified for node 'node2'",
+            {
+                "actual_count": 2,
+                "min_count": 1,
+                "max_count": 1,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
+    def test_exactly_two_addresses_allowed(self):
+        self.assert_message_from_info(
+            "2 addresses can be specified for a node, "
+            "1 address specified for node 'node2'",
+            {
+                "actual_count": 1,
+                "min_count": 2,
+                "max_count": 2,
+                "node_name": "node2",
+                "node_id": 2,
+            }
+        )
+
 
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
     code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
@@ -2561,5 +2613,16 @@ class PcsdVersionTooOld(NameBuildTest):
             ),
             {
                 "node": "node1",
+            }
+        )
+
+class UsingKnownHostAddressForHost(NameBuildTest):
+    code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
+    def test_success(self):
+        self.assert_message_from_info(
+            "No addresses specified for host 'node-name', using 'node-addr'",
+            {
+                "host_name": "node-name",
+                "address": "node-addr"
             }
         )

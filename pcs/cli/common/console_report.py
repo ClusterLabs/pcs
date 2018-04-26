@@ -177,6 +177,33 @@ def invalid_options(info):
         **info
     )
 
+def corosync_bad_node_addresses_count(info):
+    if info["min_count"] == info["max_count"]:
+        template = (
+            "{max_count} address{_s_allowed} can be specified for a node, "
+            "{actual_count} address{_s_specified} specified{_node_desc}"
+        )
+    else:
+        template = (
+            "At least {min_count} and at most {max_count} address{_s_allowed} "
+            "can be specified for a node, {actual_count} address{_s_specified} "
+            "specified{_node_desc}"
+        )
+    node_template = " for node '{}'"
+    return template.format(
+        _node_desc=(
+            node_template.format(info["node_name"])
+            if "node_name" in info
+            else
+            node_template.format(info["node_id"])
+            if "node_id" in info
+            else ""
+        ),
+        _s_allowed=("es" if info["max_count"] > 1 else ""),
+        _s_specified=("es" if info["actual_count"] > 1 else ""),
+        **info
+    )
+
 def corosync_node_address_count_mismatch(info):
     count_node = defaultdict(list)
     for node_name, count in info["node_addr_count"].items():
@@ -631,22 +658,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to parse corosync config"
     ,
 
-    codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT: lambda info:
-        (
-            "At least {min_count} and at most {max_count} addresses can be "
-            "specified for a node, {actual_count} addresses specified"
-            "{_node_desc}"
-        ).format(
-            _node_desc=(
-                " for node '{}'".format(info["node_name"])
-                if "node_name" in info
-                else
-                " for node '{}'".format(info["node_id"])
-                if "node_id" in info
-                else ""
-            ),
-            **info
-        )
+    codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT:
+        corosync_bad_node_addresses_count
     ,
 
     codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
@@ -1627,5 +1640,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.CLUSTER_SETUP_SUCCESS:
         "Cluster has been successfully set up."
+    ,
+    codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST: lambda info:
+        "No addresses specified for host '{host_name}', using '{address}'"
+        .format(**info)
     ,
 }
