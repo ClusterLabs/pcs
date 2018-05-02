@@ -24,13 +24,15 @@ PCSD_SSL_CIPHERS = "PCSD_SSL_CIPHERS"
 PCSD_SSL_OPTIONS = "PCSD_SSL_OPTIONS"
 PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
-DEBUG = "DEBUG"
+PCSD_DEBUG = "PCSD_DEBUG"
 DISABLE_GUI = "DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 GEM_HOME = "GEM_HOME"
 PCSD_DEV = "PCSD_DEV"
 PCSD_CMDLINE_ENTRY = "PCSD_CMDLINE_ENTRY"
 PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
+HTTPS_PROXY = "HTTPS_PROXY"
+NO_PROXY = "NO_PROXY"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -38,12 +40,14 @@ Env = namedtuple("Env", [
     PCSD_SSL_OPTIONS,
     PCSD_BIND_ADDR,
     NOTIFY_SOCKET,
-    DEBUG,
+    PCSD_DEBUG,
     DISABLE_GUI,
     PCSD_SESSION_LIFETIME,
     GEM_HOME,
     PCSD_CMDLINE_ENTRY,
     PCSD_STATIC_FILES_DIR,
+    HTTPS_PROXY,
+    NO_PROXY,
     "has_errors",
 ])
 
@@ -55,12 +59,14 @@ def prepare_env(environ, logger=None):
         loader.ssl_options(),
         loader.bind_addresses(),
         loader.notify_socket(),
-        loader.debug(),
+        loader.pcsd_debug(),
         loader.disable_gui(),
         loader.session_lifetime(),
         loader.gem_home(),
         loader.pcsd_cmdline_entry(),
         loader.pcsd_static_files_dir(),
+        loader.https_proxy(),
+        loader.no_proxy(),
         loader.has_errors(),
     )
     if logger:
@@ -154,9 +160,9 @@ class EnvLoader:
             settings.gui_session_lifetime_seconds
         )
 
-    def debug(self):
-        if DEBUG in self.environ:
-            return self.environ[DEBUG].lower() == "true"
+    def pcsd_debug(self):
+        if PCSD_DEBUG in self.environ:
+            return self.environ[PCSD_DEBUG].lower() == "true"
         return self.__has_true_in_environ(PCSD_DEV)
 
     def gem_home(self):
@@ -177,6 +183,12 @@ class EnvLoader:
             "Directory with web UI assets",
             existence_required=not self.disable_gui()
         )
+
+    def https_proxy(self):
+        return self.environ.get(HTTPS_PROXY, None)
+
+    def no_proxy(self):
+        return self.environ.get(NO_PROXY, None)
 
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (

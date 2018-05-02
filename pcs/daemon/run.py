@@ -53,7 +53,7 @@ def main():
         gem_home=env.GEM_HOME,
         pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
         log_file_location=settings.pcsd_log_location,
-        debug=env.DEBUG,
+        debug=env.PCSD_DEBUG,
         ruby_executable=settings.ruby_executable
     )
     make_app = partial(
@@ -63,7 +63,7 @@ def main():
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
         disable_gui=env.DISABLE_GUI,
-        debug=env.DEBUG,
+        debug=env.PCSD_DEBUG,
     )
     try:
         SignalInfo.server_manage = HttpsServerManage(

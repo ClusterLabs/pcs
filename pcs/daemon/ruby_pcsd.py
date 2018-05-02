@@ -28,9 +28,10 @@ class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
         )
 
 class Wrapper:
+    # pylint: disable=too-many-instance-attributes
     def __init__(
         self, gem_home, pcsd_cmdline_entry, log_file_location,
-        debug=False, ruby_executable="ruby"
+        debug=False, ruby_executable="ruby", https_proxy=None, no_proxy=None
     ):
         self.__gem_home = gem_home
         self.__pcsd_cmdline_entry = pcsd_cmdline_entry
@@ -38,6 +39,8 @@ class Wrapper:
         self.__log_file_location = log_file_location
         self.__ruby_executable = ruby_executable
         self.__debug = debug
+        self.__https_proxy = https_proxy
+        self.__no_proxy = no_proxy
 
     def get_sinatra_request(self, request: HTTPServerRequest):
         host, port = split_host_and_port(request.host)
@@ -64,6 +67,15 @@ class Wrapper:
         }}
 
     async def send_to_ruby(self, request_json):
+        env = {
+            "GEM_HOME": self.__gem_home,
+            "PCSD_DEBUG": "true" if self.__debug else "false"
+        }
+        if self.__no_proxy is not None:
+            env["NO_PROXY"] = self.__no_proxy
+        if self.__https_proxy is not None:
+            env["HTTPS_PROXY"] = self.__https_proxy
+
         pcsd_ruby = Subprocess(
             [
                 self.__ruby_executable, "-I",
@@ -73,10 +85,7 @@ class Wrapper:
             stdin=Subprocess.STREAM,
             stdout=Subprocess.STREAM,
             stderr=Subprocess.STREAM,
-            env={
-                "GEM_HOME": self.__gem_home,
-                "PCSD_DEBUG": "true" if self.__debug else "false"
-            }
+            env=env
         )
         await Task(pcsd_ruby.stdin.write, str.encode(request_json))
         pcsd_ruby.stdin.close()

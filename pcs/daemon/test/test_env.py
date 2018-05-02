@@ -38,12 +38,14 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             ),
             env.PCSD_BIND_ADDR: {None},
             env.NOTIFY_SOCKET: None,
-            env.DEBUG: False,
+            env.PCSD_DEBUG: False,
             env.DISABLE_GUI: False,
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
             env.GEM_HOME: pcsd_dir(settings.pcsd_gem_path),
             env.PCSD_CMDLINE_ENTRY: pcsd_dir(env.PCSD_CMDLINE_ENTRY_RB_SCRIPT),
             env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
+            env.HTTPS_PROXY: None,
+            env.NO_PROXY: None,
             "has_errors": False,
         }
         if specific_env_values is None:
@@ -72,9 +74,12 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_SSL_OPTIONS: "OP_NO_SSLv2",
             env.PCSD_BIND_ADDR: "abc",
             env.NOTIFY_SOCKET: "xyz",
+            env.PCSD_DEBUG: "true",
             env.DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: 10,
             env.PCSD_DEV: "true",
+            env.HTTPS_PROXY: "proxy",
+            env.NO_PROXY: "yes",
         }
         self.assert_environ_prdoduces_modified_pcsd_env(
             environ=environ,
@@ -84,7 +89,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_SSL_OPTIONS: OP_NO_SSLv2,
                 env.PCSD_BIND_ADDR: {environ[env.PCSD_BIND_ADDR]},
                 env.NOTIFY_SOCKET: environ[env.NOTIFY_SOCKET],
-                env.DEBUG: True,
+                env.PCSD_DEBUG: True,
                 env.DISABLE_GUI: True,
                 env.PCSD_SESSION_LIFETIME: environ[env.PCSD_SESSION_LIFETIME],
                 env.GEM_HOME: pcsd_dir(settings.pcsd_gem_path),
@@ -94,6 +99,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_STATIC_FILES_DIR: pcsd_dir(
                     env.PCSD_STATIC_FILES_DIR_NAME
                 ),
+                env.HTTPS_PROXY: environ[env.HTTPS_PROXY],
+                env.NO_PROXY: environ[env.NO_PROXY],
             },
         )
 
@@ -144,12 +151,14 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
 
     def test_debug_explicitly(self):
         self.assert_environ_prdoduces_modified_pcsd_env(
-            environ={env.DEBUG: "true"},
-            specific_env_values={env.DEBUG: True}
+            environ={env.PCSD_DEBUG: "true"},
+            specific_env_values={env.PCSD_DEBUG: True}
         )
 
     def test_no_debug_explicitly(self):
-        self.assert_environ_prdoduces_modified_pcsd_env({env.DEBUG: "false"})
+        self.assert_environ_prdoduces_modified_pcsd_env(
+            {env.PCSD_DEBUG: "false"}
+        )
 
     def test_errors_on_missing_paths(self):
         self.path_exists.return_value = False
