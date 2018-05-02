@@ -198,15 +198,6 @@ class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
         else:
             self.redirect("/login", status=302) #redirect temporary (302)
 
-class RegenerateCertHandler(RequestHandler):
-    def initialize(self, https_server_manage: HttpsServerManage):
-        #pylint: disable=arguments-differ
-        self.https_server_manage = https_server_manage
-
-    def get(self, *args, **kwargs):
-        self.https_server_manage.regenerate_certificate()
-        self.write("CERTIFICATE_RELOADED")
-
 class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     def initialize(self, path, default_filename=None):
         #pylint: disable=arguments-differ
@@ -242,9 +233,13 @@ def make_app(
     disable_gui=False,
     debug=False
 ):
+    """
+    https_server_manage -- is there to be able controll the server (specifically
+        reload the certificates). A relevant handler should get this object via
+        the method `initialize`.
+    """
     ruby_wrapper = dict(ruby_pcsd_wrapper=ruby_pcsd_wrapper)
     lock= dict(sync_config_lock=sync_config_lock)
-    server_manage = dict(https_server_manage=https_server_manage)
     sessions = dict(session_storage=session_storage)
 
     routes = [
@@ -257,11 +252,6 @@ def make_app(
             {**ruby_wrapper, **lock}
         ),
         (r"/remote/.*", SinatraRemote, ruby_wrapper),
-        (
-            r"/daemon-maintenance/reload-cert",
-            RegenerateCertHandler,
-            server_manage,
-        ),
     ]
 
     if not disable_gui:

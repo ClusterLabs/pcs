@@ -6,7 +6,23 @@ from pcs.daemon import log
 
 
 class HttpsServerManage:
-    #TODO
+    """
+    Instance of HttpsServerManage encapsulate the construction of HTTPServer.
+    """
+
+    # Main motivation for this object is to be able to change the ssl certificates
+    # from http request without restarting the whole pcsd daemon.
+    #
+    # For this purpose an application, which handles http requests, gets reference
+    # to the HttpsServerManage instance. When new certificates arrives via request
+    # the application ask the HttpsServerManage instance for necessary steps (
+    # it should stop the current HTTPServer listening and start new one with
+    # actual certificates).
+    #
+    # This is currently not implemented since it could require changes in the
+    # client.
+
+    #TODO?
     #pylint: disable=too-many-instance-attributes, too-many-arguments
     def __init__(
         self,
@@ -24,26 +40,14 @@ class HttpsServerManage:
         self.__server = None
         self.__ssl = PcsdSSL(cert_location, key_location)
 
-        self.__start()
-
-    def regenerate_certificate(self):
-        self.__ssl.regenerate_cert_key(self.__server_name)
-        self.stop()
-        self.__start_new_server()
-
     def stop(self):
         self.__server.stop()
 
-    def __start_new_server(self):
-        log.pcsd.info("Starting server...")
-        self.__main_start_new_server()
-        log.pcsd.info(
-            f"Listening on "
-            f"'{', '.join([a or '' for a in self.__bind_addresses])}'"
-            f" port '{self.__port}'",
-        )
+    def start(self):
+        self.__ensure_cert_key()
 
-    def __main_start_new_server(self):
+        log.pcsd.info("Starting server...")
+
         self.__server = HTTPServer(
             self.__make_app(self),
             ssl_options=self.__ssl.create_context(
@@ -56,13 +60,20 @@ class HttpsServerManage:
             sockets.extend(bind_sockets(self.__port, address))
         self.__server.add_sockets(sockets)
 
-    def __start(self):
+        log.pcsd.info(
+            f"Listening on "
+            f"'{', '.join([a or '' for a in self.__bind_addresses])}'"
+            f" port '{self.__port}'",
+        )
+
+    def __ensure_cert_key(self):
         error_list = self.__ssl.check_cert_key()
-        if error_list:
-            for error in error_list:
-                log.pcsd.error(error)
-            log.pcsd.error(
-                "Invalid certificate and/or key, using temporary ones"
-            )
-            self.__ssl.regenerate_cert_key(self.__server_name)
-        self.__start_new_server()
+
+        if not error_list:
+            return
+
+        for error in error_list:
+            log.pcsd.error(error)
+        log.pcsd.error("Invalid certificate and/or key, using temporary ones")
+
+        self.__ssl.regenerate_cert_key(self.__server_name)

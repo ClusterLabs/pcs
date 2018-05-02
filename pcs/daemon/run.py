@@ -75,7 +75,7 @@ def main():
             ssl_ciphers=env.PCSD_SSL_CIPHERS,
             cert_location=settings.pcsd_cert_location,
             key_location=settings.pcsd_key_location,
-        )
+        ).start()
 
         ioloop = IOLoop.current()
         ioloop.add_callback(sign_ioloop_started)
