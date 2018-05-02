@@ -70,6 +70,20 @@ def prepare_env(environ, logger=None):
             logger.warning(warning)
     return env
 
+def str_to_ssl_options(ssl_options_string, reports):
+    ssl_options = 0
+    # We are tolerant to trailing whitespaces and trailing comas.
+    raw_ssl_options = ssl_options_string.strip(" ,")
+    if not raw_ssl_options: #raw_ssl_options.split(",") == [""]
+        return ssl_options
+    for raw_option in raw_ssl_options.split(","):
+        option = raw_option.strip()
+        if option.startswith("OP_") and hasattr(ssl, option):
+            ssl_options |= getattr(ssl, option)
+        else:
+            reports.append(f"Unknown SSL option '{option}'")
+    return ssl_options
+
 class EnvLoader:
     def __init__(self, environ):
         self.environ = environ
@@ -102,37 +116,23 @@ class EnvLoader:
             # User knows about underlying system. If there is a wrong option it
             # may be a typo - let them to correct it. They are able to correct
             # it in pcsd.conf.
-            reports  = self.errors
-            raw_ssl_options = self.environ.get(PCSD_SSL_OPTIONS)
-        else:
-            # Vanilla pcsd should run even on an "exotic" system. If there is
-            # a wrong option it is not probably a typo... User should not be
-            # forced to modify source code (settings.py).
-            reports  = self.warnings
-            raw_ssl_options = settings.default_ssl_options
+            return str_to_ssl_options(
+                self.environ.get(PCSD_SSL_OPTIONS),
+                self.errors
+            )
+        # Vanilla pcsd should run even on an "exotic" system. If there is
+        # a wrong option it is not probably a typo... User should not be
+        # forced to modify source code (settings.py).
+        return str_to_ssl_options(settings.default_ssl_options, self.warnings)
 
-        ssl_options = 0
-        # We are tolerant to trailing whitespaces and trailing comas.
-        raw_ssl_options = raw_ssl_options.strip(" ,")
-        if not raw_ssl_options: #raw_ssl_options.split(",") == [""]
-            return ssl_options
-
-        for raw_option in raw_ssl_options.split(","):
-            option = raw_option.strip()
-            if option.startswith("OP_") and hasattr(ssl, option):
-                ssl_options |= getattr(ssl, option)
-            else:
-                reports.append(f"Unknown SSL option '{option}'")
-
-        return ssl_options
 
     def bind_addresses(self):
         if PCSD_BIND_ADDR not in self.environ:
-            return [None]
+            return {None}
 
-        raw_bind_addresses = self.environ.get(PCSD_BIND_ADDR, None)
+        raw_bind_addresses = self.environ[PCSD_BIND_ADDR]
         if not raw_bind_addresses.strip():
-            return [""]
+            return {""}
 
         bind_addresses = set([a.strip() for a in raw_bind_addresses.split(",")])
         for address in bind_addresses:

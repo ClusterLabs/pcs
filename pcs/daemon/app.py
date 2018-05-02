@@ -120,7 +120,7 @@ class SinatraGuiProtected(SinatraGui):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
         # to send this cookies.
-        self.ensure_session()
+        self.sid_to_cookies()
 
         if not self.session.is_authenticated:
             self.enhance_headers()
@@ -158,7 +158,7 @@ class Login(SinatraGui, AjaxMixin):
         )
 
         if auth_user:
-            self.ensure_session()
+            self.sid_to_cookies()
             self.session_login(auth_user.name, auth_user.groups)
             self.__success_response()
         else:
@@ -174,7 +174,7 @@ class Login(SinatraGui, AjaxMixin):
         if self.is_ajax:
             raise self.unauthorized()
 
-        self.ensure_session()
+        self.sid_to_cookies()
         self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
@@ -185,15 +185,13 @@ class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler)
         self.enhance_headers()
         if not self.session.is_authenticated:
             raise self.unauthorized()
-        #TODO this is for sinatra compatibility, review it.
-        if self.was_sid_in_request_cookies():
-            self.put_request_cookies_sid_to_response_cookies_sid()
+        self.sid_to_cookies()
         self.write(self.session.ajax_id)
 
 class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
     def get(self, *args, **kwargs):
         self.session_logout()
-        self.ensure_session()
+        self.sid_to_cookies()
         self.enhance_headers()
         if self.is_ajax:
             self.write("OK")
@@ -228,6 +226,10 @@ class SyncConfigMutualExclusive(SinatraRemote):
         self.__sync_config_lock = sync_config_lock
 
     async def get(self, *args, **kwargs):
+        async with self.__sync_config_lock:
+            await super().get(*args, **kwargs)
+
+    async def post(self, *args, **kwargs):
         async with self.__sync_config_lock:
             await super().get(*args, **kwargs)
 

@@ -58,7 +58,7 @@ def check_cert_key(cert_path, key_path):
     context.use_certificate(cert)
     try:
         context.check_privatekey()
-    except crypto.Error:
+    except (crypto.Error, SSL.Error):
         errors.append("Certificate does not match the key")
     return errors
 
@@ -89,7 +89,7 @@ class PcsdSSL:
     def check_cert_key(self):
         return check_cert_key(self.__cert_file_path, self.__key_file_path)
 
-    def create_context(self, ssl_options, ssl_ciphers):
+    def create_context(self, ssl_options, ssl_ciphers) -> ssl.SSLContext:
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.set_ciphers(ssl_ciphers)
         ssl_context.options = ssl_options

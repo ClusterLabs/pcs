@@ -1,6 +1,6 @@
-import base64
 import json
 import os.path
+from base64 import b64decode
 from collections import namedtuple
 from time import time as now
 
@@ -16,13 +16,15 @@ SINATRA_GUI = "sinatra_gui"
 SINATRA_REMOTE = "sinatra_remote"
 SYNC_CONFIGS = "sync_configs"
 
+DEFAULT_SYNC_CONFIG_DELAY = 5
+
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
     @classmethod
     def from_response(cls, response):
         return cls(
             response["headers"],
             response["status"],
-            base64.b64decode(response["body"])
+            b64decode(response["body"])
         )
 
 class Wrapper:
@@ -61,14 +63,7 @@ class Wrapper:
             "rack.input": request.body.decode("utf8"),
         }}
 
-    async def run_ruby(self, request_type, request=None):
-        request = request or {}
-        request.update({
-            "type": request_type,
-            "config": {
-                "log_location": self.__log_file_location,
-            },
-        })
+    async def send_to_ruby(self, request_json):
         pcsd_ruby = Subprocess(
             [
                 self.__ruby_executable, "-I",
@@ -83,15 +78,23 @@ class Wrapper:
                 "PCSD_DEBUG": "true" if self.__debug else "false"
             }
         )
-
-        request_json = json.dumps(request)
         await Task(pcsd_ruby.stdin.write, str.encode(request_json))
         pcsd_ruby.stdin.close()
-        stdout, stderr = await multi([
+        return await multi([
             Task(pcsd_ruby.stdout.read_until_close),
             Task(pcsd_ruby.stderr.read_until_close),
         ])
 
+    async def run_ruby(self, request_type, request=None):
+        request = request or {}
+        request.update({
+            "type": request_type,
+            "config": {
+                "log_location": self.__log_file_location,
+            },
+        })
+        request_json = json.dumps(request)
+        stdout, stderr = await self.send_to_ruby(request_json)
         try:
             return json.loads(stdout)
         except Exception as e:
@@ -139,4 +142,4 @@ class Wrapper:
             return response["next"]
         except HTTPError:
             log.pcsd.error("Config synchronization failed")
-            return int(now()) + 5
+            return int(now()) + DEFAULT_SYNC_CONFIG_DELAY
