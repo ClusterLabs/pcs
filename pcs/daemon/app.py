@@ -15,6 +15,11 @@ from pcs.daemon.auth import authorize_user
 # SO:
 #pylint: disable=abstract-method
 
+class BaseHandler(RequestHandler):
+    def set_default_headers(self):
+        #bz 1558063
+        self.set_header("Strict-Transport-Security", "max-age=604800")
+
 class EnhanceHeadersMixin:
     def set_header_nosniff_content_type(self):
         # The X-Content-Type-Options response HTTP header is a marker used by
@@ -61,7 +66,7 @@ class AjaxMixin:
         self.write('{"notauthorized":"true"}')
         return Finish()
 
-class Sinatra(RequestHandler):
+class Sinatra(BaseHandler):
     def initialize(self, ruby_pcsd_wrapper):
         #pylint: disable=arguments-differ
         self.__ruby_pcsd_wrapper = ruby_pcsd_wrapper
@@ -178,7 +183,7 @@ class Login(SinatraGui, AjaxMixin):
         self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
+class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
     # This is for ajax. However no-ajax requests are allowed. It is how it works
     # in ruby.
     def get(self, *args, **kwargs):
@@ -188,7 +193,7 @@ class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler)
         self.sid_to_cookies()
         self.write(self.session.ajax_id)
 
-class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, RequestHandler):
+class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
     def get(self, *args, **kwargs):
         self.session_logout()
         self.sid_to_cookies()
