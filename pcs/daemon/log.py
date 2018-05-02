@@ -1,9 +1,11 @@
 import logging
-from tornado.log import enable_pretty_logging
 
 def setup(log_file):
     handler = logging.FileHandler(log_file)
-    enable_pretty_logging()
+    handler.setFormatter(logging.Formatter(
+        fmt="{levelname[0]}, [{asctime}] {levelname} -- : {message}",
+        style="{",
+    ))
 
     pcsd_log = logging.getLogger("pcs.daemon")
     pcsd_log.addHandler(handler)
