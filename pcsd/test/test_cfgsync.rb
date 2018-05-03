@@ -105,7 +105,7 @@ totem {
   def test_file()
     cfg = Cfgsync::CorosyncConf.from_file()
     assert_equal(9, cfg.version)
-    assert_equal('cd8faaf2367ceafba281387fb9dfe70eba51769c', cfg.hash)
+    assert_equal('3711fd79c5972b21877a477d0d88c9eeb0d10a22', cfg.hash)
   end
 
   def test_version()

@@ -82,7 +82,7 @@ class PCSAuth
 
   def self.validToken(token)
     begin
-      json = File.read(PCSD_USERS)
+      json = File.read(PCSD_USERS_PATH)
       users = JSON.parse(json)
     rescue
       users = []
