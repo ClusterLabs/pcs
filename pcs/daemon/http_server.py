@@ -10,14 +10,14 @@ class HttpsServerManage:
     Instance of HttpsServerManage encapsulate the construction of HTTPServer.
     """
 
-    # Main motivation for this object is to be able to change the ssl certificates
-    # from http request without restarting the whole pcsd daemon.
+    # Main motivation for this object is to be able to change the ssl
+    # certificates from http request without restarting the whole pcsd daemon.
     #
-    # For this purpose an application, which handles http requests, gets reference
-    # to the HttpsServerManage instance. When new certificates arrives via request
-    # the application ask the HttpsServerManage instance for necessary steps (
-    # it should stop the current HTTPServer listening and start new one with
-    # actual certificates).
+    # For this purpose an application, which handles http requests, gets
+    # reference to the HttpsServerManage instance. When new certificates
+    # arrives via request the application ask the HttpsServerManage instance
+    # for necessary steps ( it should stop the current HTTPServer listening and
+    # start new one with actual certificates).
     #
     # This is currently not implemented since it could require changes in the
     # client.
