@@ -2461,7 +2461,8 @@ def watchdog_not_found(node, watchdog):
         info={
             "node": node,
             "watchdog": watchdog
-        }
+        },
+        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
     )
 
 
@@ -2867,4 +2868,81 @@ def unable_to_perform_operation_on_any_node():
     """
     return ReportItem.error(
         report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
+    )
+
+
+def sbd_list_watchdog_error(reason):
+    """
+    Unable to get list of available watchdogs from sbd. Sbd cmd reutrned non 0.
+
+    string reason -- stderr of command
+    """
+    return ReportItem.error(
+        report_codes.SBD_LIST_WATCHDOG_ERROR,
+        info=dict(
+            reason=reason,
+        )
+    )
+
+
+def sbd_watchdog_not_supported(node, watchdog):
+    """
+    Specified watchdog is not supported in sbd (softdog?).
+
+    string node -- node name
+    string watchdog -- watchdog path
+    """
+    return ReportItem.error(
+        report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
+        info=dict(
+            node=node,
+            watchdog=watchdog,
+        ),
+        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
+    )
+
+
+def sbd_watchdog_validation_inactive():
+    """
+    Warning message about not validating watchdog.
+    """
+    return ReportItem.warning(
+        report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE,
+    )
+
+
+def sbd_watchdog_test_error(reason):
+    """
+    Sbd test watchdog exited with an error.
+    """
+    return ReportItem.error(
+        report_codes.SBD_WATCHDOG_TEST_ERROR,
+        info=dict(
+            reason=reason,
+        )
+    )
+
+
+def sbd_watchdog_test_multiple_devices():
+    """
+    No watchdog device has been specified for test. Because of multiple
+    available watchdogs, watchdog device to test has to be specified.
+    """
+    return ReportItem.error(
+        report_codes.SBD_WATCHDOG_TEST_MULTUPLE_DEVICES,
+    )
+
+
+def sbd_watchdog_test_failed():
+    """
+    System has not been reset.
+    """
+    return ReportItem.error(
+        report_codes.SBD_WATCHDOG_TEST_FAILED,
+    )
+
+
+def system_will_reset():
+    return ReportItem.info(
+        report_codes.SYSTEM_WILL_RESET,
     )

@@ -741,6 +741,7 @@ Commands:
 
     node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
             [--watchdog=<watchdog-path>] [--device=<path>] ...
+            [--no-watchdog-validation]
         Add the node to the cluster and sync all relevant configuration files
         to the new node. If --start is specified also start cluster on the new
         node, if --wait is specified wait up to 'n' seconds for the new node to
@@ -750,8 +751,13 @@ Commands:
         the ring 0 address first followed by a ',' and then the ring 1 address.
         Use --watchdog to specify path to watchdog on newly added node, when
         SBD is enabled in cluster. If SBD is configured with shared storage,
-        use --device to specify path to shared device on new node.
-        This command can only be run on an existing cluster node.
+        use --device to specify path to shared device on new node. If
+        --no-watchdog-validation is specified, validation of watchdog will be
+        skipped. This command can only be run on an existing cluster node.
+
+        WARNING: Listing available watchdogs may cause a restart of the system
+                 when a watchdog with no-way-out-feature enabled is present.
+                 Use --no-watchdog-validation to skip watchdog validation.
 
     node remove <node>
         Shutdown specified node and remove it from the cluster.
@@ -961,13 +967,19 @@ Commands:
         cluster partition.
 
     sbd enable [--watchdog=<path>[@<node>]] ... [--device=<path>[@<node>]] ...
-               [<SBD_OPTION>=<value>] ...
+               [<SBD_OPTION>=<value>] ... [--no-watchdog-validation]
         Enable SBD in cluster. Default path for watchdog device is
         /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5),
         SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is
-        possible to specify up to 3 devices per node.
+        possible to specify up to 3 devices per node. If
+        --no-watchdog-validation is specified, validation of watchdogs will be
+        skipped.
+
 
         WARNING: Cluster has to be restarted in order to apply these changes.
+        WARNING: Listing available watchdogs may cause a restart of the system
+                 when a watchdog with no-way-out-feature enabled is present.
+                 Use --no-watchdog-validation to skip watchdog validation.
 
         Example of enabling SBD in cluster with watchdogs on node1 will be
         /dev/watchdog2, on node2 /dev/watchdog1, /dev/watchdog0 on all other
@@ -1005,6 +1017,18 @@ Commands:
 
     sbd config
         Show SBD configuration in cluster.
+
+    sbd watchdog list
+        Show all available watchdog devices on the local node.
+
+        WARNING: Listing available watchdogs may cause a restart of the system
+                 when a watchdog with no-way-out-feature enabled is present.
+
+    sbd watchdog test [<watchdog-path>]
+        This operation is expected to force-reboot the local system without
+        following any shutdown procedures using a watchdog. If no watchdog is
+        specified, available watchdog will be used if only one watchdog device
+        is available on the local system.
 
 Examples:
     pcs stonith create MyStonith fence_virt pcmk_host_list=f1

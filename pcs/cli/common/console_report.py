@@ -1389,4 +1389,30 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
         "Unable to perform operation on any available node/host, therefore it "
         "is not possible to continue."
+    ,
+    codes.SBD_LIST_WATCHDOG_ERROR: lambda info:
+        "Unable to query available watchdogs from sbd: {reason}".format(**info)
+    ,
+    codes.SBD_WATCHDOG_NOT_SUPPORTED: lambda info:
+        (
+            "{node}: Watchdog '{watchdog}' is not supported (it may be a "
+            "software watchdog)"
+        ).format(**info)
+    ,
+    codes.SBD_WATCHDOG_VALIDATION_INACTIVE:
+        "Not validating the watchdog"
+    ,
+    codes.SBD_WATCHDOG_TEST_ERROR: lambda info:
+        "Unable to initialize test of the watchdog: {reason}".format(**info)
+    ,
+    codes.SBD_WATCHDOG_TEST_MULTUPLE_DEVICES:
+        "Multiple watchdog devices available, therefore, watchdog which should "
+        "be tested has to be specified. To list available watchdog devices use "
+        "command 'pcs stonith sbd watchdog list'"
+    ,
+    codes.SBD_WATCHDOG_TEST_FAILED:
+        "System should have been reset already"
+    ,
+    codes.SYSTEM_WILL_RESET:
+        "System will reset shortly"
 }

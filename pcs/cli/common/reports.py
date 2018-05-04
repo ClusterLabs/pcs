@@ -121,9 +121,16 @@ class LibraryReportProcessorToConsole(object):
 
 
 def _prepare_force_text(report_item):
-    if report_item.forceable == codes.SKIP_OFFLINE_NODES:
-        return ", use --skip-offline to override"
-    return ", use --force to override" if report_item.forceable else ""
+    force_text_map = {
+        codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
+        codes.SKIP_WATCHDOG_VALIDATION:
+            ", use --no-watchdog-validation to skip watchdog validations",
+    }
+    if report_item.forceable:
+        return force_text_map.get(
+            report_item.forceable, ", use --force to override"
+        )
+    return ""
 
 def process_library_reports(report_item_list):
     """

@@ -1800,9 +1800,15 @@ def node_add(lib_env, node0, node1, modifiers):
                     "SBD is not configured to use shared device, " +\
                     "therefore --device should not be specified"
                 )
-
             com_cmd = CheckSbd(lib_env.report_processor)
-            com_cmd.add_request(new_node_target, watchdog, device_list)
+            # Do not send watchdog if validation is turned off. Listing of
+            # available watchdogs in pcsd may restart the machine in some
+            # corner cases.
+            com_cmd.add_request(
+                new_node_target,
+                "" if modifiers["no_watchdog_validation"] else watchdog,
+                device_list,
+            )
             run_and_raise(com_factory.get_communicator(), com_cmd)
 
             com_cmd = SetSbdConfig(lib_env.report_processor)

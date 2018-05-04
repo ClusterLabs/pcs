@@ -2862,6 +2862,7 @@ def get_modifiers():
         "start": "--start" in pcs_options,
         "wait": pcs_options.get("--wait", False),
         "watchdog": pcs_options.get("--watchdog", []),
+        "no_watchdog_validation": "--no-watchdog-validation" in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

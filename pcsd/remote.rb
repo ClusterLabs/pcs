@@ -2394,11 +2394,26 @@ def check_sbd(param, request, auth_user)
     }
   }
   watchdog = param[:watchdog]
-  if watchdog
-    out[:watchdog] = {
-      :path => watchdog,
-      :exist => File.exist?(watchdog)
-    }
+  if not watchdog.to_s.empty?
+    stdout, stderr, ret_val = run_cmd(
+      auth_user, PCS, 'stonith', 'sbd', 'watchdog', 'list_json'
+    )
+    if ret_val != 0
+      return [400, "Unable to get list of watchdogs: #{stderr.join("\n")}"]
+    end
+    begin
+      available_watchdogs = JSON.parse(stdout.join("\n"))
+      exists = available_watchdogs.include?(watchdog)
+      out[:watchdog] = {
+        :path => watchdog,
+        :exist => exists,
+        :is_supported => (
+          exists and available_watchdogs[watchdog]['caution'] == nil
+        ),
+      }
+    rescue JSON::ParserError
+      return [400, "Unable to get list of watchdogs: unable to parse JSON"]
+    end
   end
   begin
     device_list = JSON.parse(param[:device_list])
