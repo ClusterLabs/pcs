@@ -157,14 +157,14 @@ class Login(SinatraGui, AjaxMixin):
         # No mather if authentication succeeded or failed.
         self.enhance_headers()
 
-        auth_user = await authorize_user(
+        user_auth_info = await authorize_user(
             self.get_argument("username"),
             self.get_argument("password")
         )
 
-        if auth_user:
+        if user_auth_info.is_authorized:
             self.sid_to_cookies()
-            self.session_login(auth_user.name, auth_user.groups)
+            self.session_login(user_auth_info.name, user_auth_info.groups)
             self.__success_response()
         else:
             self.__failed_response(self.get_argument("username"))

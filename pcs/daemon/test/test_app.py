@@ -158,9 +158,11 @@ class Login(AppTest, create_setup_patch_mixin(app)):
     async def authorize_user(self, username, password):
         self.assertEqual(username, USER)
         self.assertEqual(password, PASSWORD)
-        if not self.user_auth_info.valid:
-            return None
-        return auth.IdentifiedUser(username, self.user_auth_info.groups)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.user_auth_info.valid
+        )
 
     def test_get_uses_wrapper(self):
         self.assert_wrappers_response(self.get("/login"))
