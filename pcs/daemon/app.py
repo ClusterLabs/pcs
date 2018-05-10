@@ -17,7 +17,7 @@ from pcs.daemon.auth import authorize_user
 
 class BaseHandler(RequestHandler):
     def set_default_headers(self):
-        #bz 1558063
+        #rhbz 1558063
         self.set_header("Strict-Transport-Security", "max-age=604800")
 
 class EnhanceHeadersMixin:
@@ -30,9 +30,6 @@ class EnhanceHeadersMixin:
         self.set_header("X-Content-Type-Options", "nosniff")
 
     def enhance_headers(self):
-        """
-        Put headers to be compatible with old (ruby) pcsd
-        """
         self.set_header_nosniff_content_type()
 
         # The X-Frame-Options HTTP response header can be used to indicate
@@ -153,8 +150,8 @@ class Login(SinatraGui, AjaxMixin):
             self.put_request_cookies_sid_to_response_cookies_sid()
 
     async def post(self, *args, **kwargs):
-        # This is the way of old (ruby) pcs. Post login generate session cookie.
-        # No mather if authentication succeeded or failed.
+        # This is the way of old (ruby) pcsd. Post login generates a session
+        # cookie. No matter if authentication succeeded or failed.
         self.enhance_headers()
 
         user_auth_info = await authorize_user(
@@ -184,8 +181,8 @@ class Login(SinatraGui, AjaxMixin):
         self.redirect("/login", status=303) #post -> get resource (303)
 
 class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
-    # This is for ajax. However no-ajax requests are allowed. It is how it works
-    # in ruby.
+    # This is for ajax. However, non-ajax requests are allowed as well. It
+    # worked the same way in ruby.
     def get(self, *args, **kwargs):
         self.enhance_headers()
         if not self.session.is_authenticated:
@@ -239,18 +236,17 @@ def make_app(
     debug=False
 ):
     """
-    https_server_manage -- is there to be able controll the server (specifically
-        reload the certificates). A relevant handler should get this object via
+    https_server_manage -- allows to controll the server (specifically reload
+        its SSL certificates). A relevant handler should get this object via
         the method `initialize`.
     """
     ruby_wrapper = dict(ruby_pcsd_wrapper=ruby_pcsd_wrapper)
-    lock= dict(sync_config_lock=sync_config_lock)
+    lock = dict(sync_config_lock=sync_config_lock)
     sessions = dict(session_storage=session_storage)
 
     routes = [
-        # Urls protected by tokens. It is stil done by ruby.
+        # Urls protected by tokens. It is still done by ruby pcsd.
         (r"/run_pcs", SinatraRemote, ruby_wrapper),
-        (r"/remote/auth", SinatraRemote, ruby_wrapper),
         (
             r"/remote/(set_sync_options|set_configs)",
             SyncConfigMutualExclusive,
@@ -262,16 +258,16 @@ def make_app(
     if not disable_gui:
         static_path = lambda dir: dict(path=os.path.join(public_dir, dir))
         routes.extend([
-            ("/css/(.*)", StaticFile, static_path("css")),
-            ("/js/(.*)", StaticFile, static_path("js")),
-            ("/images/(.*)", StaticFile, static_path("images")),
+            (r"/css/(.*)", StaticFile, static_path("css")),
+            (r"/js/(.*)", StaticFile, static_path("js")),
+            (r"/images/(.*)", StaticFile, static_path("images")),
 
             (r"/login", Login, {**sessions, **ruby_wrapper}),
             (r"/login-status", LoginStatus, sessions),
             (r"/logout", Logout, sessions),
 
-            #The protection by session was moved from ruby code to python code
-            #(tornado).
+            # The protection by session was moved from ruby code to python code
+            # (tornado).
             (
                 r"/($|manage$|permissions$|managec/.+/main)",
                 SinatraGuiProtected,

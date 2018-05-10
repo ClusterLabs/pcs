@@ -91,7 +91,7 @@ def get_user_groups_sync(username):
     ] + [
         # `group.gr_mem` does not contain the `username` when `group` is
         # primary for the `username` (the same is in /etc/group). So it is
-        # necessary add the primary group.
+        # necessary to add the primary group.
         grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name
     ])
 
@@ -121,7 +121,7 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
 
     if HA_ADM_GROUP not in groups:
         log.pcsd.info(
-            "Failed login by '%s' (user is not a member of %s)",
+            "Failed login by '%s' (user is not a member of '%s' group)",
             username, HA_ADM_GROUP
         )
         return UserAuthInfo(username, groups, is_authorized=False)

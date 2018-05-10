@@ -152,6 +152,7 @@ install_python_part: install_bundled_libs
 ifeq ($(IS_DEBIAN),true)
 	$(call use-debian-alternative,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
 endif
+	$(PYTHON) -m compileall -fl ${DEST_PYTHON_SITELIB}/pcs/settings.py
 ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DEST_SYSTEMD_SYSTEM}
 	install -m 644 pcs/snmp/pcs_snmp_agent.service ${DEST_SYSTEMD_SYSTEM}

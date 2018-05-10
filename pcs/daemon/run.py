@@ -62,7 +62,7 @@ def main():
         ruby_pcsd_wrapper,
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
-        disable_gui=env.DISABLE_GUI,
+        disable_gui=env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEBUG,
     )
     try:

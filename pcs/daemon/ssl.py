@@ -26,7 +26,7 @@ def generate_cert(key, server_name):
     cert.set_version(2)
     cert.set_serial_number(int(now*1000))
     cert.set_notBefore(cert_date_format(now))
-    cert.set_notAfter(cert_date_format(now + 60*60*24*365*10))
+    cert.set_notAfter(cert_date_format(now + 60*60*24*365*10)) # 10 years
     cert.set_issuer(subject)
     cert.set_pubkey(key)
     cert.sign(key, 'sha256')

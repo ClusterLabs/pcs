@@ -122,9 +122,9 @@ class Wrapper:
         self, request: HTTPServerRequest, user, groups, is_authenticated
     ) -> SinatraResult:
         sinatra_request = self.get_sinatra_request(request)
-        # Session was taken from ruby. However, some session information is needed
-        # for ruby code (e.g. rendering some parts of templates). So this
-        # information must be sent to ruby by another way.
+        # Sessions handling was removed from ruby. However, some session
+        # information is needed for ruby code (e.g. rendering some parts of
+        # templates). So this information must be sent to ruby by another way.
         sinatra_request.update({
             "session": {
                 "username": user,

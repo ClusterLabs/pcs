@@ -12,7 +12,7 @@ class Session:
         # authentication succeeded.
         self.__username = username
         # The flag that indicated if the user was authenticated.
-        # The user is authenticated when they is recognized as a system user
+        # The user is authenticated when they are recognized as a system user
         # belonging to the high availability admin group (typicaly hacluster).
         self.__is_authenticated = is_authenticated
         # Id that will be returned by login-status or login (for ajax).
@@ -20,7 +20,7 @@ class Session:
             f"{int(now())}-{random.randint(1, 100)}" if is_authenticated
             else None
         )
-        # Groups of the user. Similary to username, it does not means that the
+        # Groups of the user. Similary to username, it does not mean that the
         # user is authenticated when the groups are loaded.
         self.__groups = groups or []
         # The moment of the last access. The only muttable attribute.
@@ -87,13 +87,13 @@ class Storage:
     def login(self, sid, username, groups) -> Session:
         return self.__register(
             self.__valid_sid(sid),
-            username,
-            groups,
+            username=username,
+            groups=groups,
             is_authenticated=True
         )
 
     def failed_login_attempt(self, sid, username) -> Session:
-        return self.__register(self.__valid_sid(sid), username)
+        return self.__register(self.__valid_sid(sid), username=username)
 
     def __is_valid_sid(self, sid):
         return not (
@@ -137,9 +137,10 @@ class Mixin:
     @property
     def session(self):
         if self.__session is None:
-            # It is needed to cache session or the sid. Because from client can
-            # come no sid or an invalid sid. In such case every call would
-            # provide new session. But want to have here the first provided.
+            # It is needed to cache session or the sid. Because no sid or an
+            # invalid sid can come from a client. In such case every call would
+            # provide new session. But we want to always have the first session
+            # provided.
             self.__session = self.__storage.provide(self.__sid_from_client)
         return self.__session
 
@@ -168,7 +169,7 @@ class Mixin:
 
     def sid_to_cookies(self):
         """
-        Write session id into response cookie.
+        Write the session id into a response cookie.
         """
         self.set_cookie(PCSD_SESSION, self.session.sid)
 
@@ -177,7 +178,7 @@ class Mixin:
         If sid came in the request cookies put it into response cookies. But do
         not start new one.
         """
-        #TODO this method should exists temporarily (for sinatra compatibility)
+        #TODO this method should exist temporarily (for sinatra compatibility)
         #pylint: disable=invalid-name
         if self.__sid_from_client is not None:
             self.set_cookie(PCSD_SESSION, self.__sid_from_client)

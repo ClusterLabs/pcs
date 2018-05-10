@@ -7,17 +7,18 @@ from pcs.daemon import log
 
 class HttpsServerManage:
     """
-    Instance of HttpsServerManage encapsulate the construction of HTTPServer.
+    Instance of HttpsServerManage encapsulates the construction of an HTTPServer
     """
 
     # Main motivation for this object is to be able to change the ssl
-    # certificates from http request without restarting the whole pcsd daemon.
+    # certificates from an http request without restarting the whole pcsd
+    # daemon.
     #
     # For this purpose an application, which handles http requests, gets
-    # reference to the HttpsServerManage instance. When new certificates
-    # arrives via request the application ask the HttpsServerManage instance
-    # for necessary steps ( it should stop the current HTTPServer listening and
-    # start new one with actual certificates).
+    # a reference to the HttpsServerManage instance. When new certificates
+    # arrive via a request the application asks the HttpsServerManage instance
+    # for necessary steps (it should make the current HTTPServer stop listening
+    # and start a new one with updated certificates).
     #
     # This is currently not implemented since it could require changes in the
     # client.
@@ -74,6 +75,8 @@ class HttpsServerManage:
 
         for error in error_list:
             log.pcsd.error(error)
-        log.pcsd.error("Invalid certificate and/or key, using temporary ones")
+        log.pcsd.error(
+            "Invalid SSL certificate and/or key, using temporary ones"
+        )
 
         self.__ssl.regenerate_cert_key(self.__server_name)

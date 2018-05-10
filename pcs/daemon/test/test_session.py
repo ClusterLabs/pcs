@@ -47,7 +47,7 @@ class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
         self.assertTrue(self.session.was_unused_last(1))
         self.assertFalse(self.session.was_unused_last(2))
 
-    def test_sessin_is_refreshable(self):
+    def test_session_is_refreshable(self):
         # pylint: disable=pointless-statement
         with self.refresh_test() as session1:
             session1.refresh()

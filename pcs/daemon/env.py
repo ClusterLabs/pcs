@@ -14,7 +14,7 @@ from pcs import settings
 from pcs.lib.validate import is_port_number
 
 # Relative location instead of system location is used for development purposes.
-PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__))+ "/../../pcsd")
+PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
 
 PCSD_CMDLINE_ENTRY_RB_SCRIPT = "sinatra_cmdline_wrapper.rb"
 PCSD_STATIC_FILES_DIR_NAME = "public"
@@ -25,7 +25,7 @@ PCSD_SSL_OPTIONS = "PCSD_SSL_OPTIONS"
 PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
 PCSD_DEBUG = "PCSD_DEBUG"
-DISABLE_GUI = "DISABLE_GUI"
+PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 GEM_HOME = "GEM_HOME"
 PCSD_DEV = "PCSD_DEV"
@@ -41,7 +41,7 @@ Env = namedtuple("Env", [
     PCSD_BIND_ADDR,
     NOTIFY_SOCKET,
     PCSD_DEBUG,
-    DISABLE_GUI,
+    PCSD_DISABLE_GUI,
     PCSD_SESSION_LIFETIME,
     GEM_HOME,
     PCSD_CMDLINE_ENTRY,
@@ -60,7 +60,7 @@ def prepare_env(environ, logger=None):
         loader.bind_addresses(),
         loader.notify_socket(),
         loader.pcsd_debug(),
-        loader.disable_gui(),
+        loader.pcsd_disable_gui(),
         loader.session_lifetime(),
         loader.gem_home(),
         loader.pcsd_cmdline_entry(),
@@ -120,17 +120,16 @@ class EnvLoader:
     def ssl_options(self):
         if PCSD_SSL_OPTIONS in self.environ:
             # User knows about underlying system. If there is a wrong option it
-            # may be a typo - let them to correct it. They are able to correct
-            # it in pcsd.conf.
+            # may be a typo - let them correct it. They are able to correct it
+            # in pcsd.conf.
             return str_to_ssl_options(
-                self.environ.get(PCSD_SSL_OPTIONS),
+                self.environ[PCSD_SSL_OPTIONS],
                 self.errors
             )
         # Vanilla pcsd should run even on an "exotic" system. If there is
         # a wrong option it is not probably a typo... User should not be
         # forced to modify source code (settings.py).
         return str_to_ssl_options(settings.default_ssl_options, self.warnings)
-
 
     def bind_addresses(self):
         if PCSD_BIND_ADDR not in self.environ:
@@ -151,8 +150,8 @@ class EnvLoader:
     def notify_socket(self):
         return self.environ.get(NOTIFY_SOCKET, None)
 
-    def disable_gui(self):
-        return self.__has_true_in_environ(DISABLE_GUI)
+    def pcsd_disable_gui(self):
+        return self.__has_true_in_environ(PCSD_DISABLE_GUI)
 
     def session_lifetime(self):
         return self.environ.get(
@@ -161,9 +160,7 @@ class EnvLoader:
         )
 
     def pcsd_debug(self):
-        if PCSD_DEBUG in self.environ:
-            return self.environ[PCSD_DEBUG].lower() == "true"
-        return self.__has_true_in_environ(PCSD_DEV)
+        return self.__has_true_in_environ(PCSD_DEBUG)
 
     def gem_home(self):
         return self.__in_pcsd_path(
@@ -181,7 +178,7 @@ class EnvLoader:
         return self.__in_pcsd_path(
             PCSD_STATIC_FILES_DIR_NAME,
             "Directory with web UI assets",
-            existence_required=not self.disable_gui()
+            existence_required=not self.pcsd_disable_gui()
         )
 
     def https_proxy(self):
@@ -192,16 +189,15 @@ class EnvLoader:
 
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (
-            settings.pcsd_exec_location
-            if not self.__has_true_in_environ(PCSD_DEV) else
             PCSD_LOCAL_DIR
+            if self.__has_true_in_environ(PCSD_DEV) else
+            settings.pcsd_exec_location
         )
 
-        in_pcsd_path =join_path(pcsd_dir, path)
+        in_pcsd_path = join_path(pcsd_dir, path)
         if existence_required and not path_exists(in_pcsd_path):
             self.errors.append(f"{description} '{in_pcsd_path}' does not exist")
         return in_pcsd_path
-
 
     def __has_true_in_environ(self, environ_key):
         return self.environ.get(environ_key, "").lower() == "true"

@@ -46,7 +46,7 @@ class GetSinatraRequest(TestCase):
                     'HTTP_VERSION': 'HTTP/1.0',
                     'PATH_INFO': '/pcsd/uri',
                     'QUERY_STRING': '',
-                    'REMOTE_ADDR': None, # It require a complicated request args
+                    'REMOTE_ADDR': None, # It requires complicated request args
                     'REMOTE_HOST': 'pcsd-host:2224',
                     'REQUEST_METHOD': 'POST',
                     'REQUEST_PATH': '/pcsd/uri',
