@@ -542,7 +542,7 @@ end
 
 def add_node(
   auth_user, new_nodename, all=false, auto_start=true, watchdog=nil,
-  device_list=nil
+  device_list=nil, no_watchdog_validation=false
 )
   if all
     command = [PCS, "cluster", "node", "add", new_nodename]
@@ -559,6 +559,9 @@ def add_node(
     if auto_start
       command << '--start'
       command << '--enable'
+    end
+    if no_watchdog_validation
+      command << '--no-watchdog-validation'
     end
     out, stderror, retval = run_cmd(auth_user, *command)
   else
