@@ -106,7 +106,7 @@ class Wrapper:
         stdout, stderr = await self.send_to_ruby(request_json)
         try:
             return json.loads(stdout)
-        except Exception as e:
+        except json.JSONDecodeError as e:
             message_list = [f"Cannot decode json from ruby pcsd wrapper: '{e}'"]
             if self.__debug:
                 message_list.extend([

@@ -1,4 +1,3 @@
-import socket
 import ssl
 from collections import namedtuple
 from functools import lru_cache
@@ -87,7 +86,7 @@ def str_to_ssl_options(ssl_options_string, reports):
         if option.startswith("OP_") and hasattr(ssl, option):
             ssl_options |= getattr(ssl, option)
         else:
-            reports.append(f"Unknown SSL option '{option}'")
+            reports.append(f"Ignoring unknown SSL option '{option}'")
     return ssl_options
 
 class EnvLoader:
@@ -103,7 +102,7 @@ class EnvLoader:
     def port(self):
         port = self.environ.get(PCSD_PORT, settings.pcsd_default_port)
         if not is_port_number(port):
-            self.errors.append(f"Invalid port number '{port}'")
+            self.errors.append(f"Invalid port number '{port}', use 1..65535")
         return port
 
     def ssl_ciphers(self):
@@ -139,13 +138,7 @@ class EnvLoader:
         if not raw_bind_addresses.strip():
             return {""}
 
-        bind_addresses = set([a.strip() for a in raw_bind_addresses.split(",")])
-        for address in bind_addresses:
-            try:
-                socket.getaddrinfo(address, self.port())
-            except socket.gaierror as e:
-                self.errors.append(f"Invalid bind address '{address}': '{e}'")
-        return bind_addresses
+        return set([a.strip() for a in raw_bind_addresses.split(",")])
 
     def notify_socket(self):
         return self.environ.get(NOTIFY_SOCKET, None)

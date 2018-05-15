@@ -1,7 +1,7 @@
 from os.path import join as join_path
 from functools import partial
 from ssl import OP_NO_SSLv2
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from pcs import settings
 from pcs.daemon import env
@@ -21,7 +21,6 @@ class Logger:
 
 class Prepare(TestCase, create_setup_patch_mixin(env)):
     def setUp(self):
-        self.socket = self.setup_patch("socket")
         self.path_exists = self.setup_patch("path_exists", return_value=True)
         self.logger = Logger()
 
@@ -116,32 +115,20 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_SSL_OPTIONS: "invalid"},
             specific_env_values={env.PCSD_SSL_OPTIONS: 0, "has_errors": True},
-            errors=["Unknown SSL option 'invalid'"]
+            errors=["Ignoring unknown SSL option 'invalid'"]
         )
 
     def test_report_invalid_ssl_options_warning(self):
         env.settings.default_ssl_options = "invalid"
         self.assert_environ_produces_modified_pcsd_env(
             specific_env_values={env.PCSD_SSL_OPTIONS: 0},
-            warnings=["Unknown SSL option 'invalid'"]
+            warnings=["Ignoring unknown SSL option 'invalid'"]
         )
 
     def test_empty_bind_addresses(self):
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_BIND_ADDR: " "},
             specific_env_values={env.PCSD_BIND_ADDR: {""}},
-        )
-
-    def test_invalid_bind_addresses(self):
-        self.socket.gaierror = Exception
-        self.socket.getaddrinfo = mock.Mock(side_effect=self.socket.gaierror)
-        self.assert_environ_produces_modified_pcsd_env(
-            environ={env.PCSD_BIND_ADDR: "invalid"},
-            specific_env_values={
-                env.PCSD_BIND_ADDR: {"invalid"},
-                "has_errors": True
-            },
-            errors=["Invalid bind address 'invalid': ''"]
         )
 
     def test_no_disable_gui_explicitly(self):

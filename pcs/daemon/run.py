@@ -22,7 +22,6 @@ def handle_signal(incomming_signal, frame):
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
     if SignalInfo.ioloop_started:
-        log.pcsd.warning("IOLOOP stop")
         IOLoop.current().stop()
     raise SystemExit(0)
 
@@ -76,13 +75,16 @@ def main():
             cert_location=settings.pcsd_cert_location,
             key_location=settings.pcsd_key_location,
         ).start()
-
-        ioloop = IOLoop.current()
-        ioloop.add_callback(sign_ioloop_started)
-        if systemd.is_systemd() and env.NOTIFY_SOCKET:
-            ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
-        ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
-        ioloop.start()
-    except OSError as e:
+    except socket.gaierror as e:
         log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")
         raise SystemExit(1)
+    except OSError as e:
+        log.pcsd.error(f"Unable to start pcsd daemon, exiting: {e} ")
+        raise SystemExit(1)
+
+    ioloop = IOLoop.current()
+    ioloop.add_callback(sign_ioloop_started)
+    if systemd.is_systemd() and env.NOTIFY_SOCKET:
+        ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
+    ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
+    ioloop.start()

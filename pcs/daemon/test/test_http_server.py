@@ -6,14 +6,15 @@ from pcs.daemon import http_server
 from pcs.test.tools.misc import create_setup_patch_mixin
 from tornado.httpserver import HTTPServer
 from pcs.daemon.ssl import PcsdSSL
+from pcs.test.tools.misc import get_test_resource as rc
 
 SERVER_NAME = "server.name"
 PORT = 1234
 BIND_ADDRESSES = ["addr1", "addr2"]
 SSL_OPTIONS = 0
 SSL_CIPHERS = ""
-CERT_LOCATION = "/path/to/cert.location"
-KEY_LOCATION = "/path/to/key.location"
+CERT_LOCATION = rc("/path/to/cert.location")
+KEY_LOCATION = rc("/path/to/key.location")
 
 def addr2sock(addr_list):
     return [f"sock:{addr}" for addr in addr_list]

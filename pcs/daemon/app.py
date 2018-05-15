@@ -155,8 +155,8 @@ class Login(SinatraGui, AjaxMixin):
         self.enhance_headers()
 
         user_auth_info = await authorize_user(
-            self.get_argument("username"),
-            self.get_argument("password")
+            self.get_body_argument("username"),
+            self.get_body_argument("password")
         )
 
         if user_auth_info.is_authorized:
@@ -164,7 +164,7 @@ class Login(SinatraGui, AjaxMixin):
             self.session_login(user_auth_info.name, user_auth_info.groups)
             self.__success_response()
         else:
-            self.__failed_response(self.get_argument("username"))
+            self.__failed_response(self.get_body_argument("username"))
 
     def __success_response(self):
         if self.is_ajax:

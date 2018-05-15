@@ -2,7 +2,7 @@ import random
 import string
 from time import time as now
 
-PCSD_SESSION = "rack.session"
+PCSD_SESSION = "pcsd.sid"
 
 class Session:
     def __init__(self, sid, username=None, groups=None, is_authenticated=False):

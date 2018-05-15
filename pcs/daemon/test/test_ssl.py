@@ -47,6 +47,7 @@ class CheckCertKey(TestCase):
             "Certificate does not match the key"
         ])
 
+class Context(TestCase):
     def test_context_uses_given_options(self):
         self.pcsd_ssl.regenerate_cert_key(SERVER_NAME)
         ciphers = "DEFAULT:!RC4"

@@ -57,17 +57,8 @@ if ["sinatra_gui", "sinatra_remote"].include?(request["type"])
   result = {
     :status => status,
     :headers => headers,
-    :body => ""
+    :body => Base64.encode64(body.join("")),
   }
-
-
-  full_body = ""
-  body.each{|body_part|
-    #For example public/css/style.css is long. The body is in 2 parts in this
-    #case. An extra newlinew will appear here if "puts" is used.
-    full_body += body_part
-  }
-  result[:body] = Base64.encode64(full_body)
 
 elsif request["type"] == "sync_configs"
   result = {

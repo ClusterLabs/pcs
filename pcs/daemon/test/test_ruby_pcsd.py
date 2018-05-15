@@ -9,17 +9,17 @@ from tornado.testing import AsyncTestCase, gen_test
 from tornado.web import HTTPError
 
 from pcs.daemon import ruby_pcsd
-from pcs.test.tools.misc import create_patcher
+from pcs.test.tools.misc import create_patcher,  get_test_resource as rc
 
-LOG_LOCATION = "/path/to/log/file/location"
+LOG_LOCATION = rc("/path/to/log/file/location")
 
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
 
 def create_wrapper():
     return ruby_pcsd.Wrapper(
-        "/path/to/gem_home",
-        "/path/to/pcsd/cmdline/entry",
+        rc("/path/to/gem_home"),
+        rc("/path/to/pcsd/cmdline/entry"),
         LOG_LOCATION,
     )
 

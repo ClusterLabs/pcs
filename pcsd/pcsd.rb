@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'sinatra/reloader' if development?
 require 'sinatra/cookies'
 require 'rexml/document'
 require 'webrick'
@@ -24,18 +23,6 @@ require 'permissions.rb'
 use Rack::CommonLogger
 
 set :app_file, __FILE__
-
-if development?
-  also_reload 'resource.rb'
-  also_reload 'remote.rb'
-  also_reload 'fenceagent.rb'
-  also_reload 'cluster.rb'
-  also_reload 'config.rb'
-  also_reload 'pcs.rb'
-  also_reload 'auth.rb'
-  also_reload 'wizard.rb'
-  also_reload 'cfgsync.rb'
-end
 
 def getAuthUser()
   return {
@@ -79,9 +66,6 @@ configure do
   CAPABILITIES = capabilities.freeze
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
 end
-
-set :logging, true
-set :run, false
 
 def run_cfgsync
   $logger = configure_logger($tornado_log_location)

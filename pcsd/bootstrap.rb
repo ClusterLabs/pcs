@@ -75,6 +75,12 @@ def configure_logger(log_device)
     logger.level = Logger::INFO
   end
 
+  if ISRHEL6
+    logger.debug "Detected RHEL 6"
+  else
+    logger.debug "Did not detect RHEL 6"
+  end
+
   if ISSYSTEMCTL
     logger.debug "Detected systemd is in use"
   else

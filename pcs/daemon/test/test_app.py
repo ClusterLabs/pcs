@@ -149,7 +149,6 @@ class UserAuthInfo:
 
 class Login(AppTest, create_setup_patch_mixin(app)):
     def setUp(self):
-        super().setUp()
         self.user_auth_info = UserAuthInfo()
         self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()
