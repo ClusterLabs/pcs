@@ -181,6 +181,7 @@ def validate_update(
     else:
         report_list.extend(
             _validate_network_options_update(
+                bundle_el,
                 network_el,
                 network_options,
                 force_options
@@ -269,6 +270,23 @@ def update(
     # meta attributes are handled in their own function
     remove_when_pointless(network_element)
     remove_when_pointless(storage_element)
+
+def is_pcmk_remote_accessible(bundle_element):
+    """
+    Check whenever pacemaker remote inside the bundle is accessible from
+    outside. Either a control-port or an ip-range-start have to be specified in
+    the network element. Returns True if accessible, False otherwise.
+
+    etree bundle_element -- bundle element to check
+    """
+    network_el = bundle_element.find("network")
+    if network_el is None:
+        return False
+
+    for opt in ["control-port", "ip-range-start"]:
+        if network_el.get(opt):
+            return True
+    return False
 
 def add_resource(bundle_element, primitive_element):
     """
@@ -367,7 +385,43 @@ def _validate_network_options_new(options, force_options):
         )
     )
 
-def _validate_network_options_update(network_el, options, force_options):
+def _is_pcmk_remote_acccessible_after_update(network_el, options):
+    port_name = "control-port"
+    ip_name = "ip-range-start"
+    port = network_el.get(port_name)
+    ip = network_el.get(ip_name)
+    removing = lambda opt: options.get(opt) == ""
+    not_adding = lambda opt: options.get(opt) is None
+
+    # 3 cases in which pcmk remote will not be accessible after an update
+    # case1: port set, IP !set; removing port, !adding IP
+    case1 = port and not ip and removing(port_name) and not_adding(ip_name)
+    # case2: port !set, IP set; !adding port, removing IP
+    case2 = not port and ip and not_adding(port_name) and removing(ip_name)
+    # case3: port set, IP set; removing port, removing IP
+    case3 = port and ip and removing(port_name) and removing(ip_name)
+
+    return not (case1 or case2 or case3)
+
+def _validate_network_options_update(
+    bundle_el, network_el, options, force_options
+):
+    report_list = []
+    inner_primitive = get_inner_resource(bundle_el)
+    if (
+        inner_primitive is not None
+        and
+        not _is_pcmk_remote_acccessible_after_update(network_el, options)
+    ):
+        report_list.append(
+            reports.get_problem_creator(
+                report_codes.FORCE_OPTIONS, force_options
+            )(
+                reports.resource_in_bundle_not_accessible,
+                bundle_el.get("id"),
+                inner_primitive.get("id")
+            )
+        )
     validators = [
         # TODO add validators for other keys (ip-range-start - IPv4)
         validate.value_empty_or_valid(
@@ -380,6 +434,8 @@ def _validate_network_options_update(network_el, options, force_options):
         ),
     ]
     return (
+        report_list
+        +
         validate.run_collection_of_option_validators(options, validators)
         +
         validate.names_in(

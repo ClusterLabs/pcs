@@ -2946,3 +2946,18 @@ def system_will_reset():
     return ReportItem.info(
         report_codes.SYSTEM_WILL_RESET,
     )
+
+
+def resource_in_bundle_not_accessible(
+    bundle_id, inner_resource_id,
+    severity=ReportItemSeverity.ERROR, forceable=report_codes.FORCE_OPTIONS,
+):
+    return ReportItem(
+        report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+        severity,
+        info=dict(
+            bundle_id=bundle_id,
+            inner_resource_id=inner_resource_id,
+        ),
+        forceable=forceable,
+    )
