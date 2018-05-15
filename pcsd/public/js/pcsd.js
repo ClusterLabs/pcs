@@ -86,13 +86,6 @@ function select_menu(menu, item, initial) {
   } else {
     menu_show("acls", false);
   }
-
-  if (menu == "WIZARDS") {
-    Pcs.set('cur_page',"wizards");
-    menu_show("wizards", true);
-  } else {
-    menu_show("wizards", false);
-  }
 }
 
 function create_group() {
@@ -2049,22 +2042,6 @@ function checkBoxToggle(cb,nodes) {
     cbs.prop('checked',true).change();
   else
     cbs.prop('checked',false).change();
-}
-
-function loadWizard(item) {
-  wizard_name = $(item).val();
-  data = {wizard: wizard_name};
-
-  $("#wizard_location").load(
-   get_cluster_remote_url() + 'get_wizard',
-   data);
-}
-
-function wizard_submit(form) {
-  data = $(form).serialize();
-  $("#wizard_location").load(
-    get_cluster_remote_url() + 'wizard_submit',
-    data);
 }
 
 function update_resource_type_options() {

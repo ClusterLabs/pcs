@@ -66,8 +66,6 @@ def remote(params, request, auth_user)
       :remove_nodes => method(:remote_remove_nodes),
       :remove_node => method(:remote_remove_node),
       :cluster_destroy => method(:cluster_destroy),
-      :get_wizard => method(:get_wizard),
-      :wizard_submit => method(:wizard_submit),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
@@ -2029,31 +2027,6 @@ def cluster_destroy(params, request, auth_user)
   else
     return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
   end
-end
-
-def get_wizard(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  wizard = PCSDWizard.getWizard(params["wizard"])
-  if wizard != nil
-    return erb wizard.collection_page
-  else
-    return "Error finding Wizard - #{params["wizard"]}"
-  end
-end
-
-def wizard_submit(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  wizard = PCSDWizard.getWizard(params["wizard"])
-  if wizard != nil
-    return erb wizard.process_responses(params)
-  else
-    return "Error finding Wizard - #{params["wizard"]}"
-  end
-
 end
 
 def get_cluster_known_hosts(params, request, auth_user)

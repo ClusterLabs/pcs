@@ -18,18 +18,14 @@ require 'cluster.rb'
 require 'config.rb'
 require 'pcs.rb'
 require 'auth.rb'
-require 'wizard.rb'
 require 'cfgsync.rb'
 require 'permissions.rb'
-
-Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
 set :app_file, __FILE__
 
 if development?
-  Dir["wizards/*.rb"].each {|file| also_reload file}
   also_reload 'resource.rb'
   also_reload 'remote.rb'
   also_reload 'fenceagent.rb'
@@ -1462,14 +1458,6 @@ already been added to pcsd.  You may not add two clusters with the same name int
   get '/' do
     $logger.info "Redirecting '/'...\n"
     redirect '/manage'
-  end
-
-  get '/wizards/?:wizard?' do
-    return wizard(params, request, params[:wizard])
-  end
-
-  post '/wizards/?:wizard?' do
-    return wizard(params, request, params[:wizard])
   end
 
   get '*' do
