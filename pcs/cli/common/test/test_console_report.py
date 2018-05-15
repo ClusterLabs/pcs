@@ -2626,3 +2626,19 @@ class UsingKnownHostAddressForHost(NameBuildTest):
                 "address": "node-addr"
             }
         )
+
+
+class ResourceInBundleNotAccessible(NameBuildTest):
+    code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Resource 'resourceA' will not be accessible by the cluster "
+                "inside bundle 'bundleA'. At least one of bundle options "
+                "'control-port' or 'ip-range-start' has to be specified."
+            ),
+            dict(
+                bundle_id="bundleA",
+                resource_id="resourceA",
+            )
+        )

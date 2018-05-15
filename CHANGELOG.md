@@ -8,6 +8,9 @@
 - Pcs-0.10 requires Python 3.6 and Ruby 2.2, support for older Python and Ruby
   versions has been removed.
 
+### Added
+- Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
+
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
   ([ghpull#166])
@@ -39,6 +42,7 @@
   ([rhbz#1550243])
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
+[rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366

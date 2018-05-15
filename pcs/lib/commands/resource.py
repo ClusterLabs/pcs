@@ -413,6 +413,7 @@ def create_into_bundle(
     ensure_disabled=False,
     wait=False,
     allow_not_suitable_command=False,
+    allow_not_accessible_resource=False,
 ):
     """
     Create a new resource in a cib and put it into an existing bundle
@@ -438,6 +439,8 @@ def create_into_bundle(
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
     mixed wait is flag for controlling waiting for pacemaker idle mechanism
     bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    bool allow_not_accessible_resource -- flag for
+        FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -476,14 +479,24 @@ def create_into_bundle(
         )
         if ensure_disabled:
             resource.common.disable(primitive_element)
-        resource.bundle.add_resource(
-            find_element_by_tag_and_id(
-                resource.bundle.TAG,
-                resources_section,
-                bundle_id
-            ),
-            primitive_element
+
+        bundle_el = find_element_by_tag_and_id(
+            resource.bundle.TAG,
+            resources_section,
+            bundle_id
         )
+        if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
+            env.report_processor.process(
+                reports.get_problem_creator(
+                    report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    allow_not_accessible_resource
+                )(
+                    reports.resource_in_bundle_not_accessible,
+                    bundle_id,
+                    resource_id
+                )
+            )
+        resource.bundle.add_resource(bundle_el, primitive_element)
 
 def bundle_create(
     env, bundle_id, container_type, container_options=None,

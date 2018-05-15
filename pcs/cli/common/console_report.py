@@ -1645,4 +1645,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "No addresses specified for host '{host_name}', using '{address}'"
         .format(**info)
     ,
+    codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE: lambda info:
+        (
+            "Resource '{resource_id}' will not be accessible by the cluster "
+            "inside bundle '{bundle_id}'. At least one of bundle options "
+            "'control-port' or 'ip-range-start' has to be specified."
+        ).format(**info)
 }

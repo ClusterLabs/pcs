@@ -513,7 +513,8 @@ class BundleShow(TestCase, AssertPcsMixin):
 
     def test_resource(self):
         self.assert_pcs_success(
-            "resource bundle create B1 container docker image=pcs:test"
+            "resource bundle create B1 container docker image=pcs:test network "
+            "control-port=1234"
         )
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
@@ -522,6 +523,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             """\
              Bundle: B1
               Docker: image=pcs:test
+              Network: control-port=1234
               Resource: A (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
             """

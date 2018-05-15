@@ -945,3 +945,299 @@ class Wait(TestCase):
         self.env_assist.assert_reports([
             fixture.report_resource_not_running("B1", severities.INFO),
         ])
+
+class WithPrimitive(TestCase):
+    fixture_resources_pre = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" />
+                <primitive id="P"/>
+                {network}
+            </bundle>
+        </resources>
+    """
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_already_not_accessible(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(network="")
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network='<network host-interface="int"/>'
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "host-interface": "int",
+            }
+        )
+
+    def test_add_ip_remove_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network control-port="1234"/>'
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network='<network ip-range-start="192.168.100.200"/>'
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "ip-range-start": "192.168.100.200",
+                "control-port": "",
+            }
+        )
+
+    def test_remove_ip_add_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network ip-range-start="192.168.100.200"/>'
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network='<network control-port="1234"/>'
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "ip-range-start": "",
+                "control-port": "1234",
+            }
+        )
+
+    def test_remove_ip_remove_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network="""
+                        <network
+                            ip-range-start="192.168.100.200"
+                            control-port="1234"
+                        />
+                    """
+                )
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                network_options={
+                    "ip-range-start": "",
+                    "control-port": "",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ]
+        )
+
+    def test_remove_ip_remove_port_force(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network="""
+                        <network
+                            ip-range-start="192.168.100.200"
+                            control-port="1234"
+                        />
+                    """
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network=''
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "ip-range-start": "",
+                "control-port": "",
+            },
+            force_options=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                )
+            ]
+        )
+
+    def test_remove_ip_left_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network="""
+                        <network
+                            ip-range-start="192.168.100.200"
+                            control-port="1234"
+                        />
+                    """
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network='<network control-port="1234"/>'
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "ip-range-start": "",
+            }
+        )
+
+    def test_left_ip_remove_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network="""
+                        <network
+                            ip-range-start="192.168.100.200"
+                            control-port="1234"
+                        />
+                    """
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network='<network ip-range-start="192.168.100.200"/>'
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "control-port": "",
+            }
+        )
+
+    def test_remove_ip(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network ip-range-start="192.168.100.200"/>'
+                )
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                network_options={
+                    "ip-range-start": "",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ]
+        )
+
+    def test_remove_ip_force(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network ip-range-start="192.168.100.200"/>'
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network=''
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "ip-range-start": "",
+            },
+            force_options=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                )
+            ]
+        )
+
+    def test_remove_port(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network control-port="1234"/>'
+                )
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                network_options={
+                    "control-port": "",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ]
+        )
+
+    def test_remove_port_force(self):
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_resources_pre.format(
+                    network='<network control-port="1234"/>'
+                )
+            )
+            .env.push_cib(resources=self.fixture_resources_pre.format(
+                network=''
+            ))
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "control-port": "",
+            },
+            force_options=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B1",
+                    inner_resource_id="P",
+                )
+            ]
+        )

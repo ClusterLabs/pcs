@@ -965,9 +965,10 @@ class Bundle(ResourceTest):
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
-            "resource bundle create {0} container docker image=pcs:test".format(
-                name
-            )
+            (
+                "resource bundle create {0} container docker image=pcs:test "
+                "network control-port=1234"
+            ).format(name)
         )
 
     def test_bundle_id_not_specified(self):
@@ -1009,6 +1010,7 @@ class Bundle(ResourceTest):
                 <resources>
                     <bundle id="B">
                         <docker image="pcs:test" />
+                        <network control-port="1234"/>
                         <primitive class="ocf" id="R1" provider="heartbeat"
                             type="Dummy"
                         >

@@ -70,7 +70,10 @@ def create_clone(
         ensure_disabled=disabled
     )
 
-def create_bundle(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
+def create_bundle(
+    env, wait=TIMEOUT, disabled=False, meta_attributes=None,
+    allow_not_accessible_resource=False,
+):
     return resource.create_into_bundle(
         env,
         "A", "ocf:heartbeat:Dummy",
@@ -79,7 +82,8 @@ def create_bundle(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
         instance_attributes={},
         bundle_id="B",
         wait=wait,
-        ensure_disabled=disabled
+        ensure_disabled=disabled,
+        allow_not_accessible_resource=allow_not_accessible_resource,
     )
 
 wait_error_message = outdent(
@@ -1373,13 +1377,16 @@ class CreateInToBundle(TestCase):
 
     fixture_resources_pre = """
         <resources>
-            <bundle id="B"/>
+            <bundle id="B">
+                <network control-port="12345" ip-range-start="192.168.100.200"/>
+            </bundle>
         </resources>
     """
 
-    fixture_resources_post_simple = """
+    fixture_resource_post_simple_without_network = """
         <resources>
             <bundle id="B">
+                {network}
                 <primitive
                     class="ocf" id="A" provider="heartbeat" type="Dummy"
                 >
@@ -1408,9 +1415,17 @@ class CreateInToBundle(TestCase):
         </resources>
     """
 
+    fixture_resources_post_simple = \
+        fixture_resource_post_simple_without_network.format(
+            network="""
+                <network control-port="12345" ip-range-start="192.168.100.200"/>
+            """
+        )
+
     fixture_resources_post_disabled = """
         <resources>
             <bundle id="B">
+                <network control-port="12345" ip-range-start="192.168.100.200"/>
                 <primitive
                     class="ocf" id="A" provider="heartbeat" type="Dummy"
                 >
@@ -1563,6 +1578,7 @@ class CreateInToBundle(TestCase):
                 resources="""
                     <resources>
                         <bundle id="B">
+                            <network control-port="12345"/>
                             <primitive id="P"/>
                         </bundle>
                     </resources>
@@ -1687,4 +1703,88 @@ class CreateInToBundle(TestCase):
                     roles_with_nodes={"Started": ["node1"]},
                 )
             ]
+        )
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_no_port_no_ip(self):
+        resources_fixture = """
+            <resources>
+                <bundle id="B"/>
+            </resources>
+        """
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(resources=resources_fixture)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create_bundle(self.env_assist.get_env(), wait=False),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B",
+                    inner_resource_id="A",
+                    force_code=
+                        report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
+                )
+            ]
+        )
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_no_port_no_ip_forced(self):
+        resources_fixture = """
+            <resources>
+                <bundle id="B"/>
+            </resources>
+        """
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(resources=resources_fixture)
+            .env.push_cib(
+                resources=
+                    self.fixture_resource_post_simple_without_network.format(
+                        network=""
+                    )
+            )
+        )
+        create_bundle(
+            self.env_assist.get_env(),
+            wait=False,
+            allow_not_accessible_resource=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                bundle_id="B",
+                inner_resource_id="A",
+            )
+        ])
+
+    def _test_with_network_defined(self, network):
+        resources_fixture = """
+            <resources>
+                <bundle id="B">
+                    {network}
+                </bundle>
+            </resources>
+        """.format(network=network)
+        (self.config
+            .runner.pcmk.load_agent()
+            .runner.cib.load(resources=resources_fixture)
+            .env.push_cib(
+                resources=
+                    self.fixture_resource_post_simple_without_network.format(
+                        network=network
+                    )
+            )
+        )
+        create_bundle(self.env_assist.get_env(), wait=False)
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_port_defined(self):
+        self._test_with_network_defined('<network control-port="12345"/>')
+
+    @skip_unless_pacemaker_supports_bundle
+    def test_ip_range_defined(self):
+        self._test_with_network_defined(
+            '<network ip-range-start="192.168.100.200"/>'
         )
