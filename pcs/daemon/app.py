@@ -64,7 +64,7 @@ class AjaxMixin:
         return Finish()
 
 class Sinatra(BaseHandler):
-    def initialize(self, ruby_pcsd_wrapper):
+    def initialize(self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
         #pylint: disable=arguments-differ
         self.__ruby_pcsd_wrapper = ruby_pcsd_wrapper
 
@@ -226,6 +226,23 @@ class SyncConfigMutualExclusive(SinatraRemote):
         async with self.__sync_config_lock:
             await super().get(*args, **kwargs)
 
+class SetCerts(SinatraRemote):
+    def initialize(
+        self,
+        ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
+        https_server_manage: HttpsServerManage
+    ):
+        #pylint: disable=arguments-differ
+        super().initialize(ruby_pcsd_wrapper)
+        self.__https_server_manage = https_server_manage
+
+    async def handle_sinatra_request(self):
+        result = await self.ruby_pcsd_wrapper.request_remote(self.request)
+        if result.status == 200:
+            self.__https_server_manage.reload_certs()
+        self.send_sinatra_result(result)
+
+
 def make_app(
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
@@ -247,6 +264,11 @@ def make_app(
     routes = [
         # Urls protected by tokens. It is still done by ruby pcsd.
         (r"/run_pcs", SinatraRemote, ruby_wrapper),
+        (
+            r"/remote/set_certs",
+            SetCerts,
+            {**ruby_wrapper, "https_server_manage": https_server_manage}
+        ),
         (
             r"/remote/(set_sync_options|set_configs)",
             SyncConfigMutualExclusive,

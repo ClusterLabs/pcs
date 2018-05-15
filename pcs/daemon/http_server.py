@@ -4,6 +4,8 @@ from tornado.netutil import bind_sockets
 from pcs.daemon.ssl import PcsdSSL
 from pcs.daemon import log
 
+class HttpsServerManageException(Exception):
+    pass
 
 class HttpsServerManage:
     """
@@ -40,9 +42,15 @@ class HttpsServerManage:
 
         self.__server = None
         self.__ssl = PcsdSSL(cert_location, key_location)
+        self.__server_is_running = False
+
+    @property
+    def server_is_running(self):
+        return self.__server_is_running
 
     def stop(self):
         self.__server.stop()
+        self.__server_is_running = False
 
     def start(self):
         self.__ensure_cert_key()
@@ -56,9 +64,13 @@ class HttpsServerManage:
                 self.__ssl_ciphers,
             )
         )
+
+        # It is necessary to bind sockets for every new HTTPServer since
+        # HTTPServer.stop calls sock.close() inside.
         sockets = []
         for address in self.__bind_addresses:
             sockets.extend(bind_sockets(self.__port, address))
+
         self.__server.add_sockets(sockets)
 
         log.pcsd.info(
@@ -66,6 +78,16 @@ class HttpsServerManage:
             f"'{', '.join([a or '' for a in self.__bind_addresses])}'"
             f" port '{self.__port}'",
         )
+        self.__server_is_running = True
+
+    def reload_certs(self):
+        if not self.server_is_running:
+            raise HttpsServerManageException(
+                "Could not reload certificates, server is not running"
+            )
+        log.pcsd.info("Stopping server to reload ssl certificates...")
+        self.stop()
+        self.start()
 
     def __ensure_cert_key(self):
         error_list = self.__ssl.check_cert_key()

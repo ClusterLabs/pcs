@@ -4,6 +4,7 @@ import re
 from base64 import b64encode
 from urllib.parse import urlencode
 from pprint import pformat
+from unittest import mock
 
 from tornado.httputil import HTTPHeaders, parse_cookie
 from tornado.locks import Lock
@@ -46,15 +47,13 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
             "body": b64encode(self.body),
         }
 
-class HttpsServerManage(http_server.HttpsServerManage):
-    def __init__(self):
-        #pylint: disable=super-init-not-called
-        pass
-
 class AppTest(AsyncHTTPTestCase):
     def setUp(self):
         self.wrapper = RubyPcsdWrapper()
         self.session_storage = session.Storage(lifetime_seconds=10)
+        self.https_server_manage = mock.MagicMock(
+            spec_set=http_server.HttpsServerManage
+        )
         self.lock = Lock()
         super().setUp()
 
@@ -64,7 +63,7 @@ class AppTest(AsyncHTTPTestCase):
             self.wrapper,
             self.lock,
             PUBLIC_DIR,
-            HttpsServerManage(),
+            self.https_server_manage,
         )
 
     def extract_sid(self, response):
@@ -313,3 +312,22 @@ class SyncConfigMutualExclusive(AppTest):
 
     def test_post_locked(self):
         self.check_locked("POST")
+
+class SetCerts(AppTest):
+    def setUp(self):
+        super().setUp()
+        self.wrapper.request_type = ruby_pcsd.SINATRA_REMOTE
+
+    def test_it_asks_for_cert_reload_if_ruby_succeeds(self):
+        self.wrapper.status_code = 200
+        self.wrapper.body = b"success"
+        # body is irelevant
+        self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
+        self.https_server_manage.reload_certs.assert_called_once()
+
+    def test_it_not_asks_for_cert_reload_if_ruby_fail(self):
+        self.wrapper.status_code = 400
+        self.wrapper.body = b"cannot save ssl certificate without ssl key"
+        # body is irelevant
+        self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
+        self.https_server_manage.reload_certs.assert_not_called()
