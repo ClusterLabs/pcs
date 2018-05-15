@@ -470,6 +470,7 @@ def sbd_cmd(lib, argv, modifiers):
         elif cmd == "watchdog":
             sbd_watchdog_cmd(lib, argv, modifiers)
         else:
+            cmd = ""
             raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
@@ -489,6 +490,7 @@ def sbd_watchdog_cmd(lib, argv, modifiers):
         elif cmd == "test":
             sbd_watchdog_test(lib, argv, modifiers)
         else:
+            cmd = ""
             raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(

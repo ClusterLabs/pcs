@@ -192,7 +192,7 @@ def enable_sbd(
         as value
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
-    no_watchdog_validation -- it True, do not validate existance of watchdog
+    no_watchdog_validation -- if True, do not validate existence of a watchdog
         on the nodes
     """
     node_list = _get_cluster_nodes(lib_env)

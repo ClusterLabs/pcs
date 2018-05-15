@@ -15,7 +15,8 @@
   pacemaker-1.1.18 and newer ([rhbz#1574898])
 
 ### Changed
-- Watchdog devices are validated against list provided by sbd ([rhbz#1475318]).
+- Watchdog devices are validated against a list provided by sbd
+  ([rhbz#1475318]).
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318

@@ -242,11 +242,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                 report_list.append(reports.sbd_not_installed(node_label))
             if "watchdog" in data:
                 if data["watchdog"]["exist"]:
-                    if (
-                        "is_supported" in data["watchdog"]
-                        and
-                        not data["watchdog"]["is_supported"]
-                    ):
+                    if not data["watchdog"].get("is_supported", True):
                         report_list.append(reports.sbd_watchdog_not_supported(
                             node_label, data["watchdog"]["path"]
                         ))

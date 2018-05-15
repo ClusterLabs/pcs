@@ -755,9 +755,10 @@ Commands:
         --no-watchdog-validation is specified, validation of watchdog will be
         skipped. This command can only be run on an existing cluster node.
 
-        WARNING: Listing available watchdogs may cause a restart of the system
-                 when a watchdog with no-way-out-feature enabled is present.
-                 Use --no-watchdog-validation to skip watchdog validation.
+        WARNING: By default, it is tested whether the specified watchdog is
+                 supported. This may cause a restart of the system when
+                 a watchdog with no-way-out-feature enabled is present. Use
+                 --no-watchdog-validation to skip watchdog validation.
 
     node remove <node>
         Shutdown specified node and remove it from the cluster.
@@ -977,9 +978,11 @@ Commands:
 
 
         WARNING: Cluster has to be restarted in order to apply these changes.
-        WARNING: Listing available watchdogs may cause a restart of the system
-                 when a watchdog with no-way-out-feature enabled is present.
-                 Use --no-watchdog-validation to skip watchdog validation.
+
+        WARNING: By default, it is tested whether the specified watchdogs are
+                 supported. This may cause a restart of the system when
+                 a watchdog with no-way-out-feature enabled is present. Use
+                 --no-watchdog-validation to skip watchdog validation.
 
         Example of enabling SBD in cluster with watchdogs on node1 will be
         /dev/watchdog2, on node2 /dev/watchdog1, /dev/watchdog0 on all other
