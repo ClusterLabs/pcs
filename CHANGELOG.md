@@ -13,6 +13,8 @@
   ([ghpull#166])
 - `pcs resource update` does not create an empty meta\_attributes element any
   more ([rhbz#1568353])
+- `pcs resource debug-*` commands provide debug messages even with
+  pacemaker-1.1.18 and newer ([rhbz#1574898])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -41,6 +43,7 @@
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
+[rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 
 
 ## [0.9.163] - 2018-02-20
