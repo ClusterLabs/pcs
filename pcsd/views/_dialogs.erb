@@ -129,6 +129,25 @@
           />
         </td>
       </tr>
+      <tr>
+        <td>
+          <label for="sbd_enable_no_watchdog_validation_checkbox">
+            skip watchdog validation
+            <span
+                class="infoicon sprites"
+                style="margin-left: 5px; float: right"
+                title="By default, it is tested whether the specified watchdog is supported. This may cause a restart of the system when a watchdog with no-way-out-feature enabled is present. Use this option to skip watchdog validation."
+            ></span>
+          </label>
+        </td>
+        <td>
+          <input
+              id="sbd_enable_no_watchdog_validation_checkbox"
+              type="checkbox"
+              name="no_watchdog_validation"
+          />
+        </td>
+      </tr>
     </table>
   </form>
 </div>

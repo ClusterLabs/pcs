@@ -285,8 +285,10 @@ Upgrade the CIB to conform to the latest version of the document schema.
 edit [scope=<scope> | \fB\-\-config\fR]
 Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving.  Specify scope to edit a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to edit the whole CIB or be warned in the case of outdated CIB.
 .TP
-node add <node[,node\-altaddr]> [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-enable\fR] [\fB\-\-watchdog\fR=<watchdog\-path>] [\fB\-\-device\fR=<path>] ...
-Add the node to the cluster and sync all relevant configuration files to the new node. If \fB\-\-start\fR is specified also start cluster on the new node, if \fB\-\-wait\fR is specified wait up to 'n' seconds for the new node to start. If \fB\-\-enable\fR is specified configure cluster to start on the new node on boot. When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address. Use \fB\-\-watchdog\fR to specify path to watchdog on newly added node, when SBD is enabled in cluster. If SBD is configured with shared storage, use \fB\-\-device\fR to specify path to shared device on new node. This command can only be run on an existing cluster node.
+node add <node[,node\-altaddr]> [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-enable\fR] [\fB\-\-watchdog\fR=<watchdog\-path>] [\fB\-\-device\fR=<path>] ... [\fB\-\-no\-watchdog\-validation\fR]
+Add the node to the cluster and sync all relevant configuration files to the new node. If \fB\-\-start\fR is specified also start cluster on the new node, if \fB\-\-wait\fR is specified wait up to 'n' seconds for the new node to start. If \fB\-\-enable\fR is specified configure cluster to start on the new node on boot. When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address. Use \fB\-\-watchdog\fR to specify path to watchdog on newly added node, when SBD is enabled in cluster. If SBD is configured with shared storage, use \fB\-\-device\fR to specify path to shared device on new node. If \fB\-\-no\-watchdog\-validation\fR is specified, validation of watchdog will be skipped. This command can only be run on an existing cluster node.
+
+.B WARNING: By default, it is tested whether the specified watchdog is supported. This may cause a restart of the system when a watchdog with no\-way\-out\-feature enabled is present. Use \-\-no\-watchdog\-validation to skip watchdog validation.
 .TP
 node remove <node>
 Shutdown specified node and remove it from the cluster.
@@ -389,10 +391,12 @@ Confirm to the cluster that the specified node is powered off. This allows the c
 
 NOTE: It is not checked if the specified node exists in the cluster in order to be able to work with nodes not visible from the local cluster partition.
 .TP
-sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [\fB\-\-device\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
-Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is possible to specify up to 3 devices per node.
+sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [\fB\-\-device\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ... [\fB\-\-no\-watchdog\-validation\fR]
+Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is possible to specify up to 3 devices per node. If \fB\-\-no\-watchdog\-validation\fR is specified, validation of watchdogs will be skipped.
 
 .B WARNING: Cluster has to be restarted in order to apply these changes.
+
+.B WARNING: By default, it is tested whether the specified watchdog is supported. This may cause a restart of the system when a watchdog with no\-way\-out\-feature enabled is present. Use \-\-no\-watchdog\-validation to skip watchdog validation.
 
 Example of enabling SBD in cluster with watchdogs on node1 will be /dev/watchdog2, on node2 /dev/watchdog1, /dev/watchdog0 on all other nodes, device /dev/sdb on node1, device /dev/sda on all other nodes and watchdog timeout will bet set to 10 seconds:
 
@@ -417,6 +421,17 @@ Show status of SBD services in cluster and local device(s) configured. If \fB\-\
 .TP
 sbd config
 Show SBD configuration in cluster.
+
+.TP
+sbd watchdog list
+Show all available watchdog devices on the local node.
+
+.B WARNING: Listing available watchdogs may cause a restart of the system when a watchdog with no\-way\-out\-feature enabled is present.
+
+.TP
+sbd watchdog test [<watchdog\-path>]
+This operation is expected to force\-reboot the local system without following any shutdown procedures using a watchdog. If no watchdog is specified, available watchdog will be used if only one watchdog device is available on the local system.
+
 .SS "acl"
 .TP
 [show]

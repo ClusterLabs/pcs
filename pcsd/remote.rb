@@ -167,6 +167,10 @@ def capabilities(params, request, auth_user)
   })
 end
 
+def param_to_bool(obj)
+  return ['true', '1', 'on'].include?(obj)
+end
+
 # provides remote cluster status to a local gui
 def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
   cluster_nodes = get_cluster_nodes(cluster_name)
@@ -843,7 +847,8 @@ def remote_add_node(params, request, auth_user, all=false)
       device_list = params[:devices]
     end
     retval, output = add_node(
-      auth_user, node, all, auto_start, params[:watchdog], device_list
+      auth_user, node, all, auto_start, params[:watchdog], device_list,
+      param_to_bool(params[:no_watchdog_validation]),
     )
   end
 
@@ -2394,11 +2399,26 @@ def check_sbd(param, request, auth_user)
     }
   }
   watchdog = param[:watchdog]
-  if watchdog
-    out[:watchdog] = {
-      :path => watchdog,
-      :exist => File.exist?(watchdog)
-    }
+  if not watchdog.to_s.empty?
+    stdout, stderr, ret_val = run_cmd(
+      auth_user, PCS, 'stonith', 'sbd', 'watchdog', 'list_json'
+    )
+    if ret_val != 0
+      return [400, "Unable to get list of watchdogs: #{stderr.join("\n")}"]
+    end
+    begin
+      available_watchdogs = JSON.parse(stdout.join("\n"))
+      exists = available_watchdogs.include?(watchdog)
+      out[:watchdog] = {
+        :path => watchdog,
+        :exist => exists,
+        :is_supported => (
+          exists and available_watchdogs[watchdog]['caution'] == nil
+        ),
+      }
+    rescue JSON::ParserError
+      return [400, "Unable to get list of watchdogs: unable to parse JSON"]
+    end
   end
   begin
     device_list = JSON.parse(param[:device_list])
@@ -2521,8 +2541,12 @@ def remote_enable_sbd(params, request, auth_user)
 
   arg_list = []
 
-  if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
+  if param_to_bool(params[:ignore_offline_nodes])
     arg_list << '--skip-offline'
+  end
+
+  if param_to_bool(params[:no_watchdog_validation])
+    arg_list << '--no-watchdog-validation'
   end
 
   params[:watchdog].each do |node, watchdog|

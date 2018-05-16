@@ -2081,3 +2081,40 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
                 "current_set": "3.0.6",
             }
         )
+
+
+class SbdListWatchdogError(NameBuildTest):
+    code = codes.SBD_LIST_WATCHDOG_ERROR
+    def test_success(self):
+        self.assert_message_from_info(
+            "Unable to query available watchdogs from sbd: this is a reason",
+            {
+                "reason": "this is a reason",
+            }
+        )
+
+
+class SbdWatchdogNotSupported(NameBuildTest):
+    code = codes.SBD_WATCHDOG_NOT_SUPPORTED
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "node1: Watchdog '/dev/watchdog' is not supported (it may be a "
+                "software watchdog)"
+            ),
+            {
+                "node": "node1",
+                "watchdog": "/dev/watchdog"
+            }
+        )
+
+
+class SbdWatchdogTestError(NameBuildTest):
+    code = codes.SBD_WATCHDOG_TEST_ERROR
+    def test_success(self):
+        self.assert_message_from_info(
+            "Unable to initialize test of the watchdog: some reason",
+            {
+                "reason": "some reason",
+            }
+        )

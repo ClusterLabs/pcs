@@ -240,10 +240,17 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
             data = json.loads(response.data)
             if not data["sbd"]["installed"]:
                 report_list.append(reports.sbd_not_installed(node_label))
-            if not data["watchdog"]["exist"]:
-                report_list.append(reports.watchdog_not_found(
-                    node_label, data["watchdog"]["path"]
-                ))
+            if "watchdog" in data:
+                if data["watchdog"]["exist"]:
+                    if not data["watchdog"].get("is_supported", True):
+                        report_list.append(reports.sbd_watchdog_not_supported(
+                            node_label, data["watchdog"]["path"]
+                        ))
+                else:
+                    report_list.append(reports.watchdog_not_found(
+                        node_label, data["watchdog"]["path"]
+                    ))
+
             for device in data.get("device_list", []):
                 if not device["exist"]:
                     report_list.append(reports.sbd_device_does_not_exist(

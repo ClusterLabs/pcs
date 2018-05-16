@@ -529,3 +529,9 @@ class SetMessageTest(TestCase):
         self.mock_runner.run.assert_called_once_with([
             settings.sbd_binary, "-d", "device", "message", "node", "test"
         ])
+
+
+class GetAvailableWatchdogs(TestCase):
+    """
+    Tested in pcs.lib.commands.test.sbd.test_watchdog_list
+    """

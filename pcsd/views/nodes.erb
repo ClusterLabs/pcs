@@ -360,6 +360,25 @@
           <a href="#" onclick="add_sbd_device_textbox(); return false;">(+)</a>
         </td>
       </tr>
+      <tr>
+        <td>
+          <label for="node_add_no_watchdog_validation_checkbox">
+            Skip watchdog validation:
+            <span
+                class="infoicon sprites"
+                style="margin-left: 5px; float: right"
+                title="By default, it is tested whether the specified watchdog is supported. This may cause a restart of the system when a watchdog with no-way-out-feature enabled is present. Use this option to skip watchdog validation."
+            ></span>
+          </label>
+        </td>
+        <td>
+          <input
+              type="checkbox"
+              name="no_watchdog_validation"
+              id="node_add_no_watchdog_validation_checkbox"
+          />
+        </td>
+      </tr>
       {{/if}}
       {{#if Pcs.is_cman_with_udpu_transport}}
       <tr>

@@ -388,6 +388,9 @@ def load_module(env, middleware_factory, name):
                 "initialize_block_devices": sbd.initialize_block_devices,
                 "get_local_devices_info": sbd.get_local_devices_info,
                 "set_message": sbd.set_message,
+                "get_local_available_watchdogs":
+                    sbd.get_local_available_watchdogs,
+                "test_local_watchdog": sbd.test_local_watchdog,
             }
         )
 
