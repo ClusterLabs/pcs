@@ -25,7 +25,7 @@ PCS_LONG_OPTIONS = [
     "transport=", "rrpmode=", "ipv6",
     "addr0=", "bcast0=", "mcast0=", "mcastport0=", "ttl0=", "broadcast0",
     "addr1=", "bcast1=", "mcast1=", "mcastport1=", "ttl1=", "broadcast1",
-    "wait_for_all=", "auto_tie_breaker=", "last_man_standing=",
+    "wait_for_all=", "auto_tie_breaker=", "last_man_standing=", "netmtu=",
     "last_man_standing_window=",
     "token=", "token_coefficient=", "consensus=", "join=",
     "miss_count_const=", "fail_recv_const=",

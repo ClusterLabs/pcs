@@ -594,7 +594,7 @@ Commands:
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
             [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
             [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
-            [--join <timeout>] [--consensus <timeout>]
+            [--join <timeout>] [--consensus <timeout>] [--netmtu <size>]
             [--miss_count_const <count>] [--fail_recv_const <failures>]
             [--encryption 0|1]
         Configure corosync and sync configuration out to listed nodes.
@@ -626,6 +626,7 @@ Commands:
         --consensus <timeout> sets time in milliseconds to wait for consensus
             to be achieved before starting a new round of membership
             configuration (default 1200 ms)
+        --netmtu <size> sets the network maximum transmit unit (default: 1500)
         --miss_count_const <count> sets the maximum number of times on
             receipt of a token a message is checked for retransmission before
             a retransmission occurs (default 5 messages)

@@ -636,6 +636,7 @@ def cluster_setup_parse_options_corosync(options, force=False):
         "--consensus": "consensus",
         "--miss_count_const": "miss_count_const",
         "--fail_recv_const": "fail_recv_const",
+        "--netmtu": "netmtu",
     }
     for opt_name, parsed_name in totem_options_names.items():
         if opt_name in options:
@@ -831,6 +832,7 @@ def cluster_setup_create_corosync_conf(
         "consensus",
         "miss_count_const",
         "fail_recv_const",
+        "netmtu",
     )
     for opt_name in totem_options_names:
         if opt_name in totem_options:

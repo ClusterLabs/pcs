@@ -2545,7 +2545,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005 --netmtu 21000"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -2564,6 +2564,7 @@ totem {
     consensus: 20002
     miss_count_const: 20003
     fail_recv_const: 20004
+    netmtu: 21000
 }
 
 nodelist {

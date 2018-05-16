@@ -5,6 +5,7 @@
 ### Added
 - Pcsd option to reject client initiated SSL/TLS renegotiation ([rhbz#1566382])
 - Commands for listing and testing watchdog devices ([rhbz#1475318]).
+- Option for setting netmtu in `pcs cluster setup` command ([rhbz#1535967])
 
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
@@ -20,6 +21,7 @@
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
+[rhbz#1535967]: https://bugzilla.redhat.com/show_bug.cgi?id=1535967
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
