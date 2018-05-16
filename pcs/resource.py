@@ -2171,7 +2171,8 @@ def resource_force_action(action, argv):
 
     args = ["crm_resource", "-r", resource, action_command[action]]
     if "--full" in utils.pcs_options:
-        args.append("-V")
+        # set --verbose twice to get a reasonable amount of debug messages
+        args.extend(["--verbose"] * 2)
     if "--force" in utils.pcs_options:
         args.append("--force")
     output, retval = utils.run(args)
