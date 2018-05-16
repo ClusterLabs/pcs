@@ -40,12 +40,12 @@ def check_cert_key(cert_path, key_path):
             with open(path) as ssl_file:
                 return load_ssl_file(crypto.FILETYPE_PEM, ssl_file.read())
         except EnvironmentError as e:
-            errors.append(f"Unable to read {label}: '{e}'")
+            errors.append(f"Unable to read SSL {label}: '{e}'")
         except crypto.Error as e:
             msg = ""
             if e.args and e.args[0] and e.args[0][0]:
                 msg = f": '{':'.join(e.args[0][0])}'"
-            errors.append(f"Invalid {label}{msg}")
+            errors.append(f"Invalid SSL {label}{msg}")
 
     cert = load(crypto.load_certificate, "certificate", cert_path)
     key = load(crypto.load_privatekey, "key", key_path)
@@ -59,7 +59,7 @@ def check_cert_key(cert_path, key_path):
     try:
         context.check_privatekey()
     except (crypto.Error, SSL.Error):
-        errors.append("Certificate does not match the key")
+        errors.append("SSL certificate does not match the key")
     return errors
 
 def regenerate_cert_key(server_name, cert_path, key_path):

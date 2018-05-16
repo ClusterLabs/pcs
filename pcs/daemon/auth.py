@@ -98,7 +98,7 @@ def get_user_groups_sync(username):
 UserAuthInfo = namedtuple("UserAuthInfo", "name groups is_authorized")
 
 def authorize_user_sync(username, password) -> UserAuthInfo:
-    log.pcsd.info("Attempting login by %s", username)
+    log.pcsd.info("Attempting login by '%s'", username)
 
     if not authenticate_by_pam(username, password):
         log.pcsd.info(
@@ -126,6 +126,7 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
         )
         return UserAuthInfo(username, groups, is_authorized=False)
 
+    log.pcsd.info("Successful login by '%s'", username)
     return UserAuthInfo(username, groups, is_authorized=True)
 
 # TODO async/await version - how to do it?

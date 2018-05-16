@@ -69,15 +69,16 @@ class HttpsServerManage:
         # HTTPServer.stop calls sock.close() inside.
         sockets = []
         for address in self.__bind_addresses:
+            log.pcsd.info(
+                "Binding socket for address '%s' and port '%s'",
+                address if address is not None else "*",
+                self.__port
+            )
             sockets.extend(bind_sockets(self.__port, address))
 
         self.__server.add_sockets(sockets)
 
-        log.pcsd.info(
-            f"Listening on "
-            f"'{', '.join([a or '' for a in self.__bind_addresses])}'"
-            f" port '{self.__port}'",
-        )
+        log.pcsd.info(f"Server is listening")
         self.__server_is_running = True
 
     def reload_certs(self):

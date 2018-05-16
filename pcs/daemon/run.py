@@ -47,6 +47,9 @@ def main():
     if env.has_errors:
         raise SystemExit(1)
 
+    if env.PCSD_DEBUG:
+        log.enable_debug()
+
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         gem_home=env.GEM_HOME,
