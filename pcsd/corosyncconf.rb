@@ -140,6 +140,20 @@ module CorosyncConf
     raise ParseErrorException, 'Missing closing brace' if section.parent
   end
 
+  def CorosyncConf::get_corosync_nodes_names(corosync_section)
+    result = []
+    corosync_section.sections("nodelist").each {|nodelist_section|
+      nodelist_section.sections("node").each {|node_section|
+        names = node_section.attributes("name")
+        if not names.empty?
+          # get the value ([1]) of the last ([-1]) name attribute
+          result << names[-1][-1]
+        end
+      }
+    }
+    return result
+  end
+
 
   class CorosyncConfException < Exception
   end

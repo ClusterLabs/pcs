@@ -663,6 +663,12 @@ def get_corosync_conf()
   return Cfgsync::cluster_cfg_class.from_file().text()
 end
 
+def get_corosync_nodes_names()
+  return CorosyncConf::get_corosync_nodes_names(
+    CorosyncConf::parse_string(get_corosync_conf)
+  )
+end
+
 def get_corosync_nodes()
   stdout, stderror, retval = run_cmd(
     PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "corosync"
@@ -1233,7 +1239,7 @@ def pcs_auth(auth_user, nodes)
     )
     return auth_responses, sync_successful, sync_failed_nodes, sync_responses
   end
-  cluster_nodes = get_corosync_nodes()
+  cluster_nodes = get_corosync_nodes_names()
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
     new_hosts, [], cluster_nodes, $cluster_name
   )
