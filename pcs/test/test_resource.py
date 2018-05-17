@@ -3523,9 +3523,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o,"Warning: 'D2' is unmanaged\n")
         assert r == 0
 
-        # unmanaged resource - by cluster property
-        o,r = pcs(temp_cib, "property set is-managed-default=false")
-        ac(o,"")
+        # unmanaged resource - by resource defaults
+        o,r = pcs(temp_cib, "resource defaults is-managed=false")
+        ac(
+            o,
+            "Warning: Defaults do not apply to resources which override them "
+                "with their own defined values\n"
+        )
         assert r == 0
         o,r = pcs(temp_cib, "resource disable D1")
         ac(o,"Warning: 'D1' is unmanaged\n")
@@ -3533,8 +3537,12 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         o,r = pcs(temp_cib, "resource enable D1")
         ac(o,"Warning: 'D1' is unmanaged\n")
         assert r == 0
-        o,r = pcs(temp_cib, "property set is-managed-default=")
-        ac(o,"")
+        o,r = pcs(temp_cib, "resource defaults is-managed=")
+        ac(
+            o,
+            "Warning: Defaults do not apply to resources which override them "
+                "with their own defined values\n"
+        )
         assert r == 0
 
         # resource in an unmanaged group

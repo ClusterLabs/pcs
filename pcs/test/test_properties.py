@@ -213,62 +213,61 @@ class PropertyTest(TestCase):
 
     def test_set_property_validation_integer(self):
         output, returnVal = pcs(
-            temp_cib, "property set default-resource-stickiness=0"
+            temp_cib, "property set migration-limit=0"
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
         o, _ = pcs(temp_cib, "property list")
         ac(o, """Cluster Properties:
- default-resource-stickiness: 0
+ migration-limit: 0
 """
         )
 
-
         output, returnVal = pcs(
-            temp_cib, "property set default-resource-stickiness=-10"
+            temp_cib, "property set migration-limit=-10"
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
         o, _ = pcs(temp_cib, "property list")
         ac(o, """Cluster Properties:
- default-resource-stickiness: -10
+ migration-limit: -10
 """
         )
 
         output, returnVal = pcs(
-            temp_cib, "property set default-resource-stickiness=0 --force"
+            temp_cib, "property set migration-limit=0 --force"
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
         o, _ = pcs(temp_cib, "property list")
         ac(o, """Cluster Properties:
- default-resource-stickiness: 0
+ migration-limit: 0
 """
         )
 
         output, returnVal = pcs(
-            temp_cib, "property set default-resource-stickiness=0.1"
+            temp_cib, "property set migration-limit=0.1"
         )
         ac(
             output,
             "Error: invalid value of property: "
-            "'default-resource-stickiness=0.1', (use --force to override)\n"
+            "'migration-limit=0.1', (use --force to override)\n"
         )
         self.assertEqual(returnVal, 1)
         o, _ = pcs(temp_cib, "property list")
         ac(o, """Cluster Properties:
- default-resource-stickiness: 0
+ migration-limit: 0
 """
         )
 
         output, returnVal = pcs(
-            temp_cib, "property set default-resource-stickiness=0.1 --force"
+            temp_cib, "property set migration-limit=0.1 --force"
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
         o, _ = pcs(temp_cib, "property list")
         ac(o, """Cluster Properties:
- default-resource-stickiness: 0.1
+ migration-limit: 0.1
 """
         )
 

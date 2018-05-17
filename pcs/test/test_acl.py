@@ -33,7 +33,8 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.") != -1
+            assert data.find("pacemaker-2.") == -1
+            assert data.find("pacemaker-3.") != -1
 
     def testEnableDisable(self):
         o,r = pcs(temp_cib, "acl disable")
