@@ -41,8 +41,6 @@ def remote(params, request, auth_user)
       :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
-      :pcsd_restart => method(:remote_pcsd_restart),
-      :pcsd_instance_signature => method(:pcsd_instance_signature),
       :get_permissions => method(:get_permissions_remote),
       :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
@@ -760,18 +758,6 @@ def set_permissions_remote(params, request, auth_user)
     return [200, 'Permissions saved'] if pushed
   }
   return 400, 'Unable to save permissions'
-end
-
-def remote_pcsd_restart(params, request, auth_user)
-  pcsd_restart()
-  return JSON.generate({
-    :success => true,
-    :instance_signature => DAEMON_INSTANCE_SIGNATURE,
-  })
-end
-
-def pcsd_instance_signature(params, request, auth_user)
-  return [200, DAEMON_INSTANCE_SIGNATURE]
 end
 
 def get_sw_versions(params, request, auth_user)
