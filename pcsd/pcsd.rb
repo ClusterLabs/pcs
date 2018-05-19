@@ -65,7 +65,6 @@ configure do
 end
 
 def run_cfgsync
-  $logger = configure_logger($tornado_log_location)
   $logger.debug('Config files sync started')
   if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
     begin
