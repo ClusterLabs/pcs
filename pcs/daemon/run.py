@@ -56,7 +56,9 @@ def main():
         pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
         log_file_location=settings.pcsd_log_location,
         debug=env.PCSD_DEBUG,
-        ruby_executable=settings.ruby_executable
+        ruby_executable=settings.ruby_executable,
+        https_proxy=env.HTTPS_PROXY,
+        no_proxy=env.NO_PROXY,
     )
     make_app = partial(
         app.make_app,

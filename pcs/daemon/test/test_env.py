@@ -77,8 +77,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: 10,
             env.PCSD_DEV: "true",
-            env.HTTPS_PROXY: "proxy",
-            env.NO_PROXY: "yes",
+            env.HTTPS_PROXY: "proxy1",
+            env.NO_PROXY: "host",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,
@@ -183,3 +183,35 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 ,
             ]
         )
+
+    def test_lower_case_no_proxy_has_precedence(self):
+        def it_selects(proxy_value):
+            self.assert_environ_produces_modified_pcsd_env(
+                environ=environ,
+                specific_env_values={env.NO_PROXY: proxy_value}
+            )
+
+        environ = {"NO_PROXY": "no_proxy_1"}
+        it_selects("no_proxy_1")
+
+        environ["no_proxy"] = "no_proxy_2"
+        it_selects("no_proxy_2")
+
+    def test_http_proxy_is_setup_by_precedence(self):
+        def it_selects(proxy_value):
+            self.assert_environ_produces_modified_pcsd_env(
+                environ=environ,
+                specific_env_values={env.HTTPS_PROXY: proxy_value}
+            )
+
+        environ = {"ALL_PROXY": "all_proxy_1"}
+        it_selects("all_proxy_1")
+
+        environ["all_proxy"] = "all_proxy_2"
+        it_selects("all_proxy_2")
+
+        environ["HTTPS_PROXY"] = "https_proxy_1"
+        it_selects("https_proxy_1")
+
+        environ["https_proxy"] = "https_proxy_2"
+        it_selects("https_proxy_2")

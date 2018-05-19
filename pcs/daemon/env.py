@@ -175,10 +175,13 @@ class EnvLoader:
         )
 
     def https_proxy(self):
-        return self.environ.get(HTTPS_PROXY, None)
+        for key in ["https_proxy", HTTPS_PROXY, "all_proxy", "ALL_PROXY"]:
+            if key in self.environ:
+                return self.environ[key]
+        return None
 
     def no_proxy(self):
-        return self.environ.get(NO_PROXY, None)
+        return self.environ.get("no_proxy", self.environ.get(NO_PROXY, None))
 
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (
