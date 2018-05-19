@@ -7,6 +7,7 @@ from tornado.ioloop import IOLoop
 from tornado.locks import Lock
 
 from pcs import settings
+from pcs.common.system import is_systemd
 from pcs.daemon import log, systemd, session, ruby_pcsd, app, ssl
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
@@ -97,7 +98,7 @@ def main():
 
     ioloop = IOLoop.current()
     ioloop.add_callback(sign_ioloop_started)
-    if systemd.is_systemd() and env.NOTIFY_SOCKET:
+    if is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
     ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
     ioloop.start()

@@ -15,6 +15,7 @@ import getpass
 import base64
 import threading
 import logging
+from functools import lru_cache
 
 from pcs import settings, usage
 
@@ -23,10 +24,7 @@ from pcs.common import (
     report_codes,
 )
 from pcs.common.host import PcsKnownHost
-from pcs.common.tools import (
-    join_multilines,
-    simple_cache,
-)
+from pcs.common.tools import join_multilines
 
 from pcs.cli.common import (
     console_report,
@@ -1038,7 +1036,7 @@ def run(
 
     return output, returnVal
 
-@simple_cache
+@lru_cache()
 def cmd_runner():
     env_vars = dict()
     if usefile:
@@ -2157,7 +2155,7 @@ def verify_cert_key_pair(cert, key):
 def is_rhel6():
     return is_cman_cluster()
 
-@simple_cache
+@lru_cache()
 def is_cman_cluster():
     return lib_is_cman_cluster(cmd_runner())
 

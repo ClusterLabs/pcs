@@ -1,17 +1,8 @@
 import socket
-from os.path import isdir
 
 from tornado.iostream import IOStream
 
 from pcs.daemon import log
-
-SYSTEMD_PATHS = [
-  '/run/systemd/system',
-  '/var/run/systemd/system',
-]
-
-def is_systemd():
-    return any([isdir(path) for path in SYSTEMD_PATHS])
 
 async def notify(socket_name):
     if socket_name[0] == '@':

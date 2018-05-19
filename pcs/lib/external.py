@@ -10,10 +10,8 @@ from urllib.parse import urlencode
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
-from pcs.common.tools import (
-    join_multilines,
-    simple_cache,
-)
+from pcs.common.system import is_systemd as is_systemctl
+from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
@@ -67,24 +65,6 @@ def ensure_is_systemd():
         raise LibraryError(
             reports.unsupported_operation_on_non_systemd_systems()
         )
-
-
-
-@simple_cache
-def is_systemctl():
-    """
-    Check whenever is local system running on systemd.
-    Returns True if current system is systemctl compatible, False otherwise.
-    """
-    systemd_paths = [
-        '/run/systemd/system',
-        '/var/run/systemd/system',
-    ]
-    for path in systemd_paths:
-        if os.path.isdir(path):
-            return True
-    return False
-
 
 def disable_service(runner, service, instance=None):
     """
