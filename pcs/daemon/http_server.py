@@ -19,29 +19,16 @@ class HttpsServerManage:
     # For this purpose an application, which handles http requests, gets
     # a reference to the HttpsServerManage instance. When new certificates
     # arrive via a request the application asks the HttpsServerManage instance
-    # for necessary steps (it should make the current HTTPServer stop listening
-    # and start a new one with updated certificates).
-    #
-    # This is currently not implemented since it could require changes in the
-    # client.
+    # for necessary steps (it stops listening of the current HTTPServer and
+    # starts a new one with updated certificates).
 
-    #TODO?
-    #pylint: disable=too-many-instance-attributes, too-many-arguments
-    def __init__(
-        self,
-        make_app,
-        server_name, port, bind_addresses,
-        ssl_options, ssl_ciphers, cert_location, key_location,
-    ):
+    def __init__(self, make_app, port, bind_addresses, ssl: PcsdSSL):
         self.__make_app = make_app
-        self.__server_name = server_name
         self.__port = port
         self.__bind_addresses = bind_addresses
-        self.__ssl_options = ssl_options
-        self.__ssl_ciphers = ssl_ciphers
 
         self.__server = None
-        self.__ssl = PcsdSSL(cert_location, key_location)
+        self.__ssl = ssl
         self.__server_is_running = False
 
     @property
@@ -53,16 +40,13 @@ class HttpsServerManage:
         self.__server_is_running = False
 
     def start(self):
-        self.__ensure_cert_key()
+        self.__ssl.guarantee_valid_certs()
 
         log.pcsd.info("Starting server...")
 
         self.__server = HTTPServer(
             self.__make_app(self),
-            ssl_options=self.__ssl.create_context(
-                self.__ssl_options,
-                self.__ssl_ciphers,
-            )
+            ssl_options=self.__ssl.create_context()
         )
 
         # It is necessary to bind sockets for every new HTTPServer since
@@ -89,17 +73,3 @@ class HttpsServerManage:
         log.pcsd.info("Stopping server to reload ssl certificates...")
         self.stop()
         self.start()
-
-    def __ensure_cert_key(self):
-        error_list = self.__ssl.check_cert_key()
-
-        if not error_list:
-            return
-
-        for error in error_list:
-            log.pcsd.error(error)
-        log.pcsd.error(
-            "Invalid SSL certificate and/or key, using temporary ones"
-        )
-
-        self.__ssl.regenerate_cert_key(self.__server_name)

@@ -7,7 +7,7 @@ from tornado.ioloop import IOLoop
 from tornado.locks import Lock
 
 from pcs import settings
-from pcs.daemon import log, systemd, session, ruby_pcsd, app
+from pcs.daemon import log, systemd, session, ruby_pcsd, app, ssl
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -69,22 +69,30 @@ def main():
         disable_gui=env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEBUG,
     )
+    pcsd_ssl = ssl.PcsdSSL(
+        server_name=socket.gethostname(),
+        cert_location=settings.pcsd_cert_location,
+        key_location=settings.pcsd_key_location,
+        ssl_options=env.PCSD_SSL_OPTIONS,
+        ssl_ciphers=env.PCSD_SSL_CIPHERS,
+    )
     try:
         SignalInfo.server_manage = HttpsServerManage(
             make_app,
-            server_name=socket.gethostname(),
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,
-            ssl_options=env.PCSD_SSL_OPTIONS,
-            ssl_ciphers=env.PCSD_SSL_CIPHERS,
-            cert_location=settings.pcsd_cert_location,
-            key_location=settings.pcsd_key_location,
+            ssl=pcsd_ssl,
         ).start()
     except socket.gaierror as e:
         log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")
         raise SystemExit(1)
     except OSError as e:
         log.pcsd.error(f"Unable to start pcsd daemon, exiting: {e} ")
+        raise SystemExit(1)
+    except ssl.SSLCertKeyException as e:
+        for error in e.args:
+            log.pcsd.error(error)
+        log.pcsd.error("Invalid SSL certificate and/or key, exiting")
         raise SystemExit(1)
 
     ioloop = IOLoop.current()
