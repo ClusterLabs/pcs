@@ -7,20 +7,18 @@ from pcs.daemon import ruby_pcsd, session
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 
-# abstract method `data_received` does need to be overriden. This method should
-# be implemented to handle streamed request data.
-# BUT:
-# * static files are not streamed
-# * in other handlers we currently do not plan to use it:
-# SO:
-#pylint: disable=abstract-method
-
-class BaseHandler(RequestHandler):
-    def set_default_headers(self):
-        #rhbz 1558063
-        self.set_header("Strict-Transport-Security", "max-age=604800")
 
 class EnhanceHeadersMixin:
+    """
+    EnhanceHeadersMixin allows to add security headers to GUI urls.
+    """
+    def set_strict_transport_security(self):
+        # rhbz 1558063
+        # The HTTP Strict-Transport-Security response header (often abbreviated
+        # as HSTS)  lets a web site tell browsers that it should only be
+        # accessed using HTTPS, instead of using HTTP.
+        self.set_header("Strict-Transport-Security", "max-age=604800")
+
     def set_header_nosniff_content_type(self):
         # The X-Content-Type-Options response HTTP header is a marker used by
         # the server to indicate that the MIME types advertised in the
@@ -49,7 +47,25 @@ class EnhanceHeadersMixin:
         # CSP.
         self.set_header("X-Xss-Protection", "1; mode=block")
 
+class BaseHandler(EnhanceHeadersMixin, RequestHandler):
+    """
+    BaseHandler adds for all urls Strict-Transport-Security.
+    """
+    def set_default_headers(self):
+        self.set_strict_transport_security()
+
+    def data_received(self, chunk):
+        # abstract method `data_received` does need to be overriden. This
+        # method should be implemented to handle streamed request data.
+        # BUT we currently do not plan to use it SO:
+        #pylint: disable=abstract-method
+        pass
+
 class AjaxMixin:
+    """
+    AjaxMixin adds methods for an ajax request detection and common unauthorized
+    response.
+    """
     @property
     def is_ajax(self):
         return (
@@ -64,6 +80,11 @@ class AjaxMixin:
         return Finish()
 
 class Sinatra(BaseHandler):
+    """
+    Sinatra is base class for handlers which calls the Sinatra via wrapper.
+    It accept ruby wrapper during initialization. It also provides method for
+    transformation result from sinatra to http response.
+    """
     def initialize(self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
         #pylint: disable=arguments-differ
         self.__ruby_pcsd_wrapper = ruby_pcsd_wrapper
@@ -78,7 +99,12 @@ class Sinatra(BaseHandler):
     def ruby_pcsd_wrapper(self):
         return self.__ruby_pcsd_wrapper
 
-class SinatraGui(session.Mixin, EnhanceHeadersMixin, Sinatra):
+class SinatraGui(session.Mixin, Sinatra):
+    """
+    SinatraGui is base class for handlers which calls the Sinatra GUI functions.
+    It adds work with session.
+    It adds default GET and POST handlers with hook before Sinatra is called.
+    """
     can_use_sinatra = True
 
     def initialize(self, session_storage, ruby_pcsd_wrapper):
@@ -107,6 +133,10 @@ class SinatraGui(session.Mixin, EnhanceHeadersMixin, Sinatra):
         await self.handle_sinatra_request()
 
 class SinatraRemote(Sinatra):
+    """
+    SinatraRemote is handler for urls which should be directed to the Sinatra
+    remote (non-GUI) functions.
+    """
     async def handle_sinatra_request(self):
         result = await self.ruby_pcsd_wrapper.request_remote(self.request)
         self.send_sinatra_result(result)
@@ -118,6 +148,10 @@ class SinatraRemote(Sinatra):
         await self.handle_sinatra_request()
 
 class SinatraGuiProtected(SinatraGui):
+    """
+    SinatraGuiProtected handles urls that calls the non-ajax Sinatra GUI
+    functions. These urls provides real pages.
+    """
     def before_sinatra_use(self):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
@@ -130,6 +164,10 @@ class SinatraGuiProtected(SinatraGui):
             self.can_use_sinatra = False
 
 class SinatraAjaxProtected(SinatraGui, AjaxMixin):
+    """
+    SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
+    It allows to use this urls only for ajax calls.
+    """
     @property
     def is_authorized(self):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
@@ -144,6 +182,12 @@ class SinatraAjaxProtected(SinatraGui, AjaxMixin):
             raise self.unauthorized()
 
 class Login(SinatraGui, AjaxMixin):
+    """
+    Login handles urls that cares about loging process.
+    It displays a login form (taken from Sinatra), process data sent by the
+    form, call an authentication mechanism and uses session for expressing
+    a result of the authentication mechanism.
+    """
     def before_sinatra_use(self):
         #TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
@@ -180,7 +224,10 @@ class Login(SinatraGui, AjaxMixin):
         self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
+class LoginStatus(session.Mixin, AjaxMixin, BaseHandler):
+    """
+    LoginStatus handles urls for obtaining current login status via ajax.
+    """
     # This is for ajax. However, non-ajax requests are allowed as well. It
     # worked the same way in ruby.
     def get(self, *args, **kwargs):
@@ -190,7 +237,11 @@ class LoginStatus(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
         self.sid_to_cookies()
         self.write(self.session.ajax_id)
 
-class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
+class Logout(session.Mixin, AjaxMixin, BaseHandler):
+    """
+    Logout handles url for logout. It is used for both ajax and non-ajax
+    requests.
+    """
     def get(self, *args, **kwargs):
         self.session_logout()
         self.sid_to_cookies()
@@ -201,6 +252,10 @@ class Logout(session.Mixin, EnhanceHeadersMixin, AjaxMixin, BaseHandler):
             self.redirect("/login", status=302) #redirect temporary (302)
 
 class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
+    # abstract method `data_received` does need to be overriden. This
+    # method should be implemented to handle streamed request data.
+    # BUT static files are not streamed SO:
+    #pylint: disable=abstract-method
     def initialize(self, path, default_filename=None):
         #pylint: disable=arguments-differ
         super().initialize(path, default_filename)
@@ -209,8 +264,14 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
         # no another special reason for it. So, maybe, it can be removed in
         # future.
         self.set_header_nosniff_content_type()
+        self.set_strict_transport_security()
 
 class SyncConfigMutualExclusive(SinatraRemote):
+    """
+    SyncConfigMutualExclusive handles urls which should be directed to the
+    Sinatra remote (non-GUI) functions that can not run at the same time as
+    config synchronization. The exclusivity is achived by sync_config_lock.
+    """
     def initialize(
         self, sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
     ):
@@ -227,6 +288,11 @@ class SyncConfigMutualExclusive(SinatraRemote):
             await super().get(*args, **kwargs)
 
 class SetCerts(SinatraRemote):
+    """
+    SetCerts handles url for setting new certificate and key. It calls the
+    Sinatra for setting certificate and key and in the case of the success it
+    will take care of notify of http sever about this change.
+    """
     def initialize(
         self,
         ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
