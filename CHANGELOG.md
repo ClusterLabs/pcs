@@ -34,6 +34,8 @@
     a single host / token as well as all hosts / tokens.
   - These changes are not backward compatible. You should use the `pcs host
     auth` command to re-authenticate your hosts.
+- Removing resources using web UI when the operation takes longer than expected
+  ([rhbz#1579911])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -48,6 +50,7 @@
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
+[rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 
 
 ## [0.9.163] - 2018-02-20
