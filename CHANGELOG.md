@@ -17,6 +17,8 @@
   pacemaker-1.1.18 and newer ([rhbz#1574898])
 - `pcs config` no longer crashes when `crm_mon` prints anything to stderr
   ([rhbz#1581150])
+- Removing resources using web UI when the operation takes longer than expected
+  ([rhbz#1579911])
 
 ### Changed
 - Watchdog devices are validated against a list provided by sbd
@@ -29,6 +31,7 @@
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
+[rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1581150]: https://bugzilla.redhat.com/show_bug.cgi?id=1581150
 
 
