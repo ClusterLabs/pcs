@@ -71,17 +71,19 @@ def full_status():
             ["--show-detail", "--show-node-attributes", "--failcounts"]
         )
 
-    output, retval = utils.run(monitor_command)
-
+    stdout, stderr, retval = utils.cmd_runner().run(monitor_command)
     if (retval != 0):
         utils.err("cluster is not currently running on this node")
+
+    warnings = []
+    if stderr.strip():
+        warnings.extend(stderr.strip().splitlines())
 
     if not utils.usefile or "--corosync_conf" in utils.pcs_options:
         cluster_name = utils.getClusterName()
         print("Cluster name: %s" % cluster_name)
 
-    status_stonith_check()
-
+    warnings.extend(status_stonith_check())
     if (
         not utils.usefile
         and
@@ -89,9 +91,16 @@ def full_status():
         and
         utils.corosyncPacemakerNodeCheck()
     ):
-        print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
+        warnings.append(
+            "Corosync and pacemaker node names do not match (IPs used in setup?)"
+        )
+    if warnings:
+        print()
+        print("WARNINGS:")
+        print("\n".join(warnings))
+        print()
 
-    print(output)
+    print(stdout)
 
     if "--full" in utils.pcs_options:
         tickets, retval = utils.run(["crm_ticket", "-L"])
@@ -164,12 +173,13 @@ def status_stonith_check():
         except LibraryError:
             pass
 
+    warnings = []
     if stonith_enabled and not stonith_devices and not sbd_running:
-        print("WARNING: no stonith devices and stonith-enabled is not false")
+        warnings.append("No stonith devices and stonith-enabled is not false")
 
     if stonith_devices_id_action:
-        print(
-            "WARNING: following stonith devices have the 'action' option set, "
+        warnings.append(
+            "Following stonith devices have the 'action' option set, "
             "it is recommended to set {0} instead: {1}".format(
                 ", ".join(
                     ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
@@ -178,13 +188,14 @@ def status_stonith_check():
             )
         )
     if stonith_devices_id_method_cycle:
-        print(
-            "WARNING: following stonith devices have the 'method' option set "
+        warnings.append(
+            "Following stonith devices have the 'method' option set "
             "to 'cycle' which is potentially dangerous, please consider using "
             "'onoff': {0}".format(
                 ", ".join(sorted(stonith_devices_id_method_cycle))
             )
         )
+    return warnings
 
 # Parse crm_mon for status
 def nodes_status(argv):

@@ -15,6 +15,8 @@
   more ([rhbz#1568353])
 - `pcs resource debug-*` commands provide debug messages even with
   pacemaker-1.1.18 and newer ([rhbz#1574898])
+- `pcs config` no longer crashes when `crm_mon` prints anything to stderr
+  ([rhbz#1581150])
 
 ### Changed
 - Watchdog devices are validated against a list provided by sbd
@@ -27,6 +29,7 @@
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
+[rhbz#1581150]: https://bugzilla.redhat.com/show_bug.cgi?id=1581150
 
 
 ## [0.9.164] - 2018-04-09
