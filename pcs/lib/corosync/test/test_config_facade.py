@@ -355,6 +355,153 @@ class GetNodesNames(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
 
+class AddNodesTest(TestCase):
+    def test_adding_two_nodes(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node0-addr1
+                ring1_addr: node0-addr2
+                nodeid: 0
+                name: node0
+            }
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_nodes([
+            dict(
+                name="node2",
+                addrs=["node2-addr1", "node2-addr2"],
+            ),
+            dict(
+                name="node1",
+                addrs=["node1-addr1", "node1-addr2"],
+            ),
+        ])
+
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node0-addr1
+                ring1_addr: node0-addr2
+                nodeid: 0
+                name: node0
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                ring1_addr: node2-addr2
+                name: node2
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node1-addr1
+                ring1_addr: node1-addr2
+                name: node1
+                nodeid: 2
+            }
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+    def test_ids(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring1_addr: node1-addr1
+                ring5_addr: node1-addr5
+                ring2_addr: node1-addr2
+                nodeid: 1
+                name: node1
+            }
+
+            node {
+                ring1_addr: node4-addr1
+                ring5_addr: node4-addr5
+                ring2_addr: node4-addr2
+                nodeid: 4
+                name: node4
+            }
+
+            node {
+                ring1_addr: node2-addr1
+                ring5_addr: node2-addr5
+                ring2_addr: node2-addr2
+                nodeid: 2
+                name: node2
+            }
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_nodes([
+            dict(
+                name="node0",
+                addrs=["node0-addr1", "node0-addr2", "node0-addr5"],
+            ),
+            dict(
+                name="node3",
+                addrs=["node3-addr1", "node3-addr2", "node3-addr5"],
+            ),
+            dict(
+                name="node5",
+                addrs=["node5-addr1", "node5-addr2", "node5-addr5"],
+            ),
+        ])
+
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring1_addr: node1-addr1
+                ring5_addr: node1-addr5
+                ring2_addr: node1-addr2
+                nodeid: 1
+                name: node1
+            }
+
+            node {
+                ring1_addr: node4-addr1
+                ring5_addr: node4-addr5
+                ring2_addr: node4-addr2
+                nodeid: 4
+                name: node4
+            }
+
+            node {
+                ring1_addr: node2-addr1
+                ring5_addr: node2-addr5
+                ring2_addr: node2-addr2
+                nodeid: 2
+                name: node2
+            }
+
+            node {
+                ring1_addr: node0-addr1
+                ring2_addr: node0-addr2
+                ring5_addr: node0-addr5
+                name: node0
+                nodeid: 0
+            }
+
+            node {
+                ring1_addr: node3-addr1
+                ring2_addr: node3-addr2
+                ring5_addr: node3-addr5
+                name: node3
+                nodeid: 3
+            }
+
+            node {
+                ring1_addr: node5-addr1
+                ring2_addr: node5-addr2
+                ring5_addr: node5-addr5
+                name: node5
+                nodeid: 5
+            }
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
 class GetQuorumOptionsTest(TestCase):
     def test_no_quorum(self):
         config = ""

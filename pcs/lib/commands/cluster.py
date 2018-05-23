@@ -1,26 +1,46 @@
 import math
+import os.path
 import time
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import (
+    env_file_role_codes,
+    report_codes,
+)
+from pcs.common.tools import format_environment_error
 from pcs.common.reports import SimpleReportProcessor
 from pcs.common import ssl
-from pcs.lib import reports, node_communication_format
+from pcs.lib import reports, node_communication_format, sbd
+from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
+from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
+from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
 from pcs.lib.cib.tools import (
     get_fencing_topology,
     get_resources,
 )
 from pcs.lib.communication import cluster
+from pcs.lib.communication.corosync import (
+    CheckCorosyncOffline,
+    DistributeCorosyncConf,
+    ReloadCorosyncConf,
+)
 from pcs.lib.communication.nodes import (
     CheckPacemakerStarted,
     DistributeFilesWithoutForces,
     EnableCluster,
     GetHostInfo,
+    GetOnlineTargets,
     RemoveFilesWithoutForces,
     SendPcsdSslCertAndKey,
     StartCluster,
     UpdateKnownHosts,
+)
+from pcs.lib.communication.sbd import (
+    CheckSbd,
+    SetSbdConfig,
+    EnableSbdService,
+    DisableSbdService,
 )
 from pcs.lib.communication.tools import (
     run as run_com,
@@ -29,7 +49,8 @@ from pcs.lib.communication.tools import (
 from pcs.lib.corosync import (
     config_facade,
     config_validators,
-    constants as corosync_constants
+    constants as corosync_constants,
+    qdevice_net,
 )
 from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib.errors import (
@@ -46,7 +67,10 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
-from pcs.lib.tools import generate_binary_key
+from pcs.lib.tools import (
+    environment_file_to_dict,
+    generate_binary_key,
+)
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
@@ -167,7 +191,7 @@ def setup(
         _normalize_dict(node, {"addrs"}) for node in nodes
     ]
 
-    _report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
 
     # Get targets for all nodes and report unknown (== not-authorized) nodes.
@@ -180,13 +204,13 @@ def setup(
             allow_skip=False,
         )
     )
-    _report_processor.report_list(target_report_list)
+    report_processor.report_list(target_report_list)
 
     # Use an address defined in known-hosts for each node with no addresses
     # specified. This allows users not to specify node addresses at all which
     # simplifies the whole cluster setup command / form significantly.
     addrs_defaulter = _get_addrs_defaulter(
-        _report_processor,
+        report_processor,
         {target.label: target for target in target_list}
     )
     nodes = [
@@ -195,7 +219,7 @@ def setup(
     ]
 
     # Validate inputs.
-    _report_processor.report_list(config_validators.create(
+    report_processor.report_list(config_validators.create(
         cluster_name, nodes, transport_type,
         force_unresolvable=force_unresolvable
     ))
@@ -204,7 +228,7 @@ def setup(
             [len(node["addrs"]) for node in nodes],
             default=0
         )
-        _report_processor.report_list(
+        report_processor.report_list(
             config_validators.create_transport_knet(
                 transport_options,
                 compression_options,
@@ -217,7 +241,7 @@ def setup(
             )
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        _report_processor.report_list(
+        report_processor.report_list(
             config_validators.create_transport_udp(
                 transport_options,
                 compression_options,
@@ -226,35 +250,26 @@ def setup(
             +
             config_validators.create_link_list_udp(link_list)
         )
-    _report_processor.report_list(
+    report_processor.report_list(
         config_validators.create_totem(totem_options)
         +
         # We are creating the config and we know there is no qdevice in it.
         config_validators.create_quorum_options(quorum_options, False)
     )
 
-    try:
-        if wait is False:
-            wait_timeout = False
-        else:
-            if not start:
-                _report_processor.report(
-                    reports.wait_for_node_startup_without_start()
-                )
-            wait_timeout = get_valid_timeout_seconds(wait)
-    except LibraryError as e:
-        _report_processor.report_list(e.args)
+    # Validate flags
+    wait_timeout = _get_validated_wait_timeout(report_processor, wait, start)
 
-    # Validate the nodes.
-    com_cmd = GetHostInfo(_report_processor)
+    # Validate the nodes
+    com_cmd = GetHostInfo(report_processor)
     com_cmd.set_targets(target_list)
-    _report_processor.report_list(
+    report_processor.report_list(
         _host_check_cluster_setup(
             run_com(env.get_node_communicator(), com_cmd), force
         )
     )
 
-    if _report_processor.has_errors:
+    if report_processor.has_errors:
         raise LibraryError()
 
     # Validation done. If errors occured, an exception has been raised and we
@@ -300,7 +315,7 @@ def setup(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Distribute and reload pcsd SSL certificate
-    _report_processor.report(
+    report_processor.report(
         reports.pcsd_ssl_cert_and_key_distribution_started(
             [target.label for target in target_list]
         )
@@ -345,35 +360,380 @@ def setup(
         com_cmd = EnableCluster(env.report_processor)
         com_cmd.set_targets(target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
-
     if start:
-        # Large clusters take longer time to start up. So we make the timeout
-        # longer for each 8 nodes:
-        #  1 -  8 nodes: 1 * timeout
-        #  9 - 16 nodes: 2 * timeout
-        # 17 - 24 nodes: 3 * timeout
-        # and so on ...
-        # Users can override this and set their own timeout by specifying
-        # the --request-timeout option.
-        timeout = int(
-            settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
+        _start_cluster(
+            env.communicator_factory,
+            env.report_processor,
+            target_list,
+            wait_timeout=wait_timeout,
         )
-        com_cmd = StartCluster(env.report_processor)
-        com_cmd.set_targets(target_list)
-        run_and_raise(
-            env.get_node_communicator(request_timeout=timeout),
-            com_cmd
+
+def add_nodes(
+    env, nodes, wait=False, start=False, enable=False, force=False,
+    force_unresolvable=False, skip_offline_nodes=False
+):
+    """
+    Add specified nodes to the local cluster
+    Raise LibraryError on any error.
+
+    env LibraryEnvironment
+    nodes list -- list of dicts which represents node.
+        Supported keys are: name (required), addrs (list), devices (list),
+        watchdog
+    wait -- specifies if command should try to wait for cluster to start up.
+        Has no effect start is False. If set to False command will not wait for
+        cluster to start. If None command will wait for some default timeout.
+        If int wait set timeout to int value of seconds.
+    start bool -- if True start cluster when it is set up
+    enable bool -- if True enable cluster when it is set up
+    force bool -- if True some validations errors are treated as warnings
+    force_unresolvable bool -- if True not resolvable addresses of nodes are
+        treated as warnings
+    skip_offline_nodes bool -- if True non fatal connection failures to other
+        hosts are treated as warnings
+    """
+    new_nodes = [
+        _normalize_dict(node, {"addrs", "devices", "watchdog"})
+        for node in nodes
+    ]
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    target_factory = env.get_node_target_factory()
+    is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
+    corosync_conf = env.get_corosync_conf()
+    cluster_nodes_names = corosync_conf.get_nodes_names()
+
+    # get targets for existing nodes
+    target_report_list, cluster_nodes_target_list = (
+        target_factory.get_target_list_with_reports(
+            cluster_nodes_names,
+            skip_non_existing=skip_offline_nodes,
         )
-        if wait_timeout is not False:
-            env.report_processor.process_list(
-                _wait_for_pacemaker_to_start(
-                    env.get_node_communicator(),
-                    env.report_processor,
-                    target_list,
-                    timeout=wait_timeout, # wait_timeout is either None or a timeout
+    )
+    report_processor.report_list(target_report_list)
+
+    # Get targets for new nodes and report unknown (== not-authorized) nodes.
+    # If a node doesn't contain the 'name' key, validation of inputs reports it.
+    # That means we don't report missing names but cannot rely on them being
+    # present either.
+    target_report_list, new_nodes_target_list = (
+        target_factory.get_target_list_with_reports(
+            [node["name"] for node in new_nodes if "name" in node],
+            allow_skip=False,
+        )
+    )
+    report_processor.report_list(target_report_list)
+
+    # Set default values for not-specified node options.
+    # Use an address defined in known-hosts for each node with no addresses
+    # specified. This allows users not to specify node addresses at all which
+    # simplifies the whole node add command / form significantly.
+    new_nodes_target_dict = {
+        target.label: target for target in new_nodes_target_list
+    }
+    addrs_defaulter = _get_addrs_defaulter(
+        report_processor,
+        new_nodes_target_dict
+    )
+    watchdog_defaulter = _get_watchdog_defaulter(
+        report_processor,
+        new_nodes_target_dict,
+        is_sbd_enabled
+    )
+    new_nodes = [
+        _set_defaults_in_dict(node, {
+            "addrs": addrs_defaulter,
+            "devices": lambda _: [],
+            "watchdog": watchdog_defaulter,
+        })
+        for node in new_nodes
+    ]
+
+    # Validate inputs - corosync part
+    cib = env.get_cib()
+    # corosync validator rejects non-corosync keys
+    new_nodes_corosync = [
+        {key: node[key] for key in ("name", "addrs") if key in node}
+        for node in new_nodes
+    ]
+    report_processor.report_list(config_validators.add_nodes(
+        new_nodes_corosync,
+        corosync_conf.get_nodes(),
+        get_remote_nodes(cib) + get_guest_nodes(cib),
+        force_unresolvable=force_unresolvable
+    ))
+
+    # Validate inputs - SBD part
+    report_processor.report_list(
+        sbd.validate_new_nodes_devices(
+            is_sbd_enabled,
+            {
+                node["name"]: node["devices"]
+                for node in new_nodes if "name" in node
+            }
+        )
+    )
+
+    # Validate inputs - flags part
+    wait_timeout = _get_validated_wait_timeout(report_processor, wait, start)
+
+    # Get online cluster nodes
+    # This is the only call in which we accept skip_offline_nodes option for the
+    # cluster nodes. In all the other actions we communicate only with the
+    # online nodes. This allows us to simplify code as any communication issue
+    # is considered an error, ends the commande processing and is not possible
+    # to skip it by skip_offline_nodes. We do not have to care about a situation
+    # when a communication command cannot connect to some nodes and then the
+    # next command can connect but fails due to the previous one did not
+    # succeed.
+    com_cmd = GetOnlineTargets(
+        report_processor, ignore_offline_targets=skip_offline_nodes,
+    )
+    com_cmd.set_targets(cluster_nodes_target_list)
+    online_cluster_target_list = run_com(env.get_node_communicator(), com_cmd)
+
+    # Validate existing cluster nodes status
+    if sbd.atb_has_to_be_enabled(
+        env.cmd_runner(), corosync_conf, len(new_nodes)
+    ):
+        report_processor.report(reports.atb_will_be_enabled())
+        com_cmd = CheckCorosyncOffline(
+            report_processor, allow_skip_offline=False,
+        )
+        com_cmd.set_targets(online_cluster_target_list)
+        run_com(env.get_node_communicator(), com_cmd)
+
+    # Validate new nodes. All new nodes have to be online.
+    com_cmd = GetHostInfo(report_processor)
+    com_cmd.set_targets(new_nodes_target_list)
+    report_processor.report_list(
+        _host_check_cluster_setup(
+            run_com(env.get_node_communicator(), com_cmd),
+            force,
+            # version of services may not be the same across the existing
+            # cluster nodes, so it's not easy to make this check properly
+            check_services_versions=False,
+        )
+    )
+
+    # Validate SBD on new nodes
+    new_nodes_dict = {node["name"]: node for node in new_nodes}
+    report_processor.report(reports.sbd_check_started())
+    com_cmd = CheckSbd(report_processor)
+    for new_node_target in new_nodes_target_list:
+        new_node = new_nodes_dict[new_node_target.label]
+        com_cmd.add_request(
+            new_node_target,
+            watchdog=new_node["watchdog"],
+            device_list=new_node["devices"],
+        )
+    run_com(env.get_node_communicator(), com_cmd)
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # Validation done. If errors occured, an exception has been raised and we
+    # don't get below this line.
+
+    # First set up everything else than corosync. Once the new nodes are present
+    # in corosync.conf, they're considered part of a cluster and the node add
+    # command cannot be run again. So we need to minimize the amout of actions
+    # (and therefore possible failures) after adding the nodes to corosync.
+
+    # distribute auth tokens of all cluster nodes (including the new ones) to
+    # all new nodes
+    com_cmd = UpdateKnownHosts(
+        env.report_processor,
+        known_hosts_to_add=env.get_known_hosts(
+            cluster_nodes_names + list(new_nodes_dict.keys())
+        ),
+        known_hosts_to_remove=[],
+    )
+    com_cmd.set_targets(new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # qdevice setup
+    qdevice_model, qdevice_model_options, _, _ = (
+        corosync_conf.get_quorum_device_settings()
+    )
+    if qdevice_model == "net":
+        qdevice_net.set_up_client_certificates(
+            env.cmd_runner(),
+            env.report_processor,
+            env.communicator_factory,
+            target_factory.get_target_from_hostname(
+                qdevice_model_options["host"]
+            ),
+            corosync_conf.get_cluster_name(),
+            new_nodes_target_list,
+            # we don't want to allow skiping offline nodes which are being
+            # added, otherwise qdevice will not work properly
+            skip_offline_nodes=False
+        )
+
+    # sbd setup
+    if is_sbd_enabled:
+        sbd_cfg = environment_file_to_dict(sbd.get_local_sbd_config())
+
+        com_cmd = SetSbdConfig(env.report_processor)
+        for new_node_target in new_nodes_target_list:
+            new_node = new_nodes_dict[new_node_target.label]
+            com_cmd.add_request(
+                new_node_target,
+                sbd.create_sbd_config(
+                    sbd_cfg,
+                    new_node["name"],
+                    watchdog=new_node["watchdog"],
+                    device_list=new_node["devices"],
                 )
             )
+        run_and_raise(env.get_node_communicator(), com_cmd)
 
+        com_cmd = EnableSbdService(env.report_processor)
+        com_cmd.add_request(new_nodes_target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
+    else:
+        com_cmd = DisableSbdService(env.report_processor)
+        com_cmd.add_request(new_nodes_target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # booth setup
+    booth_sync.send_all_config_to_node(
+        env.get_node_communicator(),
+        env.report_processor,
+        new_nodes_target_list,
+        rewrite_existing=force,
+        skip_wrong_config=force,
+    )
+
+    # distribute corosync and pacemaker authkeys
+    files_action = {}
+    forceable_io_error_creator = reports.get_problem_creator(
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS, force
+    )
+    if os.path.isfile(settings.corosync_authkey_file):
+        try:
+            files_action.update(
+                node_communication_format.corosync_authkey_file(
+                    open(settings.corosync_authkey_file, "rb").read()
+                )
+            )
+        except EnvironmentError as e:
+            report_processor.report(forceable_io_error_creator(
+                reports.file_io_error,
+                env_file_role_codes.COROSYNC_AUTHKEY,
+                file_path=settings.corosync_authkey_file,
+                operation="read",
+                reason=format_environment_error(e)
+            ))
+
+    if os.path.isfile(settings.pacemaker_authkey_file):
+        try:
+            files_action.update(
+                node_communication_format.pcmk_authkey_file(
+                    open(settings.pacemaker_authkey_file, "rb").read()
+                )
+            )
+        except EnvironmentError as e:
+            report_processor.report(forceable_io_error_creator(
+                reports.file_io_error,
+                env_file_role_codes.PACEMAKER_AUTHKEY,
+                file_path=settings.pacemaker_authkey_file,
+                operation="read",
+                reason=format_environment_error(e)
+            ))
+
+    # pcs_settings.conf was previously synced using pcsdcli send_local_configs.
+    # This has been changed temporarily until new system for distribution and
+    # syncronization of configs will be introduced.
+    if os.path.isfile(settings.pcsd_settings_conf_location):
+        try:
+            files_action.update(
+                node_communication_format.pcs_settings_conf_file(
+                    open(settings.pcsd_settings_conf_location, "r").read()
+                )
+            )
+        except EnvironmentError as e:
+            report_processor.report(forceable_io_error_creator(
+                reports.file_io_error,
+                env_file_role_codes.PCS_SETTINGS_CONF,
+                file_path=settings.pcsd_settings_conf_location,
+                operation="read",
+                reason=format_environment_error(e)
+            ))
+
+    # stop here if one of the files could not be loaded and it was not forced
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    com_cmd = DistributeFilesWithoutForces(env.report_processor, files_action)
+    com_cmd.set_targets(new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # When corosync >= 2 is in use, the procedure for adding a node is:
+    # 1. add the new node to corosync.conf on all existing nodes
+    # 2. reload corosync.conf before the new node is started
+    # 3. start the new node
+    # If done otherwise, membership gets broken and qdevice hangs. Cluster
+    # will recover after a minute or so but still it's a wrong way.
+
+    corosync_conf.add_nodes(new_nodes_corosync)
+
+    com_cmd = DistributeCorosyncConf(
+        env.report_processor,
+        corosync_conf.config.export(),
+        allow_skip_offline=False,
+    )
+    com_cmd.set_targets(online_cluster_target_list + new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    com_cmd = ReloadCorosyncConf(env.report_processor)
+    com_cmd.set_targets(online_cluster_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # TODO: distribute and reload pcsd certs
+
+    # Optionally enable and start cluster services.
+    if enable:
+        com_cmd = EnableCluster(env.report_processor)
+        com_cmd.set_targets(new_nodes_target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
+    if start:
+        _start_cluster(
+            env.communicator_factory,
+            env.report_processor,
+            new_nodes_target_list,
+            wait_timeout=wait_timeout,
+        )
+
+def _start_cluster(
+    communicator_factory, report_processor, target_list, wait_timeout=False,
+):
+    # Large clusters take longer time to start up. So we make the timeout
+    # longer for each 8 nodes:
+    #  1 -  8 nodes: 1 * timeout
+    #  9 - 16 nodes: 2 * timeout
+    # 17 - 24 nodes: 3 * timeout
+    # and so on ...
+    # Users can override this and set their own timeout by specifying
+    # the --request-timeout option.
+    timeout = int(
+        settings.default_request_timeout * math.ceil(len(target_list) / 8.0)
+    )
+    com_cmd = StartCluster(report_processor)
+    com_cmd.set_targets(target_list)
+    run_and_raise(
+        communicator_factory.get_communicator(request_timeout=timeout), com_cmd
+    )
+    if wait_timeout is not False:
+        report_processor.process_list(
+            _wait_for_pacemaker_to_start(
+                communicator_factory.get_communicator(),
+                report_processor,
+                target_list,
+                timeout=wait_timeout, # wait_timeout is either None or a timeout
+            )
+        )
 
 def _wait_for_pacemaker_to_start(
     node_communicator, report_processor, target_list, timeout=None
@@ -401,8 +761,9 @@ def _wait_for_pacemaker_to_start(
         error_report_list.append(reports.wait_for_node_startup_error())
     return error_report_list
 
-
-def _host_check_cluster_setup(host_info_dict, force):
+def _host_check_cluster_setup(
+    host_info_dict, force, check_services_versions=True
+):
     report_list = []
     # We only care about services which matter for creating a cluster. It does
     # not make sense to check e.g. booth when a) it will never be used b) it
@@ -457,15 +818,15 @@ def _host_check_cluster_setup(host_info_dict, force):
         except KeyError:
             report_list.append(reports.invalid_response_format(host_name))
 
-    for service, version_dict in service_version_dict.items():
-        report_list.extend(
-            _check_for_not_matching_service_versions(service, version_dict)
-        )
+    if check_services_versions:
+        for service, version_dict in service_version_dict.items():
+            report_list.extend(
+                _check_for_not_matching_service_versions(service, version_dict)
+            )
 
     if cluster_exists_on_nodes and not force:
         report_list.append(reports.cluster_will_be_destroyed())
     return report_list
-
 
 def _check_for_not_matching_service_versions(service, service_version_dict):
     if len(set(service_version_dict.values())) <= 1:
@@ -504,3 +865,29 @@ def _get_addrs_defaulter(
             return [target.first_addr]
         return []
     return defaulter
+
+def _get_watchdog_defaulter(
+    report_processor: SimpleReportProcessor, targets_dict, is_sbd_enabled
+):
+    def defaulter(node):
+        if is_sbd_enabled:
+            report_processor.report(reports.using_default_watchdog(
+                settings.sbd_watchdog_default,
+                node["name"],
+            ))
+            return settings.sbd_watchdog_default
+        return None
+    return defaulter
+
+def _get_validated_wait_timeout(report_processor, wait, start):
+    try:
+        if wait is False:
+            return False
+        if not start:
+            report_processor.report(
+                reports.wait_for_node_startup_without_start()
+            )
+        return get_valid_timeout_seconds(wait)
+    except LibraryError as e:
+        report_processor.report_list(e.args)
+    return None

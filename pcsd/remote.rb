@@ -92,6 +92,7 @@ def remote(params, request, auth_user)
       :remove_file => method(:remove_file),
       :manage_services => method(:manage_services),
       :check_host => method(:check_host),
+      :reload_corosync_conf => method(:reload_corosync_conf),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -3045,7 +3046,10 @@ def check_request_data_for_json(params, auth_user)
   end
 end
 
-def check_host(params, reqest, auth_user)
+def check_host(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
   service_list = [
     :pacemaker, :pacemaker_remote, :corosync, :pcsd, :sbd, :qdevice, :booth
   ]
@@ -3071,4 +3075,22 @@ def check_host(params, reqest, auth_user)
     )
   end
   return [200, JSON.generate(output)]
+end
+
+def reload_corosync_conf(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+
+  output, stderr, retval = run_cmd(
+    auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
+  )
+  if retval != 0
+    return [
+      400,
+      "Unable to reload corosync configuration: #{stderr.join("\n")}"
+    ]
+  end
+
+  return [200, "Reloaded"]
 end

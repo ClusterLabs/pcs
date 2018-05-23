@@ -2,6 +2,7 @@ require 'base64'
 require 'pcs.rb' #write_file_lock, read_file_lock
 require 'settings.rb'
 require 'pcsd_exchange_format.rb'
+require 'cfgsync.rb' # CFG_PCSD_SETTINGS
 
 
 module PcsdFile
@@ -183,12 +184,27 @@ module PcsdFile
     end
   end
 
+  class PutPcsSettingsConf < PutFile
+    def full_file_name
+      @full_file_name ||= CFG_PCSD_SETTINGS
+    end
+
+    def binary?()
+      return false
+    end
+
+    def permissions()
+      return 0644
+    end
+  end
+
   TYPES = {
     "booth_authfile" => PutFileBoothAuthfile,
     "booth_config" => PutFileBoothConfig,
     "pcmk_remote_authkey" => PutFilePcmkRemoteAuthkey,
     "corosync_authkey" => PutFileCorosyncAuthkey,
     "corosync_conf" => PutFileCorosyncConf,
+    "pcs_settings_conf" => PutPcsSettingsConf,
   }
 end
 

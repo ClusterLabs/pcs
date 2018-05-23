@@ -1027,6 +1027,11 @@ class Validations(TestCase):
                     max_devices=max_dev_num,
                 ),
                 fixture.error(
+                    report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
+                    device="dev",
+                    node="rh7-1",
+                ),
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["SBD_WATCHDOG_DEV"],
                     option_type=None,

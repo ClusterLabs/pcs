@@ -2769,7 +2769,7 @@ def file_does_not_exist(file_role, file_path=""):
 
 def file_io_error(
     file_role, file_path="", reason="", operation="work with",
-    severity=ReportItemSeverity.ERROR
+    severity=ReportItemSeverity.ERROR, forceable=None,
 ):
     return ReportItem(
         report_codes.FILE_IO_ERROR,
@@ -2780,6 +2780,7 @@ def file_io_error(
             "reason": reason,
             "operation": operation
         },
+        forceable=forceable,
     )
 
 def unable_to_determine_user_uid(user):
@@ -3275,7 +3276,6 @@ def using_known_host_address_for_host(host_name, address):
         }
     )
 
-
 def resource_in_bundle_not_accessible(
     bundle_id, inner_resource_id,
     severity=ReportItemSeverity.ERROR, forceable=report_codes.FORCE_OPTIONS,
@@ -3288,4 +3288,26 @@ def resource_in_bundle_not_accessible(
             inner_resource_id=inner_resource_id,
         ),
         forceable=forceable,
+    )
+
+def atb_will_be_enabled():
+    """
+    Quorum option auto_tie_breaker will be enabled due to a user action. In
+    order to enable it, the cluster has to be stopped.
+    """
+    return ReportItem.warning(
+        report_codes.ATB_WILL_BE_ENABLED,
+    )
+
+def using_default_watchdog(watchdog, node):
+    """
+    No watchdog has been specified for the node, therefore pcs will use
+    a default watchdog.
+    """
+    return ReportItem.info(
+        report_codes.USING_DEFAULT_WATCHDOG,
+        info=dict(
+            watchdog=watchdog,
+            node=node,
+        )
     )

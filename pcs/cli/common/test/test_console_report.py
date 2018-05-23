@@ -2724,7 +2724,6 @@ class UsingKnownHostAddressForHost(NameBuildTest):
             }
         )
 
-
 class ResourceInBundleNotAccessible(NameBuildTest):
     code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     def test_success(self):
@@ -2827,5 +2826,19 @@ class FileIoError(NameBuildTest):
                 "file_path": "/var/lib/pcsd.key",
                 "reason": "Failed",
                 "operation": "write",
+            }
+        )
+
+class UsingDefaultWatchdog(NameBuildTest):
+    code = codes.USING_DEFAULT_WATCHDOG
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "No watchdog has been specified for node 'node1'. Using "
+                "default watchdog '/dev/watchdog'"
+            ),
+            {
+                "node": "node1",
+                "watchdog": "/dev/watchdog",
             }
         )

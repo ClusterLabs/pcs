@@ -1694,4 +1694,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "cluster inside bundle '{bundle_id}', at least one of bundle "
             "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
+    ,
+    codes.ATB_WILL_BE_ENABLED:
+        "auto_tie_breaker quorum option will be enabled to make SBD fencing "
+        "effecive after this change. Cluster has to be offline to be able to "
+        "make this change."
+    ,
+    codes.USING_DEFAULT_WATCHDOG: lambda info:
+        (
+            "No watchdog has been specified for node '{node}'. Using default "
+            "watchdog '{watchdog}'"
+        ).format(**info)
+    ,
 }

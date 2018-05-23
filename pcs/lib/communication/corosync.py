@@ -5,17 +5,24 @@ from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
+    OneByOneStrategyMixin,
     RunRemotelyBase,
     SkipOfflineMixin,
 )
+from pcs.lib.errors import ReportItemSeverity
+from pcs.lib.node_communication import response_to_report_item
 
 
 class CheckCorosyncOffline(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
-    def __init__(self, report_processor, skip_offline_targets=False):
+    def __init__(
+        self, report_processor,
+        skip_offline_targets=False, allow_skip_offline=True,
+    ):
         super(CheckCorosyncOffline, self).__init__(report_processor)
-        self._set_skip_offline(skip_offline_targets)
+        if allow_skip_offline:
+            self._set_skip_offline(skip_offline_targets)
 
     def _get_request_data(self):
         return RequestData("remote/status")
@@ -53,11 +60,13 @@ class DistributeCorosyncConf(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(
-        self, report_processor, config_text, skip_offline_targets=False
+        self, report_processor, config_text, skip_offline_targets=False,
+        allow_skip_offline=True,
     ):
         super(DistributeCorosyncConf, self).__init__(report_processor)
         self._config_text = config_text
-        self._set_skip_offline(skip_offline_targets)
+        if allow_skip_offline:
+            self._set_skip_offline(skip_offline_targets)
 
     def _get_request_data(self):
         return RequestData(
@@ -81,3 +90,20 @@ class DistributeCorosyncConf(
 
     def before(self):
         self._report(reports.corosync_config_distribution_started())
+
+
+class ReloadCorosyncConf(
+    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+):
+    def _get_request_data(self):
+        return RequestData("remote/reload_corosync_conf")
+
+    def _process_response(self, response):
+        report = response_to_report_item(
+            response, severity=ReportItemSeverity.WARNING
+        )
+        if report is None:
+            self._on_success()
+            return
+        self._report(report)
+        return self._get_next_list()
