@@ -55,7 +55,6 @@ def main():
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         gem_home=env.GEM_HOME,
         pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
-        log_file_location=settings.pcsd_log_location,
         debug=env.PCSD_DEBUG,
         ruby_executable=settings.ruby_executable,
         https_proxy=env.HTTPS_PROXY,

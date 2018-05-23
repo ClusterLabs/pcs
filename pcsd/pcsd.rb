@@ -52,12 +52,17 @@ end
 
 configure do
   PCS = get_pcs_path()
-  logger = File.open($tornado_log_location, "a+", 0600)
-  STDOUT.reopen(logger)
-  STDERR.reopen(logger)
-  STDOUT.sync = true
-  STDERR.sync = true
-  $logger = configure_logger($tornado_log_location)
+  $logger = configure_logger(StringIO.new())
+  $logger.formatter = proc {|severity, datetime, progname, msg|
+    # rushing a raw logging info into the global
+    $tornado_logs << {
+      :level => severity,
+      :timestamp_usec => (datetime.to_f * 1000000).to_i,
+      :message => msg,
+    }
+    # don't need any log to the stream
+    ""
+  }
 
   capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze

@@ -11,8 +11,6 @@ from tornado.web import HTTPError
 from pcs.daemon import ruby_pcsd
 from pcs.test.tools.misc import create_patcher,  get_test_resource as rc
 
-LOG_LOCATION = rc("/path/to/log/file/location")
-
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
 
@@ -20,7 +18,6 @@ def create_wrapper():
     return ruby_pcsd.Wrapper(
         rc("/path/to/gem_home"),
         rc("/path/to/pcsd/cmdline/entry"),
-        LOG_LOCATION,
     )
 
 def create_http_request():
@@ -60,7 +57,7 @@ class GetSinatraRequest(TestCase):
             }
         )
 
-patch_now = create_patcher(ruby_pcsd)
+patch_ruby_pcsd = create_patcher(ruby_pcsd)
 
 class RunRuby(AsyncTestCase):
     def setUp(self):
@@ -82,16 +79,11 @@ class RunRuby(AsyncTestCase):
         return self.stdout, self.stderr
 
     def create_request(self, type=ruby_pcsd.SYNC_CONFIGS):
-        return {
-            "type": type,
-            "config": {
-                "log_location": LOG_LOCATION,
-            }
-        }
+        return {"type": type}
 
     @gen_test
     def test_correct_sending(self):
-        run_result = {"next": 10}
+        run_result = {"next": 10, "logs": []}
         self.stdout = json.dumps(run_result)
         result = yield self.wrapper.run_ruby(ruby_pcsd.SYNC_CONFIGS)
         self.assertEqual(result, run_result)
@@ -102,13 +94,13 @@ class RunRuby(AsyncTestCase):
             yield self.wrapper.run_ruby(ruby_pcsd.SYNC_CONFIGS)
 
     @gen_test
-    def test_sync_config_shorcut_success(self):
+    def test_sync_config_shortcut_success(self):
         next = 10
-        self.stdout = json.dumps({"next": next})
+        self.stdout = json.dumps({"next": next, "logs": []})
         result = yield self.wrapper.sync_configs()
         self.assertEqual(result, next)
 
-    @patch_now("now", return_value=0)
+    @patch_ruby_pcsd("now", return_value=0)
     @gen_test
     def test_sync_config_shorcut_fail(self, now):
         result = yield self.wrapper.sync_configs()
@@ -122,7 +114,8 @@ class RunRuby(AsyncTestCase):
         self.stdout = json.dumps({
             "headers": headers,
             "status": status,
-            "body": b64encode(str.encode(body)).decode()
+            "body": b64encode(str.encode(body)).decode(),
+            "logs": [],
         })
         http_request = create_http_request()
         self.request = {
@@ -145,7 +138,8 @@ class RunRuby(AsyncTestCase):
         self.stdout = json.dumps({
             "headers": headers,
             "status": status,
-            "body": b64encode(str.encode(body)).decode()
+            "body": b64encode(str.encode(body)).decode(),
+            "logs": [],
         })
         http_request = create_http_request()
         self.request = {
@@ -164,3 +158,20 @@ class RunRuby(AsyncTestCase):
             is_authenticated=is_authenticated,
         )
         self.assertEqual(result, (headers, status, str.encode(body)))
+
+class ProcessResponseLog(TestCase):
+    @patch_ruby_pcsd("log.from_external_source")
+    @patch_ruby_pcsd("next", mock.Mock(return_value=1))
+    def test_put_correct_values_to_log(self, from_external_source):
+        ruby_pcsd.process_response_logs([{
+            "level": "FATAL",
+            "timestamp_usec": 1234567890,
+            "message": "ruby_message",
+        }])
+        from_external_source.assert_called_once_with(
+            level=logging.CRITICAL,
+            created=1234.56789,
+            usecs=567890,
+            message="ruby_message",
+            group_id=1,
+        )

@@ -7,32 +7,56 @@ LOGGER_NAMES = [
     "tornado.general",
 ]
 
+#pylint:disable=invalid-name
+pcsd = logging.getLogger("pcs.daemon")
+
+def from_external_source(level, created: float, usecs: int, message, group_id):
+    record = pcsd.makeRecord(
+        name=pcsd.name,
+        level=level,
+        # Information about stack fram is not needed here. Values are
+        # inspired by the code of the logging module.
+        fn="(external)",
+        lno=0,
+        # Message from ruby does not need args.
+        msg=message,
+        args=[],
+        # The exception information makes not sense here.
+        exc_info=None,
+    )
+
+    # A value of attribute relativelyCreated is in logging module calculated by
+    # this way:
+    # self.relativeCreated = (self.created - _startTime) * 1000
+    # To update it, we need to reduce it by difference between current value
+    # of attribute created (which is newer, so higher) and the correct one
+    # (which commes from an external source)
+    record.relativeCreated -= (record.created - created) * 1000
+    record.created = created
+    record.msec = usecs // 1000
+    record.pcsd_group_id = str(group_id).zfill(5)
+    pcsd.handle(record)
+
 class Formatter(logging.Formatter):
     default_time_format = '%Y-%m-%dT%H:%M:%S'
     # It produces `datetime.miliseconds`
     default_msec_format = '%s.%03d'
-    py_to_rb_level_name_map = {
-        "WARNING": "WARN",
-        "CRITICAL": "FATAL",
-    }
 
     def __init__(self):
         super().__init__(
-            # Python uses only milseconds so there are 3 spaces to align it with
-            # ruby where microseconds are used.
-            fmt="{levelname[0]}, [{asctime}    #{process}]"
-                " {levelname:>5s} -- : {message}"
+            fmt="{levelname[0]}, [{asctime} #{pcsd_group_id}]"
+                " {levelname:>8s} -- : {message}"
             ,
             datefmt=None,
             style="{"
         )
 
     def format(self, record):
-        # The levelname should be the same as in Ruby. Note that ruby uses width
-        # up to 5 for levelname. So the levels WARNING and CRITICAL would break
-        # the log alignment.
-        if record.levelname in self.py_to_rb_level_name_map:
-            record.levelname = self.py_to_rb_level_name_map[record.levelname]
+        # Non-external records, which are currently the minority, needs to be
+        # extended by group_id (see init arugument fmt and function
+        # from_external_source).
+        if not hasattr(record, "pcsd_group_id"):
+            record.pcsd_group_id = "00000"
         return super().format(record)
 
 def setup(log_file):
@@ -51,6 +75,3 @@ def enable_debug():
     # reason to make it more complicated currently.
     for logger_name in LOGGER_NAMES:
         logging.getLogger(logger_name).setLevel(logging.DEBUG)
-
-#pylint:disable=invalid-name
-pcsd = logging.getLogger("pcs.daemon")

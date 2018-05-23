@@ -2,7 +2,6 @@ require "base64"
 require "date"
 require "json"
 
-orig_std_out = STDOUT.clone
 request_json = ARGF.read()
 
 begin
@@ -12,29 +11,13 @@ rescue => e
   exit
 end
 
-
-if !request.include?("config")
-  STDOUT.reopen(orig_std_out)
-  result = {:error => "config not specified"}
-  print result.to_json
-  exit
-end
-
-if !request["config"].include?("log_location")
-  STDOUT.reopen(orig_std_out)
-  result = {:error => "log location not specified"}
-  print result.to_json
-  exit
-end
-
 if !request.include?("type")
-  STDOUT.reopen(orig_std_out)
   result = {:error => "Type not specified"}
   print result.to_json
   exit
 end
 
-$tornado_log_location = request["config"]["log_location"]
+$tornado_logs = []
 
 require 'pcsd'
 
@@ -68,5 +51,5 @@ else
   result = {:error => "Unknown type: '#{request["type"]}'"}
 end
 
-STDOUT.reopen(orig_std_out)
+result[:logs] = $tornado_logs
 print result.to_json

@@ -1,4 +1,5 @@
 import json
+import logging
 import os.path
 from base64 import b64decode
 from collections import namedtuple
@@ -17,6 +18,14 @@ SINATRA_REMOTE = "sinatra_remote"
 SYNC_CONFIGS = "sync_configs"
 
 DEFAULT_SYNC_CONFIG_DELAY = 5
+RUBY_LOG_LEVEL_MAP = {
+    "UNKNOWN": logging.NOTSET,
+    "FATAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+    "WARN": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+}
 
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
     @classmethod
@@ -27,16 +36,37 @@ class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
             b64decode(response["body"])
         )
 
+def log_group_id_generator():
+    group_id = 0
+    while True:
+        group_id = group_id + 1 if group_id < 99999 else 0
+        yield group_id
+
+LOG_GROUP_ID = log_group_id_generator()
+
+def process_response_logs(rb_log_list):
+    if not rb_log_list:
+        return
+
+    group_id = next(LOG_GROUP_ID)
+    for rb_log in rb_log_list:
+        log.from_external_source(
+            level=RUBY_LOG_LEVEL_MAP.get(rb_log["level"], logging.NOTSET),
+            created=rb_log["timestamp_usec"] / 1000000,
+            usecs=int(str(rb_log["timestamp_usec"])[-6:]),
+            message=rb_log["message"],
+            group_id=group_id
+        )
+
 class Wrapper:
     # pylint: disable=too-many-instance-attributes
     def __init__(
-        self, gem_home, pcsd_cmdline_entry, log_file_location,
-        debug=False, ruby_executable="ruby", https_proxy=None, no_proxy=None
+        self, gem_home, pcsd_cmdline_entry, debug=False, ruby_executable="ruby",
+        https_proxy=None, no_proxy=None
     ):
         self.__gem_home = gem_home
         self.__pcsd_cmdline_entry = pcsd_cmdline_entry
         self.__pcsd_dir = os.path.dirname(pcsd_cmdline_entry)
-        self.__log_file_location = log_file_location
         self.__ruby_executable = ruby_executable
         self.__debug = debug
         self.__https_proxy = https_proxy
@@ -96,16 +126,11 @@ class Wrapper:
 
     async def run_ruby(self, request_type, request=None):
         request = request or {}
-        request.update({
-            "type": request_type,
-            "config": {
-                "log_location": self.__log_file_location,
-            },
-        })
+        request.update({"type": request_type})
         request_json = json.dumps(request)
         stdout, stderr = await self.send_to_ruby(request_json)
         try:
-            return json.loads(stdout)
+            response = json.loads(stdout)
         except json.JSONDecodeError as e:
             message_list = [f"Cannot decode json from ruby pcsd wrapper: '{e}'"]
             if self.__debug:
@@ -117,6 +142,9 @@ class Wrapper:
             for message in message_list:
                 log.pcsd.error(message)
             raise HTTPError(500)
+        else:
+            process_response_logs(response["logs"])
+            return response
 
     async def request_gui(
         self, request: HTTPServerRequest, user, groups, is_authenticated
