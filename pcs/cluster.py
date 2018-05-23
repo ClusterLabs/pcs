@@ -34,7 +34,7 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
-from pcs.lib.commands.quorum import _add_device_model_net
+from pcs.lib.corosync.qdevice_net import set_up_client_certificates
 from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import (
     CheckAuth,
@@ -925,9 +925,13 @@ def node_add(lib_env, node0, node1, modifiers):
             )
             qdevice_model, qdevice_model_options, _, _ = conf_facade.get_quorum_device_settings()
             if qdevice_model == "net":
-                _add_device_model_net(
-                    lib_env,
-                    qdevice_model_options["host"],
+                set_up_client_certificates(
+                    lib_env.cmd_runner(),
+                    report_processor,
+                    com_factory,
+                    lib_env.get_node_target_factory().get_target_from_hostname(
+                        qdevice_model_options["host"]
+                    ),
                     conf_facade.get_cluster_name(),
                     [node0],
                     skip_offline_nodes=False

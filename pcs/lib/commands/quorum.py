@@ -163,8 +163,10 @@ def add_device(
         # anything else than corosync.conf, as we do not know what to do
         # anyway.
         if model == "net":
-            _add_device_model_net(
-                lib_env,
+            qdevice_net.set_up_client_certificates(
+                lib_env.cmd_runner(),
+                lib_env.report_processor,
+                lib_env.communicator_factory,
                 # We are sure the "host" key is there, it has been validated
                 # above.
                 target_factory.get_target_from_hostname(model_options["host"]),
@@ -195,55 +197,6 @@ def add_device(
         )
         com_cmd.set_targets(target_list)
         run_and_raise(lib_env.get_node_communicator(), com_cmd)
-
-def _add_device_model_net(
-    lib_env, qnetd_target, cluster_name, cluster_nodes_target_list,
-    skip_offline_nodes,
-):
-    """
-    setup cluster nodes for using qdevice model net
-    string qnetd_host address of qdevice provider (qnetd host)
-    string cluster_name name of the cluster to which qdevice is being added
-    list cluster_nodes_target_list list of cluster nodes names
-    bool skip_offline_nodes continue even if not all nodes are accessible
-    """
-    runner = lib_env.cmd_runner()
-    reporter = lib_env.report_processor
-
-    reporter.process(
-        reports.qdevice_certificate_distribution_started()
-    )
-    # get qnetd CA certificate
-    com_cmd = qdevice_net_com.GetCaCert(reporter)
-    com_cmd.set_targets([qnetd_target])
-    qnetd_ca_cert = run_and_raise(
-        lib_env.get_node_communicator(), com_cmd
-    )[0][1]
-    # init certificate storage on all nodes
-    com_cmd = qdevice_net_com.ClientSetup(
-        reporter, qnetd_ca_cert, skip_offline_nodes
-    )
-    com_cmd.set_targets(cluster_nodes_target_list)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
-    # create client certificate request
-    cert_request = qdevice_net.client_generate_certificate_request(
-        runner,
-        cluster_name
-    )
-    # sign the request on qnetd host
-    com_cmd = qdevice_net_com.SignCertificate(reporter)
-    com_cmd.add_request(qnetd_target, cert_request, cluster_name)
-    signed_certificate = run_and_raise(
-        lib_env.get_node_communicator(), com_cmd
-    )[0][1]
-    # transform the signed certificate to pk12 format which can sent to nodes
-    pk12 = qdevice_net.client_cert_request_to_pk12(runner, signed_certificate)
-    # distribute final certificate to nodes
-    com_cmd = qdevice_net_com.ClientImportCertificateAndKey(
-        reporter, pk12, skip_offline_nodes
-    )
-    com_cmd.set_targets(cluster_nodes_target_list)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 def update_device(
     lib_env, model_options, generic_options, heuristics_options,
