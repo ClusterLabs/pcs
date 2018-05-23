@@ -1,11 +1,10 @@
 import os
 import base64
 
-from pcs.common import report_codes
-from pcs.lib import reports as lib_reports
+from pcs.common.reports import SimpleReportProcessor
 from pcs.lib.communication.booth import BoothSaveFiles
-from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
+from pcs.lib.communication.tools import run
+from pcs.lib.errors import LibraryError
 from pcs.lib.booth import (
     config_files as booth_conf,
     config_structure,
@@ -13,11 +12,11 @@ from pcs.lib.booth import (
     reports,
 )
 
-
+# TODO: fix tests
 def send_all_config_to_node(
     communicator,
     reporter,
-    target,
+    target_list,
     rewrite_existing=False,
     skip_wrong_config=False
 ):
@@ -27,15 +26,16 @@ def send_all_config_to_node(
 
     communicator -- NodeCommunicator
     reporter -- report processor
-    node -- NodeAddress
+    target_list list -- list of targets to which configs should be delivered
     rewrite_existing -- if True rewrite existing file
     skip_wrong_config -- if True skip local configs that are unreadable
     """
+    _reporter = SimpleReportProcessor(reporter)
     config_dict = booth_conf.read_configs(reporter, skip_wrong_config)
     if not config_dict:
         return
 
-    reporter.process(reports.booth_config_distribution_started())
+    _reporter.report(reports.booth_config_distribution_started())
 
     file_list = []
     for config, config_data in sorted(config_dict.items()):
@@ -58,35 +58,15 @@ def send_all_config_to_node(
                     "is_authfile": True
                 })
         except LibraryError:
-            reporter.process(reports.booth_skipping_config(
+            _reporter.report(reports.booth_skipping_config(
                 config, "unable to parse config"
             ))
 
     com_cmd = BoothSaveFiles(
-        reporter, file_list, rewrite_existing=rewrite_existing
+        _reporter, file_list, rewrite_existing=rewrite_existing
     )
-    com_cmd.set_targets([target])
-    response = run_and_raise(communicator, com_cmd)[0][1]
-    try:
-        report_list = []
-        for file in response["existing"]:
-            report_list.append(lib_reports.file_already_exists(
-                None,
-                file,
-                Severities.WARNING if rewrite_existing else Severities.ERROR,
-                (
-                    None if rewrite_existing
-                    else report_codes.FORCE_FILE_OVERWRITE
-                ),
-                target.label
-            ))
-        for file, reason in response["failed"].items():
-            report_list.append(reports.booth_config_distribution_node_error(
-                target.label, reason, file
-            ))
-        reporter.process_list(report_list)
-        reporter.process(
-            reports.booth_config_accepted_by_node(target.label, response["saved"])
-        )
-    except (KeyError, ValueError):
-        raise LibraryError(lib_reports.invalid_response_format(target.label))
+    com_cmd.set_targets(target_list)
+    run(communicator, com_cmd)
+
+    if _reporter.has_errors:
+        raise LibraryError()

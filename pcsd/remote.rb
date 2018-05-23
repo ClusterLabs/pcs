@@ -2724,8 +2724,8 @@ def booth_save_files(params, request, auth_user)
 
     code_result_map = {
       :written => :saved,
-      :rewritten => :saved,
-      :same_content => :saved,
+      :rewritten => :existing,
+      :same_content => :existing,
       :conflict => :existing,
     }
 

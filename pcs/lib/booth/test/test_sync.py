@@ -141,6 +141,7 @@ class SyncConfigInCluster(TestCase):
             )]
         )
 
+@skip("TODO: rewrite for pcs.lib.communication.booth.BoothSaveFiles")
 @mock.patch("pcs.lib.booth.sync.run_and_raise")
 @mock.patch("pcs.lib.booth.config_structure.get_authfile")
 @mock.patch("pcs.lib.booth.config_parser.parse")

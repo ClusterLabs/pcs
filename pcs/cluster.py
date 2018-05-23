@@ -997,7 +997,7 @@ def node_add(lib_env, node0, node1, modifiers):
         booth_sync.send_all_config_to_node(
             com_factory.get_communicator(),
             report_processor,
-            new_node_target,
+            [new_node_target],
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
