@@ -739,7 +739,7 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name="node2",
-                    node_id=2
+                    node_index=2
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
@@ -1053,7 +1053,7 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_id=id
+                    node_index=id
                 )
                 for id, name in enumerate(NODE_LIST, 1)
             ]

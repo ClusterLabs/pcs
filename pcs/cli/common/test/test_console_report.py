@@ -903,13 +903,37 @@ class SbdDeviceISNotBlockDevice(NameBuildTest):
         )
 
 
-class SbdNoDEviceForNode(NameBuildTest):
-    code = codes.SBD_NO_DEVICE_FOR_NODE
-    def test_build_message(self):
+class SbdWithDevicesNotUsedCannotSetDevice(NameBuildTest):
+    code = codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE
+    def test_success(self):
         self.assert_message_from_info(
-            "No device defined for node 'node1'",
+            "Cluster is not configured to use SBD with shared storage, cannot "
+                "specify SBD devices for node 'node1'"
+            ,
             {
                 "node": "node1",
+            }
+        )
+
+class SbdNoDEviceForNode(NameBuildTest):
+    code = codes.SBD_NO_DEVICE_FOR_NODE
+    def test_not_enabled(self):
+        self.assert_message_from_info(
+            "No SBD device specified for node 'node1'",
+            {
+                "node": "node1",
+                "sbd_enabled_in_cluster": False,
+            }
+        )
+
+    def test_enabled(self):
+        self.assert_message_from_info(
+            "Cluster uses SBD with shared storage so SBD devices must be "
+                "specified for all nodes, no device specified for node 'node1'"
+            ,
+            {
+                "node": "node1",
+                "sbd_enabled_in_cluster": True,
             }
         )
 
@@ -918,8 +942,9 @@ class SbdTooManyDevicesForNode(NameBuildTest):
     code = codes.SBD_TOO_MANY_DEVICES_FOR_NODE
     def test_build_messages(self):
         self.assert_message_from_info(
-            "More than 3 devices defined for node 'node1' (devices: /dev1, "
-                "/dev2, /dev3)",
+            "At most 3 SBD devices can be specified for a node, '/dev1', "
+                "'/dev2', '/dev3' specified for node 'node1'"
+            ,
             {
                 "max_devices": 3,
                 "node": "node1",
@@ -1966,6 +1991,18 @@ class CibLoadErrorBadFormat(NameBuildTest):
             }
         )
 
+class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
+    code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
+    def test_message(self):
+        self.assert_message_from_info(
+            "Address '192.168.100.42' cannot be used in link '3' because "
+            "the link uses IPv6 addresses",
+            {
+                "address": "192.168.100.42",
+                "expected_address_type": "IPv6",
+                "link_number": 3,
+            }
+        )
 
 class CorosyncBadNodeAddressesCount(NameBuildTest):
     code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
@@ -2000,7 +2037,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "actual_count": 5,
                 "min_count": 1,
                 "max_count": 4,
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2013,7 +2050,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 1,
                 "max_count": 4,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2026,7 +2063,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 0,
                 "max_count": 1,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2039,7 +2076,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 2,
                 "max_count": 4,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2052,7 +2089,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 1,
                 "max_count": 1,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2065,7 +2102,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 2,
                 "max_count": 2,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2115,9 +2152,28 @@ class CorosyncLinkNumberDuplication(NameBuildTest):
             }
         )
 
+class NodeAddressesAlreadyExist(NameBuildTest):
+    code = codes.NODE_ADDRESSES_ALREADY_EXIST
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Node address 'node1' is already used by existing nodes; please, "
+            "use other address",
+            {
+                "address_list": ["node1"],
+            }
+        )
 
-class CorosyncNodeAddressDuplication(NameBuildTest):
-    code = codes.COROSYNC_NODE_ADDRESS_DUPLICATION
+    def test_more_addresses(self):
+        self.assert_message_from_info(
+            "Node addresses 'node1', 'node3' are already used by existing "
+            "nodes; please, use other addresses",
+            {
+                "address_list": ["node1", "node3"],
+            }
+        )
+
+class NodeAddressesDuplication(NameBuildTest):
+    code = codes.NODE_ADDRESSES_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
             "Node addresses must be unique, duplicate addresses: "
@@ -2128,9 +2184,28 @@ class CorosyncNodeAddressDuplication(NameBuildTest):
             }
         )
 
+class NodeNamesAlreadyExist(NameBuildTest):
+    code = codes.NODE_NAMES_ALREADY_EXIST
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Node name 'node1' is already used by existing nodes; please, "
+            "use other name",
+            {
+                "name_list": ["node1"],
+            }
+        )
 
-class CorosyncNodeNameDuplication(NameBuildTest):
-    code = codes.COROSYNC_NODE_NAME_DUPLICATION
+    def test_more_addresses(self):
+        self.assert_message_from_info(
+            "Node names 'node1', 'node3' are already used by existing "
+            "nodes; please, use other names",
+            {
+                "name_list": ["node1", "node3"],
+            }
+        )
+
+class NodeNamesDuplication(NameBuildTest):
+    code = codes.NODE_NAMES_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
             "Node names must be unique, duplicate names: 'node1', 'node3'",

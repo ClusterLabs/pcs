@@ -207,8 +207,8 @@ def corosync_bad_node_addresses_count(info):
             node_template.format(info["node_name"])
             if "node_name" in info
             else
-            node_template.format(info["node_id"])
-            if "node_id" in info
+            node_template.format(info["node_index"])
+            if "node_index" in info
             else ""
         ),
         _s_allowed=("es" if info["max_count"] > 1 else ""),
@@ -666,6 +666,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to parse corosync config"
     ,
 
+    codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK: lambda info:
+        (
+            "Address '{address}' cannot be used in link '{link_number}' "
+            "because the link uses {expected_address_type} addresses"
+        ).format(**info)
+    ,
+
     codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT:
         corosync_bad_node_addresses_count
     ,
@@ -685,7 +692,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
+    codes.NODE_ADDRESSES_ALREADY_EXIST: lambda info:
+        (
+            "Node address{_es} {_addrs} {_are} already used by existing nodes; "
+            "please, use other address{_es}"
+        ).format(
+            _addrs=format_list(info["address_list"]),
+            _es=("es" if len(info["address_list"]) > 1 else ""),
+            _are=("are" if len(info["address_list"]) > 1 else "is"),
+        )
+    ,
+
+    codes.NODE_ADDRESSES_DUPLICATION: lambda info:
         "Node addresses must be unique, duplicate addresses: {_addrs}".format(
             _addrs=format_list(info["address_list"])
         )
@@ -695,7 +713,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         corosync_node_address_count_mismatch
     ,
 
-    codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
+    codes.NODE_NAMES_ALREADY_EXIST: lambda info:
+        (
+            "Node name{_s} {_names} {_are} already used by existing nodes; "
+            "please, use other name{_s}"
+        ).format(
+            _names=format_list(info["name_list"]),
+            _s=("s" if len(info["name_list"]) > 1 else ""),
+            _are=("are" if len(info["name_list"]) > 1 else "is"),
+        )
+    ,
+
+    codes.NODE_NAMES_DUPLICATION: lambda info:
         "Node names must be unique, duplicate names: {_names}".format(
             _names=format_list(info["name_list"])
         )
@@ -1332,20 +1361,35 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.SBD_NO_DEVICE_FOR_NODE: lambda info:
-        "No device defined for node '{node}'"
-        .format(**info)
+        (
+            (
+                "Cluster uses SBD with shared storage so SBD devices must be "
+                "specified for all nodes, no device specified for node '{node}'"
+            )
+            if info["sbd_enabled_in_cluster"] else
+            "No SBD device specified for node '{node}'"
+        ).format(**info)
     ,
 
     codes.SBD_TOO_MANY_DEVICES_FOR_NODE: lambda info:
         (
-            "More than {max_devices} devices defined for node '{node}' "
-            "(devices: {devices})"
+            "At most {max_devices} SBD devices can be specified for a node, "
+            "'{_devices}' specified for node '{node}'"
         )
-        .format(devices=", ".join(info["device_list"]), **info)
+        .format(
+            _devices="', '".join(info["device_list"]),
+            **info
+        )
     ,
 
     codes.SBD_NOT_INSTALLED: lambda info:
         "SBD is not installed on node '{node}'"
+        .format(**info)
+    ,
+
+    codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE: lambda info:
+        "Cluster is not configured to use SBD with shared storage, cannot "
+        "specify SBD devices for node '{node}'"
         .format(**info)
     ,
 

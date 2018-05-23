@@ -942,7 +942,7 @@ def corosync_options_incompatible_with_qdevice(options):
     )
 
 def corosync_bad_node_addresses_count(
-    actual_count, min_count, max_count, node_name=None, node_id=None
+    actual_count, min_count, max_count, node_name=None, node_index=None
 ):
     """
     Wrong number of addresses set for a corosync node.
@@ -950,8 +950,9 @@ def corosync_bad_node_addresses_count(
     int actual_count -- how many addresses set for a node
     int min_count -- minimal allowed addresses count
     int max_count -- maximal allowed addresses count
-    string node_name -- optionally specify node name (if available)
-    string node_id -- optionally specify node index or id (if available)
+    string node_name -- optionally specify node name
+    string node_index -- optionally specify node index (helps to identify a node
+        if a name is missing)
     """
     return ReportItem.error(
         report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
@@ -960,19 +961,40 @@ def corosync_bad_node_addresses_count(
             "min_count": min_count,
             "max_count": max_count,
             "node_name": node_name,
-            "node_id": node_id,
+            "node_index": node_index,
         }
     )
 
 def corosync_ip_version_mismatch_in_links(link_numbers):
     """
     Mixing IPv4 and IPv6 in one or more links, which is not allowed
+
+    iterable link_numbers -- numbers of links with mismatched IP versions
     """
     return ReportItem.error(
         report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
         info={
             "link_numbers": link_numbers,
         }
+    )
+
+def corosync_address_ip_version_wrong_for_link(
+    address, expected_address_type, link_number
+):
+    """
+    Cannot use an address in a link as it does not match the link's IP version.
+
+    string address -- a provided address
+    string expected_address_type -- an address type used in a link
+    int link_number -- number of the link
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+        info=dict(
+            address=address,
+            expected_address_type=expected_address_type,
+            link_number=link_number,
+        )
     )
 
 def corosync_link_number_duplication(number_list):
@@ -1001,27 +1023,53 @@ def corosync_node_address_count_mismatch(node_addr_count):
         }
     )
 
-def corosync_node_address_duplication(address_list):
+def node_addresses_already_exist(address_list):
+    """
+    Trying add node(s) with addresses already used by other nodes
+
+    iterable address_list -- list of specified already existing addresses
+    """
+    return ReportItem.error(
+        report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+        info={
+            "address_list": sorted(address_list),
+        }
+    )
+
+def node_addresses_duplication(address_list):
     """
     Trying to set one address for more nodes or links, addresses must be unique
 
     iterable address_list -- list of nonunique addresses
     """
     return ReportItem.error(
-        report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+        report_codes.NODE_ADDRESSES_DUPLICATION,
         info={
             "address_list": sorted(address_list),
         }
     )
 
-def corosync_node_name_duplication(name_list):
+def node_names_already_exist(name_list):
+    """
+    Trying add node(s) with name(s) already used by other nodes
+
+    iterable name_list -- list of specified already used node names
+    """
+    return ReportItem.error(
+        report_codes.NODE_NAMES_ALREADY_EXIST,
+        info={
+            "name_list": sorted(name_list),
+        }
+    )
+
+def node_names_duplication(name_list):
     """
     Trying to set one node name for more nodes, node names must be unique
 
     iterable name_list -- list of nonunique node names
     """
     return ReportItem.error(
-        report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+        report_codes.NODE_NAMES_DUPLICATION,
         info={
             "name_list": sorted(name_list),
         }
@@ -2477,20 +2525,41 @@ def invalid_response_format(node):
         info={"node": node}
     )
 
-
-def sbd_no_device_for_node(node):
+def sbd_with_devices_not_used_cannot_set_device(node):
     """
-    there is no device defined for node when enabling sbd with device
+    The cluster is not using SBD with devices, cannot specify a device.
+
+    node -- node name
+    """
+    return ReportItem.error(
+        report_codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE,
+        info={
+            "node": node,
+        }
+    )
+
+def sbd_no_device_for_node(node, sbd_enabled_in_cluster=False):
+    """
+    No SBD device defined for a node when it should be
+
+    string node -- node name
+    bool sbd_enabled_in_cluster -- additional context for displaying the error
     """
     return ReportItem.error(
         report_codes.SBD_NO_DEVICE_FOR_NODE,
-        info={"node": node}
+        info={
+            "node": node,
+            "sbd_enabled_in_cluster": sbd_enabled_in_cluster,
+        }
     )
-
 
 def sbd_too_many_devices_for_node(node, device_list, max_devices):
     """
-    More than 3 devices defined for node
+    More than allowed number of SBD devices specified for a node
+
+    string node -- node name
+    list device_list -- list of SND devices specified for the node
+    int max_devices -- maximum number of SBD devices
     """
     return ReportItem.error(
         report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
@@ -2500,7 +2569,6 @@ def sbd_too_many_devices_for_node(node, device_list, max_devices):
             "max_devices": max_devices,
         }
     )
-
 
 def sbd_device_path_not_absolute(device, node=None):
     """
