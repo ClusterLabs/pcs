@@ -3,7 +3,7 @@ import os.path
 from tornado.locks import Lock
 from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
-from pcs.daemon import ruby_pcsd, session
+from pcs.daemon import ruby_pcsd, session, app_session
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 
@@ -99,7 +99,7 @@ class Sinatra(BaseHandler):
     def ruby_pcsd_wrapper(self):
         return self.__ruby_pcsd_wrapper
 
-class SinatraGui(session.Mixin, Sinatra):
+class SinatraGui(app_session.Mixin, Sinatra):
     """
     SinatraGui is base class for handlers which calls the Sinatra GUI functions.
     It adds work with session.
@@ -109,7 +109,7 @@ class SinatraGui(session.Mixin, Sinatra):
 
     def initialize(self, session_storage, ruby_pcsd_wrapper):
         #pylint: disable=arguments-differ
-        session.Mixin.initialize(self, session_storage)
+        app_session.Mixin.initialize(self, session_storage)
         Sinatra.initialize(self, ruby_pcsd_wrapper)
 
     def before_sinatra_use(self):
@@ -224,7 +224,7 @@ class Login(SinatraGui, AjaxMixin):
         self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(session.Mixin, AjaxMixin, BaseHandler):
+class LoginStatus(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     LoginStatus handles urls for obtaining current login status via ajax.
     """
@@ -237,7 +237,7 @@ class LoginStatus(session.Mixin, AjaxMixin, BaseHandler):
         self.sid_to_cookies()
         self.write(self.session.ajax_id)
 
-class Logout(session.Mixin, AjaxMixin, BaseHandler):
+class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
     requests.

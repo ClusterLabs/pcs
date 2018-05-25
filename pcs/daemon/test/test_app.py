@@ -10,7 +10,7 @@ from tornado.httputil import HTTPHeaders, parse_cookie
 from tornado.locks import Lock
 from tornado.testing import AsyncHTTPTestCase
 
-from pcs.daemon import session, ruby_pcsd, http_server
+from pcs.daemon import session, app_session, ruby_pcsd, http_server
 from pcs.daemon import app, auth
 from pcs.test.tools.misc import(
     create_setup_patch_mixin,
@@ -74,7 +74,7 @@ class AppTest(AsyncHTTPTestCase):
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
             kwargs["headers"]["Cookie"] =  (
-                f"{session.PCSD_SESSION}={kwargs['sid']}"
+                f"{app_session.PCSD_SESSION}={kwargs['sid']}"
             )
             del kwargs["sid"]
 
@@ -110,10 +110,10 @@ class AppTest(AsyncHTTPTestCase):
     def assert_session_in_response(self, response, sid=None):
         self.assertTrue("Set-Cookie" in response.headers)
         cookie = parse_cookie(response.headers["Set-Cookie"])
-        self.assertTrue(session.PCSD_SESSION, cookie)
+        self.assertTrue(app_session.PCSD_SESSION, cookie)
         if sid:
-            self.assertEqual(cookie[session.PCSD_SESSION], sid)
-        return cookie[session.PCSD_SESSION]
+            self.assertEqual(cookie[app_session.PCSD_SESSION], sid)
+        return cookie[app_session.PCSD_SESSION]
 
 
     def assert_headers_contains(self, headers: HTTPHeaders, contained: dict):
