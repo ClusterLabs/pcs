@@ -201,6 +201,7 @@ class ConfigFacade(object):
                     self._get_used_linkid_list()
                 )
             )
+        self.__update_two_node()
 
     def create_link_list(self, link_list):
         """

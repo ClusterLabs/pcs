@@ -502,6 +502,99 @@ class AddNodesTest(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
+    def test_enable_two_node(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_nodes([
+            dict(name="node2", addrs=["node2-addr1"]),
+        ])
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+            two_node: 1
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+    def test_disable_two_node(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+            two_node: 1
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_nodes([
+            dict(name="node3", addrs=["node3-addr1"]),
+        ])
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+
+            node {
+                ring0_addr: node3-addr1
+                name: node3
+                nodeid: 3
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+
 class GetQuorumOptionsTest(TestCase):
     def test_no_quorum(self):
         config = ""
