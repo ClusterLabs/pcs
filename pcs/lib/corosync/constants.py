@@ -10,6 +10,12 @@ LINKS_KNET_MIN = 1
 LINKS_KNET_MAX = 8
 LINKS_MAX = max(LINKS_KNET_MAX, LINKS_UDP_MAX)
 
+NODE_OPTIONS = (
+    ["name", "nodeid"]
+    +
+    [f"ring{i}_addr" for i in range(LINKS_MAX)]
+)
+
 QUORUM_OPTIONS = (
     "auto_tie_breaker",
     "last_man_standing",

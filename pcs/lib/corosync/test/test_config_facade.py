@@ -360,52 +360,52 @@ class AddNodesTest(TestCase):
         config = outdent("""\
         nodelist {
             node {
-                ring0_addr: node0-addr1
-                ring1_addr: node0-addr2
-                nodeid: 0
-                name: node0
+                ring0_addr: node1-addr1
+                ring1_addr: node1-addr2
+                nodeid: 1
+                name: node1
             }
         }
         """)
         facade = lib.ConfigFacade.from_string(config)
         facade.add_nodes([
             dict(
-                name="node2",
-                addrs=["node2-addr1", "node2-addr2"],
+                name="node3",
+                addrs=["node3-addr1", "node3-addr2"],
             ),
             dict(
-                name="node1",
-                addrs=["node1-addr1", "node1-addr2"],
+                name="node2",
+                addrs=["node2-addr1", "node2-addr2"],
             ),
         ])
 
         expected_config = outdent("""\
         nodelist {
             node {
-                ring0_addr: node0-addr1
-                ring1_addr: node0-addr2
-                nodeid: 0
-                name: node0
+                ring0_addr: node1-addr1
+                ring1_addr: node1-addr2
+                nodeid: 1
+                name: node1
+            }
+
+            node {
+                ring0_addr: node3-addr1
+                ring1_addr: node3-addr2
+                name: node3
+                nodeid: 2
             }
 
             node {
                 ring0_addr: node2-addr1
                 ring1_addr: node2-addr2
                 name: node2
-                nodeid: 1
-            }
-
-            node {
-                ring0_addr: node1-addr1
-                ring1_addr: node1-addr2
-                name: node1
-                nodeid: 2
+                nodeid: 3
             }
         }
         """)
         ac(expected_config, facade.config.export())
 
-    def test_ids(self):
+    def test_skipped_and_out_of_order_links_and_nodes_ids(self):
         config = outdent("""\
         nodelist {
             node {
@@ -436,8 +436,8 @@ class AddNodesTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         facade.add_nodes([
             dict(
-                name="node0",
-                addrs=["node0-addr1", "node0-addr2", "node0-addr5"],
+                name="node6",
+                addrs=["node6-addr1", "node6-addr2", "node6-addr5"],
             ),
             dict(
                 name="node3",
@@ -476,11 +476,11 @@ class AddNodesTest(TestCase):
             }
 
             node {
-                ring1_addr: node0-addr1
-                ring2_addr: node0-addr2
-                ring5_addr: node0-addr5
-                name: node0
-                nodeid: 0
+                ring1_addr: node6-addr1
+                ring2_addr: node6-addr2
+                ring5_addr: node6-addr5
+                name: node6
+                nodeid: 3
             }
 
             node {
@@ -488,7 +488,7 @@ class AddNodesTest(TestCase):
                 ring2_addr: node3-addr2
                 ring5_addr: node3-addr5
                 name: node3
-                nodeid: 3
+                nodeid: 5
             }
 
             node {
@@ -496,7 +496,7 @@ class AddNodesTest(TestCase):
                 ring2_addr: node5-addr2
                 ring5_addr: node5-addr5
                 name: node5
-                nodeid: 5
+                nodeid: 6
             }
         }
         """)

@@ -144,9 +144,9 @@ class ConfigFacade(object):
         return used_ids
 
     @staticmethod
-    def _get_id_generator(used_ids, start_id=0):
+    def _get_nodeid_generator(used_ids):
         used_ids = set(used_ids)
-        current_id = start_id
+        current_id = 1
         while True:
             if current_id not in used_ids:
                 yield current_id
@@ -155,18 +155,13 @@ class ConfigFacade(object):
 
     @staticmethod
     def _get_node_data(node_section):
-        data_names = set(
-            ["name", "nodeid"]
-            +
-            [f"ring{i}_addr" for i in range(constants.LINKS_MAX)]
-        )
-        node_data = {}
-        for attr_name, attr_value in node_section.get_attributes():
-            if attr_name in data_names:
-                node_data[attr_name] = attr_value
-        return node_data
+        return {
+            attr_name: attr_value
+            for attr_name, attr_value in node_section.get_attributes()
+            if attr_name in constants.NODE_OPTIONS
+        }
 
-    def _get_available_link_ids(self):
+    def _get_used_linkid_list(self):
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)
@@ -178,13 +173,9 @@ class ConfigFacade(object):
                 ]
 
     @staticmethod
-    def _create_node_section(node_id, node_options, link_id_generator):
+    def _create_node_section(node_id, node_options, link_ids):
         node_section = config_parser.Section("node")
-        for link_addr in node_options["addrs"]:
-            try:
-                link_id = next(link_id_generator)
-            except StopIteration:
-                raise AssertionError("Out of available link ids")
+        for link_id, link_addr in zip(link_ids, node_options["addrs"]):
             node_section.add_attribute(
                 "ring{}_addr".format(link_id), link_addr
             )
@@ -199,19 +190,15 @@ class ConfigFacade(object):
         list node_list -- list of dict: name, addrs
         """
         nodelist_section = self.__ensure_section(self.config, "nodelist")[-1]
-        id_generator = self._get_id_generator(self._get_used_nodeid_list())
-        available_link_ids = self._get_available_link_ids()
-
-        def _link_id_generator(_available_link_ids):
-            for i in _available_link_ids:
-                yield i
-
+        node_id_generator = self._get_nodeid_generator(
+            self._get_used_nodeid_list()
+        )
         for node_options in node_list:
             nodelist_section.add_section(
                 self._create_node_section(
-                    next(id_generator),
+                    next(node_id_generator),
                     node_options,
-                    _link_id_generator(available_link_ids)
+                    self._get_used_linkid_list()
                 )
             )
 
