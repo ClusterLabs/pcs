@@ -3,7 +3,10 @@ import string
 from time import time as now
 
 class Session:
-    def __init__(self, sid, username=None, groups=None, is_authenticated=False):
+    def __init__(
+        self, sid, username=None, groups=None, is_authenticated=False,
+        ajax_id=None
+    ):
         # Session id propageted via cookies.
         self.__sid = sid
         # Username given by login attempt. It does not matter if the
@@ -14,10 +17,12 @@ class Session:
         # belonging to the high availability admin group (typicaly hacluster).
         self.__is_authenticated = is_authenticated
         # Id that will be returned by login-status or login (for ajax).
-        self.__ajax_id = (
-            f"{int(now())}-{random.randint(1, 100)}" if is_authenticated
-            else None
-        )
+        self.__ajax_id = None
+        if self.__is_authenticated:
+            self.__ajax_id = (
+                ajax_id if ajax_id
+                else f"{int(now())}-{random.randint(1, 100)}"
+            )
         # Groups of the user. Similary to username, it does not mean that the
         # user is authenticated when the groups are loaded.
         self.__groups = groups or []
@@ -82,15 +87,16 @@ class Storage:
             del self.__sessions[sid]
         return self
 
-    def login(self, sid, username, groups) -> Session:
+    def login(self, sid, username, groups, ajax_id=None) -> Session:
         return self.__register(
             self.__valid_sid(sid),
             username=username,
             groups=groups,
-            is_authenticated=True
+            is_authenticated=True,
+            ajax_id=ajax_id,
         )
 
-    def failed_login_attempt(self, sid, username) -> Session:
+    def rejected_user(self, sid, username) -> Session:
         return self.__register(self.__valid_sid(sid), username=username)
 
     def __is_valid_sid(self, sid):

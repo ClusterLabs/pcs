@@ -119,12 +119,12 @@ class StorageTest(TestCase, AssertMixin, PatchSessionMixin):
 
     def test_can_sign_failed_login_attempt_new_session(self):
         self.assert_login_failed_session(
-            self.storage.failed_login_attempt(sid=None, username=USER),
+            self.storage.rejected_user(sid=None, username=USER),
             USER
         )
 
     def test_can_sign_failed_login_attempt_existing_session(self):
         session1 = self.storage.provide()
-        session2 = self.storage.failed_login_attempt(session1.sid, USER)
+        session2 = self.storage.rejected_user(session1.sid, USER)
         self.assert_login_failed_session(session2, USER)
         self.assertEqual(session1.sid, session2.sid)

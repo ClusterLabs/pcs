@@ -97,6 +97,60 @@ def get_user_groups_sync(username):
 
 UserAuthInfo = namedtuple("UserAuthInfo", "name groups is_authorized")
 
+class LoginLogger:
+    def unable_determine_groups(self, username, e):
+        log.pcsd.info(
+            "Unable to determine groups of user '%s': %s",
+            username,
+            e
+        )
+        log.pcsd.info(
+            "Failed login by '%s' (unable to determine user's groups)",
+            username
+        )
+
+    def not_ha_adm_member(self, username, ha_adm_group):
+        log.pcsd.info(
+            "Failed login by '%s' (user is not a member of '%s' group)",
+            username,
+            ha_adm_group
+        )
+
+    def success(self, username):
+        log.pcsd.info("Successful login by '%s'", username)
+
+class PlainLogger:
+    def unable_determine_groups(self, username, e):
+        log.pcsd.info(
+            "Unable to determine groups of user '%s': %s",
+            username,
+            e
+        )
+
+    def not_ha_adm_member(self, username, ha_adm_group):
+        log.pcsd.info(
+            "User '%s' is not a member of '%s' group",
+            username,
+            ha_adm_group
+        )
+
+    def success(self, username):
+        pass
+
+def check_user_groups_sync(username, logger) -> UserAuthInfo:
+    try:
+        groups = get_user_groups_sync(username)
+    except KeyError as e:
+        logger.unable_determine_groups(username, e)
+        return UserAuthInfo(username, [], is_authorized=False)
+
+    if HA_ADM_GROUP not in groups:
+        logger.not_ha_adm_member(username, HA_ADM_GROUP)
+        return UserAuthInfo(username, groups, is_authorized=False)
+
+    logger.success(username)
+    return UserAuthInfo(username, groups, is_authorized=True)
+
 def authorize_user_sync(username, password) -> UserAuthInfo:
     log.pcsd.info("Attempting login by '%s'", username)
 
@@ -106,28 +160,7 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
         )
         return UserAuthInfo(username, [], is_authorized=False)
 
-    try:
-        groups = get_user_groups_sync(username)
-    except KeyError as e:
-        log.pcsd.info(
-            "Unable to determine groups of user '%s': %s",
-            username,
-            e
-        )
-        log.pcsd.info(
-            "Failed login by '%s' (unable to determine user's groups)", username
-        )
-        return UserAuthInfo(username, [], is_authorized=False)
-
-    if HA_ADM_GROUP not in groups:
-        log.pcsd.info(
-            "Failed login by '%s' (user is not a member of '%s' group)",
-            username, HA_ADM_GROUP
-        )
-        return UserAuthInfo(username, groups, is_authorized=False)
-
-    log.pcsd.info("Successful login by '%s'", username)
-    return UserAuthInfo(username, groups, is_authorized=True)
+    return check_user_groups_sync(username, LoginLogger())
 
 # TODO async/await version - how to do it?
 # When async/await is used then the problem is:
@@ -135,8 +168,18 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
 # if the function "convert_yielded" is used according to
 # http://www.tornadoweb.org/en/stable/guide/coroutines.html#python-3-5-async-and-await
 @coroutine
-def authorize_user(username, password) -> UserAuthInfo:
+def run_in_process(sync_fn, *args):
     pool = ProcessPoolExecutor(max_workers=1)
-    user = yield pool.submit(authorize_user_sync, username, password)
+    result = yield pool.submit(sync_fn, *args)
     pool.shutdown()
+    return result
+
+@coroutine
+def authorize_user(username, password) -> UserAuthInfo:
+    user = yield run_in_process(authorize_user_sync, username, password)
+    return user
+
+@coroutine
+def check_user_groups(username) -> UserAuthInfo:
+    user = yield run_in_process(check_user_groups_sync, username, PlainLogger())
     return user

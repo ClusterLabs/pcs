@@ -5,7 +5,6 @@ from tornado.web import Application, RequestHandler, StaticFileHandler, Finish
 
 from pcs.daemon import ruby_pcsd, session, app_session
 from pcs.daemon.http_server import HttpsServerManage
-from pcs.daemon.auth import authorize_user
 
 
 class EnhanceHeadersMixin:
@@ -116,6 +115,7 @@ class SinatraGui(app_session.Mixin, Sinatra):
         pass
 
     async def handle_sinatra_request(self):
+        await self.init_session()
         self.before_sinatra_use()
         if self.can_use_sinatra:
             result = await self.ruby_pcsd_wrapper.request_gui(
@@ -198,17 +198,16 @@ class Login(SinatraGui, AjaxMixin):
         # cookie. No matter if authentication succeeded or failed.
         self.enhance_headers()
 
-        user_auth_info = await authorize_user(
+        await self.session_auth_user(
             self.get_body_argument("username"),
-            self.get_body_argument("password")
+            self.get_body_argument("password"),
+            sign_rejection=not self.is_ajax
         )
 
-        if user_auth_info.is_authorized:
-            self.sid_to_cookies()
-            self.session_login(user_auth_info.name, user_auth_info.groups)
+        if self.session.is_authenticated:
             self.__success_response()
         else:
-            self.__failed_response(self.get_body_argument("username"))
+            self.__failed_response()
 
     def __success_response(self):
         if self.is_ajax:
@@ -216,12 +215,10 @@ class Login(SinatraGui, AjaxMixin):
         else:
             self.redirect("/manage", status=303) #post -> get resource (303)
 
-    def __failed_response(self, username):
+    def __failed_response(self):
         if self.is_ajax:
             raise self.unauthorized()
 
-        self.sid_to_cookies()
-        self.session_login_failed(username)
         self.redirect("/login", status=303) #post -> get resource (303)
 
 class LoginStatus(app_session.Mixin, AjaxMixin, BaseHandler):
@@ -230,7 +227,8 @@ class LoginStatus(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     # This is for ajax. However, non-ajax requests are allowed as well. It
     # worked the same way in ruby.
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
+        await self.init_session()
         self.enhance_headers()
         if not self.session.is_authenticated:
             raise self.unauthorized()
@@ -242,7 +240,8 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     Logout handles url for logout. It is used for both ajax and non-ajax
     requests.
     """
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
+        await self.init_session()
         self.session_logout()
         self.sid_to_cookies()
         self.enhance_headers()

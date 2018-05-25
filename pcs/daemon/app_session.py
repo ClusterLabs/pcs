@@ -1,4 +1,5 @@
 from pcs.daemon.session import Storage
+from pcs.daemon.auth import check_user_groups, authorize_user
 
 PCSD_SESSION = "pcsd.sid"
 
@@ -10,14 +11,29 @@ class Mixin:
     def initialize(self, session_storage: Storage):
         self.__storage = session_storage
 
+    async def init_session(self):
+        self.__session = self.__storage.provide(self.__sid_from_client)
+        if self.__session.is_authenticated:
+            self.__refresh_auth(
+                await check_user_groups(self.__session.username),
+                ajax_id = self.__session.ajax_id
+            )
+
+    async def session_auth_user(self, username, password, sign_rejection=True):
+        # initialize session since it should be used without `init_session`
+        self.__session = self.__storage.provide(self.__sid_from_client)
+        self.__refresh_auth(
+            await authorize_user(username, password),
+            sign_rejection=sign_rejection
+        )
+
     @property
     def session(self):
         if self.__session is None:
-            # It is needed to cache session or the sid. Because no sid or an
-            # invalid sid can come from a client. In such case every call would
-            # provide new session. But we want to always have the first session
-            # provided.
-            self.__session = self.__storage.provide(self.__sid_from_client)
+            raise Exception(
+                "Session is not set in session mixin. "
+                "Session probably has not been initialized in requst handler."
+            )
         return self.__session
 
     def prepare(self):
@@ -30,18 +46,9 @@ class Mixin:
     def session_logout(self):
         if self.__session is not None:
             self.__storage.destroy(self.__session.sid)
-            self.__session = None
         elif self.__sid_from_client is not None:
             self.__storage.destroy(self.__sid_from_client)
-
-    def session_login(self, username, groups=None):
-        self.__session = self.__storage.login(self.__sid, username, groups)
-
-    def session_login_failed(self, username):
-        self.__session = self.__storage.failed_login_attempt(
-            self.__sid,
-            username,
-        )
+        self.__session = self.__storage.provide()
 
     def sid_to_cookies(self):
         """
@@ -63,11 +70,21 @@ class Mixin:
         return self.__sid_from_client is not None
 
     @property
-    def __sid(self):
-        if self.__session is not None:
-            return self.__session.sid
-        return self.__sid_from_client
-
-    @property
     def __sid_from_client(self):
         return self.get_cookie(PCSD_SESSION, default=None)
+
+    def __refresh_auth(self, user_auth_info, sign_rejection=True, ajax_id=None):
+        if user_auth_info.is_authorized:
+            self.__session = self.__storage.login(
+                self.__session.sid,
+                user_auth_info.name,
+                user_auth_info.groups,
+                ajax_id,
+            )
+            self.sid_to_cookies()
+        elif sign_rejection:
+            self.__session = self.__storage.rejected_user(
+                self.__session.sid,
+                user_auth_info.name,
+            )
+            self.sid_to_cookies()

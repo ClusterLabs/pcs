@@ -47,15 +47,30 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
             "body": b64encode(self.body),
         }
 
-class AppTest(AsyncHTTPTestCase):
+class UserAuthInfo:
+    valid = False
+    groups = []
+
+class AppTest(AsyncHTTPTestCase, create_setup_patch_mixin(app.app_session)):
     def setUp(self):
+        self.user_auth_info = UserAuthInfo()
+        self.groups_valid = True
         self.wrapper = RubyPcsdWrapper()
         self.session_storage = session.Storage(lifetime_seconds=10)
         self.https_server_manage = mock.MagicMock(
             spec_set=http_server.HttpsServerManage
         )
         self.lock = Lock()
+        self.setup_patch("check_user_groups", self.check_user_groups)
         super().setUp()
+
+    async def check_user_groups(self, username):
+        self.assertEqual(username, USER)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.groups_valid
+        )
 
     def get_app(self):
         return app.make_app(
@@ -143,13 +158,8 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body.decode(), expected_body)
 
-class UserAuthInfo:
-    valid = False
-    groups = []
-
-class Login(AppTest, create_setup_patch_mixin(app)):
+class Login(AppTest):
     def setUp(self):
-        self.user_auth_info = UserAuthInfo()
         self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()
 
