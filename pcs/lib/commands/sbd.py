@@ -195,7 +195,9 @@ def enable_sbd(
     # enable ATB if neede
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
-            lib_env.report_processor.process(reports.sbd_requires_atb())
+            lib_env.report_processor.process(
+                reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+            )
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
             lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
 

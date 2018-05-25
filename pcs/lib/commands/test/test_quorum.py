@@ -248,7 +248,7 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
         self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
         report_item = (
             severity.ERROR,
-            report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+            report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
             {},
             report_codes.FORCE_OPTIONS
         )
@@ -345,7 +345,7 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 severity.WARNING,
-                report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+                report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
                 {},
                 None
             )]
@@ -2126,7 +2126,9 @@ class RemoveDeviceNetTest(TestCase):
         reports = []
         if atb_enabled:
             reports.append(
-                fixture.warn(report_codes.SBD_REQUIRES_ATB)
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                )
             )
         reports += [
             fixture.info(

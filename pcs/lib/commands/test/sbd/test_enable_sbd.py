@@ -60,7 +60,9 @@ def _sbd_enable_successful_report_list_fixture(
     if atb_set:
         report_list += (
             [
-                fixture.warn(report_codes.SBD_REQUIRES_ATB),
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                ),
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
             ]
             +

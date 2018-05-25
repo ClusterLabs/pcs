@@ -496,7 +496,9 @@ def add_nodes(
     if sbd.atb_has_to_be_enabled(
         env.cmd_runner(), corosync_conf, len(new_nodes)
     ):
-        report_processor.report(reports.atb_will_be_enabled())
+        report_processor.report(
+            reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+        )
         com_cmd = CheckCorosyncOffline(
             report_processor, allow_skip_offline=False,
         )

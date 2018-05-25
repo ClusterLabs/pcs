@@ -1530,12 +1530,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:
-        "unable to disable auto_tie_breaker: SBD fencing will have no effect"
-        .format(**info)
+    codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD:
+        "Unable to disable auto_tie_breaker, SBD fencing would have no effect"
     ,
 
-    codes.SBD_REQUIRES_ATB: lambda info:
+    codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD:
         "auto_tie_breaker quorum option will be enabled to make SBD fencing "
         "effective. Cluster has to be offline to be able to make this change."
     ,
@@ -1694,11 +1693,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "cluster inside bundle '{bundle_id}', at least one of bundle "
             "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
-    ,
-    codes.ATB_WILL_BE_ENABLED:
-        "auto_tie_breaker quorum option will be enabled to make SBD fencing "
-        "effecive after this change. Cluster has to be offline to be able to "
-        "make this change."
     ,
     codes.USING_DEFAULT_WATCHDOG: lambda info:
         (

@@ -2842,3 +2842,28 @@ class UsingDefaultWatchdog(NameBuildTest):
                 "watchdog": "/dev/watchdog",
             }
         )
+
+class CorosyncQuorumAtbCannotBeDisabledDueToSbd(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to disable auto_tie_breaker, SBD fencing would have no "
+                "effect"
+            ),
+            {
+            }
+        )
+
+class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "auto_tie_breaker quorum option will be enabled to make SBD "
+                "fencing effective. Cluster has to be offline to be able to "
+                "make this change."
+            ),
+            {
+            }
+        )

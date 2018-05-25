@@ -58,9 +58,12 @@ def _check_if_atb_can_be_disabled(
         and
         sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
     ):
-        report_processor.process(reports.quorum_cannot_disable_atb_due_to_sbd(
-            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR,
-            None if force else report_codes.FORCE_OPTIONS
+        report_processor.process(
+            reports.corosync_quorum_atb_cannot_be_disabled_due_to_sbd(
+                ReportItemSeverity.WARNING if force
+                    else ReportItemSeverity.ERROR
+                ,
+                None if force else report_codes.FORCE_OPTIONS
         ))
 
 
@@ -268,7 +271,9 @@ def remove_device(lib_env, skip_offline_nodes=False):
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
-            lib_env.report_processor.process(reports.sbd_requires_atb())
+            lib_env.report_processor.process(
+                reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+            )
             cfg.set_quorum_options({"auto_tie_breaker": "1"})
 
         # disable qdevice

@@ -2865,25 +2865,27 @@ def nolive_skip_service_command_on_nodes(service, command, nodes):
         }
     )
 
-def quorum_cannot_disable_atb_due_to_sbd(
+def corosync_quorum_atb_cannot_be_disabled_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    Quorum option auto_tie_breaker cannot be disbled due to SBD.
+    Quorum option auto_tie_breaker cannot be disabled due to SBD.
     """
     return ReportItem(
-        report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+        report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
         severity,
         forceable=forceable
     )
 
 
-def sbd_requires_atb():
+def corosync_quorum_atb_will_be_enabled_due_to_sbd():
     """
-    Warning that ATB will be enabled in order to make SBD fencing effective.
+    Quorum option auto_tie_breaker will be enabled due to a user action in
+    order to make SBD fencing effective. The cluster has to be stopped to make
+    this change.
     """
     return ReportItem.warning(
-        report_codes.SBD_REQUIRES_ATB,
+        report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
     )
 
 
@@ -3288,15 +3290,6 @@ def resource_in_bundle_not_accessible(
             inner_resource_id=inner_resource_id,
         ),
         forceable=forceable,
-    )
-
-def atb_will_be_enabled():
-    """
-    Quorum option auto_tie_breaker will be enabled due to a user action. In
-    order to enable it, the cluster has to be stopped.
-    """
-    return ReportItem.warning(
-        report_codes.ATB_WILL_BE_ENABLED,
     )
 
 def using_default_watchdog(watchdog, node):
