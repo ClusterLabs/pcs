@@ -448,6 +448,7 @@ def add_nodes(
         })
         for node in new_nodes
     ]
+    new_nodes_dict = {node["name"]: node for node in new_nodes}
 
     # Validate inputs - corosync part
     cib = env.get_cib()
@@ -519,17 +520,20 @@ def add_nodes(
     )
 
     # Validate SBD on new nodes
-    new_nodes_dict = {node["name"]: node for node in new_nodes}
-    report_processor.report(reports.sbd_check_started())
-    com_cmd = CheckSbd(report_processor)
-    for new_node_target in new_nodes_target_list:
-        new_node = new_nodes_dict[new_node_target.label]
-        com_cmd.add_request(
-            new_node_target,
-            watchdog=new_node["watchdog"],
-            device_list=new_node["devices"],
-        )
-    run_com(env.get_node_communicator(), com_cmd)
+    if is_sbd_enabled:
+        report_processor.report(reports.sbd_check_started())
+        com_cmd = CheckSbd(report_processor)
+        for new_node_target in new_nodes_target_list:
+            new_node = new_nodes_dict[new_node_target.label]
+            com_cmd.add_request(
+                new_node_target,
+                watchdog=new_node["watchdog"],
+                device_list=new_node["devices"],
+            )
+        run_com(env.get_node_communicator(), com_cmd)
+    else:
+        # TODO validate that "watchdog" and "devices" options are not set
+        pass
 
     if report_processor.has_errors:
         raise LibraryError()
@@ -596,7 +600,7 @@ def add_nodes(
         run_and_raise(env.get_node_communicator(), com_cmd)
     else:
         com_cmd = DisableSbdService(env.report_processor)
-        com_cmd.add_request(new_nodes_target_list)
+        com_cmd.set_targets(new_nodes_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
 
     # booth setup
@@ -668,9 +672,13 @@ def add_nodes(
     if report_processor.has_errors:
         raise LibraryError()
 
-    com_cmd = DistributeFilesWithoutForces(env.report_processor, files_action)
-    com_cmd.set_targets(new_nodes_target_list)
-    run_and_raise(env.get_node_communicator(), com_cmd)
+    if files_action:
+        com_cmd = DistributeFilesWithoutForces(
+            env.report_processor,
+            files_action
+        )
+        com_cmd.set_targets(new_nodes_target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
 
     # When corosync >= 2 is in use, the procedure for adding a node is:
     # 1. add the new node to corosync.conf on all existing nodes
@@ -786,8 +794,9 @@ def _host_check_cluster_setup(
     for host_name, host_info in host_info_dict.items():
         try:
             services = host_info["services"]
-            for service, version_dict in service_version_dict.items():
-                version_dict[host_name] = services[service]["version"]
+            if check_services_versions:
+                for service, version_dict in service_version_dict.items():
+                    version_dict[host_name] = services[service]["version"]
             missing_service_list = [
                 service for service in required_service_list
                 if not services[service]["installed"]
@@ -796,16 +805,16 @@ def _host_check_cluster_setup(
                 report_list.append(reports.service_not_installed(
                     host_name, missing_service_list
                 ))
-            running_service_list = [
+            cannot_be_running_service_list = [
                 service for service in required_as_stopped_service_list
-                if services[service]["running"]
+                if service in services and services[service]["running"]
             ]
-            if running_service_list:
+            if cannot_be_running_service_list:
                 cluster_exists_on_nodes = True
                 report_list.append(
                     reports.host_already_in_cluster_services(
                         host_name,
-                        running_service_list,
+                        cannot_be_running_service_list,
                         severity=report_severity,
                     )
                 )

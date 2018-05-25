@@ -7,6 +7,7 @@ CALL_TYPE_FS = "CALL_TYPE_FS"
 _FUNC_ARGS = {
     "open": ["name", "mode", "buffering"],
     "os.path.exists": ["path"],
+    "os.path.isfile": ["path"],
     "os.chmod": ["fd", "mode"],
     "os.chown": ["fd", "uid", "gid"],
 }

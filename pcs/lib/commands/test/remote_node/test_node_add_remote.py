@@ -1,6 +1,7 @@
 from functools import partial
 from unittest import mock, TestCase
 
+from pcs import settings
 from pcs.common import report_codes, env_file_role_codes
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
@@ -363,6 +364,13 @@ class WithWait(TestCase):
                 resource_agent="ocf::pacemaker:remote",
                 node_name=NODE_1,
             ))
+            # self.config.fs is used to mock authkey file existence. Therefore,
+            # filesystem mocking is active and we need to cover it. We tell the
+            # file doesn't exist, because we aren't currently mocking the
+            # function which reads it:
+            #   if os.path.isfile(settings.crm_mon_schema):
+            #       etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
+            .fs.isfile(settings.crm_mon_schema, return_value=False)
         )
         node_add_remote(self.env_assist.get_env(), wait=self.wait)
         self.env_assist.assert_reports(
@@ -383,6 +391,13 @@ class WithWait(TestCase):
                 node_name=NODE_1,
                 failed="true",
             ))
+            # self.config.fs is used to mock authkey file existence. Therefore,
+            # filesystem mocking is active and we need to cover it. We tell the
+            # file doesn't exist, because we aren't currently mocking the
+            # function which reads it:
+            #   if os.path.isfile(settings.crm_mon_schema):
+            #       etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
+            .fs.isfile(settings.crm_mon_schema, return_value=False)
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env(), wait=self.wait),

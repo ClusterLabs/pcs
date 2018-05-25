@@ -3092,5 +3092,5 @@ def reload_corosync_conf(params, request, auth_user)
     ]
   end
 
-  return [200, "Reloaded"]
+  return [200, "Succeeded"]
 end

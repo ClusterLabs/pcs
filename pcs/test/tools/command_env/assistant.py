@@ -88,6 +88,10 @@ def patch_env(call_queue, config, init_env):
                 fs_mock("os.path.exists", os.path.exists)
             ),
             mock.patch(
+                "os.path.isfile",
+                fs_mock("os.path.isfile", os.path.isfile)
+            ),
+            mock.patch(
                 "os.chmod",
                 fs_mock("os.chmod", os.chmod)
             ),

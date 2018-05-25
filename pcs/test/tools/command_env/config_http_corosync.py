@@ -127,3 +127,16 @@ class CorosyncShortcuts(object):
             param_list=[("corosync_conf", corosync_conf)],
             output="Succeeded",
         )
+
+    def reload_corosync_conf(
+        self, node_labels=None, communication_list=None,
+        name="http.corosync.reload_corosync_conf"
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/reload_corosync_conf",
+            output="Succeeded",
+        )
