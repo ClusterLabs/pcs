@@ -416,32 +416,15 @@ def get_quorum_info(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  if ISRHEL6
-    stdout_status, stderr_status, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), CMAN_TOOL, "status"
-    )
-    stdout_nodes, stderr_nodes, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(),
-      CMAN_TOOL, "nodes", "-F", "id,type,votes,name"
-    )
-    if stderr_status.length > 0
-      return stderr_status.join
-    elsif stderr_nodes.length > 0
-      return stderr_nodes.join
-    else
-      return stdout_status.join + "\n---Votes---\n" + stdout_nodes.join
-    end
+  stdout, stderr, _retval = run_cmd(
+    PCSAuth.getSuperuserAuth(), COROSYNC_QUORUMTOOL, "-p", "-s"
+  )
+  # retval is 0 on success if node is not in partition with quorum
+  # retval is 1 on error OR on success if node has quorum
+  if stderr.length > 0
+    return stderr.join
   else
-    stdout, stderr, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC_QUORUMTOOL, "-p", "-s"
-    )
-    # retval is 0 on success if node is not in partition with quorum
-    # retval is 1 on error OR on success if node has quorum
-    if stderr.length > 0
-      return stderr.join
-    else
-      return stdout.join
-    end
+    return stdout.join
   end
 end
 

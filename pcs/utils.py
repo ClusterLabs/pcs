@@ -2352,71 +2352,7 @@ def get_remote_quorumtool_output(node):
 
 # return True if quorumtool_output is a string returned when the node is off
 def is_node_offline_by_quorumtool_output(quorum_info):
-    if (
-        is_rhel6()
-        and
-        ":" in quorum_info
-        and
-        quorum_info.split(":", 1)[1].strip()
-        ==
-        "Cannot open connection to cman, is it running ?"
-    ):
-        return True
-    if (
-        not is_rhel6()
-        and
-        quorum_info.strip() == "Cannot initialize CMAP service"
-    ):
-        return True
-    return False
-
-def parse_cman_quorum_info(cman_info):
-# get cman_info like this:
-# cman_tool status
-# echo ---Votes---
-# cman_tool nodes -F id,type,votes,name
-    parsed = {}
-    in_node_list = False
-    local_node_id = ""
-    try:
-        for line in cman_info.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if in_node_list:
-                # node list command: cman_tool nodes -F id,type,votes,name
-                parts = line.split()
-                if parts[1] != "M" and parts[1] != "d":
-                    continue # node is not online
-                parsed["node_list"].append({
-                    "name": parts[3],
-                    "votes": int(parts[2]),
-                    "local": local_node_id == parts[0],
-                })
-            else:
-                if line == "---Votes---":
-                    in_node_list = True
-                    parsed["node_list"] = []
-                    parsed["qdevice_list"] = []
-                    continue
-                if not ":" in line:
-                    continue
-                parts = [x.strip() for x in line.split(":", 1)]
-                if parts[0] == "Quorum":
-                    parsed["quorate"] = "Activity blocked" not in parts[1]
-                    match = re.match("(\d+).*", parts[1])
-                    if match:
-                        parsed["quorum"] = int(match.group(1))
-                    else:
-                        return None
-                elif parts[0] == "Node ID":
-                    local_node_id = parts[1]
-    except (ValueError, IndexError):
-        return None
-    for required in ("quorum", "quorate", "node_list"):
-        if required not in parsed:
-            return None
-    return parsed
+    return quorum_info.strip() == "Cannot initialize CMAP service"
 
 def parse_quorumtool_output(quorumtool_output):
     parsed = {}

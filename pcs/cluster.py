@@ -62,7 +62,6 @@ from pcs.lib.errors import (
 )
 from pcs.lib.external import (
     disable_service,
-    is_systemctl,
     NodeCommandUnsuccessfulException,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
@@ -1038,10 +1037,10 @@ def wait_for_nodes_started(node_list, timeout=None):
             utils.err("unable to verify all nodes have started")
 
 def stop_cluster_all():
-    stop_cluster_nodes(utils.getNodesFromCorosyncConf())
+    stop_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def stop_cluster_nodes(nodes):
-    all_nodes = utils.getNodesFromCorosyncConf()
+    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
         utils.err(
@@ -1057,13 +1056,7 @@ def stop_cluster_nodes(nodes):
             if retval != 0:
                 error_list.append(node + ": " + data)
                 continue
-            # we are sure whether we are on cman cluster or not because only
-            # nodes from a local cluster can be stopped (see nodes validation
-            # above)
-            if utils.is_rhel6():
-                quorum_info = utils.parse_cman_quorum_info(data)
-            else:
-                quorum_info = utils.parse_quorumtool_output(data)
+            quorum_info = utils.parse_quorumtool_output(data)
             if quorum_info:
                 if not quorum_info["quorate"]:
                     continue
@@ -1186,22 +1179,10 @@ def stop_cluster(argv):
         return
 
     if "--force" not in utils.pcs_options:
-        if utils.is_rhel6():
-            output_status, dummy_retval = utils.run(["cman_tool", "status"])
-            output_nodes, dummy_retval = utils.run([
-                "cman_tool", "nodes", "-F", "id,type,votes,name"
-            ])
-            if output_status == output_nodes:
-                # when both commands return the same error
-                output = output_status
-            else:
-                output = output_status + "\n---Votes---\n" + output_nodes
-            quorum_info = utils.parse_cman_quorum_info(output)
-        else:
-            output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
-            # retval is 0 on success if node is not in partition with quorum
-            # retval is 1 on error OR on success if node has quorum
-            quorum_info = utils.parse_quorumtool_output(output)
+        output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
+        # retval is 0 on success if node is not in partition with quorum
+        # retval is 1 on error OR on success if node has quorum
+        quorum_info = utils.parse_quorumtool_output(output)
         if quorum_info:
             if utils.is_node_stop_cause_quorum_loss(quorum_info, local=True):
                 utils.err(
@@ -1227,40 +1208,22 @@ def stop_cluster(argv):
 
 def stop_cluster_pacemaker():
     print("Stopping Cluster (pacemaker)...")
-    if not is_systemctl():
-        command = ["service", "pacemaker", "stop"]
-        # If --skip-cman is not specified, pacemaker init script will stop cman
-        # and corosync as well. That way some of the nodes may stop cman before
-        # others stop pacemaker, which leads to quorum loss. We need to keep
-        # quorum until all pacemaker resources are stopped as some of them may
-        # need quorum to be able to stop.
-        if utils.is_cman_cluster():
-            command.append("--skip-cman")
-    else:
-        command = ["systemctl", "stop", "pacemaker"]
-    output, retval = utils.run(command)
+    output, retval = utils.stop_service("pacemaker")
     if retval != 0:
         print(output)
         utils.err("unable to stop pacemaker")
 
 def stop_cluster_corosync():
-    if utils.is_rhel6():
-        print("Stopping Cluster (cman)...")
-        output, retval = utils.stop_service("cman")
+    print("Stopping Cluster (corosync)...")
+    service_list = []
+    if utils.need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
+    service_list.append("corosync")
+    for service in service_list:
+        output, retval = utils.stop_service(service)
         if retval != 0:
             print(output)
-            utils.err("unable to stop cman")
-    else:
-        print("Stopping Cluster (corosync)...")
-        service_list = []
-        if utils.need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
-        service_list.append("corosync")
-        for service in service_list:
-            output, retval = utils.stop_service(service)
-            if retval != 0:
-                print(output)
-                utils.err("unable to stop {0}".format(service))
+            utils.err("unable to stop {0}".format(service))
 
 def kill_cluster(argv):
     daemons = [
@@ -1818,13 +1781,7 @@ def node_remove(lib_env, node0, modifiers):
                 + "a loss of the quorum, use --force to override\n"
                 + data
             )
-        # we are sure whether we are on cman cluster or not because only
-        # nodes from a local cluster can be stopped (see nodes validation
-        # above)
-        if utils.is_rhel6():
-            quorum_info = utils.parse_cman_quorum_info(data)
-        else:
-            quorum_info = utils.parse_quorumtool_output(data)
+        quorum_info = utils.parse_quorumtool_output(data)
         if quorum_info:
             if utils.is_node_stop_cause_quorum_loss(
                 quorum_info, local=False, node_list=[node0]
