@@ -420,13 +420,13 @@ def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
     port = None
-    token = None
     addr = host
+    token = None
     known_host = read_known_hosts_file().get(host, None)
     # TODO: do not allow communication with unknown host
     if known_host:
         port = known_host.dest.port
-        host = known_host.dest.addr
+        addr = known_host.dest.addr
         token = known_host.token
     if port is None:
         port = settings.pcsd_default_port
@@ -557,6 +557,13 @@ def __get_cookie_list(token):
                 cookies.append("{0}={1}".format(name, value))
     return cookies
 
+def get_corosync_conf_facade(conf_path=None, conf_text=None):
+    try:
+        return corosync_conf_facade.from_string(
+            getCorosyncConf(conf_path) if conf_text is None else conf_text
+        )
+    except corosync_conf_parser.CorosyncConfParserException as e:
+        err("Unable to parse corosync.conf: %s" % e)
 
 def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():
@@ -595,18 +602,12 @@ def getNodeAttributesFromPacemaker():
 
 def hasCorosyncConf(conf=None):
     if not conf:
-        if is_rhel6():
-            conf = settings.cluster_conf_file
-        else:
-            conf = settings.corosync_conf_file
+        conf = settings.corosync_conf_file
     return os.path.isfile(conf)
 
 def getCorosyncConf(conf=None):
     if not conf:
-        if is_rhel6():
-            conf = settings.cluster_conf_file
-        else:
-            conf = settings.corosync_conf_file
+        conf = settings.corosync_conf_file
     try:
         out = open(conf).read()
     except IOError as e:
@@ -615,11 +616,6 @@ def getCorosyncConf(conf=None):
 
 def getCorosyncConfParsed(conf=None, text=None):
     conf_text = getCorosyncConf(conf) if text is None else text
-    if is_rhel6():
-        try:
-            return parseString(conf_text)
-        except xml.parsers.expat.ExpatError as e:
-            err("Unable to parse cluster.conf: %s" % e)
     try:
         return corosync_conf_parser.parse_string(conf_text)
     except corosync_conf_parser.CorosyncConfParserException as e:
@@ -1252,24 +1248,6 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
         create_task_list(report, action, node_list, *args, **kwargs)
     )
     return node_errors
-
-def prepare_node_name(node, pm_nodes, cs_nodes):
-    '''
-    Return pacemaker-corosync combined name for node if needed
-    pm_nodes dictionary pacemaker nodes id:node_name
-    cs_nodes dictionary corosync nodes id:node_name
-    '''
-    if node in pm_nodes.values():
-        return node
-
-    for cs_id, cs_name in cs_nodes.items():
-        if node == cs_name and cs_id in pm_nodes:
-            return '{0} ({1})'.format(
-                pm_nodes[cs_id] if pm_nodes[cs_id] != '(null)' else "*Unknown*",
-                node
-            )
-
-    return node
 
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string
