@@ -219,7 +219,10 @@ def cluster_cmd(argv):
     elif (sub_cmd == "reload"):
         cluster_reload(argv)
     elif (sub_cmd == "destroy"):
-        cluster_destroy(argv)
+        try:
+            cluster_destroy(argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "verify"):
         cluster_verify(argv)
     elif (sub_cmd == "report"):
@@ -1226,23 +1229,30 @@ def stop_cluster_corosync():
             utils.err("unable to stop {0}".format(service))
 
 def kill_cluster(argv):
-    daemons = [
-        "crmd",
-        "pengine",
-        "attrd",
-        "lrmd",
-        "stonithd",
-        "cib",
-        "pacemakerd",
-        "pacemaker_remoted",
-        "corosync-qdevice",
-        "corosync",
-    ]
-    dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
+    dummy_output, dummy_retval = kill_local_cluster_services()
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
 #        print output
 #        sys.exit(1)
+
+def kill_local_cluster_services():
+    all_cluster_daemons = [
+        # Daemons taken from cluster-clean script in pacemaker
+        "pacemaker-attrd",
+        "pacemaker-based",
+        "pacemaker-controld",
+        "pacemaker-execd",
+        "pacemaker-fenced",
+        "pacemaker-remoted",
+        "pacemaker-schedulerd",
+        "pacemakerd",
+        "dlm_controld",
+        "gfs_controld",
+        # Corosync daemons
+        "corosync-qdevice",
+        "corosync",
+    ]
+    return utils.run(["killall", "-9"] + all_cluster_daemons)
 
 def cluster_push(argv):
     if len(argv) > 2:
@@ -2030,6 +2040,8 @@ def cluster_reload(argv):
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
+    if argv:
+        raise CmdLineInputError()
     if "--all" in utils.pcs_options:
         # destroy remote and guest nodes
         cib = None
@@ -2043,7 +2055,7 @@ def cluster_destroy(argv):
             )
         if cib is not None:
             try:
-                all_remote_nodes = get_existing_nodes_names(tree=cib)
+                all_remote_nodes = get_existing_nodes_names(cib=cib)
                 if len(all_remote_nodes) > 0:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -2055,7 +2067,7 @@ def cluster_destroy(argv):
                 utils.process_library_reports(e.args)
 
         # destroy full-stack nodes
-        destroy_cluster(utils.getNodesFromCorosyncConf())
+        destroy_cluster(utils.get_corosync_conf_facade().get_nodes_names())
     else:
         print("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:
@@ -2063,7 +2075,7 @@ def cluster_destroy(argv):
             # ignore it since we want it not to be running anyways.
             utils.stop_service(service)
         print("Killing any remaining services...")
-        os.system("killall -q -9 corosync corosync-qdevice aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+        kill_local_cluster_services()
         try:
             utils.disableServices()
         except:
@@ -2077,16 +2089,19 @@ def cluster_destroy(argv):
             pass
 
         print("Removing all cluster configuration files...")
-        if utils.is_rhel6():
-            os.system("rm -f /etc/cluster/cluster.conf")
-        else:
-            os.system("rm -f /etc/corosync/corosync.conf")
-            os.system("rm -f {0}".format(settings.corosync_authkey_file))
+        dummy_output, dummy_retval = utils.run([
+            "rm", "-f",
+            settings.corosync_conf_file,
+            settings.corosync_authkey_file,
+            settings.pacemaker_authkey_file,
+        ])
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
-            os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
-        os.system("rm -f {0}".format(settings.pacemaker_authkey_file))
+            dummy_output, dummy_retval = utils.run([
+                "find", "/var/lib/pacemaker", "-name", name,
+                "-exec", "rm", "-f", "{}", ";"
+            ])
         try:
             qdevice_net.client_destroy()
         except:

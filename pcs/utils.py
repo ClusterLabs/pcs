@@ -2190,8 +2190,6 @@ def enableServices():
         raise LibraryError(*report_item_list)
 
 def disableServices():
-    # Disable corosync on RHEL6 as well - left here for users of old pcs which
-    # enabled corosync.
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
