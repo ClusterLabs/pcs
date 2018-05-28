@@ -20,7 +20,6 @@ class TestAuth < Test::Unit::TestCase
   end
 
   def setup
-    $user_pass_file = CFG_PCSD_USERS
     $logger = MockLogger.new
   end
 
@@ -29,7 +28,7 @@ class TestAuth < Test::Unit::TestCase
     users << {"username" => "user1", "token" => "token1"}
     users << {"username" => "user2", "token" => "token2"}
     users << {"username" => SUPERUSER, "token" => "tokenS"}
-    password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
+    password_file = File.open(PCSD_USERS_PATH, File::RDWR|File::CREAT)
     password_file.truncate(0)
     password_file.rewind
     password_file.write(JSON.pretty_generate(users))

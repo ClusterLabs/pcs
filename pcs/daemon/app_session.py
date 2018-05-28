@@ -1,0 +1,90 @@
+from pcs.daemon.session import Storage
+from pcs.daemon.auth import check_user_groups, authorize_user
+
+PCSD_SESSION = "pcsd.sid"
+
+class Mixin:
+    __session = None
+    """
+    Mixin for tornado.web.RequestHandler
+    """
+    def initialize(self, session_storage: Storage):
+        self.__storage = session_storage
+
+    async def init_session(self):
+        self.__session = self.__storage.provide(self.__sid_from_client)
+        if self.__session.is_authenticated:
+            self.__refresh_auth(
+                await check_user_groups(self.__session.username),
+                ajax_id = self.__session.ajax_id
+            )
+
+    async def session_auth_user(self, username, password, sign_rejection=True):
+        # initialize session since it should be used without `init_session`
+        self.__session = self.__storage.provide(self.__sid_from_client)
+        self.__refresh_auth(
+            await authorize_user(username, password),
+            sign_rejection=sign_rejection
+        )
+
+    @property
+    def session(self):
+        if self.__session is None:
+            raise Exception(
+                "Session is not set in session mixin. "
+                "Session probably has not been initialized in requst handler."
+            )
+        return self.__session
+
+    def prepare(self):
+        """
+        Expired sessions are removed before each request that uses sessions (it
+        means before each request that is handled by descendant of this mixin).
+        """
+        self.__storage.drop_expired()
+
+    def session_logout(self):
+        if self.__session is not None:
+            self.__storage.destroy(self.__session.sid)
+        elif self.__sid_from_client is not None:
+            self.__storage.destroy(self.__sid_from_client)
+        self.__session = self.__storage.provide()
+
+    def sid_to_cookies(self):
+        """
+        Write the session id into a response cookie.
+        """
+        self.set_cookie(PCSD_SESSION, self.session.sid)
+
+    def put_request_cookies_sid_to_response_cookies_sid(self):
+        """
+        If sid came in the request cookies put it into response cookies. But do
+        not start new one.
+        """
+        #TODO this method should exist temporarily (for sinatra compatibility)
+        #pylint: disable=invalid-name
+        if self.__sid_from_client is not None:
+            self.set_cookie(PCSD_SESSION, self.__sid_from_client)
+
+    def was_sid_in_request_cookies(self):
+        return self.__sid_from_client is not None
+
+    @property
+    def __sid_from_client(self):
+        return self.get_cookie(PCSD_SESSION, default=None)
+
+    def __refresh_auth(self, user_auth_info, sign_rejection=True, ajax_id=None):
+        if user_auth_info.is_authorized:
+            self.__session = self.__storage.login(
+                self.__session.sid,
+                user_auth_info.name,
+                user_auth_info.groups,
+                ajax_id,
+            )
+            self.sid_to_cookies()
+        elif sign_rejection:
+            self.__session = self.__storage.rejected_user(
+                self.__session.sid,
+                user_auth_info.name,
+            )
+            self.sid_to_cookies()

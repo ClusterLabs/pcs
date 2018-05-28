@@ -105,7 +105,7 @@ totem {
   def test_file()
     cfg = Cfgsync::CorosyncConf.from_file()
     assert_equal(9, cfg.version)
-    assert_equal('cd8faaf2367ceafba281387fb9dfe70eba51769c', cfg.hash)
+    assert_equal('3711fd79c5972b21877a477d0d88c9eeb0d10a22', cfg.hash)
   end
 
   def test_version()
@@ -333,14 +333,12 @@ class TestConfigSyncControll < Test::Unit::TestCase
   end
 
   def test_paused()
-    semaphore = Mutex.new
-
     assert(Cfgsync::ConfigSyncControl.sync_thread_resume())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause())
     assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
@@ -350,7 +348,7 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, 2))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(2))
     assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
@@ -359,7 +357,7 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, '2'))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause('2'))
     assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
@@ -368,21 +366,19 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, 'abcd'))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause('abcd'))
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
   end
 
   def test_disable()
-    semaphore = Mutex.new
-
     assert(Cfgsync::ConfigSyncControl.sync_thread_enable())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_disable(semaphore))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_disable())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())

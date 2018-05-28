@@ -5,7 +5,7 @@ Documentation=man:pcs(8)
 
 [Service]
 EnvironmentFile=/etc/default/pcsd
-ExecStart=/usr/bin/ruby -C/var/lib/pcsd -I/usr/share/pcsd -- /usr/share/pcsd/ssl.rb
+ExecStart=/usr/sbin/pcsd
 
 [Install]
 WantedBy=multi-user.target

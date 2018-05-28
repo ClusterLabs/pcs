@@ -41,8 +41,6 @@ def remote(params, request, auth_user)
       :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
-      :pcsd_restart => method(:remote_pcsd_restart),
-      :pcsd_instance_signature => method(:pcsd_instance_signature),
       :get_permissions => method(:get_permissions_remote),
       :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
@@ -66,8 +64,6 @@ def remote(params, request, auth_user)
       :remove_nodes => method(:remote_remove_nodes),
       :remove_node => method(:remote_remove_node),
       :cluster_destroy => method(:cluster_destroy),
-      :get_wizard => method(:get_wizard),
-      :wizard_submit => method(:wizard_submit),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
@@ -521,7 +517,7 @@ def set_sync_options(params, request, auth_user)
   end
 
   if params['sync_thread_disable']
-    if Cfgsync::ConfigSyncControl.sync_thread_disable($semaphore_cfgsync)
+    if Cfgsync::ConfigSyncControl.sync_thread_disable()
       return 'sync thread disabled'
     else
       return [400, 'sync thread disable error']
@@ -545,9 +541,7 @@ def set_sync_options(params, request, auth_user)
   end
 
   if params['sync_thread_pause']
-    if Cfgsync::ConfigSyncControl.sync_thread_pause(
-        $semaphore_cfgsync, params['sync_thread_pause']
-      )
+    if Cfgsync::ConfigSyncControl.sync_thread_pause(params['sync_thread_pause'])
       return 'sync thread paused'
     else
       return [400, 'sync thread pause error']
@@ -596,36 +590,34 @@ def set_configs(params, request, auth_user)
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end
 
-  $semaphore_cfgsync.synchronize {
-    force = configs_json['force']
-    remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
-    local_configs = Cfgsync::get_configs_local
+  force = configs_json['force']
+  remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
+  local_configs = Cfgsync::get_configs_local
 
-    result = {}
-    unknown_cfg_names.each { |name| result[name] = 'not_supported' }
-    remote_configs.each { |name, remote_cfg|
-      begin
-        # Save a remote config if it is a newer version than local. If the config
-        # is not present on a local node, the node is beeing added to a cluster,
-        # so we need to save the config as well.
-        if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
-          local_configs[name].class.backup() if local_configs.key?(name)
-          remote_cfg.save()
-          result[name] = 'accepted'
-        elsif remote_cfg == local_configs[name]
-          # Someone wants this node to have a config that it already has.
-          # So the desired state is met and the result is a success then.
-          result[name] = 'accepted'
-        else
-          result[name] = 'rejected'
-        end
-      rescue => e
-        $logger.error("Error saving config '#{name}': #{e}")
-        result[name] = 'error'
+  result = {}
+  unknown_cfg_names.each { |name| result[name] = 'not_supported' }
+  remote_configs.each { |name, remote_cfg|
+    begin
+      # Save a remote config if it is a newer version than local. If the config
+      # is not present on a local node, the node is beeing added to a cluster,
+      # so we need to save the config as well.
+      if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
+        local_configs[name].class.backup() if local_configs.key?(name)
+        remote_cfg.save()
+        result[name] = 'accepted'
+      elsif remote_cfg == local_configs[name]
+        # Someone wants this node to have a config that it already has.
+        # So the desired state is met and the result is a success then.
+        result[name] = 'accepted'
+      else
+        result[name] = 'rejected'
       end
-    }
-    return JSON.generate({'status' => 'ok', 'result' => result})
+    rescue => e
+      $logger.error("Error saving config '#{name}': #{e}")
+      result[name] = 'error'
+    end
   }
+  return JSON.generate({'status' => 'ok', 'result' => result})
 end
 
 def set_certs(params, request, auth_user)
@@ -655,17 +647,6 @@ def set_certs(params, request, auth_user)
       FileUtils.rm(CRT_FILE, {:force => true})
       FileUtils.rm(KEY_FILE, {:force => true})
       return [400, "cannot save ssl files: #{e}"]
-    end
-  end
-
-  if params['cookie_secret']
-    cookie_secret = params['cookie_secret'].strip
-    if !cookie_secret.empty?
-      begin
-        write_file_lock(COOKIE_FILE, 0700, cookie_secret)
-      rescue => e
-        return [400, "cannot save cookie secret: #{e}"]
-      end
     end
   end
 
@@ -777,18 +758,6 @@ def set_permissions_remote(params, request, auth_user)
     return [200, 'Permissions saved'] if pushed
   }
   return 400, 'Unable to save permissions'
-end
-
-def remote_pcsd_restart(params, request, auth_user)
-  pcsd_restart()
-  return JSON.generate({
-    :success => true,
-    :instance_signature => DAEMON_INSTANCE_SIGNATURE,
-  })
-end
-
-def pcsd_instance_signature(params, request, auth_user)
-  return [200, DAEMON_INSTANCE_SIGNATURE]
 end
 
 def get_sw_versions(params, request, auth_user)
@@ -1354,7 +1323,7 @@ def clusters_overview(params, request, auth_user)
 end
 
 def auth(params, request, auth_user)
-  return PCSAuth.validUser(params['username'], params['password'], true)
+  return PCSAuth.validUser(params['username'], params['password'])
 end
 
 def check_auth(params, request, auth_user)
@@ -2044,31 +2013,6 @@ def cluster_destroy(params, request, auth_user)
   else
     return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
   end
-end
-
-def get_wizard(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  wizard = PCSDWizard.getWizard(params["wizard"])
-  if wizard != nil
-    return erb wizard.collection_page
-  else
-    return "Error finding Wizard - #{params["wizard"]}"
-  end
-end
-
-def wizard_submit(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  wizard = PCSDWizard.getWizard(params["wizard"])
-  if wizard != nil
-    return erb wizard.process_responses(params)
-  else
-    return "Error finding Wizard - #{params["wizard"]}"
-  end
-
 end
 
 def get_cluster_known_hosts(params, request, auth_user)

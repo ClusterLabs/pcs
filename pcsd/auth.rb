@@ -4,6 +4,10 @@ gem 'rpam-ruby19'
 require 'rpam'
 require 'base64'
 
+
+# trick with defined? allows to prefill this constants in tests
+PCSD_USERS_PATH = PCSD_USERS_CONF_LOCATION unless defined? PCSD_USERS_PATH
+
 class PCSAuth
   # Ruby 1.8.7 doesn't implement SecureRandom.uuid
   def self.uuid
@@ -17,7 +21,7 @@ class PCSAuth
     end
   end
 
-  def self.validUser(username, password, generate_token = false)
+  def self.validUser(username, password)
     $logger.info("Attempting login by '#{username}'")
     if not Rpam.auth(username, password, :service => "pcsd")
       $logger.info("Failed login by '#{username}' (bad username or password)")
@@ -25,25 +29,22 @@ class PCSAuth
     end
     return nil if not isUserAllowedToLogin(username)
 
-    if generate_token
-      token = PCSAuth.uuid
-      begin
-        password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
-        password_file.flock(File::LOCK_EX)
-        json = password_file.read()
-        users = JSON.parse(json)
-      rescue Exception
-        $logger.info "Empty pcs_users.conf file, creating new file"
-        users = []
-      end
-      users << {"username" => username, "token" => token, "creation_date" => Time.now}
-      password_file.truncate(0)
-      password_file.rewind
-      password_file.write(JSON.pretty_generate(users))
-      password_file.close()
-      return token
+    token = PCSAuth.uuid
+    begin
+      password_file = File.open(PCSD_USERS_PATH, File::RDWR|File::CREAT)
+      password_file.flock(File::LOCK_EX)
+      json = password_file.read()
+      users = JSON.parse(json)
+    rescue Exception
+      $logger.info "Empty file '#{PCSD_USERS_PATH}', creating new file"
+      users = []
     end
-    return true
+    users << {"username" => username, "token" => token, "creation_date" => Time.now}
+    password_file.truncate(0)
+    password_file.rewind
+    password_file.write(JSON.pretty_generate(users))
+    password_file.close()
+    return token
   end
 
   def self.getUsersGroups(username)
@@ -81,7 +82,7 @@ class PCSAuth
 
   def self.validToken(token)
     begin
-      json = File.read($user_pass_file)
+      json = File.read(PCSD_USERS_PATH)
       users = JSON.parse(json)
     rescue
       users = []
@@ -123,27 +124,6 @@ class PCSAuth
     return nil
   end
 
-  def self.loginByPassword(username, password)
-    if validUser(username, password)
-      auth_user = {}
-      auth_user[:username] = username
-      success, groups = getUsersGroups(username)
-      auth_user[:usergroups] = success ? groups : []
-      return auth_user
-    end
-    return nil
-  end
-
-  def self.isLoggedIn(session)
-    username = session[:username]
-    if (username != nil) and isUserAllowedToLogin(username, false)
-      success, groups = getUsersGroups(username)
-      session[:usergroups] = success ? groups : []
-      return true
-    end
-    return false
-  end
-
   def self.getSuperuserAuth()
     return {
       :username => SUPERUSER,
@@ -165,17 +145,4 @@ class PCSAuth
   def self.cookieUserDecode(text)
     return Base64.decode64(text)
   end
-
-  def self.sessionToAuthUser(session)
-    return {
-      :username => session[:username],
-      :usergroups => session[:usergroups],
-    }
-  end
-
-  def self.authUserToSession(auth_user, session)
-    session[:username] = auth_user[:username]
-    session[:usergroups] = auth_user[:usergroups]
-  end
 end
-

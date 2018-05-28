@@ -5,8 +5,9 @@ PCSD_DEFAULT_PORT = 2224
 
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'
-COOKIE_FILE = PCSD_VAR_LOCATION + 'pcsd.cookiesecret'
 KNOWN_HOSTS_FILE_NAME = 'known-hosts'
+PCSD_SETTINGS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_settings.conf"
+PCSD_USERS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_users.conf"
 
 PENGINE = "/usr/libexec/pacemaker/pengine"
 CIB_BINARY = '/usr/libexec/pacemaker/cib'
@@ -32,4 +33,3 @@ COROSYNC_AUTHKEY = "/etc/corosync/authkey"
 
 SUPERUSER = 'hacluster'
 ADMIN_GROUP = 'haclient'
-$user_pass_file = "pcs_users.conf"

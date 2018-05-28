@@ -1,4 +1,6 @@
-PYAGENTX_VERSION="0.4.pcs.1"
+# Default pyagentx version should by for python3 since python 2 is no longer
+# supported in pcs-0.10 branch.
+PYAGENTX_VERSION="0.4.pcs.2"
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
 
 ifndef PYTHON
@@ -36,7 +38,9 @@ endif
 
 build_pyagentx: get_pyagentx
 ifdef PYAGENTX_DIR
-	cd ${PYAGENTX_DIR} && PYTHONPATH=${BUNDLED_LIB_DIR_ABS}/packages/ $(PYTHON) setup.py install --install-purelib /packages/ --root ${BUNDLED_LIB_DIR_ABS}
+	# prefix must be explicit since fedora uses /usr/local as default when
+	# environment variable RPM_BUILD_ROOT is not set.
+	cd ${PYAGENTX_DIR} && PYTHONPATH=${BUNDLED_LIB_DIR_ABS}/packages/ $(PYTHON) setup.py install --prefix=${PREFIX} --install-purelib /packages/ --root ${BUNDLED_LIB_DIR_ABS}
 endif
 
 build_bundled_libs: build_pyagentx

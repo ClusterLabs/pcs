@@ -1,5 +1,5 @@
 <div style="width:960px;margin-top: 25px;text-align:center;">
-  <% if session[:bad_login_name] %>
+  <% if @tornado_session_username %>
     <span style="color:red;font-size:24px;">Bad username or password</span>
   <% end %>
   <form action="/login" method="post">
@@ -8,7 +8,7 @@
         <td style="text-align:right;">Username:</td>
         <td>
           <input type="text" name="username" <%=
-            "value='#{h(session[:bad_login_name])}'" if session[:bad_login_name]
+            "value='#{h(@tornado_session_username)}'" if @tornado_session_username
           %>>
         </td>
       </tr>

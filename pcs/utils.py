@@ -15,6 +15,7 @@ import getpass
 import base64
 import threading
 import logging
+from functools import lru_cache
 
 from pcs import settings, usage
 
@@ -23,10 +24,7 @@ from pcs.common import (
     report_codes,
 )
 from pcs.common.host import PcsKnownHost
-from pcs.common.tools import (
-    join_multilines,
-    simple_cache,
-)
+from pcs.common.tools import join_multilines
 
 from pcs.cli.common import (
     console_report,
@@ -1038,7 +1036,7 @@ def run(
 
     return output, returnVal
 
-@simple_cache
+@lru_cache()
 def cmd_runner():
     env_vars = dict()
     if usefile:
@@ -1063,10 +1061,10 @@ def run_pcsdcli(command, data=None):
         env_var["PCSD_NETWORK_TIMEOUT"] = str(settings.default_request_timeout)
     pcsd_dir_path = settings.pcsd_exec_location
     pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
-    gem_home = os.path.join(pcsd_dir_path, 'vendor/bundle/ruby')
+    gem_home = os.path.join(pcsd_dir_path, settings.pcsd_gem_path)
     env_var["GEM_HOME"] = gem_home
     stdout, dummy_stderr, retval = cmd_runner().run(
-        ["/usr/bin/ruby", "-I" + pcsd_dir_path, pcsdcli_path, command],
+        [settings.ruby_executable, "-I" + pcsd_dir_path, pcsdcli_path, command],
         json.dumps(data),
         env_var
     )
@@ -2157,7 +2155,7 @@ def verify_cert_key_pair(cert, key):
 def is_rhel6():
     return is_cman_cluster()
 
-@simple_cache
+@lru_cache()
 def is_cman_cluster():
     return lib_is_cman_cluster(cmd_runner())
 

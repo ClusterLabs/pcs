@@ -1,5 +1,4 @@
 require 'settings.rb'
-require 'cfgsync.rb' # settings_file_path
 
 module PcsdRemoveFile
   class RemoveFile
@@ -38,7 +37,7 @@ module PcsdRemoveFile
 
   class RemovePcsdSettings < RemoveFile
     def full_file_name()
-      @full_file_name ||= settings_file_path()
+      @full_file_name ||= PCSD_SETTINGS_CONF_LOCATION
     end
   end
 

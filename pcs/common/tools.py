@@ -2,21 +2,6 @@ from collections import namedtuple
 from lxml import etree
 import threading
 
-def simple_cache(func):
-    cache = {
-        "was_run": False,
-        "value": None
-    }
-
-    def wrapper():
-        if not cache["was_run"]:
-            cache["value"] = func()
-            cache["was_run"] = True
-        return cache["value"]
-
-    return wrapper
-
-
 def run_parallel(worker, data_list):
     thread_list = []
     for args, kwargs in data_list:

@@ -45,9 +45,6 @@ List of hostnames for which proxy is not used.
 .TP
 .B PCSD_DEBUG=<boolean>
 Set to \fBtrue\fR for advanced pcsd debugging information.
-.TP
-.B RACK_ENV=<string>
-Value of this variable has to be \fBproduction\fR, otherwise pcsd will not work properly.
 
 .SH FILES
 All files described in this section are located in \fB/var/lib/pcsd/\fR. They are not meant to be edited manually unless said otherwise.
@@ -85,7 +82,7 @@ Disable the synchronization until the set unix timestamp.
 .SS known-hosts
 This JSON file stores information about hosts known to the local pcsd which are used to login to remote instances of pcsd. Stored information include host addresses, pcsd ports and authentication tokens.
 
-.SS pcsd_settings.conf
+.SS pcs_settings.conf
 This JSON file contains web UI and cluster configuration such as clusters managed from web UI and cluster permissions.
 
 .SS pcs_users.conf

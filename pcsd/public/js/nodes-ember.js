@@ -34,10 +34,6 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "permissions") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
-  wizards_page: function() {
-    if (this.cur_page == "wizards") return "display: table-row;";
-    else return "display: none;";
-  }.property("cur_page"),
   available_features: [], /* deprecated capability list */
   pcsd_capabilities: [], /* new capability list */
   is_sbd_supported: function() {
@@ -1345,19 +1341,12 @@ Pcs.Router.map(function() {
 
 //  this.resource("Resource", {path: 'resources/:resource_id'});
   this.route("Manage", {path: "manage"});
-  this.route("Wizards", {path: "wizards"});
   this.route("Default Route", { path: "*x" });
 });
 
 Pcs.ManageRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("MANAGE");
-  }
-});
-
-Pcs.WizardsRoute = Ember.Route.extend({
-  setupController: function(controller, model) {
-    select_menu("WIZARDS");
   }
 });
 

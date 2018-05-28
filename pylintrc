@@ -64,7 +64,12 @@
 #W0703: [broad-except] Catching too general exception %s
 #W0710: [nonstandard-exception] Exception doesn't inherit from standard "Exception" class
 #W1401: [anomalous-backslash-in-string] Anomalous backslash in string: \'%s\'. String constant might be missing an r prefix.
+# for checking new daemon files
+# disable=missing-docstring, fixme, bad-continuation
 disable=no-name-in-module, import-error, nonstandard-exception, unused-argument, redefined-outer-name, bare-except,  anomalous-backslash-in-string, no-member, star-args, undefined-loop-variable, maybe-no-member, broad-except, too-few-public-methods, not-callable, protected-access, method-hidden, too-many-arguments, global-statement, unbalanced-tuple-unpacking, fixme, lost-exception, dangerous-default-value, too-many-return-statements, no-self-use, no-init, redefined-builtin, wildcard-import, relative-import, unused-wildcard-import, bad-builtin, locally-disabled, missing-docstring, invalid-name, bad-whitespace, bad-continuation, superfluous-parens, singleton-comparison, misplaced-comparison-constant, simplifiable-if-statement, multiple-imports, redefined-variable-type, wrong-import-position, ungrouped-imports, wrong-import-order, consider-using-enumerate, unsubscriptable-object, too-many-lines, too-many-ancestors, len-as-condition, invalid-slice-index
+
+[BASIC]
+good-names=e
 
 [DESIGN]
 # Maximum number of locals for function / method body
