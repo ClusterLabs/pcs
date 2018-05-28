@@ -13,6 +13,8 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-lxml
 * python3-pycurl
 * python3-setuptools
+* python3-pyOpenSSL (python3-openssl)
+* python3-tornado
 * ruby 2.2.0+
 * killall (package psmisc)
 * openssl
@@ -37,7 +39,6 @@ installation:
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)
 * gcc
 * gcc-c++
-* PAM development files (package pam-devel or libpam0g-dev)
 * FFI development files (package libffi-devel or libffi-dev)
 * fontconfig
 * printf (package coreutils)
