@@ -9,7 +9,6 @@ import datetime
 import json
 import time
 import xml.dom.minidom
-from subprocess import getstatusoutput
 
 from pcs import (
     constraint,
@@ -933,22 +932,9 @@ def start_cluster(argv):
         return
 
     print("Starting Cluster...")
-    service_list = []
-    if utils.is_cman_cluster():
-#   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
-        retval, output = getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
-        if retval == 0:
-            with open("/etc/sysconfig/cman", "a") as cman_conf_file:
-                cman_conf_file.write("\nCMAN_QUORUM_TIMEOUT=0\n")
-
-        output, retval = utils.start_service("cman")
-        if retval != 0:
-            print(output)
-            utils.err("unable to start cman")
-    else:
-        service_list.append("corosync")
-        if utils.need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
+    service_list = ["corosync"]
+    if utils.need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
     service_list.append("pacemaker")
     for service in service_list:
         output, retval = utils.start_service(service)
@@ -965,7 +951,7 @@ def start_cluster_all():
         wait_timeout = utils.validate_wait_get_timeout(False)
         wait = True
 
-    all_nodes = utils.getNodesFromCorosyncConf()
+    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
     start_cluster_nodes(all_nodes)
 
     if wait:

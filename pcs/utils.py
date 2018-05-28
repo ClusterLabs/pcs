@@ -871,8 +871,6 @@ def autoset_2node_corosync(corosync_conf):
 
 # is it needed to handle corosync-qdevice service when managing cluster services
 def need_to_handle_qdevice_service():
-    if is_rhel6():
-        return False
     try:
         cfg = corosync_conf_facade.from_string(
             open(settings.corosync_conf_file).read()
