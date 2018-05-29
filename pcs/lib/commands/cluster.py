@@ -492,6 +492,18 @@ def add_nodes(
     )
     com_cmd.set_targets(cluster_nodes_target_list)
     online_cluster_target_list = run_com(env.get_node_communicator(), com_cmd)
+    offline_cluster_target_list = [
+        target for target in cluster_nodes_target_list
+        if target not in online_cluster_target_list
+    ]
+    if len(online_cluster_target_list) == 0:
+        # TODO: report (error) that no cluster node is online
+        # report_processor.report(None)
+        pass
+    elif offline_cluster_target_list and skip_offline_nodes:
+        # TODO: report (warn) how to fix offline nodes when they come online
+        # report_processor.report(None)
+        pass
 
     # Validate existing cluster nodes status
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
