@@ -1926,7 +1926,7 @@ end
 
 def get_cib_dom(auth_user)
   begin
-    stdout, _, retval = run_cmd(auth_user, 'cibadmin', '-Q', '-l')
+    stdout, _, retval = run_cmd(auth_user, CIBADMIN, '-Q', '-l')
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))
     end
