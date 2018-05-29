@@ -100,7 +100,10 @@ def cluster_cmd(argv):
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "sync"):
-        sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
+        sync_nodes(
+            utils.get_corosync_conf_facade().get_nodes_names(),
+            utils.getCorosyncConf()
+        )
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
     elif (sub_cmd == "pcsd-status"):

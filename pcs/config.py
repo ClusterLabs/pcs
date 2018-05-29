@@ -264,9 +264,9 @@ def config_restore_remote(infile_name, infile_obj):
 
     config_backup_check_version(extracted["version.txt"])
 
-    node_list = utils.getNodesFromCorosyncConf(
-        extracted["cluster.conf" if utils.is_rhel6() else "corosync.conf"].decode("utf-8")
-    )
+    node_list = utils.get_corosync_conf_facade(
+        conf_text=extracted["corosync.conf"].decode("utf-8")
+    ).get_nodes_names()
     if not node_list:
         utils.err("no nodes found in the tarball")
 

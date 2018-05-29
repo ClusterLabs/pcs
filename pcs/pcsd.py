@@ -74,7 +74,9 @@ def pcsd_certkey(argv):
 
 def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
     error = False
-    nodes_sync = argv if argv else utils.getNodesFromCorosyncConf()
+    nodes_sync = (
+        argv if argv else utils.get_corosync_conf_facade().get_nodes_names()
+    )
     nodes_restart = []
 
     print("Synchronizing pcsd certificates on nodes {0}...".format(
