@@ -581,15 +581,6 @@ def getNodesFromCorosyncConf(conf_text=None):
                 nodes.append(attr[1])
     return nodes
 
-def getNodesFromPacemaker():
-    try:
-        return [
-            node.attrs.name
-            for node in ClusterState(getClusterStateXml()).node_section.nodes
-        ]
-    except LibraryError as e:
-        process_library_reports(e.args)
-
 def getNodeAttributesFromPacemaker():
     try:
         return [

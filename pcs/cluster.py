@@ -1902,65 +1902,7 @@ def cluster_localnode(argv):
         usage.cluster()
         exit(1)
 
-def cluster_uidgid_rhel6(argv, silent_list = False):
-    if not os.path.isfile(settings.cluster_conf_file):
-        utils.err("the file doesn't exist on this machine, create a cluster before running this command" % settings.cluster_conf_file)
-
-    if len(argv) == 0:
-        found = False
-        output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--lsmisc"])
-        if retval != 0:
-            utils.err("error running ccs\n" + output)
-        lines = output.split('\n')
-        for line in lines:
-            if line.startswith('UID/GID: '):
-                print(line)
-                found = True
-        if not found and not silent_list:
-            print("No uidgids configured in cluster.conf")
-        return
-
-    command = argv.pop(0)
-    uid=""
-    gid=""
-    if (command == "add" or command == "rm") and len(argv) > 0:
-        for arg in argv:
-            if arg.find('=') == -1:
-                utils.err("uidgid options must be of the form uid=<uid> gid=<gid>")
-
-            (k,v) = arg.split('=',1)
-            if k != "uid" and k != "gid":
-                utils.err("%s is not a valid key, you must use uid or gid" %k)
-
-            if k == "uid":
-                uid = v
-            if k == "gid":
-                gid = v
-        if uid == "" and gid == "":
-            utils.err("you must set either uid or gid")
-
-        if command == "add":
-            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--setuidgid", "uid="+uid, "gid="+gid])
-            if retval != 0:
-                utils.err("unable to add uidgid\n" + output.rstrip())
-        elif command == "rm":
-            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--rmuidgid", "uid="+uid, "gid="+gid])
-            if retval != 0:
-                utils.err("unable to remove uidgid\n" + output.rstrip())
-
-        # If we make a change, we sync out the changes to all nodes unless we're using -f
-        if not utils.usefile:
-            sync_nodes(utils.getNodesFromCorosyncConf(), utils.getCorosyncConf())
-
-    else:
-        usage.cluster(["uidgid"])
-        exit(1)
-
 def cluster_uidgid(argv, silent_list = False):
-    if utils.is_rhel6():
-        cluster_uidgid_rhel6(argv, silent_list)
-        return
-
     if len(argv) == 0:
         found = False
         uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
