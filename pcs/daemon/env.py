@@ -47,6 +47,7 @@ Env = namedtuple("Env", [
     PCSD_STATIC_FILES_DIR,
     HTTPS_PROXY,
     NO_PROXY,
+    PCSD_DEV,
     "has_errors",
 ])
 
@@ -66,6 +67,7 @@ def prepare_env(environ, logger=None):
         loader.pcsd_static_files_dir(),
         loader.https_proxy(),
         loader.no_proxy(),
+        loader.pcsd_dev(),
         loader.has_errors(),
     )
     if logger:
@@ -183,11 +185,13 @@ class EnvLoader:
     def no_proxy(self):
         return self.environ.get("no_proxy", self.environ.get(NO_PROXY, None))
 
+    @lru_cache()
+    def pcsd_dev(self):
+        return self.__has_true_in_environ(PCSD_DEV)
+
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (
-            PCSD_LOCAL_DIR
-            if self.__has_true_in_environ(PCSD_DEV) else
-            settings.pcsd_exec_location
+            PCSD_LOCAL_DIR if self.pcsd_dev() else settings.pcsd_exec_location
         )
 
         in_pcsd_path = join_path(pcsd_dir, path)

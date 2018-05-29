@@ -98,7 +98,7 @@ def main():
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
         disable_gui=env.PCSD_DISABLE_GUI,
-        debug=env.PCSD_DEBUG,
+        debug=env.PCSD_DEV,
     )
     pcsd_ssl = ssl.PcsdSSL(
         server_name=socket.gethostname(),
