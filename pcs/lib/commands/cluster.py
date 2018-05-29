@@ -494,9 +494,10 @@ def add_nodes(
     online_cluster_target_list = run_com(env.get_node_communicator(), com_cmd)
 
     # Validate existing cluster nodes status
-    if sbd.atb_has_to_be_enabled(
+    atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
         env.cmd_runner(), corosync_conf, len(new_nodes)
-    ):
+    )
+    if atb_has_to_be_enabled:
         report_processor.report(
             reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
         )
@@ -688,6 +689,8 @@ def add_nodes(
     # will recover after a minute or so but still it's a wrong way.
 
     corosync_conf.add_nodes(new_nodes_corosync)
+    if atb_has_to_be_enabled:
+        corosync_conf.set_quorum_options(dict(auto_tie_breaker="1"))
 
     com_cmd = DistributeCorosyncConf(
         env.report_processor,
