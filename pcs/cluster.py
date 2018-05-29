@@ -1136,10 +1136,10 @@ def disable_cluster(argv):
         process_library_reports(e.args)
 
 def enable_cluster_all():
-    enable_cluster_nodes(utils.getNodesFromCorosyncConf())
+    enable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def disable_cluster_all():
-    disable_cluster_nodes(utils.getNodesFromCorosyncConf())
+    disable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def enable_cluster_nodes(nodes):
     error_list = utils.map_for_error_list(utils.enableCluster, nodes)
