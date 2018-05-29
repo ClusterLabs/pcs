@@ -175,7 +175,7 @@ def status_stonith_check():
 def nodes_status(argv):
     if len(argv) == 1 and (argv[0] == "config"):
         if utils.hasCorosyncConf():
-            corosync_nodes = utils.getNodesFromCorosyncConf()
+            corosync_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         else:
             corosync_nodes = []
         try:
@@ -196,7 +196,7 @@ def nodes_status(argv):
         return
 
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
-        all_nodes = utils.getNodesFromCorosyncConf()
+        all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:

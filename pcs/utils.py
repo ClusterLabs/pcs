@@ -565,6 +565,7 @@ def get_corosync_conf_facade(conf_path=None, conf_text=None):
     except corosync_conf_parser.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
 
+# Deprecated, not needed, TODO: remove
 def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():
         dom = getCorosyncConfParsed(text=conf_text)
@@ -635,45 +636,35 @@ def reloadCorosync():
     return output, retval
 
 def getCorosyncActiveNodes():
-    if is_rhel6():
-        output, retval = run(["cman_tool", "nodes", "-F", "type,name"])
-        if retval != 0:
-            return []
-        nodestatus_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
-        return [
-            node_name
-            for node_status, node_name in nodestatus_re.findall(output)
-                if node_status == "M"
-        ]
-
-    args = ["corosync-cmapctl"]
-    nodes = []
-    output,retval = run(args)
+    output,retval = run(["corosync-cmapctl"])
     if retval != 0:
         return []
 
-    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", re.M)
-    nodestatus_re = re.compile(r"^runtime\.totem\.pg\.mrp\.srp\.members\.(\d+).status.*= (.*)", re.M)
-    nodenameid_mapping_re = re.compile(r"nodelist\.node\.(\d+)\.nodeid.*= (\d+)", re.M)
+    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.name .*= (.*)", re.M)
+    nodestatus_re = re.compile(
+        r"^runtime\.members\.(\d+).status .*= (.*)",
+        re.M
+    )
+    nodenameid_mapping_re = re.compile(
+        r"nodelist\.node\.(\d+)\.nodeid .*= (\d+)",
+        re.M
+    )
 
-    nodes = nodename_re.findall(output)
-    nodes_status = nodestatus_re.findall(output)
-    nodes_mapping = nodenameid_mapping_re.findall(output)
+    node_names = nodename_re.findall(output)
+    node_statuses = nodestatus_re.findall(output)
+    node_ids = nodenameid_mapping_re.findall(output)
+
+    index_to_id = {index:nodeid for index, nodeid in node_ids}
+    id_to_status = {nodeid:status for nodeid, status in node_statuses}
+
     node_status = {}
-
-    for orig_id, node in nodes:
-        mapped_id = None
-        for old_id, new_id in nodes_mapping:
-            if orig_id == old_id:
-                mapped_id = new_id
-                break
-        if mapped_id == None:
-            print("Error mapping %s" % node)
-            continue
-        for new_id, status in nodes_status:
-            if new_id == mapped_id:
-                node_status[node] = status
-                break
+    for index, node_name in node_names:
+        if index in index_to_id:
+            nodeid = index_to_id[index]
+            if nodeid in id_to_status:
+                node_status[node_name] = id_to_status[nodeid]
+        else:
+            print("Error mapping %s" % node_name)
 
     nodes_active = []
     for node,status in node_status.items():
