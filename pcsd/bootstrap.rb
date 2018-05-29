@@ -53,11 +53,7 @@ PCS_VERSION = '0.10.0'
 COROSYNC = COROSYNC_BINARIES + "corosync"
 ISRHEL6 = is_rhel6
 ISSYSTEMCTL = is_systemctl
-if ISRHEL6
-  COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-objctl"
-else
-  COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-cmapctl"
-end
+COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-cmapctl"
 COROSYNC_QUORUMTOOL = COROSYNC_BINARIES + "corosync-quorumtool"
 
 if not defined? $cur_node_name

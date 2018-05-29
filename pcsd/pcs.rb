@@ -627,27 +627,6 @@ def get_current_node_name()
 end
 
 def get_local_node_id()
-  if ISRHEL6
-    out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster.cman"
-    )
-    if retval != 0
-      return ""
-    end
-    match = /cluster\.nodename=(.*)/.match(out.join("\n"))
-    if not match
-      return ""
-    end
-    local_node_name = match[1]
-    out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(),
-      CMAN_TOOL, "nodes", "-F", "id", "-n", local_node_name
-    )
-    if retval != 0
-      return ""
-    end
-    return out[0].strip()
-  end
   out, errout, retval = run_cmd(
     PCSAuth.getSuperuserAuth(),
     COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id"
@@ -727,43 +706,13 @@ def get_nodes_status()
   }
 end
 
+# TODO replace by a function providing number of links defined in corosync.conf
 def need_ring1_address?()
-  out, errout, retval = run_cmd(PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL)
-  if retval != 0
-    return false
-  else
-    udpu_transport = false
-    rrp = false
-    out.each { |line|
-      # support both corosync-objctl and corosync-cmapctl format
-      if /^\s*totem\.transport(\s+.*)?=\s*udpu$/.match(line)
-        udpu_transport = true
-      elsif /^\s*totem\.rrp_mode(\s+.*)?=\s*(passive|active)$/.match(line)
-        rrp = true
-      end
-    }
-    # on rhel6 ring1 address is required regardless of transport
-    # it has to be added to cluster.conf in order to set up ring1
-    # in corosync by cman
-    return ((ISRHEL6 and rrp) or (rrp and udpu_transport))
-  end
+  return false
 end
 
+# TODO remove - it makes no sense with knet
 def is_cman_with_udpu_transport?
-  if not ISRHEL6
-    return false
-  end
-  begin
-    cluster_conf = Cfgsync::ClusterConf.from_file().text()
-    conf_dom = REXML::Document.new(cluster_conf)
-    conf_dom.elements.each("cluster/cman") { |elem|
-      if elem.attributes["transport"].downcase == "udpu"
-        return true
-      end
-    }
-  rescue
-    return false
-  end
   return false
 end
 
@@ -802,32 +751,10 @@ def get_stonith_agents_avail(auth_user, params)
 end
 
 def get_cluster_name()
-  if ISRHEL6
-    stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster"
-    )
-    if retval == 0
-      stdout.each { |line|
-        match = /^cluster\.name=(.*)$/.match(line)
-        return match[1] if match
-      }
-    end
-    begin
-      cluster_conf = Cfgsync::ClusterConf.from_file().text()
-    rescue
-      return ''
-    end
-    conf_dom = REXML::Document.new(cluster_conf)
-    if conf_dom.root and conf_dom.root.name == 'cluster'
-      return conf_dom.root.attributes['name']
-    end
-    return ''
-  end
-
   stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "totem.cluster_name"
+    PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "-g", "totem.cluster_name"
   )
-  if retval != 0 and not ISRHEL6
+  if retval != 0
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
     begin
