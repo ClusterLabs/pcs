@@ -76,15 +76,6 @@ def full_status():
 
     status_stonith_check()
 
-    if (
-        not utils.usefile
-        and
-        not utils.is_rhel6()
-        and
-        utils.corosyncPacemakerNodeCheck()
-    ):
-        print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
-
     print(output)
 
     if "--full" in utils.pcs_options:
@@ -182,16 +173,6 @@ def status_stonith_check():
 
 # Parse crm_mon for status
 def nodes_status(argv):
-    if len(argv) == 1 and argv[0] == "pacemaker-id":
-        for node_id, node_name in utils.getPacemakerNodesID().items():
-            print("{0} {1}".format(node_id, node_name))
-        return
-
-    if len(argv) == 1 and argv[0] == "corosync-id":
-        for node_id, node_name in utils.getCorosyncNodesID().items():
-            print("{0} {1}".format(node_id, node_name))
-        return
-
     if len(argv) == 1 and (argv[0] == "config"):
         if utils.hasCorosyncConf():
             corosync_nodes = utils.getNodesFromCorosyncConf()

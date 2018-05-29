@@ -230,8 +230,6 @@ def main(argv=None):
         ['host', 'deauth', '...'],
         ['pcsd', 'deauth', '...'],
         ['pcsd', 'sync-certificates'],
-        ['status', 'nodes', 'corosync-id'],
-        ['status', 'nodes', 'pacemaker-id'],
         ['status', 'pcsd', '...'],
     ]
     argv_cmd = argv[:]

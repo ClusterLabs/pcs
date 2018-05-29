@@ -251,14 +251,6 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
-    ['status', 'nodes', 'corosync-id', '...'] => {
-      'only_superuser' => false,
-      'permissions' => Permissions::READ,
-    },
-    ['status', 'nodes', 'pacemaker-id', '...'] => {
-      'only_superuser' => false,
-      'permissions' => Permissions::READ,
-    },
     ['status', 'pcsd', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
