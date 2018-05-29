@@ -580,7 +580,7 @@ def add_node(
     )
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes()
+  corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
@@ -604,7 +604,7 @@ def remove_node(auth_user, new_nodename, all=false)
     )
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes()
+  corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
@@ -667,22 +667,6 @@ def get_corosync_nodes_names()
   return CorosyncConf::get_corosync_nodes_names(
     CorosyncConf::parse_string(get_corosync_conf)
   )
-end
-
-def get_corosync_nodes()
-  stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "corosync"
-  )
-  if retval != 0
-    return []
-  end
-
-  stdout.each {|x| x.strip!}
-  corosync_online = stdout[1].sub(/^.*Online:/,"").strip
-  corosync_offline = stdout[2].sub(/^.*Offline:/,"").strip
-  corosync_nodes = (corosync_online.split(/ /)) + (corosync_offline.split(/ /))
-
-  return corosync_nodes
 end
 
 def get_nodes()
@@ -1285,7 +1269,7 @@ def pcs_deauth(auth_user, host_names)
     )
     return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
   end
-  cluster_nodes = get_corosync_nodes()
+  cluster_nodes = get_corosync_nodes_names()
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
     [], host_names, cluster_nodes, $cluster_name
   )

@@ -187,7 +187,7 @@ def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
       # on version conflict just go on, config will be corrected eventually
       # by displaying the cluster in the web UI
       Cfgsync::save_sync_new_version(
-          sync_config, get_corosync_nodes(), $cluster_name, true
+          sync_config, get_corosync_nodes_names(), $cluster_name, true
       )
       return cluster_status_gui(auth_user, cluster_name, true)
     end
@@ -736,7 +736,7 @@ def set_permissions_remote(params, request, auth_user)
     pcs_config.permissions_local = perm_set
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
     pushed, _ = Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes(), $cluster_name, true
+      sync_config, get_corosync_nodes_names(), $cluster_name, true
     )
     return [200, 'Permissions saved'] if pushed
   }
@@ -1130,7 +1130,7 @@ def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
       # on version conflict just go on, config will be corrected eventually
       # by displaying the cluster in the web UI
       Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes(), $cluster_name, true
+        sync_config, get_corosync_nodes_names(), $cluster_name, true
       )
       return status_all(params, request, auth_user, node_list, true)
     end
@@ -1292,7 +1292,7 @@ def clusters_overview(params, request, auth_user)
     # on version conflict just go on, config will be corrected eventually
     # by displaying the cluster in the web UI
     Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes(), $cluster_name, true
+      sync_config, get_corosync_nodes_names(), $cluster_name, true
     )
   end
 
@@ -2042,7 +2042,7 @@ def known_hosts_change(params, request, auth_user)
   end
 
   sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
-    new_hosts, remove_hosts, get_corosync_nodes(), $cluster_name
+    new_hosts, remove_hosts, get_corosync_nodes_names(), $cluster_name
   )
   if sync_successful
     return [200, '']
