@@ -76,15 +76,6 @@ def full_status():
 
     status_stonith_check()
 
-    if (
-        not utils.usefile
-        and
-        not utils.is_rhel6()
-        and
-        utils.corosyncPacemakerNodeCheck()
-    ):
-        print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
-
     print(output)
 
     if "--full" in utils.pcs_options:
@@ -182,19 +173,9 @@ def status_stonith_check():
 
 # Parse crm_mon for status
 def nodes_status(argv):
-    if len(argv) == 1 and argv[0] == "pacemaker-id":
-        for node_id, node_name in utils.getPacemakerNodesID().items():
-            print("{0} {1}".format(node_id, node_name))
-        return
-
-    if len(argv) == 1 and argv[0] == "corosync-id":
-        for node_id, node_name in utils.getCorosyncNodesID().items():
-            print("{0} {1}".format(node_id, node_name))
-        return
-
     if len(argv) == 1 and (argv[0] == "config"):
         if utils.hasCorosyncConf():
-            corosync_nodes = utils.getNodesFromCorosyncConf()
+            corosync_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         else:
             corosync_nodes = []
         try:
@@ -215,7 +196,7 @@ def nodes_status(argv):
         return
 
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
-        all_nodes = utils.getNodesFromCorosyncConf()
+        all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:
@@ -343,10 +324,6 @@ def check_nodes(node_list, prefix=""):
     """
     Print pcsd status on node_list, return if there is any pcsd not online
     """
-    if not utils.is_rhel6():
-        pm_nodes = utils.getPacemakerNodesID(allow_failure=True)
-        cs_nodes = utils.getCorosyncNodesID(allow_failure=True)
-
     STATUS_ONLINE = 0
     status_desc_map = {
         STATUS_ONLINE: 'Online',
@@ -356,9 +333,7 @@ def check_nodes(node_list, prefix=""):
     def report(node, returncode, output):
         print("{0}{1}: {2}".format(
             prefix,
-            node if utils.is_rhel6() else utils.prepare_node_name(
-                node, pm_nodes, cs_nodes
-            ),
+            node,
             status_desc_map.get(returncode, 'Offline')
         ))
         status_list.append(returncode)
@@ -374,12 +349,9 @@ def check_nodes(node_list, prefix=""):
 def cluster_pcsd_status(argv, dont_exit=False):
     bad_nodes = False
     if len(argv) == 0:
-        nodes = utils.getNodesFromCorosyncConf()
+        nodes = utils.get_corosync_conf_facade().get_nodes_names()
         if len(nodes) == 0:
-            if utils.is_rhel6():
-                utils.err("no nodes found in cluster.conf")
-            else:
-                utils.err("no nodes found in corosync.conf")
+            utils.err("no nodes found in corosync.conf")
         bad_nodes = check_nodes(nodes, "  ")
     else:
         bad_nodes = check_nodes(argv, "  ")

@@ -1427,11 +1427,12 @@ Commands:
         will be used. If a port is not specified 2224 will be used.
 
     deauth [<host name>]...
-       Delete locally stored authentication tokens which allow pcs/pcsd on the
-       current system to connect to remote pcsd instances on specified host
-       names. If no host names are specified all tokens will be deleted. After
-       this command is run this node will need to re-authenticate against other
-       nodes to be able to connect to them.
+       Delete authentication tokens which allow pcs/pcsd on the current system
+       to connect to remote pcsd instances on specified host names. If the
+       current system is a member of a cluster, the tokens will be deleted from
+       all nodes in the cluster. If no host names are specified all tokens will
+       be deleted. After this command is run this node will need to
+       re-authenticate against other nodes to be able to connect to them.
 """
     if pout:
         print(sub_usage(args, output))

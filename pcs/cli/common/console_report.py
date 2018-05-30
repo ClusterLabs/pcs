@@ -1554,15 +1554,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.HOST_NOT_FOUND: lambda info:
         (
-            "Host{_s} {_hosts_comma} not found. Try to authenticate the "
-            "host{_s} using 'pcs host auth {_hosts_space}' command."
+            "Host{_s} {_hosts_comma} {_are} not known to pcs, try to "
+            "authenticate the host{_s} using 'pcs host auth {_hosts_space}' "
+            "command"
         ).format(
             _hosts_comma=format_list(info["host_list"]),
             _hosts_space=" ".join(sorted(info["host_list"])),
-            _s=("s" if len(info["host_list"]) > 1 else "")
+            _s=("s" if len(info["host_list"]) > 1 else ""),
+            _are=("are" if len(info["host_list"]) > 1 else "is")
         )
     ,
-    codes.NONE_HOST_FOUND: "None of hosts found.",
+    codes.NONE_HOST_FOUND: "None of hosts is known to pcs.",
     codes.HOST_ALREADY_AUTHORIZED: lambda info:
         "{host_name}: Already authorized".format(**info)
     ,

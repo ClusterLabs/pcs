@@ -72,7 +72,8 @@ def auth_cmd(lib, argv, modifiers):
 
 def deauth_cmd(lib, argv, modifiers):
     if len(argv) < 1:
-        remove_hosts = utils.read_known_hosts_file().keys()
+        # Object of type 'dict_keys' is not JSON serializable, make it a list
+        remove_hosts = list(utils.read_known_hosts_file().keys())
     else:
         remove_hosts = argv
     output, retval = utils.run_pcsdcli(

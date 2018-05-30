@@ -420,13 +420,13 @@ def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
     port = None
-    token = None
     addr = host
+    token = None
     known_host = read_known_hosts_file().get(host, None)
     # TODO: do not allow communication with unknown host
     if known_host:
         port = known_host.dest.port
-        host = known_host.dest.addr
+        addr = known_host.dest.addr
         token = known_host.token
     if port is None:
         port = settings.pcsd_default_port
@@ -557,7 +557,15 @@ def __get_cookie_list(token):
                 cookies.append("{0}={1}".format(name, value))
     return cookies
 
+def get_corosync_conf_facade(conf_path=None, conf_text=None):
+    try:
+        return corosync_conf_facade.from_string(
+            getCorosyncConf(conf_path) if conf_text is None else conf_text
+        )
+    except corosync_conf_parser.CorosyncConfParserException as e:
+        err("Unable to parse corosync.conf: %s" % e)
 
+# Deprecated, not needed, TODO: remove
 def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():
         dom = getCorosyncConfParsed(text=conf_text)
@@ -574,15 +582,6 @@ def getNodesFromCorosyncConf(conf_text=None):
                 nodes.append(attr[1])
     return nodes
 
-def getNodesFromPacemaker():
-    try:
-        return [
-            node.attrs.name
-            for node in ClusterState(getClusterStateXml()).node_section.nodes
-        ]
-    except LibraryError as e:
-        process_library_reports(e.args)
-
 def getNodeAttributesFromPacemaker():
     try:
         return [
@@ -595,18 +594,12 @@ def getNodeAttributesFromPacemaker():
 
 def hasCorosyncConf(conf=None):
     if not conf:
-        if is_rhel6():
-            conf = settings.cluster_conf_file
-        else:
-            conf = settings.corosync_conf_file
+        conf = settings.corosync_conf_file
     return os.path.isfile(conf)
 
 def getCorosyncConf(conf=None):
     if not conf:
-        if is_rhel6():
-            conf = settings.cluster_conf_file
-        else:
-            conf = settings.corosync_conf_file
+        conf = settings.corosync_conf_file
     try:
         out = open(conf).read()
     except IOError as e:
@@ -615,11 +608,6 @@ def getCorosyncConf(conf=None):
 
 def getCorosyncConfParsed(conf=None, text=None):
     conf_text = getCorosyncConf(conf) if text is None else text
-    if is_rhel6():
-        try:
-            return parseString(conf_text)
-        except xml.parsers.expat.ExpatError as e:
-            err("Unable to parse cluster.conf: %s" % e)
     try:
         return corosync_conf_parser.parse_string(conf_text)
     except corosync_conf_parser.CorosyncConfParserException as e:
@@ -648,45 +636,35 @@ def reloadCorosync():
     return output, retval
 
 def getCorosyncActiveNodes():
-    if is_rhel6():
-        output, retval = run(["cman_tool", "nodes", "-F", "type,name"])
-        if retval != 0:
-            return []
-        nodestatus_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
-        return [
-            node_name
-            for node_status, node_name in nodestatus_re.findall(output)
-                if node_status == "M"
-        ]
-
-    args = ["corosync-cmapctl"]
-    nodes = []
-    output,retval = run(args)
+    output,retval = run(["corosync-cmapctl"])
     if retval != 0:
         return []
 
-    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", re.M)
-    nodestatus_re = re.compile(r"^runtime\.totem\.pg\.mrp\.srp\.members\.(\d+).status.*= (.*)", re.M)
-    nodenameid_mapping_re = re.compile(r"nodelist\.node\.(\d+)\.nodeid.*= (\d+)", re.M)
+    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.name .*= (.*)", re.M)
+    nodestatus_re = re.compile(
+        r"^runtime\.members\.(\d+).status .*= (.*)",
+        re.M
+    )
+    nodenameid_mapping_re = re.compile(
+        r"nodelist\.node\.(\d+)\.nodeid .*= (\d+)",
+        re.M
+    )
 
-    nodes = nodename_re.findall(output)
-    nodes_status = nodestatus_re.findall(output)
-    nodes_mapping = nodenameid_mapping_re.findall(output)
+    node_names = nodename_re.findall(output)
+    node_statuses = nodestatus_re.findall(output)
+    node_ids = nodenameid_mapping_re.findall(output)
+
+    index_to_id = {index:nodeid for index, nodeid in node_ids}
+    id_to_status = {nodeid:status for nodeid, status in node_statuses}
+
     node_status = {}
-
-    for orig_id, node in nodes:
-        mapped_id = None
-        for old_id, new_id in nodes_mapping:
-            if orig_id == old_id:
-                mapped_id = new_id
-                break
-        if mapped_id == None:
-            print("Error mapping %s" % node)
-            continue
-        for new_id, status in nodes_status:
-            if new_id == mapped_id:
-                node_status[node] = status
-                break
+    for index, node_name in node_names:
+        if index in index_to_id:
+            nodeid = index_to_id[index]
+            if nodeid in id_to_status:
+                node_status[node_name] = id_to_status[nodeid]
+        else:
+            print("Error mapping %s" % node_name)
 
     nodes_active = []
     for node,status in node_status.items():
@@ -875,8 +853,6 @@ def autoset_2node_corosync(corosync_conf):
 
 # is it needed to handle corosync-qdevice service when managing cluster services
 def need_to_handle_qdevice_service():
-    if is_rhel6():
-        return False
     try:
         cfg = corosync_conf_facade.from_string(
             open(settings.corosync_conf_file).read()
@@ -1252,24 +1228,6 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
         create_task_list(report, action, node_list, *args, **kwargs)
     )
     return node_errors
-
-def prepare_node_name(node, pm_nodes, cs_nodes):
-    '''
-    Return pacemaker-corosync combined name for node if needed
-    pm_nodes dictionary pacemaker nodes id:node_name
-    cs_nodes dictionary corosync nodes id:node_name
-    '''
-    if node in pm_nodes.values():
-        return node
-
-    for cs_id, cs_name in cs_nodes.items():
-        if node == cs_name and cs_id in pm_nodes:
-            return '{0} ({1})'.format(
-                pm_nodes[cs_id] if pm_nodes[cs_id] != '(null)' else "*Unknown*",
-                node
-            )
-
-    return node
 
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string
@@ -1950,101 +1908,6 @@ def getClusterStateXml():
         err("error running crm_mon, is pacemaker running?")
     return xml
 
-def getCorosyncNodesID(allow_failure=False):
-    if os.getuid() == 0:
-        if is_rhel6():
-            output, retval = run(["cman_tool", "nodes", "-F", "id,name"])
-            if retval != 0:
-                if allow_failure:
-                    return {}
-                else:
-                    err("unable to get list of corosync nodes")
-            nodeid_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
-            return dict([
-                (node_id, node_name)
-                for node_id, node_name in nodeid_re.findall(output)
-            ])
-
-        (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
-    else:
-        err_msgs, retval, output, dummy_std_err = call_local_pcsd(
-            ['status', 'nodes', 'corosync-id'], True
-        )
-        if err_msgs and not allow_failure:
-            for msg in err_msgs:
-                err(msg, False)
-            sys.exit(1)
-
-    if retval != 0:
-        if allow_failure:
-            return {}
-        else:
-            err("unable to get list of corosync nodes")
-
-    cs_nodes = {}
-    node_list_node_mapping = {}
-    for line in output.rstrip().split("\n"):
-        m = re.match("nodelist\.node\.(\d+)\.nodeid.*= (.*)", line)
-        if m:
-            node_list_node_mapping[m.group(1)] = m.group(2)
-
-    for line in output.rstrip().split("\n"):
-        m = re.match("nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", line)
-        # check if node id is in node_list_node_mapping - do not crash when
-        # node ids are not specified
-        if m and m.group(1) in node_list_node_mapping:
-            cs_nodes[node_list_node_mapping[m.group(1)]] = m.group(2)
-    return cs_nodes
-
-# Warning, if a node has never started the hostname may be '(null)'
-#TODO This doesn't work on CMAN clusters at all and should be removed completely
-# Doesn't work on pacemaker-remote nodes either
-def getPacemakerNodesID(allow_failure=False):
-    if os.getuid() == 0:
-        (output, retval) = run(['crm_node', '-l'])
-    else:
-        err_msgs, retval, output, dummy_std_err = call_local_pcsd(
-            ['status', 'nodes', 'pacemaker-id'], True
-        )
-        if err_msgs and not allow_failure:
-            for msg in err_msgs:
-                err(msg, False)
-            sys.exit(1)
-
-    if retval != 0:
-        if allow_failure:
-            return {}
-        else:
-            err("unable to get list of pacemaker nodes")
-
-    pm_nodes = {}
-    for line in output.rstrip().split("\n"):
-        node_info = line.rstrip().split(" ")
-        if len(node_info) <= 2 or node_info[2] != "lost":
-            pm_nodes[node_info[0]] = node_info[1]
-
-    return pm_nodes
-
-def corosyncPacemakerNodeCheck():
-    # does not work on CMAN clusters and pacemaker-remote nodes
-    # we do not want a failure to exit pcs as this is only a minor information
-    # function
-    pm_nodes = getPacemakerNodesID(allow_failure=True)
-    cs_nodes = getCorosyncNodesID(allow_failure=True)
-
-    for node_id in pm_nodes:
-        if pm_nodes[node_id] == "(null)":
-            continue
-
-        if node_id not in cs_nodes:
-            continue
-
-        if pm_nodes[node_id] == cs_nodes[node_id]:
-            continue
-
-        return True
-    return False
-
 def getResourceType(resource):
     resClass = resource.getAttribute("class")
     resProvider = resource.getAttribute("provider")
@@ -2214,8 +2077,6 @@ def enableServices():
         raise LibraryError(*report_item_list)
 
 def disableServices():
-    # Disable corosync on RHEL6 as well - left here for users of old pcs which
-    # enabled corosync.
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
@@ -2376,71 +2237,7 @@ def get_remote_quorumtool_output(node):
 
 # return True if quorumtool_output is a string returned when the node is off
 def is_node_offline_by_quorumtool_output(quorum_info):
-    if (
-        is_rhel6()
-        and
-        ":" in quorum_info
-        and
-        quorum_info.split(":", 1)[1].strip()
-        ==
-        "Cannot open connection to cman, is it running ?"
-    ):
-        return True
-    if (
-        not is_rhel6()
-        and
-        quorum_info.strip() == "Cannot initialize CMAP service"
-    ):
-        return True
-    return False
-
-def parse_cman_quorum_info(cman_info):
-# get cman_info like this:
-# cman_tool status
-# echo ---Votes---
-# cman_tool nodes -F id,type,votes,name
-    parsed = {}
-    in_node_list = False
-    local_node_id = ""
-    try:
-        for line in cman_info.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if in_node_list:
-                # node list command: cman_tool nodes -F id,type,votes,name
-                parts = line.split()
-                if parts[1] != "M" and parts[1] != "d":
-                    continue # node is not online
-                parsed["node_list"].append({
-                    "name": parts[3],
-                    "votes": int(parts[2]),
-                    "local": local_node_id == parts[0],
-                })
-            else:
-                if line == "---Votes---":
-                    in_node_list = True
-                    parsed["node_list"] = []
-                    parsed["qdevice_list"] = []
-                    continue
-                if not ":" in line:
-                    continue
-                parts = [x.strip() for x in line.split(":", 1)]
-                if parts[0] == "Quorum":
-                    parsed["quorate"] = "Activity blocked" not in parts[1]
-                    match = re.match("(\d+).*", parts[1])
-                    if match:
-                        parsed["quorum"] = int(match.group(1))
-                    else:
-                        return None
-                elif parts[0] == "Node ID":
-                    local_node_id = parts[1]
-    except (ValueError, IndexError):
-        return None
-    for required in ("quorum", "quorate", "node_list"):
-        if required not in parsed:
-            return None
-    return parsed
+    return quorum_info.strip() == "Cannot initialize CMAP service"
 
 def parse_quorumtool_output(quorumtool_output):
     parsed = {}

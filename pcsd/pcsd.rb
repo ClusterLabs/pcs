@@ -75,7 +75,7 @@ def run_cfgsync
     begin
       # do not sync if this host is not in a cluster
       cluster_name = get_cluster_name()
-      cluster_nodes = get_corosync_nodes()
+      cluster_nodes = get_corosync_nodes_names()
       if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
         $logger.debug('Config files sync fetching')
         fetcher = Cfgsync::ConfigFetcher.new(
@@ -251,14 +251,6 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
-    ['status', 'nodes', 'corosync-id', '...'] => {
-      'only_superuser' => false,
-      'permissions' => Permissions::READ,
-    },
-    ['status', 'nodes', 'pacemaker-id', '...'] => {
-      'only_superuser' => false,
-      'permissions' => Permissions::READ,
-    },
     ['status', 'pcsd', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
@@ -345,7 +337,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     )
     if not new_hosts.empty?
       pushed, _ = Cfgsync::save_sync_new_known_hosts(
-        new_hosts, [], get_corosync_nodes(), $cluster_name
+        new_hosts, [], get_corosync_nodes_names(), $cluster_name
       )
       if not pushed
         return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -357,7 +349,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
     pushed, _ = Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes(), $cluster_name, true
+      sync_config, get_corosync_nodes_names(), $cluster_name, true
     )
     if not pushed
       return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -460,7 +452,7 @@ post '/manage/newcluster' do
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
       sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
       pushed, _ = Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes(), $cluster_name, true
+        sync_config, get_corosync_nodes_names(), $cluster_name, true
       )
       break if pushed
     }
@@ -483,7 +475,7 @@ post '/manage/removecluster' do
   }
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
   pushed, _ = Cfgsync::save_sync_new_version(
-    sync_config, get_corosync_nodes(), $cluster_name, true
+    sync_config, get_corosync_nodes_names(), $cluster_name, true
   )
   if not pushed
     return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate."
@@ -570,7 +562,7 @@ post '/manage/auth_gui_against_nodes' do
 
   if not new_hosts.empty?
     _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
-      new_hosts.values(), [], get_corosync_nodes(), $cluster_name
+      new_hosts.values(), [], get_corosync_nodes_names(), $cluster_name
     )
   end
 

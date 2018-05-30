@@ -30,12 +30,20 @@ if ["sinatra_gui", "sinatra_remote"].include?(request["type"])
 
   set :logging, true
   set :run, false
+  # Do not turn exceptions into fancy 100kB HTML pages and print them on stdout.
+  # Instead, rack.errors is logged and therefore returned in result[:log].
+  set :show_exceptions, false
   app = [Sinatra::Application][0]
 
   env = request["env"]
   env["rack.input"] = StringIO.new(env["rack.input"])
+  env["rack.errors"] = StringIO.new()
 
   status, headers, body = app.call(env)
+  rack_errors = env['rack.errors'].string()
+  if not rack_errors.empty?()
+    $logger.error(rack_errors)
+  end
 
   result = {
     :status => status,

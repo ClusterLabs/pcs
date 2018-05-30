@@ -580,7 +580,7 @@ def add_node(
     )
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes()
+  corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
@@ -604,7 +604,7 @@ def remove_node(auth_user, new_nodename, all=false)
     )
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes()
+  corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
@@ -627,27 +627,6 @@ def get_current_node_name()
 end
 
 def get_local_node_id()
-  if ISRHEL6
-    out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster.cman"
-    )
-    if retval != 0
-      return ""
-    end
-    match = /cluster\.nodename=(.*)/.match(out.join("\n"))
-    if not match
-      return ""
-    end
-    local_node_name = match[1]
-    out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(),
-      CMAN_TOOL, "nodes", "-F", "id", "-n", local_node_name
-    )
-    if retval != 0
-      return ""
-    end
-    return out[0].strip()
-  end
   out, errout, retval = run_cmd(
     PCSAuth.getSuperuserAuth(),
     COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id"
@@ -659,30 +638,21 @@ def get_local_node_id()
   end
 end
 
+def has_corosync_conf()
+  return Cfgsync::cluster_cfg_class.exist?()
+end
+
 def get_corosync_conf()
   return Cfgsync::cluster_cfg_class.from_file().text()
 end
 
 def get_corosync_nodes_names()
-  return CorosyncConf::get_corosync_nodes_names(
-    CorosyncConf::parse_string(get_corosync_conf)
-  )
-end
-
-def get_corosync_nodes()
-  stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "corosync"
-  )
-  if retval != 0
-    return []
+  if has_corosync_conf()
+    return CorosyncConf::get_corosync_nodes_names(
+      CorosyncConf::parse_string(get_corosync_conf())
+    )
   end
-
-  stdout.each {|x| x.strip!}
-  corosync_online = stdout[1].sub(/^.*Online:/,"").strip
-  corosync_offline = stdout[2].sub(/^.*Offline:/,"").strip
-  corosync_nodes = (corosync_online.split(/ /)) + (corosync_offline.split(/ /))
-
-  return corosync_nodes
+  return []
 end
 
 def get_nodes()
@@ -743,43 +713,13 @@ def get_nodes_status()
   }
 end
 
+# TODO replace by a function providing number of links defined in corosync.conf
 def need_ring1_address?()
-  out, errout, retval = run_cmd(PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL)
-  if retval != 0
-    return false
-  else
-    udpu_transport = false
-    rrp = false
-    out.each { |line|
-      # support both corosync-objctl and corosync-cmapctl format
-      if /^\s*totem\.transport(\s+.*)?=\s*udpu$/.match(line)
-        udpu_transport = true
-      elsif /^\s*totem\.rrp_mode(\s+.*)?=\s*(passive|active)$/.match(line)
-        rrp = true
-      end
-    }
-    # on rhel6 ring1 address is required regardless of transport
-    # it has to be added to cluster.conf in order to set up ring1
-    # in corosync by cman
-    return ((ISRHEL6 and rrp) or (rrp and udpu_transport))
-  end
+  return false
 end
 
+# TODO remove - it makes no sense with knet
 def is_cman_with_udpu_transport?
-  if not ISRHEL6
-    return false
-  end
-  begin
-    cluster_conf = Cfgsync::ClusterConf.from_file().text()
-    conf_dom = REXML::Document.new(cluster_conf)
-    conf_dom.elements.each("cluster/cman") { |elem|
-      if elem.attributes["transport"].downcase == "udpu"
-        return true
-      end
-    }
-  rescue
-    return false
-  end
   return false
 end
 
@@ -818,53 +758,20 @@ def get_stonith_agents_avail(auth_user, params)
 end
 
 def get_cluster_name()
-  if ISRHEL6
-    stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster"
+  if has_corosync_conf()
+    corosync_conf = CorosyncConf::parse_string(
+      Cfgsync::CorosyncConf.from_file().text()
     )
-    if retval == 0
-      stdout.each { |line|
-        match = /^cluster\.name=(.*)$/.match(line)
-        return match[1] if match
+    # mimic corosync behavior - the last cluster_name found is used
+    cluster_name = ''
+    corosync_conf.sections('totem').each { |totem|
+      totem.attributes('cluster_name').each { |attrib|
+        cluster_name = attrib[1]
       }
-    end
-    begin
-      cluster_conf = Cfgsync::ClusterConf.from_file().text()
-    rescue
-      return ''
-    end
-    conf_dom = REXML::Document.new(cluster_conf)
-    if conf_dom.root and conf_dom.root.name == 'cluster'
-      return conf_dom.root.attributes['name']
-    end
-    return ''
+    }
+    return cluster_name
   end
-
-  stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "totem.cluster_name"
-  )
-  if retval != 0 and not ISRHEL6
-    # Cluster probably isn't running, try to get cluster name from
-    # corosync.conf
-    begin
-      corosync_conf = CorosyncConf::parse_string(
-        Cfgsync::CorosyncConf.from_file().text()
-      )
-      # mimic corosync behavior - the last cluster_name found is used
-      cluster_name = nil
-      corosync_conf.sections('totem').each { |totem|
-        totem.attributes('cluster_name').each { |attrib|
-          cluster_name = attrib[1]
-        }
-      }
-      return cluster_name if cluster_name
-    rescue
-      return ''
-    end
-    return ""
-  else
-    return stdout.join().gsub(/.*= /,"").strip
-  end
+  return ''
 end
 
 def get_node_attributes(auth_user, cib_dom=nil)
@@ -1285,7 +1192,7 @@ def pcs_deauth(auth_user, host_names)
     )
     return sync_successful, sync_failed_nodes, sync_responses, hosts_not_found
   end
-  cluster_nodes = get_corosync_nodes()
+  cluster_nodes = get_corosync_nodes_names()
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
     [], host_names, cluster_nodes, $cluster_name
   )
@@ -1942,7 +1849,7 @@ end
 
 def get_cib_dom(auth_user)
   begin
-    stdout, _, retval = run_cmd(auth_user, 'cibadmin', '-Q', '-l')
+    stdout, _, retval = run_cmd(auth_user, CIBADMIN, '-Q', '-l')
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))
     end

@@ -9,7 +9,6 @@ import datetime
 import json
 import time
 import xml.dom.minidom
-from subprocess import getstatusoutput
 
 from pcs import (
     constraint,
@@ -63,7 +62,6 @@ from pcs.lib.errors import (
 )
 from pcs.lib.external import (
     disable_service,
-    is_systemctl,
     NodeCommandUnsuccessfulException,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
@@ -102,7 +100,10 @@ def cluster_cmd(argv):
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "sync"):
-        sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
+        sync_nodes(
+            utils.get_corosync_conf_facade().get_nodes_names(),
+            utils.getCorosyncConf()
+        )
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
     elif (sub_cmd == "pcsd-status"):
@@ -221,7 +222,10 @@ def cluster_cmd(argv):
     elif (sub_cmd == "reload"):
         cluster_reload(argv)
     elif (sub_cmd == "destroy"):
-        cluster_destroy(argv)
+        try:
+            cluster_destroy(argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "verify"):
         cluster_verify(argv)
     elif (sub_cmd == "report"):
@@ -933,22 +937,9 @@ def start_cluster(argv):
         return
 
     print("Starting Cluster...")
-    service_list = []
-    if utils.is_cman_cluster():
-#   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
-        retval, output = getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
-        if retval == 0:
-            with open("/etc/sysconfig/cman", "a") as cman_conf_file:
-                cman_conf_file.write("\nCMAN_QUORUM_TIMEOUT=0\n")
-
-        output, retval = utils.start_service("cman")
-        if retval != 0:
-            print(output)
-            utils.err("unable to start cman")
-    else:
-        service_list.append("corosync")
-        if utils.need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
+    service_list = ["corosync"]
+    if utils.need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
     service_list.append("pacemaker")
     for service in service_list:
         output, retval = utils.start_service(service)
@@ -965,7 +956,7 @@ def start_cluster_all():
         wait_timeout = utils.validate_wait_get_timeout(False)
         wait = True
 
-    all_nodes = utils.getNodesFromCorosyncConf()
+    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
     start_cluster_nodes(all_nodes)
 
     if wait:
@@ -1052,10 +1043,10 @@ def wait_for_nodes_started(node_list, timeout=None):
             utils.err("unable to verify all nodes have started")
 
 def stop_cluster_all():
-    stop_cluster_nodes(utils.getNodesFromCorosyncConf())
+    stop_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def stop_cluster_nodes(nodes):
-    all_nodes = utils.getNodesFromCorosyncConf()
+    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
         utils.err(
@@ -1071,13 +1062,7 @@ def stop_cluster_nodes(nodes):
             if retval != 0:
                 error_list.append(node + ": " + data)
                 continue
-            # we are sure whether we are on cman cluster or not because only
-            # nodes from a local cluster can be stopped (see nodes validation
-            # above)
-            if utils.is_rhel6():
-                quorum_info = utils.parse_cman_quorum_info(data)
-            else:
-                quorum_info = utils.parse_quorumtool_output(data)
+            quorum_info = utils.parse_quorumtool_output(data)
             if quorum_info:
                 if not quorum_info["quorate"]:
                     continue
@@ -1154,10 +1139,10 @@ def disable_cluster(argv):
         process_library_reports(e.args)
 
 def enable_cluster_all():
-    enable_cluster_nodes(utils.getNodesFromCorosyncConf())
+    enable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def disable_cluster_all():
-    disable_cluster_nodes(utils.getNodesFromCorosyncConf())
+    disable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def enable_cluster_nodes(nodes):
     error_list = utils.map_for_error_list(utils.enableCluster, nodes)
@@ -1200,22 +1185,10 @@ def stop_cluster(argv):
         return
 
     if "--force" not in utils.pcs_options:
-        if utils.is_rhel6():
-            output_status, dummy_retval = utils.run(["cman_tool", "status"])
-            output_nodes, dummy_retval = utils.run([
-                "cman_tool", "nodes", "-F", "id,type,votes,name"
-            ])
-            if output_status == output_nodes:
-                # when both commands return the same error
-                output = output_status
-            else:
-                output = output_status + "\n---Votes---\n" + output_nodes
-            quorum_info = utils.parse_cman_quorum_info(output)
-        else:
-            output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
-            # retval is 0 on success if node is not in partition with quorum
-            # retval is 1 on error OR on success if node has quorum
-            quorum_info = utils.parse_quorumtool_output(output)
+        output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
+        # retval is 0 on success if node is not in partition with quorum
+        # retval is 1 on error OR on success if node has quorum
+        quorum_info = utils.parse_quorumtool_output(output)
         if quorum_info:
             if utils.is_node_stop_cause_quorum_loss(quorum_info, local=True):
                 utils.err(
@@ -1241,59 +1214,48 @@ def stop_cluster(argv):
 
 def stop_cluster_pacemaker():
     print("Stopping Cluster (pacemaker)...")
-    if not is_systemctl():
-        command = ["service", "pacemaker", "stop"]
-        # If --skip-cman is not specified, pacemaker init script will stop cman
-        # and corosync as well. That way some of the nodes may stop cman before
-        # others stop pacemaker, which leads to quorum loss. We need to keep
-        # quorum until all pacemaker resources are stopped as some of them may
-        # need quorum to be able to stop.
-        if utils.is_cman_cluster():
-            command.append("--skip-cman")
-    else:
-        command = ["systemctl", "stop", "pacemaker"]
-    output, retval = utils.run(command)
+    output, retval = utils.stop_service("pacemaker")
     if retval != 0:
         print(output)
         utils.err("unable to stop pacemaker")
 
 def stop_cluster_corosync():
-    if utils.is_rhel6():
-        print("Stopping Cluster (cman)...")
-        output, retval = utils.stop_service("cman")
+    print("Stopping Cluster (corosync)...")
+    service_list = []
+    if utils.need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
+    service_list.append("corosync")
+    for service in service_list:
+        output, retval = utils.stop_service(service)
         if retval != 0:
             print(output)
-            utils.err("unable to stop cman")
-    else:
-        print("Stopping Cluster (corosync)...")
-        service_list = []
-        if utils.need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
-        service_list.append("corosync")
-        for service in service_list:
-            output, retval = utils.stop_service(service)
-            if retval != 0:
-                print(output)
-                utils.err("unable to stop {0}".format(service))
+            utils.err("unable to stop {0}".format(service))
 
 def kill_cluster(argv):
-    daemons = [
-        "crmd",
-        "pengine",
-        "attrd",
-        "lrmd",
-        "stonithd",
-        "cib",
-        "pacemakerd",
-        "pacemaker_remoted",
-        "corosync-qdevice",
-        "corosync",
-    ]
-    dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
+    dummy_output, dummy_retval = kill_local_cluster_services()
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
 #        print output
 #        sys.exit(1)
+
+def kill_local_cluster_services():
+    all_cluster_daemons = [
+        # Daemons taken from cluster-clean script in pacemaker
+        "pacemaker-attrd",
+        "pacemaker-based",
+        "pacemaker-controld",
+        "pacemaker-execd",
+        "pacemaker-fenced",
+        "pacemaker-remoted",
+        "pacemaker-schedulerd",
+        "pacemakerd",
+        "dlm_controld",
+        "gfs_controld",
+        # Corosync daemons
+        "corosync-qdevice",
+        "corosync",
+    ]
+    return utils.run(["killall", "-9"] + all_cluster_daemons)
 
 def cluster_push(argv):
     if len(argv) > 2:
@@ -1832,13 +1794,7 @@ def node_remove(lib_env, node0, modifiers):
                 + "a loss of the quorum, use --force to override\n"
                 + data
             )
-        # we are sure whether we are on cman cluster or not because only
-        # nodes from a local cluster can be stopped (see nodes validation
-        # above)
-        if utils.is_rhel6():
-            quorum_info = utils.parse_cman_quorum_info(data)
-        else:
-            quorum_info = utils.parse_quorumtool_output(data)
+        quorum_info = utils.parse_quorumtool_output(data)
         if quorum_info:
             if utils.is_node_stop_cause_quorum_loss(
                 quorum_info, local=False, node_list=[node0]
@@ -1946,65 +1902,7 @@ def cluster_localnode(argv):
         usage.cluster()
         exit(1)
 
-def cluster_uidgid_rhel6(argv, silent_list = False):
-    if not os.path.isfile(settings.cluster_conf_file):
-        utils.err("the file doesn't exist on this machine, create a cluster before running this command" % settings.cluster_conf_file)
-
-    if len(argv) == 0:
-        found = False
-        output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--lsmisc"])
-        if retval != 0:
-            utils.err("error running ccs\n" + output)
-        lines = output.split('\n')
-        for line in lines:
-            if line.startswith('UID/GID: '):
-                print(line)
-                found = True
-        if not found and not silent_list:
-            print("No uidgids configured in cluster.conf")
-        return
-
-    command = argv.pop(0)
-    uid=""
-    gid=""
-    if (command == "add" or command == "rm") and len(argv) > 0:
-        for arg in argv:
-            if arg.find('=') == -1:
-                utils.err("uidgid options must be of the form uid=<uid> gid=<gid>")
-
-            (k,v) = arg.split('=',1)
-            if k != "uid" and k != "gid":
-                utils.err("%s is not a valid key, you must use uid or gid" %k)
-
-            if k == "uid":
-                uid = v
-            if k == "gid":
-                gid = v
-        if uid == "" and gid == "":
-            utils.err("you must set either uid or gid")
-
-        if command == "add":
-            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--setuidgid", "uid="+uid, "gid="+gid])
-            if retval != 0:
-                utils.err("unable to add uidgid\n" + output.rstrip())
-        elif command == "rm":
-            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--rmuidgid", "uid="+uid, "gid="+gid])
-            if retval != 0:
-                utils.err("unable to remove uidgid\n" + output.rstrip())
-
-        # If we make a change, we sync out the changes to all nodes unless we're using -f
-        if not utils.usefile:
-            sync_nodes(utils.getNodesFromCorosyncConf(), utils.getCorosyncConf())
-
-    else:
-        usage.cluster(["uidgid"])
-        exit(1)
-
 def cluster_uidgid(argv, silent_list = False):
-    if utils.is_rhel6():
-        cluster_uidgid_rhel6(argv, silent_list)
-        return
-
     if len(argv) == 0:
         found = False
         uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
@@ -2087,6 +1985,8 @@ def cluster_reload(argv):
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
+    if argv:
+        raise CmdLineInputError()
     if "--all" in utils.pcs_options:
         # destroy remote and guest nodes
         cib = None
@@ -2100,7 +2000,7 @@ def cluster_destroy(argv):
             )
         if cib is not None:
             try:
-                all_remote_nodes = get_existing_nodes_names(tree=cib)
+                all_remote_nodes = get_existing_nodes_names(cib=cib)
                 if len(all_remote_nodes) > 0:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -2112,7 +2012,7 @@ def cluster_destroy(argv):
                 utils.process_library_reports(e.args)
 
         # destroy full-stack nodes
-        destroy_cluster(utils.getNodesFromCorosyncConf())
+        destroy_cluster(utils.get_corosync_conf_facade().get_nodes_names())
     else:
         print("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:
@@ -2120,7 +2020,7 @@ def cluster_destroy(argv):
             # ignore it since we want it not to be running anyways.
             utils.stop_service(service)
         print("Killing any remaining services...")
-        os.system("killall -q -9 corosync corosync-qdevice aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+        kill_local_cluster_services()
         try:
             utils.disableServices()
         except:
@@ -2134,16 +2034,19 @@ def cluster_destroy(argv):
             pass
 
         print("Removing all cluster configuration files...")
-        if utils.is_rhel6():
-            os.system("rm -f /etc/cluster/cluster.conf")
-        else:
-            os.system("rm -f /etc/corosync/corosync.conf")
-            os.system("rm -f {0}".format(settings.corosync_authkey_file))
+        dummy_output, dummy_retval = utils.run([
+            "rm", "-f",
+            settings.corosync_conf_file,
+            settings.corosync_authkey_file,
+            settings.pacemaker_authkey_file,
+        ])
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
-            os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
-        os.system("rm -f {0}".format(settings.pacemaker_authkey_file))
+            dummy_output, dummy_retval = utils.run([
+                "find", "/var/lib/pacemaker", "-name", name,
+                "-exec", "rm", "-f", "{}", ";"
+            ])
         try:
             qdevice_net.client_destroy()
         except:

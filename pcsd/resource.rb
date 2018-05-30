@@ -60,7 +60,7 @@ def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = f
   resource_list = resource_list.sort_by{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options or get_operations
-    stdout, stderror, retval = run_cmd(auth_user, "cibadmin", "-Q", "-l")
+    stdout, stderror, retval = run_cmd(auth_user, CIBADMIN, "-Q", "-l")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}

@@ -2391,8 +2391,8 @@ class HostNotFound(NameBuildTest):
     def test_single_host(self):
         self.assert_message_from_info(
             (
-                "Host 'unknown_host' not found. Try to authenticate the host "
-                "using 'pcs host auth unknown_host' command."
+                "Host 'unknown_host' is not known to pcs, try to authenticate "
+                "the host using 'pcs host auth unknown_host' command"
             ),
             {
                 "host_list": ["unknown_host"],
@@ -2402,9 +2402,9 @@ class HostNotFound(NameBuildTest):
     def test_multiple_hosts(self):
         self.assert_message_from_info(
             (
-                "Hosts 'another_one', 'unknown_host' not found. Try to "
-                "authenticate the hosts using 'pcs host auth another_one "
-                "unknown_host' command."
+                "Hosts 'another_one', 'unknown_host' are not known to pcs, try "
+                "to authenticate the hosts using 'pcs host auth another_one "
+                "unknown_host' command"
             ),
             {
                 "host_list": ["unknown_host", "another_one"],

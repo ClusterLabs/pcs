@@ -238,9 +238,6 @@ def quorum_unblock_cmd(argv):
         usage.quorum(["unblock"])
         sys.exit(1)
 
-    if utils.is_rhel6():
-        utils.err("operation is not supported on CMAN clusters")
-
     output, retval = utils.run(
         ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]
     )
@@ -250,7 +247,7 @@ def quorum_unblock_cmd(argv):
         utils.err("cluster is not waiting for nodes to establish quorum")
 
     unjoined_nodes = (
-        set(utils.getNodesFromCorosyncConf())
+        set(utils.get_corosync_conf_facade().get_nodes_names())
         -
         set(utils.getCorosyncActiveNodes())
     )
