@@ -638,14 +638,21 @@ def get_local_node_id()
   end
 end
 
+def has_corosync_conf()
+  return Cfgsync::cluster_cfg_class.exist?()
+end
+
 def get_corosync_conf()
   return Cfgsync::cluster_cfg_class.from_file().text()
 end
 
 def get_corosync_nodes_names()
-  return CorosyncConf::get_corosync_nodes_names(
-    CorosyncConf::parse_string(get_corosync_conf)
-  )
+  if has_corosync_conf()
+    return CorosyncConf::get_corosync_nodes_names(
+      CorosyncConf::parse_string(get_corosync_conf())
+    )
+  end
+  return []
 end
 
 def get_nodes()
@@ -751,31 +758,20 @@ def get_stonith_agents_avail(auth_user, params)
 end
 
 def get_cluster_name()
-  stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "-g", "totem.cluster_name"
-  )
-  if retval != 0
-    # Cluster probably isn't running, try to get cluster name from
-    # corosync.conf
-    begin
-      corosync_conf = CorosyncConf::parse_string(
-        Cfgsync::CorosyncConf.from_file().text()
-      )
-      # mimic corosync behavior - the last cluster_name found is used
-      cluster_name = nil
-      corosync_conf.sections('totem').each { |totem|
-        totem.attributes('cluster_name').each { |attrib|
-          cluster_name = attrib[1]
-        }
+  if has_corosync_conf()
+    corosync_conf = CorosyncConf::parse_string(
+      Cfgsync::CorosyncConf.from_file().text()
+    )
+    # mimic corosync behavior - the last cluster_name found is used
+    cluster_name = ''
+    corosync_conf.sections('totem').each { |totem|
+      totem.attributes('cluster_name').each { |attrib|
+        cluster_name = attrib[1]
       }
-      return cluster_name if cluster_name
-    rescue
-      return ''
-    end
-    return ""
-  else
-    return stdout.join().gsub(/.*= /,"").strip
+    }
+    return cluster_name
   end
+  return ''
 end
 
 def get_node_attributes(auth_user, cib_dom=nil)

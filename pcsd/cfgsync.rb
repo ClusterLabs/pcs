@@ -53,6 +53,10 @@ module Cfgsync
       end
     end
 
+    def self.exist?()
+      return File::exist?(@file_path)
+    end
+
     def self.backup()
       begin
         FileUtils.cp(@file_path, @file_path + "." + Time.now.to_i.to_s)
