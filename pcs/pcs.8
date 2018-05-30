@@ -767,7 +767,7 @@ auth (<host name> [addr=<address>[:<port>]])... [\fB\-u\fR <username>] [\fB\-p\f
 Authenticate local pcs/pcsd against pcsd on specified hosts. It is possible to specify an address and a port via which pcs/pcsd will communicate with each host. If an address is not specified a host name will be used. If a port is not specified 2224 will be used.
 .TP
 deauth [<host name>]...
-Delete locally stored authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If no host names are specified all tokens will be deleted. After this command is run this node will need to re\-authenticate against other nodes to be able to connect to them.
+Delete authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If the current system is a member of a cluster, the tokens will be deleted from all nodes in the cluster. If no host names are specified all tokens will be deleted. After this command is run this node will need to re-authenticate against other nodes to be able to connect to them.
 .SS "node"
 .TP
 attribute [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
