@@ -45,6 +45,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
             env.HTTPS_PROXY: None,
             env.NO_PROXY: None,
+            env.PCSD_DEV: False,
             "has_errors": False,
         }
         if specific_env_values is None:
@@ -79,6 +80,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DEV: "true",
             env.HTTPS_PROXY: "proxy1",
             env.NO_PROXY: "host",
+            env.PCSD_DEV: "true",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,
@@ -100,6 +102,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 ),
                 env.HTTPS_PROXY: environ[env.HTTPS_PROXY],
                 env.NO_PROXY: environ[env.NO_PROXY],
+                env.PCSD_DEV: True,
             },
         )
 

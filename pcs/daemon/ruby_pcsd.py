@@ -92,7 +92,7 @@ class Wrapper:
             ]),
             "HTTPS": "on" if request.protocol == "https" else "off",
             "HTTP_VERSION": request.version,
-            "REQUEST_PATH": request.uri,
+            "REQUEST_PATH": request.path,
             "rack.input": request.body.decode("utf8"),
         }}
 
@@ -132,15 +132,10 @@ class Wrapper:
         try:
             response = json.loads(stdout)
         except json.JSONDecodeError as e:
-            message_list = [f"Cannot decode json from ruby pcsd wrapper: '{e}'"]
-            if self.__debug:
-                message_list.extend([
-                    f"Request for ruby pcsd wrapper: '{request_json}'",
-                    f"Response stdout from ruby pcsd wrapper: '{stdout}'",
-                    f"Response stderr from ruby pcsd wrapper: '{stderr}'",
-                ])
-            for message in message_list:
-                log.pcsd.error(message)
+            self.__log_bad_response(
+                f"Cannot decode json from ruby pcsd wrapper: '{e}'",
+                request_json, stdout, stderr
+            )
             raise HTTPError(500)
         else:
             process_response_logs(response["logs"])
@@ -180,3 +175,11 @@ class Wrapper:
         except HTTPError:
             log.pcsd.error("Config synchronization failed")
             return int(now()) + DEFAULT_SYNC_CONFIG_DELAY
+
+    def __log_bad_response(self, error_message, request_json, stdout, stderr):
+        log.pcsd.error(error_message)
+        if not self.__debug:
+            return
+        log.pcsd.debug(f"Request for ruby pcsd wrapper: '{request_json}'")
+        log.pcsd.debug(f"Response stdout from ruby pcsd wrapper: '{stdout}'")
+        log.pcsd.debug(f"Response stderr from ruby pcsd wrapper: '{stderr}'")

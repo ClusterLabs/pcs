@@ -1,14 +1,14 @@
 import os
 import signal
 import socket
-from functools import partial
 
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
+from tornado.web import Application
 
 from pcs import settings
 from pcs.common.system import is_systemd
-from pcs.daemon import log, systemd, session, ruby_pcsd, app, ssl
+from pcs.daemon import log, systemd, session, ruby_pcsd, app_remote, app_gui,ssl
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -38,6 +38,38 @@ def config_sync(
         IOLoop.current().call_at(next_run_time, config_synchronization)
     return config_synchronization
 
+def configure_app(
+    session_storage: session.Storage,
+    ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
+    sync_config_lock: Lock,
+    public_dir,
+    disable_gui=False,
+    debug=False
+):
+    def make_app(https_server_manage: HttpsServerManage):
+        """
+        https_server_manage -- allows to controll the server (specifically
+            reload its SSL certificates). A relevant handler should get this
+            object via the method `initialize`.
+        """
+        routes = app_remote.get_routes(
+            ruby_pcsd_wrapper,
+            sync_config_lock,
+            https_server_manage,
+        )
+
+        if not disable_gui:
+            routes.extend(
+                app_gui.get_routes(
+                    session_storage,
+                    ruby_pcsd_wrapper,
+                    public_dir
+                )
+            )
+
+        return Application(routes, debug=debug)
+    return make_app
+
 def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
@@ -60,14 +92,13 @@ def main():
         https_proxy=env.HTTPS_PROXY,
         no_proxy=env.NO_PROXY,
     )
-    make_app = partial(
-        app.make_app,
+    make_app = configure_app(
         session.Storage(env.PCSD_SESSION_LIFETIME),
         ruby_pcsd_wrapper,
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
         disable_gui=env.PCSD_DISABLE_GUI,
-        debug=env.PCSD_DEBUG,
+        debug=env.PCSD_DEV,
     )
     pcsd_ssl = ssl.PcsdSSL(
         server_name=socket.gethostname(),
