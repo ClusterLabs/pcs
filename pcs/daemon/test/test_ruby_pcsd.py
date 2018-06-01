@@ -81,12 +81,20 @@ class RunRuby(AsyncTestCase):
     def create_request(self, type=ruby_pcsd.SYNC_CONFIGS):
         return {"type": type}
 
+    def set_run_result(self, run_result):
+        self.stdout = json.dumps({**run_result, "logs": []})
+
+    def assert_sinatra_result(self, result, headers, status, body):
+        self.assertEqual(result.headers, headers)
+        self.assertEqual(result.status, status)
+        self.assertEqual(result.body, str.encode(body))
+
     @gen_test
     def test_correct_sending(self):
-        run_result = {"next": 10, "logs": []}
-        self.stdout = json.dumps(run_result)
+        run_result = {"next": 10}
+        self.set_run_result(run_result)
         result = yield self.wrapper.run_ruby(ruby_pcsd.SYNC_CONFIGS)
-        self.assertEqual(result, run_result)
+        self.assertEqual(result["next"], run_result["next"])
 
     @gen_test
     def test_error_from_ruby(self):
@@ -96,7 +104,7 @@ class RunRuby(AsyncTestCase):
     @gen_test
     def test_sync_config_shortcut_success(self):
         next = 10
-        self.stdout = json.dumps({"next": next, "logs": []})
+        self.set_run_result({"next": next})
         result = yield self.wrapper.sync_configs()
         self.assertEqual(result, next)
 
@@ -111,11 +119,10 @@ class RunRuby(AsyncTestCase):
         headers = {"some": "header"}
         status = 200
         body = "content"
-        self.stdout = json.dumps({
+        self.set_run_result({
             "headers": headers,
             "status": status,
             "body": b64encode(str.encode(body)).decode(),
-            "logs": [],
         })
         http_request = create_http_request()
         self.request = {
@@ -123,7 +130,7 @@ class RunRuby(AsyncTestCase):
             **self.wrapper.get_sinatra_request(http_request),
         }
         result = yield self.wrapper.request_remote(http_request)
-        self.assertEqual(result, (headers, status, str.encode(body)))
+        self.assert_sinatra_result(result, headers, status, body)
 
     @gen_test
     def test_request_gui(self):
@@ -135,11 +142,10 @@ class RunRuby(AsyncTestCase):
         groups = ["hacluster"]
         is_authenticated = True
 
-        self.stdout = json.dumps({
+        self.set_run_result({
             "headers": headers,
             "status": status,
             "body": b64encode(str.encode(body)).decode(),
-            "logs": [],
         })
         http_request = create_http_request()
         self.request = {
@@ -157,7 +163,7 @@ class RunRuby(AsyncTestCase):
             groups=groups,
             is_authenticated=is_authenticated,
         )
-        self.assertEqual(result, (headers, status, str.encode(body)))
+        self.assert_sinatra_result(result, headers, status, body)
 
 class ProcessResponseLog(TestCase):
     @patch_ruby_pcsd("log.from_external_source")
