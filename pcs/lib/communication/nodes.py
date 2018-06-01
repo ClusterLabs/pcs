@@ -371,6 +371,25 @@ class UpdateKnownHosts(
         )
 
 
+class SendPcsdSslCertAndKey(
+    SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    RunRemotelyBase
+):
+    def __init__(self, report_processor, ssl_cert, ssl_key):
+        super().__init__(report_processor)
+        self._ssl_cert = ssl_cert
+        self._ssl_key = ssl_key
+
+    def _get_request_data(self):
+        return RequestData(
+            "remote/set_certs",
+            [("ssl_cert", self._ssl_cert), ("ssl_key", self._ssl_key)]
+        )
+
+    def _get_success_report(self, node_label):
+        return reports.pcsd_ssl_cert_and_key_set_success(node_label)
+
+
 def _force(force_code, is_forced):
     if is_forced:
         return dict(

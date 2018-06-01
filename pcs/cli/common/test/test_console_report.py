@@ -2616,6 +2616,28 @@ class PcsdVersionTooOld(NameBuildTest):
             }
         )
 
+class PcsdSslCertAndKeyDistributionStarted(NameBuildTest):
+    code = codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED
+    def test_success(self):
+        self.assert_message_from_info(
+            "Synchronizing pcsd SSL certificates on nodes 'node1', 'node2', "
+                "'node3'..."
+            ,
+            {
+                "node_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+class PcsdSslCertAndKeySetSuccess(NameBuildTest):
+    code = codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Success",
+            {
+                "node": "node1",
+            }
+        )
+
 class UsingKnownHostAddressForHost(NameBuildTest):
     code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
     def test_success(self):

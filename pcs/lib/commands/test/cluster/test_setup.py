@@ -1,4 +1,5 @@
 from copy import deepcopy
+from functools import partial
 import json
 
 from unittest import mock, TestCase
@@ -26,6 +27,8 @@ SERVICE_LIST = [
     "pacemaker", "pacemaker_remote", "corosync", "pcsd", "sbd", "qdevice",
     "booth",
 ]
+PCSD_SSL_CERT = "pcsd ssl cert"
+PCSD_SSL_KEY = "pcsd ssl key"
 RING_TEMPLATE = "ring{i}_addr: {addr}"
 NODE_TEMPLATE = """\
     node {{
@@ -186,6 +189,10 @@ def config_succes_minimal_fixture(
             pcsd_settings=True,
             communication_list=communication_list,
         )
+        .local.read_and_send_pcsd_ssl_cert(
+            node_labels=node_labels,
+            communication_list=communication_list,
+        )
         .http.files.put_files(
             node_labels=node_labels,
             corosync_conf=corosync_conf,
@@ -260,6 +267,20 @@ def reports_success_minimal_fixture(
         +
         [
             fixture.info(
+                report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                node_name_list=node_list,
+            )
+        ]
+        +
+        [
+            fixture.info(
+                report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                node=node,
+            ) for node in node_list
+        ]
+        +
+        [
+            fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
                 file_list=[corosync_conf_file],
                 node_list=node_list,
@@ -279,6 +300,37 @@ def reports_success_minimal_fixture(
             fixture.info(report_codes.CLUSTER_SETUP_SUCCESS)
         ]
     )
+
+
+class LocalConfig():
+    def __init__(self, call_collection, wrap_helper, config):
+        self.__calls = call_collection
+        self.config = config
+
+    def read_and_send_pcsd_ssl_cert(
+        self, node_labels=None, communication_list=None
+    ):
+        (self.config
+            .fs.open(
+                settings.pcsd_cert_location,
+                mock.mock_open(read_data=PCSD_SSL_CERT)(),
+                name="fs.open.pcsd_ssl_cert"
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                mock.mock_open(read_data=PCSD_SSL_KEY)(),
+                name="fs.open.pcsd_ssl_key"
+            )
+            .http.host.send_pcsd_cert(
+                cert=PCSD_SSL_CERT,
+                key=PCSD_SSL_KEY,
+                node_labels=node_labels,
+                communication_list=communication_list,
+            )
+        )
+
+
+get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
 
 @mock.patch(
@@ -535,6 +587,9 @@ class Setup2NodeSuccessMinimal(TestCase):
                 corosync_authkey=RANDOM_KEY,
             )
             .http.files.remove_files(self.node_list, pcsd_settings=True)
+            .local.read_and_send_pcsd_ssl_cert(
+                node_labels=self.node_list,
+            )
         )
 
     def test_two_node(self):
@@ -1674,6 +1729,9 @@ class SetupWithWait(TestCase):
                 corosync_authkey=RANDOM_KEY,
             )
             .http.files.remove_files(NODE_LIST, pcsd_settings=True)
+            .local.read_and_send_pcsd_ssl_cert(
+                node_labels=NODE_LIST
+            )
             .http.files.put_files(
                 NODE_LIST,
                 corosync_conf=corosync_conf_fixture(
@@ -2217,8 +2275,108 @@ class Failures(TestCase):
             ]
         )
 
-    def test_removing_files_communication_failure(self):
+    def test_reading_pcsd_ssl_cert_failure(self):
+        self._remove_calls(6)
+        self.config.fs.open(
+            settings.pcsd_cert_location,
+            name="fs.open.pcsd_ssl_cert",
+            side_effect=EnvironmentError(1, REASON)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role="PCSD_SSL_CERT",
+                    file_path=settings.pcsd_cert_location,
+                    reason=REASON,
+                    operation="read"
+                )
+            ]
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+        )
+
+    def test_reading_pcsd_ssl_key_failure(self):
+        self._remove_calls(5)
+        self.config.fs.open(
+            settings.pcsd_key_location,
+            name="fs.open.pcsd_ssl_key",
+            side_effect=EnvironmentError(1, REASON)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+            ),
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role="PCSD_SSL_KEY",
+                    file_path=settings.pcsd_key_location,
+                    reason=REASON,
+                    operation="read"
+                )
+            ]
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+        )
+
+    def test_sending_pcsd_ssl_cert_and_key_failure(self):
         self._remove_calls(4)
+        self.config.http.host.send_pcsd_cert(
+            cert=PCSD_SSL_CERT,
+            key=PCSD_SSL_KEY,
+            communication_list=[
+                {
+                    "label": NODE_LIST[0],
+                    "response_code": 400,
+                    "output": REASON,
+                }
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ]
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-8]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node1",
+                    command="remote/set_certs",
+                    reason=REASON
+                )
+            ]
+        )
+
+    def test_removing_files_communication_failure(self):
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=self.communication_list,
             pcsd_settings=True,
@@ -2235,7 +2393,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
+            reports_success_minimal_fixture()[:-12]
             +
             [
                 fixture.info(
@@ -2249,7 +2407,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_failure(self):
-        self._remove_calls(4)
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2280,7 +2438,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
+            reports_success_minimal_fixture()[:-12]
             +
             [
                 fixture.info(
@@ -2301,7 +2459,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_invalid_response(self):
-        self._remove_calls(4)
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2325,7 +2483,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
+            reports_success_minimal_fixture()[:-12]
             +
             [
                 fixture.info(
@@ -2344,7 +2502,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_communication_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(10)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2395,7 +2553,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2434,7 +2592,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_invalid_response(self):
-        self._remove_calls(6)
+        self._remove_calls(10)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2459,7 +2617,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2480,7 +2638,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(10)
         self.config.http.files.put_files(
             communication_list=self.communication_list,
             pcmk_authkey=RANDOM_KEY,
@@ -2498,7 +2656,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2514,7 +2672,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_known_hosts_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(12)
         self.config.http.host.update_known_hosts(
             communication_list=self.communication_list,
             to_add_hosts=NODE_LIST
@@ -2531,13 +2689,13 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-16]
+            reports_success_minimal_fixture()[:-20]
             +
             self._get_failure_reports("remote/known_hosts_change")
         )
 
     def test_cluster_destroy_failure(self):
-        self._remove_calls(10)
+        self._remove_calls(14)
         self.config.http.host.cluster_destroy(
             communication_list=self.communication_list,
         )
@@ -2553,7 +2711,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-23]
             +
             [
                 fixture.info(

@@ -1652,6 +1652,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "is unable to perform the action"
         ).format(**info)
     ,
+    codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED: lambda info:
+        "Synchronizing pcsd SSL certificates on nodes {_nodes}...".format(
+            _nodes=format_list(info["node_name_list"])
+        )
+    ,
+    codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS: lambda info:
+        "{node}: Success".format(**info)
+    ,
     codes.CLUSTER_WILL_BE_DESTROYED:
         "Some nodes are already in a cluster, enforcing this will destroy "
         "existing cluster on those nodes"
