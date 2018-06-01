@@ -3224,6 +3224,31 @@ def pcsd_version_too_old(node):
         )
     )
 
+def pcsd_ssl_cert_and_key_distribution_started(node_name_list):
+    """
+    We are about to distribute pcsd SSL certificate and key to nodes
+
+    iterable node_name_list -- node names to distribute to
+    """
+    return ReportItem.info(
+        report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+        info={
+            "node_name_list": sorted(node_name_list),
+        }
+    )
+
+def pcsd_ssl_cert_and_key_set_success(node):
+    """
+    Pcsd SSL certificate and key have been succesfuly saved on a node
+
+    string node -- node name
+    """
+    return ReportItem.info(
+        report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+        info={
+            "node": node,
+        }
+    )
 
 def cluster_will_be_destroyed():
     return ReportItem.error(

@@ -1400,7 +1400,6 @@ Commands:
 
     sync-certificates
         Sync pcsd certificates to all nodes in the local cluster.
-        WARNING: This will restart pcsd daemon on the nodes.
 
     deauth [<token>]...
        Delete locally stored authentication tokens used by remote systems to

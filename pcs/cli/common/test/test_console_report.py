@@ -2616,6 +2616,28 @@ class PcsdVersionTooOld(NameBuildTest):
             }
         )
 
+class PcsdSslCertAndKeyDistributionStarted(NameBuildTest):
+    code = codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED
+    def test_success(self):
+        self.assert_message_from_info(
+            "Synchronizing pcsd SSL certificates on nodes 'node1', 'node2', "
+                "'node3'..."
+            ,
+            {
+                "node_name_list": ["node1", "node3", "node2"],
+            }
+        )
+
+class PcsdSslCertAndKeySetSuccess(NameBuildTest):
+    code = codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS
+    def test_success(self):
+        self.assert_message_from_info(
+            "node1: Success",
+            {
+                "node": "node1",
+            }
+        )
+
 class UsingKnownHostAddressForHost(NameBuildTest):
     code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
     def test_success(self):
@@ -2641,4 +2663,94 @@ class ResourceInBundleNotAccessible(NameBuildTest):
                 bundle_id="bundleA",
                 resource_id="resourceA",
             )
+        )
+
+class FileAlreadyExists(NameBuildTest):
+    code = codes.FILE_ALREADY_EXISTS
+    def test_minimal(self):
+        self.assert_message_from_info(
+            "Corosync authkey file '/etc/corosync/key' already exists",
+            {
+                "file_role": "COROSYNC_AUTHKEY",
+                "file_path": "/etc/corosync/key",
+                "node": None,
+            }
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_info(
+            "node1: pcs configuration file '/var/lib/pcsd/conf' already exists",
+            {
+                "file_role": "PCS_SETTINGS_CONF",
+                "file_path": "/var/lib/pcsd/conf",
+                "node": "node1",
+            }
+        )
+
+class FileDoesNotExist(NameBuildTest):
+    code = codes.FILE_DOES_NOT_EXIST
+    def test_success(self):
+        self.assert_message_from_info(
+            "UNKNOWN_ROLE file '/etc/cluster/something' does not exist",
+            {
+                "file_role": "UNKNOWN_ROLE",
+                "file_path": "/etc/cluster/something",
+            }
+        )
+
+class FileIoError(NameBuildTest):
+    code = codes.FILE_IO_ERROR
+    def test_success_a(self):
+        self.assert_message_from_info(
+            "Unable to chown Booth key '/etc/booth/booth.key': Failed",
+            {
+                "file_role": "BOOTH_KEY",
+                "file_path": "/etc/booth/booth.key",
+                "reason": "Failed",
+                "operation": "chown",
+            }
+        )
+
+    def test_success_b(self):
+        self.assert_message_from_info(
+            "Unable to chmod Booth configuration '/etc/booth/main.cfg': Failed",
+            {
+                "file_role": "BOOTH_CONFIG",
+                "file_path": "/etc/booth/main.cfg",
+                "reason": "Failed",
+                "operation": "chmod",
+            }
+        )
+
+    def test_success_c(self):
+        self.assert_message_from_info(
+            "Unable to remove Pacemaker authkey '/etc/pacemaker/key': Failed",
+            {
+                "file_role": "PACEMAKER_AUTHKEY",
+                "file_path": "/etc/pacemaker/key",
+                "reason": "Failed",
+                "operation": "remove",
+            }
+        )
+
+    def test_success_d(self):
+        self.assert_message_from_info(
+            "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
+            {
+                "file_role": "PCSD_SSL_CERT",
+                "file_path": "/var/lib/pcsd.crt",
+                "reason": "Failed",
+                "operation": "read",
+            }
+        )
+
+    def test_success_e(self):
+        self.assert_message_from_info(
+            "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
+            {
+                "file_role": "PCSD_SSL_KEY",
+                "file_path": "/var/lib/pcsd.key",
+                "reason": "Failed",
+                "operation": "write",
+            }
         )

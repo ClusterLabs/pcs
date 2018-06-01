@@ -1,30 +1,34 @@
 import json
 import os
 import sys
-import time
 
 from pcs import settings
 from pcs import usage
 from pcs import utils
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.lib.errors import LibraryError
 
-
-def pcsd_cmd(argv):
-    if len(argv) == 0:
+def pcsd_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
         usage.pcsd()
         sys.exit(1)
 
-    sub_cmd = argv.pop(0)
-    if sub_cmd == "help":
-        usage.pcsd(argv)
-    elif sub_cmd == "deauth":
-        pcsd_deauth(argv)
-    elif sub_cmd == "certkey":
-        pcsd_certkey(argv)
-    elif sub_cmd == "sync-certificates":
-        pcsd_sync_certs(argv)
-    else:
-        usage.pcsd()
-        sys.exit(1)
+    sub_cmd, argv_next = argv[0], argv[1:]
+    try:
+        if sub_cmd == "help":
+            usage.pcsd(argv_next)
+        elif sub_cmd == "deauth":
+            pcsd_deauth(argv_next)
+        elif sub_cmd == "certkey":
+            pcsd_certkey(argv_next)
+        elif sub_cmd == "sync-certificates":
+            pcsd_sync_certs(lib, argv_next, modifiers)
+        else:
+            raise CmdLineInputError()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "pcsd", sub_cmd)
 
 def pcsd_certkey(argv):
     if len(argv) != 2:
@@ -72,48 +76,11 @@ def pcsd_certkey(argv):
 
     print("Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect")
 
-def pcsd_sync_certs(argv, exit_after_error=True, async_restart=False):
-    error = False
-    nodes_sync = (
-        argv if argv else utils.get_corosync_conf_facade().get_nodes_names()
-    )
-    nodes_restart = []
-
-    print("Synchronizing pcsd certificates on nodes {0}...".format(
-        ", ".join(nodes_sync)
-    ))
-    pcsd_data = {
-        "nodes": nodes_sync,
-    }
-    output, retval = utils.run_pcsdcli("send_local_certs", pcsd_data)
-    if retval == 0 and output["status"] == "ok" and output["data"]:
-        try:
-            sync_result = output["data"]
-            if sync_result["node_status"]:
-                for node, status in sync_result["node_status"].items():
-                    print("{0}: {1}".format(node, status["text"]))
-                    if status["status"] == "ok":
-                        nodes_restart.append(node)
-                    else:
-                        error = True
-            if sync_result["status"] != "ok":
-                error = True
-                utils.err(sync_result["text"], False)
-            if error and not nodes_restart:
-                if exit_after_error:
-                    sys.exit(1)
-                else:
-                    return
-        except (KeyError, AttributeError):
-            utils.err("Unable to communicate with pcsd", exit_after_error)
-            return
-    else:
-        utils.err("Unable to sync pcsd certificates", exit_after_error)
-        return
-
-    print("Restarting pcsd on the nodes in order to reload the certificates...")
-    pcsd_restart_nodes(
-        nodes_restart, exit_after_error, async_restart=async_restart
+def pcsd_sync_certs(lib, argv, modifiers):
+    if len(argv) > 0:
+        raise CmdLineInputError()
+    lib.pcsd.synchronize_ssl_certificate(
+        skip_offline=modifiers["skip_offline_nodes"]
     )
 
 def pcsd_deauth(argv):
@@ -167,75 +134,3 @@ def pcsd_deauth(argv):
         utils.err(
             "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
         )
-
-def pcsd_restart_nodes(nodes, exit_after_error=True, async_restart=False):
-    pcsd_data = {
-        "nodes": nodes,
-    }
-    instance_signatures = dict()
-
-    error = False
-    output, retval = utils.run_pcsdcli("pcsd_restart_nodes", pcsd_data)
-    if retval == 0 and output["status"] == "ok" and output["data"]:
-        try:
-            restart_result = output["data"]
-            if restart_result["node_status"]:
-                for node, status in restart_result["node_status"].items():
-                    # If the request got accepted and we have the instance
-                    # signature, we are able to check if the restart was
-                    # perfirmed. Otherwise we just print the status. Instance
-                    # signature got added in pcs-0.9.156.
-                    if status["status"] == "ok":
-                        sign = status.get("instance_signature", "")
-                        if sign:
-                            instance_signatures[node] = sign
-                            continue
-                    print("{0}: {1}".format(node, status["text"]))
-                    if status["status"] != "ok":
-                        error = True
-            if restart_result["status"] != "ok":
-                error = True
-                utils.err(restart_result["text"], False)
-            if error:
-                if exit_after_error:
-                    sys.exit(1)
-                else:
-                    return
-        except (KeyError, AttributeError):
-            utils.err("Unable to communicate with pcsd", exit_after_error)
-            return
-    else:
-        utils.err("Unable to restart pcsd", exit_after_error)
-        return
-
-    if async_restart:
-        print("Not waiting for restart of pcsd on all nodes.")
-        return
-
-    # check if the restart was performed already
-    sleep_seconds = 3
-    total_wait_seconds = 60 * 5
-    error = False
-    for _ in range(int(total_wait_seconds / sleep_seconds)):
-        if not instance_signatures:
-            # no more nodes to check
-            break
-        time.sleep(sleep_seconds)
-        for node, signature in list(instance_signatures.items()):
-            retval, output = utils.getPcsdInstanceSignature(node)
-            if retval == 0 and signature != output:
-                del instance_signatures[node]
-                print("{0}: Success".format(node))
-            elif retval in (3, 4):
-                # node not authorized or permission denied
-                del instance_signatures[node]
-                utils.err(output, False)
-                error = True
-            # if connection refused or an http error occurs the dameon is just
-            # restarting so we'll try it again
-    if instance_signatures:
-        for node in sorted(instance_signatures):
-            utils.err("{0}: Not restarted".format(node), False)
-            error = True
-    if error and exit_after_error:
-        sys.exit(1)

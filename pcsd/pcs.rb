@@ -964,21 +964,6 @@ def get_rhel_version()
   return nil
 end
 
-def pcsd_restart()
-  # restart in a separate process so we can send a response to the restart
-  # request
-  fork {
-    # let us send the response to the restart request
-    # we need little bit more time to finish some things when setting up cluster
-    sleep(10)
-    if ISSYSTEMCTL
-      exec("systemctl", "restart", "pcsd")
-    else
-      exec("service", "pcsd", "restart")
-    end
-  }
-end
-
 def get_pcsd_version()
   return PCS_VERSION.split(".").collect { | x | x.to_i }
 end
@@ -1224,138 +1209,6 @@ def send_local_configs_to_nodes(
   return publisher.send(force)
 end
 
-def send_local_certs_to_nodes(auth_user, nodes)
-  begin
-    data = {
-      'ssl_cert' => File.read(CRT_FILE),
-      'ssl_key' => File.read(KEY_FILE),
-    }
-  rescue => e
-    return {
-      'status' => 'error',
-      'text' => "Unable to read certificates: #{e}",
-      'node_status' => {},
-    }
-  end
-
-  crt_errors = verify_cert_key_pair(data['ssl_cert'], data['ssl_key'])
-  if crt_errors and not crt_errors.empty?
-    return {
-      'status' => 'error',
-      'text' => "Invalid certificate and/or key: #{crt_errors.join}",
-      'node_status' => {},
-    }
-  end
-
-  node_response = {}
-  threads = []
-  nodes.each { |node|
-    threads << Thread.new {
-      code, response = send_request_with_token(
-        auth_user, node, '/set_certs', true, data
-      )
-      node_response[node] = [code, response]
-    }
-  }
-  threads.each { |t| t.join }
-
-  node_error = []
-  node_status = {}
-  node_response.each { |node, response|
-    if response[0] == 200
-      node_status[node] = {
-        'status' => 'ok',
-        'text' => 'Success',
-      }
-    else
-      text = response[1]
-      if response[0] == 401
-        text = "Unable to authenticate, try running 'pcs cluster auth'"
-      elsif response[0] == 400
-        begin
-          parsed_response = JSON.parse(response[1], {:symbolize_names => true})
-          if parsed_response[:noresponse]
-            text = "Unable to connect"
-          elsif parsed_response[:notoken] or parsed_response[:notauthorized]
-            text = "Unable to authenticate, try running 'pcs cluster auth'"
-          end
-        rescue JSON::ParserError
-        end
-      end
-      node_status[node] = {
-        'status' => 'error',
-        'text' => text
-      }
-      node_error << node
-    end
-  }
-  return {
-    'status' => node_error.empty?() ? 'ok' : 'error',
-    'text' => node_error.empty?() ? 'Success' : \
-      "Unable to save pcsd certificates to nodes: #{node_error.join(', ')}",
-    'node_status' => node_status,
-  }
-end
-
-def pcsd_restart_nodes(auth_user, nodes)
-  node_response = {}
-  threads = []
-  nodes.each { |node|
-    threads << Thread.new {
-      code, response = send_request_with_token(
-        auth_user, node, '/pcsd_restart', true
-      )
-      node_response[node] = [code, response]
-    }
-  }
-  threads.each { |t| t.join }
-
-  node_error = []
-  node_status = {}
-  node_response.each { |node, response|
-    if response[0] == 200
-      my_status = {
-        'status' => 'ok',
-        'text' => 'Success',
-      }
-      begin
-        parsed_response = JSON.parse(response[1], {:symbolize_names => true})
-        if parsed_response[:instance_signature]
-          my_status["instance_signature"] = parsed_response[:instance_signature]
-        end
-      rescue JSON::ParserError
-      end
-      node_status[node] = my_status
-    else
-      text = response[1]
-      if response[0] == 401
-        text = "Unable to authenticate, try running 'pcs cluster auth'"
-      elsif response[0] == 400
-        begin
-          parsed_response = JSON.parse(response[1], {:symbolize_names => true})
-          if parsed_response[:noresponse]
-            text = "Unable to connect"
-          elsif parsed_response[:notoken] or parsed_response[:notauthorized]
-            text = "Unable to authenticate, try running 'pcs cluster auth'"
-          end
-        rescue JSON::ParserError
-        end
-      end
-      node_status[node] = {
-        'status' => 'error',
-        'text' => text
-      }
-      node_error << node
-    end
-  }
-  return {
-    'status' => node_error.empty?() ? 'ok' : 'error',
-    'text' => node_error.empty?() ? 'Success' : \
-      "Unable to restart pcsd on nodes: #{node_error.join(', ')}",
-    'node_status' => node_status,
-  }
-end
-
 def get_uid(username)
   return Etc.getpwnam(username).uid
 end
@@ -1367,7 +1220,10 @@ end
 def write_file_lock(path, perm, data, binary=false, user=nil, group=nil)
   file = nil
   begin
-    file = File.open(path, binary ? 'wb' : 'w', perm)
+    # File.open(path, mode, options)
+    # File.open(path, mode, perm, options)
+    # In order to set permissions, the method must be called with 4 arguments.
+    file = File.open(path, binary ? 'wb' : 'w', perm, {})
     file.flock(File::LOCK_EX)
     if user or group
       File.chown(get_uid(user), get_gid(group), path)
