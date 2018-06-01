@@ -21,6 +21,15 @@ _type_articles = {
     "ACL role": "an",
     "ACL permission": "an",
 }
+_file_role_translation = {
+    "BOOTH_CONFIG": "Booth configuration",
+    "BOOTH_KEY": "Booth key",
+    "COROSYNC_AUTHKEY": "Corosync authkey",
+    "PACEMAKER_AUTHKEY": "Pacemaker authkey",
+    "PCSD_SSL_CERT": "pcsd SSL certificate",
+    "PCSD_SSL_KEY": "pcsd SSL key",
+    "PCS_SETTINGS_CONF": "pcs configuration",
+}
 
 def warn(message):
     sys.stdout.write(format_message(message, "Warning: "))
@@ -55,6 +64,9 @@ def format_list(a_list):
     return ", ".join([
         "'{0}'".format(x) for x in sorted(a_list)
     ])
+
+def format_file_role(role):
+    return _file_role_translation.get(role, role)
 
 def service_operation_started(operation, info):
     return "{operation} {service}{instance_suffix}...".format(
@@ -1415,23 +1427,27 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.FILE_ALREADY_EXISTS: lambda info:
-        "{node_prefix}{role_prefix}file {file_path} already exists"
+        "{_node}{_file_role} file '{file_path}' already exists"
         .format(
-            node_prefix=format_optional(info["node"], NODE_PREFIX),
-            role_prefix=format_optional(info["file_role"], "{0} "),
+            _node=format_optional(info["node"], NODE_PREFIX),
+            _file_role=format_file_role(info["file_role"]),
             **info
         )
     ,
 
     codes.FILE_DOES_NOT_EXIST: lambda info:
-        "{file_role} file {file_path} does not exist"
-        .format(**info)
+        "{_file_role} file '{file_path}' does not exist"
+        .format(
+            _file_role=format_file_role(info["file_role"]),
+            **info
+        )
     ,
 
     codes.FILE_IO_ERROR: lambda info:
-        "unable to {operation} {file_role}{path_desc}: {reason}"
+        "Unable to {operation} {_file_role}{_file_path}: {reason}"
         .format(
-            path_desc=format_optional(info["file_path"], " '{0}'"),
+            _file_path=format_optional(info["file_path"], " '{0}'"),
+            _file_role=format_file_role(info["file_role"]),
             **info
         )
     ,
