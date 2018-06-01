@@ -650,8 +650,8 @@ def set_certs(params, request, auth_user)
       return [400, ssl_errors.join]
     end
     begin
-      write_file_lock(CRT_FILE, 0700, ssl_cert)
-      write_file_lock(KEY_FILE, 0700, ssl_key)
+      write_file_lock(CRT_FILE, 0600, ssl_cert)
+      write_file_lock(KEY_FILE, 0600, ssl_key)
     rescue => e
       # clean the files if we ended in the middle
       # the files will be regenerated on next pcsd start
