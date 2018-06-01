@@ -11,17 +11,18 @@ from pcs.lib.commands import (
     acl,
     alert,
     booth,
+    cib_options,
     cluster,
     fencing_topology,
     node,
+    pcsd,
     qdevice,
     quorum,
     remote_node,
-    resource_agent,
     resource,
-    cib_options,
-    stonith,
+    resource_agent,
     sbd,
+    stonith,
     stonith_agent,
 )
 from pcs.lib.commands.constraint import (
@@ -265,6 +266,15 @@ def load_module(env, middleware_factory, name):
                 "standby_unstandby_all": node.standby_unstandby_all,
                 "standby_unstandby_list": node.standby_unstandby_list,
                 "standby_unstandby_local": node.standby_unstandby_local,
+            }
+        )
+
+    if name == "pcsd":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "synchronize_ssl_certificate": pcsd.synchronize_ssl_certificate,
             }
         )
 

@@ -2368,7 +2368,7 @@ class Failures(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    node="node1",
+                    node=NODE_LIST[0],
                     command="remote/set_certs",
                     reason=REASON
                 )

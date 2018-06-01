@@ -472,10 +472,10 @@ def cluster_setup(argv):
             enable_cluster(primary_addr_list)
 
         # sync certificates as the last step because it restarts pcsd
-        print()
-        pcsd.pcsd_sync_certs(
-            [], exit_after_error=False, async_restart=modifiers["async"]
-        )
+        #print()
+        #pcsd.pcsd_sync_certs(
+        #    [], exit_after_error=False, async_restart=modifiers["async"]
+        #)
         if wait:
             print()
             wait_for_nodes_started(primary_addr_list, wait_timeout)
@@ -1771,7 +1771,7 @@ def node_add(lib_env, node0, node1, modifiers):
             if retval != 0:
                 print("Warning: start cluster - {0}".format(err))
 
-        pcsd.pcsd_sync_certs([node0], exit_after_error=False)
+        #pcsd.pcsd_sync_certs([node0], exit_after_error=False)
     else:
         utils.err("Unable to update any nodes")
     if utils.is_cman_with_udpu_transport():

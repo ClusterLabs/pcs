@@ -171,7 +171,11 @@ def main(argv=None):
             utils.get_modifiers()
         ),
         "config": config.config_cmd,
-        "pcsd": pcsd.pcsd_cmd,
+        "pcsd": lambda argv: pcsd.pcsd_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modifiers()
+        ),
         "node": lambda argv: node.node_cmd(
             utils.get_library_wrapper(),
             argv,

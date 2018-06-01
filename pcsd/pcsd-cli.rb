@@ -128,20 +128,6 @@ allowed_commands = {
       )
     }
   },
-  'send_local_certs' => {
-    'only_superuser' => false,
-    'permissions' => Permissions::FULL,
-    'call' => lambda { |params, auth_user_|
-      send_local_certs_to_nodes(auth_user_, params['nodes'] || [])
-    }
-  },
-  'pcsd_restart_nodes' => {
-    'only_superuser' => false,
-    'permissions' => nil,
-    'call' => lambda { |params, auth_user_|
-      pcsd_restart_nodes(auth_user_, params['nodes'] || [])
-    }
-  },
   'node_status' => {
     'only_superuser' => true,
     'permissions' => Permissions::FULL,
