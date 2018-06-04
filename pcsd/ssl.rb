@@ -132,8 +132,11 @@ end
 
 if not File.exists?(CRT_FILE) or not File.exists?(KEY_FILE)
   crt, key = generate_cert_key_pair(server_name)
-  File.open(CRT_FILE, 'w',0700) {|f| f.write(crt)}
-  File.open(KEY_FILE, 'w',0700) {|f| f.write(key)}
+  # File.open(path, mode, options)
+  # File.open(path, mode, perm, options)
+  # In order to set permissions, the method must be called with 4 arguments.
+  File.open(CRT_FILE, 'w', 0600, {}) {|f| f.write(crt)}
+  File.open(KEY_FILE, 'w', 0600, {}) {|f| f.write(key)}
 else
   crt, key = nil, nil
   begin

@@ -43,7 +43,10 @@ begin
   end
 rescue Errno::ENOENT
   secret = generate_cookie_secret()
-  File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
+  # File.open(path, mode, options)
+  # File.open(path, mode, perm, options)
+  # In order to set permissions, the method must be called with 4 arguments.
+  File.open(COOKIE_FILE, 'w', 0600, {}) {|f| f.write(secret)}
 end
 
 session_lifetime = ENV['PCSD_SESSION_LIFETIME'].to_i()
@@ -108,7 +111,10 @@ configure do
     ENV['PCSD_DISABLE_GUI'] and ENV['PCSD_DISABLE_GUI'].downcase == 'true'
   )
   PCS = get_pcs_path()
-  logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)
+  # File.open(path, mode, options)
+  # File.open(path, mode, perm, options)
+  # In order to set permissions, the method must be called with 4 arguments.
+  logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600, {})
   STDOUT.reopen(logger)
   STDERR.reopen(logger)
   STDOUT.sync = true
