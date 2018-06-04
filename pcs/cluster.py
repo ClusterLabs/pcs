@@ -83,16 +83,16 @@ def cluster_cmd(argv):
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.cluster([" ".join(argv)] if argv else [])
-    elif (sub_cmd == "setup"):
+    elif (sub_cmd == "old-setup"):
         if "--name" in utils.pcs_options:
-            cluster_setup([utils.pcs_options["--name"]] + argv)
+            old_cluster_setup([utils.pcs_options["--name"]] + argv)
         else:
             utils.err(
                 "A cluster name (--name <name>) is required to setup a cluster"
             )
-    elif (sub_cmd == "new-setup"):
+    elif (sub_cmd == "setup"):
         try:
-            new_cluster_setup(
+            cluster_setup(
                 utils.get_library_wrapper(), argv, utils.get_modifiers()
             )
         except LibraryError as e:
@@ -249,7 +249,7 @@ def cluster_certkey(argv):
     return pcsd.pcsd_certkey(argv)
 
 
-def cluster_setup(argv):
+def old_cluster_setup(argv):
     modifiers = utils.get_modifiers()
     allowed_encryption_values = ["0", "1"]
     if modifiers["encryption"] not in allowed_encryption_values:
@@ -2375,7 +2375,7 @@ def _parse_transport(transport_args):
     return transport_type, options
 
 
-def new_cluster_setup(lib, argv, modifiers):
+def cluster_setup(lib, argv, modifiers):
     DEFAULT_TRANSPORT_TYPE = KNET_KEYWORD
     if len(argv) < 2:
         raise CmdLineInputError()

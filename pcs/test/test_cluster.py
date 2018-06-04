@@ -175,18 +175,18 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         ))
 
     def test_cluster_setup_bad_args(self):
-        output, returnVal = pcs(temp_cib, "cluster setup")
+        output, returnVal = pcs(temp_cib, "cluster old-setup")
         self.assertEqual(
             "Error: A cluster name (--name <name>) is required to setup a cluster\n",
             output
         )
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "cluster setup --name cname")
+        output, returnVal = pcs(temp_cib, "cluster old-setup --name cname")
         self.assertTrue(output.startswith("\nUsage: pcs cluster setup..."))
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "cluster setup cname rh7-1.localhost rh7-2.localhost")
+        output, returnVal = pcs(temp_cib, "cluster old-setup cname rh7-1.localhost rh7-2.localhost")
         self.assertEqual(
             "Error: A cluster name (--name <name>) is required to setup a cluster\n",
             output
@@ -197,7 +197,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def test_cluster_setup_hostnames_resolving(self):
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid"
+            "cluster old-setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid"
             .format(corosync_conf_tmp, cluster_conf_tmp)
         )
         ac(output, """\
@@ -208,7 +208,7 @@ Warning: Unable to resolve hostname: nonexistant-address.invalid
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid --force"
+            "cluster old-setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid --force"
             .format(corosync_conf_tmp, cluster_conf_tmp)
         )
         ac(output, """\
@@ -222,7 +222,7 @@ Warning: Unable to resolve hostname: nonexistant-address.invalid
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -264,7 +264,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("""\
@@ -279,7 +279,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --force --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -325,7 +325,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("", output)
@@ -365,7 +365,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("""\
@@ -380,7 +380,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --force --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("", output)
@@ -423,7 +423,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=1"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=1"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -467,7 +467,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=0"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=0"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -512,7 +512,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=bad"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --encryption=bad"
             .format(corosync_conf_tmp)
         )
         self.assertEqual(
@@ -531,7 +531,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -788,7 +788,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --auto_tie_breaker=1"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --auto_tie_breaker=1"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -921,7 +921,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -971,7 +971,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udp"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udp"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -1022,7 +1022,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1275,7 +1275,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1327,7 +1327,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udpu"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udpu"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -1372,7 +1372,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -1419,7 +1419,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -1464,7 +1464,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         assert r == 1
@@ -1472,7 +1472,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         assert r == 1
@@ -1483,7 +1483,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
+            "cluster old-setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1543,7 +1543,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
+            "cluster old-setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1603,7 +1603,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
+            "cluster old-setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1663,7 +1663,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1725,7 +1725,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
@@ -1733,7 +1733,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster old-setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
@@ -1793,7 +1793,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
@@ -1801,7 +1801,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster old-setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
@@ -1860,7 +1860,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
             .format(corosync_conf_tmp)
         )
         ac(o,"Error: You cannot specify more than two addresses for a node: rh7-2.localhost,192.168.99.2,192.168.99.3\n")
@@ -1868,7 +1868,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         ac(o,"Error: if one node is configured for RRP, all nodes must be configured for RRP\n")
@@ -1876,14 +1876,14 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1"
+            "cluster old-setup --force --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1"
         )
         ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
         assert r == 1
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
+            "cluster old-setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1931,7 +1931,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
+            "cluster old-setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
@@ -1939,7 +1939,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
+            "cluster old-setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
@@ -1947,7 +1947,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
+            "cluster old-setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
@@ -1955,7 +1955,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
+            "cluster old-setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
@@ -1963,7 +1963,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
+            "cluster old-setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
@@ -1971,7 +1971,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
+            "cluster old-setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
@@ -1979,7 +1979,7 @@ logging {
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
+            "cluster old-setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -2028,14 +2028,14 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
+            "cluster old-setup --local --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
         )
         ac(output, "Error: --addr0 can only be used once\n")
         self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2046,7 +2046,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
+            "cluster old-setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2097,7 +2097,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
+            "cluster old-setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2148,7 +2148,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
+            "cluster old-setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2199,7 +2199,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2250,7 +2250,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(
@@ -2261,7 +2261,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster old-setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(
@@ -2314,7 +2314,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2325,7 +2325,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster old-setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2375,7 +2375,7 @@ Warning: using a RRP mode of 'active' is not supported or tested
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2385,7 +2385,7 @@ Error: You cannot specify more than two addresses for a node: rh7-2.localhost,19
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
+            "cluster old-setup --local --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
         )
         ac(output, """\
 Error: if one node is configured for RRP, all nodes must be configured for RRP
@@ -2394,7 +2394,7 @@ Error: if one node is configured for RRP, all nodes must be configured for RRP
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1 --transport=udpu"
+            "cluster old-setup --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1 --transport=udpu"
         )
         ac(output, """\
 Error: --addr0 and --addr1 can only be used with --transport=udp
@@ -2404,7 +2404,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2484,7 +2484,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2499,7 +2499,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
+            "cluster old-setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2517,7 +2517,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
+            "cluster old-setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2565,7 +2565,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
 
         o,r = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
+            "cluster old-setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -2617,7 +2617,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
+            "cluster old-setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2786,12 +2786,12 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             return
 
         self.assert_pcs_fail(
-            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown",
+            "cluster old-setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown",
             "Error: 'unknown' is not a valid transport value, use udp, udpu, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown --force",
+            "cluster old-setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown --force",
             "Warning: 'unknown' is not a valid transport value, use udp, udpu\n"
         )
         with open(corosync_conf_tmp) as f:
@@ -2834,12 +2834,12 @@ logging {
             return
 
         self.assert_pcs_fail(
-            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma",
+            "cluster old-setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma",
             "Error: 'rdma' is not a valid transport value, use udp, udpu, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma --force",
+            "cluster old-setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma --force",
             "Warning: 'rdma' is not a valid transport value, use udp, udpu\n"
         )
         with open(cluster_conf_tmp) as f:
@@ -3067,7 +3067,7 @@ def node_dict_fixture(node_name, addrs=None):
     )
 
 DEFAULT_TRANSPORT_TYPE = "knet"
-class NewClusterSetup(unittest.TestCase):
+class ClusterSetup(unittest.TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["setup"])
@@ -3102,7 +3102,7 @@ class NewClusterSetup(unittest.TestCase):
             "wait": False,
         }
         all_modifiers.update(modifiers or {})
-        cluster.new_cluster_setup(self.lib, argv, all_modifiers)
+        cluster.cluster_setup(self.lib, argv, all_modifiers)
 
     def call_cmd(self, argv, modifiers=None):
         self.call_cmd_without_cluster_name(
