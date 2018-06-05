@@ -16,16 +16,9 @@ PCS_LONG_OPTIONS = [
     "no-default-ops", "defaults", "nodesc",
     "clone", "master", "name=", "group=", "node=",
     "from=", "to=", "after=", "before=",
-    "transport=", "rrpmode=", "ipv6",
-    "addr0=", "bcast0=", "mcast0=", "mcastport0=", "ttl0=", "broadcast0",
-    "addr1=", "bcast1=", "mcast1=", "mcastport1=", "ttl1=", "broadcast1",
-    "wait_for_all=", "auto_tie_breaker=", "last_man_standing=",
-    "last_man_standing_window=",
-    "token=", "token_coefficient=", "consensus=", "join=",
-    "miss_count_const=", "fail_recv_const=",
     "corosync_conf=", "cluster_conf=",
     "booth-conf=", "booth-key=",
-    "remote", "watchdog=", "device=", "encryption=",
+    "remote", "watchdog=", "device=",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
