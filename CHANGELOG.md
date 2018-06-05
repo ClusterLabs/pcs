@@ -35,6 +35,16 @@
     a single host / token as well as all hosts / tokens.
   - These changes are not backward compatible. You should use the `pcs host
     auth` command to re-authenticate your hosts.
+- The `pcs cluster setup` command has been overhauled ([rhbz#1158816],
+[rhbz#1183103]):
+  - It works with Corosync 3.x only and supports knet as well as udp/udpu.
+  - The number of Corosync options configurable by the command has been
+    significantly increased.
+  - The syntax of the command has been completely changed to accommodate the
+    changes and new features.
+- Node names are fully supported now and are no longer coupled with node
+  addresses. It is possible to set up a cluster where Corosync communicates
+  over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
 
@@ -45,6 +55,8 @@
   ([rhbz#1550243])
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
+[rhbz#1158816]: https://bugzilla.redhat.com/show_bug.cgi?id=1158816
+[rhbz#1183103]: https://bugzilla.redhat.com/show_bug.cgi?id=1183103
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535

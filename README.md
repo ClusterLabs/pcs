@@ -103,7 +103,7 @@ derivates.
   of nodes in the cluster). `--start` and `--enable` will start your cluster
   and configure the nodes to start the cluster on boot respectively.
   ```shell
-  # pcs cluster setup --name cluster_name node1 node2 node3 --start --enable
+  # pcs cluster setup cluster_name node1 node2 node3 --start --enable
   ```
 
 * **Check the cluster status**
