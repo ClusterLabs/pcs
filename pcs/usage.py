@@ -1581,12 +1581,18 @@ Commands:
 
     device add [<generic options>] model <device model> [<model options>]
             [heuristics <heuristics options>]
-        Add a quorum device to the cluster. Quorum device needs to be created
-        first by "pcs qdevice setup" command. It is not possible to use more
-        than one quorum device in a cluster simultaneously. Models and options
-        are all documented in corosync-qdevice(8) man page; for heuristics
-        options check the quorum.device.heuristics subkey section, for model
-        options check the quorum.device.<device model> subkey sections.
+        Add a quorum device to the cluster. Quorum device should be configured
+        first with "pcs qdevice setup". It is not possible to use more than one
+        quorum device in a cluster simultaneously.
+        Currently the only supported model is 'net'. It requires model options
+        'algorithm' and 'host' to be specified. Options are documented in
+        corosync-qdevice(8) man page; generic options are 'sync_timeout' and
+        'timeout', for model net options check the quorum.device.net section,
+        for heuristics options see the quorum.device.heuristics section. Pcs
+        automatically creates and distributes TLS certificates and sets the
+        'tls' model option to the default value 'on'.
+        Example: pcs quorum device add model net algorithm=lms \\
+            host=qnetd.internal.example.com
 
     device heuristics remove
         Remove all heuristics settings of the configured quorum device.

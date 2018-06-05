@@ -19,6 +19,7 @@
   ([rhbz#1581150])
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
+- Improve 'pcs quorum device add' usage and man page ([rhbz#1476862])
 
 ### Changed
 - Watchdog devices are validated against a list provided by sbd
@@ -27,6 +28,7 @@
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
+[rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1535967]: https://bugzilla.redhat.com/show_bug.cgi?id=1535967
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
