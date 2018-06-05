@@ -203,10 +203,6 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => nil,
     },
-    ['cluster', 'setup', '...'] => {
-      'only_superuser' => true,
-      'permissions' => nil,
-    },
     # runs on the local node, check permissions
     ['cluster', 'start'] => {
       'only_superuser' => false,
