@@ -18,6 +18,7 @@
   more ([rhbz#1568353])
 - `pcs resource debug-*` commands provide debug messages even with
   pacemaker-1.1.18 and newer ([rhbz#1574898])
+- Improve 'pcs quorum device add' usage and man page ([rhbz#1476862])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -45,6 +46,7 @@
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
+[rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
