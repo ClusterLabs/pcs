@@ -1425,7 +1425,7 @@
         daemon urls: auth, check_auth
       </description>
     </capability>
-    <capability id="pcs.auth-deauth-client" in-pcs="1" in-pcsd="0">
+    <capability id="pcs.auth.deauth-client" in-pcs="1" in-pcsd="0">
       <description>
         Remove authentication tokens from a local host so that the local host
         will not be able to connect to such remote hosts.
@@ -1515,6 +1515,8 @@
       <description>
         Push the daemon's SSL certificate from the local host to all nodes in
         the local cluster.
+
+        pcs commands: pcsd sync-certificates
       </description>
     </capability>
 
@@ -1628,7 +1630,7 @@
       <description>
         Show status pacemaker status of the local node.
 
-        daemon urls:pacemaker_node_status
+        daemon urls: pacemaker_node_status
       </description>
     </capability>
     <capability id="status.pcmk.resources.hide-inactive" in-pcs="1" in-pcsd="0">
