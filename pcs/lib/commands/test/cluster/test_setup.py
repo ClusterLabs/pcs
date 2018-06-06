@@ -1,5 +1,4 @@
 from copy import deepcopy
-from functools import partial
 import json
 
 from unittest import mock, TestCase
@@ -14,9 +13,19 @@ from pcs.test.tools.custom_mock import patch_getaddrinfo
 from pcs import settings
 from pcs.common import report_codes
 from pcs.common.host import Destination
+from pcs.common.ssl import (
+    dump_cert,
+    dump_key,
+    generate_cert,
+    generate_key,
+)
 from pcs.lib.commands import cluster
 from pcs.lib.corosync import constants
 
+PCSD_SSL_KEY = generate_key()
+PCSD_SSL_CERT = generate_cert(PCSD_SSL_KEY, "servername")
+PCSD_SSL_KEY_DUMP = dump_key(PCSD_SSL_KEY)
+PCSD_SSL_CERT_DUMP = dump_cert(PCSD_SSL_CERT)
 DEFAULT_TRANSPORT_TYPE = "knet"
 RANDOM_KEY = "I'm so random!".encode()
 CLUSTER_NAME = "myCluster"
@@ -27,8 +36,6 @@ SERVICE_LIST = [
     "pacemaker", "pacemaker_remote", "corosync", "pcsd", "sbd", "qdevice",
     "booth",
 ]
-PCSD_SSL_CERT = "pcsd ssl cert"
-PCSD_SSL_KEY = "pcsd ssl key"
 RING_TEMPLATE = "ring{i}_addr: {addr}"
 NODE_TEMPLATE = """\
     node {{
@@ -189,7 +196,9 @@ def config_succes_minimal_fixture(
             pcsd_settings=True,
             communication_list=communication_list,
         )
-        .local.read_and_send_pcsd_ssl_cert(
+        .http.host.send_pcsd_cert(
+            cert=PCSD_SSL_CERT_DUMP,
+            key=PCSD_SSL_KEY_DUMP,
             node_labels=node_labels,
             communication_list=communication_list,
         )
@@ -302,40 +311,17 @@ def reports_success_minimal_fixture(
     )
 
 
-class LocalConfig():
-    def __init__(self, call_collection, wrap_helper, config):
-        self.__calls = call_collection
-        self.config = config
-
-    def read_and_send_pcsd_ssl_cert(
-        self, node_labels=None, communication_list=None
-    ):
-        (self.config
-            .fs.open(
-                settings.pcsd_cert_location,
-                mock.mock_open(read_data=PCSD_SSL_CERT)(),
-                name="fs.open.pcsd_ssl_cert"
-            )
-            .fs.open(
-                settings.pcsd_key_location,
-                mock.mock_open(read_data=PCSD_SSL_KEY)(),
-                name="fs.open.pcsd_ssl_key"
-            )
-            .http.host.send_pcsd_cert(
-                cert=PCSD_SSL_CERT,
-                key=PCSD_SSL_KEY,
-                node_labels=node_labels,
-                communication_list=communication_list,
-            )
-        )
-
-
-get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
-
-
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
 )
 class SetupSuccessMinimal(TestCase):
     def setUp(self):
@@ -497,6 +483,14 @@ class SetupSuccessMinimal(TestCase):
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class SetupSuccessAddresses(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -557,6 +551,14 @@ class SetupSuccessAddresses(TestCase):
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class Setup2NodeSuccessMinimal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -587,7 +589,9 @@ class Setup2NodeSuccessMinimal(TestCase):
                 corosync_authkey=RANDOM_KEY,
             )
             .http.files.remove_files(self.node_list, pcsd_settings=True)
-            .local.read_and_send_pcsd_ssl_cert(
+            .http.host.send_pcsd_cert(
+                cert=PCSD_SSL_CERT_DUMP,
+                key=PCSD_SSL_KEY_DUMP,
                 node_labels=self.node_list,
             )
         )
@@ -637,6 +641,14 @@ class Setup2NodeSuccessMinimal(TestCase):
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
 )
 class Validation(TestCase):
     def setUp(self):
@@ -1489,6 +1501,14 @@ QUORUM_OPTIONS = dict(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class TransportKnetSuccess(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -1612,6 +1632,14 @@ class TransportKnetSuccess(TestCase):
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class TransportUdpSuccess(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -1703,6 +1731,14 @@ def get_time_mock(step=1):
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class SetupWithWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -1729,7 +1765,9 @@ class SetupWithWait(TestCase):
                 corosync_authkey=RANDOM_KEY,
             )
             .http.files.remove_files(NODE_LIST, pcsd_settings=True)
-            .local.read_and_send_pcsd_ssl_cert(
+            .http.host.send_pcsd_cert(
+                cert=PCSD_SSL_CERT_DUMP,
+                key=PCSD_SSL_KEY_DUMP,
                 node_labels=NODE_LIST
             )
             .http.files.put_files(
@@ -2036,6 +2074,14 @@ REASON = "error msg"
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY
+)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT
+)
 class Failures(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -2275,67 +2321,11 @@ class Failures(TestCase):
             ]
         )
 
-    def test_reading_pcsd_ssl_cert_failure(self):
-        self._remove_calls(6)
-        self.config.fs.open(
-            settings.pcsd_cert_location,
-            name="fs.open.pcsd_ssl_cert",
-            side_effect=EnvironmentError(1, REASON)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
-            ),
-            [
-                fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_CERT",
-                    file_path=settings.pcsd_cert_location,
-                    reason=REASON,
-                    operation="read"
-                )
-            ]
-        )
-        self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
-        )
-
-    def test_reading_pcsd_ssl_key_failure(self):
-        self._remove_calls(5)
-        self.config.fs.open(
-            settings.pcsd_key_location,
-            name="fs.open.pcsd_ssl_key",
-            side_effect=EnvironmentError(1, REASON)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
-            ),
-            [
-                fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_KEY",
-                    file_path=settings.pcsd_key_location,
-                    reason=REASON,
-                    operation="read"
-                )
-            ]
-        )
-        self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
-        )
-
     def test_sending_pcsd_ssl_cert_and_key_failure(self):
         self._remove_calls(4)
         self.config.http.host.send_pcsd_cert(
-            cert=PCSD_SSL_CERT,
-            key=PCSD_SSL_KEY,
+            cert=PCSD_SSL_CERT_DUMP,
+            key=PCSD_SSL_KEY_DUMP,
             communication_list=[
                 {
                     "label": NODE_LIST[0],
@@ -2376,7 +2366,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_communication_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=self.communication_list,
             pcsd_settings=True,
@@ -2407,7 +2397,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2459,7 +2449,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_invalid_response(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2502,7 +2492,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_communication_failure(self):
-        self._remove_calls(10)
+        self._remove_calls(8)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2592,7 +2582,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_invalid_response(self):
-        self._remove_calls(10)
+        self._remove_calls(8)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2638,7 +2628,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_failure(self):
-        self._remove_calls(10)
+        self._remove_calls(8)
         self.config.http.files.put_files(
             communication_list=self.communication_list,
             pcmk_authkey=RANDOM_KEY,
@@ -2672,7 +2662,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_known_hosts_failure(self):
-        self._remove_calls(12)
+        self._remove_calls(10)
         self.config.http.host.update_known_hosts(
             communication_list=self.communication_list,
             to_add_hosts=NODE_LIST
@@ -2695,7 +2685,7 @@ class Failures(TestCase):
         )
 
     def test_cluster_destroy_failure(self):
-        self._remove_calls(14)
+        self._remove_calls(12)
         self.config.http.host.cluster_destroy(
             communication_list=self.communication_list,
         )

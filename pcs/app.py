@@ -225,7 +225,6 @@ def main(argv=None):
         ['cluster', 'enable', '...'],
         ['cluster', 'node', '...'],
         ['cluster', 'pcsd-status', '...'],
-        ['cluster', 'setup', '...'],
         ['cluster', 'start', '...'],
         ['cluster', 'stop', '...'],
         ['cluster', 'sync', '...'],

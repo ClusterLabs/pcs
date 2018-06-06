@@ -288,10 +288,6 @@ def joined_list(item_list, optional_transformations=None):
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
 
-    codes.COMMON_ERROR: lambda info: info["text"],
-
-    codes.COMMON_INFO: lambda info: info["text"],
-
     codes.EMPTY_RESOURCE_SET_LIST: "Resource set list is empty",
 
     codes.REQUIRED_OPTION_IS_MISSING: lambda info:
@@ -1081,29 +1077,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "unable to get local node name from pacemaker: {reason}"
         .format(**info)
     ,
-
-    codes.RRP_ACTIVE_NOT_SUPPORTED:
-        "using a RRP mode of 'active' is not supported or tested"
-    ,
-
-    codes.IGNORED_CMAN_UNSUPPORTED_OPTION: lambda info:
-        "{option_name} ignored as it is not supported on CMAN clusters"
-        .format(**info)
-    ,
-
-    codes.NON_UDP_TRANSPORT_ADDR_MISMATCH:
-        "--addr0 and --addr1 can only be used with --transport=udp"
-    ,
-
-    codes.CMAN_UDPU_RESTART_REQUIRED: (
-        "Using udpu transport on a CMAN cluster,"
-        " cluster restart is required after node add or remove"
-    ),
-
-    codes.CMAN_BROADCAST_ALL_RINGS: (
-        "Enabling broadcast for all rings as CMAN does not support"
-        " broadcast in only one ring"
-    ),
 
     codes.SERVICE_START_STARTED: partial(service_operation_started, "Starting"),
     codes.SERVICE_START_ERROR: partial(service_operation_error, "start"),

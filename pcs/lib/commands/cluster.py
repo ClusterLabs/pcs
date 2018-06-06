@@ -2,12 +2,9 @@ import math
 import time
 
 from pcs import settings
-from pcs.common import (
-    env_file_role_codes,
-    report_codes,
-)
-from pcs.common.tools import format_environment_error
+from pcs.common import report_codes
 from pcs.common.reports import SimpleReportProcessor
+from pcs.common import ssl
 from pcs.lib import reports, node_communication_format
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.tools import (
@@ -303,38 +300,16 @@ def setup(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Distribute and reload pcsd SSL certificate
-    # Report we are going to distribute the cert. If an error is reported that
-    # the cert or the key cannot be read, the context provided by this report
-    # will be usefull.
     _report_processor.report(
         reports.pcsd_ssl_cert_and_key_distribution_started(
             [target.label for target in target_list]
         )
     )
-    try:
-        with open(settings.pcsd_cert_location, "r") as f:
-            ssl_cert = f.read()
-    except EnvironmentError as e:
-        env.report_processor.process(
-            reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT,
-                file_path=settings.pcsd_cert_location,
-                reason=format_environment_error(e),
-                operation="read",
-            )
-        )
-    try:
-        with open(settings.pcsd_key_location, "r") as f:
-            ssl_key = f.read()
-    except EnvironmentError as e:
-        env.report_processor.process(
-            reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY,
-                file_path=settings.pcsd_key_location,
-                reason=format_environment_error(e),
-                operation="read",
-            )
-        )
+    ssl_key_raw = ssl.generate_key()
+    ssl_key = ssl.dump_key(ssl_key_raw)
+    ssl_cert = ssl.dump_cert(
+        ssl.generate_cert(ssl_key_raw, target_list[0].label)
+    )
     com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)

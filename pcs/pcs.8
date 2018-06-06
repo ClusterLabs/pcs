@@ -208,43 +208,51 @@ utilization [<resource id> [<name>=<value> ...]]
 Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20
 .SS "cluster"
 .TP
-auth [\fB\-u\fR <username>] [\fB\-p\fR <password>]
-Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
-.TP
-setup [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1\-altaddr]> [<node2[,node2\-altaddr]>] [...] [\fB\-\-transport\fR udpu|udp] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-ipv6\fR] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>] [\fB\-\-encryption\fR 0|1]
-Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-wait\fR will wait up to 'n' seconds for the nodes to start, \fB\-\-enable\fR will enable corosync and pacemaker on node startup, \fB\-\-transport\fR allows specification of corosync transport (default: udpu; udp for CMAN clusters), \fB\-\-rrpmode\fR allows you to set the RRP mode of the system. Currently only 'passive' is supported or tested (using 'active' is not recommended). The \fB\-\-wait_for_all\fR, \fB\-\-auto_tie_breaker\fR, \fB\-\-last_man_standing\fR, \fB\-\-last_man_standing_window\fR options are all documented in corosync's votequorum(5) man page. These options are not supported on CMAN clusters.
+setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>] [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]]
+Create a cluster from the listed nodes and synchronize cluster configuration files to them.
+.br
+Nodes are specified by their names and optionally their addresses. If no addresses are specified for a node, pcs will configure corosync to communicate with that node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure corosync to communicate with the node using the specified addresses.
 
-\fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4).  This option is not supported on CMAN clusters.
+Transport knet:
+.br
+This is the default transport. It allows configuring traffic encryption and compression as well as using multiple addreses (links) for nodes.
+.br
+Transport options are: ip_version, knet_pmtud_interval, link_mode
+.br
+Link options are: ip_version, link_priority, linknumber, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport (udp or sctp)
+.br
+Compression options are: level, model, threshold
+.br
+Crypto options are: cipher, hash, model
 
-\fB\-\-token\fR <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms)
+Transports udp and udpu:
+.br
+These transports are limited for one address per node. They do not support traffic encryption nor compression.
+.br
+Transport options are: ip_version, netmtu
+.br
+Link options are: bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
-\fB\-\-token_coefficient\fR <timeout> sets time in milliseconds used for clusters with at least 3 nodes as a coefficient for real token timeout calculation (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)  This option is not supported on CMAN clusters.
+Totem and quorum can be configured regardles of used transport.
+.br
+Totem options are: consensus, downcheck, fail_recv_const, heartbeat_failures_allowed, hold, join, max_messages, max_network_delay, merge, miss_count_const, send_join, seqno_unchanged_const, token, token_coefficient, token_retransmit, token_retransmits_before_loss_const, window_size
+.br
+Quorum options are: auto_tie_breaker, last_man_standing, last_man_standing_window, wait_for_all
 
-\fB\-\-join\fR <timeout> sets time in milliseconds to wait for join messages (default 50 ms)
+Transports and their options, link, compression, crypto and totem options are all documented in corosync.conf(5) man page; knet link options are prefixed 'knet_' there, compression options are prefixed 'knet_compression_' and crypto options are prefixed 'crypto_'. Quorum options are documented in votequorum(5) man page.
 
-\fB\-\-consensus\fR <timeout> sets time in milliseconds to wait for consensus to be achieved before starting a new round of membership configuration (default 1200 ms)
+--enable will configure the cluster to start on nodes boot. --start will start the cluster right after creating it. --wait will wait up to 'n' seconds for the cluster to start.
 
-\fB\-\-miss_count_const\fR <count> sets the maximum number of times on receipt of a token a message is checked for retransmission before a retransmission occurs (default 5 messages)
-
-\fB\-\-fail_recv_const\fR <failures> specifies how many rotations of the token without receiving any messages when messages should be received may occur before a new configuration is formed (default 2500 failures)
-
-\fB\-\-encryption\fR 0|1 disables (0) or enables (1) corosync communication encryption (default 0)
-
-
-Configuring Redundant Ring Protocol (RRP)
-
-When using udpu specifying nodes, specify the ring 0 address first
-followed by a ',' and then the ring 1 address.
-
-Example: pcs cluster setup \-\-name cname nodeA\-0,nodeA\-1 nodeB\-0,nodeB\-1
-
-When using udp, using \fB\-\-addr0\fR and \fB\-\-addr1\fR will allow you to configure
-rrp mode for corosync.  It's recommended to use a network (instead of
-IP address) for \fB\-\-addr0\fR and \fB\-\-addr1\fR so the same corosync.conf file can
-be used around the cluster.  \fB\-\-mcast0\fR defaults to 239.255.1.1 and
-\fB\-\-mcast1\fR defaults to 239.255.2.1, \fB\-\-mcastport0/1\fR default to 5405 and
-ttl defaults to 1. If \fB\-\-broadcast\fR is specified, \fB\-\-mcast0/1\fR,
-\fB\-\-mcastport0/1\fR & \fB\-\-ttl0/1\fR are ignored.
+Examples:
+.br
+Create a cluster with default settings:
+    pcs cluster setup newcluster node1 node2
+.br
+Create a cluster using two links:
+    pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12
+.br
+Create a cluster using udp transport with a non-default port:
+    pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
 .TP
 start [\fB\-\-all\fR | <node>... ] [\fB\-\-wait\fR[=<n>]] [\fB\-\-request\-timeout\fR=<seconds>]
 Start a cluster on specified node(s). If no nodes are specified then start a cluster on the local node. If \fB\-\-all\fR is specified then start a cluster on all nodes. If the cluster has many nodes then the start request may time out. In that case you should consider setting \fB\-\-request\-timeout\fR to a suitable value. If \fB\-\-wait\fR is specified, pcs waits up to 'n' seconds for the cluster to get ready to provide services after the cluster has successfully started.
@@ -260,6 +268,9 @@ Configure cluster to run on node boot on specified node(s). If node is not speci
 .TP
 disable [\fB\-\-all\fR | <node>... ]
 Configure cluster to not run on node boot on specified node(s). If node is not specified then cluster is disabled on the local node. If \fB\-\-all\fR is specified then cluster is disabled on all nodes.
+.TP
+auth [\fB\-u\fR <username>] [\fB\-p\fR <password>]
+Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 .TP
 status
 View current cluster status (an alias of 'pcs status cluster').

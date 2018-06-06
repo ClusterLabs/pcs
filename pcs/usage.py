@@ -89,8 +89,7 @@ def sub_usage(args, output):
 
     if ret != "":
         return "\n" + usage + "\n" + ret.rstrip() + "\n"
-    else:
-        return output
+    return output
 
 def dict_depth(d, depth=0):
     if not isinstance(d, dict) or not d:
@@ -571,74 +570,72 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    auth [-u <username>] [-p <password>]
-        Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
+    setup <cluster name> (<node name> [addr=<node address>]...)...
+            [transport knet|udp|udpu
+                [<transport options>] [link <link options>]
+                [compression <compression options>] [crypto <crypto options>]
+            ] [totem <totem options>] [quorum <quorum options>]
+            [--enable] [--start [--wait[=<n>]]]
+        Create a cluster from the listed nodes and synchronize cluster
+        configuration files to them.
 
-    setup [--start [--wait[=<n>]]] [--local] [--enable] --name <cluster name>
-            <node1[,node1-altaddr]> [<node2[,node2-altaddr]>] [...]
-            [--transport udpu|udp] [--rrpmode active|passive]
-            [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
-                            [--ttl0 <ttl>]] | [--broadcast0]]
-            [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
-                            [--ttl1 <ttl>]] | [--broadcast1]]]]
-            [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
-            [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
-            [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
-            [--join <timeout>] [--consensus <timeout>]
-            [--miss_count_const <count>] [--fail_recv_const <failures>]
-            [--encryption 0|1]
-        Configure corosync and sync configuration out to listed nodes.
-        --local will only perform changes on the local node,
-        --start will also start the cluster on the specified nodes,
-        --wait will wait up to 'n' seconds for the nodes to start,
-        --enable will enable corosync and pacemaker on node startup,
-        --transport allows specification of corosync transport (default: udpu;
-            udp for CMAN clusters),
-        --rrpmode allows you to set the RRP mode of the system. Currently only
-            'passive' is supported or tested (using 'active' is not
-            recommended).
-        The --wait_for_all, --auto_tie_breaker, --last_man_standing,
-            --last_man_standing_window options are all documented in corosync's
-            votequorum(5) man page. These options are not supported on CMAN
-            clusters.
-        --ipv6 will configure corosync to use ipv6 (instead of ipv4). This
-            option is not supported on CMAN clusters.
-        --token <timeout> sets time in milliseconds until a token loss is
-            declared after not receiving a token (default 1000 ms)
-        --token_coefficient <timeout> sets time in milliseconds used for
-            clusters with at least 3 nodes as a coefficient for real token
-            timeout calculation
-            (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)
-            This option is not supported on CMAN clusters.
-        --join <timeout> sets time in milliseconds to wait for join messages
-            (default 50 ms)
-        --consensus <timeout> sets time in milliseconds to wait for consensus
-            to be achieved before starting a new round of membership
-            configuration (default 1200 ms)
-        --miss_count_const <count> sets the maximum number of times on
-            receipt of a token a message is checked for retransmission before
-            a retransmission occurs (default 5 messages)
-        --fail_recv_const <failures> specifies how many rotations of the token
-            without receiving any messages when messages should be received
-            may occur before a new configuration is formed
-            (default 2500 failures)
-        --encryption 0|1 disables (0) or enables (1) corosync communication
-            encryption (default 0)
+        Nodes are specified by their names and optionally their addresses. If
+        no addresses are specified for a node, pcs will configure corosync to
+        communicate with that node using an address provided in 'pcs host auth'
+        command. Otherwise, pcs will configure corosync to communicate with the
+        node using the specified addresses.
 
-        Configuring Redundant Ring Protocol (RRP)
+        Transport knet:
+        This is the default transport. It allows configuring traffic encryption
+        and compression as well as using multiple addreses (links) for nodes.
+        Transport options are:
+            ip_version, knet_pmtud_interval, link_mode
+        Link options are:
+            ip_version, link_priority, linknumber, mcastport, ping_interval,
+            ping_precision, ping_timeout, pong_count, transport (udp or sctp)
+        Compression options are:
+            level, model, threshold
+        Crypto options are:
+            cipher, hash, model
 
-        When using udpu specifying nodes, specify the ring 0 address first
-        followed by a ',' and then the ring 1 address.
+        Transports udp and udpu:
+        These transports are limited for one address per node. They do not
+        support traffic encryption nor compression.
+        Transport options are:
+            ip_version, netmtu
+        Link options are:
+            bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
-        Example: pcs cluster setup --name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
+        Totem and quorum can be configured regardles of used transport.
+        Totem options are:
+            consensus, downcheck, fail_recv_const, heartbeat_failures_allowed,
+            hold, join, max_messages, max_network_delay, merge,
+            miss_count_const, send_join, seqno_unchanged_const, token,
+            token_coefficient, token_retransmit,
+            token_retransmits_before_loss_const, window_size
+        Quorum options are:
+            auto_tie_breaker, last_man_standing, last_man_standing_window,
+            wait_for_all
 
-        When using udp, using --addr0 and --addr1 will allow you to configure
-        rrp mode for corosync.  It's recommended to use a network (instead of
-        IP address) for --addr0 and --addr1 so the same corosync.conf file can
-        be used around the cluster.  --mcast0 defaults to 239.255.1.1 and
-        --mcast1 defaults to 239.255.2.1, --mcastport0/1 default to 5405 and
-        ttl defaults to 1. If --broadcast is specified, --mcast0/1,
-        --mcastport0/1 & --ttl0/1 are ignored.
+        Transports and their options, link, compression, crypto and totem
+        options are all documented in corosync.conf(5) man page; knet link
+        options are prefixed 'knet_' there, compression options are prefixed
+        'knet_compression_' and crypto options are prefixed 'crypto_'. Quorum
+        options are documented in votequorum(5) man page.
+
+        --enable will configure the cluster to start on nodes boot.
+        --start will start the cluster right after creating it.
+        --wait will wait up to 'n' seconds for the cluster to start.
+
+        Examples:
+        Create a cluster with default settings:
+            pcs cluster setup newcluster node1 node2
+        Create a cluster using two links:
+            pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 \\
+                node2 addr=10.0.1.12 addr=10.0.2.12
+        Create a cluster using udp transport with a non-default port:
+            pcs cluster setup newcluster node1 node2 transport udp link \\
+                mcastport=55405
 
     start [--all | <node>... ] [--wait[=<n>]] [--request-timeout=<seconds>]
         Start a cluster on specified node(s). If no nodes are specified then
@@ -672,6 +669,9 @@ Commands:
         Configure cluster to not run on node boot on specified node(s). If node
         is not specified then cluster is disabled on the local node. If --all
         is specified then cluster is disabled on all nodes.
+
+    auth [-u <username>] [-p <password>]
+        Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 
     status
         View current cluster status (an alias of 'pcs status cluster').

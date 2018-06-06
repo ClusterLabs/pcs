@@ -79,26 +79,6 @@ def get_problem_creator(force_code=None, is_forced=False):
         return warning
     return partial(forceable_error, force_code)
 
-def common_error(text):
-    # TODO replace by more specific reports
-    """
-    unspecified error with text message, do not use unless absolutely necessary
-    """
-    return ReportItem.error(
-        report_codes.COMMON_ERROR,
-        info={"text": text}
-    )
-
-def common_info(text):
-    # TODO replace by more specific reports
-    """
-    unspecified info with text message, do not use unless absolutely necessary
-    """
-    return ReportItem.info(
-        report_codes.COMMON_INFO,
-        info={"text": text}
-    )
-
 def resource_for_constraint_is_multiinstance(
     resource_id, parent_type, parent_id,
     severity=ReportItemSeverity.ERROR, forceable=None
@@ -1812,51 +1792,6 @@ def pacemaker_local_node_name_not_found(reason):
     return ReportItem.error(
         report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
         info={"reason": reason}
-    )
-
-def rrp_active_not_supported(warning=False):
-    """
-    active RRP mode is not supported, require user confirmation
-    warning set to True if user confirmed he/she wants to proceed
-    """
-    return ReportItem(
-        report_codes.RRP_ACTIVE_NOT_SUPPORTED,
-        ReportItemSeverity.WARNING if warning else ReportItemSeverity.ERROR,
-        forceable=(None if warning else report_codes.FORCE_ACTIVE_RRP)
-    )
-
-def cman_ignored_option(option):
-    """
-    specified option is ignored as CMAN clusters do not support it
-    options string option name
-    """
-    return ReportItem.warning(
-        report_codes.IGNORED_CMAN_UNSUPPORTED_OPTION,
-        info={'option_name': option}
-    )
-
-def rrp_addresses_transport_mismatch():
-    """
-    RRP defined by network addresses is not allowed when udp transport is used
-    """
-    return ReportItem.error(
-        report_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
-    )
-
-def cman_udpu_restart_required():
-    """
-    warn user it is required to restart CMAN cluster for changes to take effect
-    """
-    return ReportItem.warning(
-        report_codes.CMAN_UDPU_RESTART_REQUIRED,
-    )
-
-def cman_broadcast_all_rings():
-    """
-    broadcast enabled in all rings, CMAN doesn't support 1 ring only broadcast
-    """
-    return ReportItem.warning(
-        report_codes.CMAN_BROADCAST_ALL_RINGS,
     )
 
 def service_start_started(service, instance=None):
