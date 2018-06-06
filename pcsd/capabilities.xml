@@ -106,6 +106,39 @@
         daemon urls: setup_cluster
       </description>
     </capability>
+    <capability id="cluster.create.separated-name-and-address" in-pcs="1" in-pcsd="1">
+      <description>
+        It is possible to specify a node's address different from its name.
+        Corosync will communicate with the node via the specified address(es).
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
+    <capability id="cluster.create.transport.knet" in-pcs="1" in-pcsd="1">
+      <description>
+        Knet transport is supported including encryption and compression.
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
+    <capability id="cluster.create.transport.udp-udpu" in-pcs="1" in-pcsd="1">
+      <description>
+        Udp and udpu transports are supported.
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
+    <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="1" in-pcsd="1">
+      <description>
+        Redundant ring protocol (rrp) is not supported.
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
     <capability id="cluster.create.enable" in-pcs="1" in-pcsd="0">
       <description>
         Enable cluster services on cluster nodes during cluster setup.
@@ -1408,7 +1441,7 @@
         pcs commands: pcs pcsd deauth
       </description>
     </capability>
-    <capability id="pcs.auth.separate-name-and-address" in-pcs="1" in-pcsd="1">
+    <capability id="pcs.auth.separated-name-and-address" in-pcs="1" in-pcsd="1">
       <description>
         It is possible to specify a host's address different from its name when
         authenticating. Pcs/pcsd will communicate with the host via the
