@@ -127,6 +127,14 @@
         pcs commands: cluster setup --start --wait[=timeout]
       </description>
     </capability>
+    <capability id="cluster.create.totem.netmtu" in-pcs="1" in-pcsd="0">
+      <description>
+        Support setting the netmtu option in cluster setup.
+
+        pcs commands: cluster setup
+        daemon urls: setup_cluster
+      </description>
+    </capability>
     <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">
       <description>
         Destroy cluster on the local host.
