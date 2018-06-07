@@ -119,7 +119,7 @@ class BoothSaveFiles(
         try:
             parsed_data = json.loads(response.data)
             self._report(
-                reports.booth_config_accepted_by_node(
+                reports_booth.booth_config_accepted_by_node(
                     target.label, list(parsed_data["saved"])
                 )
             )
@@ -138,7 +138,7 @@ class BoothSaveFiles(
                     node=target.label,
                 ))
             for file, reason in dict(parsed_data["failed"]).items():
-                self._report(reports.booth_config_distribution_node_error(
+                self._report(reports_booth.booth_config_distribution_node_error(
                     target.label, reason, file
                 ))
         except (KeyError, TypeError, ValueError):
