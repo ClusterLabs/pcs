@@ -75,3 +75,25 @@ class FsConfig(object):
             return_value=return_value,
         )
         self.__calls.place(name, call, before, instead)
+
+    def isdir(
+        self, path, return_value=True, name="fs.isdir", before=None,
+        instead=None
+    ):
+        call = FsCall(
+            "os.path.isdir",
+            call_kwargs={"path": path},
+            return_value=return_value,
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def listdir(
+        self, path, return_value=(), name="fs.listdir", before=None,
+        instead=None
+    ):
+        call = FsCall(
+            "os.listdir",
+            call_kwargs={"path": path},
+            return_value=list(return_value),
+        )
+        self.__calls.place(name, call, before, instead)

@@ -38,14 +38,12 @@ class SbdShortcuts(object):
         )
 
     def check_sbd(
-        self, watchdog=None, device_list=(), node_labels=None,
-        communication_list=None, name="http.sbd.check_sbd"
+        self, communication_list=None, name="http.sbd.check_sbd"
     ):
         place_multinode_call(
             self.__calls,
             name,
-            node_labels,
-            communication_list,
+            communication_list=communication_list,
             action="remote/check_sbd",
         )
 

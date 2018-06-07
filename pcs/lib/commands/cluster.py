@@ -534,7 +534,6 @@ def add_nodes(
 
     # Validate SBD on new nodes
     if is_sbd_enabled:
-        report_processor.report(reports.sbd_check_started())
         com_cmd = CheckSbd(report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
@@ -546,6 +545,9 @@ def add_nodes(
         run_com(env.get_node_communicator(), com_cmd)
     else:
         # TODO validate that "watchdog" and "devices" options are not set
+        # Note that the watchdogs and the devices are initialized by some
+        # defaults if not specified by the user, therefore this check has to be
+        # performed before the actual initilization
         pass
 
     if report_processor.has_errors:
@@ -609,7 +611,7 @@ def add_nodes(
         run_and_raise(env.get_node_communicator(), com_cmd)
 
         com_cmd = EnableSbdService(env.report_processor)
-        com_cmd.add_request(new_nodes_target_list)
+        com_cmd.set_targets(new_nodes_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
     else:
         com_cmd = DisableSbdService(env.report_processor)

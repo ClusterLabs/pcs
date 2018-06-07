@@ -11,7 +11,7 @@ class FilesShortcuts(object):
 
     def put_files(
         self, node_labels=None, pcmk_authkey=None, corosync_authkey=None,
-        corosync_conf=None, communication_list=None,
+        corosync_conf=None, pcs_settings_conf=None, communication_list=None,
         name="http.files.put_files",
     ):
         """
@@ -21,6 +21,7 @@ class FilesShortcuts(object):
         pcmk_authkey bytes -- content of pacemaker authkey file
         corosync_authkey bytes -- content of corosync authkey file
         corosync_conf string -- content of corosync.conf
+        pcs_settings_conf string -- content of pcs_settings.conf
         communication_list list -- create custom responses
         name string -- the key of this call
         """
@@ -54,6 +55,15 @@ class FilesShortcuts(object):
             input_data[file_id] = dict(
                 data=corosync_conf,
                 type="corosync_conf",
+            )
+            output_data[file_id] = written_output_dict
+
+        if pcs_settings_conf:
+            file_id = "pcs_settings.conf"
+            input_data[file_id] = dict(
+                data=pcs_settings_conf,
+                type="pcs_settings_conf",
+                rewrite_existing=True,
             )
             output_data[file_id] = written_output_dict
 

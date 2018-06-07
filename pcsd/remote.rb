@@ -3082,6 +3082,7 @@ def reload_corosync_conf(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
+  # TODO: make sure that this cmd will not successed if corosycn is not running
   output, stderr, retval = run_cmd(
     auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
   )

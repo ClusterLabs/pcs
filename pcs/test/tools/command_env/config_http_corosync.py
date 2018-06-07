@@ -1,3 +1,5 @@
+import base64
+
 from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
 )
@@ -139,4 +141,61 @@ class CorosyncShortcuts(object):
             communication_list,
             action="remote/reload_corosync_conf",
             output="Succeeded",
+        )
+
+    def qdevice_get_ca_cert(
+        self, ca_cert=b"ca_cert", node_labels=None, communication_list=None,
+        name="http.corosync.qdevice_get_ca_cert",
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/qdevice_net_get_ca_certificate",
+            output=base64.b64encode(ca_cert),
+        )
+
+    def qdevice_client_setup(
+        self, ca_cert=b"ca_cert", node_labels=None, communication_list=None,
+        name="http.corosync.qdevice_client_setup",
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/qdevice_net_client_init_certificate_storage",
+            param_list=[("ca_certificate", base64.b64encode(ca_cert))],
+        )
+
+    def qdevice_sign_certificate(
+        self, cluster_name, cert=b"cert", signed_cert=b"signed cert",
+        node_labels=None, communication_list=None,
+        name="http.corosync.qdevice_sign_certificate",
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/qdevice_net_sign_node_certificate",
+            param_list=[
+                ("certificate_request", base64.b64encode(cert)),
+                ("cluster_name", cluster_name),
+            ],
+            output=base64.b64encode(signed_cert),
+        )
+
+    def qdevice_client_import_cert_and_key(
+        self, cert=b"pk12 cert", node_labels=None, communication_list=None,
+        name="http.corosync.qdevice_client_import_cert_and_key",
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/qdevice_net_client_import_certificate",
+            param_list=[("certificate", base64.b64encode(cert))],
         )

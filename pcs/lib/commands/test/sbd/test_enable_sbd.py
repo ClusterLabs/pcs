@@ -10,29 +10,6 @@ from pcs.test.tools.misc import get_test_resource, outdent
 from pcs.lib.corosync.config_parser import parse_string
 
 
-def _check_sbd_comm_success_fixture(node, watchdog, device_list):
-    return dict(
-        label=node,
-        output=json.dumps({
-            "sbd": {
-                "installed": True,
-            },
-            "watchdog": {
-                "exist": True,
-                "path": watchdog,
-            },
-            "device_list": [
-                dict(path=dev, exist=True, block_device=True)
-                for dev in device_list
-            ],
-        }),
-        param_list=[
-            ("watchdog", watchdog),
-            ("device_list", json.dumps(device_list)),
-        ]
-    )
-
-
 def _get_corosync_conf_text_with_atb(orig_cfg_file):
     corosync_conf = parse_string(open(get_test_resource(orig_cfg_file)).read())
     for quorum in corosync_conf.get_sections(name="quorum"):
@@ -174,7 +151,7 @@ class OddNumOfNodesSuccess(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     node, self.watchdog_dict[node], device_dict[node]
                 ) for node in self.node_list
             ]
@@ -206,7 +183,7 @@ class OddNumOfNodesSuccess(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     node, self.watchdog_dict[node], []
                 ) for node in self.node_list
             ]
@@ -256,7 +233,7 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     node, self.watchdog, device_list
                 ) for node in self.node_list
             ]
@@ -285,7 +262,7 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
         )
@@ -334,7 +311,7 @@ class EvenNumOfNodes(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     node, self.watchdog, device_list
                 ) for node in self.node_list
             ]
@@ -364,7 +341,7 @@ class EvenNumOfNodes(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
         )
@@ -406,7 +383,7 @@ class EvenNumOfNodes(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
         )
@@ -437,7 +414,7 @@ class EvenNumOfNodes(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
         )
@@ -524,7 +501,7 @@ class OfflineNodes(TestCase):
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.online_node_list
             ]
         )
@@ -558,7 +535,7 @@ class OfflineNodes(TestCase):
     def test_ignore_offline_nodes_atb_needed(self):
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.online_node_list
             ]
         )
@@ -808,7 +785,7 @@ class Validations(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     self.node_list[0], watchdog, []
                 ),
                 dict(
@@ -860,7 +837,7 @@ class Validations(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     self.node_list[0], watchdog, []
                 ),
                 dict(
@@ -915,7 +892,7 @@ class Validations(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     self.node_list[0], watchdog, device_list
                 ),
                 dict(
@@ -1099,7 +1076,7 @@ class FailureHandling(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.sbd.check_sbd(
             communication_list=[
-                _check_sbd_comm_success_fixture(node, self.watchdog, [])
+                fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
                 for node in self.node_list
             ]
         )
@@ -1561,7 +1538,7 @@ class FailureHandling(TestCase):
                     response_code=400,
                     output=self.reason,
                 ),
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     self.node_list[1], self.watchdog, []
                 )
             ]
@@ -1605,7 +1582,7 @@ class FailureHandling(TestCase):
                     error_msg=self.reason,
                     was_connected=False,
                 ),
-                _check_sbd_comm_success_fixture(
+                fixture.check_sbd_comm_success_fixture(
                     self.node_list[1], self.watchdog, []
                 )
             ]
@@ -1735,8 +1712,9 @@ class UnknownHosts(TestCase):
             .http.host.check_auth(self.known_hosts)
             .http.sbd.check_sbd(
                 communication_list=[
-                    _check_sbd_comm_success_fixture(node, "/dev/watchdog", [])
-                    for node in self.known_hosts
+                    fixture.check_sbd_comm_success_fixture(
+                        node, "/dev/watchdog", []
+                    ) for node in self.known_hosts
                 ]
             )
             .http.sbd.set_sbd_config(

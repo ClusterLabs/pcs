@@ -69,7 +69,13 @@ def patch_env(call_queue, config, init_env):
                 else spy.get_local_corosync_conf
         ),
 
-        patch_lib_env("communicator_factory", mock_communicator_factory)
+        patch_lib_env("communicator_factory", mock_communicator_factory),
+
+        # In all the tests we assume that we are running on top of a systemd
+        # running system. If needed, this may be turned off for some particular
+        # tests. Note that the patched function is cached therefore is patched
+        # here and not in every tests.
+        mock.patch("pcs.lib.external.is_systemctl", lambda: True),
     ]
 
     if is_fs_call_in(call_queue):
@@ -88,8 +94,16 @@ def patch_env(call_queue, config, init_env):
                 fs_mock("os.path.exists", os.path.exists)
             ),
             mock.patch(
+                "os.path.isdir",
+                fs_mock("os.path.isdir", os.path.isdir)
+            ),
+            mock.patch(
                 "os.path.isfile",
                 fs_mock("os.path.isfile", os.path.isfile)
+            ),
+            mock.patch(
+                "os.listdir",
+                fs_mock("os.listdir", os.listdir)
             ),
             mock.patch(
                 "os.chmod",
