@@ -2309,7 +2309,7 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
 
-class FailureDisableSbdFailures(TestCase):
+class FailureDisableSbd(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -2325,14 +2325,6 @@ class FailureDisableSbdFailures(TestCase):
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
 
-        config_dir = settings.booth_config_dir
-        self.config_file = "booth.conf"
-        self.authfile = "booth.authfile"
-        self.config_path = os.path.join(config_dir, self.config_file)
-        self.authfile_path = os.path.join(config_dir, self.authfile)
-        self.config_content = "authfile = {}\n".format(self.authfile_path)
-        self.authfile_content = b"booth authfile"
-
         self.config.env.set_corosync_conf_data(
             corosync_conf_fixture(self.existing_corosync_nodes)
         )
@@ -2341,9 +2333,7 @@ class FailureDisableSbdFailures(TestCase):
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2435,3 +2425,196 @@ class FailureDisableSbdFailures(TestCase):
                 ) for node in self.unsuccessful_nodes
             ]
         )
+
+
+class FailureEnableSbd(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        # have 5 nodes in total so we do not need to enable atb
+        self.existing_nodes, self.new_nodes = _generate_nodes(3, 2)
+        self.expected_reports = []
+        self.unsuccessful_nodes = self.new_nodes[:1]
+        self.successful_nodes = self.new_nodes[1:]
+        self.err_msg = "an error message"
+        patch_getaddrinfo(self, self.new_nodes)
+        self.existing_corosync_nodes = [
+            _node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.sbd_config = ""
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        (self.config
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .runner.cib.load()
+            .local.read_sbd_config(self.sbd_config)
+            .http.host.check_auth(node_labels=self.existing_nodes)
+            .local.get_host_info(self.new_nodes)
+            .local.check_sbd(self.new_nodes, with_devices=False)
+            .http.host.update_known_hosts(
+                node_labels=self.new_nodes,
+                to_add_hosts=self.existing_nodes + self.new_nodes,
+            )
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in self.new_nodes
+            ]
+        )
+
+    def _add_nodes_with_lib_error(self, reports=[]):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [
+                    {"name": node, "watchdog": _get_watchdog(node)}
+                    for node in self.new_nodes
+                ],
+            ),
+            reports,
+            expected_in_processor=False,
+        )
+
+    def test_enable_communication_failure(self):
+        (self.config
+            .fs.open(
+                settings.sbd_config,
+                return_value=mock.mock_open(read_data=self.sbd_config)(),
+                name="fs.open.sbd_config",
+            )
+            .http.sbd.set_sbd_config(
+                config_generator=lambda node: sbd_config_generator(
+                    node, with_devices=False
+                ),
+                node_labels=self.new_nodes,
+            )
+            .http.sbd.enable_sbd(
+                communication_list=[
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    ) for node in self.unsuccessful_nodes
+                ] + [dict(label=node) for node in self.successful_nodes]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                ) for node in self.new_nodes
+            ]
+            +
+            [fixture.info(report_codes.SBD_ENABLING_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.SERVICE_ENABLE_SUCCESS,
+                    service="sbd",
+                    node=node,
+                    instance=None,
+                ) for node in self.successful_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/sbd_enable",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
+
+    def test_send_config_communication_failure(self):
+        (self.config
+            .fs.open(
+                settings.sbd_config,
+                return_value=mock.mock_open(read_data=self.sbd_config)(),
+                name="fs.open.sbd_config",
+            )
+            .http.sbd.set_sbd_config(
+                communication_list=[
+                    dict(
+                        label=node,
+                        param_list=[(
+                            "config",
+                            sbd_config_generator(node, with_devices=False)
+                        )],
+                        output=self.err_msg,
+                        response_code=400,
+                    ) for node in self.unsuccessful_nodes
+                ] + [
+                    dict(
+                        label=node,
+                        param_list=[(
+                            "config",
+                            sbd_config_generator(node, with_devices=False)
+                        )],
+                    ) for node in self.successful_nodes
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                ) for node in self.successful_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/set_sbd_config",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
+
+    def test_read_config_failure(self):
+        (self.config
+            .fs.open(
+                settings.sbd_config,
+                side_effect=EnvironmentError(
+                    1, self.err_msg, settings.sbd_config
+                ),
+                name="fs.open.sbd_config",
+            )
+        )
+
+        self._add_nodes_with_lib_error(
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_SBD_CONFIG,
+                    node="local node",
+                    reason=f"[Errno 1] {self.err_msg}: '{settings.sbd_config}'",
+                )
+            ]
+        )
+
+        self.env_assist.assert_reports(self.expected_reports)
