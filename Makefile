@@ -104,10 +104,10 @@ DEST_BASH_COMPLETION = ${DESTDIR}${BASH_COMPLETION_DIR}
 DEST_CONF = ${DESTDIR}${CONF_DIR}
 DEST_LIB = ${DESTDIR}${LIB_DIR}
 DEST_PREFIX = ${DESTDIR}${PREFIX}
-SNMP_MIB_DIR_FULL=${DEST_PREFIX}${SNMP_MIB_DIR}
 BUNDLED_LIB_INSTALL_DIR=${DEST_LIB}/pcs/bundled
 BUNDLED_LIB_DIR_ABS=$(shell readlink -f ${BUNDLED_LIB_DIR})
 BUNDLES_TMP_DIR=${BUNDLED_LIB_DIR_ABS}/tmp
+DEST_SNMP_MIB=${DEST_PREFIX}${SNMP_MIB_DIR}
 
 pcsd_fonts = \
 	LiberationSans-Regular.ttf;LiberationSans:style=Regular \
@@ -145,8 +145,8 @@ install_python_part: install_bundled_libs
 	# pcs SNMP install
 	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
 	install -d ${DESTDIR}/var/log/pcs
-	install -d ${SNMP_MIB_DIR_FULL}
-	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${SNMP_MIB_DIR_FULL}
+	install -d ${DEST_SNMP_MIB}
+	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DEST_MAN}
 ifeq ($(IS_DEBIAN),true)
@@ -214,7 +214,7 @@ else
 endif
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
-	rm -f ${SNMP_MIB_DIR_FULL}/PCMK-PCS*-MIB.txt
+	rm -f ${DEST_SNMP_MIB}/PCMK-PCS*-MIB.txt
 
 newversion:
 	$(PYTHON) newversion.py
