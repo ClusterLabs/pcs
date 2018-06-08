@@ -515,6 +515,42 @@ class LocalConfig():
             ]
         )
 
+    def pcsd_ssl_cert_sync(self, node_labels):
+        pcsd_ssl_cert = "pcsd ssl cert"
+        pcsd_ssl_key = "pcsd ssl key"
+        (self.config
+            .fs.open(
+                settings.pcsd_cert_location,
+                mock.mock_open(read_data=pcsd_ssl_cert)(),
+                name="fs.open.pcsd_ssl_cert"
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                mock.mock_open(read_data=pcsd_ssl_key)(),
+                name="fs.open.pcsd_ssl_key"
+            )
+            .http.host.send_pcsd_cert(
+                cert=pcsd_ssl_cert,
+                key=pcsd_ssl_key,
+                node_labels=node_labels
+            )
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=node_labels
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in node_labels
+            ]
+        )
+
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
@@ -557,6 +593,7 @@ class AddNodesSuccessMinimal(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     existing_corosync_nodes + [
@@ -994,6 +1031,7 @@ class AddNodeFull(TestCase):
             .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
             .local.setup_booth(self.new_nodes)
             .local.files_sync(self.new_nodes)
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
@@ -1047,6 +1085,7 @@ class AddNodeFull(TestCase):
             )
             .local.setup_booth(self.new_nodes)
             .local.files_sync(self.new_nodes)
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
@@ -1109,6 +1148,7 @@ class FailureReloadCorosyncConf(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .http.corosync.set_corosync_conf(
                 corosync_conf_fixture(
                     existing_corosync_nodes + [
@@ -1257,6 +1297,7 @@ class FailureCorosyncConfDistribution(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
         )
         self.expected_reports.extend(
             [
@@ -1417,6 +1458,148 @@ class FailureCorosyncConfDistribution(TestCase):
                     report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
                 ) for node in node_list
+            ]
+        )
+
+
+class FailurePcsdSslCertSync(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.expected_reports = []
+        self.pcsd_ssl_cert = "pcsd ssl cert"
+        self.pcsd_ssl_key = "pcsd ssl key"
+        self.unsuccessful_nodes = self.new_nodes[:1]
+        self.successful_nodes = self.new_nodes[1:]
+        self.error = "an error"
+        patch_getaddrinfo(self, self.new_nodes)
+        existing_corosync_nodes = [
+            _node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(existing_corosync_nodes)
+        )
+        self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        (self.config
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .runner.cib.load()
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({})
+            .local.get_host_info(self.new_nodes)
+            .http.host.update_known_hosts(
+                node_labels=self.new_nodes,
+                to_add_hosts=self.existing_nodes + self.new_nodes,
+            )
+            .local.disable_sbd(self.new_nodes)
+            .fs.isdir(settings.booth_config_dir, return_value=False)
+            .local.no_file_sync()
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=self.new_nodes
+                )
+            ]
+        )
+
+    def _add_nodes_with_lib_error(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node, "addrs": [node]} for node in self.new_nodes],
+            )
+        )
+
+    def test_read_failure(self):
+        (self.config
+            .fs.open(
+                settings.pcsd_cert_location,
+                name="fs.open.pcsd_ssl_cert",
+                side_effect=EnvironmentError(1, "error cert")
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                name="fs.open.pcsd_ssl_key",
+                side_effect=EnvironmentError(1, "error key")
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role="PCSD_SSL_CERT",
+                    file_path=settings.pcsd_cert_location,
+                    reason="error cert",
+                    operation="read"
+                ),
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role="PCSD_SSL_KEY",
+                    file_path=settings.pcsd_key_location,
+                    reason="error key",
+                    operation="read"
+                ),
+            ]
+        )
+
+    def test_communication_failure(self):
+        (self.config
+            .fs.open(
+                settings.pcsd_cert_location,
+                mock.mock_open(read_data=self.pcsd_ssl_cert)(),
+                name="fs.open.pcsd_ssl_cert"
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                mock.mock_open(read_data=self.pcsd_ssl_key)(),
+                name="fs.open.pcsd_ssl_key"
+            )
+            .http.host.send_pcsd_cert(
+                cert=self.pcsd_ssl_cert,
+                key=self.pcsd_ssl_key,
+                communication_list=[
+                    {
+                        "label": node,
+                        "response_code": 400,
+                        "output": self.error,
+                    } for node in self.unsuccessful_nodes
+                ] + [
+                    dict(label=node) for node in self.successful_nodes
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in self.successful_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/set_certs",
+                    reason=self.error
+                ) for node in self.unsuccessful_nodes
             ]
         )
 
@@ -1840,6 +2023,7 @@ class FailureBoothConfigsDistribution(TestCase):
                 node_labels=self.new_nodes,
             )
             .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes + [

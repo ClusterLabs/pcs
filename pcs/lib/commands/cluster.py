@@ -695,6 +695,44 @@ def add_nodes(
         com_cmd.set_targets(new_nodes_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
 
+    # Distribute and reload pcsd SSL certificate
+    report_processor.report(
+        reports.pcsd_ssl_cert_and_key_distribution_started(
+            [target.label for target in new_nodes_target_list]
+        )
+    )
+
+    try:
+        with open(settings.pcsd_cert_location, "r") as f:
+            ssl_cert = f.read()
+    except EnvironmentError as e:
+        report_processor.report(
+            reports.file_io_error(
+                env_file_role_codes.PCSD_SSL_CERT,
+                file_path=settings.pcsd_cert_location,
+                reason=format_environment_error(e),
+                operation="read",
+            )
+        )
+    try:
+        with open(settings.pcsd_key_location, "r") as f:
+            ssl_key = f.read()
+    except EnvironmentError as e:
+        report_processor.report(
+            reports.file_io_error(
+                env_file_role_codes.PCSD_SSL_KEY,
+                file_path=settings.pcsd_key_location,
+                reason=format_environment_error(e),
+                operation="read",
+            )
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
+    com_cmd.set_targets(new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
     # When corosync >= 2 is in use, the procedure for adding a node is:
     # 1. add the new node to corosync.conf on all existing nodes
     # 2. reload corosync.conf before the new node is started
@@ -717,8 +755,6 @@ def add_nodes(
     com_cmd = ReloadCorosyncConf(env.report_processor)
     com_cmd.set_targets(online_cluster_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
-
-    # TODO: distribute and reload pcsd certs
 
     # Optionally enable and start cluster services.
     if enable:
