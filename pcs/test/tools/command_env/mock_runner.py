@@ -49,9 +49,6 @@ COMMAND_COMPLETIONS = {
     "corosync-cfgtool": path.join(
         settings.corosync_binaries, "corosync-cfgtool"
     ),
-    "corosync-qdevice-net-certutil": path.join(
-        settings.corosync_binaries, "corosync-qdevice-net-certutil"
-    ),
     "crm_diff": path.join(settings.pacemaker_binaries, "crm_diff"),
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),

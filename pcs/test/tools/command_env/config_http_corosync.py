@@ -28,6 +28,41 @@ class CorosyncShortcuts(object):
             output='{"corosync":false}'
         )
 
+    def set_corosync_conf(
+        self, corosync_conf, node_labels=None, communication_list=None,
+        name="http.corosync.set_corosync_conf"
+    ):
+        """
+        Create a call for sending corosync.conf text
+
+        string corosync_conf -- corosync.conf text to be sent
+        list node_labels -- create success responses from these nodes
+        list communication_list -- create custom responses
+        string name -- the key of this call
+        """
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/set_corosync_conf",
+            param_list=[("corosync_conf", corosync_conf)],
+            output="Succeeded",
+        )
+
+    def reload_corosync_conf(
+        self, node_labels=None, communication_list=None,
+        name="http.corosync.reload_corosync_conf"
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/reload_corosync_conf",
+            output="Succeeded",
+        )
+
     def qdevice_client_enable(
         self, name="http.corosync.qdevice_client_enable",
         node_labels=None, communication_list=None
@@ -108,44 +143,9 @@ class CorosyncShortcuts(object):
             output="corosync-qdevice stopped",
         )
 
-    def set_corosync_conf(
-        self, corosync_conf, node_labels=None, communication_list=None,
-        name="http.corosync.set_corosync_conf"
-    ):
-        """
-        Create a call for sending corosync.conf text
-
-        string corosync_conf -- corosync.conf text to be sent
-        list node_labels -- create success responses from these nodes
-        list communication_list -- create custom responses
-        string name -- the key of this call
-        """
-        place_multinode_call(
-            self.__calls,
-            name,
-            node_labels,
-            communication_list,
-            action="remote/set_corosync_conf",
-            param_list=[("corosync_conf", corosync_conf)],
-            output="Succeeded",
-        )
-
-    def reload_corosync_conf(
-        self, node_labels=None, communication_list=None,
-        name="http.corosync.reload_corosync_conf"
-    ):
-        place_multinode_call(
-            self.__calls,
-            name,
-            node_labels,
-            communication_list,
-            action="remote/reload_corosync_conf",
-            output="Succeeded",
-        )
-
-    def qdevice_get_ca_cert(
+    def qdevice_net_get_ca_cert(
         self, ca_cert=b"ca_cert", node_labels=None, communication_list=None,
-        name="http.corosync.qdevice_get_ca_cert",
+        name="http.corosync.qdevice_net_get_ca_cert",
     ):
         place_multinode_call(
             self.__calls,
@@ -156,9 +156,9 @@ class CorosyncShortcuts(object):
             output=base64.b64encode(ca_cert),
         )
 
-    def qdevice_client_setup(
+    def qdevice_net_client_setup(
         self, ca_cert=b"ca_cert", node_labels=None, communication_list=None,
-        name="http.corosync.qdevice_client_setup",
+        name="http.corosync.qdevice_net_client_setup",
     ):
         place_multinode_call(
             self.__calls,
@@ -169,10 +169,10 @@ class CorosyncShortcuts(object):
             param_list=[("ca_certificate", base64.b64encode(ca_cert))],
         )
 
-    def qdevice_sign_certificate(
+    def qdevice_net_sign_certificate(
         self, cluster_name, cert=b"cert", signed_cert=b"signed cert",
         node_labels=None, communication_list=None,
-        name="http.corosync.qdevice_sign_certificate",
+        name="http.corosync.qdevice_net_sign_certificate",
     ):
         place_multinode_call(
             self.__calls,
@@ -187,9 +187,9 @@ class CorosyncShortcuts(object):
             output=base64.b64encode(signed_cert),
         )
 
-    def qdevice_client_import_cert_and_key(
+    def qdevice_net_client_import_cert_and_key(
         self, cert=b"pk12 cert", node_labels=None, communication_list=None,
-        name="http.corosync.qdevice_client_import_cert_and_key",
+        name="http.corosync.qdevice_net_client_import_cert_and_key",
     ):
         place_multinode_call(
             self.__calls,

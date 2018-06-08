@@ -122,12 +122,12 @@ class LocalConfig():
         mock_write_tmpfile.return_value = tempfile_mock
         local_prefix = "local.setup_qdevice."
         (self.config
-            .http.corosync.qdevice_get_ca_cert(
+            .http.corosync.qdevice_net_get_ca_cert(
                 ca_cert=ca_cert,
                 node_labels=[QDEVICE_HOST],
                 name=f"{local_prefix}http.corosync.qdevice_ca_cert",
             )
-            .http.corosync.qdevice_client_setup(
+            .http.corosync.qdevice_net_client_setup(
                 ca_cert=ca_cert,
                 node_labels=new_nodes,
                 name=f"{local_prefix}http.corosync.qdevice_client_setup",
@@ -151,7 +151,7 @@ class LocalConfig():
                 mode="rb",
                 name=f"{local_prefix}fs.open.cert_req_read",
             )
-            .http.corosync.qdevice_sign_certificate(
+            .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
                 signed_cert=b"signed cert",
@@ -177,7 +177,7 @@ class LocalConfig():
                 mode="rb",
                 name=f"{local_prefix}fs.open.pk12_cert_read",
             )
-            .http.corosync.qdevice_client_import_cert_and_key(
+            .http.corosync.qdevice_net_client_import_cert_and_key(
                 cert=pk12_cert,
                 node_labels=new_nodes,
                 name=(
