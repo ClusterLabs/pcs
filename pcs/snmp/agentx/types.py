@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-import pcs.snmp.agentx.pcs_pyagentx as pyagentx
+import pyagentx
 
 
 BaseType = namedtuple("BaseType", ["data_type", "value"])
