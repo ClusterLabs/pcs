@@ -31,6 +31,7 @@ else
 endif
 
 # VARIABLES OVERRIDABLE FROM OUTSIDE
+# ==================================
 
 ifndef PYTHON
 	# some distros ship python3 as python
@@ -86,15 +87,51 @@ ifndef LIB_DIR
   endif
 endif
 
-ifndef BUNDLED_LIB_DIR
-  BUNDLED_LIB_DIR=./pcs/bundled/
+ifndef BUNDLE_LOCAL_DIR
+  BUNDLE_LOCAL_DIR=./pcs/bundled/
 endif
 
 ifndef SNMP_MIB_DIR
   SNMP_MIB_DIR=/share/snmp/mibs/
 endif
 
+# INSTALLATION FINE DETAIL CONTROLL
+# =================================
+#  `BUNDLE_INSTALL_PYAGENTX=false`
+#      to disable the default automatic pyagentx instalation
+#  `BUNDLE_PYAGENTX_SRC_DIR=/path/to/pyagentx/sources`
+#      to install pyagentx from the given location instead of using default
+#      location for downloading sources and an installation
+#  `BUNDLE_TORNADO_SRC_DIR=/path/to/tornado/sources`
+#      to install tornado from specified location (tornado is not installed by
+#      default)
+BUNDLE_PYAGENTX_VERSION="0.4.pcs.2"
+BUNDLE_PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${BUNDLE_PYAGENTX_VERSION}.tar.gz"
+
+ifndef BUNDLE_INSTALL_PYAGENTX
+	BUNDLE_INSTALL_PYAGENTX=true
+endif
+
+BUNDLE_PYAGENTX_SRC_DOWNLOAD=false
+ifndef BUNDLE_PYAGENTX_SRC_DIR
+	BUNDLE_PYAGENTX_SRC_DOWNLOAD=true
+endif
+ifneq ($(BUNDLE_INSTALL_PYAGENTX),true)
+	BUNDLE_PYAGENTX_SRC_DOWNLOAD=false
+endif
+
+# There is BUNDLE_TO_INSTALL when BUNDLE_INSTALL_PYAGENTX is true or
+# BUNDLE_TORNADO_SRC_DIR is specified
+BUNDLE_TO_INSTALL=false
+ifeq ($(BUNDLE_INSTALL_PYAGENTX), true)
+	BUNDLE_TO_INSTALL=true
+endif
+ifdef BUNDLE_TORNADO_SRC_DIR
+	BUNDLE_TO_INSTALL=true
+endif
+
 # DESTINATION DIRS
+# ================
 
 DEST_PYTHON_SITELIB = ${DESTDIR}${PYTHON_SITELIB}
 DEST_MAN=${DESTDIR}/usr/share/man/man8
@@ -104,10 +141,12 @@ DEST_BASH_COMPLETION = ${DESTDIR}${BASH_COMPLETION_DIR}
 DEST_CONF = ${DESTDIR}${CONF_DIR}
 DEST_LIB = ${DESTDIR}${LIB_DIR}
 DEST_PREFIX = ${DESTDIR}${PREFIX}
-BUNDLED_LIB_INSTALL_DIR=${DEST_LIB}/pcs/bundled
-BUNDLED_LIB_DIR_ABS=$(shell readlink -f ${BUNDLED_LIB_DIR})
-BUNDLES_TMP_DIR=${BUNDLED_LIB_DIR_ABS}/tmp
+DEST_BUNDLE_LIB=${DEST_LIB}/pcs/bundled
+DEST_BUNDLE_LOCAL=$(shell readlink -f ${BUNDLE_LOCAL_DIR})
 DEST_SNMP_MIB=${DEST_PREFIX}${SNMP_MIB_DIR}
+
+# OTHER
+# =====
 
 pcsd_fonts = \
 	LiberationSans-Regular.ttf;LiberationSans:style=Regular \
@@ -117,6 +156,8 @@ pcsd_fonts = \
 	Overpass-Regular.ttf;Overpass:style=Regular \
 	Overpass-Bold.ttf;Overpass:style=Bold
 
+# 1 - debian alternative file
+# 2 - file which will be replaced by debian alternative file
 define use-debian-alternative
 	rm -f  $(2)
 	tmp_alternative=`mktemp`; \
@@ -124,6 +165,41 @@ define use-debian-alternative
 	install -m644 $$tmp_alternative $(2)
 	rm -f $$tmp_alternative
 endef
+
+# 1 - sources directory - with python package sources
+# 2 - destination directory - python package will be installed into the
+#     `packages` subdirectory of this destination directory
+define build_python_bundle
+	cd $(1) && \
+	PYTHONPATH=$(2)/packages/ \
+	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
+endef
+
+# TARGETS
+# =======
+
+bundle_pyagentx:
+ifeq ($(BUNDLE_PYAGENTX_SRC_DOWNLOAD),true)
+	mkdir -p ${DEST_BUNDLE_LOCAL}/src
+	$(eval BUNDLE_PYAGENTX_SRC_DIR=${DEST_BUNDLE_LOCAL}/src/pyagentx-${BUNDLE_PYAGENTX_VERSION})
+	rm -rf ${BUNDLE_PYAGENTX_SRC_DIR}
+	wget -qO- ${BUNDLE_PYAGENTX_URI} | tar xvz -C ${DEST_BUNDLE_LOCAL}/src
+endif
+ifeq ($(BUNDLE_INSTALL_PYAGENTX),true)
+	$(call build_python_bundle,${BUNDLE_PYAGENTX_SRC_DIR},$(PYAGENTX_LIB_DIR))
+endif
+ifeq ($(BUNDLE_PYAGENTX_SRC_DOWNLOAD),true)
+	rm -rf ${BUNDLE_PYAGENTX_SRC_DIR}
+endif
+
+install_bundled_libs:
+ifeq ($(BUNDLE_TO_INSTALL),true)
+	install -d ${DEST_BUNDLE_LIB}
+endif
+ifdef BUNDLE_TORNADO_SRC_DIR
+	$(call build_python_bundle,${BUNDLE_TORNADO_SRC_DIR},${DEST_BUNDLE_LIB})
+endif
+	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LIB) bundle_pyagentx
 
 install_python_part: install_bundled_libs
 	# make Python interpreter execution sane (via -Es flags)
@@ -187,19 +263,11 @@ endif
 		$(if $(font_path),ln -s -f $(font_path) ${DEST_LIB}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
 	)
 
-build_bundled_libs:
-ifndef PYAGENTX_INSTALLED
-	rm -rf ${BUNDLES_TMP_DIR}
-	mkdir -p ${BUNDLES_TMP_DIR}
-	$(MAKE) -C pcs/snmp/ build_bundled_libs
-	rm -rf ${BUNDLES_TMP_DIR}
-endif
-
-install_bundled_libs: build_bundled_libs
-ifndef PYAGENTX_INSTALLED
-	install -d ${BUNDLED_LIB_INSTALL_DIR}
-	cp -r ${BUNDLED_LIB_DIR_ABS}/packages ${BUNDLED_LIB_INSTALL_DIR}
-endif
+# For running pcs_snmp_agent from a local (git clone) directory (without full
+# pcs installation) it is necessary to have pyagentx installed in expected
+# location inside the local directory.
+bundle_pyagentx_local:
+	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LOCAL) bundle_pyagentx
 
 uninstall:
 	rm -f ${DEST_PREFIX}/sbin/pcs

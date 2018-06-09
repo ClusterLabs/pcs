@@ -3,6 +3,7 @@
 /MANIFEST
 /dist/
 /pcs/bash_completion.d.pcs
+/pcs/bundled/
 /pcsd/.bundle
 /pcsd/vendor
 
