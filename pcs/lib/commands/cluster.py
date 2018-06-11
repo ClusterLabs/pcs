@@ -6,10 +6,11 @@ from pcs import settings
 from pcs.common import (
     env_file_role_codes,
     report_codes,
+    ssl,
 )
+from pcs.common.node_communicator import HostNotFound
 from pcs.common.tools import format_environment_error
 from pcs.common.reports import SimpleReportProcessor
-from pcs.common import ssl
 from pcs.lib import reports, node_communication_format, sbd
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
@@ -411,6 +412,19 @@ def add_nodes(
         )
     )
     report_processor.report_list(target_report_list)
+    # get a target for qnetd if needed
+    qdevice_model, qdevice_model_options, _, _ = (
+        corosync_conf.get_quorum_device_settings()
+    )
+    if qdevice_model == "net":
+        try:
+            qnetd_target = target_factory.get_target(
+                qdevice_model_options["host"]
+            )
+        except HostNotFound:
+            report_processor.report_list([
+                reports.host_not_found([qdevice_model_options["host"]])
+            ])
 
     # Get targets for new nodes and report unknown (== not-authorized) nodes.
     # If a node doesn't contain the 'name' key, validation of inputs reports it.
@@ -574,22 +588,18 @@ def add_nodes(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     # qdevice setup
-    qdevice_model, qdevice_model_options, _, _ = (
-        corosync_conf.get_quorum_device_settings()
-    )
     if qdevice_model == "net":
         qdevice_net.set_up_client_certificates(
             env.cmd_runner(),
             env.report_processor,
             env.communicator_factory,
-            target_factory.get_target_from_hostname(
-                qdevice_model_options["host"]
-            ),
+            qnetd_target,
             corosync_conf.get_cluster_name(),
             new_nodes_target_list,
             # we don't want to allow skiping offline nodes which are being
             # added, otherwise qdevice will not work properly
-            skip_offline_nodes=False
+            skip_offline_nodes=False,
+            allow_skip_offline=False
         )
 
     # sbd setup

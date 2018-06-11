@@ -33,15 +33,18 @@ class QnetdNotRunningException(Exception):
 
 def set_up_client_certificates(
     runner, reporter, communicator_factory, qnetd_target, cluster_name,
-    cluster_nodes_target_list, skip_offline_nodes,
+    cluster_nodes_target_list, skip_offline_nodes, allow_skip_offline=True
 ):
     """
     setup cluster nodes for using qdevice model net
-    # TODO document all parameters
+    CommandRunner runner -- command runner instance
+    ReportProcessor reporter -- report processor instance
+    NodeCommunicatorFactory communicator_factory -- communicator facto. instance
     Target qnetd_target -- qdevice provider (qnetd host)
     string cluster_name -- name of the cluster to which qdevice is being added
-    list cluster_nodes_target_list -- list of cluster nodes names
+    list cluster_nodes_target_list -- list of cluster nodes targets
     bool skip_offline_nodes -- continue even if not all nodes are accessible
+    bool allow_skip_offline -- enables forcing errors by skip_offline_nodes
     """
     reporter.report(
         reports.qdevice_certificate_distribution_started()
@@ -54,7 +57,7 @@ def set_up_client_certificates(
     )[0][1]
     # init certificate storage on all nodes
     com_cmd = qdevice_net_com.ClientSetup(
-        reporter, qnetd_ca_cert, skip_offline_nodes
+        reporter, qnetd_ca_cert, skip_offline_nodes, allow_skip_offline
     )
     com_cmd.set_targets(cluster_nodes_target_list)
     run_and_raise(communicator_factory.get_communicator(), com_cmd)
@@ -73,7 +76,7 @@ def set_up_client_certificates(
     pk12 = client_cert_request_to_pk12(runner, signed_certificate)
     # distribute final certificate to nodes
     com_cmd = qdevice_net_com.ClientImportCertificateAndKey(
-        reporter, pk12, skip_offline_nodes
+        reporter, pk12, skip_offline_nodes, allow_skip_offline
     )
     com_cmd.set_targets(cluster_nodes_target_list)
     run_and_raise(communicator_factory.get_communicator(), com_cmd)

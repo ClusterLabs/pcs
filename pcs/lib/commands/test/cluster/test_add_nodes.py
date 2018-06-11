@@ -110,16 +110,15 @@ class LocalConfig():
     def set_expected_reports_list(self, expected_reports):
         self.expected_reports = expected_reports
 
-    def setup_qdevice(self, mock_write_tmpfile, new_nodes):
-        ca_cert = b"ca_cert"
+    def setup_qdevice_part1(self, mock_write_tmpfile, new_nodes):
         cert = b"cert"
+        ca_cert = b"ca_cert"
         cert_req_path = "cert_req_path"
-        tmp_file_path = "path"
-        pk12_cert_path = "path2"
-        pk12_cert = b"cert pk12"
+        tmp_file_path = "tmp_file_path"
         tempfile_mock = mock.Mock(spec_set=["close", "name"])
         tempfile_mock.name = tmp_file_path
         mock_write_tmpfile.return_value = tempfile_mock
+
         local_prefix = "local.setup_qdevice."
         (self.config
             .http.corosync.qdevice_net_get_ca_cert(
@@ -127,11 +126,13 @@ class LocalConfig():
                 node_labels=[QDEVICE_HOST],
                 name=f"{local_prefix}http.corosync.qdevice_ca_cert",
             )
+
             .http.corosync.qdevice_net_client_setup(
                 ca_cert=ca_cert,
                 node_labels=new_nodes,
                 name=f"{local_prefix}http.corosync.qdevice_client_setup",
             )
+
             .fs.exists(
                 os.path.join(
                     settings.corosync_qdevice_net_client_certs_dir,
@@ -151,6 +152,26 @@ class LocalConfig():
                 mode="rb",
                 name=f"{local_prefix}fs.open.cert_req_read",
             )
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                )
+            ]
+        )
+
+    def setup_qdevice_part2(self, mock_write_tmpfile, new_nodes):
+        cert = b"cert"
+        tmp_file_path = "tmp_file_path"
+        pk12_cert_path = "pk12_cert_path"
+        pk12_cert = b"pk12_cert"
+        tempfile_mock = mock.Mock(spec_set=["close", "name"])
+        tempfile_mock.name = tmp_file_path
+        mock_write_tmpfile.return_value = tempfile_mock
+
+        local_prefix = "local.setup_qdevice."
+        (self.config
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
@@ -158,6 +179,7 @@ class LocalConfig():
                 node_labels=[QDEVICE_HOST],
                 name=f"{local_prefix}http.corosync.qdevice_sign_sertificate",
             )
+
             .fs.exists(
                 os.path.join(
                     settings.corosync_qdevice_net_client_certs_dir,
@@ -177,6 +199,7 @@ class LocalConfig():
                 mode="rb",
                 name=f"{local_prefix}fs.open.pk12_cert_read",
             )
+
             .http.corosync.qdevice_net_client_import_cert_and_key(
                 cert=pk12_cert,
                 node_labels=new_nodes,
@@ -189,17 +212,15 @@ class LocalConfig():
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                )
-            ]
-            +
-            [
-                fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=node,
                 ) for node in new_nodes
             ]
         )
+
+    def setup_qdevice(self, mock_write_tmpfile, new_nodes):
+        self.setup_qdevice_part1(mock_write_tmpfile, new_nodes)
+        self.setup_qdevice_part2(mock_write_tmpfile, new_nodes)
 
     def distribute_and_reload_corosync_conf(
         self, corosync_conf_content, existing_nodes, new_nodes
@@ -1004,7 +1025,9 @@ class AddNodeFull(TestCase):
         )
         (self.config
             .local.set_expected_reports_list(self.expected_reports)
-            .env.set_known_nodes(self.new_nodes + self.existing_nodes)
+            .env.set_known_nodes(
+                self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
+            )
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .runner.cib.load()
         )
@@ -2618,3 +2641,413 @@ class FailureEnableSbd(TestCase):
         )
 
         self.env_assist.assert_reports(self.expected_reports)
+
+
+class FailureQdevice(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.existing_nodes, self.new_nodes = _generate_nodes(2, 2)
+        self.expected_reports = []
+        self.unsuccessful_nodes = self.new_nodes[:1]
+        self.successful_nodes = self.new_nodes[1:]
+        self.err_msg = "an error message"
+        patch_getaddrinfo(self, self.new_nodes)
+        self.existing_corosync_nodes = [
+            _node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.sbd_config = ""
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                qdevice_net=True,
+            )
+        )
+        self.config.env.set_known_nodes(
+            self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
+        )
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        (self.config
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .runner.cib.load()
+            .http.host.check_auth(node_labels=self.existing_nodes)
+            .local.get_host_info(self.new_nodes)
+            .http.host.update_known_hosts(
+                node_labels=self.new_nodes,
+                to_add_hosts=self.existing_nodes + self.new_nodes,
+            )
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in self.new_nodes
+            ]
+        )
+
+    def _add_nodes_with_lib_error(self, reports=[]):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [
+                    {"name": node} for node in self.new_nodes
+                ],
+            ),
+            reports,
+            expected_in_processor=False,
+        )
+
+    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
+    def test_import_pk12_failure(self, mock_write_tmpfile):
+        cert = b"cert"
+        tmp_file_path = "tmp_file_path"
+        pk12_cert_path = "pk12_cert_path"
+        pk12_cert = b"pk12_cert"
+        (self.config
+            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+            .http.corosync.qdevice_net_sign_certificate(
+                CLUSTER_NAME,
+                cert=cert,
+                signed_cert=b"signed cert",
+                node_labels=[QDEVICE_HOST],
+            )
+            .fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir,
+                    "cert8.db"
+                ),
+                return_value=True,
+                name="fs.exists.corosync_certs_db2",
+            )
+            .runner.corosync.qdevice_get_pk12(
+                cert_path=tmp_file_path,
+                output_path=pk12_cert_path,
+            )
+            .fs.open(
+                pk12_cert_path,
+                return_value=mock.mock_open(read_data=pk12_cert)(),
+                mode="rb",
+                name="fs.open.pk12_cert_read",
+            )
+            .http.corosync.qdevice_net_client_import_cert_and_key(
+                cert=pk12_cert,
+                communication_list=[
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    ) for node in self.unsuccessful_nodes
+                ] + [
+                    dict(
+                        label=node,
+                    ) for node in self.successful_nodes
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    node=node,
+                ) for node in self.successful_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/qdevice_net_client_import_certificate",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
+
+    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
+    def test_read_pk12_from_file_failure(self, mock_write_tmpfile):
+        cert = b"cert"
+        tmp_file_path = "tmp_file_path"
+        pk12_cert_path = "pk12_cert_path"
+        (self.config
+            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+            .http.corosync.qdevice_net_sign_certificate(
+                CLUSTER_NAME,
+                cert=cert,
+                signed_cert=b"signed cert",
+                node_labels=[QDEVICE_HOST],
+            )
+            .fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir,
+                    "cert8.db"
+                ),
+                return_value=True,
+                name="fs.exists.corosync_certs_db2",
+            )
+            .runner.corosync.qdevice_get_pk12(
+                cert_path=tmp_file_path,
+                output_path=pk12_cert_path,
+            )
+            .fs.open(
+                pk12_cert_path,
+                side_effect=EnvironmentError(
+                    1, self.err_msg, pk12_cert_path,
+                ),
+                mode="rb",
+                name="fs.open.pk12_cert_read",
+            )
+        )
+
+        self._add_nodes_with_lib_error([
+            fixture.error(
+                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reason=f"{pk12_cert_path}: {self.err_msg}"
+            ),
+        ])
+
+        self.env_assist.assert_reports(self.expected_reports)
+
+    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
+    def test_transform_to_pk12_failure(self, mock_write_tmpfile):
+        cert = b"cert"
+        tmp_file_path = "tmp_file_path"
+        (self.config
+            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+            .http.corosync.qdevice_net_sign_certificate(
+                CLUSTER_NAME,
+                cert=cert,
+                signed_cert=b"signed cert",
+                node_labels=[QDEVICE_HOST],
+            )
+            .fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir,
+                    "cert8.db"
+                ),
+                return_value=True,
+                name="fs.exists.corosync_certs_db2",
+            )
+            .runner.corosync.qdevice_get_pk12(
+                cert_path=tmp_file_path,
+                output_path=None,
+                stdout="",
+                stderr=self.err_msg,
+                returncode=1
+            )
+        )
+
+        self._add_nodes_with_lib_error([
+            fixture.error(
+                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reason=self.err_msg
+            ),
+        ])
+
+        self.env_assist.assert_reports(self.expected_reports)
+
+    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
+    def test_sign_certificate_failure(self, mock_write_tmpfile):
+        cert = b"cert"
+        (self.config
+            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+            .http.corosync.qdevice_net_sign_certificate(
+                CLUSTER_NAME,
+                cert=cert,
+                communication_list=[
+                    {
+                        "label": QDEVICE_HOST,
+                        "output": "invalid base64 encoded certificate data",
+                    },
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=QDEVICE_HOST,
+                )
+            ]
+        )
+
+    def test_read_certificate_request_failure(self):
+        ca_cert = b"ca_cert"
+        cert_req_path = "cert_req_path"
+        (self.config
+            .http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
+            )
+            .http.corosync.qdevice_net_client_setup(
+                ca_cert=ca_cert,
+                node_labels=self.new_nodes,
+            )
+            .fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir,
+                    "cert8.db"
+                ),
+                return_value=True,
+                name="fs.exists.corosync_certs_db"
+            )
+            .runner.corosync.qdevice_generate_cert(
+                CLUSTER_NAME,
+                cert_req_path=cert_req_path,
+            )
+            .fs.open(
+                cert_req_path,
+                side_effect=EnvironmentError(
+                    1, self.err_msg, cert_req_path
+                ),
+                mode="rb",
+                name="fs.open.cert_req_read",
+            )
+        )
+
+        self._add_nodes_with_lib_error([
+            fixture.error(
+                report_codes.QDEVICE_INITIALIZATION_ERROR,
+                model="net",
+                reason=f"{cert_req_path}: {self.err_msg}"
+            ),
+        ])
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                )
+            ]
+        )
+
+    def test_generate_certificate_request_failure(self):
+        ca_cert = b"ca_cert"
+        (self.config
+            .http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
+            )
+            .http.corosync.qdevice_net_client_setup(
+                ca_cert=ca_cert,
+                node_labels=self.new_nodes,
+            )
+            .fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir,
+                    "cert8.db"
+                ),
+                return_value=True,
+                name="fs.exists.corosync_certs_db"
+            )
+            .runner.corosync.qdevice_generate_cert(
+                CLUSTER_NAME,
+                cert_req_path=None,
+                stdout="",
+                stderr=self.err_msg,
+                returncode=1
+            )
+        )
+
+        self._add_nodes_with_lib_error([
+            fixture.error(
+                report_codes.QDEVICE_INITIALIZATION_ERROR,
+                model="net",
+                reason=self.err_msg
+            ),
+        ])
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                )
+            ]
+        )
+
+    def test_initialize_new_nodes_failure(self):
+        ca_cert = b"ca_cert"
+        (self.config
+            .http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
+            )
+            .http.corosync.qdevice_net_client_setup(
+                ca_cert=ca_cert,
+                communication_list=[
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    ) for node in self.unsuccessful_nodes
+                ] + [
+                    dict(
+                        label=node,
+                    ) for node in self.successful_nodes
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                )
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/qdevice_net_client_init_certificate_storage",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
+
+    def test_get_ca_cert_failure(self):
+        (self.config
+            .http.corosync.qdevice_net_get_ca_cert(
+                communication_list=[
+                    {
+                        "label": QDEVICE_HOST,
+                        "output": "invalid base64 encoded certificate data",
+                    },
+                ]
+            )
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node=QDEVICE_HOST,
+                )
+            ]
+        )
