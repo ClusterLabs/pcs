@@ -10,16 +10,23 @@ from functools import partial
 from pcs.common import report_codes
 from pcs.common.tools import Version
 from pcs.lib import reports
-from pcs.lib.cib import resource
+from pcs.lib.cib import (
+    resource,
+    status as cib_status,
+)
 from pcs.lib.cib.resource import operations, remote_node, guest_node
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_resources,
+    get_status,
     IdProvider,
 )
 from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.values import (
+    timeout_to_seconds,
+    validate_id,
+)
 from pcs.lib.pacemaker.state import (
     ensure_resource_state,
     info_resource_state,
@@ -29,6 +36,7 @@ from pcs.lib.pacemaker.state import (
 from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name as get_agent
 )
+from pcs.lib.validate import value_time_interval
 
 @contextmanager
 def resource_environment(
@@ -780,6 +788,46 @@ def manage(env, resource_ids, with_monitor=False):
                     )
 
         env.report_processor.process_list(report_list)
+
+def get_failcounts(
+    env, resource=None, node=None, operation=None, interval=None
+):
+    """
+    List resources failcounts, optionally filtered by a resource, node or op
+
+    LibraryEnvironment env
+    string resource -- show failcounts for the specified resource only
+    string node -- show failcounts for the specified node only
+    string operation -- show failcounts for the specified operation only
+    string interval -- show failcounts for the specified operation interval only
+    """
+    report_items = []
+    if interval is not None and operation is None:
+        report_items.append(
+            reports.prerequisite_option_is_missing("interval", "operation")
+        )
+    if interval is not None:
+        report_items.extend(
+            value_time_interval("interval")({"interval": interval})
+        )
+    if report_items:
+        raise LibraryError(*report_items)
+
+    interval_ms = (
+        None if interval is None
+        else timeout_to_seconds(interval) * 1000
+    )
+
+    all_failcounts = cib_status.get_resources_failcounts(
+        get_status(env.get_cib())
+    )
+    return cib_status.filter_resources_failcounts(
+        all_failcounts,
+        resource=resource,
+        node=node,
+        operation=operation,
+        interval=interval_ms
+    )
 
 def _find_resources_or_raise(
     resources_section, resource_ids, additional_search=None

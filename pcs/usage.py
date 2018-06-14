@@ -491,15 +491,18 @@ Commands:
         to refresh a resource on all nodes, otherwise only nodes where the
         resource's state is known will be considered.
 
-    failcount show <resource id> [node]
-        Show current failcount for specified resource from all nodes or
-        only on specified node.
+    failcount show [<resource id> [<node> [<operation> [<interval>]]]] [--full]
+        Show current failcount for resources, optionally filtered by a resource,
+        node, operation and its interval. If --full is specified do not sum
+        failcounts per resource and node. Operation, interval and --full
+        options require pacemaker-1.1.18 or newer.
 
-    failcount reset <resource id> [node]
-        Reset failcount for specified resource on all nodes or only on
-        specified node.  This tells the cluster to forget how many times
-        a resource has failed in the past.  This may allow the resource to
-        be started or moved to a more preferred location.
+    failcount reset [<resource id> [<node> [<operation> [interval=<interval>]]]]
+        Reset failcount for specified resource on all nodes or only on specified
+        node. This tells the cluster to forget how many times a resource has
+        failed in the past. This may allow the resource to be started or moved
+        to a more preferred location. Operation and interval options require
+        pacemaker-1.1.18 or newer.
 
     relocate dry-run [resource1] [resource2] ...
         The same as 'relocate run' but has no effect on the cluster.

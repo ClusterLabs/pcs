@@ -313,12 +313,18 @@ def remove_node(runner, node_name):
 
 ### resources
 
-def resource_cleanup(runner, resource=None, node=None):
+def resource_cleanup(
+    runner, resource=None, node=None, operation=None, interval=None
+):
     cmd = [__exec("crm_resource"), "--cleanup"]
     if resource:
         cmd.extend(["--resource", resource])
     if node:
         cmd.extend(["--node", node])
+    if operation:
+        cmd.extend(["--operation", operation])
+    if interval:
+        cmd.extend(["--interval", interval])
 
     stdout, stderr, retval = runner.run(cmd)
 

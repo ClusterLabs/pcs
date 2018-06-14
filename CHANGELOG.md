@@ -7,6 +7,9 @@
 - Commands for listing and testing watchdog devices ([rhbz#1475318]).
 - Option for setting netmtu in `pcs cluster setup` command ([rhbz#1535967])
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
+- Options to display and filter failures by an operation and its interval in
+  `pcs resource failcount reset` and `pcs resource failcount show` commands
+  ([rhbz#1427273])
 
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
@@ -20,12 +23,15 @@
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
 - Improve 'pcs quorum device add' usage and man page ([rhbz#1476862])
+- `pcs resource failcount show` works correctly with pacemaker-1.1.18 and newer
+  ([rhbz#1588667])
 
 ### Changed
 - Watchdog devices are validated against a list provided by sbd
   ([rhbz#1475318]).
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
+[rhbz#1427273]: https://bugzilla.redhat.com/show_bug.cgi?id=1427273
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
@@ -35,6 +41,7 @@
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1581150]: https://bugzilla.redhat.com/show_bug.cgi?id=1581150
+[rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 
 
 ## [0.9.164] - 2018-04-09
