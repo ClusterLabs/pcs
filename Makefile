@@ -204,9 +204,7 @@ endif
 install_python_part: install_bundled_libs
 	# make Python interpreter execution sane (via -Es flags)
 	printf "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
-	# prefix must be explicit since fedora uses /usr/local as default when
-	# environment variable RPM_BUILD_ROOT is not set.
-	$(PYTHON) setup.py install --prefix=${DEST_PREFIX} --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
+	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	# fix excessive script interpreting "executable" quoting with old setuptools:
 	# https://github.com/pypa/setuptools/issues/188
 	# https://bugzilla.redhat.com/1353934
@@ -217,14 +215,14 @@ install_python_part: install_bundled_libs
 	mv ${DEST_PREFIX}/bin/pcs ${DEST_PREFIX}/sbin/pcs
 	mv ${DEST_PREFIX}/bin/pcsd ${DEST_PREFIX}/sbin/pcsd
 	install -D -m644 pcs/bash_completion ${DEST_BASH_COMPLETION}/pcs
-	install -m644 -D pcs/pcs.8 ${DEST_MAN}
+	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
 	# pcs SNMP install
 	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
 	install -d ${DESTDIR}/var/log/pcs
 	install -d ${DEST_SNMP_MIB}
 	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
-	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DEST_MAN}
+	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DEST_MAN}/pcs_snmp_agent.8
 ifeq ($(IS_DEBIAN),true)
 	$(call use-debian-alternative,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
 endif
@@ -255,7 +253,7 @@ else
 endif
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
-	install -m644 -D pcsd/pcsd.8 ${DEST_MAN}
+	install -m644 -D pcsd/pcsd.8 ${DEST_MAN}/pcsd.8
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
