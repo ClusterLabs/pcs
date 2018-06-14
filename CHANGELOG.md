@@ -22,7 +22,7 @@
   ([rhbz#1581150])
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
-- Improve 'pcs quorum device add' usage and man page ([rhbz#1476862])
+- Improve `pcs quorum device add` usage and man page ([rhbz#1476862])
 - `pcs resource failcount show` works correctly with pacemaker-1.1.18 and newer
   ([rhbz#1588667])
 
