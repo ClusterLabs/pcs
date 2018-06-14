@@ -469,7 +469,8 @@ Commands:
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined values.
 
-    cleanup [<resource id>] [--node <node>]
+    cleanup [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]]
         Make the cluster forget failed operations from history of the resource
         and re-detect its current state. This can be useful to purge knowledge
         of past failures that have since been resolved. If a resource id is not
@@ -477,7 +478,7 @@ Commands:
         node is not specified then resources / stonith devices on all nodes will
         be cleaned up.
 
-    refresh [<resource id>] [--node <node>] [--full]
+    refresh [<resource id>] [node=<node>] [--full]
         Make the cluster forget the complete operation history (including
         failures) of the resource and re-detect its current state. If you are
         interested in forgetting failed operations only, use the 'pcs resource

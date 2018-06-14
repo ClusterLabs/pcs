@@ -2531,38 +2531,38 @@ def get_attrs(node, prepend_string = "", append_string = ""):
         return prepend_string + output.rstrip() + append_string
     return output.rstrip()
 
-def _parse_cleanup_refresh(argv):
-    resource = None
-    node = None
-    if len(argv) > 1:
-        raise CmdLineInputError()
-    if argv:
-        resource = argv[0]
-    if "--node" in utils.pcs_options:
-        node = utils.pcs_options["--node"]
-    return {
-        "node": node,
-        "resource": resource,
-        "force": "--force" in utils.pcs_options,
-    }
-
 def resource_cleanup(argv):
-    # --force is noop now but we must support it for backwards compatibility
-    options = _parse_cleanup_refresh(argv)
+    resource = argv.pop(0) if argv and "=" not in argv[0] else None
+    parsed_options = prepare_options(argv)
+    unknown_options = (
+        set(parsed_options.keys()) - {"node", "operation", "interval"}
+    )
+    if unknown_options:
+        raise CmdLineInputError(
+            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
+        )
     print(lib_pacemaker.resource_cleanup(
         utils.cmd_runner(),
-        resource=options["resource"],
-        node=options["node"]
+        resource=resource,
+        node=parsed_options.get("node"),
+        operation=parsed_options.get("operation"),
+        interval=parsed_options.get("interval"),
     ))
 
 def resource_refresh(argv):
-    options = _parse_cleanup_refresh(argv)
+    resource = argv.pop(0) if argv and "=" not in argv[0] else None
+    parsed_options = prepare_options(argv)
+    unknown_options = (set(parsed_options.keys()) - {"node"})
+    if unknown_options:
+        raise CmdLineInputError(
+            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
+        )
     print(lib_pacemaker.resource_refresh(
         utils.cmd_runner(),
-        resource=options["resource"],
-        node=options["node"],
+        resource=resource,
+        node=parsed_options.get("node"),
         full="--full" in utils.pcs_options,
-        force=options["force"]
+        force="--force" in utils.pcs_options
     ))
 
 def resource_history(args):
