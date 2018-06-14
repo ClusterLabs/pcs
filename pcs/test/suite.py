@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import importlib
-import os.path
+import os
 import sys
 import unittest
 
@@ -10,6 +10,9 @@ try:
     can_concurrency = True
 except ImportError:
     can_concurrency = False
+
+if "BUNDLED_LIB_LOCATION" in os.environ:
+    sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
