@@ -1,8 +1,9 @@
 from lxml import etree
 import re
+from random import shuffle
 import shutil
 from textwrap import dedent
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import (
     ac,
@@ -5227,4 +5228,267 @@ class ResourceUpdateSpcialChecks(TestCase, AssertPcsMixin):
             "resource meta R remote-node= --force",
             "Warning: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest'\n"
+        )
+
+class FailcountShow(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["get_failcounts"])
+        self.get_failcounts = mock.Mock()
+        self.lib.resource = self.resource
+        self.lib.resource.get_failcounts = self.get_failcounts
+
+    def assert_failcount_output(
+        self, lib_failures, expected_output, resource_id=None, node=None,
+        operation=None, interval=None, full=False
+    ):
+        self.get_failcounts.return_value = lib_failures
+        ac(
+            resource.resource_failcount_show(
+                self.lib, resource_id, node, operation, interval, full
+            ),
+            expected_output
+        )
+
+    def fixture_failures_monitor(self):
+        failures = [
+            {
+                "node": "node2",
+                "resource": "resource",
+                "clone_id": None,
+                "operation": "monitor",
+                "interval": "500",
+                "fail_count": 10,
+                "last_failure": 1528871946,
+            },
+            {
+                "node": "node2",
+                "resource": "resource",
+                "clone_id": None,
+                "operation": "monitor",
+                "interval": "1500",
+                "fail_count": 150,
+                "last_failure": 1528871956,
+            },
+            {
+                "node": "node1",
+                "resource": "resource",
+                "clone_id": None,
+                "operation": "monitor",
+                "interval": "1500",
+                "fail_count": 25,
+                "last_failure": 1528871966,
+            },
+        ]
+        shuffle(failures)
+        return failures
+
+    def fixture_failures(self):
+        failures = self.fixture_failures_monitor() + [
+            {
+                "node": "node1",
+                "resource": "clone",
+                "clone_id": "0",
+                "operation": "start",
+                "interval": "0",
+                "fail_count": "INFINITY",
+                "last_failure": 1528871936,
+            },
+            {
+                "node": "node1",
+                "resource": "clone",
+                "clone_id": "1",
+                "operation": "start",
+                "interval": "0",
+                "fail_count": "INFINITY",
+                "last_failure": 1528871936,
+            },
+            {
+                "node": "node2",
+                "resource": "clone",
+                "clone_id": "0",
+                "operation": "start",
+                "interval": "0",
+                "fail_count": "INFINITY",
+                "last_failure": 1528871936,
+            },
+            {
+                "node": "node2",
+                "resource": "clone",
+                "clone_id": "1",
+                "operation": "start",
+                "interval": "0",
+                "fail_count": "INFINITY",
+                "last_failure": 1528871936,
+            },
+            {
+                "node": "node1",
+                "resource": "resource",
+                "clone_id": None,
+                "operation": "start",
+                "interval": "0",
+                "fail_count": 100,
+                "last_failure": 1528871966,
+            },
+            {
+                "node": "node1",
+                "resource": "resource",
+                "clone_id": None,
+                "operation": "start",
+                "interval": "0",
+                "fail_count": "INFINITY",
+                "last_failure": 1528871966,
+            },
+        ]
+        shuffle(failures)
+        return failures
+
+    def test_no_failcounts(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts"
+        )
+
+    def test_no_failcounts_resource(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for resource 'res'",
+            resource_id="res"
+        )
+
+    def test_no_failcounts_node(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts on node 'nod'",
+            node="nod"
+        )
+
+    def test_no_failcounts_operation(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope'",
+            operation="ope"
+        )
+
+    def test_no_failcounts_operation_interval(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' with interval '10'",
+            operation="ope",
+            interval="10"
+        )
+
+    def test_no_failcounts_resource_node(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for resource 'res' on node 'nod'",
+            resource_id="res",
+            node="nod"
+        )
+
+    def test_no_failcounts_resource_operation(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' of resource 'res'",
+            resource_id="res",
+            operation="ope",
+        )
+
+    def test_no_failcounts_resource_operation_interval(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' with interval '10' of resource "
+                "'res'",
+            resource_id="res",
+            operation="ope",
+            interval="10"
+        )
+
+    def test_no_failcounts_resource_node_operation_interval(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' with interval '10' of resource "
+                "'res' on node 'nod'",
+            resource_id="res",
+            node="nod",
+            operation="ope",
+            interval="10"
+        )
+
+    def test_no_failcounts_node_operation(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' on node 'nod'",
+            node="nod",
+            operation="ope",
+        )
+
+    def test_no_failcounts_node_operation_interval(self):
+        self.assert_failcount_output(
+            [],
+            "No failcounts for operation 'ope' with interval '10' on node 'nod'",
+            node="nod",
+            operation="ope",
+            interval="10"
+        )
+
+    def test_failcounts_short(self):
+        self.assert_failcount_output(
+            self.fixture_failures(),
+            dedent("""\
+                Failcounts for resource 'clone'
+                  node1: INFINITY
+                  node2: INFINITY
+                Failcounts for resource 'resource'
+                  node1: INFINITY
+                  node2: 160"""
+            ),
+            full=False
+        )
+
+    def test_failcounts_full(self):
+        self.assert_failcount_output(
+            self.fixture_failures(),
+            dedent("""\
+                Failcounts for resource 'clone'
+                  node1:
+                    start 0ms: INFINITY
+                  node2:
+                    start 0ms: INFINITY
+                Failcounts for resource 'resource'
+                  node1:
+                    monitor 1500ms: 25
+                    start 0ms: INFINITY
+                  node2:
+                    monitor 1500ms: 150
+                    monitor 500ms: 10"""
+            ),
+            full=True
+        )
+
+    def test_failcounts_short_filter(self):
+        self.assert_failcount_output(
+            self.fixture_failures_monitor(),
+            dedent("""\
+                Failcounts for operation 'monitor' of resource 'resource'
+                  node1: 25
+                  node2: 160"""
+            ),
+            operation="monitor",
+            full=False
+        )
+
+    def test_failcounts_full_filter(self):
+        self.assert_failcount_output(
+            self.fixture_failures_monitor(),
+            dedent("""\
+                Failcounts for operation 'monitor' of resource 'resource'
+                  node1:
+                    monitor 1500ms: 25
+                  node2:
+                    monitor 1500ms: 150
+                    monitor 500ms: 10"""
+            ),
+            operation="monitor",
+            full=True
         )

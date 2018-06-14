@@ -7,9 +7,13 @@
   1.x based clusters. For managing those clusters use pcs-0.9.x.
 - Pcs-0.10 requires Python 3.6 and Ruby 2.2, support for older Python and Ruby
   versions has been removed.
+- `pcs resource failcount reset` command has been removed as `pcs resource
+  cleanup` is doing exactly the same job. ([rhbz#1427273])
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
+- Options to filter failures by an operation and its interval in `pcs resource
+  cleanup` and `pcs resource failcount show` commands ([rhbz#1427273])
 
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
@@ -47,6 +51,9 @@
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
+- Commands related to resource failures have been overhauled to support changes
+  in pacemaker. Failures are now tracked per resource operations on top of
+  resources and nodes. ([rhbz#1427273], [rhbz#1588667])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -57,6 +64,7 @@
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1158816]: https://bugzilla.redhat.com/show_bug.cgi?id=1158816
 [rhbz#1183103]: https://bugzilla.redhat.com/show_bug.cgi?id=1183103
+[rhbz#1427273]: https://bugzilla.redhat.com/show_bug.cgi?id=1427273
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
@@ -65,6 +73,7 @@
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
+[rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 
 
 ## [0.9.163] - 2018-02-20

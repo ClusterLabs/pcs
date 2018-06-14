@@ -469,7 +469,8 @@ Commands:
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined values.
 
-    cleanup [<resource id>] [--node <node>]
+    cleanup [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]]
         Make the cluster forget failed operations from history of the resource
         and re-detect its current state. This can be useful to purge knowledge
         of past failures that have since been resolved. If a resource id is not
@@ -477,7 +478,7 @@ Commands:
         node is not specified then resources / stonith devices on all nodes will
         be cleaned up.
 
-    refresh [<resource id>] [--node <node>] [--full]
+    refresh [<resource id>] [node=<node>] [--full]
         Make the cluster forget the complete operation history (including
         failures) of the resource and re-detect its current state. If you are
         interested in forgetting failed operations only, use the 'pcs resource
@@ -487,15 +488,12 @@ Commands:
         to refresh a resource on all nodes, otherwise only nodes where the
         resource's state is known will be considered.
 
-    failcount show <resource id> [node]
-        Show current failcount for specified resource from all nodes or
-        only on specified node.
-
-    failcount reset <resource id> [node]
-        Reset failcount for specified resource on all nodes or only on
-        specified node.  This tells the cluster to forget how many times
-        a resource has failed in the past.  This may allow the resource to
-        be started or moved to a more preferred location.
+    failcount show [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]] [--full]
+        Show current failcount for resources, optionally filtered by a resource,
+        node, operation and its interval. If --full is specified do not sum
+        failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs
+        resource refresh' to reset failcounts.
 
     relocate dry-run [resource1] [resource2] ...
         The same as 'relocate run' but has no effect on the cluster.
