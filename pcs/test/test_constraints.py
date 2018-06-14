@@ -17,9 +17,12 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
+CONSTRAINTS_TMP = rc("test_constraints")
+if not os.path.exists(CONSTRAINTS_TMP):
+    os.makedirs(CONSTRAINTS_TMP)
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("test_constraints/temp-cib.xml")
+temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
 skip_unless_location_resource_discovery = skip_unless_pacemaker_version(
