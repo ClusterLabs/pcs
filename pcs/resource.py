@@ -2246,16 +2246,6 @@ def resource_failcount(lib, argv, modifiers):
         ))
         return
 
-    if command == "reset":
-        print(lib_pacemaker.resource_cleanup(
-            utils.cmd_runner(),
-            resource=resource,
-            node=node,
-            operation=operation,
-            interval=interval
-        ))
-        return
-
     raise CmdLineInputError()
 
 def __agregate_failures(failure_list):

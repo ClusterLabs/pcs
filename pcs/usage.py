@@ -492,14 +492,8 @@ Commands:
             [interval=<interval>]] [--full]
         Show current failcount for resources, optionally filtered by a resource,
         node, operation and its interval. If --full is specified do not sum
-        failcounts per resource and node.
-
-    failcount reset [<resource id>] [node=<node>] [operation=<operation>
-            [interval=<interval>]]
-        Reset failcount for specified resource on all nodes or only on
-        specified node.  This tells the cluster to forget how many times
-        a resource has failed in the past.  This may allow the resource to
-        be started or moved to a more preferred location.
+        failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs
+        resource refresh' to reset failcounts.
 
     relocate dry-run [resource1] [resource2] ...
         The same as 'relocate run' but has no effect on the cluster.
