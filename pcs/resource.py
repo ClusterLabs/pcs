@@ -146,7 +146,7 @@ def resource_cmd(argv):
         elif sub_cmd == "unmanage":
             resource_unmanage_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "failcount":
-            resource_failcount(argv_next)
+            resource_failcount(lib, argv_next, modifiers)
         elif sub_cmd == "op":
             if len(argv_next) < 1:
                 usage.resource(["op"])
@@ -2221,65 +2221,139 @@ def is_managed(resource_id):
             return True
     utils.err("unable to find a resource/clone/master/group: %s" % resource_id)
 
-def resource_failcount(argv):
-    if len(argv) < 2:
-        usage.resource()
-        sys.exit(1)
+def resource_failcount(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
 
-    resource_command = argv.pop(0)
-    resource = argv.pop(0)
-    if resource_command != "show" and resource_command != "reset":
-        usage.resource()
-        sys.exit(1)
+    command = argv.pop(0)
 
-    if len(argv) > 0:
-        node = argv.pop(0)
-        all_nodes = False
+    resource = argv.pop(0) if argv and "=" not in argv[0] else None
+    parsed_options = prepare_options(argv)
+    unknown_options = (
+        set(parsed_options.keys()) - {"node", "operation", "interval"}
+    )
+    if unknown_options:
+        raise CmdLineInputError(
+            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
+        )
+    node = parsed_options.get("node")
+    operation = parsed_options.get("operation")
+    interval = parsed_options.get("interval")
+
+    if command == "show":
+        print(resource_failcount_show(
+            lib, resource, node, operation, interval, modifiers["full"]
+        ))
+        return
+
+    if command == "reset":
+        print(lib_pacemaker.resource_cleanup(
+            utils.cmd_runner(),
+            resource=resource,
+            node=node,
+            operation=operation,
+            interval=interval
+        ))
+        return
+
+    raise CmdLineInputError()
+
+def __agregate_failures(failure_list):
+    last_failure = 0
+    fail_count = 0
+    for failure in failure_list:
+        # infinity is a maximal value and cannot be increased
+        if fail_count != "INFINITY":
+            if failure["fail_count"] == "INFINITY":
+                fail_count = failure["fail_count"]
+            else:
+                fail_count += failure["fail_count"]
+        last_failure = max(last_failure, failure["last_failure"])
+    return fail_count, last_failure
+
+def __headline_resource_failures(empty, resource, node, operation, interval):
+    headline_parts = []
+    if empty:
+        headline_parts.append("No failcounts")
     else:
-        all_nodes = True
+        headline_parts.append("Failcounts")
+    if operation:
+        headline_parts.append("for operation '{operation}'")
+        if interval:
+            headline_parts.append("with interval '{interval}'")
+    if resource:
+        headline_parts.append("of" if operation else "for")
+        headline_parts.append("resource '{resource}'")
+    if node:
+        headline_parts.append("on node '{node}'")
+    return " ".join(headline_parts).format(
+        node=node, resource=resource, operation=operation,
+        interval=interval
+    )
 
-    dom = utils.get_cib_dom()
-    output_dict = {}
-    trans_attrs = dom.getElementsByTagName("transient_attributes")
-    fail_counts_removed = 0
-    for ta in trans_attrs:
-        ta_node = ta.parentNode.getAttribute("uname")
-        if not all_nodes and ta_node != node:
-            continue
-        for nvp in ta.getElementsByTagName("nvpair"):
-            if nvp.getAttribute("name") == ("fail-count-" + resource):
-                if resource_command == "reset":
-                    (output, retval) = utils.run(["crm_attribute", "-N",
-                        ta_node, "-n", nvp.getAttribute("name"), "-t",
-                        "status", "-D"])
-                    if retval != 0:
-                        utils.err("Unable to remove failcounts from %s on %s\n" % (resource,ta_node) + output)
-                    fail_counts_removed = fail_counts_removed + 1
-                else:
-                    output_dict[ta_node] = " " + ta_node + ": " + nvp.getAttribute("value")
-                break
+def resource_failcount_show(lib, resource, node, operation, interval, full):
+    result_lines = []
+    failures_data = lib.resource.get_failcounts(
+        resource=resource,
+        node=node,
+        operation=operation,
+        interval=interval
+    )
 
-    if resource_command == "reset":
-        if fail_counts_removed == 0:
-            print("No failcounts needed resetting")
-    if resource_command == "show":
-        output = []
-        for key in sorted(output_dict.keys()):
-            output.append(output_dict[key])
+    if not failures_data:
+        result_lines.append(__headline_resource_failures(
+            True, resource, node, operation, interval
+        ))
+        return "\n".join(result_lines)
 
-
-        if not output:
-            if all_nodes:
-                print("No failcounts for %s" % resource)
+    resource_list = sorted(set([fail["resource"] for fail in failures_data]))
+    for current_resource in resource_list:
+        result_lines.append(__headline_resource_failures(
+            False, current_resource, node, operation, interval
+        ))
+        resource_failures = [
+            fail for fail in failures_data
+            if fail["resource"] == current_resource
+        ]
+        node_list = sorted(set([fail["node"] for fail in resource_failures]))
+        for current_node in node_list:
+            node_failures = [
+                fail for fail in resource_failures
+                if fail["node"] == current_node
+            ]
+            if full:
+                result_lines.append(f"  {current_node}:")
+                operation_list = sorted(set(
+                    [fail["operation"] for fail in node_failures]
+                ))
+                for current_operation in operation_list:
+                    operation_failures = [
+                        fail for fail in node_failures
+                        if fail["operation"] == current_operation
+                    ]
+                    interval_list = sorted(
+                        set([fail["interval"] for fail in operation_failures]),
+                        # pacemaker's definition of infinity
+                        key=lambda x: 1000000 if x == "INFINITY" else x
+                    )
+                    for current_interval in interval_list:
+                        interval_failures = [
+                            fail for fail in operation_failures
+                            if fail["interval"] == current_interval
+                        ]
+                        failcount, dummy_last_failure = __agregate_failures(
+                            interval_failures
+                        )
+                        result_lines.append(
+                            f"    {current_operation} {current_interval}ms: "
+                            f"{failcount}"
+                        )
             else:
-                print("No failcounts for %s on %s" % (resource,node))
-        else:
-            if all_nodes:
-                print("Failcounts for %s" % resource)
-            else:
-                print("Failcounts for %s on %s" % (resource,node))
-            print("\n".join(output))
-
+                failcount, dummy_last_failure = __agregate_failures(
+                    node_failures
+                )
+                result_lines.append(f"  {current_node}: {failcount}")
+    return "\n".join(result_lines)
 
 def show_defaults(def_type, indent=""):
     dom = utils.get_cib_dom()

@@ -186,11 +186,11 @@ Make the cluster forget failed operations from history of the resource and re\-d
 refresh [<resource id>] [\fB\-\-node\fR <node>] [\fB\-\-full\fR]
 Make the cluster forget the complete operation history (including failures) of the resource and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command. If a resource id is not specified then all resources / stonith devices will be refreshed. If a node is not specified then resources / stonith devices on all nodes will be refreshed. Use \fB\-\-full\fR to refresh a resource on all nodes, otherwise only nodes where the resource's state is known will be considered.
 .TP
-failcount show <resource id> [node]
-Show current failcount for specified resource from all nodes or only on specified node.
+failcount show [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-full\fR]
+Show current failcount for resources, optionally filtered by a resource, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource and node.
 .TP
-failcount reset <resource id> [node]
-Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
+failcount reset [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]]
+Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past. This may allow the resource to be started or moved to a more preferred location.
 .TP
 relocate dry\-run [resource1] [resource2] ...
 The same as 'relocate run' but has no effect on the cluster.

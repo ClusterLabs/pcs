@@ -8,7 +8,7 @@ from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
-from pcs.lib.xml_tools import get_root
+from pcs.lib.xml_tools import get_root, get_sub_element
 
 _VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
 
@@ -240,6 +240,13 @@ def get_resources(tree):
     tree -- cib etree node
     """
     return sections.get(tree, sections.RESOURCES)
+
+def get_status(tree):
+    """
+    Return the 'status' element from the tree
+    tree -- cib etree node
+    """
+    return get_sub_element(tree, "status")
 
 def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     version = cib.get(attribute)

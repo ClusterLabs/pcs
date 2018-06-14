@@ -487,11 +487,14 @@ Commands:
         to refresh a resource on all nodes, otherwise only nodes where the
         resource's state is known will be considered.
 
-    failcount show <resource id> [node]
-        Show current failcount for specified resource from all nodes or
-        only on specified node.
+    failcount show [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]] [--full]
+        Show current failcount for resources, optionally filtered by a resource,
+        node, operation and its interval. If --full is specified do not sum
+        failcounts per resource and node.
 
-    failcount reset <resource id> [node]
+    failcount reset [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]]
         Reset failcount for specified resource on all nodes or only on
         specified node.  This tells the cluster to forget how many times
         a resource has failed in the past.  This may allow the resource to
