@@ -32,7 +32,13 @@ def compare_version(a, b):
         return cmp3(a[1], b[1])
     return cmp3(a[0], b[0])
 
-def is_minimum_pacemaker_version(cmajor, cminor, crev):
+def is_minimum_pacemaker_version(major, minor, rev):
+    return is_version_sufficient(
+        get_current_pacemaker_version(),
+        (major, minor, rev)
+    )
+
+def get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(["crm_mon", "--version"])
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
@@ -40,7 +46,13 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
     major = int(m.group(1))
     minor = int(m.group(2))
     rev = int(m.group(3))
-    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+    return major, minor, rev
+
+def is_version_sufficient(current_version, minimal_version):
+    return compare_version(current_version, minimal_version) > -1
+
+def format_version(version_tuple):
+    return ".".join([str(x) for x in version_tuple])
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
     output, dummy_stderr, dummy_retval = runner.run(
@@ -55,13 +67,17 @@ def is_minimum_pacemaker_features(cmajor, cminor, crev):
     return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
 def skip_unless_pacemaker_version(version_tuple, feature):
+    current_version = get_current_pacemaker_version()
     return skipUnless(
-        is_minimum_pacemaker_version(*version_tuple),
-        "Pacemaker version is too old (must be >= {version}) to test {feature}"
-            .format(
-                version=".".join([str(x) for x in version_tuple]),
-                feature=feature
-            )
+        is_version_sufficient(current_version, version_tuple),
+        (
+            "Pacemaker version is too old (current: {current_version},"
+            " must be >= {minimal_version}) to test {feature}"
+        ).format(
+            current_version=format_version(current_version),
+            minimal_version=format_version(version_tuple),
+            feature=feature
+        )
     )
 
 def skip_unless_pacemaker_features(version_tuple, feature):
@@ -69,7 +85,7 @@ def skip_unless_pacemaker_features(version_tuple, feature):
         is_minimum_pacemaker_features(*version_tuple),
         "Pacemaker must support feature set version {version} to test {feature}"
             .format(
-                version=".".join([str(x) for x in version_tuple]),
+                version=format_version(version_tuple),
                 feature=feature
             )
     )

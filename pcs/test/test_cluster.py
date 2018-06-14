@@ -403,7 +403,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
         shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
-    @skip_unless_pacemaker_version((1, 1, 11), "CIB schema upgrade")
+    @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def testClusterUpgrade(self):
         with open(temp_cib) as myfile:
             data = myfile.read()

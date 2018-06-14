@@ -5,7 +5,10 @@ from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
 )
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    skip_unless_pacemaker_version,
+)
 from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
@@ -21,6 +24,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
+    @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def testAutoUpgradeofCIB(self):
         shutil.copy(old_cib, temp_cib)
 
