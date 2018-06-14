@@ -22,7 +22,9 @@
   more ([rhbz#1568353])
 - `pcs resource debug-*` commands provide debug messages even with
   pacemaker-1.1.18 and newer ([rhbz#1574898])
-- Improve 'pcs quorum device add' usage and man page ([rhbz#1476862])
+- Improve `pcs quorum device add` usage and man page ([rhbz#1476862])
+- Removing resources using web UI when the operation takes longer than expected
+  ([rhbz#1579911])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -49,8 +51,6 @@
 - Node names are fully supported now and are no longer coupled with node
   addresses. It is possible to set up a cluster where Corosync communicates
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])
-- Removing resources using web UI when the operation takes longer than expected
-  ([rhbz#1579911])
 - Commands related to resource failures have been overhauled to support changes
   in pacemaker. Failures are now tracked per resource operations on top of
   resources and nodes. ([rhbz#1427273], [rhbz#1588667])
