@@ -108,7 +108,10 @@ def cluster_cmd(argv):
     elif (sub_cmd == "certkey"):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
-        cluster_auth(argv)
+        try:
+            cluster_auth(argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", "auth")
     elif (sub_cmd == "token"):
         cluster_token(argv)
     elif (sub_cmd == "token-nodes"):
