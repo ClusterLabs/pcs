@@ -25,6 +25,8 @@
 - Improve `pcs quorum device add` usage and man page ([rhbz#1476862])
 - `pcs resource failcount show` works correctly with pacemaker-1.1.18 and newer
   ([rhbz#1588667])
+- Do not lowercase node addresses in the `pcs cluster auth` command
+  ([rhbz#1590533])
 
 ### Changed
 - Watchdog devices are validated against a list provided by sbd
@@ -42,6 +44,7 @@
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1581150]: https://bugzilla.redhat.com/show_bug.cgi?id=1581150
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
+[rhbz#1590533]: https://bugzilla.redhat.com/show_bug.cgi?id=1590533
 
 
 ## [0.9.164] - 2018-04-09

@@ -22,13 +22,6 @@ except ImportError:
     # python3
     from subprocess import getstatusoutput
 
-try:
-    # python2
-    from urlparse import urlparse
-except ImportError:
-    # python3
-    from urllib.parse import urlparse
-
 from pcs import (
     constraint,
     node,
@@ -321,16 +314,33 @@ def parse_nodes_with_ports(node_list):
         if node.count(":") > 1 and not node.startswith("["):
             # if IPv6 without port put it in parentheses
             node = "[{0}]".format(node)
-        # adding protocol so urlparse will parse hostname/ip and port correctly
-        url = urlparse("http://{0}".format(node))
-        if url.hostname in result and result[url.hostname] != url.port:
+        hostname, port =_split_addr_port(node)
+        if hostname in result and result[hostname] != port:
             raise CmdLineInputError(
-                "Node '{0}' defined twice with different ports".format(
-                    url.hostname
-                )
+                "Node '{0}' defined twice with different ports".format(hostname)
             )
-        result[url.hostname] = url.port
+        result[hostname] = port
     return result
+
+def _split_addr_port(host_port):
+    # urrlib code without .lower()
+    host_port = host_port.strip()
+    if (
+        ("[" in host_port and "]" not in host_port)
+        or
+        ("]" in host_port and "[" not in host_port)
+    ):
+        raise CmdLineInputError("Invalid IPv6 address '{}'".format(host_port))
+
+    _, have_open_br, bracketed = host_port.partition('[')
+    if have_open_br:
+        hostname, _, port = bracketed.partition(']')
+        _, _, port = port.partition(':')
+    else:
+        hostname, _, port = host_port.partition(':')
+    if not port:
+        port = None
+    return hostname, port
 
 
 def cluster_certkey(argv):
