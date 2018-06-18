@@ -1053,11 +1053,37 @@ def start_cluster(argv):
             wait_for_nodes_started(nodes, wait_timeout)
         return
 
-    print("Starting Cluster...")
-    service_list = []
+    start_all = (
+        "--pacemaker" not in utils.pcs_options
+        and
+        "--corosync" not in utils.pcs_options
+    )
+    if start_all or "--corosync" in utils.pcs_options:
+        start_cluster_corosync()
+    if start_all or "--pacemaker" in utils.pcs_options:
+        start_cluster_pacemaker()
+
+    # --wait will never succeed if only corosync is started. However,
+    # --pacemaker and --corosync is only supposed to be used from pcsd which
+    # does not use --wait. --wait is used from cli, where --corosync and
+    # --pacemaker is not supposed to be used (it's not documented).
+    if wait:
+        wait_for_nodes_started([], wait_timeout)
+
+def start_cluster_pacemaker():
+    print("Starting Cluster (pacemaker)...")
+    output, retval = utils.start_service("pacemaker")
+    if retval != 0:
+        print(output)
+        utils.err("unable to start pacemaker")
+
+def start_cluster_corosync():
     if utils.is_cman_cluster():
-#   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
-        retval, output = getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
+        print("Starting Cluster (cman)...")
+        # Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
+        retval, output = getstatusoutput(
+            'source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]'
+        )
         if retval == 0:
             with open("/etc/sysconfig/cman", "a") as cman_conf_file:
                 cman_conf_file.write("\nCMAN_QUORUM_TIMEOUT=0\n")
@@ -1066,18 +1092,17 @@ def start_cluster(argv):
         if retval != 0:
             print(output)
             utils.err("unable to start cman")
-    else:
-        service_list.append("corosync")
-        if utils.need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
-    service_list.append("pacemaker")
+        return
+
+    print("Starting Cluster (corosync)...")
+    service_list = ["corosync"]
+    if utils.need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
     for service in service_list:
         output, retval = utils.start_service(service)
         if retval != 0:
             print(output)
             utils.err("unable to start {0}".format(service))
-    if wait:
-        wait_for_nodes_started([], wait_timeout)
 
 def start_cluster_all():
     wait = False
@@ -1092,6 +1117,31 @@ def start_cluster_all():
     if wait:
         wait_for_nodes_started(all_nodes, wait_timeout)
 
+class IsComponentStartSupported(object):
+    def __init__(self, node):
+        self.node = node
+        self.supported = False
+        self.error = None
+
+    def run(self):
+        code, output = utils.getPcsdCapabilities(self.node)
+        if code != 0:
+            message = '{0}: {1}'.format(self.node, output.strip())
+            print(message)
+            self.error = message
+        else:
+            try:
+                data = json.loads(output)
+                if (
+                    "node.start-stop-enable-disable.start-component"
+                    in
+                    data["pcsd_capabilities"]
+                ):
+                    self.supported = True
+            except KeyError, ValueError:
+                # not a valid json or 404 => not supported
+                pass
+
 def start_cluster_nodes(nodes):
     # Large clusters take longer time to start up. So we make the timeout longer
     # for each 8 nodes:
@@ -1104,13 +1154,64 @@ def start_cluster_nodes(nodes):
     timeout = int(
         settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
     )
+    was_error = False
+
+    task_list = [
+        IsComponentStartSupported(node) for node in nodes
+    ]
+    utils.run_parallel([task.run for task in task_list])
+    nodes_supported = []
+    nodes_not_supported = []
+    accessible_nodes = []
+    for task in task_list:
+        if task.error:
+            # unable to connect, unathorized
+            was_error = True
+            print("{0}: Not starting cluster - node is unreachable".format(
+                task.node
+            ))
+        else:
+            if task.supported:
+                nodes_supported.append(task.node)
+            else:
+                nodes_not_supported.append(task.node)
+    if not nodes_supported + nodes_not_supported:
+        utils.err("unable to start all nodes")
+
     node_errors = parallel_for_nodes(
-        utils.startCluster, nodes, quiet=True, timeout=timeout
+        utils.startCorosync,
+        nodes_supported,
+        quiet=True,
+        timeout=timeout,
+        __sleep_step=0.25
+    )
+    started_corosync_nodes = [
+        node for node in nodes_supported if node not in node_errors.keys()
+    ]
+    if node_errors:
+        utils.err(
+            "unable to start all nodes\n" + "\n".join(node_errors.values()),
+            exit_after_error=not started_corosync_nodes
+        )
+        was_error = True
+
+    for node in node_errors:
+        print("{0}: Not starting cluster - node is unreachable".format(node))
+
+    # nodes not supporting separate corosync / pacemaker start will start both
+    # pacemaker and corosync
+    node_errors = parallel_for_nodes(
+        utils.startPacemaker,
+        set(started_corosync_nodes + nodes_not_supported),
+        quiet=True,
+        timeout=timeout
     )
     if node_errors:
         utils.err(
             "unable to start all nodes\n" + "\n".join(node_errors.values())
         )
+    if was_error:
+        utils.err("unable to start all nodes")
 
 def is_node_fully_started(node_status):
     return (

@@ -429,6 +429,14 @@
         pcs commands: cluster start --wait[=timeout]
       </description>
     </capability>
+    <capability id="node.start-stop-enable-disable.start-component" in-pcs="0" in-pcsd="1">
+      <description>
+        At the node level, provide means for starting services separatelly so
+        the nodes starting can be synchronized on the cluster level.
+
+        daemon urls: cluster_start (param: component)
+      </description>
+    </capability>
     <capability id="node.start-stop-enable-disable.stop-component" in-pcs="0" in-pcsd="1">
       <description>
         At the node level, provide means for stopping services separatelly so

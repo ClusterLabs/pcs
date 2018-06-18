@@ -10,6 +10,8 @@
 - Options to display and filter failures by an operation and its interval in
   `pcs resource failcount reset` and `pcs resource failcount show` commands
   ([rhbz#1427273])
+- When starting a cluster, each node is now started with a small delay to help
+  preventing JOIN flood in corosync ([rhbz#1572886])
 
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
@@ -40,6 +42,7 @@
 [rhbz#1535967]: https://bugzilla.redhat.com/show_bug.cgi?id=1535967
 [rhbz#1566382]: https://bugzilla.redhat.com/show_bug.cgi?id=1566382
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
+[rhbz#1572886]: https://bugzilla.redhat.com/show_bug.cgi?id=1572886
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1581150]: https://bugzilla.redhat.com/show_bug.cgi?id=1581150

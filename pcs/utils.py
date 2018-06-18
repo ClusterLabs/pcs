@@ -157,6 +157,11 @@ def getPcsdInstanceSignature(node):
         node, 'remote/pcsd_instance_signature', None, False, False
     )
 
+def getPcsdCapabilities(node):
+    return sendHTTPRequest(
+        node, 'remote/capabilities', printResult=False, printSuccess=False
+    )
+
 def get_uid_gid_file_name(uid, gid):
     return "pcs-uidgid-%s-%s" % (uid, gid)
 
@@ -282,10 +287,29 @@ def getPacemakerNodeStatus(node):
         node, "remote/pacemaker_node_status", None, False, False
     )
 
-def startCluster(node, quiet=False, timeout=None):
+def startPacemaker(node, quiet=False, timeout=None):
+    return startCluster(
+        node, quiet=quiet, timeout=timeout, pacemaker=True, corosync=False
+    )
+
+def startCorosync(node, quiet=False, timeout=None):
+    return startCluster(
+        node, quiet=quiet, timeout=timeout, pacemaker=False, corosync=True
+    )
+
+def startCluster(
+    node, quiet=False, timeout=None, pacemaker=True, corosync=True
+):
+    data = dict()
+    if pacemaker and not corosync:
+        data["component"] = "pacemaker"
+    elif corosync and not pacemaker:
+        data["component"] = "corosync"
+    data = urllib_urlencode(data)
     return sendHTTPRequest(
         node,
         "remote/cluster_start",
+        data,
         printResult=False,
         printSuccess=not quiet,
         timeout=timeout
@@ -1235,13 +1259,20 @@ def run_parallel(worker_list, wait_seconds=1):
 
 def create_task(report, action, node, *args, **kwargs):
     def worker():
+        sleep = kwargs.pop("__sleep", 0)
+        if sleep:
+            time.sleep(sleep)
         returncode, output = action(node, *args, **kwargs)
         report(node, returncode, output)
     return worker
 
 def create_task_list(report, action, node_list, *args, **kwargs):
+    sleep_step = kwargs.pop("__sleep_step", 0)
     return [
-        create_task(report, action, node, *args, **kwargs) for node in node_list
+        create_task(
+            report, action, node, *args, __sleep=(index * sleep_step), **kwargs
+        )
+        for index, node in enumerate(node_list)
     ]
 
 def parallel_for_nodes(action, node_list, *args, **kwargs):

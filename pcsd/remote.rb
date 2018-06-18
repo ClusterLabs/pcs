@@ -233,33 +233,16 @@ def cluster_status_remote(params, request, auth_user)
   return JSON.generate(status)
 end
 
-def cluster_start(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'cluster_start', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Starting Daemons"
-    output, stderr, retval = run_cmd(auth_user, PCS, 'cluster', 'start')
-    $logger.debug output
-    if retval != 0
-      return [400, (output + stderr).join]
-    else
-      return output
-    end
+def _cluster_start_stop(action, params, request, auth_user)
+  if not ['start', 'stop'].include?(action)
+    return [400, "Action can be 'start' or 'stop', got '#{action}'"]
   end
-end
-
-def cluster_stop(params, request, auth_user)
   if params[:name]
     params_without_name = params.reject {|key, value|
       key == "name" or key == :name
     }
     code, response = send_request_with_token(
-      auth_user, params[:name], 'cluster_stop', true, params_without_name
+      auth_user, params[:name], "cluster_#{action}", true, params_without_name
     )
   else
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
@@ -273,17 +256,29 @@ def cluster_stop(params, request, auth_user)
         options << "--corosync"
       end
     end
-    options << "--force" if params["force"]
-    $logger.info "Stopping Daemons"
+    if action == "stop"
+      options << "--force" if params["force"]
+      $logger.info "Stopping Daemons"
+    else
+      $logger.info "Starting Daemons"
+    end
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "cluster", "stop", *options
+      auth_user, PCS, 'cluster', action, *options
     )
     if retval != 0
-      return [400, stderr.join]
+      return [400, (stdout + stderr).join]
     else
       return stdout.join
     end
   end
+end
+
+def cluster_start(params, request, auth_user)
+  return _cluster_start_stop('start', params, request, auth_user)
+end
+
+def cluster_stop(params, request, auth_user)
+  return _cluster_start_stop('stop', params, request, auth_user)
 end
 
 def config_backup(params, request, auth_user)
