@@ -185,6 +185,7 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
+                "add_nodes": cluster.add_nodes,
                 "node_clear": cluster.node_clear,
                 "setup": cluster.setup,
                 "verify": cluster.verify,
