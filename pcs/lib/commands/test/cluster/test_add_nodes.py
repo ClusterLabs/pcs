@@ -3051,3 +3051,105 @@ class FailureQdevice(TestCase):
                 )
             ]
         )
+
+class FailureKnownHostsUpdate(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.existing_nodes, self.new_nodes = _generate_nodes(2, 2)
+        self.expected_reports = []
+        self.unsuccessful_nodes = self.new_nodes[:1]
+        self.successful_nodes = self.new_nodes[1:]
+        self.err_msg = "an error message"
+        patch_getaddrinfo(self, self.new_nodes)
+        self.existing_corosync_nodes = [
+            _node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        (self.config
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .runner.cib.load()
+            .http.host.check_auth(node_labels=self.existing_nodes)
+            # SBD not installed
+            .runner.systemctl.list_unit_files({})
+            .local.get_host_info(self.new_nodes)
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in self.new_nodes
+            ]
+        )
+
+    def _add_nodes_with_lib_error(self, reports=[]):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node} for node in self.new_nodes],
+            ),
+            reports,
+            expected_in_processor=False,
+        )
+
+    def test_communication_failure(self):
+        self.config.http.host.update_known_hosts(
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                ) for node in self.unsuccessful_nodes
+            ] + [dict(label=node) for node in self.successful_nodes]
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/known_hosts_change",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
+
+    def test_not_connected(self):
+        self.config.http.host.update_known_hosts(
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+            communication_list=[
+                dict(
+                    label=node,
+                    errno=1,
+                    error_msg=self.err_msg,
+                    was_connected=False,
+                ) for node in self.unsuccessful_nodes
+            ] + [dict(label=node) for node in self.successful_nodes]
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=node,
+                    command="remote/known_hosts_change",
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+        )
