@@ -96,22 +96,26 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
     )
 
 
-def validate_new_nodes_devices(is_sbd_enabled, nodes_devices):
+def validate_new_nodes_devices(nodes_devices):
     """
     Validate if SBD devices are set for new nodes when they should be
 
-    bool is_sbd_enabled -- True if SBD is enableb in a cluster
     dict nodes_devices -- name: node name, key: list of SBD devices
     """
-    if is_sbd_enabled and is_device_set_local():
-        return validate_nodes_devices(nodes_devices)
+    if is_device_set_local():
+        return validate_nodes_devices(
+            nodes_devices,
+            adding_nodes_to_sbd_enabled_cluster=True
+        )
     return [
         reports.sbd_with_devices_not_used_cannot_set_device(node)
         for node, devices in nodes_devices.items() if devices
     ]
 
 
-def validate_nodes_devices(node_device_dict):
+def validate_nodes_devices(
+    node_device_dict, adding_nodes_to_sbd_enabled_cluster=False
+):
     """
     Validates device list for all nodes. If node is present, it checks if there
     is at least one device and at max settings.sbd_max_device_num. Also devices
@@ -119,12 +123,16 @@ def validate_nodes_devices(node_device_dict):
     Returns list of ReportItem
 
     dict node_device_dict -- name: node name, key: list of SBD devices
+    bool adding_nodes_to_sbd_enabled_cluster -- provides context to reports
     """
     report_item_list = []
     for node_label, device_list in node_device_dict.items():
         if not device_list:
             report_item_list.append(
-                reports.sbd_no_device_for_node(node_label)
+                reports.sbd_no_device_for_node(
+                    node_label,
+                    sbd_enabled_in_cluster=adding_nodes_to_sbd_enabled_cluster
+                )
             )
         elif len(device_list) > settings.sbd_max_device_num:
             report_item_list.append(reports.sbd_too_many_devices_for_node(

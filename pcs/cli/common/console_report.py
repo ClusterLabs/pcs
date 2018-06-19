@@ -1387,6 +1387,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS: lambda info:
+        (
+            "Cluster is not configured to use SBD, cannot specify SBD "
+            "option(s) {__options} for node '{node}'"
+        ).format(
+            __options=format_list(info["options"]),
+            **info
+        )
+    ,
+
     codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE: lambda info:
         "Cluster is not configured to use SBD with shared storage, cannot "
         "specify SBD devices for node '{node}'"
@@ -1575,7 +1585,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
         "Unable to perform operation on any available node/host, therefore it "
-        "is not possible to continue."
+        "is not possible to continue"
     ,
     codes.NODE_COMMUNICATION_RETRYING: lambda info:
         (

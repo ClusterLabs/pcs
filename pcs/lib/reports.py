@@ -2525,6 +2525,21 @@ def invalid_response_format(node):
         info={"node": node}
     )
 
+def sbd_not_used_cannot_set_sbd_options(options, node):
+    """
+    The cluster is not using SBD, cannot specify SBD options
+
+    iterable options -- list of specified not allowed SBD options
+    string node -- node name
+    """
+    return ReportItem.error(
+        report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
+        info={
+            "node": node,
+            "options": sorted(options)
+        }
+    )
+
 def sbd_with_devices_not_used_cannot_set_device(node):
     """
     The cluster is not using SBD with devices, cannot specify a device.

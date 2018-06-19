@@ -902,6 +902,18 @@ class SbdDeviceISNotBlockDevice(NameBuildTest):
             }
         )
 
+class SbdNotUsedCannotSetSbdOptions(NameBuildTest):
+    code = codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS
+    def test_success(self):
+        self.assert_message_from_info(
+            "Cluster is not configured to use SBD, cannot specify SBD option(s)"
+            " 'device', 'watchdog' for node 'node1'"
+            ,
+            {
+                "node": "node1",
+                "options": ["device", "watchdog"],
+            }
+        )
 
 class SbdWithDevicesNotUsedCannotSetDevice(NameBuildTest):
     code = codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE

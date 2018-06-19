@@ -72,6 +72,7 @@ from pcs.lib.tools import (
     environment_file_to_dict,
     generate_binary_key,
 )
+from pcs.lib.validate import names_in as validate_names_in
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
@@ -393,16 +394,18 @@ def add_nodes(
     skip_offline_nodes bool -- if True non fatal connection failures to other
         hosts are treated as warnings
     """
-    new_nodes = [
-        _normalize_dict(node, {"addrs", "devices", "watchdog"})
-        for node in nodes
-    ]
-
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
     is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
     corosync_conf = env.get_corosync_conf()
     cluster_nodes_names = corosync_conf.get_nodes_names()
+    corosync_node_options = {"name", "addrs"}
+    sbd_node_options = {"devices", "watchdog"}
+
+    keys_to_normalize = {"addrs"}
+    if is_sbd_enabled:
+        keys_to_normalize |= sbd_node_options
+    new_nodes = [_normalize_dict(node, keys_to_normalize) for node in nodes]
 
     # get targets for existing nodes
     target_report_list, cluster_nodes_target_list = (
@@ -422,9 +425,9 @@ def add_nodes(
                 qdevice_model_options["host"]
             )
         except HostNotFound:
-            report_processor.report_list([
+            report_processor.report(
                 reports.host_not_found([qdevice_model_options["host"]])
-            ])
+            )
 
     # Get targets for new nodes and report unknown (== not-authorized) nodes.
     # If a node doesn't contain the 'name' key, validation of inputs reports it.
@@ -449,26 +452,43 @@ def add_nodes(
         report_processor,
         new_nodes_target_dict
     )
-    watchdog_defaulter = _get_watchdog_defaulter(
-        report_processor,
-        new_nodes_target_dict,
-        is_sbd_enabled
-    )
+    new_nodes_defaulters = {"addrs": addrs_defaulter}
+    if is_sbd_enabled:
+        watchdog_defaulter = _get_watchdog_defaulter(
+            report_processor,
+            new_nodes_target_dict
+        )
+        new_nodes_defaulters["devices"] = lambda _: []
+        new_nodes_defaulters["watchdog"] = watchdog_defaulter
     new_nodes = [
-        _set_defaults_in_dict(node, {
-            "addrs": addrs_defaulter,
-            "devices": lambda _: [],
-            "watchdog": watchdog_defaulter,
-        })
-        for node in new_nodes
+        _set_defaults_in_dict(node, new_nodes_defaulters) for node in new_nodes
     ]
-    new_nodes_dict = {node["name"]: node for node in new_nodes}
+    new_nodes_dict = {
+        node["name"]: node for node in new_nodes if "name" in node
+    }
+
+    # Validate inputs - node options names
+    # We do not want to make corosync validators know about SBD options and
+    # vice versa. Therefore corosync and SBD validators get only valid corosync
+    # and SBD options respectively, and we need to check for any surplus
+    # options here.
+    report_processor.report_list(
+        validate_names_in(
+            corosync_node_options | sbd_node_options,
+            set([
+                option
+                for node_options in [node.keys() for node in new_nodes]
+                for option in node_options
+            ]),
+            option_type="node"
+        )
+    )
 
     # Validate inputs - corosync part
     cib = env.get_cib()
     # corosync validator rejects non-corosync keys
     new_nodes_corosync = [
-        {key: node[key] for key in ("name", "addrs") if key in node}
+        {key: node[key] for key in corosync_node_options if key in node}
         for node in new_nodes
     ]
     report_processor.report_list(config_validators.add_nodes(
@@ -479,15 +499,25 @@ def add_nodes(
     ))
 
     # Validate inputs - SBD part
-    report_processor.report_list(
-        sbd.validate_new_nodes_devices(
-            is_sbd_enabled,
-            {
-                node["name"]: node["devices"]
-                for node in new_nodes if "name" in node
-            }
+    if is_sbd_enabled:
+        report_processor.report_list(
+            sbd.validate_new_nodes_devices(
+                {
+                    node["name"]: node["devices"]
+                    for node in new_nodes if "name" in node
+                }
+            )
         )
-    )
+    else:
+        for node in new_nodes:
+            sbd_options = sbd_node_options.intersection(node.keys())
+            if sbd_options and "name" in node:
+                report_processor.report(
+                    reports.sbd_not_used_cannot_set_sbd_options(
+                        sbd_options,
+                        node["name"]
+                    )
+                )
 
     # Validate inputs - flags part
     wait_timeout = _get_validated_wait_timeout(report_processor, wait, start)
@@ -501,23 +531,27 @@ def add_nodes(
     # when a communication command cannot connect to some nodes and then the
     # next command can connect but fails due to the previous one did not
     # succeed.
-    com_cmd = GetOnlineTargets(
-        report_processor, ignore_offline_targets=skip_offline_nodes,
-    )
-    com_cmd.set_targets(cluster_nodes_target_list)
-    online_cluster_target_list = run_com(env.get_node_communicator(), com_cmd)
-    offline_cluster_target_list = [
-        target for target in cluster_nodes_target_list
-        if target not in online_cluster_target_list
-    ]
-    if len(online_cluster_target_list) == 0:
-        # TODO: report (error) that no cluster node is online
-        # report_processor.report(None)
-        pass
-    elif offline_cluster_target_list and skip_offline_nodes:
-        # TODO: report (warn) how to fix offline nodes when they come online
-        # report_processor.report(None)
-        pass
+    online_cluster_target_list = []
+    if cluster_nodes_target_list:
+        com_cmd = GetOnlineTargets(
+            report_processor, ignore_offline_targets=skip_offline_nodes,
+        )
+        com_cmd.set_targets(cluster_nodes_target_list)
+        online_cluster_target_list = run_com(
+            env.get_node_communicator(), com_cmd
+        )
+        offline_cluster_target_list = [
+            target for target in cluster_nodes_target_list
+            if target not in online_cluster_target_list
+        ]
+        if len(online_cluster_target_list) == 0:
+            report_processor.report(
+                reports.unable_to_perform_operation_on_any_node()
+            )
+        elif offline_cluster_target_list and skip_offline_nodes:
+            # TODO: report (warn) how to fix offline nodes when they come online
+            # report_processor.report(None)
+            pass
 
     # Validate existing cluster nodes status
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
@@ -527,11 +561,12 @@ def add_nodes(
         report_processor.report(
             reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
         )
-        com_cmd = CheckCorosyncOffline(
-            report_processor, allow_skip_offline=False,
-        )
-        com_cmd.set_targets(online_cluster_target_list)
-        run_com(env.get_node_communicator(), com_cmd)
+        if online_cluster_target_list:
+            com_cmd = CheckCorosyncOffline(
+                report_processor, allow_skip_offline=False,
+            )
+            com_cmd.set_targets(online_cluster_target_list)
+            run_com(env.get_node_communicator(), com_cmd)
 
     # Validate new nodes. All new nodes have to be online.
     com_cmd = GetHostInfo(report_processor)
@@ -557,12 +592,6 @@ def add_nodes(
                 device_list=new_node["devices"],
             )
         run_com(env.get_node_communicator(), com_cmd)
-    else:
-        # TODO validate that "watchdog" and "devices" options are not set
-        # Note that the watchdogs and the devices are initialized by some
-        # defaults if not specified by the user, therefore this check has to be
-        # performed before the actual initilization
-        pass
 
     if report_processor.has_errors:
         raise LibraryError()
@@ -941,16 +970,14 @@ def _get_addrs_defaulter(
     return defaulter
 
 def _get_watchdog_defaulter(
-    report_processor: SimpleReportProcessor, targets_dict, is_sbd_enabled
+    report_processor: SimpleReportProcessor, targets_dict
 ):
     def defaulter(node):
-        if is_sbd_enabled:
-            report_processor.report(reports.using_default_watchdog(
-                settings.sbd_watchdog_default,
-                node["name"],
-            ))
-            return settings.sbd_watchdog_default
-        return None
+        report_processor.report(reports.using_default_watchdog(
+            settings.sbd_watchdog_default,
+            node["name"],
+        ))
+        return settings.sbd_watchdog_default
     return defaulter
 
 def _get_validated_wait_timeout(report_processor, wait, start):

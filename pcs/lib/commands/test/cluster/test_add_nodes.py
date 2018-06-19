@@ -34,7 +34,7 @@ def _get_two_node(nodes_num):
     return []
 
 
-def _generate_nodes(existing_nodes_num, new_nodes_num):
+def generate_nodes(existing_nodes_num, new_nodes_num):
     return [
         f"node{i}" for i in range(1, existing_nodes_num + 1)
     ], [
@@ -97,8 +97,8 @@ def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
     )
 
 
-def _node_fixture(node, node_id, addr_sufix=""):
-    return _corosync_node_fixture(node_id, node, [f"{node}{addr_sufix}"])
+def node_fixture(node, node_id, addr_sufix=""):
+    return corosync_node_fixture(node_id, node, [f"{node}{addr_sufix}"])
 
 
 class LocalConfig():
@@ -584,12 +584,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.expected_reports = []
 
     def set_up(self, existing_nodes_num, new_nodes_num):
-        self.existing_nodes, self.new_nodes = _generate_nodes(
+        self.existing_nodes, self.new_nodes = generate_nodes(
             existing_nodes_num, new_nodes_num
         )
         patch_getaddrinfo(self, self.new_nodes)
         existing_corosync_nodes = [
-            _node_fixture(node, i)
+            node_fixture(node, i)
             for i, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
@@ -618,9 +618,9 @@ class AddNodesSuccessMinimal(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     existing_corosync_nodes + [
-                        _node_fixture(node, i)
+                        node_fixture(node, i)
                         for i, node in enumerate(
-                                self.new_nodes, existing_nodes_num + 1
+                            self.new_nodes, existing_nodes_num + 1
                         )
                     ],
                     _get_two_node(existing_nodes_num + new_nodes_num)
@@ -975,7 +975,7 @@ def _flat_list(list_of_lists):
     return [item for _list in list_of_lists for item in _list]
 
 
-def _corosync_node_fixture(node_id, node, addrs):
+def corosync_node_fixture(node_id, node, addrs):
     return [
         (f"ring{i}_addr", addr) for i, addr in enumerate(addrs)
     ] + [
@@ -1014,9 +1014,9 @@ class AddNodeFull(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.expected_reports = []
-        self.existing_nodes, self.new_nodes = _generate_nodes(3, 3)
+        self.existing_nodes, self.new_nodes = generate_nodes(3, 3)
         self.existing_corosync_nodes = [
-            _corosync_node_fixture(node_id, node, _get_addrs(node))
+            corosync_node_fixture(node_id, node, _get_addrs(node))
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
 
@@ -1060,9 +1060,9 @@ class AddNodeFull(TestCase):
                     self.existing_corosync_nodes
                     +
                     [
-                        _corosync_node_fixture(node_id, node, _get_addrs(node))
+                        corosync_node_fixture(node_id, node, _get_addrs(node))
                         for node_id, node in enumerate(
-                                self.new_nodes, len(self.existing_nodes) + 1
+                            self.new_nodes, len(self.existing_nodes) + 1
                         )
                     ],
                     qdevice_net=True,
@@ -1114,9 +1114,9 @@ class AddNodeFull(TestCase):
                     self.existing_corosync_nodes
                     +
                     [
-                        _corosync_node_fixture(node_id, node, _get_addrs(node))
+                        corosync_node_fixture(node_id, node, _get_addrs(node))
                         for node_id, node in enumerate(
-                                self.new_nodes, len(self.existing_nodes) + 1
+                            self.new_nodes, len(self.existing_nodes) + 1
                         )
                     ],
                     [("auto_tie_breaker", "1")],
@@ -1143,11 +1143,11 @@ class AddNodeFull(TestCase):
 class FailureReloadCorosyncConf(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         patch_getaddrinfo(self, self.new_nodes)
         existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
@@ -1175,9 +1175,9 @@ class FailureReloadCorosyncConf(TestCase):
             .http.corosync.set_corosync_conf(
                 corosync_conf_fixture(
                     existing_corosync_nodes + [
-                        _node_fixture(node, node_id)
+                        node_fixture(node, node_id)
                         for node_id, node in enumerate(
-                                self.new_nodes, len(self.existing_nodes) + 1
+                            self.new_nodes, len(self.existing_nodes) + 1
                         )
                     ]
                 ),
@@ -1292,11 +1292,11 @@ class FailureReloadCorosyncConf(TestCase):
 class FailureCorosyncConfDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         patch_getaddrinfo(self, self.new_nodes)
         existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
@@ -1335,7 +1335,7 @@ class FailureCorosyncConfDistribution(TestCase):
         )
         self.updated_corosync_conf_text = corosync_conf_fixture(
             existing_corosync_nodes + [
-                _node_fixture(node, node_id)
+                node_fixture(node, node_id)
                 for node_id, node in enumerate(
                         self.new_nodes, len(self.existing_nodes) + 1
                 )
@@ -1489,7 +1489,7 @@ class FailurePcsdSslCertSync(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         self.pcsd_ssl_cert = "pcsd ssl cert"
         self.pcsd_ssl_key = "pcsd ssl key"
@@ -1498,7 +1498,7 @@ class FailurePcsdSslCertSync(TestCase):
         self.error = "an error"
         patch_getaddrinfo(self, self.new_nodes)
         existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
@@ -1631,7 +1631,7 @@ class FailureFilesDistribution(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         self.pcmk_authkey_content = b"some content"
         self.pcmk_authkey_file_id = "pacemaker_remote authkey"
@@ -1642,7 +1642,7 @@ class FailureFilesDistribution(TestCase):
         self.before_open_position = "fs.isfile.pcsd_settings"
         patch_getaddrinfo(self, self.new_nodes)
         existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
@@ -1919,7 +1919,7 @@ class FailureBoothConfigsDistribution(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
@@ -1927,7 +1927,7 @@ class FailureBoothConfigsDistribution(TestCase):
         self.before_open_position = "fs.isfile.pcsd_settings"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
 
@@ -2050,9 +2050,9 @@ class FailureBoothConfigsDistribution(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes + [
-                        _node_fixture(node, i)
+                        node_fixture(node, i)
                         for i, node in enumerate(
-                                self.new_nodes, len(self.existing_nodes) + 1
+                            self.new_nodes, len(self.existing_nodes) + 1
                         )
                     ],
                     _get_two_node(
@@ -2336,7 +2336,7 @@ class FailureDisableSbd(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(4, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
@@ -2344,7 +2344,7 @@ class FailureDisableSbd(TestCase):
         self.before_open_position = "fs.isfile.pcsd_settings"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
 
@@ -2455,14 +2455,14 @@ class FailureEnableSbd(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         # have 5 nodes in total so we do not need to enable atb
-        self.existing_nodes, self.new_nodes = _generate_nodes(3, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(3, 2)
         self.expected_reports = []
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
         self.err_msg = "an error message"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.sbd_config = ""
@@ -2647,14 +2647,14 @@ class FailureQdevice(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(2, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(2, 2)
         self.expected_reports = []
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
         self.err_msg = "an error message"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.sbd_config = ""
@@ -3056,14 +3056,14 @@ class FailureKnownHostsUpdate(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.existing_nodes, self.new_nodes = _generate_nodes(2, 2)
+        self.existing_nodes, self.new_nodes = generate_nodes(2, 2)
         self.expected_reports = []
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
         self.err_msg = "an error message"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
-            _node_fixture(node, node_id)
+            node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
