@@ -1,4 +1,5 @@
 from lxml import etree
+import os
 import re
 from random import shuffle
 import shutil
@@ -23,10 +24,14 @@ from pcs.test.tools.pcs_runner import (
 from pcs import utils
 from pcs import resource
 
+RESOURCES_TMP = rc("test_resource")
+if not os.path.exists(RESOURCES_TMP):
+    os.makedirs(RESOURCES_TMP)
+
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("test_resource/temp-cib.xml")
+temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
 large_cib = rc("cib-large.xml")
-temp_large_cib  = rc("test_resource/temp-cib-large.xml")
+temp_large_cib  = os.path.join(RESOURCES_TMP, "temp-cib-large.xml")
 
 
 class ResourceDescribeTest(TestCase, AssertPcsMixin):

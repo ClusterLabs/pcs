@@ -1,3 +1,4 @@
+import os
 import re
 import shutil
 from unittest import TestCase
@@ -19,9 +20,12 @@ from pcs.test.tools.pcs_runner import (
     PcsRunner,
 )
 
+STONITH_TMP = rc("test_stonith")
+if not os.path.exists(STONITH_TMP):
+    os.makedirs(STONITH_TMP)
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("test_stonith/temp-cib.xml")
+temp_cib = os.path.join(STONITH_TMP, "temp-cib.xml")
 
 # target-pattern attribute was added in pacemaker 1.1.13 with validate-with 2.3.
 # However in pcs this was implemented much later together with target-attribute

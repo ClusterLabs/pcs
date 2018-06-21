@@ -1,4 +1,4 @@
-from pcs.snmp.agentx.pcs_pyagentx import Updater
+from pyagentx import Updater
 
 
 class AgentxUpdaterBase(Updater):

@@ -1,5 +1,5 @@
 import logging
-import os.path
+import os
 
 from tornado.httputil import parse_cookie
 
@@ -17,6 +17,10 @@ PASSWORD = "password"
 GROUPS=["hacluster"]
 LOGIN_BODY ={"username": USER, "password": PASSWORD}
 PUBLIC_DIR = rc("web_public")
+CSS_DIR = os.path.join(PUBLIC_DIR, "css")
+
+if not os.path.exists(CSS_DIR):
+    os.makedirs(CSS_DIR)
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -204,9 +208,16 @@ class Logout(AppTest):
         )
 
 class Static(AppTest):
+    def setUp(self):
+        self.style_path = os.path.join(CSS_DIR, "style.css")
+        self.css = "body{color:black};"
+        with open(self.style_path, "w") as style:
+            style.write(self.css)
+        super().setUp()
+
+    def tearDown(self):
+        os.remove(self.style_path)
+        super().tearDown()
+
     def test_css(self):
-        with open(os.path.join(PUBLIC_DIR, "css/style.css")) as style:
-            self.assert_success_response(
-                self.get("/css/style.css"),
-                style.read()
-            )
+        self.assert_success_response(self.get("/css/style.css"), self.css)

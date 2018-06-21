@@ -36,8 +36,8 @@ setup(
     entry_points={
         'console_scripts': [
             'pcs = pcs.app:main',
-            'pcsd = pcs.daemon.run:main',
-            'pcs_snmp_agent = pcs.snmp.pcs_snmp_agent:main',
+            'pcsd = pcs.run:daemon',
+            'pcs_snmp_agent = pcs.run:pcs_snmp_agent',
         ],
     },
     cmdclass={

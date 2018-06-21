@@ -3,9 +3,10 @@ import sys
 import logging
 import logging.handlers
 
+import pyagentx
+
 import pcs.utils
 from pcs.snmp import settings
-from pcs.snmp.agentx import pcs_pyagentx as pyagentx
 from pcs.snmp.updaters.v1 import ClusterPcsV1Updater
 
 

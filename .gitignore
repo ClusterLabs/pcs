@@ -3,6 +3,9 @@
 /MANIFEST
 /dist/
 /pcs/bash_completion.d.pcs
+/pcs/bundled/
 /pcsd/.bundle
 /pcsd/vendor
-
+/pcs/test/resources/test_constraints/
+/pcs/test/resources/test_resource/
+/pcs/test/resources/test_stonith/
