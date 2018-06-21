@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.165] - 2018-06-21
 
 ### Added
 - Pcsd option to reject client initiated SSL/TLS renegotiation ([rhbz#1566382])
