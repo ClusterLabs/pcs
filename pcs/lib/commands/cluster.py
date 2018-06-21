@@ -526,7 +526,7 @@ def add_nodes(
     # This is the only call in which we accept skip_offline_nodes option for the
     # cluster nodes. In all the other actions we communicate only with the
     # online nodes. This allows us to simplify code as any communication issue
-    # is considered an error, ends the commande processing and is not possible
+    # is considered an error, ends the command processing and is not possible
     # to skip it by skip_offline_nodes. We do not have to care about a situation
     # when a communication command cannot connect to some nodes and then the
     # next command can connect but fails due to the previous one did not

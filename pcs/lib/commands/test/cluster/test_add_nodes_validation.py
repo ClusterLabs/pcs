@@ -1,4 +1,5 @@
 from functools import partial
+import json
 from unittest import TestCase
 
 from pcs import settings
@@ -639,9 +640,7 @@ class Inputs(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [
-                    {"name": "new1"},
-                ],
+                [{"name": "new1"}],
                 wait=10
             )
         )
@@ -681,9 +680,7 @@ class Inputs(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [
-                    {"name": "new1"},
-                ],
+                [{"name": "new1"}],
                 start=True,
                 wait="nonsense"
             )
@@ -708,4 +705,667 @@ class Inputs(TestCase):
 
 
 class ClusterStatus(TestCase):
-    pass
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def setup_config(
+        self, existing_nodes, new_nodes, check_auth_communication_list=None,
+        with_get_host_info=True
+    ):
+        patch_getaddrinfo(self, new_nodes)
+        (self.config
+            .env.set_known_nodes(existing_nodes + new_nodes)
+            .env.set_corosync_conf_data(
+                corosync_conf_fixture([
+                    node_fixture(node, i)
+                    for i, node in enumerate(existing_nodes, 1)
+                ])
+            )
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .runner.cib.load()
+        )
+        if check_auth_communication_list:
+            self.config.http.host.check_auth(
+                communication_list=check_auth_communication_list
+            )
+        else:
+            self.config.http.host.check_auth(
+                node_labels=existing_nodes
+            )
+        if with_get_host_info:
+            self.config.local.get_host_info(new_nodes)
+
+    def test_all_nodes_offline_skipped(self):
+        existing_nodes = ["node1", "node2"]
+        new_nodes = ["new1"]
+        self.setup_config(
+            existing_nodes,
+            new_nodes,
+            [
+                {
+                    "label": "node1",
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": "node2",
+                    "response_code": 400,
+                    "output": "not authorized",
+                },
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+                skip_offline_nodes=True
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.warn(
+                    report_codes.OMITTING_NODE,
+                    node="node1",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node2",
+                    command="remote/check_auth",
+                    reason="not authorized",
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
+                ),
+            ]
+        )
+
+    def test_some_nodes_offline(self):
+        existing_nodes = ["node1", "node2"]
+        new_nodes = ["new1"]
+        self.setup_config(
+            existing_nodes,
+            new_nodes,
+            [
+                {
+                    "label": "node1",
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": "node2",
+                    "response_code": 200,
+                    "output": '{"success":true}',
+                },
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node1",
+                    command="remote/check_auth",
+                    reason="an error",
+                ),
+            ]
+        )
+
+    def test_some_nodes_offline_skipped(self):
+        existing_nodes = ["node1", "node2"]
+        new_nodes = ["new1"]
+        self.setup_config(
+            existing_nodes,
+            new_nodes,
+            [
+                {
+                    "label": "node1",
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": "node2",
+                    "response_code": 200,
+                    "output": '{"success":true}',
+                },
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+                # Use 'wait' without 'start' so the command stops after the
+                # validation and the test does not have to cover the whole
+                # node add process.
+                wait=10
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node1",
+                    command="remote/check_auth",
+                    reason="an error",
+                ),
+            ]
+        )
+
+    def test_atb_will_be_enable_cluster_not_offline(self):
+        existing_nodes = ["node1", "node2", "node3", "node4", "node5"]
+        new_nodes = ["new1"]
+        patch_getaddrinfo(self, new_nodes)
+        (self.config
+            .env.set_known_nodes(existing_nodes + new_nodes)
+            .env.set_corosync_conf_data(
+                corosync_conf_fixture([
+                    node_fixture(node, i)
+                    for i, node in enumerate(existing_nodes, 1)
+                ])
+            )
+            .runner.systemctl.is_enabled(
+                "sbd", is_enabled=True, name="is_enabled_sbd_1"
+            )
+            .runner.cib.load()
+            .local.read_sbd_config(name_sufix="_1")
+            .http.host.check_auth(node_labels=existing_nodes)
+            .runner.systemctl.list_unit_files({"sbd": "enabled"})
+            .runner.systemctl.is_enabled(
+                "sbd", is_enabled=True, name="is_enabled_sbd_2"
+            )
+            .local.read_sbd_config(name_sufix="_2")
+            .http.corosync.check_corosync_offline(
+                communication_list=[
+                    {
+                        "label": "node1",
+                        "output": '{"corosync":true}'
+                    },
+                    {
+                        "label": "node2",
+                        "output": "an error"
+                    },
+                    {
+                        "label": "node3",
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": "an error",
+                    },
+                    {
+                        "label": "node4",
+                        "output": '{"corosync":true}'
+                    },
+                    {
+                        "label": "node5",
+                        "output": '{"corosync":false}'
+                    },
+                ]
+            )
+            .local.get_host_info(new_nodes)
+            .http.sbd.check_sbd(
+                # This is where the SBD values validation happens. This test
+                # only deals with enabling ATB check, so we pretend here the
+                # remote nodes say everything is valid
+                communication_list=[
+                    fixture.check_sbd_comm_success_fixture(
+                        "new1", "/dev/watchdog", []
+                    ),
+                ]
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.USING_DEFAULT_WATCHDOG,
+                    node="new1",
+                    watchdog="/dev/watchdog",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                ),
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.error(
+                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    node="node1"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node="node2"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node3",
+                    command="remote/status",
+                    reason="an error",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node="node3"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    node="node4"
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node5"
+                ),
+                fixture.info(report_codes.SBD_CHECK_STARTED),
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new1")
+            ]
+        )
+
+    def fixture_get_host_info_communication(self):
+        return [
+            dict(
+                label="new1",
+                output=json.dumps(dict(
+                    services=dict(
+                        corosync=dict(
+                            installed=True, enabled=True, running=True
+                        ),
+                        pacemaker=dict(
+                            installed=True, enabled=True, running=True
+                        ),
+                        pcsd=dict(
+                            installed=True, enabled=True, running=True
+                        ),
+                    ),
+                    cluster_configuration_exists=False,
+                ))
+            ),
+            dict(
+                label="new2",
+                output=json.dumps(dict(
+                    services=dict(
+                        corosync=dict(
+                            installed=False, enabled=False, running=False
+                        ),
+                        pacemaker=dict(
+                            installed=False, enabled=False, running=False
+                        ),
+                        pcsd=dict(
+                            installed=True, enabled=True, running=True
+                        ),
+                    ),
+                    cluster_configuration_exists=False,
+                ))
+            ),
+            dict(
+                label="new3",
+                output=json.dumps(dict(
+                    services=dict(
+                        corosync=dict(
+                            installed=True, enabled=True, running=False
+                        ),
+                        pacemaker=dict(
+                            installed=True, enabled=True, running=False
+                        ),
+                        pcsd=dict(
+                            installed=True, enabled=True, running=True
+                        ),
+                    ),
+                    cluster_configuration_exists=True,
+                ))
+            ),
+            dict(
+                label="new4",
+                output=json.dumps(dict())
+            ),
+            dict(
+                label="new5",
+                was_connected=False,
+                errno=7,
+                error_msg="an error"
+            ),
+            dict(
+                label="new6",
+                response_code=400,
+                output="an error"
+            ),
+        ]
+
+    def test_new_nodes_not_ready(self):
+        existing_nodes = ["node1", "node2", "node3"]
+        new_nodes = ["new1", "new2", "new3", "new4", "new5", "new6"]
+        self.setup_config(
+            existing_nodes,
+            new_nodes,
+            with_get_host_info=False
+        )
+        self.config.http.host.get_host_info(
+            communication_list=self.fixture_get_host_info_communication()
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": name} for name in new_nodes]
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="new5",
+                    command="remote/check_host",
+                    reason="an error",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="new6",
+                    command="remote/check_host",
+                    reason="an error",
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="new1",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node="new2",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name="new3",
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="new4",
+                ),
+                fixture.error(
+                    report_codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                ),
+            ]
+        )
+
+    def test_new_nodes_not_ready_forced(self):
+        existing_nodes = ["node1", "node2", "node3"]
+        new_nodes = ["new1", "new2", "new3", "new4", "new5", "new6"]
+        self.setup_config(
+            existing_nodes,
+            new_nodes,
+            with_get_host_info=False
+        )
+        self.config.http.host.get_host_info(
+            communication_list=self.fixture_get_host_info_communication()
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": name} for name in new_nodes],
+                force=True
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="new5",
+                    command="remote/check_host",
+                    reason="an error",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="new6",
+                    command="remote/check_host",
+                    reason="an error",
+                ),
+                fixture.warn(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name="new1",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.error(
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node="new2",
+                    service_list=["corosync", "pacemaker"]
+                ),
+                fixture.warn(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name="new3",
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="new4",
+                ),
+            ]
+        )
+
+    def fixture_sbd_check_input(self, suffix):
+        return [
+            ("watchdog", f"/dev/watchdog{suffix}"),
+            ("device_list", json.dumps([f"/dev/sda{suffix}"])),
+        ]
+
+    def fixture_sbd_check_output(
+        self, suffix, sbd_installed=True, wd_exists=True, device_exists=True,
+        device_block=True
+    ):
+        return json.dumps({
+            "sbd": {
+                "installed": sbd_installed,
+            },
+            "watchdog": {
+                "exist": wd_exists,
+                "path": f"/dev/watchdog{suffix}",
+            },
+            "device_list": [
+                {
+                    "path": f"/dev/sda{suffix}",
+                    "exist": device_exists,
+                    "block_device": device_block,
+                },
+            ],
+        })
+
+    def test_sbd_check(self):
+        existing_nodes = ["node1", "node2", "node3"]
+        new_nodes = [f"new{i}" for i in range(1, 9)]
+        patch_getaddrinfo(self, new_nodes)
+        (self.config
+            .env.set_known_nodes(existing_nodes + new_nodes)
+            .env.set_corosync_conf_data(
+                corosync_conf_fixture([
+                    node_fixture(node, i)
+                    for i, node in enumerate(existing_nodes, 1)
+                ])
+            )
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .runner.cib.load()
+            .local.read_sbd_config("SBD_DEVICE=/device\n")
+            .http.host.check_auth(node_labels=existing_nodes)
+            .local.get_host_info(new_nodes)
+            .http.sbd.check_sbd(
+                communication_list=[
+                    {
+                        "label": "new1",
+                        "output": self.fixture_sbd_check_output(
+                            1, sbd_installed=False
+                        ),
+                        "param_list": self.fixture_sbd_check_input(1),
+                    },
+                    {
+                        "label": "new2",
+                        "output": self.fixture_sbd_check_output(
+                            2, wd_exists=False
+                        ),
+                        "param_list": self.fixture_sbd_check_input(2),
+                    },
+                    {
+                        "label": "new3",
+                        "output": self.fixture_sbd_check_output(
+                            3, device_exists=False, device_block=False
+                        ),
+                        "param_list": self.fixture_sbd_check_input(3),
+                    },
+                    {
+                        "label": "new4",
+                        "output": self.fixture_sbd_check_output(
+                            4, device_block=False
+                        ),
+                        "param_list": self.fixture_sbd_check_input(4),
+                    },
+                    {
+                        "label": "new5",
+                        "output": "bad json",
+                        "param_list": self.fixture_sbd_check_input(5),
+                    },
+                    {
+                        "label": "new6",
+                        "response_code": 400,
+                        "output": "an error",
+                        "param_list": self.fixture_sbd_check_input(6),
+                    },
+                    {
+                        "label": "new7",
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": "an error",
+                        "param_list": self.fixture_sbd_check_input(7),
+                    },
+                    {
+                        "label": "new8",
+                        "output": self.fixture_sbd_check_output(8),
+                        "param_list": self.fixture_sbd_check_input(8),
+                    },
+                ]
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [
+                    {
+                        "name": f"new{i}",
+                        "watchdog": f"/dev/watchdog{i}",
+                        "devices": [f"/dev/sda{i}"],
+                    } for i in range(1, 9)
+                ],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.info(report_codes.SBD_CHECK_STARTED),
+                fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.error(
+                    report_codes.WATCHDOG_NOT_FOUND,
+                    node="new2",
+                    watchdog="/dev/watchdog2"
+                ),
+                fixture.error(
+                    report_codes.SBD_DEVICE_DOES_NOT_EXIST,
+                    node="new3",
+                    device="/dev/sda3"
+                ),
+                fixture.error(
+                    report_codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE,
+                    node="new4",
+                    device="/dev/sda4"
+                ),
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="new5",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="new6",
+                    command="remote/check_sbd",
+                    reason="an error",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="new7",
+                    command="remote/check_sbd",
+                    reason="an error",
+                ),
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new8")
+            ]
+        )
