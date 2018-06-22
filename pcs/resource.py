@@ -437,6 +437,7 @@ def resource_create(lib, argv, modifiers):
             **settings
         )
     elif "bundle" in parts:
+        settings["allow_not_accessible_resource"] = modifiers["force"]
         lib.resource.create_into_bundle(
             ra_id, ra_type, parts["op"],
             parts["meta"],

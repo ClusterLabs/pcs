@@ -2656,12 +2656,12 @@ class ResourceInBundleNotAccessible(NameBuildTest):
         self.assert_message_from_info(
             (
                 "Resource 'resourceA' will not be accessible by the cluster "
-                "inside bundle 'bundleA'. At least one of bundle options "
-                "'control-port' or 'ip-range-start' has to be specified."
+                "inside bundle 'bundleA', at least one of bundle options "
+                "'control-port' or 'ip-range-start' has to be specified"
             ),
             dict(
                 bundle_id="bundleA",
-                resource_id="resourceA",
+                inner_resource_id="resourceA",
             )
         )
 
