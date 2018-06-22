@@ -1633,20 +1633,22 @@ class FailureFilesDistribution(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
         self.expected_reports = []
-        self.pcmk_authkey_content = b"some content"
+        self.pcmk_authkey_content = b"pcmk authkey content"
+        self.corosync_authkey_content = b"corosync authkey content"
         self.pcmk_authkey_file_id = "pacemaker_remote authkey"
+        self.corosync_authkey_file_id = "corosync authkey"
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
         self.err_msg = "an error message"
-        # self.before_open_position = "FileDsitribution.fs.open.pcmk_authkey"
-        self.before_open_position = "fs.isfile.pcsd_settings"
+        self.corosync_key_open_before_position = "fs.isfile.pacemaker_authkey"
+        self.pacemaker_key_open_before_position = "fs.isfile.pcsd_settings"
         patch_getaddrinfo(self, self.new_nodes)
-        existing_corosync_nodes = [
+        self.existing_corosync_nodes = [
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(existing_corosync_nodes)
+            corosync_conf_fixture(self.existing_corosync_nodes)
         )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
@@ -1666,17 +1668,18 @@ class FailureFilesDistribution(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .fs.isfile(
-                settings.corosync_authkey_file, return_value=False,
+                settings.corosync_authkey_file, return_value=True,
                 name="fs.isfile.corosync_authkey"
             )
+            # open will be inserted here
             .fs.isfile(
                 settings.pacemaker_authkey_file, return_value=True,
-                name="fs.isfile.pacemaker_authkey"
+                name=self.corosync_key_open_before_position
             )
             # open will be inserted here
             .fs.isfile(
                 settings.pcsd_settings_conf_location, return_value=False,
-                name=self.before_open_position,
+                name=self.pacemaker_key_open_before_position
             )
         )
         self.expected_reports.extend(
@@ -1691,12 +1694,20 @@ class FailureFilesDistribution(TestCase):
         self.distribution_started_reports = [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=[self.pcmk_authkey_file_id],
+                file_list=[
+                    self.corosync_authkey_file_id, self.pcmk_authkey_file_id
+                ],
                 node_list=self.new_nodes,
                 description="",
             )
         ]
         self.successful_reports = [
+            fixture.info(
+                report_codes.FILE_DISTRIBUTION_SUCCESS,
+                node=node,
+                file_description=self.corosync_authkey_file_id,
+            ) for node in self.successful_nodes
+        ] + [
             fixture.info(
                 report_codes.FILE_DISTRIBUTION_SUCCESS,
                 node=node,
@@ -1713,14 +1724,23 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_read_failure(self):
-        # TODO: test with force
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.corosync_authkey_file
+            ),
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position
+        )
         self.config.fs.open(
             settings.pacemaker_authkey_file,
             mode="rb",
             side_effect=EnvironmentError(
                 1, self.err_msg, settings.pacemaker_authkey_file
             ),
-            before=self.before_open_position,
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
         )
 
         self._add_nodes_with_lib_error()
@@ -1729,6 +1749,14 @@ class FailureFilesDistribution(TestCase):
             self.expected_reports
             +
             [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    file_path=settings.corosync_authkey_file,
+                    reason=f"{self.err_msg}: '{settings.corosync_authkey_file}'",
+                    operation="read",
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
@@ -1740,22 +1768,99 @@ class FailureFilesDistribution(TestCase):
             ]
         )
 
+    def test_read_failure_forced(self):
+        (self.config
+            .fs.open(
+                settings.corosync_authkey_file,
+                mode="rb",
+                side_effect=EnvironmentError(
+                    1, self.err_msg, settings.corosync_authkey_file
+                ),
+                name="fs.open.corosync_authkey",
+                before=self.corosync_key_open_before_position
+            )
+            .fs.open(
+                settings.pacemaker_authkey_file,
+                mode="rb",
+                side_effect=EnvironmentError(
+                    1, self.err_msg, settings.pacemaker_authkey_file
+                ),
+                name="fs.open.pacemaker_authkey",
+                before=self.pacemaker_key_open_before_position,
+            )
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes + [
+                        node_fixture(node, i)
+                        for i, node in enumerate(
+                            self.new_nodes, len(self.existing_nodes) + 1
+                        )
+                    ],
+                ),
+                self.existing_nodes,
+                self.new_nodes,
+            )
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force=True
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    file_path=settings.corosync_authkey_file,
+                    reason=f"{self.err_msg}: '{settings.corosync_authkey_file}'",
+                    operation="read",
+                ),
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    file_path=settings.pacemaker_authkey_file,
+                    reason=f"{self.err_msg}: '{settings.pacemaker_authkey_file}'",
+                    operation="read",
+                )
+            ]
+        )
+
     def test_write_failure(self):
         (self.config
+            .fs.open(
+                settings.corosync_authkey_file,
+                return_value=mock.mock_open(
+                    read_data=self.corosync_authkey_content
+                )(),
+                mode="rb",
+                name="fs.open.corosync_authkey",
+                before=self.corosync_key_open_before_position
+            )
             .fs.open(
                 settings.pacemaker_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.pcmk_authkey_content
                 )(),
                 mode="rb",
-                before=self.before_open_position,
+                name="fs.open.pacemaker_authkey",
+                before=self.pacemaker_key_open_before_position,
             )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
+                corosync_authkey=self.corosync_authkey_content,
                 communication_list=[
                     dict(
                         label=node,
                         output=json.dumps(dict(files={
+                            self.corosync_authkey_file_id: dict(
+                                code="unexpected",
+                                message=self.err_msg
+                            ),
                             self.pcmk_authkey_file_id: dict(
                                 code="unexpected",
                                 message=self.err_msg
@@ -1781,6 +1886,15 @@ class FailureFilesDistribution(TestCase):
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
+                    file_description=self.corosync_authkey_file_id,
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    node=node,
                     file_description=self.pcmk_authkey_file_id,
                     reason=self.err_msg,
                 ) for node in self.unsuccessful_nodes
@@ -1790,15 +1904,26 @@ class FailureFilesDistribution(TestCase):
     def test_communication_failure(self):
         (self.config
             .fs.open(
+                settings.corosync_authkey_file,
+                return_value=mock.mock_open(
+                    read_data=self.corosync_authkey_content
+                )(),
+                mode="rb",
+                name="fs.open.corosync_authkey",
+                before=self.corosync_key_open_before_position
+            )
+            .fs.open(
                 settings.pacemaker_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.pcmk_authkey_content
                 )(),
                 mode="rb",
-                before=self.before_open_position,
+                name="fs.open.pacemaker_authkey",
+                before=self.pacemaker_key_open_before_position,
             )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
+                corosync_authkey=self.corosync_authkey_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -1833,15 +1958,26 @@ class FailureFilesDistribution(TestCase):
     def test_invalid_response_format(self):
         (self.config
             .fs.open(
+                settings.corosync_authkey_file,
+                return_value=mock.mock_open(
+                    read_data=self.corosync_authkey_content
+                )(),
+                mode="rb",
+                name="fs.open.corosync_authkey",
+                before=self.corosync_key_open_before_position
+            )
+            .fs.open(
                 settings.pacemaker_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.pcmk_authkey_content
                 )(),
                 mode="rb",
-                before=self.before_open_position,
+                name="fs.open.pacemaker_authkey",
+                before=self.pacemaker_key_open_before_position,
             )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
+                corosync_authkey=self.corosync_authkey_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -1873,15 +2009,26 @@ class FailureFilesDistribution(TestCase):
     def test_node_not_responding(self):
         (self.config
             .fs.open(
+                settings.corosync_authkey_file,
+                return_value=mock.mock_open(
+                    read_data=self.corosync_authkey_content
+                )(),
+                mode="rb",
+                name="fs.open.corosync_authkey",
+                before=self.corosync_key_open_before_position
+            )
+            .fs.open(
                 settings.pacemaker_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.pcmk_authkey_content
                 )(),
                 mode="rb",
-                before=self.before_open_position,
+                name="fs.open.pacemaker_authkey",
+                before=self.pacemaker_key_open_before_position,
             )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
+                corosync_authkey=self.corosync_authkey_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -2001,7 +2148,6 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure(self):
-        # TODO: test with force
         self.config.fs.open(
             self.config_path,
             side_effect=EnvironmentError(1, self.err_msg, self.config_path),
@@ -2016,6 +2162,43 @@ class FailureBoothConfigsDistribution(TestCase):
         ]
 
         self._add_nodes_with_lib_error(expected_reports)
+
+        self.env_assist.assert_reports(self.expected_reports + expected_reports)
+
+    def test_config_read_failure_forced(self):
+        (self.config
+            .fs.open(
+                self.config_path,
+                side_effect=EnvironmentError(1, self.err_msg, self.config_path),
+            )
+            .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes + [
+                        node_fixture(node, i)
+                        for i, node in enumerate(
+                            self.new_nodes, len(self.existing_nodes) + 1
+                        )
+                    ],
+                ),
+                self.existing_nodes,
+                self.new_nodes,
+            )
+        )
+
+        expected_reports = [
+            fixture.warn(
+                report_codes.BOOTH_CONFIG_READ_ERROR,
+                name=self.config_file,
+            )
+        ]
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force=True
+        )
 
         self.env_assist.assert_reports(self.expected_reports + expected_reports)
 
