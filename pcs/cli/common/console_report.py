@@ -1434,8 +1434,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE: lambda info:
         (
-            "Resource '{resource_id}' will not be accessible by the cluster "
-            "inside bundle '{bundle_id}'. At least one of bundle options "
-            "'control-port' or 'ip-range-start' has to be specified."
+            "Resource '{inner_resource_id}' will not be accessible by the "
+            "cluster inside bundle '{bundle_id}', at least one of bundle "
+            "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
 }
