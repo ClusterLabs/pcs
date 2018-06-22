@@ -306,7 +306,7 @@ Commands:
         to move and then return 0 on success or 1 on error.  If 'n' is not
         specified it defaults to 60 minutes.
         If you want the resource to preferably avoid running on some nodes but
-        be able to failover to them use 'pcs location avoids'.
+        be able to failover to them use 'pcs constraint location avoids'.
 
     ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
@@ -321,7 +321,7 @@ Commands:
         on success or 1 on error. If 'n' is not specified it defaults to 60
         minutes.
         If you want the resource to preferably avoid running on some nodes but
-        be able to failover to them use 'pcs location avoids'.
+        be able to failover to them use 'pcs constraint location avoids'.
 
     clear <resource id> [node] [--master] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
