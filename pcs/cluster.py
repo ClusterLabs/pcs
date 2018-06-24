@@ -1138,7 +1138,7 @@ class IsComponentStartSupported(object):
                     data["pcsd_capabilities"]
                 ):
                     self.supported = True
-            except KeyError, ValueError:
+            except (KeyError, ValueError):
                 # not a valid json or 404 => not supported
                 pass
 
