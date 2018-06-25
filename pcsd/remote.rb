@@ -3087,9 +3087,13 @@ def reload_corosync_conf(params, request, auth_user)
     auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
   )
   if retval != 0
+    msg_lines = output + stderr
+    if not msg_lines.empty? and msg_lines[0].strip() == 'Reloading corosync.conf...'
+      msg_lines.delete_at(0)
+    end
     return [
       400,
-      "Unable to reload corosync configuration: #{stderr.join("\n")}"
+      "Unable to reload corosync configuration: #{msg_lines.join("\n").strip()}"
     ]
   end
 
