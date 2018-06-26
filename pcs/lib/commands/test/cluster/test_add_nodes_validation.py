@@ -230,9 +230,9 @@ class Inputs(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
-    def test_addresses(self):
+    def test_conflict_existing_nodes(self):
         existing_nodes = ["node1", "node2", "node3"]
-        new_nodes = ["new1", "new2", "node3", "new4"]
+        new_nodes = ["new1", "remote-name", "node3", "guest-name"]
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
@@ -243,7 +243,33 @@ class Inputs(TestCase):
                     corosync_node_fixture(3, "node3", ["addr3-1", "addr3-2"]),
                 ])
             )
-            .runner.cib.load()
+            .runner.cib.load(
+                resources="""
+                    <resources>
+                        <primitive id="guest" class="ocf" provider="heartbeat"
+                            type="VirtualDomain"
+                        >
+                            <meta_attributes id="guest-meta_attributes">
+                                <nvpair id="guest-remote-addr"
+                                    name="remote-addr" value="guest-host"
+                                />
+                                <nvpair id="guest-remote-node"
+                                    name="remote-node" value="guest-name"
+                                />
+                             </meta_attributes>
+                        </primitive>
+                        <primitive id="remote-name" class="ocf"
+                            provider="pacemaker" type="remote"
+                        >
+                            <instance_attributes id="remote-instance_attrs">
+                                <nvpair id="remote-server"
+                                    name="server" value="remote-host"
+                                />
+                            </instance_attributes>
+                        </primitive>
+                    </resources>
+                """
+            )
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
         )
@@ -253,13 +279,15 @@ class Inputs(TestCase):
                 self.env_assist.get_env(),
                 [
                     # no change, addrs defined
-                    {"name": "new1", "addrs": ["new-addr1", "addr1-2"]},
+                    {"name": "new1", "addrs": [
+                        "new-addr1", "addr1-2", "guest-host", "remote-host"
+                    ]},
                     # no change, addrs defined even though empty
-                    {"name": "new2", "addrs": []},
+                    {"name": "remote-name", "addrs": []},
                     # use a default address
                     {"name": "node3", "addrs": None},
                     # use a default address
-                    {"name": "new4"},
+                    {"name": "guest-name"},
                 ],
             )
         )
@@ -273,15 +301,23 @@ class Inputs(TestCase):
                 ),
                 fixture.info(
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
-                    host_name="new4",
-                    address="new4"
+                    host_name="guest-name",
+                    address="guest-name"
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=4,
+                    min_count=2,
+                    max_count=2,
+                    node_name="new1",
+                    node_index=1,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=0,
                     min_count=2,
                     max_count=2,
-                    node_name="new2",
+                    node_name="remote-name",
                     node_index=2,
                 ),
                 fixture.error(
@@ -297,21 +333,97 @@ class Inputs(TestCase):
                     actual_count=1,
                     min_count=2,
                     max_count=2,
-                    node_name="new4",
+                    node_name="guest-name",
                     node_index=4,
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addr1-2", "new-addr1", "new4", "node3"]
+                    address_list=[
+                        "addr1-2", "guest-host", "guest-name", "new-addr1",
+                        "node3", "remote-host",
+                    ]
                 ),
                 fixture.error(
                     report_codes.NODE_NAMES_ALREADY_EXIST,
-                    name_list=["node3"]
+                    name_list=["guest-name", "node3", "remote-name"]
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr1-2"]
+                    address_list=["addr1-2", "guest-host", "remote-host"]
+                ),
+            ]
+        )
+
+    def conflict_existing_nodes_cib_load_error(self):
+        existing_nodes = ["node1", "node2", "node3", "node4"]
+        new_nodes = ["new1"]
+        (self.config
+            .env.set_known_nodes(existing_nodes + new_nodes)
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture([
+                    corosync_node_fixture(1, "node1", ["addr1-1"]),
+                    corosync_node_fixture(2, "node2", ["addr2-1"]),
+                    corosync_node_fixture(3, "node3", ["addr3-1"]),
+                    corosync_node_fixture(4, "node4", ["addr4-1"]),
+                ])
+            )
+            .runner.cib.load(returncode=1, stderr="an error")
+            .http.host.check_auth(node_labels=existing_nodes)
+            .local.get_host_info(new_nodes)
+        )
+
+    def test_conflict_existing_nodes_cib_load_error(self):
+        self.conflict_existing_nodes_cib_load_error()
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name="new1",
+                    address="new1"
+                ),
+                fixture.error(
+                    report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
+                    force_code=report_codes.FORCE_LOAD_NODES_FROM_CIB
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["new1"]
+                ),
+            ]
+        )
+
+    def test_conflict_existing_nodes_cib_load_error_forced(self):
+        self.conflict_existing_nodes_cib_load_error()
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
+                force=True
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name="new1",
+                    address="new1"
+                ),
+                fixture.warn(
+                    report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["new1"]
                 ),
             ]
         )

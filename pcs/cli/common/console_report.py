@@ -928,6 +928,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
        .format(**info)
     ,
 
+    codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION:
+        "Unable to load CIB to get guest and remote nodes from it, "
+        "those nodes cannot be considered in configuration validation"
+    ,
+
     codes.CIB_CANNOT_FIND_MANDATORY_SECTION: lambda info:
         "Unable to get {section} section of cib"
         .format(**info)

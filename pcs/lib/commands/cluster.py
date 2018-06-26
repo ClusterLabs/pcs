@@ -489,7 +489,19 @@ def add_nodes(
     )
 
     # Validate inputs - corosync part
-    cib = env.get_cib()
+    try:
+        cib = env.get_cib()
+        cib_nodes = get_remote_nodes(cib) + get_guest_nodes(cib)
+    except LibraryError:
+        cib_nodes = []
+        report_processor.report(
+            reports.get_problem_creator(
+                report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                force
+            )(
+                reports.cib_load_error_get_nodes_for_validation
+            )
+        )
     # corosync validator rejects non-corosync keys
     new_nodes_corosync = [
         {key: node[key] for key in corosync_node_options if key in node}
@@ -498,7 +510,7 @@ def add_nodes(
     report_processor.report_list(config_validators.add_nodes(
         new_nodes_corosync,
         corosync_conf.get_nodes(),
-        get_remote_nodes(cib) + get_guest_nodes(cib),
+        cib_nodes,
         force_unresolvable=force_unresolvable
     ))
 

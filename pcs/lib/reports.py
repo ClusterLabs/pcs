@@ -1524,6 +1524,18 @@ def cib_load_error(reason):
         }
     )
 
+def cib_load_error_get_nodes_for_validation(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Unable to load CIB, unable to get remote and guest nodes for validation
+    """
+    return ReportItem(
+        report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
+        severity,
+        forceable=forceable
+    )
+
 def cib_load_error_scope_missing(scope, reason):
     """
     cannot load cib from cibadmin, specified scope is missing in the cib
