@@ -183,6 +183,8 @@ def setup(
     force_unresolvable bool -- if True not resolvable addresses of nodes are
         treated as warnings
     """
+    _ensure_live_env(env) # raises if env is not live
+
     transport_options = transport_options or {}
     link_list = link_list or []
     compression_options = compression_options or {}
@@ -394,6 +396,8 @@ def add_nodes(
     skip_offline_nodes bool -- if True non fatal connection failures to other
         hosts are treated as warnings
     """
+    _ensure_live_env(env) # raises if env is not live
+
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
     is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
@@ -807,6 +811,15 @@ def add_nodes(
             new_nodes_target_list,
             wait_timeout=wait_timeout,
         )
+
+def _ensure_live_env(env):
+    not_live = []
+    if not env.is_cib_live:
+        not_live.append("CIB")
+    if not env.is_corosync_conf_live:
+        not_live.append("COROSYNC_CONF")
+    if not_live:
+        raise LibraryError(reports.live_environment_required(not_live))
 
 def _start_cluster(
     communicator_factory, report_processor, target_list, wait_timeout=False,

@@ -576,6 +576,54 @@ class LocalConfig():
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
 
+class CheckLive(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
+        self.existing_corosync_nodes = [
+            node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+
+    def assert_live_required(self, forbidden_options):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node} for node in self.new_nodes],
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=forbidden_options
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_mock_corosync(self):
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                _get_two_node(len(self.existing_corosync_nodes))
+            )
+        )
+        self.assert_live_required(["COROSYNC_CONF"])
+
+    def test_mock_cib(self):
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required(["CIB"])
+
+    def test_mock_cib_corosync(self):
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                _get_two_node(len(self.existing_corosync_nodes))
+            )
+        )
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required(["CIB", "COROSYNC_CONF"])
+
+
 class AddNodesSuccessMinimal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -592,16 +640,16 @@ class AddNodesSuccessMinimal(TestCase):
             node_fixture(node, i)
             for i, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(
-                existing_corosync_nodes, _get_two_node(existing_nodes_num)
-            )
-        )
         self.config.env.set_known_nodes(self.new_nodes + self.existing_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         get_unit_files_name = "_runner.systemctl.list_unit_files"
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    existing_corosync_nodes, _get_two_node(existing_nodes_num)
+                )
+            )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed
@@ -1029,19 +1077,19 @@ class AddNodeFull(TestCase):
                 self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
             )
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
-            .runner.cib.load()
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
     def test_with_qdevice(self, mock_write_tmpfile):
         sbd_config = "SBD_DEVICE=/device\n"
         (self.config
-            .env.set_corosync_conf_data(
+            .corosync_conf.load_content(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes,
                     qdevice_net=True,
                 )
             )
+            .runner.cib.load()
             .local.read_sbd_config(sbd_config)
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.get_host_info(self.new_nodes)
@@ -1089,9 +1137,10 @@ class AddNodeFull(TestCase):
     def test_atb_needed(self):
         sbd_config = ""
         (self.config
-            .env.set_corosync_conf_data(
+            .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
+            .runner.cib.load()
             .local.read_sbd_config()
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.atb_needed(self.existing_nodes)
@@ -1150,13 +1199,13 @@ class FailureReloadCorosyncConf(TestCase):
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
@@ -1299,13 +1348,13 @@ class FailureCorosyncConfDistribution(TestCase):
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
@@ -1501,13 +1550,13 @@ class FailurePcsdSslCertSync(TestCase):
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
@@ -1647,13 +1696,13 @@ class FailureFilesDistribution(TestCase):
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(self.existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
@@ -2086,13 +2135,13 @@ class FailureBoothConfigsDistribution(TestCase):
         self.config_content = "authfile = {}\n".format(self.authfile_path)
         self.authfile_content = b"booth authfile"
 
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(self.existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
@@ -2531,13 +2580,13 @@ class FailureDisableSbd(TestCase):
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
 
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(self.existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed
@@ -2649,13 +2698,13 @@ class FailureEnableSbd(TestCase):
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.sbd_config = ""
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(self.existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
             .runner.cib.load()
             .local.read_sbd_config(self.sbd_config)
             .http.host.check_auth(node_labels=self.existing_nodes)
@@ -2841,18 +2890,18 @@ class FailureQdevice(TestCase):
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
         self.sbd_config = ""
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(
-                self.existing_corosync_nodes,
-                qdevice_net=True,
-            )
-        )
         self.config.env.set_known_nodes(
             self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    qdevice_net=True,
+                )
+            )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.get_host_info(self.new_nodes)
@@ -3249,13 +3298,13 @@ class FailureKnownHostsUpdate(TestCase):
             node_fixture(node, node_id)
             for node_id, node in enumerate(self.existing_nodes, 1)
         ]
-        self.config.env.set_corosync_conf_data(
-            corosync_conf_fixture(self.existing_corosync_nodes)
-        )
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed

@@ -34,10 +34,10 @@ class GetTargets(TestCase):
         ]
         (self.config
             .local.set_expected_reports_list(self.expected_reports)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
         )
 
@@ -167,10 +167,14 @@ class GetTargets(TestCase):
 
     def _assert_qnetd_unknown(self, skip_offline):
         (self.config
-            .env.set_corosync_conf_data(corosync_conf_fixture(
-                self.existing_corosync_nodes, qdevice_net=True
-            ))
             .env.set_known_nodes(self.existing_nodes + self.new_nodes)
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    qdevice_net=True
+                ),
+                instead="corosync_conf.load_content"
+            )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.get_host_info(self.new_nodes)
         )
@@ -231,14 +235,14 @@ class Inputs(TestCase):
         new_nodes = ["new1", "new2", "node3", "new4"]
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     corosync_node_fixture(1, "node1", ["addr1-1", "addr1-2"]),
                     corosync_node_fixture(2, "node2", ["addr2-1", "addr2-2"]),
                     corosync_node_fixture(3, "node3", ["addr3-1", "addr3-2"]),
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
@@ -317,13 +321,13 @@ class Inputs(TestCase):
         new_nodes = ["new1"]
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
@@ -361,13 +365,13 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .runner.systemctl.list_unit_files({}) # SBD not installed
@@ -431,13 +435,13 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .runner.cib.load()
             .local.read_sbd_config()
             .http.host.check_auth(node_labels=existing_nodes)
@@ -526,13 +530,13 @@ class Inputs(TestCase):
         devices2 = ["/dev/sxe", "dev/sxf"]
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .runner.cib.load()
             .local.read_sbd_config("SBD_DEVICE=/device\n")
             .http.host.check_auth(node_labels=existing_nodes)
@@ -625,13 +629,13 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
@@ -665,13 +669,13 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
@@ -715,13 +719,13 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .runner.cib.load()
         )
         if check_auth_communication_list:
@@ -897,14 +901,14 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled(
+                "sbd", is_enabled=True, name="is_enabled_sbd_1"
+            )
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
-            )
-            .runner.systemctl.is_enabled(
-                "sbd", is_enabled=True, name="is_enabled_sbd_1"
             )
             .runner.cib.load()
             .local.read_sbd_config(name_sufix="_1")
@@ -1242,13 +1246,13 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
-            .env.set_corosync_conf_data(
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .corosync_conf.load_content(
                 corosync_conf_fixture([
                     node_fixture(node, i)
                     for i, node in enumerate(existing_nodes, 1)
                 ])
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .runner.cib.load()
             .local.read_sbd_config("SBD_DEVICE=/device\n")
             .http.host.check_auth(node_labels=existing_nodes)
