@@ -981,7 +981,7 @@ def run(
         if string_for_stdin != None:
             stdin_pipe = subprocess.PIPE
         else:
-            stdin_pipe = None
+            stdin_pipe = subprocess.DEVNULL
 
         p = subprocess.Popen(
             args,

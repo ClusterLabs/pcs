@@ -362,7 +362,11 @@ class CommandRunner(object):
             process = subprocess.Popen(
                 args,
                 # Some commands react differently if they get anything via stdin
-                stdin=(subprocess.PIPE if stdin_string is not None else None),
+                stdin=(
+                    subprocess.PIPE
+                    if stdin_string is not None
+                    else subprocess.DEVNULL
+                ),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 preexec_fn=(
