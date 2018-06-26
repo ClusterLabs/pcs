@@ -4,8 +4,10 @@
 
 ### Fixed
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
+- Test of watchdog devices ([rhbz#1475318])
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
+[rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
 
 
 ## [0.9.165] - 2018-06-21

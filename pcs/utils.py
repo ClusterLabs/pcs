@@ -86,6 +86,12 @@ try:
 except ImportError:
     # python3
     from urllib.parse import urlencode as urllib_urlencode
+try:
+    # python 3
+    from subprocess import DEVNULL
+except ImportError:
+    # python 2
+    DEVNULL = open(os.devnull, "r")
 
 
 PYTHON2 = (sys.version_info.major == 2)
@@ -1035,7 +1041,7 @@ def run(
         if string_for_stdin != None:
             stdin_pipe = subprocess.PIPE
         else:
-            stdin_pipe = None
+            stdin_pipe = DEVNULL
 
         p = subprocess.Popen(
             args,
