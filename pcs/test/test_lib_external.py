@@ -74,7 +74,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": lib.DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -158,7 +158,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": None,}
+            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": lib.DEVNULL,}
         )
         logger_calls = [
             mock.call(
@@ -327,7 +327,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": lib.DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -376,7 +376,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": lib.DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
