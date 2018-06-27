@@ -8,6 +8,7 @@ from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
+    MarkSuccessfulMixin,
     OneByOneStrategyMixin,
     RunRemotelyBase,
     SimpleResponseProcessingMixin,
@@ -60,7 +61,8 @@ class DisableSbdService(ServiceAction):
 
 
 class StonithWatchdogTimeoutAction(
-    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+    AllSameDataMixin, MarkSuccessfulMixin, OneByOneStrategyMixin,
+    RunRemotelyBase,
 ):
     def _get_request_action(self):
         raise NotImplementedError()

@@ -873,22 +873,50 @@ def corosync_quorum_set_expected_votes_error(reason):
         }
     )
 
-def corosync_config_reloaded():
+def corosync_config_reloaded(node=None):
     """
     corosync configuration has been reloaded
+
+    node string -- node label on which operation has been executed
     """
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_RELOADED,
+        info=dict(
+            node=node,
+        )
     )
 
-def corosync_config_reload_error(reason):
+def corosync_config_reload_error(
+    reason, node=None, severity=ReportItemSeverity.ERROR
+):
     """
     an error occured when reloading corosync configuration
-    reason string an error message
+
+    reason string -- an error message
+    node string -- node label
+    severity ReportItemSeverity -- severity of the report
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-        info={"reason": reason}
+        severity,
+        info={
+            "reason": reason,
+            "node": node,
+        }
+    )
+
+def corosync_config_reload_not_possible(node):
+    """
+    corosync configuration cannot be reloaded because corosync is not running
+    on the specified node
+
+    node string -- node label on which confi
+    """
+    return ReportItem.warning(
+        report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+        info=dict(
+            node=node,
+        )
     )
 
 def corosync_config_read_error(path, reason):
@@ -2525,15 +2553,16 @@ def service_command_on_node_error(
     )
 
 
-def invalid_response_format(node):
+def invalid_response_format(node, severity=ReportItemSeverity.ERROR):
     """
     error message that response in invalid format has been received from
     specified node
 
     node -- node name
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.INVALID_RESPONSE_FORMAT,
+        severity,
         info={"node": node}
     )
 

@@ -11,6 +11,8 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.lib import reports
+from pcs.lib.errors import ReportItem
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -38,6 +40,11 @@ class NameBuildTest(TestCase):
             message,
             build(info) if callable(build) else build
         )
+
+    def assert_message_from_report(self, message, report):
+        if not isinstance(report, ReportItem):
+            raise AssertionError("report is not instance of ReportItem")
+        self.assert_message_from_info(message, report.info)
 
 
 class BuildInvalidOptionsMessageTest(NameBuildTest):
@@ -2878,4 +2885,46 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
             ),
             {
             }
+        )
+
+
+class CorosyncConfigReloaded(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOADED
+    def test_with_node(self):
+        self.assert_message_from_report(
+            "node1: Corosync configuration reloaded",
+            reports.corosync_config_reloaded("node1"),
+        )
+
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Corosync configuration reloaded",
+            reports.corosync_config_reloaded(),
+        )
+
+
+class CorosyncConfigReloadNotPossible(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "node1: Corosync is not running, therefore reload of the "
+                "corosync configuration is not possible"
+            ),
+            reports.corosync_config_reload_not_possible("node1")
+        )
+
+
+class CorosyncConfigReloadError(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOAD_ERROR
+    def test_with_node(self):
+        self.assert_message_from_report(
+            "node1: Unable to reload corosync configuration: a reason",
+            reports.corosync_config_reload_error("a reason", "node1"),
+        )
+
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Unable to reload corosync configuration: different reason",
+            reports.corosync_config_reload_error("different reason"),
         )

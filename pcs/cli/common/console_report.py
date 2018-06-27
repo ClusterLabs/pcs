@@ -642,11 +642,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "disabled"
     ,
 
-    codes.COROSYNC_CONFIG_RELOADED: "Corosync configuration reloaded",
+    codes.COROSYNC_CONFIG_RELOADED: lambda info:
+        "{_node}Corosync configuration reloaded".format(
+            _node=format_optional(info["node"], "{}: "),
+            **info
+        )
+    ,
 
     codes.COROSYNC_CONFIG_RELOAD_ERROR: lambda info:
-        "Unable to reload corosync configuration: {reason}"
-        .format(**info)
+        "{_node}Unable to reload corosync configuration: {reason}"
+        .format(
+            _node=format_optional(info["node"], "{}: "),
+            **info,
+        )
+    ,
+
+    codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE: lambda info:
+       (
+           "{node}: Corosync is not running, therefore reload of the corosync "
+           "configuration is not possible"
+       ).format(**info)
     ,
 
     codes.UNABLE_TO_READ_COROSYNC_CONFIG: lambda info:

@@ -1,4 +1,5 @@
 import base64
+import json
 
 from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
@@ -60,7 +61,7 @@ class CorosyncShortcuts(object):
             node_labels,
             communication_list,
             action="remote/reload_corosync_conf",
-            output="Succeeded",
+            output=json.dumps(dict(code="reloaded", message="")),
         )
 
     def qdevice_client_enable(

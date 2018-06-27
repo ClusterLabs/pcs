@@ -246,6 +246,14 @@ class LocalConfig():
                     node=node,
                 ) for node in existing_nodes + new_nodes
             ]
+            +
+            [
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    node=existing_nodes[0],
+                )
+            ]
+
         )
 
     def atb_needed(self, node_labels):
@@ -1252,22 +1260,20 @@ class FailureReloadCorosyncConf(TestCase):
             ]
         )
         self.cmd_url = "remote/reload_corosync_conf"
+        self.err_msg = "An error"
 
-    def test_few_failes(self):
-        err_msg = "An error"
-        err_output = "FAILED"
+    def test_few_failed(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
                 [dict(
                     label="node1",
                     was_connected=False,
                     errno=7,
-                    error_msg=err_msg,
+                    error_msg=self.err_msg,
                 )],
                 [dict(
                     label="node2",
-                    response_code=400,
-                    output=err_output,
+                    output=json.dumps(dict(code="failed", message=self.err_msg)),
                 )],
                 [dict(
                     label="node3",
@@ -1288,26 +1294,112 @@ class FailureReloadCorosyncConf(TestCase):
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node1",
                     command=self.cmd_url,
-                    reason=err_msg
+                    reason=self.err_msg,
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
                     node="node2",
-                    command=self.cmd_url,
-                    reason=err_output
+                    reason=self.err_msg,
                 ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    node="node3",
+                )
             ]
         )
 
-    def test_all_failed(self):
-        err_output = "FAILED"
+    def test_failed_and_corosync_not_running(self):
+        self.config.http.corosync.reload_corosync_conf(
+            communication_list=[
+                [dict(
+                    label="node1",
+                    # corosync not running
+                    output=json.dumps(dict(code="not_running", message=""))
+                )],
+                [dict(
+                    label="node2",
+                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                )],
+                [dict(
+                    label="node3",
+                )],
+            ]
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node1",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    node="node2",
+                    reason=self.err_msg
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    node="node3",
+                )
+            ]
+        )
+
+    def test_all_corosync_not_running(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
                 [dict(
                     label=node,
-                    response_code=400,
-                    output=err_output,
+                    # corosync not running
+                    output=json.dumps(dict(code="not_running", message=""))
                 )] for node in self.existing_nodes
+            ]
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node=node,
+                ) for node in self.existing_nodes
+            ]
+        )
+
+    def test_all_failed(self):
+        self.config.http.corosync.reload_corosync_conf(
+            communication_list=[
+                [dict(
+                    label="node1",
+                    was_connected=False,
+                    errno=7,
+                    error_msg=self.err_msg,
+                )],
+                [dict(
+                    label="node2",
+                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                )],
+                [dict(
+                    label="node3",
+                    output="not a json",
+                )],
+                [dict(
+                    label="node4",
+                    response_code=400,
+                    output=self.err_msg,
+                )],
             ]
         )
 
@@ -1323,11 +1415,26 @@ class FailureReloadCorosyncConf(TestCase):
             +
             [
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    node=node,
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node1",
                     command=self.cmd_url,
-                    reason=err_output
-                ) for node in self.existing_nodes
+                    reason=self.err_msg,
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    node="node2",
+                    reason=self.err_msg,
+                ),
+                fixture.warn(
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node3",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node4",
+                    command=self.cmd_url,
+                    reason=self.err_msg,
+                )
             ]
             +
             [

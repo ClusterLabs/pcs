@@ -95,6 +95,9 @@ class DistributeCorosyncConf(
 class ReloadCorosyncConf(
     AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
 ):
+    __was_successful = False
+    __has_failures = False
+
     def _get_request_data(self):
         return RequestData("remote/reload_corosync_conf")
 
@@ -102,8 +105,35 @@ class ReloadCorosyncConf(
         report = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
-        if report is None:
-            self._on_success()
-            return
-        self._report(report)
+        node = response.request.target.label
+        if report is not None:
+            self.__has_failures = True
+            self._report(report)
+            return self._get_next_list()
+        try:
+            output = json.loads(response.data)
+            if output["code"] == "reloaded":
+                self.__was_successful = True
+                self._report(reports.corosync_config_reloaded(node))
+                return
+
+            if output["code"] == "not_running":
+                self._report(reports.corosync_config_reload_not_possible(node))
+            else:
+                self.__has_failures = True
+                self._report(reports.corosync_config_reload_error(
+                    output["message"],
+                    node=node,
+                    severity=ReportItemSeverity.WARNING,
+                ))
+        except (ValueError, LookupError):
+            self._report(reports.invalid_response_format(
+                node,
+                severity=ReportItemSeverity.WARNING,
+            ))
+
         return self._get_next_list()
+
+    def on_complete(self):
+        if not self.__was_successful and self.__has_failures:
+            self._report(reports.unable_to_perform_operation_on_any_node())

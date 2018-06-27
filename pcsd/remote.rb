@@ -3082,20 +3082,25 @@ def reload_corosync_conf(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  # TODO: make sure that this cmd will not successed if corosycn is not running
-  output, stderr, retval = run_cmd(
-    auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
-  )
-  if retval != 0
-    msg_lines = output + stderr
-    if not msg_lines.empty? and msg_lines[0].strip() == 'Reloading corosync.conf...'
-      msg_lines.delete_at(0)
+  if is_service_running?('corosync')
+    output, stderr, retval = run_cmd(
+      auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
+    )
+    if retval != 0
+      msg_lines = output + stderr
+      if not msg_lines.empty? and msg_lines[0].strip() == 'Reloading corosync.conf...'
+        msg_lines.delete_at(0)
+      end
+      result = PcsdExchangeFormat::result(
+        :failed,
+        "Unable to reload corosync configuration: #{msg_lines.join("\n").strip()}"
+      )
+    else
+      result = PcsdExchangeFormat::result(:reloaded)
     end
-    return [
-      400,
-      "Unable to reload corosync configuration: #{msg_lines.join("\n").strip()}"
-    ]
+  else
+    result = PcsdExchangeFormat::result(:not_running)
   end
 
-  return [200, "Succeeded"]
+  return JSON.generate(result)
 end
