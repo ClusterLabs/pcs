@@ -12,7 +12,6 @@ from pcs.lib.booth import (
     reports,
 )
 
-# TODO: fix tests
 def send_all_config_to_node(
     communicator,
     reporter,

@@ -1,4 +1,4 @@
-from unittest import skip, TestCase
+from unittest import TestCase
 
 
 class BoothSendConfig(TestCase):
@@ -17,7 +17,9 @@ class BoothGetConfig(TestCase):
     """
 
 
-@skip("TODO: missing tests for pcs.lib.communication.booth.BoothSaveFiles")
 class BoothSaveFiles(TestCase):
-    def test_skip(self):
-        pass
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_add_nodes.AddNodeFull
+        pcs.lib.commands.test.cluster.test_add_nodes.FailureBoothConfigsDistribution
+    """

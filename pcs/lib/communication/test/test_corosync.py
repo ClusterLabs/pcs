@@ -1,4 +1,4 @@
-from unittest import TestCase, skip
+from unittest import TestCase
 
 class CheckCorosyncOffline(TestCase):
     """
@@ -14,7 +14,10 @@ class DistributeCorosyncConf(TestCase):
         pcs.lib.commands.test.sbd.test_enable_sbd
     """
 
-@skip("Missing test for pcs.lib.communication.corosync.ReloadCorosyncConf")
 class ReloadCorosyncConf(TestCase):
-    def test_dummy(self):
-        pass
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_add_nodes.AddNodesSuccessMinimal
+        pcs.lib.commands.test.cluster.test_add_nodes.AddNodeFull
+        pcs.lib.commands.test.cluster.test_add_nodes.FailureReloadCorosyncConf
+    """
