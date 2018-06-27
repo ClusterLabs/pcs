@@ -42,12 +42,19 @@
   - These changes are not backward compatible. You should use the `pcs host
     auth` command to re-authenticate your hosts.
 - The `pcs cluster setup` command has been overhauled ([rhbz#1158816],
-[rhbz#1183103]):
+  [rhbz#1183103]):
   - It works with Corosync 3.x only and supports knet as well as udp/udpu.
+  - Node names are now supported.
   - The number of Corosync options configurable by the command has been
     significantly increased.
   - The syntax of the command has been completely changed to accommodate the
     changes and new features.
+- The `pcs cluster node add` command has been overhauled ([rhbz#1158816],
+  [rhbz#1183103])
+  - It works with Corosync 3.x only and supports knet as well as udp/udpu.
+  - Node names are now supported.
+  - The syntax of the command has been changed to accommodate new features and
+    to be consistent with other pcs commands.
 - Node names are fully supported now and are no longer coupled with node
   addresses. It is possible to set up a cluster where Corosync communicates
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])

@@ -331,13 +331,13 @@
         daemon urls: add_node_all
       </description>
     </capability>
-    <capability id="node.add.local" in-pcs="1" in-pcsd="1">
+    <capability id="node.add.separated-name-and-address" in-pcs="1" in-pcsd="1">
       <description>
-        Add a new node to a cluster on the local host only (pcs/pcsd internal
-        function).
+        It is possible to specify a node's address different from its name.
+        Corosync will communicate with the node via the specified address(es).
 
-        pcs commands: cluster localnode add
-        daemon urls: add_node
+        pcs commands: cluster node add
+        daemon urls: add_node_all
       </description>
     </capability>
     <capability id="node.add.enable" in-pcs="1" in-pcsd="0">
@@ -367,7 +367,7 @@
         Enable and start cluster services on the new cluster node during adding
         a node, cannot do "enable" and "start" separately.
 
-        daemon urls: add_node, add_node_all (param: auto_start)
+        daemon urls: add_node_all (param: auto_start)
       </description>
     </capability>
     <capability id="node.remove" in-pcs="1" in-pcsd="1">

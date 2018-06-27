@@ -816,7 +816,7 @@ class ClusterSetup(unittest.TestCase):
         )
 
 
-class NewNodeAdd(unittest.TestCase):
+class NodeAdd(unittest.TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_nodes"])
@@ -841,7 +841,7 @@ class NewNodeAdd(unittest.TestCase):
     def call_cmd(self, argv, modifiers=None):
         all_modifiers = dict(self._default_kwargs)
         all_modifiers.update(modifiers or {})
-        cluster.new_node_add(self.lib, argv, all_modifiers)
+        cluster.node_add(self.lib, argv, all_modifiers)
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:

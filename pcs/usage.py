@@ -585,7 +585,7 @@ Commands:
 
         Transport knet:
         This is the default transport. It allows configuring traffic encryption
-        and compression as well as using multiple addreses (links) for nodes.
+        and compression as well as using multiple addresses (links) for nodes.
         Transport options are:
             ip_version, knet_pmtud_interval, link_mode
         Link options are:
@@ -726,19 +726,26 @@ Commands:
         --config is recommended.  Do not specify a scope if you need to edit
         the whole CIB or be warned in the case of outdated CIB.
 
-    node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
-            [--watchdog=<watchdog-path>] [--device=<path>] ...
-        Add the node to the cluster and sync all relevant configuration files
-        to the new node. If --start is specified also start cluster on the new
-        node, if --wait is specified wait up to 'n' seconds for the new node to
-        start. If --enable is specified configure cluster to start on the new
-        node on boot.
-        When using Redundant Ring Protocol (RRP) with udpu transport, specify
-        the ring 0 address first followed by a ',' and then the ring 1 address.
-        Use --watchdog to specify path to watchdog on newly added node, when
-        SBD is enabled in cluster. If SBD is configured with shared storage,
-        use --device to specify path to shared device on new node.
-        This command can only be run on an existing cluster node.
+    node add <node name> [addr=<node address>]... [watchdog=<watchdog path>]
+            [device=<SBD device path>]... [--start [--wait[=<n>]]] [--enable]
+        Add the node to the cluster and synchronize all relevant configuration
+        files to the new node. This command can only be run on an existing
+        cluster node.
+
+        The new node is specified by its name and optionally its addresses. If
+        no addresses are specified for the node, pcs will configure corosync to
+        communicate with the node using an address provided in 'pcs host auth'
+        command. Otherwise, pcs will configure corosync to communicate with the
+        node using the specified addresses.
+
+        Use 'watchdog' to specify a path to a watchdog on the new node, when
+        SBD is enabled in the cluster. If SBD is configured with shared storage,
+        use 'device' to specify path to shared device(s) on the new node.
+
+        If --start is specified also start cluster on the new node, if --wait
+        is specified wait up to 'n' seconds for the new node to start. If
+        --enable is specified configure cluster to start on the new node on
+        boot.
 
     node remove <node>
         Shutdown specified node and remove it from the cluster.

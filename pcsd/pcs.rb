@@ -554,31 +554,26 @@ def is_proxy_set(env_var_hash)
 end
 
 def add_node(
-  auth_user, new_nodename, all=false, auto_start=true, watchdog=nil,
-  device_list=nil
+  auth_user, new_nodename, auto_start=true, watchdog=nil, device_list=nil
 )
-  if all
-    command = [PCS, "cluster", "node", "add", new_nodename]
-    if watchdog and not watchdog.strip.empty?
-      command << "--watchdog=#{watchdog.strip}"
-    end
-    if device_list
-      device_list.each { |device|
-        if device and not device.strip.empty?
-          command << "--device=#{device.strip}"
-        end
-      }
-    end
-    if auto_start
-      command << '--start'
-      command << '--enable'
-    end
-    out, stderror, retval = run_cmd(auth_user, *command)
-  else
-    out, stderror, retval = run_cmd(
-      auth_user, PCS, "cluster", "localnode", "add", new_nodename
-    )
+  # TODO update for the new node add
+  # TODO separate --start and --enable, fix capability node.add.enable-and-start
+  command = [PCS, "cluster", "node", "add", new_nodename]
+  if watchdog and not watchdog.strip.empty?
+    command << "--watchdog=#{watchdog.strip}"
   end
+  if device_list
+    device_list.each { |device|
+      if device and not device.strip.empty?
+        command << "--device=#{device.strip}"
+      end
+    }
+  end
+  if auto_start
+    command << '--start'
+    command << '--enable'
+  end
+  out, stderror, retval = run_cmd(auth_user, *command)
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
   corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
