@@ -95,6 +95,8 @@ def cluster_cmd(argv):
             cluster_auth_cmd(
                 utils.get_library_wrapper(), argv, utils.get_modifiers()
             )
+        except LibraryError as e:
+            process_library_reports(e.args)
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     elif (sub_cmd == "start"):
