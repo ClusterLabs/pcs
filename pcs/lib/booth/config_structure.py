@@ -21,16 +21,27 @@ GLOBAL_KEYS = (
     "debug",
     "ticket",
 )
-TICKET_KEYS = (
-    "acquire-after",
-    "attr-prereq",
-    "before-acquire-handler",
-    "expire",
-    "renewal-freq",
-    "retries",
-    "timeout",
-    "weights",
+
+_ver1_0 = (1, 0)
+_verINF = (999, 0)  # sentinel for unreleased highest
+# (minimal supported version, option name)
+TICKET_ITEMS = (
+    (_ver1_0, "acquire-after"),
+    (_ver1_0, "attr-prereq"),
+    (_ver1_0, "before-acquire-handler"),
+    (_ver1_0, "expire"),
+    # post-1.0: https://github.com/ClusterLabs/booth/pull/64/files
+    #"manual" (case insensitively) vs. anything else ~ automatic
+    (_verINF, "mode"),
+    (_ver1_0, "renewal-freq"),
+    (_ver1_0, "retries"),
+    (_ver1_0, "timeout"),
+    (_ver1_0, "weights"),
 )
+
+def ticket_keys(target_version=_ver1_0):
+    return tuple(key for (minver, key) in TICKET_ITEMS
+                 if target_version >= minver)
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
     def __new__(cls, key, value, details=None):
@@ -98,21 +109,23 @@ def validate_ticket_unique(booth_configuration, ticket_name):
     if ticket_exists(booth_configuration, ticket_name):
         raise LibraryError(reports.booth_ticket_duplicate(ticket_name))
 
-def validate_ticket_options(report_processor, options, allow_unknown_options):
+def validate_ticket_options(report_processor, options, allow_unknown_options,
+                            target_version=_ver1_0):
     reports = []
+    allowed_keys = ticket_keys(target_version=target_version)
     for key in sorted(options):
         if key in GLOBAL_KEYS:
             reports.append(common_reports.invalid_options(
                 [key],
-                TICKET_KEYS,
+                allowed_keys,
                 "booth ticket",
             ))
 
-        elif key not in TICKET_KEYS:
+        elif key not in allowed_keys:
             reports.append(
                 common_reports.invalid_options(
                     [key],
-                    TICKET_KEYS,
+                    allowed_keys,
                     "booth ticket",
                     severity=(
                         severities.WARNING if allow_unknown_options

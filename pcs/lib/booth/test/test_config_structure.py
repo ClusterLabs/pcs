@@ -53,7 +53,9 @@ class ValidateTicketOptionsTest(TestCase):
                 {
                     "option_names": ["site"],
                     "option_type": "booth ticket",
-                    "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed": list(config_structure.ticket_keys(
+                                        target_version=config_structure._ver1_0
+                               )),
                     "allowed_patterns": [],
                 },
             ),
@@ -63,7 +65,9 @@ class ValidateTicketOptionsTest(TestCase):
                 {
                     "option_names": ["port"],
                     "option_type": "booth ticket",
-                    "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed": list(config_structure.ticket_keys(
+                                        target_version=config_structure._ver1_0
+                               )),
                     "allowed_patterns": [],
                 },
             ),
@@ -82,7 +86,22 @@ class ValidateTicketOptionsTest(TestCase):
                 {
                     "option_names": ["unknown"],
                     "option_type": "booth ticket",
-                    "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed": list(config_structure.ticket_keys(
+                                        target_version=config_structure._ver1_0
+                               )),
+                    "allowed_patterns": [],
+                },
+                report_codes.FORCE_OPTIONS
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTIONS,
+                {
+                    "option_names": ["mode"],
+                    "option_type": "booth ticket",
+                    "allowed": list(config_structure.ticket_keys(
+                                        target_version=config_structure._ver1_0
+                               )),
                     "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
@@ -96,8 +115,10 @@ class ValidateTicketOptionsTest(TestCase):
                     "port": "b",
                     "timeout": " ",
                     "unknown": "c",
+                    "mode": "manual",
                 },
                 allow_unknown_options=False,
+                target_version=config_structure._ver1_0,
             ),
             *expected_errors
         )
@@ -115,7 +136,7 @@ class ValidateTicketOptionsTest(TestCase):
                 {
                     "option_names": ["site"],
                     "option_type": "booth ticket",
-                    "allowed": list(config_structure.TICKET_KEYS),
+                    "allowed": list(config_structure.ticket_keys()),
                     "allowed_patterns": [],
                 },
             ),
@@ -139,7 +160,7 @@ class ValidateTicketOptionsTest(TestCase):
                     {
                         "option_names": ["unknown"],
                         "option_type": "booth ticket",
-                        "allowed": list(config_structure.TICKET_KEYS),
+                        "allowed": list(config_structure.ticket_keys()),
                         "allowed_patterns": [],
                     },
                 ),
@@ -152,6 +173,18 @@ class ValidateTicketOptionsTest(TestCase):
             report_processor,
             {"timeout": "10"},
             allow_unknown_options=False,
+        )
+        assert_report_item_list_equal(report_processor.report_item_list, [])
+
+    def test_success_on_valid_options_target_version(self):
+        report_processor = MockLibraryReportProcessor()
+        config_structure.validate_ticket_options(
+            report_processor, {
+                "timeout": "10",
+                "mode": "manual",
+            },
+            allow_unknown_options=False,
+            target_version=config_structure._verINF,
         )
         assert_report_item_list_equal(report_processor.report_item_list, [])
 
