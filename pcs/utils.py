@@ -42,7 +42,7 @@ import pcs.cli.booth.env
 
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError, ReportListAnalyzer
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     CommandRunner,
     disable_service,
@@ -57,11 +57,6 @@ from pcs.lib.external import (
     _service,
     _systemctl,
 )
-from pcs.lib.communication.nodes import (
-    availability_checker_node,
-    PrecheckNewNode,
-)
-from pcs.lib.communication.tools import run as run_com_cmd
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
@@ -330,65 +325,6 @@ def pauseConfigSyncing(node, delay_seconds=300):
 def resumeConfigSyncing(node):
     data = urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
-
-def canAddNodeToCluster(node_communicator, target):
-    """
-    Return tuple with two parts. The first part is information if the node can
-    be added to a cluster. The second part is a relevant explanation for the
-    first part.
-
-    NodeCommunicator node_communicator -- provides connection to the node
-    string target -- the request's destination
-    """
-    report_list = []
-    com_cmd = PrecheckNewNode(report_list, availability_checker_node)
-    com_cmd.add_request(target)
-    run_com_cmd(node_communicator, com_cmd)
-
-    analyzer = ReportListAnalyzer(report_list)
-    if not analyzer.error_list:
-        return True, ""
-
-    first_problem = analyzer.error_list[0]
-
-    report_message_map = {
-        report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED:
-           "unable to authenticate to node"
-        ,
-        report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER:
-            "node is already in a cluster"
-        ,
-        report_codes.INVALID_RESPONSE_FORMAT:
-            "response parsing error"
-        ,
-        report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE:
-             "node is running pacemaker_remote"
-        ,
-    }
-
-    if first_problem.code in report_message_map:
-        return False, report_message_map[first_problem.code]
-
-    return False, "error checking node availability{0}".format(
-        ": {0}".format(first_problem.info["reason"])
-            if "reason" in first_problem.info else ""
-    )
-
-def addLocalNode(node, node_to_add, ring1_addr=None):
-    options = {'new_nodename': node_to_add}
-    if ring1_addr:
-        options['new_ring1addr'] = ring1_addr
-    data = urlencode(options)
-    retval, output = sendHTTPRequest(node, 'remote/add_node', data, False, False)
-    if retval == 0:
-        try:
-            myout = json.loads(output)
-            retval2 = myout[0]
-            output = myout[1]
-        except ValueError:
-            return 1, output
-        return retval2, output
-    return 1, output
 
 def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
     data = urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
@@ -682,116 +618,6 @@ def _enable_auto_tie_breaker_for_sbd(corosync_conf):
     except LibraryError as e:
         process_library_reports(e.args)
 
-
-# Add node specified to corosync.conf and reload corosync.conf (if running)
-def addNodeToCorosync(node):
-# Before adding, make sure node isn't already in corosync.conf
-    node0, node1 = parse_multiring_node(node)
-    corosync_conf_text = getCorosyncConf()
-    for c_node in getNodesFromCorosyncConf(conf_text=corosync_conf_text):
-        if (c_node == node0) or (c_node == node1):
-            err("node already exists in corosync.conf")
-    if "--corosync_conf" not in pcs_options:
-        for c_node in getCorosyncActiveNodes():
-            if (c_node == node0) or (c_node == node1):
-                err("Node already exists in running corosync")
-    corosync_conf = getCorosyncConfParsed(text=corosync_conf_text)
-    new_nodeid = getNextNodeID(corosync_conf)
-
-    nodelists = corosync_conf.get_sections("nodelist")
-    if not nodelists:
-        err("unable to find nodelist in corosync.conf")
-    nodelist = nodelists[0]
-    new_node = corosync_conf_parser.Section("node")
-    nodelist.add_section(new_node)
-    new_node.add_attribute("ring0_addr", node0)
-    if node1:
-        new_node.add_attribute("ring1_addr", node1)
-    new_node.add_attribute("nodeid", new_nodeid)
-
-    # enable ATB if it's needed
-    _enable_auto_tie_breaker_for_sbd(corosync_conf)
-
-    corosync_conf = autoset_2node_corosync(corosync_conf)
-    setCorosyncConf(str(corosync_conf))
-    return True
-
-def addNodeToClusterConf(node):
-    node0, node1 = parse_multiring_node(node)
-    nodes = getNodesFromCorosyncConf()
-    for existing_node in nodes:
-        if (existing_node == node0) or (existing_node == node1):
-            err("node already exists in cluster.conf")
-
-    output, retval = run(["ccs", "-f", settings.cluster_conf_file, "--addnode", node0])
-    if retval != 0:
-        print(output)
-        err("error adding node: %s" % node0)
-
-    if node1:
-        output, retval = run([
-            "ccs", "-f", settings.cluster_conf_file,
-            "--addalt", node0, node1
-        ])
-        if retval != 0:
-            print(output)
-            err(
-                "error adding alternative address for node: %s" % node0
-            )
-
-    # ensure the pacemaker fence device exists
-    pcmk_fence_name = None
-    all_fence_names = set()
-    output, retval = run([
-        "ccs", "-i", "-f", settings.cluster_conf_file, "--lsfencedev"
-    ])
-    if retval == 0:
-        for line in output.splitlines():
-            fence_name, dummy_fence_args = line.split(":", 1)
-            all_fence_names.add(fence_name)
-            match = re.match("(^|(.* ))agent=fence_pcmk((,.+)|$)", line)
-            if match:
-                pcmk_fence_name = fence_name
-    if not pcmk_fence_name:
-        fence_index = 1
-        pcmk_fence_name = "pcmk-redirect"
-        while pcmk_fence_name in all_fence_names:
-            pcmk_fence_name = "pcmk-redirect-{0}".format(fence_index)
-            fence_index += 1
-
-        output, retval = run([
-            "ccs", "-i", "-f", settings.cluster_conf_file,
-            "--addfencedev", pcmk_fence_name, "agent=fence_pcmk",
-        ])
-        if retval != 0:
-            print(output)
-            err("error fence device for node: %s" % node)
-
-    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node0])
-    if retval != 0:
-        print(output)
-        err("error adding fence method: %s" % node)
-
-    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", pcmk_fence_name, node0, "pcmk-method", "port="+node0])
-    if retval != 0:
-        print(output)
-        err("error adding fence instance: %s" % node)
-
-    if len(nodes) == 2:
-        cman_options_map = get_cluster_conf_cman_options()
-        cman_options_map.pop("expected_votes", None)
-        cman_options_map.pop("two_node", None)
-        cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
-        output, retval = run(
-            ["ccs", "-i", "-f", settings.cluster_conf_file, "--setcman"]
-            + cman_options
-        )
-        if retval != 0:
-            print(output)
-            err("unable to set cman options")
-
-    return True
-
 def removeNodeFromCorosync(node_expression):
     removed_node = False
     node0, node1 = parse_multiring_node(node_expression)
@@ -857,25 +683,6 @@ def need_to_handle_qdevice_service():
         # corosync.conf not present or not valid => no qdevice specified
         return False
 
-def getNextNodeID(corosync_conf):
-    currentNodes = []
-    highest = 0
-    for nodelist in corosync_conf.get_sections("nodelist"):
-        for node in nodelist.get_sections("node"):
-            for attr in node.get_attributes("nodeid"):
-                nodeid = int(attr[1])
-                currentNodes.append(nodeid)
-                if nodeid > highest:
-                    highest = nodeid
-
-    cur_test_id = highest
-    while cur_test_id >= 1:
-        if cur_test_id not in currentNodes:
-            return cur_test_id
-        cur_test_id = cur_test_id - 1
-
-    return highest + 1
-
 def parse_multiring_node(node):
     node_addr_count = node.count(",") + 1
     if node_addr_count == 2:
@@ -887,32 +694,6 @@ def parse_multiring_node(node):
             "You cannot specify more than two addresses for a node: %s"
             % node
         )
-
-def need_ring1_address(corosync_conf_text):
-    if is_rhel6():
-        # ring1 address is required regardless of transport
-        # it has to be added to cluster.conf in order to set up ring1
-        # in corosync by cman
-        try:
-            dom = parseString(corosync_conf_text)
-        except xml.parsers.expat.ExpatError as e:
-            err("Unable parse cluster.conf: %s" % e)
-        rrp = False
-        for el in dom.getElementsByTagName("totem"):
-            if el.getAttribute("rrp_mode") in ["active", "passive"]:
-                rrp = True
-        return rrp
-
-    corosync_conf = getCorosyncConfParsed(text=corosync_conf_text)
-    udpu_transport = False
-    rrp = False
-    for totem in corosync_conf.get_sections("totem"):
-        for attr in totem.get_attributes():
-            if attr[0] == "transport" and attr[1] == "udpu":
-                udpu_transport = True
-            if attr[0] == "rrp_mode" and attr[1] in ["active", "passive"]:
-                rrp = True
-    return udpu_transport and rrp
 
 def is_cman_with_udpu_transport():
     if not is_rhel6():

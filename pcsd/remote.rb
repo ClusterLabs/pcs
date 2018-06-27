@@ -55,11 +55,10 @@ def remote(params, request, auth_user)
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
+      # TODO rename, previously there was "node_add" for adding a node to a
+      # cluster configs locally on one node
       :add_node_all => lambda { |params_, request_, auth_user_|
         remote_add_node(params_, request_, auth_user_, true)
-      },
-      :add_node => lambda { |params_, request_, auth_user_|
-        remote_add_node(params_, request_, auth_user_, false)
       },
       :remove_nodes => method(:remote_remove_nodes),
       :remove_node => method(:remote_remove_node),
@@ -778,10 +777,11 @@ def remote_node_available(params, request, auth_user)
   return JSON.generate({:node_available => true})
 end
 
-def remote_add_node(params, request, auth_user, all=false)
+def remote_add_node(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
+  return [400, "not implemented"] # TODO
   auto_start = false
   if params[:auto_start] and params[:auto_start] == "1"
     auto_start = true
@@ -797,7 +797,7 @@ def remote_add_node(params, request, auth_user, all=false)
       device_list = params[:devices]
     end
     retval, output = add_node(
-      auth_user, node, all, auto_start, params[:watchdog], device_list
+      auth_user, node, auto_start, params[:watchdog], device_list
     )
   end
 

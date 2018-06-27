@@ -9,8 +9,6 @@ from pcs.test.tools.xml import dom_get_child_elements
 from pcs.test.tools.misc import get_test_resource as rc
 
 from pcs import utils
-from pcs.lib import reports
-from pcs.lib.errors import ReportItemSeverity
 
 cib_with_nodes = rc("cib-empty-withnodes.xml")
 empty_cib = rc("cib-empty.xml")
@@ -2461,86 +2459,6 @@ class IsNodeStopCauseQuorumLossTest(TestCase):
             )
         )
 
-class CanAddNodeToCluster(TestCase):
-    def setUp(self):
-        patcher = mock.patch("pcs.utils.run_com_cmd")
-        self.addCleanup(patcher.stop)
-        self.check_can_add = patcher.start()
-
-    def assert_report_list_cause_result(self, report_list, can_add, message):
-        def side_effect(node_communicator, com_cmd):
-            com_cmd._report_items.extend(
-                report_list if isinstance(report_list, list) else [report_list]
-            )
-        self.check_can_add.side_effect = side_effect
-
-        result_can_add, result_message = utils.canAddNodeToCluster(
-            None, "node1"
-        )
-
-        self.assertEqual((result_can_add, result_message), (can_add, message))
-
-    def assert_report_list_cause_success(self, report_list):
-        self.assert_report_list_cause_result(
-            report_list,
-            can_add=True,
-            message="",
-        )
-
-    def assert_report_list_cause_fail(self, report_list, message):
-        self.assert_report_list_cause_result(
-            report_list,
-            can_add=False,
-            message=message,
-        )
-
-    def test_sucess_on_empty_reports(self):
-        self.assert_report_list_cause_success([])
-
-    def test_sucess_when_no_error_there(self):
-        self.assert_report_list_cause_success(
-            reports.node_communication_error_not_authorized(
-                "node1", "command", "reason",
-                severity=ReportItemSeverity.WARNING
-            )
-        )
-
-    def test_deals_with_no_authorized(self):
-        self.assert_report_list_cause_fail(
-            reports.node_communication_error_not_authorized(
-                "node1", "command", "reason"
-            ),
-            "unable to authenticate to node"
-        )
-
-    def test_deals_with_running_pacemaker_remote(self):
-        self.assert_report_list_cause_fail(
-            reports.cannot_add_node_is_running_service(
-                "node1",
-                "pacemaker_remote"
-            ),
-            "node is running pacemaker_remote"
-        )
-
-    def test_deals_with_node_is_in_cluster(self):
-        self.assert_report_list_cause_fail(
-            reports.cannot_add_node_is_in_cluster("node1"),
-            "node is already in a cluster"
-        )
-
-    def test_deals_with_invalid_response(self):
-        self.assert_report_list_cause_fail(
-            reports.invalid_response_format("node1"),
-            "response parsing error"
-        )
-
-    def test_deals_with_any_other_connection_error(self):
-        self.assert_report_list_cause_fail(
-            reports.node_communication_error_timed_out(
-                "node1", "command", "reason",
-            ),
-            "error checking node availability: reason"
-        )
 
 class TouchCibFile(TestCase):
     @mock.patch("pcs.utils.os.path.isfile", mock.Mock(return_value=False))
