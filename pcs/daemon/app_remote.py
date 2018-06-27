@@ -3,6 +3,7 @@ from tornado.locks import Lock
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app_common import Sinatra
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.daemon.auth import authorize_user
 
 class SinatraRemote(Sinatra):
     """
@@ -61,6 +62,21 @@ class SetCerts(SinatraRemote):
             self.__https_server_manage.reload_certs()
         self.send_sinatra_result(result)
 
+class Auth(SinatraRemote):
+    async def auth(self):
+        user_auth_info = await authorize_user(
+            self.get_body_argument("username"),
+            self.get_body_argument("password"),
+        )
+        if user_auth_info.is_authorized:
+            await self.handle_sinatra_request()
+
+    async def post(self, *args, **kwargs):
+        await self.auth()
+
+    async def get(self, *args, **kwargs):
+        await self.auth()
+
 def get_routes(
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
@@ -79,5 +95,6 @@ def get_routes(
             SyncConfigMutualExclusive,
             {**ruby_wrapper, **lock}
         ),
+        (r"/remote/auth", Auth, ruby_wrapper),
         (r"/remote/.*", SinatraRemote, ruby_wrapper),
     ]

@@ -6,8 +6,11 @@ from tornado.httputil import HTTPHeaders
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.daemon import ruby_pcsd
+from pcs.daemon import ruby_pcsd, auth
 
+USER = "user"
+GROUPS = ["group1", "group2"]
+PASSWORD = "password"
 
 class RubyPcsdWrapper(ruby_pcsd.Wrapper):
     def __init__(self, request_type):
@@ -66,3 +69,28 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.code, self.wrapper.status_code)
         self.assert_headers_contains(response.headers, self.wrapper.headers)
         self.assertEqual(response.body, self.wrapper.body)
+
+class UserAuthInfo:
+    def __init__(self, valid=False, groups=GROUPS):
+        self.valid = valid
+        self.groups = groups
+
+class UserAuthMixin:
+    user_auth_info = UserAuthInfo()
+
+    async def check_user_groups(self, username):
+        self.assertEqual(username, USER)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.groups_valid
+        )
+
+    async def authorize_user(self, username, password):
+        self.assertEqual(username, USER)
+        self.assertEqual(password, PASSWORD)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.user_auth_info.valid
+        )

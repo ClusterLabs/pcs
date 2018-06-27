@@ -2,19 +2,18 @@ from tornado.httputil import parse_cookie
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler
 
-from pcs.daemon import session, app_session, auth
+from pcs.daemon import session, app_session
 from pcs.daemon.test.test_session import AssertMixin
 from pcs.test.tools.misc import create_setup_patch_mixin
+from pcs.daemon.test.fixtures_app import(
+    USER,
+    GROUPS,
+    PASSWORD,
+    UserAuthInfo,
+    UserAuthMixin
+)
 
 SID = "abc"
-USER = "user"
-GROUPS = ["group1", "group2"]
-PASSWORD = "password"
-
-class UserAuthInfo:
-    def __init__(self, valid=False, groups=GROUPS):
-        self.valid = valid
-        self.groups = groups
 
 def headers_with_sid(cookie_sid):
     return {
@@ -44,13 +43,13 @@ RESPONSE_WITHOUT_SID = "RESPONSE_WITHOUT_SID"
 RESPONSE_SID_IN_STORAGE = "RESPONSE_SID_IN_STORAGE"
 
 class MixinTest(
-    AsyncHTTPTestCase, AssertMixin, create_setup_patch_mixin(app_session)
+    AsyncHTTPTestCase, AssertMixin, create_setup_patch_mixin(app_session),
+    UserAuthMixin
 ):
     init_session = None
     auto_init_session = True
     groups_valid = False
     response_sid_expectation = None
-    user_auth_info = UserAuthInfo()
     """
     The app_session.Mixin is tested via Handler(RequestHandler) that mix it. The
     particular tests acts inside the handler.
@@ -66,24 +65,6 @@ class MixinTest(
         self.response = None
 
         super().setUp()
-
-    async def check_user_groups(self, username):
-        self.assertEqual(username, USER)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.groups_valid
-        )
-
-    async def authorize_user(self, username, password):
-        self.assertEqual(username, USER)
-        self.assertEqual(password, PASSWORD)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid
-        )
-
 
     def get_app(self):
         return Application([("/", Handler, dict(session_storage=self.storage))])
