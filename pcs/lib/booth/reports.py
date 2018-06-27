@@ -312,7 +312,7 @@ def booth_cannot_determine_local_site_ip():
 def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
     """
     Pcs uses external booth tools for some ticket_name operations. For example
-        grand and revoke. But the external command failed.
+        grant and revoke. But the external command failed.
     string operatin determine what was intended perform with ticket_name
     string reason is taken from external booth command
     string site_ip specifiy what site had to run the command
