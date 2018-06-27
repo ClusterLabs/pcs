@@ -311,6 +311,42 @@ def reports_success_minimal_fixture(
     )
 
 
+class CheckLive(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.node_names = ["node1", "node2", "node3"]
+
+    def assert_live_required(self, forbidden_options):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [{"name": name} for name in self.node_names],
+                transport_type=DEFAULT_TRANSPORT_TYPE,
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=forbidden_options
+                )
+            ],
+            expected_in_processor=False
+        )
+
+    def test_mock_corosync(self):
+        self.config.env.set_corosync_conf_data("")
+        self.assert_live_required(["COROSYNC_CONF"])
+
+    def test_mock_cib(self):
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required(["CIB"])
+
+    def test_mock_cib_corosync(self):
+        self.config.env.set_corosync_conf_data("")
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required(["CIB", "COROSYNC_CONF"])
+
+
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -739,7 +775,7 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name="node2",
-                    node_id=2
+                    node_index=2
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
@@ -1053,7 +1089,7 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_id=id
+                    node_index=id
                 )
                 for id, name in enumerate(NODE_LIST, 1)
             ]

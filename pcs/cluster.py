@@ -34,7 +34,7 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
-from pcs.lib.commands.quorum import _add_device_model_net
+from pcs.lib.corosync.qdevice_net import set_up_client_certificates
 from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import (
     CheckAuth,
@@ -177,6 +177,7 @@ def cluster_cmd(argv):
             ),
             "remove-guest": cluster_command.node_remove_guest,
             "clear": cluster_command.node_clear,
+            "new-add": new_node_add,
         }
         if argv[0] in remote_node_command_map:
             try:
@@ -876,7 +877,7 @@ def node_add_outside_cluster(lib, argv, modifiers):
     except NodeCommunicationException as e:
         process_library_reports([node_communicator_exception_to_report_item(e)])
 
-
+# TODO: remove
 def node_add(lib_env, node0, node1, modifiers):
     wait = False
     wait_timeout = None
@@ -925,9 +926,13 @@ def node_add(lib_env, node0, node1, modifiers):
             )
             qdevice_model, qdevice_model_options, _, _ = conf_facade.get_quorum_device_settings()
             if qdevice_model == "net":
-                _add_device_model_net(
-                    lib_env,
-                    qdevice_model_options["host"],
+                set_up_client_certificates(
+                    lib_env.cmd_runner(),
+                    report_processor,
+                    com_factory,
+                    lib_env.get_node_target_factory().get_target_from_hostname(
+                        qdevice_model_options["host"]
+                    ),
                     conf_facade.get_cluster_name(),
                     [node0],
                     skip_offline_nodes=False
@@ -993,7 +998,7 @@ def node_add(lib_env, node0, node1, modifiers):
         booth_sync.send_all_config_to_node(
             com_factory.get_communicator(),
             report_processor,
-            new_node_target,
+            [new_node_target],
             rewrite_existing=modifiers["force"],
             skip_wrong_config=modifiers["force"]
         )
@@ -1159,6 +1164,7 @@ def cluster_localnode(argv):
     if len(argv) != 2:
         usage.cluster()
         exit(1)
+    # TODO: local add is not needed anymore, therefore it should be removed
     elif argv[0] == "add":
         node = argv[1]
         if not utils.is_rhel6():
@@ -1629,25 +1635,24 @@ def cluster_auth_cmd(lib, argv, modifiers):
             print("Warning: {0}".format(msg))
 
 
-def _parse_node_options(node, options):
+def _parse_node_options(
+    node, options, additional_options=(), additional_repeatable_options=()
+):
     ADDR_OPT_KEYWORD = "addr"
-    supported_options = {ADDR_OPT_KEYWORD}
-    parsed_options = parse_args.prepare_options(
-        options, allowed_repeatable_options={ADDR_OPT_KEYWORD}
-    )
+    supported_options = {ADDR_OPT_KEYWORD} | set(additional_options)
+    repeatable_options = {ADDR_OPT_KEYWORD} | set(additional_repeatable_options)
+    parsed_options = parse_args.prepare_options(options, repeatable_options)
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:
         raise CmdLineInputError(
-            "Unknown options {} for node '{}'".format(
-                ", ".join(sorted(unknown_options)), node
+            "Unknown options '{}' for node '{}'".format(
+                "', '".join(sorted(unknown_options)), node
             )
         )
     parsed_options["name"] = node
     if ADDR_OPT_KEYWORD in parsed_options:
         parsed_options["addrs"] = parsed_options[ADDR_OPT_KEYWORD]
         del parsed_options[ADDR_OPT_KEYWORD]
-    else:
-        parsed_options["addrs"] = None
     return parsed_options
 
 
@@ -1728,4 +1733,30 @@ def cluster_setup(lib, argv, modifiers):
         enable=modifiers["enable"],
         force=modifiers["force"],
         force_unresolvable=modifiers["force"]
+    )
+
+def new_node_add(lib, argv, modifiers):
+    if not argv:
+        raise CmdLineInputError()
+
+    DEVICE_KEYWORD = "device"
+    WATCHDOG_KEYWORD = "watchdog"
+    hostname, *argv = argv
+    node_dict = _parse_node_options(
+        hostname,
+        argv,
+        additional_options={DEVICE_KEYWORD, WATCHDOG_KEYWORD},
+        additional_repeatable_options={DEVICE_KEYWORD}
+    )
+    if DEVICE_KEYWORD in node_dict:
+        node_dict[f"{DEVICE_KEYWORD}s"] = node_dict[DEVICE_KEYWORD]
+        del node_dict[DEVICE_KEYWORD]
+    lib.cluster.add_nodes(
+        nodes=[node_dict],
+        wait=modifiers["wait"],
+        start=modifiers["start"],
+        enable=modifiers["enable"],
+        force=modifiers["force"],
+        force_unresolvable=modifiers["force"],
+        skip_offline_nodes=modifiers["skip_offline_nodes"],
     )

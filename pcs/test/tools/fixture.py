@@ -1,3 +1,5 @@
+import json
+
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
@@ -212,4 +214,27 @@ def report_wait_for_idle_timed_out(reason):
             "reason": reason.strip(),
         },
         None
+    )
+
+
+def check_sbd_comm_success_fixture(node, watchdog, device_list):
+    return dict(
+        label=node,
+        output=json.dumps({
+            "sbd": {
+                "installed": True,
+            },
+            "watchdog": {
+                "exist": True,
+                "path": watchdog,
+            },
+            "device_list": [
+                dict(path=dev, exist=True, block_device=True)
+                for dev in device_list
+            ],
+        }),
+        param_list=[
+            ("watchdog", watchdog),
+            ("device_list", json.dumps(device_list)),
+        ]
     )

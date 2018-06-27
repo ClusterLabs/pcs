@@ -1,9 +1,15 @@
 from collections import namedtuple
+import socket
 
 from pcs.lib.validate import (
     is_ipv4_address,
     is_ipv6_address,
 )
+
+ADDR_IPV4 = "IPv4"
+ADDR_IPV6 = "IPv6"
+ADDR_FQDN = "FQDN"
+ADDR_UNRESOLVABLE = "unresolvable"
 
 class CorosyncNodeAddress(
     namedtuple("CorosyncNodeAddress", "addr link")
@@ -18,11 +24,7 @@ class CorosyncNodeAddress(
         return self._type
 
     def _get_type(self):
-        if is_ipv4_address(self.addr):
-            return "IPv4"
-        if is_ipv6_address(self.addr):
-            return "IPv6"
-        return "FQDN"
+        return get_address_type(self.addr, resolve=False)
 
 
 class CorosyncNode(
@@ -39,3 +41,16 @@ class CorosyncNode(
         if self._addrs_plain is None:
             self._addrs_plain = [addr.addr for addr in self.addrs]
         return self._addrs_plain
+
+
+def get_address_type(address, resolve=False):
+    if is_ipv4_address(address):
+        return ADDR_IPV4
+    if is_ipv6_address(address):
+        return ADDR_IPV6
+    if resolve:
+        try:
+            socket.getaddrinfo(address, None)
+        except socket.gaierror:
+            return ADDR_UNRESOLVABLE
+    return ADDR_FQDN

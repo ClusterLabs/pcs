@@ -11,6 +11,8 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.lib import reports
+from pcs.lib.errors import ReportItem
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -38,6 +40,11 @@ class NameBuildTest(TestCase):
             message,
             build(info) if callable(build) else build
         )
+
+    def assert_message_from_report(self, message, report):
+        if not isinstance(report, ReportItem):
+            raise AssertionError("report is not instance of ReportItem")
+        self.assert_message_from_info(message, report.info)
 
 
 class BuildInvalidOptionsMessageTest(NameBuildTest):
@@ -902,14 +909,50 @@ class SbdDeviceISNotBlockDevice(NameBuildTest):
             }
         )
 
+class SbdNotUsedCannotSetSbdOptions(NameBuildTest):
+    code = codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS
+    def test_success(self):
+        self.assert_message_from_info(
+            "Cluster is not configured to use SBD, cannot specify SBD option(s)"
+            " 'device', 'watchdog' for node 'node1'"
+            ,
+            {
+                "node": "node1",
+                "options": ["device", "watchdog"],
+            }
+        )
+
+class SbdWithDevicesNotUsedCannotSetDevice(NameBuildTest):
+    code = codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE
+    def test_success(self):
+        self.assert_message_from_info(
+            "Cluster is not configured to use SBD with shared storage, cannot "
+                "specify SBD devices for node 'node1'"
+            ,
+            {
+                "node": "node1",
+            }
+        )
 
 class SbdNoDEviceForNode(NameBuildTest):
     code = codes.SBD_NO_DEVICE_FOR_NODE
-    def test_build_message(self):
+    def test_not_enabled(self):
         self.assert_message_from_info(
-            "No device defined for node 'node1'",
+            "No SBD device specified for node 'node1'",
             {
                 "node": "node1",
+                "sbd_enabled_in_cluster": False,
+            }
+        )
+
+    def test_enabled(self):
+        self.assert_message_from_info(
+            "Cluster uses SBD with shared storage so SBD devices must be "
+                "specified for all nodes, no device specified for node 'node1'"
+            ,
+            {
+                "node": "node1",
+                "sbd_enabled_in_cluster": True,
             }
         )
 
@@ -918,8 +961,9 @@ class SbdTooManyDevicesForNode(NameBuildTest):
     code = codes.SBD_TOO_MANY_DEVICES_FOR_NODE
     def test_build_messages(self):
         self.assert_message_from_info(
-            "More than 3 devices defined for node 'node1' (devices: /dev1, "
-                "/dev2, /dev3)",
+            "At most 3 SBD devices can be specified for a node, '/dev1', "
+                "'/dev2', '/dev3' specified for node 'node1'"
+            ,
             {
                 "max_devices": 3,
                 "node": "node1",
@@ -1966,6 +2010,18 @@ class CibLoadErrorBadFormat(NameBuildTest):
             }
         )
 
+class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
+    code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
+    def test_message(self):
+        self.assert_message_from_info(
+            "Address '192.168.100.42' cannot be used in link '3' because "
+            "the link uses IPv6 addresses",
+            {
+                "address": "192.168.100.42",
+                "expected_address_type": "IPv6",
+                "link_number": 3,
+            }
+        )
 
 class CorosyncBadNodeAddressesCount(NameBuildTest):
     code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
@@ -2000,7 +2056,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "actual_count": 5,
                 "min_count": 1,
                 "max_count": 4,
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2013,7 +2069,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 1,
                 "max_count": 4,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2026,7 +2082,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 0,
                 "max_count": 1,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2039,7 +2095,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 2,
                 "max_count": 4,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2052,7 +2108,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 1,
                 "max_count": 1,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2065,7 +2121,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
                 "min_count": 2,
                 "max_count": 2,
                 "node_name": "node2",
-                "node_id": 2,
+                "node_index": 2,
             }
         )
 
@@ -2115,9 +2171,28 @@ class CorosyncLinkNumberDuplication(NameBuildTest):
             }
         )
 
+class NodeAddressesAlreadyExist(NameBuildTest):
+    code = codes.NODE_ADDRESSES_ALREADY_EXIST
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Node address 'node1' is already used by existing nodes; please, "
+            "use other address",
+            {
+                "address_list": ["node1"],
+            }
+        )
 
-class CorosyncNodeAddressDuplication(NameBuildTest):
-    code = codes.COROSYNC_NODE_ADDRESS_DUPLICATION
+    def test_more_addresses(self):
+        self.assert_message_from_info(
+            "Node addresses 'node1', 'node3' are already used by existing "
+            "nodes; please, use other addresses",
+            {
+                "address_list": ["node1", "node3"],
+            }
+        )
+
+class NodeAddressesDuplication(NameBuildTest):
+    code = codes.NODE_ADDRESSES_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
             "Node addresses must be unique, duplicate addresses: "
@@ -2128,9 +2203,28 @@ class CorosyncNodeAddressDuplication(NameBuildTest):
             }
         )
 
+class NodeNamesAlreadyExist(NameBuildTest):
+    code = codes.NODE_NAMES_ALREADY_EXIST
+    def test_one_address(self):
+        self.assert_message_from_info(
+            "Node name 'node1' is already used by existing nodes; please, "
+            "use other name",
+            {
+                "name_list": ["node1"],
+            }
+        )
 
-class CorosyncNodeNameDuplication(NameBuildTest):
-    code = codes.COROSYNC_NODE_NAME_DUPLICATION
+    def test_more_addresses(self):
+        self.assert_message_from_info(
+            "Node names 'node1', 'node3' are already used by existing "
+            "nodes; please, use other names",
+            {
+                "name_list": ["node1", "node3"],
+            }
+        )
+
+class NodeNamesDuplication(NameBuildTest):
+    code = codes.NODE_NAMES_DUPLICATION
     def test_message(self):
         self.assert_message_from_info(
             "Node names must be unique, duplicate names: 'node1', 'node3'",
@@ -2649,7 +2743,6 @@ class UsingKnownHostAddressForHost(NameBuildTest):
             }
         )
 
-
 class ResourceInBundleNotAccessible(NameBuildTest):
     code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     def test_success(self):
@@ -2753,4 +2846,85 @@ class FileIoError(NameBuildTest):
                 "reason": "Failed",
                 "operation": "write",
             }
+        )
+
+class UsingDefaultWatchdog(NameBuildTest):
+    code = codes.USING_DEFAULT_WATCHDOG
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "No watchdog has been specified for node 'node1'. Using "
+                "default watchdog '/dev/watchdog'"
+            ),
+            {
+                "node": "node1",
+                "watchdog": "/dev/watchdog",
+            }
+        )
+
+class CorosyncQuorumAtbCannotBeDisabledDueToSbd(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "Unable to disable auto_tie_breaker, SBD fencing would have no "
+                "effect"
+            ),
+            {
+            }
+        )
+
+class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+    def test_success(self):
+        self.assert_message_from_info(
+            (
+                "auto_tie_breaker quorum option will be enabled to make SBD "
+                "fencing effective. Cluster has to be offline to be able to "
+                "make this change."
+            ),
+            {
+            }
+        )
+
+
+class CorosyncConfigReloaded(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOADED
+    def test_with_node(self):
+        self.assert_message_from_report(
+            "node1: Corosync configuration reloaded",
+            reports.corosync_config_reloaded("node1"),
+        )
+
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Corosync configuration reloaded",
+            reports.corosync_config_reloaded(),
+        )
+
+
+class CorosyncConfigReloadNotPossible(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "node1: Corosync is not running, therefore reload of the "
+                "corosync configuration is not possible"
+            ),
+            reports.corosync_config_reload_not_possible("node1")
+        )
+
+
+class CorosyncConfigReloadError(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOAD_ERROR
+    def test_with_node(self):
+        self.assert_message_from_report(
+            "node1: Unable to reload corosync configuration: a reason",
+            reports.corosync_config_reload_error("a reason", "node1"),
+        )
+
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Unable to reload corosync configuration: different reason",
+            reports.corosync_config_reload_error("different reason"),
         )

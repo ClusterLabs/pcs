@@ -207,8 +207,8 @@ def corosync_bad_node_addresses_count(info):
             node_template.format(info["node_name"])
             if "node_name" in info
             else
-            node_template.format(info["node_id"])
-            if "node_id" in info
+            node_template.format(info["node_index"])
+            if "node_index" in info
             else ""
         ),
         _s_allowed=("es" if info["max_count"] > 1 else ""),
@@ -642,11 +642,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "disabled"
     ,
 
-    codes.COROSYNC_CONFIG_RELOADED: "Corosync configuration reloaded",
+    codes.COROSYNC_CONFIG_RELOADED: lambda info:
+        "{_node}Corosync configuration reloaded".format(
+            _node=format_optional(info["node"], "{}: "),
+            **info
+        )
+    ,
 
     codes.COROSYNC_CONFIG_RELOAD_ERROR: lambda info:
-        "Unable to reload corosync configuration: {reason}"
-        .format(**info)
+        "{_node}Unable to reload corosync configuration: {reason}"
+        .format(
+            _node=format_optional(info["node"], "{}: "),
+            **info,
+        )
+    ,
+
+    codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE: lambda info:
+       (
+           "{node}: Corosync is not running, therefore reload of the corosync "
+           "configuration is not possible"
+       ).format(**info)
     ,
 
     codes.UNABLE_TO_READ_COROSYNC_CONFIG: lambda info:
@@ -664,6 +679,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.PARSE_ERROR_COROSYNC_CONF:
         "Unable to parse corosync config"
+    ,
+
+    codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK: lambda info:
+        (
+            "Address '{address}' cannot be used in link '{link_number}' "
+            "because the link uses {expected_address_type} addresses"
+        ).format(**info)
     ,
 
     codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT:
@@ -685,7 +707,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_NODE_ADDRESS_DUPLICATION: lambda info:
+    codes.NODE_ADDRESSES_ALREADY_EXIST: lambda info:
+        (
+            "Node address{_es} {_addrs} {_are} already used by existing nodes; "
+            "please, use other address{_es}"
+        ).format(
+            _addrs=format_list(info["address_list"]),
+            _es=("es" if len(info["address_list"]) > 1 else ""),
+            _are=("are" if len(info["address_list"]) > 1 else "is"),
+        )
+    ,
+
+    codes.NODE_ADDRESSES_DUPLICATION: lambda info:
         "Node addresses must be unique, duplicate addresses: {_addrs}".format(
             _addrs=format_list(info["address_list"])
         )
@@ -695,7 +728,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         corosync_node_address_count_mismatch
     ,
 
-    codes.COROSYNC_NODE_NAME_DUPLICATION: lambda info:
+    codes.NODE_NAMES_ALREADY_EXIST: lambda info:
+        (
+            "Node name{_s} {_names} {_are} already used by existing nodes; "
+            "please, use other name{_s}"
+        ).format(
+            _names=format_list(info["name_list"]),
+            _s=("s" if len(info["name_list"]) > 1 else ""),
+            _are=("are" if len(info["name_list"]) > 1 else "is"),
+        )
+    ,
+
+    codes.NODE_NAMES_DUPLICATION: lambda info:
         "Node names must be unique, duplicate names: {_names}".format(
             _names=format_list(info["name_list"])
         )
@@ -897,6 +941,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CIB_LOAD_ERROR_BAD_FORMAT: lambda info:
        "unable to get cib, {reason}"
        .format(**info)
+    ,
+
+    codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION:
+        "Unable to load CIB to get guest and remote nodes from it, "
+        "those nodes cannot be considered in configuration validation"
     ,
 
     codes.CIB_CANNOT_FIND_MANDATORY_SECTION: lambda info:
@@ -1332,20 +1381,45 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.SBD_NO_DEVICE_FOR_NODE: lambda info:
-        "No device defined for node '{node}'"
-        .format(**info)
+        (
+            (
+                "Cluster uses SBD with shared storage so SBD devices must be "
+                "specified for all nodes, no device specified for node '{node}'"
+            )
+            if info["sbd_enabled_in_cluster"] else
+            "No SBD device specified for node '{node}'"
+        ).format(**info)
     ,
 
     codes.SBD_TOO_MANY_DEVICES_FOR_NODE: lambda info:
         (
-            "More than {max_devices} devices defined for node '{node}' "
-            "(devices: {devices})"
+            "At most {max_devices} SBD devices can be specified for a node, "
+            "'{_devices}' specified for node '{node}'"
         )
-        .format(devices=", ".join(info["device_list"]), **info)
+        .format(
+            _devices="', '".join(info["device_list"]),
+            **info
+        )
     ,
 
     codes.SBD_NOT_INSTALLED: lambda info:
         "SBD is not installed on node '{node}'"
+        .format(**info)
+    ,
+
+    codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS: lambda info:
+        (
+            "Cluster is not configured to use SBD, cannot specify SBD "
+            "option(s) {__options} for node '{node}'"
+        ).format(
+            __options=format_list(info["options"]),
+            **info
+        )
+    ,
+
+    codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE: lambda info:
+        "Cluster is not configured to use SBD with shared storage, cannot "
+        "specify SBD devices for node '{node}'"
         .format(**info)
     ,
 
@@ -1486,12 +1560,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:
-        "unable to disable auto_tie_breaker: SBD fencing will have no effect"
-        .format(**info)
+    codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD:
+        "Unable to disable auto_tie_breaker, SBD fencing would have no effect"
     ,
 
-    codes.SBD_REQUIRES_ATB: lambda info:
+    codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD:
         "auto_tie_breaker quorum option will be enabled to make SBD fencing "
         "effective. Cluster has to be offline to be able to make this change."
     ,
@@ -1532,7 +1605,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
         "Unable to perform operation on any available node/host, therefore it "
-        "is not possible to continue."
+        "is not possible to continue"
     ,
     codes.NODE_COMMUNICATION_RETRYING: lambda info:
         (
@@ -1650,4 +1723,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "cluster inside bundle '{bundle_id}', at least one of bundle "
             "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
+    ,
+    codes.USING_DEFAULT_WATCHDOG: lambda info:
+        (
+            "No watchdog has been specified for node '{node}'. Using default "
+            "watchdog '{watchdog}'"
+        ).format(**info)
+    ,
 }

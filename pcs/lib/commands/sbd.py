@@ -100,37 +100,6 @@ def _validate_watchdog_dict(watchdog_dict):
     ]
 
 
-def _validate_device_dict(node_device_dict):
-    """
-    Validates device list for all nodes. If node is present, it checks if there
-    is at least one device and at max settings.sbd_max_device_num. Also devices
-    have to be specified with absolute path.
-    Returns list of ReportItem
-
-    node_device_dict -- dictionary with node names as keys and list of
-        devices as values
-    """
-    report_item_list = []
-    for node_label, device_list in node_device_dict.items():
-        if not device_list:
-            report_item_list.append(
-                reports.sbd_no_device_for_node(node_label)
-            )
-            continue
-        elif len(device_list) > settings.sbd_max_device_num:
-            report_item_list.append(reports.sbd_too_many_devices_for_node(
-                node_label, device_list, settings.sbd_max_device_num
-            ))
-            continue
-        for device in device_list:
-            if not device or not os.path.isabs(device):
-                report_item_list.append(
-                    reports.sbd_device_path_not_absolute(device, node_label)
-                )
-
-    return report_item_list
-
-
 def _get_full_target_dict(target_list, node_value_dict, default_value):
     """
     Returns dictionary where keys are labels of all nodes in cluster and value
@@ -202,7 +171,7 @@ def enable_sbd(
         +
         _validate_watchdog_dict(full_watchdog_dict)
         +
-        (_validate_device_dict(full_device_dict) if using_devices else [])
+        (sbd.validate_nodes_devices(full_device_dict) if using_devices else [])
         +
         _validate_sbd_options(sbd_options, allow_unknown_opts)
     )
@@ -226,7 +195,9 @@ def enable_sbd(
     # enable ATB if neede
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
-            lib_env.report_processor.process(reports.sbd_requires_atb())
+            lib_env.report_processor.process(
+                reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+            )
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
             lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
 

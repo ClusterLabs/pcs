@@ -378,55 +378,6 @@ class ValidateWatchdogDictTest(TestCase):
         )
 
 
-class ValidateDeviceDictTest(TestCase):
-    def test_all_ok(self):
-        device_dict = {
-            "node1": ["/dev1", "/dev2"],
-            "node2": ["/dev1"],
-        }
-        self.assertEqual([], cmd_sbd._validate_device_dict(device_dict))
-
-    def test_some_not_ok(self):
-        too_many_devices = [
-            "dev" + str(i) for i in range(settings.sbd_max_device_num + 1)
-        ]
-        device_dict = {
-            "node1": [],
-            "node2": too_many_devices,
-            "node3": ["/dev/vda"],
-            "node4": ["/dev/vda1", "../dev/sda2"],
-        }
-        assert_report_item_list_equal(
-            cmd_sbd._validate_device_dict(device_dict),
-            [
-                (
-                    Severities.ERROR,
-                    report_codes.SBD_NO_DEVICE_FOR_NODE,
-                    {
-                        "node": "node1",
-                    }
-                ),
-                (
-                    Severities.ERROR,
-                    report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
-                    {
-                        "node": "node2",
-                        "device_list": too_many_devices,
-                        "max_devices": settings.sbd_max_device_num,
-                    }
-                ),
-                (
-                    Severities.ERROR,
-                    report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
-                    {
-                        "node": "node4",
-                        "device": "../dev/sda2",
-                    }
-                ),
-            ]
-        )
-
-
 class GetFullTargetDictTest(TestCase):
     def setUp(self):
         self.target_list = [

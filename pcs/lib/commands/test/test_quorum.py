@@ -248,7 +248,7 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
         self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
         report_item = (
             severity.ERROR,
-            report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+            report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
             {},
             report_codes.FORCE_OPTIONS
         )
@@ -345,7 +345,7 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 severity.WARNING,
-                report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+                report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
                 {},
                 None
             )]
@@ -586,76 +586,49 @@ class AddDeviceNetTest(TestCase):
             cert_info["b64data"] = base64.b64encode(plain)
 
     def fixture_config_http_get_ca_cert(self, output=None):
-        self.config.http.add_communication(
-            "http.get_ca_certificate",
-            [
-                {"label": self.qnetd_host, },
-            ],
-            action="remote/qdevice_net_get_ca_certificate",
-            response_code=200,
-            output=(output or self.certs["cacert"]["b64data"])
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "output": output or self.certs["cacert"]["b64data"]
+                },
+            ]
         )
 
     def fixture_config_http_client_init(self):
-        self.config.http.add_communication(
-            "http.client_init",
-            [{"label": node} for node in self.cluster_nodes],
-            action="remote/qdevice_net_client_init_certificate_storage",
-            param_list=[
-                ("ca_certificate", self.certs["cacert"]["b64data"]),
-            ],
-            response_code=200,
+        self.config.http.corosync.qdevice_net_client_setup(
+            self.certs["cacert"]["data"],
+            self.cluster_nodes,
         )
 
     def fixture_config_runner_get_cert_request(self):
-        self.config.runner.place(
-            "corosync-qdevice-net-certutil -r -n {cluster_name}".format(
-                cluster_name=self.cluster_name
-            ),
-            name="runner.corosync.qdevice.cert-request",
-            stdout="Certificate request stored in {path}".format(
-                path=self.certs["cert_request"]["path"]
-            )
+        self.config.runner.corosync.qdevice_generate_cert(
+            self.cluster_name,
+            self.certs["cert_request"]["path"]
         )
 
     def fixture_config_http_sign_cert_request(self, output=None):
-        self.config.http.add_communication(
-            "http.sign_certificate_request",
-            [
-                {"label": self.qnetd_host, },
-            ],
-            action="remote/qdevice_net_sign_node_certificate",
-            param_list=[
-                (
-                    "certificate_request",
-                    self.certs["cert_request"]["b64data"]
-                ),
-                ("cluster_name", self.cluster_name),
-            ],
-            response_code=200,
-            output=(output or self.certs["signed_request"]["b64data"])
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            self.cluster_name,
+            self.certs["cert_request"]["data"],
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "output": output or self.certs["signed_request"]["b64data"],
+                },
+            ]
         )
 
     def fixture_config_runner_cert_to_pk12(self, cert_file_path):
-        self.config.runner.place(
-            "corosync-qdevice-net-certutil -M -c {file_path}".format(
-                file_path=cert_file_path
-            ),
-            name="runner.corosync.qdevice.cert-to-pk12",
-            stdout="Certificate request stored in {path}".format(
-                path=self.certs["final_cert"]["path"]
-            )
+        self.config.runner.corosync.qdevice_get_pk12(
+            cert_file_path,
+            self.certs["final_cert"]["path"]
         )
 
     def fixture_config_http_import_final_cert(self):
-        self.config.http.add_communication(
-            "http.client_import_certificate",
-            [{"label": node} for node in self.cluster_nodes],
-            action="remote/qdevice_net_client_import_certificate",
-            param_list=[
-                ("certificate", self.certs["final_cert"]["b64data"]),
-            ],
-            response_code=200,
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            self.certs["final_cert"]["data"],
+            self.cluster_nodes
         )
 
     def fixture_config_success(
@@ -1151,26 +1124,16 @@ class AddDeviceNetTest(TestCase):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
-        self.config.http.add_communication(
-            "http.client_init",
-            node_2_offline_responses,
-            action="remote/qdevice_net_client_init_certificate_storage",
-            param_list=[
-                ("ca_certificate", self.certs["cacert"]["b64data"]),
-            ],
-            response_code=200,
+        self.config.http.corosync.qdevice_net_client_setup(
+            self.certs["cacert"]["data"],
+            communication_list=node_2_offline_responses
         )
         self.fixture_config_runner_get_cert_request()
         self.fixture_config_http_sign_cert_request()
         self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
-        self.config.http.add_communication(
-            "http.client_import_certificate",
-            node_2_offline_responses,
-            action="remote/qdevice_net_client_import_certificate",
-            param_list=[
-                ("certificate", self.certs["final_cert"]["b64data"]),
-            ],
-            response_code=200,
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            self.certs["final_cert"]["data"],
+            communication_list=node_2_offline_responses
         )
         self.config.http.corosync.qdevice_client_enable(
             communication_list=node_2_offline_responses
@@ -1611,14 +1574,14 @@ class AddDeviceNetTest(TestCase):
     def test_get_ca_cert_error_communication(self):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.config.http.add_communication(
-            "http.get_ca_certificate",
-            [
-                {"label": self.qnetd_host, },
-            ],
-            action="remote/qdevice_net_get_ca_certificate",
-            response_code=400,
-            output="Unable to read certificate: error description"
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "response_code": 400,
+                    "output": "Unable to read certificate: error description",
+                },
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1678,9 +1641,9 @@ class AddDeviceNetTest(TestCase):
         self.config.runner.corosync.version()
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
-        self.config.http.add_communication(
-            "http.client_init",
-            [
+        self.config.http.corosync.qdevice_net_client_setup(
+            self.certs["cacert"]["data"],
+            communication_list=[
                 {"label": self.cluster_nodes[0]},
                 {
                     "label": self.cluster_nodes[1],
@@ -1688,12 +1651,7 @@ class AddDeviceNetTest(TestCase):
                     "output": "some error occurred",
                 },
                 {"label": self.cluster_nodes[2]},
-            ],
-            action="remote/qdevice_net_client_init_certificate_storage",
-            param_list=[
-                ("ca_certificate", self.certs["cacert"]["b64data"]),
-            ],
-            response_code=200,
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1725,11 +1683,10 @@ class AddDeviceNetTest(TestCase):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
         self.fixture_config_http_client_init()
-        self.config.runner.place(
-            "corosync-qdevice-net-certutil -r -n {cluster_name}".format(
-                cluster_name=self.cluster_name
-            ),
-            name="runner.corosync.qdevice.cert-request",
+        self.config.runner.corosync.qdevice_generate_cert(
+            self.cluster_name,
+            cert_req_path=None,
+            stdout="",
             stderr="some error occurred",
             returncode=1
         )
@@ -1764,21 +1721,16 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_http_get_ca_cert()
         self.fixture_config_http_client_init()
         self.fixture_config_runner_get_cert_request()
-        self.config.http.add_communication(
-            "http.sign_certificate_request",
-            [
-                {"label": self.qnetd_host, },
-            ],
-            action="remote/qdevice_net_sign_node_certificate",
-            param_list=[
-                (
-                    "certificate_request",
-                    self.certs["cert_request"]["b64data"]
-                ),
-                ("cluster_name", self.cluster_name),
-            ],
-            response_code=400,
-            output="some error occurred"
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            self.cluster_name,
+            self.certs["cert_request"]["data"],
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "response_code": 400,
+                    "output": "some error occurred",
+                },
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1849,11 +1801,10 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_http_client_init()
         self.fixture_config_runner_get_cert_request()
         self.fixture_config_http_sign_cert_request()
-        self.config.runner.place(
-            "corosync-qdevice-net-certutil -M -c {file_path}".format(
-                file_path=tmpfile_instance.name
-            ),
-            name="runner.corosync.qdevice.cert-to-pk12",
+        self.config.runner.corosync.qdevice_get_pk12(
+            tmpfile_instance.name,
+            output_path=None,
+            stdout="",
             stderr="some error occurred",
             returncode=1
         )
@@ -1894,9 +1845,9 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_runner_get_cert_request()
         self.fixture_config_http_sign_cert_request()
         self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
-        self.config.http.add_communication(
-            "http.client_import_certificate",
-            [
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            self.certs["final_cert"]["data"],
+            communication_list=[
                 {"label": self.cluster_nodes[0]},
                 {
                     "label": self.cluster_nodes[1],
@@ -1904,12 +1855,7 @@ class AddDeviceNetTest(TestCase):
                     "output": "some error occurred",
                 },
                 {"label": self.cluster_nodes[2]},
-            ],
-            action="remote/qdevice_net_client_import_certificate",
-            param_list=[
-                ("certificate", self.certs["final_cert"]["b64data"]),
-            ],
-            response_code=200,
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -2126,7 +2072,9 @@ class RemoveDeviceNetTest(TestCase):
         reports = []
         if atb_enabled:
             reports.append(
-                fixture.warn(report_codes.SBD_REQUIRES_ATB)
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                )
             )
         reports += [
             fixture.info(

@@ -46,9 +46,13 @@ class ClientSetup(
     SimpleResponseProcessingNoResponseOnSuccessMixin, SkipOfflineMixin,
     AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase,
 ):
-    def __init__(self, report_processor, ca_cert, skip_offline_targets=False):
+    def __init__(
+        self, report_processor, ca_cert, skip_offline_targets=False,
+        allow_skip_offline=True
+    ):
         super(ClientSetup, self).__init__(report_processor)
-        self._set_skip_offline(skip_offline_targets)
+        if allow_skip_offline:
+            self._set_skip_offline(skip_offline_targets)
         self._ca_cert = ca_cert
 
     def _get_request_data(self):
@@ -100,9 +104,13 @@ class ClientImportCertificateAndKey(
     SimpleResponseProcessingMixin, SkipOfflineMixin, AllSameDataMixin,
     AllAtOnceStrategyMixin, RunRemotelyBase
 ):
-    def __init__(self, report_processor, pk12, skip_offline_targets=False):
+    def __init__(
+        self, report_processor, pk12, skip_offline_targets=False,
+        allow_skip_offline=True
+    ):
         super(ClientImportCertificateAndKey, self).__init__(report_processor)
-        self._set_skip_offline(skip_offline_targets)
+        if allow_skip_offline:
+            self._set_skip_offline(skip_offline_targets)
         self._pk12 = pk12
 
     def _get_request_data(self):

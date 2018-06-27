@@ -2,6 +2,7 @@ import base64
 import json
 import os
 
+from pcs.common import report_codes
 from pcs.common.node_communicator import RequestData
 from pcs.lib import reports
 from pcs.lib.booth import reports as reports_booth
@@ -12,6 +13,7 @@ from pcs.lib.communication.tools import (
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
 )
+from pcs.lib.errors import ReportItemSeverity
 
 
 class BoothSendConfig(
@@ -100,9 +102,44 @@ class BoothSaveFiles(
         super(BoothSaveFiles, self).__init__(report_processor)
         self._file_list = file_list
         self._rewrite_existing = rewrite_existing
+        self._output_data = []
 
     def _get_request_data(self):
         data = [("data_json", json.dumps(self._file_list))]
         if self._rewrite_existing:
             data.append(("rewrite_existing", "1"))
         return RequestData("remote/booth_save_files", data)
+
+    def _process_response(self, response):
+        report = self._get_response_report(response)
+        if report is not None:
+            self._report(report)
+            return
+        target = response.request.target
+        try:
+            parsed_data = json.loads(response.data)
+            self._report(
+                reports_booth.booth_config_accepted_by_node(
+                    target.label, list(parsed_data["saved"])
+                )
+            )
+            for file in list(parsed_data["existing"]):
+                self._report(reports.file_already_exists(
+                    None,
+                    file,
+                    severity=(
+                        ReportItemSeverity.WARNING if self._rewrite_existing
+                        else ReportItemSeverity.ERROR
+                    ),
+                    forceable=(
+                        None if self._rewrite_existing
+                        else report_codes.FORCE_FILE_OVERWRITE
+                    ),
+                    node=target.label,
+                ))
+            for file, reason in dict(parsed_data["failed"]).items():
+                self._report(reports_booth.booth_config_distribution_node_error(
+                    target.label, reason, file
+                ))
+        except (KeyError, TypeError, ValueError):
+            self._report(reports.invalid_response_format(target.label))

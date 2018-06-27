@@ -873,22 +873,50 @@ def corosync_quorum_set_expected_votes_error(reason):
         }
     )
 
-def corosync_config_reloaded():
+def corosync_config_reloaded(node=None):
     """
     corosync configuration has been reloaded
+
+    node string -- node label on which operation has been executed
     """
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_RELOADED,
+        info=dict(
+            node=node,
+        )
     )
 
-def corosync_config_reload_error(reason):
+def corosync_config_reload_error(
+    reason, node=None, severity=ReportItemSeverity.ERROR
+):
     """
     an error occured when reloading corosync configuration
-    reason string an error message
+
+    reason string -- an error message
+    node string -- node label
+    severity ReportItemSeverity -- severity of the report
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-        info={"reason": reason}
+        severity,
+        info={
+            "reason": reason,
+            "node": node,
+        }
+    )
+
+def corosync_config_reload_not_possible(node):
+    """
+    corosync configuration cannot be reloaded because corosync is not running
+    on the specified node
+
+    node string -- node label on which confi
+    """
+    return ReportItem.warning(
+        report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+        info=dict(
+            node=node,
+        )
     )
 
 def corosync_config_read_error(path, reason):
@@ -942,7 +970,7 @@ def corosync_options_incompatible_with_qdevice(options):
     )
 
 def corosync_bad_node_addresses_count(
-    actual_count, min_count, max_count, node_name=None, node_id=None
+    actual_count, min_count, max_count, node_name=None, node_index=None
 ):
     """
     Wrong number of addresses set for a corosync node.
@@ -950,8 +978,9 @@ def corosync_bad_node_addresses_count(
     int actual_count -- how many addresses set for a node
     int min_count -- minimal allowed addresses count
     int max_count -- maximal allowed addresses count
-    string node_name -- optionally specify node name (if available)
-    string node_id -- optionally specify node index or id (if available)
+    string node_name -- optionally specify node name
+    string node_index -- optionally specify node index (helps to identify a node
+        if a name is missing)
     """
     return ReportItem.error(
         report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
@@ -960,19 +989,40 @@ def corosync_bad_node_addresses_count(
             "min_count": min_count,
             "max_count": max_count,
             "node_name": node_name,
-            "node_id": node_id,
+            "node_index": node_index,
         }
     )
 
 def corosync_ip_version_mismatch_in_links(link_numbers):
     """
     Mixing IPv4 and IPv6 in one or more links, which is not allowed
+
+    iterable link_numbers -- numbers of links with mismatched IP versions
     """
     return ReportItem.error(
         report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
         info={
             "link_numbers": link_numbers,
         }
+    )
+
+def corosync_address_ip_version_wrong_for_link(
+    address, expected_address_type, link_number
+):
+    """
+    Cannot use an address in a link as it does not match the link's IP version.
+
+    string address -- a provided address
+    string expected_address_type -- an address type used in a link
+    int link_number -- number of the link
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+        info=dict(
+            address=address,
+            expected_address_type=expected_address_type,
+            link_number=link_number,
+        )
     )
 
 def corosync_link_number_duplication(number_list):
@@ -1001,27 +1051,53 @@ def corosync_node_address_count_mismatch(node_addr_count):
         }
     )
 
-def corosync_node_address_duplication(address_list):
+def node_addresses_already_exist(address_list):
+    """
+    Trying add node(s) with addresses already used by other nodes
+
+    iterable address_list -- list of specified already existing addresses
+    """
+    return ReportItem.error(
+        report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+        info={
+            "address_list": sorted(address_list),
+        }
+    )
+
+def node_addresses_duplication(address_list):
     """
     Trying to set one address for more nodes or links, addresses must be unique
 
     iterable address_list -- list of nonunique addresses
     """
     return ReportItem.error(
-        report_codes.COROSYNC_NODE_ADDRESS_DUPLICATION,
+        report_codes.NODE_ADDRESSES_DUPLICATION,
         info={
             "address_list": sorted(address_list),
         }
     )
 
-def corosync_node_name_duplication(name_list):
+def node_names_already_exist(name_list):
+    """
+    Trying add node(s) with name(s) already used by other nodes
+
+    iterable name_list -- list of specified already used node names
+    """
+    return ReportItem.error(
+        report_codes.NODE_NAMES_ALREADY_EXIST,
+        info={
+            "name_list": sorted(name_list),
+        }
+    )
+
+def node_names_duplication(name_list):
     """
     Trying to set one node name for more nodes, node names must be unique
 
     iterable name_list -- list of nonunique node names
     """
     return ReportItem.error(
-        report_codes.COROSYNC_NODE_NAME_DUPLICATION,
+        report_codes.NODE_NAMES_DUPLICATION,
         info={
             "name_list": sorted(name_list),
         }
@@ -1474,6 +1550,18 @@ def cib_load_error(reason):
         info={
             "reason": reason,
         }
+    )
+
+def cib_load_error_get_nodes_for_validation(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Unable to load CIB, unable to get remote and guest nodes for validation
+    """
+    return ReportItem(
+        report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
+        severity,
+        forceable=forceable
     )
 
 def cib_load_error_scope_missing(scope, reason):
@@ -2465,32 +2553,69 @@ def service_command_on_node_error(
     )
 
 
-def invalid_response_format(node):
+def invalid_response_format(node, severity=ReportItemSeverity.ERROR):
     """
     error message that response in invalid format has been received from
     specified node
 
     node -- node name
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.INVALID_RESPONSE_FORMAT,
+        severity,
         info={"node": node}
     )
 
-
-def sbd_no_device_for_node(node):
+def sbd_not_used_cannot_set_sbd_options(options, node):
     """
-    there is no device defined for node when enabling sbd with device
+    The cluster is not using SBD, cannot specify SBD options
+
+    iterable options -- list of specified not allowed SBD options
+    string node -- node name
+    """
+    return ReportItem.error(
+        report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
+        info={
+            "node": node,
+            "options": sorted(options)
+        }
+    )
+
+def sbd_with_devices_not_used_cannot_set_device(node):
+    """
+    The cluster is not using SBD with devices, cannot specify a device.
+
+    node -- node name
+    """
+    return ReportItem.error(
+        report_codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE,
+        info={
+            "node": node,
+        }
+    )
+
+def sbd_no_device_for_node(node, sbd_enabled_in_cluster=False):
+    """
+    No SBD device defined for a node when it should be
+
+    string node -- node name
+    bool sbd_enabled_in_cluster -- additional context for displaying the error
     """
     return ReportItem.error(
         report_codes.SBD_NO_DEVICE_FOR_NODE,
-        info={"node": node}
+        info={
+            "node": node,
+            "sbd_enabled_in_cluster": sbd_enabled_in_cluster,
+        }
     )
-
 
 def sbd_too_many_devices_for_node(node, device_list, max_devices):
     """
-    More than 3 devices defined for node
+    More than allowed number of SBD devices specified for a node
+
+    string node -- node name
+    list device_list -- list of SND devices specified for the node
+    int max_devices -- maximum number of SBD devices
     """
     return ReportItem.error(
         report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
@@ -2500,7 +2625,6 @@ def sbd_too_many_devices_for_node(node, device_list, max_devices):
             "max_devices": max_devices,
         }
     )
-
 
 def sbd_device_path_not_absolute(device, node=None):
     """
@@ -2701,7 +2825,7 @@ def file_does_not_exist(file_role, file_path=""):
 
 def file_io_error(
     file_role, file_path="", reason="", operation="work with",
-    severity=ReportItemSeverity.ERROR
+    severity=ReportItemSeverity.ERROR, forceable=None,
 ):
     return ReportItem(
         report_codes.FILE_IO_ERROR,
@@ -2712,6 +2836,7 @@ def file_io_error(
             "reason": reason,
             "operation": operation
         },
+        forceable=forceable,
     )
 
 def unable_to_determine_user_uid(user):
@@ -2796,25 +2921,27 @@ def nolive_skip_service_command_on_nodes(service, command, nodes):
         }
     )
 
-def quorum_cannot_disable_atb_due_to_sbd(
+def corosync_quorum_atb_cannot_be_disabled_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    Quorum option auto_tie_breaker cannot be disbled due to SBD.
+    Quorum option auto_tie_breaker cannot be disabled due to SBD.
     """
     return ReportItem(
-        report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+        report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
         severity,
         forceable=forceable
     )
 
 
-def sbd_requires_atb():
+def corosync_quorum_atb_will_be_enabled_due_to_sbd():
     """
-    Warning that ATB will be enabled in order to make SBD fencing effective.
+    Quorum option auto_tie_breaker will be enabled due to a user action in
+    order to make SBD fencing effective. The cluster has to be stopped to make
+    this change.
     """
     return ReportItem.warning(
-        report_codes.SBD_REQUIRES_ATB,
+        report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
     )
 
 
@@ -3207,7 +3334,6 @@ def using_known_host_address_for_host(host_name, address):
         }
     )
 
-
 def resource_in_bundle_not_accessible(
     bundle_id, inner_resource_id,
     severity=ReportItemSeverity.ERROR, forceable=report_codes.FORCE_OPTIONS,
@@ -3220,4 +3346,17 @@ def resource_in_bundle_not_accessible(
             inner_resource_id=inner_resource_id,
         ),
         forceable=forceable,
+    )
+
+def using_default_watchdog(watchdog, node):
+    """
+    No watchdog has been specified for the node, therefore pcs will use
+    a default watchdog.
+    """
+    return ReportItem.info(
+        report_codes.USING_DEFAULT_WATCHDOG,
+        info=dict(
+            watchdog=watchdog,
+            node=node,
+        )
     )

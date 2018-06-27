@@ -58,6 +58,18 @@ def corosync_conf_file(corosync_conf_content):
         "corosync.conf": corosync_conf_format(corosync_conf_content)
     }
 
+def pcs_settings_conf_format(content):
+    return {
+        "data": content,
+        "type": "pcs_settings_conf",
+        "rewrite_existing": True,
+    }
+
+def pcs_settings_conf_file(content):
+    return {
+        "pcs_settings.conf": pcs_settings_conf_format(content)
+    }
+
 def service_cmd_format(service, command):
     """
     Return a dict usable in the communication with a remote/run_action

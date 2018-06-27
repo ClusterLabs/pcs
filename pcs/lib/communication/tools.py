@@ -191,14 +191,6 @@ class OneByOneStrategyMixin(StrategyBase):
         except StopIteration:
             return []
 
-    def _on_success(self):
-        self.__successful = True
-
-    def on_complete(self):
-        if not self.__successful:
-            self._report(reports.unable_to_perform_operation_on_any_node())
-        return None
-
 
 class AllAtOnceStrategyMixin(StrategyBase):
     """
@@ -208,6 +200,18 @@ class AllAtOnceStrategyMixin(StrategyBase):
     #pylint: disable=abstract-method
     def get_initial_request_list(self):
         return self._prepare_initial_requests()
+
+
+class MarkSuccessfulMixin(object):
+    __successful = False
+
+    def _on_success(self):
+        self.__successful = True
+
+    def on_complete(self):
+        if not self.__successful:
+            self._report(reports.unable_to_perform_operation_on_any_node())
+        return None
 
 
 class AllSameDataMixin(object):

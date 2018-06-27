@@ -65,3 +65,26 @@ class BoothShortcuts(object):
                 },
             }),
         )
+
+    def save_files(
+        self, files_data, saved=(), existing=(), failed=(),
+        rewrite_existing=False, node_labels=None, communication_list=None,
+        name="http.booth.save_files"
+    ):
+        param_list = [("data_json", json.dumps(files_data))]
+        if rewrite_existing:
+            param_list.append(("rewrite_existing", "1"))
+
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/booth_save_files",
+            param_list=param_list,
+            output=json.dumps({
+                "saved": saved,
+                "existing": existing,
+                "failed": failed,
+            }),
+        )

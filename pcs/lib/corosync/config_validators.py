@@ -1,10 +1,16 @@
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
-import socket
 
 from pcs.common import report_codes
 from pcs.lib import reports, validate
 from pcs.lib.corosync import constants
+from pcs.lib.corosync.node import(
+    ADDR_IPV4,
+    ADDR_IPV6,
+    ADDR_FQDN,
+    ADDR_UNRESOLVABLE,
+    get_address_type
+)
 from pcs.lib.errors import ReportItemSeverity
 
 _QDEVICE_NET_REQUIRED_OPTIONS = (
@@ -18,6 +24,11 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "tie_breaker",
 )
 
+class _LinkAddrType(
+    namedtuple("_LinkAddrType", "link addr_type")
+):
+    pass
+
 
 def create(cluster_name, node_list, transport, force_unresolvable=False):
     """
@@ -26,6 +37,8 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     string cluster_name -- the name of the new cluster
     list node_list -- nodes of the new cluster; dict: name, addrs
     string transport -- corosync transport used in the new cluster
+    bool force_unresolvable -- if True, report unresolvable addresses as
+        warnings instead of errors
     """
     # cluster name and transport validation
     validators = [
@@ -41,33 +54,29 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     )
 
     # nodelist validation
+    get_addr_type = _addr_type_analyzer()
     all_names_usable = True # can names be used to identifying nodes?
     all_names_count = defaultdict(int)
     all_addrs_count = defaultdict(int)
-    all_addrs_type = {}
     addr_types_per_node = []
+    unresolvable_addresses = set()
     # First, validate each node on its own. Also extract some info which will
     # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
-        name_validators = [
-            validate.is_required("name", f"node {i}"),
-            validate.value_not_empty(
-                "name",
-                "a non-empty string",
-                option_name_for_report=f"node {i} name"
-            )
-        ]
         report_items.extend(
-            validate.run_collection_of_option_validators(node, name_validators)
+            validate.run_collection_of_option_validators(
+                node,
+                _get_node_name_validators(i)
+            )
             +
             validate.names_in(["addrs", "name"], node.keys(), "node")
         )
-        if "name" not in node or not node["name"]:
-            all_names_usable = False
-        else:
+        if "name" in node and node["name"]:
             # Count occurrences of each node name. Do not bother counting
             # missing or empty names. They must be fixed anyway.
             all_names_count[node["name"]] += 1
+        else:
+            all_names_usable = False
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
         addr_count = len(node.get("addrs") or [])
@@ -89,7 +98,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
                         min_addr_count,
                         max_addr_count,
                         node_name=node.get("name"),
-                        node_id=i
+                        node_index=i
                     )
                 )
         addr_types = []
@@ -97,15 +106,11 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         # the get returns None and len(None) raises an exception.
         for addr in (node.get("addrs") or []):
             all_addrs_count[addr] += 1
-            if addr not in all_addrs_type:
-                all_addrs_type[addr] = _get_address_type(addr)
-            addr_types.append(all_addrs_type[addr])
+            addr_types.append(get_addr_type(addr))
+            if get_addr_type(addr) == ADDR_UNRESOLVABLE:
+                unresolvable_addresses.add(addr)
         addr_types_per_node.append(addr_types)
     # Report all unresolvable addresses at once instead on each own.
-    unresolvable_addresses = set([
-        addr for addr, addr_type in all_addrs_type.items()
-        if addr_type == "unresolvable"
-    ])
     if unresolvable_addresses:
         severity = ReportItemSeverity.ERROR
         forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
@@ -130,14 +135,14 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     if non_unique_names:
         all_names_usable = False
         report_items.append(
-            reports.corosync_node_name_duplication(non_unique_names)
+            reports.node_names_duplication(non_unique_names)
         )
     non_unique_addrs = set([
         addr for addr, count in all_addrs_count.items() if count > 1
     ])
     if non_unique_addrs:
         report_items.append(
-            reports.corosync_node_address_duplication(non_unique_addrs)
+            reports.node_addresses_duplication(non_unique_addrs)
         )
     if all_names_usable:
         # Check for errors using node names in their reports. If node names are
@@ -162,7 +167,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
     for link, addr_types in enumerate(zip_longest(*addr_types_per_node)):
-        if "IPv6" in addr_types and "IPv4" in addr_types:
+        if ADDR_IPV4 in addr_types and ADDR_IPV6 in addr_types:
             links_ip_mismatch.append(link)
     if links_ip_mismatch:
         report_items.append(
@@ -171,16 +176,192 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
 
     return report_items
 
-def _get_address_type(address):
-    if validate.is_ipv4_address(address):
-        return "IPv4"
-    if validate.is_ipv6_address(address):
-        return "IPv6"
-    try:
-        socket.getaddrinfo(address, None)
-    except socket.gaierror:
-        return "unresolvable"
-    return "FQDN"
+def _get_node_name_validators(node_index):
+    return [
+        validate.is_required("name", f"node {node_index}"),
+        validate.value_not_empty(
+            "name",
+            "a non-empty string",
+            option_name_for_report=f"node {node_index} name"
+        )
+    ]
+
+def _addr_type_analyzer():
+    cache = dict()
+    def analyzer(addr):
+        if addr not in cache:
+            cache[addr] = get_address_type(addr, resolve=True)
+        return cache[addr]
+    return analyzer
+
+def add_nodes(
+    node_list, coro_existing_nodes, pcmk_existing_nodes,
+    force_unresolvable=False
+):
+    """
+    Validate adding nodes to a config with a nonempty nodelist
+
+    list node_list -- new nodes data; list of dict: name, addrs
+    list coro_existing_nodes -- existing corosync nodes; list of CorosyncNode
+    list pcmk_existing_nodes -- existing pacemaker nodes; list of PacemakerNode
+    bool force_unresolvable -- if True, report unresolvable addresses as
+        warnings instead of errors
+    """
+    # extract info from existing nodes
+    existing_names = set()
+    existing_addrs = set()
+    existing_addr_types_dict = dict()
+    for node in coro_existing_nodes:
+        existing_names.add(node.name)
+        existing_addrs.update(set(node.addrs_plain))
+        for addr in node.addrs:
+            # If two nodes have FQDN and one has IPv4, we want to keep the IPv4
+            if (
+                addr.type not in (ADDR_FQDN, ADDR_UNRESOLVABLE)
+                or
+                addr.link not in existing_addr_types_dict
+            ):
+                existing_addr_types_dict[addr.link] = addr.type
+    for node in pcmk_existing_nodes:
+        existing_names.add(node.name)
+        existing_addrs.add(node.addr)
+    existing_addr_types = sorted([
+        _LinkAddrType(link_number, addr_type)
+        for link_number, addr_type in existing_addr_types_dict.items()
+    ])
+    number_of_existing_links = len(existing_addr_types)
+
+    # validation
+    get_addr_type = _addr_type_analyzer()
+    report_items = []
+    new_names_count = defaultdict(int)
+    new_addrs_count = defaultdict(int)
+    new_addr_types_per_node = []
+    links_ip_mismatch_reported = set()
+    unresolvable_addresses = set()
+
+    # First, validate each node on its own. Also extract some info which will
+    # be needed when validating the nodelist and inter-node dependencies.
+    for i, node in enumerate(node_list, 1):
+        report_items.extend(
+            validate.run_collection_of_option_validators(
+                node,
+                _get_node_name_validators(i)
+            )
+            +
+            validate.names_in(["addrs", "name"], node.keys(), "node")
+        )
+        if "name" in node and node["name"]:
+            # Count occurrences of each node name. Do not bother counting
+            # missing or empty names. They must be fixed anyway.
+            new_names_count[node["name"]] += 1
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        addr_count = len(node.get("addrs") or [])
+        if addr_count != number_of_existing_links:
+            report_items.append(
+                reports.corosync_bad_node_addresses_count(
+                    addr_count,
+                    number_of_existing_links,
+                    number_of_existing_links,
+                    node_name=node.get("name"),
+                    node_index=i
+                )
+            )
+        addr_types = []
+        # Cannot use node.get("addrs", []) - if node["addrs"] == None then
+        # the get returns None and len(None) raises an exception.
+        for link_index, addr in enumerate(node.get("addrs") or []):
+            new_addrs_count[addr] += 1
+            addr_types.append(get_addr_type(addr))
+            if get_addr_type(addr) == ADDR_UNRESOLVABLE:
+                unresolvable_addresses.add(addr)
+            # Check matching IPv4 / IPv6 in existing links. FQDN matches with
+            # both IPv4 and IPv6 as it can resolve to both. Unresolvable is a
+            # special case of FQDN so we don't need to check it.
+            if (
+                link_index < number_of_existing_links
+                and
+                get_addr_type(addr) not in (ADDR_FQDN, ADDR_UNRESOLVABLE)
+                and
+                existing_addr_types[link_index].addr_type != ADDR_FQDN
+                and
+                get_addr_type(addr) != existing_addr_types[link_index].addr_type
+            ):
+                links_ip_mismatch_reported.add(
+                    existing_addr_types[link_index].link
+                )
+                report_items.append(
+                    reports.corosync_address_ip_version_wrong_for_link(
+                        addr,
+                        existing_addr_types[link_index].addr_type,
+                        existing_addr_types[link_index].link,
+                    )
+                )
+
+        new_addr_types_per_node.append(addr_types)
+    # Report all unresolvable addresses at once instead on each own.
+    if unresolvable_addresses:
+        severity = ReportItemSeverity.ERROR
+        forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
+        if force_unresolvable:
+            severity = ReportItemSeverity.WARNING
+            forceable = None
+        report_items.append(
+            reports.node_addresses_unresolvable(
+                unresolvable_addresses,
+                severity,
+                forceable
+            )
+        )
+
+    # Reporting single-node errors finished.
+    # Now report nodelist and inter-node errors.
+    if len(node_list) < 1:
+        report_items.append(reports.corosync_nodes_missing())
+    # Check nodes' names and address are unique
+    already_existing_names = existing_names.intersection(new_names_count.keys())
+    if already_existing_names:
+        report_items.append(
+            reports.node_names_already_exist(already_existing_names)
+        )
+    already_existing_addrs = existing_addrs.intersection(new_addrs_count.keys())
+    if already_existing_addrs:
+        report_items.append(
+            reports.node_addresses_already_exist(already_existing_addrs)
+        )
+    non_unique_names = set([
+        name for name, count in new_names_count.items() if count > 1
+    ])
+    if non_unique_names:
+        report_items.append(
+            reports.node_names_duplication(non_unique_names)
+        )
+    non_unique_addrs = set([
+        addr for addr, count in new_addrs_count.items() if count > 1
+    ])
+    if non_unique_addrs:
+        report_items.append(
+            reports.node_addresses_duplication(non_unique_addrs)
+        )
+    # Check mixing IPv4 and IPv6 in one link, node names are not relevant,
+    # skip links already reported due to new nodes have wrong IP version
+    existing_links = [x.link for x in existing_addr_types]
+    links_ip_mismatch = []
+    for link_index, addr_types in enumerate(
+            zip_longest(*new_addr_types_per_node)
+    ):
+        if (
+            ADDR_IPV4 in addr_types and ADDR_IPV6 in addr_types
+            and
+            existing_links[link_index] not in links_ip_mismatch_reported
+        ):
+            links_ip_mismatch.append(existing_links[link_index])
+    if links_ip_mismatch:
+        report_items.append(
+            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+        )
+    return report_items
 
 def create_link_list_udp(link_list):
     """
