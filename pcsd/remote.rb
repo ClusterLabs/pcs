@@ -56,7 +56,8 @@ def remote(params, request, auth_user)
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
       # TODO rename, previously there was "node_add" for adding a node to a
-      # cluster configs locally on one node
+      # cluster configs locally on one node. Also update capabilities as the
+      # url is referenced in there.
       :add_node_all => lambda { |params_, request_, auth_user_|
         remote_add_node(params_, request_, auth_user_, true)
       },

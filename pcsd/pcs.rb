@@ -557,7 +557,7 @@ def add_node(
   auth_user, new_nodename, auto_start=true, watchdog=nil, device_list=nil
 )
   # TODO update for the new node add
-  # TODO separate --start and --enable
+  # TODO separate --start and --enable, fix capability node.add.enable-and-start
   command = [PCS, "cluster", "node", "add", new_nodename]
   if watchdog and not watchdog.strip.empty?
     command << "--watchdog=#{watchdog.strip}"
