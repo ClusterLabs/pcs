@@ -1,5 +1,6 @@
 import logging
 import os.path
+from subprocess import DEVNULL
 from unittest import mock, TestCase
 
 from pcs.test.tools.assertions import (
@@ -67,7 +68,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -151,7 +152,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": None,}
+            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": DEVNULL,}
         )
         logger_calls = [
             mock.call(
@@ -320,7 +321,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -369,7 +370,7 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {}, "stdin": None,}
+            {"env": {}, "stdin": DEVNULL,}
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
