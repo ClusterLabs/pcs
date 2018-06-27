@@ -179,7 +179,7 @@ def cluster_cmd(argv):
             ),
             "remove-guest": cluster_command.node_remove_guest,
             "clear": cluster_command.node_clear,
-            "new-add": new_node_add,
+            "add": node_add,
         }
         if argv[0] in remote_node_command_map:
             try:
@@ -839,7 +839,7 @@ def cluster_node(argv):
     modifiers = utils.get_modifiers()
 
     if add_node == True:
-        node_add(lib_env, node0, node1, modifiers)
+        old_node_add(lib_env, node0, node1, modifiers)
     else:
         node_remove(lib_env, node0, modifiers)
 
@@ -880,7 +880,7 @@ def node_add_outside_cluster(lib, argv, modifiers):
         process_library_reports([node_communicator_exception_to_report_item(e)])
 
 # TODO: remove
-def node_add(lib_env, node0, node1, modifiers):
+def old_node_add(lib_env, node0, node1, modifiers):
     wait = False
     wait_timeout = None
     if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
@@ -1737,7 +1737,7 @@ def cluster_setup(lib, argv, modifiers):
         force_unresolvable=modifiers["force"]
     )
 
-def new_node_add(lib, argv, modifiers):
+def node_add(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
 
