@@ -149,10 +149,18 @@ class EnvLoader:
         return self.__has_true_in_environ(PCSD_DISABLE_GUI)
 
     def session_lifetime(self):
-        return self.environ.get(
+        session_lifetime = self.environ.get(
             PCSD_SESSION_LIFETIME,
             settings.gui_session_lifetime_seconds
         )
+        try:
+            return int(session_lifetime)
+        except ValueError:
+            self.errors.append(
+                f"Invalid PCSD_SESSION_LIFETIME value '{session_lifetime}'"
+                " (it must be an integer)"
+            )
+            return session_lifetime
 
     def pcsd_debug(self):
         return self.__has_true_in_environ(PCSD_DEBUG)

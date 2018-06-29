@@ -51,14 +51,11 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         if specific_env_values is None:
             specific_env_values = {}
 
+        # compare as dict because of clearer error report
         self.assertEqual(
-            env.prepare_env(environ or {}, self.logger),
-            env.Env(
-                **{
-                    **default_env_values,
-                    **specific_env_values,
-                }
-            )
+            dict(env.prepare_env(environ or {}, self.logger)._asdict()),
+            {**default_env_values, **specific_env_values}
+
         )
         self.assertEqual(self.logger.errors, errors or [])
         self.assertEqual(self.logger.warnings, warnings or [])
@@ -68,6 +65,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
 
     def test_many_valid_environment_changes(self):
         pcsd_dir = partial(join_path, env.PCSD_LOCAL_DIR)
+        session_lifetime = 10
         environ = {
             env.PCSD_PORT: "1234",
             env.PCSD_SSL_CIPHERS: "DEFAULT:!3DES:@STRENGTH",
@@ -76,7 +74,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.NOTIFY_SOCKET: "xyz",
             env.PCSD_DEBUG: "true",
             env.PCSD_DISABLE_GUI: "true",
-            env.PCSD_SESSION_LIFETIME: 10,
+            env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
             env.HTTPS_PROXY: "proxy1",
             env.NO_PROXY: "host",
@@ -92,7 +90,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.NOTIFY_SOCKET: environ[env.NOTIFY_SOCKET],
                 env.PCSD_DEBUG: True,
                 env.PCSD_DISABLE_GUI: True,
-                env.PCSD_SESSION_LIFETIME: environ[env.PCSD_SESSION_LIFETIME],
+                env.PCSD_SESSION_LIFETIME: session_lifetime,
                 env.GEM_HOME: pcsd_dir(settings.pcsd_gem_path),
                 env.PCSD_CMDLINE_ENTRY: pcsd_dir(
                     env.PCSD_CMDLINE_ENTRY_RB_SCRIPT
@@ -105,6 +103,18 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_DEV: True,
             },
         )
+
+    def test_error_on_noninteger_session_lifetime(self):
+        environ = {env.PCSD_SESSION_LIFETIME: "invalid"}
+        self.assert_environ_produces_modified_pcsd_env(
+            environ,
+            specific_env_values={**environ, "has_errors": True},
+            errors=[
+                "Invalid PCSD_SESSION_LIFETIME value 'invalid'"
+                " (it must be an integer)"
+            ]
+        )
+
 
     def test_report_invalid_ssl_ciphers(self):
         environ = {env.PCSD_SSL_CIPHERS: "invalid"}
