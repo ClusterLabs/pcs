@@ -20,13 +20,6 @@ class PCSAuth
   end
 
   def self.validUser(username, password)
-    $logger.info("Attempting login by '#{username}'")
-    if not Rpam.auth(username, password, :service => "pcsd")
-      $logger.info("Failed login by '#{username}' (bad username or password)")
-      return nil
-    end
-    return nil if not isUserAllowedToLogin(username)
-
     token = PCSAuth.uuid
     begin
       password_file = File.open(PCSD_USERS_PATH, File::RDWR|File::CREAT)

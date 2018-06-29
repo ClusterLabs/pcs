@@ -1,3 +1,4 @@
+import logging
 import re
 from urllib.parse import urlencode
 from unittest import mock
@@ -6,6 +7,10 @@ from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd, app_remote, http_server
 from pcs.daemon.test import fixtures_app
+from pcs.test.tools.misc import create_setup_patch_mixin
+
+# Don't write errors to test output.
+logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(fixtures_app.AppTest):
     def setUp(self):
@@ -37,6 +42,27 @@ class SetCerts(AppTest):
         # body is irelevant
         self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
         self.https_server_manage.reload_certs.assert_not_called()
+
+class Auth(
+    AppTest, create_setup_patch_mixin(app_remote), fixtures_app.UserAuthMixin
+):
+    def setUp(self):
+        self.setup_patch("authorize_user", self.authorize_user)
+        super().setUp()
+
+    def make_auth_request(self, valid=True):
+        self.user_auth_info = fixtures_app.UserAuthInfo(valid=valid)
+        return self.post("/remote/auth", body={
+            "username": fixtures_app.USER,
+            "password": fixtures_app.PASSWORD,
+        })
+
+    def test_refuse_unknown_user(self):
+        self.assertEqual(b"", self.make_auth_request(valid=False).body)
+
+    def test_wraps_ruby_on_valid_user(self):
+        self.assert_wrappers_response(self.make_auth_request())
+
 
 class SinatraRemote(AppTest):
     def test_take_result_from_ruby(self):
