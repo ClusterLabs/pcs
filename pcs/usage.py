@@ -954,8 +954,8 @@ Commands:
         in order to be able to work with nodes not visible from the local
         cluster partition.
 
-    sbd enable [--watchdog=<path>[@<node>]] ... [--device=<path>[@<node>]] ...
-               [<SBD_OPTION>=<value>] ...
+    sbd enable [watchdog=<path>[@<node>]]... [device=<path>[@<node>]]...
+               [<SBD_OPTION>=<value>]...
         Enable SBD in cluster. Default path for watchdog device is
         /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5),
         SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is
@@ -968,11 +968,11 @@ Commands:
         nodes, device /dev/sdb on node1, device /dev/sda on all other nodes and
         watchdog timeout will bet set to 10 seconds:
         pcs stonith sbd enable \\
-            --watchdog=/dev/watchdog2@node1 \\
-            --watchdog=/dev/watchdog1@node2 \\
-            --watchdog=/dev/watchdog0 \\
-            --device=/dev/sdb@node1 \\
-            --device=/dev/sda \\
+            watchdog=/dev/watchdog2@node1 \\
+            watchdog=/dev/watchdog1@node2 \\
+            watchdog=/dev/watchdog0 \\
+            device=/dev/sdb@node1 \\
+            device=/dev/sda \\
             SBD_WATCHDOG_TIMEOUT=10
 
     sbd disable
@@ -980,7 +980,7 @@ Commands:
 
         WARNING: Cluster has to be restarted in order to apply these changes.
 
-    sbd device setup --device=<path> [--device=<path>]...
+    sbd device setup device=<path> [device=<path>]...
                      [watchdog-timeout=<integer>] [allocate-timeout=<integer>]
                      [loop-timeout=<integer>] [msgwait-timeout=<integer>]
         Initialize SBD structures on device(s) with specified timeouts.

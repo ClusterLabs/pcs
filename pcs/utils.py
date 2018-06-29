@@ -2416,7 +2416,6 @@ def get_modifiers():
         "before": pcs_options.get("--before", None),
         "corosync_conf": pcs_options.get("--corosync_conf", None),
         "describe": "--nodesc" not in pcs_options,
-        "device": pcs_options.get("--device", []),
         "disabled": "--disabled" in pcs_options,
         "enable": "--enable" in pcs_options,
         "force": "--force" in pcs_options,
@@ -2428,7 +2427,6 @@ def get_modifiers():
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "wait": pcs_options.get("--wait", False),
-        "watchdog": pcs_options.get("--watchdog", []),
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

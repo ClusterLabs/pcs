@@ -61,6 +61,9 @@
 - Commands related to resource failures have been overhauled to support changes
   in pacemaker. Failures are now tracked per resource operations on top of
   resources and nodes. ([rhbz#1427273], [rhbz#1588667])
+- `--watchdog` and `--device` options of `pcs stonith sbd enable` and `pcs
+  stonith sbd device setup` commands have been replaced with `watchdog` and
+  `device` options respectively
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure

@@ -485,18 +485,24 @@ def sbd_device_cmd(lib, argv, modifiers):
 
 
 def sbd_enable(lib, argv, modifiers):
-    sbd_cfg = parse_args.prepare_options(argv)
+    options = parse_args.prepare_options(
+        argv,
+        allowed_repeatable_options=("device", "watchdog")
+    )
     default_watchdog, watchdog_dict = _sbd_parse_watchdogs(
-        modifiers["watchdog"]
+        options.get("watchdog", [])
     )
     default_device_list, node_device_dict = _sbd_parse_node_specific_options(
-        modifiers["device"]
+        options.get("device", [])
     )
 
     lib.sbd.enable_sbd(
         default_watchdog,
         watchdog_dict,
-        sbd_cfg,
+        {
+            name: value for name, value in options.items()
+            if name not in ("device", "watchdog")
+        },
         default_device_list=(
             default_device_list if default_device_list else None
         ),
@@ -533,14 +539,14 @@ def _sbd_parse_watchdogs(watchdog_list):
         raise CmdLineInputError("Multiple watchdog definitions.")
 
     watchdog_dict = {}
-    for node, watchdog_list in node_specific_watchdog_dict.items():
-        if len(watchdog_list) > 1:
+    for node, node_watchdog_list in node_specific_watchdog_dict.items():
+        if len(node_watchdog_list) > 1:
             raise CmdLineInputError(
                 "Multiple watchdog definitions for node '{node}'".format(
                     node=node
                 )
             )
-        watchdog_dict[node] = watchdog_list[0]
+        watchdog_dict[node] = node_watchdog_list[0]
 
     return default_watchdog, watchdog_dict
 
@@ -631,10 +637,13 @@ def local_sbd_config(lib, argv, modifiers):
 
 
 def sbd_setup_block_device(lib, argv, modifiers):
-    device_list = modifiers["device"]
+    options = parse_args.prepare_options(
+        argv,
+        allowed_repeatable_options=("device",)
+    )
+    device_list = options.get("device", [])
     if not device_list:
         raise CmdLineInputError("No device defined")
-    options = parse_args.prepare_options(argv)
 
     if not modifiers["force"]:
         answer = utils.get_terminal_input(
@@ -646,7 +655,14 @@ def sbd_setup_block_device(lib, argv, modifiers):
         if answer.lower() not in ["y", "yes"]:
             print("Canceled")
             return
-    lib.sbd.initialize_block_devices(device_list, options)
+
+    lib.sbd.initialize_block_devices(
+        device_list,
+        {
+            name: value for name, value in options.items()
+            if name != "device"
+        }
+    )
 
 
 def sbd_message(lib, argv, modifiers):

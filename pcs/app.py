@@ -83,15 +83,11 @@ def main(argv=None):
 
     for o, a in pcs_options:
         if not o in utils.pcs_options:
-            if o in ["--watchdog", "--device"]:
-                a = [a]
             utils.pcs_options[o] = a
         else:
-            # If any options are a list then they've been entered twice which isn't valid
-            if o not in ["--watchdog", "--device"]:
-                utils.err("%s can only be used once" % o)
-            else:
-                utils.pcs_options[o].append(a)
+            # If any options are a list then they've been entered twice which
+            # isn't valid
+            utils.err("%s can only be used once" % o)
 
         if o == "-h" or o == "--help":
             if len(argv) == 0:

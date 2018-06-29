@@ -2424,7 +2424,7 @@ def remote_enable_sbd(params, request, auth_user)
 
   params[:watchdog].each do |node, watchdog|
     unless watchdog.strip.empty?
-      arg_list << "--watchdog=#{watchdog.strip}@#{node}"
+      arg_list << "watchdog=#{watchdog.strip}@#{node}"
     end
   end
 
