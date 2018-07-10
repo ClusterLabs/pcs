@@ -115,7 +115,7 @@ def resource_for_constraint_is_multiinstance(
     parent_type string "clone" or "master"
     parent_id clone or master resource id
     severity report item severity
-    forceable is this report item forceable? by what cathegory?
+    forceable is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
@@ -137,7 +137,7 @@ def duplicate_constraints_exist(
     constraint_type string "rsc_colocation", "rsc_order", "rsc_ticket"
     constraint_info_list list of structured constraint data according to type
     severity report item severity
-    forceable is this report item forceable? by what cathegory?
+    forceable is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.DUPLICATE_CONSTRAINTS_EXIST,
@@ -166,7 +166,7 @@ def required_option_is_missing(
     list name is/are required but was not entered
     option_type describes the option
     severity report item severity
-    forceable is this report item forceable? by what cathegory?
+    forceable is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.REQUIRED_OPTION_IS_MISSING,
@@ -230,7 +230,7 @@ def invalid_options(
     string option_type -- describes the option
     list allowed_option_patterns -- allowed user defind options patterns
     string severity -- report item severity
-    mixed forceable -- is this report item forceable? by what cathegory?
+    mixed forceable -- is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.INVALID_OPTIONS,
@@ -261,7 +261,7 @@ def invalid_userdefined_options(
     string allowed_description -- describes what option names should look like
     string option_type -- describes the option
     string severity -- report item severity
-    mixed forceable -- is this report item forceable? by what cathegory?
+    mixed forceable -- is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.INVALID_USERDEFINED_OPTIONS,
@@ -298,7 +298,7 @@ def invalid_option_value(
     option_value specified value which is not valid
     allowed_options list of allowed values or string description
     severity report item severity
-    forceable is this report item forceable? by what cathegory?
+    forceable is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.INVALID_OPTION_VALUE,
