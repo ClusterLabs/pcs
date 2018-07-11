@@ -33,7 +33,10 @@ from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.corosync import qdevice_net
+from pcs.lib.corosync import (
+    live as corosync_live,
+    qdevice_net,
+)
 from pcs.cli.common.console_report import warn, error
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
@@ -367,13 +370,15 @@ def stop_cluster_nodes(nodes):
             if retval != 0:
                 error_list.append(node + ": " + data)
                 continue
-            quorum_info = utils.parse_quorumtool_output(data)
-            if quorum_info:
-                if not quorum_info["quorate"]:
+            try:
+                quorum_status = corosync_live.QuorumStatus.from_string(data)
+                if not quorum_status.is_quorate:
+                    # Get quorum status from a quorate node, non-quorate nodes
+                    # may provide inaccurate info. If no node is quorate, there
+                    # is no quorum to be lost and therefore no error to be
+                    # reported.
                     continue
-                if utils.is_node_stop_cause_quorum_loss(
-                    quorum_info, local=False, node_list=nodes
-                ):
+                if quorum_status.stopping_nodes_cause_quorum_loss(nodes):
                     utils.err(
                         "Stopping the node(s) will cause a loss of the quorum"
                         + ", use --force to override"
@@ -382,9 +387,10 @@ def stop_cluster_nodes(nodes):
                     # We have the info, no need to print errors
                     error_list = []
                     break
-            if not utils.is_node_offline_by_quorumtool_output(data):
-                error_list.append("Unable to get quorum status")
-            # else the node seems to be stopped already
+            except corosync_live.QuorumStatusException:
+                if not utils.is_node_offline_by_quorumtool_output(data):
+                    error_list.append(node + ": Unable to get quorum status")
+                # else the node seems to be stopped already
         if error_list:
             utils.err(
                 "Unable to determine whether stopping the nodes will cause "
@@ -493,19 +499,22 @@ def stop_cluster(argv):
         output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
         # retval is 0 on success if node is not in partition with quorum
         # retval is 1 on error OR on success if node has quorum
-        quorum_info = utils.parse_quorumtool_output(output)
-        if quorum_info:
-            if utils.is_node_stop_cause_quorum_loss(quorum_info, local=True):
+        try:
+            if (
+                corosync_live.QuorumStatus.from_string(output)
+                    .stopping_local_node_cause_quorum_loss()
+            ):
                 utils.err(
                     "Stopping the node will cause a loss of the quorum"
                     + ", use --force to override"
                 )
-        elif not utils.is_node_offline_by_quorumtool_output(output):
-            utils.err(
-                "Unable to determine whether stopping the node will cause "
-                + "a loss of the quorum, use --force to override"
-            )
-        # else the node seems to be stopped already, proceed to be sure
+        except corosync_live.QuorumStatusException:
+            if not utils.is_node_offline_by_quorumtool_output(output):
+                utils.err(
+                    "Unable to determine whether stopping the node will cause "
+                    + "a loss of the quorum, use --force to override"
+                )
+            # else the node seems to be stopped already, proceed to be sure
 
     stop_all = (
         "--pacemaker" not in utils.pcs_options

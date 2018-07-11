@@ -91,7 +91,6 @@ class QuorumStatus():
     """
     Parse corosync quourm status and provide access to parsed info
     """
-    # TODO: replace old functions in utils
     def __init__(self, data):
         self._data = data
 
