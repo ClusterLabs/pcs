@@ -3360,3 +3360,51 @@ def using_default_watchdog(watchdog, node):
             node=node,
         )
     )
+
+def cannot_remove_all_cluster_nodes():
+    return ReportItem.error(
+        report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES,
+    )
+
+def unable_to_connect_to_any_remaining_node():
+    return ReportItem.error(
+        report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE,
+    )
+
+def nodes_to_remove_unreachable(node_list):
+    return ReportItem.warning(
+        report_codes.NODES_TO_REMOVE_UNREACHABLE,
+        info=dict(
+            node_list=node_list,
+        )
+    )
+
+def node_used_as_tie_breaker(node, node_id):
+    return ReportItem.error(
+        report_codes.NODE_USED_AS_TIE_BREAKER,
+        info=dict(
+            node=node,
+            node_id=node_id,
+        )
+    )
+
+def corosync_quorum_will_be_lost(
+    severity=ReportItemSeverity.ERROR, forceable=None,
+):
+    return ReportItem(
+        report_codes.COROSYNC_QUORUM_WILL_BE_LOST,
+        severity,
+        forceable=forceable,
+    )
+
+def corosync_quorum_loss_unable_to_check(
+    reason, severity=ReportItemSeverity.ERROR, forceable=None,
+):
+    return ReportItem(
+        report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
+        severity,
+        info=dict(
+            reason=reason,
+        ),
+        forceable=forceable,
+    )

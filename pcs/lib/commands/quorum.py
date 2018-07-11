@@ -101,7 +101,10 @@ def status_text(lib_env):
     Get quorum runtime status in plain text
     """
     __ensure_not_cman(lib_env)
-    return corosync_live.get_quorum_status_text(lib_env.cmd_runner())
+    try:
+        return corosync_live.get_quorum_status_text(lib_env.cmd_runner())
+    except corosync_live.QuorumStatusReadException as e:
+        raise LibraryError(reports.corosync_quorum_get_status_error(e.reason))
 
 def status_device_text(lib_env, verbose=False):
     """

@@ -33,6 +33,7 @@ from pcs.lib.communication.nodes import (
     GetHostInfo,
     GetOnlineTargets,
     RemoveFilesWithoutForces,
+    RemoveNodesFromCib,
     SendPcsdSslCertAndKey,
     StartCluster,
     UpdateKnownHosts,
@@ -51,6 +52,7 @@ from pcs.lib.corosync import (
     config_facade,
     config_validators,
     constants as corosync_constants,
+    live as corosync_live,
     qdevice_net,
 )
 from pcs.lib.env_tools import get_existing_nodes_names
@@ -58,6 +60,7 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
 )
+from pcs.lib.external import is_service_running
 from pcs.lib.pacemaker.live import (
     get_cib,
     get_cib_xml,
@@ -1017,3 +1020,169 @@ def _get_validated_wait_timeout(report_processor, wait, start):
     except LibraryError as e:
         report_processor.report_list(e.args)
     return None
+
+
+def remove_nodes(env, node_list, force=False, skip_offline=False):
+    # TODO: doctext
+    # consider rename node_list to make it clear it's a list of node names to remove
+    _ensure_live_env(env) # raises if env is not live
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    target_factory = env.get_node_target_factory()
+    corosync_conf = env.get_corosync_conf()
+    cluster_nodes_names = corosync_conf.get_nodes_names()
+
+    # validations
+
+    report_processor.report_list(config_validators.remove_nodes(
+        node_list,
+        corosync_conf.get_nodes(),
+        corosync_conf.get_quorum_device_settings(),
+    ))
+
+    target_report_list, cluster_nodes_target_list = (
+        target_factory.get_target_list_with_reports(
+            cluster_nodes_names,
+            skip_non_existing=skip_offline,
+        )
+    )
+    report_processor.report_list(target_report_list)
+    com_cmd = GetOnlineTargets(
+        report_processor, ignore_offline_targets=skip_offline,
+    )
+    com_cmd.set_targets(cluster_nodes_target_list)
+    online_target_list = run_com(env.get_node_communicator(), com_cmd)
+    offline_target_list = [
+        target for target in cluster_nodes_target_list
+        if target not in online_target_list
+    ]
+    staying_online_target_list = [
+        target for target in online_target_list if target.label not in node_list
+    ]
+    if offline_target_list:
+        report_processor.report(
+            reports.get_problem_creator(
+                report_codes.SKIP_OFFLINE_NODES, skip_offline
+            )(
+                reports.cluster_nodes_unreachable,
+                [target.label for target in offline_target_list]
+            )
+        )
+    if len(staying_online_target_list) == 0:
+        report_processor.report(reports.all_cluster_nodes_offline())
+
+    if skip_offline:
+        staying_offline_nodes = [
+            target.label for target in offline_target_list
+            if target.label not in node_list
+        ]
+        if staying_offline_nodes:
+            report_processor.report(
+                # TODO fix report
+                reports.nodes_to_remove_unreachable(staying_offline_nodes)
+            )
+
+        leaving_offline_nodes = [
+            target.label for target in offline_target_list
+            if target.label in node_list
+        ]
+        if leaving_offline_nodes:
+            report_processor.report(
+                reports.nodes_to_remove_unreachable(leaving_offline_nodes)
+            )
+
+    atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
+        env.cmd_runner(), corosync_conf, -len(node_list)
+    )
+    if atb_has_to_be_enabled:
+        report_processor.report(
+            reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+        )
+        com_cmd = CheckCorosyncOffline(
+            report_processor, allow_skip_offline=False,
+        )
+        com_cmd.set_targets(staying_online_target_list)
+        run_com(env.get_node_communicator(), com_cmd)
+
+    # quorum check - local
+    # example: 5-node cluster, 3 online nodes, removing one online node,
+    # results in 4-node cluster with 2 online nodes => quorum lost
+    forceable_report_creator = reports.get_problem_creator(
+        # TODO fix force code
+        report_codes.FORCE_REMOVE_MULTIPLE_NODES, force
+    )
+    try:
+        if corosync_live.QuorumStatus(
+            corosync_live.get_quorum_status_text(env.cmd_runner())
+        ).stopping_nodes_cause_quorum_loss(node_list):
+            report_processor.report(
+                forceable_report_creator(reports.corosync_quorum_will_be_lost)
+            )
+    except corosync_live.QuorumStatusException as e:
+        report_processor.report(
+            forceable_report_creator(
+                reports.corosync_quorum_loss_unable_to_check,
+                reason=e.reason,
+            )
+        )
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    com_cmd = cluster.DestroyWarnOnFailure(report_processor)
+    com_cmd.set_targets([
+        target for target in online_target_list if target.label in node_list
+    ])
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    corosync_conf.remove_nodes(node_list)
+    if atb_has_to_be_enabled:
+        corosync_conf.set_quorum_options(dict(auto_tie_breaker="1"))
+
+    com_cmd = DistributeCorosyncConf(
+        env.report_processor,
+        corosync_conf.config.export(),
+        allow_skip_offline=False,
+    )
+    com_cmd.set_targets(staying_online_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    com_cmd = ReloadCorosyncConf(env.report_processor)
+    com_cmd.set_targets(staying_online_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # try to remove nodes from pcmk using crm_node -R <node> --force and if not
+    # successful remove it directly from CIB file on all nodes in parallel
+    com_cmd = RemoveNodesFromCib(env.report_processor, node_list)
+    com_cmd.set_targets(staying_online_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+
+def remove_nodes_from_cib(env, node_list):
+    # TODO: doctext
+    # TODO: more advanced error handling
+    if not env.is_cib_live:
+        raise LibraryError(reports.live_environment_required(["CIB"]))
+
+    if is_service_running(env.cmd_runner(), "pacemaker"):
+        for node in node_list:
+            # this may raise a LibraryError
+            # NOTE: crm_node cannot remove multiple nodes at once
+            remove_node(env.cmd_runner(), node)
+        return
+
+    # TODO: We need to remove nodes from the CIB file. We don't want to do it
+    # using environment as this is a special case in which we have to edit CIB
+    # file directly.
+    for node in node_list:
+        dummy_stdout, dummy_stderr, retval = env.cmd_runner().run(
+            [
+                settings.cibadmin,
+                "--delete-all",
+                "--force",
+                f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",
+            ],
+            env_extend={"CIB_file": os.path.join(settings.cib_dir, "cib.xml")}
+        )
+        if retval != 0:
+            raise LibraryError()

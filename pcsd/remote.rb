@@ -93,6 +93,7 @@ def remote(params, request, auth_user)
       :manage_services => method(:manage_services),
       :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
+      :remove_nodes_from_cib => method(:remove_nodes_from_cib),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -3104,4 +3105,29 @@ def reload_corosync_conf(params, request, auth_user)
   end
 
   return JSON.generate(result)
+end
+
+def remove_nodes_from_cib(params, request, auth_user)
+  begin
+    check_permissions(auth_user, Permissions::WRITE)
+    data = check_request_data_for_json(params, auth_user)
+    PcsdExchangeFormat::validate_item_map_is_Hash("data_json", data)
+    PcsdExchangeFormat::validate_item_map_is_Array("node_list", data[:node_list])
+
+    stdout, stderr, retval = run_cmd(
+      auth_user, PCS, "cluster", "remove_nodes_from_cib", *data[:node_list]
+    )
+    if retval == 0
+      result = PcsdExchangeFormat::result(:success)
+    else
+      result = PcsdExchangeFormat::result(
+        :failed, (stdout + stderr).join("\n").strip()
+      )
+    end
+    return JSON.generate(result)
+  rescue PcsdRequestException => e
+    return e.code, e.message
+  rescue PcsdExchangeFormat::Error => e
+    return 400, "Invalid input data format: #{e.message}"
+  end
 end

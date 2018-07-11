@@ -154,7 +154,7 @@ def cluster_cmd(argv):
             usage.cluster(["node"])
             sys.exit(1)
 
-        remote_node_command_map = {
+        node_command_map = {
             "add-remote": cluster_command.node_add_remote,
             "add-guest": cluster_command.node_add_guest,
             "remove-remote": cluster_command.create_node_remove_remote(
@@ -163,10 +163,11 @@ def cluster_cmd(argv):
             "remove-guest": cluster_command.node_remove_guest,
             "clear": cluster_command.node_clear,
             "add": node_add,
+            "remove_new": node_remove_new,
         }
-        if argv[0] in remote_node_command_map:
+        if argv[0] in node_command_map:
             try:
-                remote_node_command_map[argv[0]](
+                node_command_map[argv[0]](
                     utils.get_library_wrapper(),
                     argv[1:],
                     utils.get_modifiers()
@@ -202,6 +203,17 @@ def cluster_cmd(argv):
         else:
             usage.cluster()
             sys.exit(1)
+    elif (sub_cmd == "remove_nodes_from_cib"):
+        try:
+            remove_nodes_from_cib(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modifiers(),
+            )
+        except LibraryError as e:
+            process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     else:
         usage.cluster()
         sys.exit(1)
@@ -818,6 +830,7 @@ def cluster_node(argv):
     node_remove(lib_env, node0, modifiers)
 
 def node_add_outside_cluster(lib, argv, modifiers):
+    #pylint: disable=unreachable
     raise CmdLineInputError("not implemented") # TODO
     if len(argv) != 2:
         raise CmdLineInputError(
@@ -919,6 +932,15 @@ def node_remove(lib_env, node0, modifiers):
     if utils.is_cman_with_udpu_transport():
         print("Warning: Using udpu transport on a CMAN cluster, "
             + "cluster restart is required to apply node removal")
+
+def node_remove_new(lib, argv, modifiers):
+    if not argv:
+        raise CmdLineInputError()
+    lib.cluster.remove_nodes(
+        argv,
+        force=modifiers["force"],
+        skip_offline=modifiers["skip_offline_nodes"],
+    )
 
 def cluster_localnode(argv):
     if len(argv) != 2:
@@ -1508,3 +1530,8 @@ def node_add(lib, argv, modifiers):
         force_unresolvable=modifiers["force"],
         skip_offline_nodes=modifiers["skip_offline_nodes"],
     )
+
+def remove_nodes_from_cib(lib, argv, modifiers):
+    if not argv:
+        raise CmdLineInputError("No nodes specified")
+    lib.cluster.remove_nodes_from_cib(argv)

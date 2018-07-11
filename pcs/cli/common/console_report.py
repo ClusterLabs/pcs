@@ -1730,4 +1730,40 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "watchdog '{watchdog}'"
         ).format(**info)
     ,
+    codes.CANNOT_REMOVE_ALL_CLUSTER_NODES:
+        (
+            "No node would be left in the cluster, if you intend to destroy "
+            "the whole cluster, use 'pcs cluster destroy --all' instead"
+        )
+    ,
+    codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE:
+        "Unable to connect to any remaining cluster node"
+    ,
+    codes.NODES_TO_REMOVE_UNREACHABLE: lambda info:
+        # TODO TESTS
+        (
+            "Removed nodes {_nodes} are unreachable, therefore it is not "
+            "possible to deconfigure them. Run 'pcs cluster destroy' on them "
+            "when available."
+        ).format(
+            _nodes=format_list(info["node_list"]),
+        )
+    ,
+    codes.NODE_USED_AS_TIE_BREAKER: lambda info:
+        # TODO TESTS
+        # TODO: add hint how to fix it
+        (
+            "Node '{node}' (nodeid: {node_id}) is used as a tie breaker for "
+            "a qdevice"
+        ).format(**info)
+    ,
+    codes.COROSYNC_QUORUM_WILL_BE_LOST:
+        "This action will cause a loss of the quorum"
+    ,
+    codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK:
+        (
+            "Unable to determine whether this action will cause a loss of the "
+            "quorum"
+        )
+    ,
 }

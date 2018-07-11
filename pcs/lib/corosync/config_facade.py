@@ -203,6 +203,16 @@ class ConfigFacade(object):
             )
         self.__update_two_node()
 
+    def remove_nodes(self, node_name_list):
+        # TODO: doctext
+        for nodelist_section in self.config.get_sections("nodelist"):
+            for node_section in nodelist_section.get_sections("node"):
+                node_data = self._get_node_data(node_section)
+                if node_data.get("name") in node_name_list:
+                    nodelist_section.del_section(node_section)
+        self.__remove_empty_sections(self.config)
+        self.__update_two_node()
+
     def create_link_list(self, link_list):
         """
         Add a link list to a config without one

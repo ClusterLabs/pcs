@@ -371,6 +371,21 @@ class UpdateKnownHosts(
         )
 
 
+class RemoveNodesFromCib(
+    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
+    AllAtOnceStrategyMixin, RunRemotelyBase,
+):
+    def __init__(self, report_processor, nodes_to_remove):
+        super().__init__(report_processor)
+        self._nodes_to_remove = nodes_to_remove
+
+    def _get_request_data(self):
+        return RequestData(
+            "remote/remove_nodes_from_cib",
+            [("data_json", json.dumps(dict(node_list=self._nodes_to_remove)))],
+        )
+
+
 class SendPcsdSslCertAndKey(
     SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
     RunRemotelyBase
