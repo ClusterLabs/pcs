@@ -51,8 +51,8 @@ def get_quorum_status_text(runner):
         os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
         "-p"
     ])
-    # retval is 0 on success if node is not in partition with quorum
-    # retval is 1 on error OR on success if node has quorum
+    # retval is 0 on success if the node is not in a partition with quorum
+    # retval is 1 on error OR on success if the node has quorum
     if retval not in [0, 1] or stderr.strip():
         raise QuorumStatusReadException(stderr)
     return stdout
@@ -87,15 +87,21 @@ class QuorumStatusParsingException(QuorumStatusException):
     pass
 
 
-class QuorumStatus(object):
-    # TODO: doctext and replace utils.parse_quorumtool_output
-    # TODO: deprecate or replace old functions in utils
-    # TODO: tests
+class QuorumStatus():
+    """
+    Parse corosync quourm status and provide access to parsed info
+    """
+    # TODO: replace old functions in utils
     def __init__(self, data):
         self._data = data
 
     @classmethod
     def from_string(cls, quorum_status):
+        """
+        Create an instance based on corosync quorum status plaintext data
+
+        string quorum_status -- corosync quorum status plaintext
+        """
         parsed = {}
         in_node_list = False
         try:
@@ -138,50 +144,95 @@ class QuorumStatus(object):
                         if match:
                             parsed["quorum"] = int(match.group(1))
                         else:
-                            raise QuorumStatusParsingException()
+                            raise QuorumStatusParsingException(
+                                "Unable to read number of votes needed for "
+                                "quorum"
+                            )
         except (ValueError, IndexError):
             raise QuorumStatusParsingException()
-        for required in ("quorum", "quorate", "node_list"):
-            if required not in parsed:
-                raise QuorumStatusParsingException(
-                    f"Required section '{required}' is missing"
+        missing_sections = [
+            required
+            for required in ("quorum", "quorate", "node_list")
+            if required not in parsed
+        ]
+        if missing_sections:
+            raise QuorumStatusParsingException(
+                "Missing required section(s): '{}'".format(
+                    "', '".join(sorted(missing_sections))
                 )
+            )
         return cls(parsed)
 
     @property
     def is_quorate(self):
+        """
+        Does the cluster have quorum?
+        """
         return bool(self._data["quorate"])
 
     @property
     def votes_needed_for_quorum(self):
+        """
+        How many votes are needed for the cluster to have quorum?
+        """
         return self._data["quorum"]
 
     @property
     def qdevice_votes(self):
+        """
+        How many votes are provided by qdevice(s)?
+        """
         qdevice_votes = 0
         for qdevice_info in self._data.get("qdevice_list", []):
             qdevice_votes += qdevice_info["votes"]
         return qdevice_votes
 
-    def get_votes_excluding_nodes(self, node_list):
-        # TODO doctext + node_list is actually node_name_list
+    def _get_votes_excluding_nodes(self, node_names):
+        """
+        How many votes do remain if some nodes are not counted in?
+
+        iterable node_names -- list of names of nodes not to count in
+        """
         votes = 0
         for node_info in self._data["node_list"]:
-            if not (node_list and node_info["name"] in node_list):
+            if not (node_names and node_info["name"] in node_names):
                 votes += node_info["votes"]
         votes += self.qdevice_votes
         return votes
 
-    def stopping_nodes_cause_quorum_loss(self, node_list):
-        # TODO doctext + node_list is actually node_name_list
+    def _get_votes_excluding_local_node(self):
+        """
+        How many votes do remain if the local node is not counted in?
+        """
+        votes = 0
+        for node_info in self._data["node_list"]:
+            if not node_info["local"]:
+                votes += node_info["votes"]
+        votes += self.qdevice_votes
+        return votes
+
+    def stopping_nodes_cause_quorum_loss(self, node_names):
+        """
+        Will quorum be lost if specified nodes are stopped?
+
+        iterable node_names -- list of names of nodes to be stopped
+        """
         if not self.is_quorate:
             return False
         return (
-            self.get_votes_excluding_nodes(node_list)
+            self._get_votes_excluding_nodes(node_names)
             <
             self.votes_needed_for_quorum
         )
 
-    #def stopping_local_node_cause_quorum_loss(self):
-    #    pass
-    # will be implemented later when needed for the 'cluster stop' command
+    def stopping_local_node_cause_quorum_loss(self):
+        """
+        Will quorum be lost if the local node is stopped?
+        """
+        if not self.is_quorate:
+            return False
+        return (
+            self._get_votes_excluding_local_node()
+            <
+            self.votes_needed_for_quorum
+        )
