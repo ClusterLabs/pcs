@@ -62,7 +62,6 @@ def remote(params, request, auth_user)
         remote_add_node(params_, request_, auth_user_, true)
       },
       :remove_nodes => method(:remote_remove_nodes),
-      :remove_node => method(:remote_remove_node),
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -811,6 +810,7 @@ def remote_add_node(params, request, auth_user)
 end
 
 def remote_remove_nodes(params, request, auth_user)
+  # TODO update for the new node remove
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
@@ -860,23 +860,6 @@ def remote_remove_nodes(params, request, auth_user)
   else
     return [200, out]
   end
-end
-
-def remote_remove_node(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  if params[:remove_nodename] != nil
-    retval, output = remove_node(auth_user, params[:remove_nodename])
-  else
-    return 400, "No nodename specified"
-  end
-
-  if retval == 0
-    return JSON.generate([retval, get_corosync_conf()])
-  end
-
-  return JSON.generate([retval,output])
 end
 
 def setup_cluster(params, request, auth_user)

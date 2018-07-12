@@ -326,18 +326,6 @@ def resumeConfigSyncing(node):
     data = urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
-def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
-    data = urlencode({'remove_nodename':node_to_remove, 'pacemaker_remove':pacemaker_remove})
-    retval, output = sendHTTPRequest(node, 'remote/remove_node', data, False, False)
-    if retval == 0:
-        try:
-            myout = json.loads(output)
-        except ValueError:
-            return 1,output
-        return 0, myout
-    return 1, output
-
-
 # Send an HTTP request to a node return a tuple with status, data
 # If status is 0 then data contains server response
 # Otherwise if non-zero then data contains error message
@@ -496,23 +484,6 @@ def get_corosync_conf_facade(conf_path=None, conf_text=None):
     except corosync_conf_parser.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
 
-# Deprecated, not needed, TODO: remove
-def getNodesFromCorosyncConf(conf_text=None):
-    if is_rhel6():
-        dom = getCorosyncConfParsed(text=conf_text)
-        return [
-            node_el.getAttribute("name")
-            for node_el in dom.getElementsByTagName("clusternode")
-        ]
-
-    conf_root = getCorosyncConfParsed(text=conf_text)
-    nodes = []
-    for nodelist in conf_root.get_sections("nodelist"):
-        for node in nodelist.get_sections("node"):
-            for attr in node.get_attributes("ring0_addr"):
-                nodes.append(attr[1])
-    return nodes
-
 def getNodeAttributesFromPacemaker():
     try:
         return [
@@ -536,28 +507,6 @@ def getCorosyncConf(conf=None):
     except IOError as e:
         err("Unable to read %s: %s" % (conf, e.strerror))
     return out
-
-def getCorosyncConfParsed(conf=None, text=None):
-    conf_text = getCorosyncConf(conf) if text is None else text
-    try:
-        return corosync_conf_parser.parse_string(conf_text)
-    except corosync_conf_parser.CorosyncConfParserException as e:
-        err("Unable to parse corosync.conf: %s" % e)
-
-def setCorosyncConf(corosync_config, conf_file=None):
-    if not conf_file:
-        if is_rhel6():
-            conf_file = settings.cluster_conf_file
-        else:
-            conf_file = settings.corosync_conf_file
-    try:
-        f = open(conf_file,'w')
-        f.write(corosync_config)
-        f.close()
-    except EnvironmentError as e:
-        err("Unable to write {0}, try running as root.\n{1}".format(
-            conf_file, e.strerror
-        ))
 
 def reloadCorosync():
     if is_rhel6():
@@ -604,74 +553,6 @@ def getCorosyncActiveNodes():
 
     return nodes_active
 
-
-def _enable_auto_tie_breaker_for_sbd(corosync_conf):
-    """
-    Enable auto tie breaker in specified corosync conf if it is needed by SBD.
-
-    corosync_conf -- parsed corosync conf
-    """
-    try:
-        corosync_facade = corosync_conf_facade(corosync_conf)
-        if sbd.atb_has_to_be_enabled(cmd_runner(), corosync_facade):
-            corosync_facade.set_quorum_options({"auto_tie_breaker": "1"})
-    except LibraryError as e:
-        process_library_reports(e.args)
-
-def removeNodeFromCorosync(node_expression):
-    removed_node = False
-    node0, node1 = parse_multiring_node(node_expression)
-
-    corosync_conf = getCorosyncConfParsed()
-    for nodelist in corosync_conf.get_sections("nodelist"):
-        for node in nodelist.get_sections("node"):
-            ring0_attrs = node.get_attributes("ring0_addr")
-            if ring0_attrs:
-                ring0_conf = ring0_attrs[0][1]
-                if (ring0_conf == node0) or (node1 and ring0_conf == node1):
-                    node.parent.del_section(node)
-                    removed_node = True
-
-    if removed_node:
-        # enable ATB if it's needed
-        _enable_auto_tie_breaker_for_sbd(corosync_conf)
-
-        corosync_conf = autoset_2node_corosync(corosync_conf)
-        setCorosyncConf(str(corosync_conf))
-
-    return removed_node
-
-def removeNodeFromClusterConf(node):
-    node0, dummy_node1 = parse_multiring_node(node)
-    nodes = getNodesFromCorosyncConf()
-    if node0 not in nodes:
-        return False
-
-    output, retval = run(["ccs", "-f", settings.cluster_conf_file, "--rmnode", node0])
-    if retval != 0:
-        print(output)
-        err("error removing node: %s" % node)
-
-    if len(nodes) == 3:
-        cman_options_map = get_cluster_conf_cman_options()
-        cman_options_map.pop("expected_votes", None)
-        cman_options_map.pop("two_node", None)
-        cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
-        output, retval = run(
-            ["ccs", "-f", settings.cluster_conf_file, "--setcman"]
-            + ["two_node=1", "expected_votes=1"]
-            + cman_options
-        )
-        if retval != 0:
-            print(output)
-            err("unable to set cman options: expected_votes and two_node")
-    return True
-
-def autoset_2node_corosync(corosync_conf):
-    facade = corosync_conf_facade(corosync_conf)
-    facade._ConfigFacade__update_two_node()
-    return facade.config
-
 # is it needed to handle corosync-qdevice service when managing cluster services
 def need_to_handle_qdevice_service():
     try:
@@ -694,26 +575,6 @@ def parse_multiring_node(node):
             "You cannot specify more than two addresses for a node: %s"
             % node
         )
-
-def is_cman_with_udpu_transport():
-    if not is_rhel6():
-        return False
-    cman_options = get_cluster_conf_cman_options()
-    return cman_options.get("transport", "").lower() == "udpu"
-
-def get_cluster_conf_cman_options():
-    try:
-        dom = parse(settings.cluster_conf_file)
-    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
-        err("Unable to read cluster.conf: %s" % e)
-    cman = dom.getElementsByTagName("cman")
-    if not cman:
-        return dict()
-    cman = cman[0]
-    options = dict()
-    for name, value in cman.attributes.items():
-        options[name] = value
-    return options
 
 # Restore default behavior before starting subprocesses
 def subprocess_setup():
@@ -2014,74 +1875,6 @@ def get_remote_quorumtool_output(node):
 # return True if quorumtool_output is a string returned when the node is off
 def is_node_offline_by_quorumtool_output(quorum_info):
     return quorum_info.strip() == "Cannot initialize CMAP service"
-
-def parse_quorumtool_output(quorumtool_output):
-    parsed = {}
-    in_node_list = False
-    try:
-        for line in quorumtool_output.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if in_node_list:
-                if line.startswith("-") or line.startswith("Nodeid"):
-                    # skip headers
-                    continue
-                parts = line.split()
-                if parts[0] == "0":
-                    # this line has nodeid == 0, this is a qdevice line
-                    parsed["qdevice_list"].append({
-                        "name": parts[2],
-                        "votes": int(parts[1]),
-                        "local": False,
-                    })
-                else:
-                    # this line has non-zero nodeid, this is a node line
-                    parsed["node_list"].append({
-                        "name": parts[3],
-                        "votes": int(parts[1]),
-                        "local": len(parts) > 4 and parts[4] == "(local)",
-                    })
-            else:
-                if line == "Membership information":
-                    in_node_list = True
-                    parsed["node_list"] = []
-                    parsed["qdevice_list"] = []
-                    continue
-                if not ":" in line:
-                    continue
-                parts = [x.strip() for x in line.split(":", 1)]
-                if parts[0] == "Quorate":
-                    parsed["quorate"] = parts[1].lower() == "yes"
-                elif parts[0] == "Quorum":
-                    match = re.match("(\d+).*", parts[1])
-                    if match:
-                        parsed["quorum"] = int(match.group(1))
-                    else:
-                        return None
-    except (ValueError, IndexError):
-        return None
-    for required in ("quorum", "quorate", "node_list"):
-        if required not in parsed:
-            return None
-    return parsed
-
-# node_list - nodes to stop
-# local - local node is going to be stopped
-def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
-    if not quorum_info["quorate"]:
-        return False
-    # sum the votes of nodes that are not going to be stopped
-    votes_after_stop = 0
-    for node_info in quorum_info.get("node_list", []):
-        if local and node_info["local"]:
-            continue
-        if node_list and node_info["name"] in node_list:
-            continue
-        votes_after_stop += node_info["votes"]
-    for qdevice_info in quorum_info.get("qdevice_list", []):
-        votes_after_stop += qdevice_info["votes"]
-    return votes_after_stop < quorum_info["quorum"]
 
 def dom_prepare_child_element(dom_element, tag_name, id):
     dom = dom_element.ownerDocument
