@@ -204,7 +204,11 @@ class ConfigFacade(object):
         self.__update_two_node()
 
     def remove_nodes(self, node_name_list):
-        # TODO: doctext
+        """
+        Remove nodes from a config
+
+        iterable node_name_list -- names of nodes to remove
+        """
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)

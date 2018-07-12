@@ -1732,8 +1732,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.CANNOT_REMOVE_ALL_CLUSTER_NODES:
         (
-            "No node would be left in the cluster, if you intend to destroy "
-            "the whole cluster, use 'pcs cluster destroy --all' instead"
+            "No nodes would be left in the cluster, if you intend to destroy "
+            "the whole cluster, run 'pcs cluster destroy --all' instead"
         )
     ,
     codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE:
@@ -1750,11 +1750,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
     codes.NODE_USED_AS_TIE_BREAKER: lambda info:
-        # TODO TESTS
-        # TODO: add hint how to fix it
         (
-            "Node '{node}' (nodeid: {node_id}) is used as a tie breaker for "
-            "a qdevice"
+            "Node '{node}' with id '{node_id}' is used as a tie breaker for "
+            "a qdevice, run 'pcs quorum device update model "
+            "tie_breaker=<node id>' to change it"
         ).format(**info)
     ,
     codes.COROSYNC_QUORUM_WILL_BE_LOST:

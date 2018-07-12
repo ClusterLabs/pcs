@@ -606,3 +606,111 @@ class AddNodes(TestCase):
                 )
             ]
         )
+
+class RemoveNodes(TestCase):
+    fixture_nodes = [
+        CNode("node1", [CAddr("addr01", 1)], 1),
+        CNode("node2", [CAddr("addr02", 1)], 2),
+        CNode("node3", [CAddr("addr03", 1)], 3),
+        CNode("node4", [CAddr("addr04", 1)], 4),
+    ]
+
+    def test_nonexisting_nodes(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node3", "nodeX", "nodeY", "node4"],
+                self.fixture_nodes,
+                (None, None, None, None)
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND,
+                    node=node,
+                    searched_types=[]
+                )
+                for node in ["nodeX", "nodeY"]
+            ]
+        )
+
+    def test_all_nodes(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node3", "node1", "node2", "node4"],
+                self.fixture_nodes,
+                (None, None, None, None)
+            ),
+            [
+                fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES)
+            ]
+        )
+
+    def test_qdevice_tie_breaker_none(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node4"],
+                self.fixture_nodes,
+                ("net", {}, None, None)
+            ),
+            [
+            ]
+        )
+
+    def test_qdevice_tie_breaker_generic(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node4"],
+                self.fixture_nodes,
+                ("net", {"tie_breaker": "highest"}, None, None)
+            ),
+            [
+            ]
+        )
+
+    def test_qdevice_tie_breaker_kept(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node4"],
+                self.fixture_nodes,
+                ("net", {"tie_breaker": "3"}, None, None)
+            ),
+            [
+            ]
+        )
+
+    def test_qdevice_tie_breaker_removed(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node4"],
+                self.fixture_nodes,
+                ("net", {"tie_breaker": "4"}, None, None)
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_USED_AS_TIE_BREAKER,
+                    node="node4",
+                    node_id=4
+                ),
+            ]
+        )
+
+    def test_more_errors(self):
+        assert_report_item_list_equal(
+            config_validators.remove_nodes(
+                ["node3", "node1", "node2", "node4", "nodeX"],
+                self.fixture_nodes,
+                ("net", {"tie_breaker": "4"}, None, None)
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND,
+                    node="nodeX",
+                    searched_types=[]
+                ),
+                fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES),
+                fixture.error(
+                    report_codes.NODE_USED_AS_TIE_BREAKER,
+                    node="node4",
+                    node_id=4
+                ),
+            ]
+        )

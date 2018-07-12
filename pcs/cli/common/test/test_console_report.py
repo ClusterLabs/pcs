@@ -2928,3 +2928,27 @@ class CorosyncConfigReloadError(NameBuildTest):
             "Unable to reload corosync configuration: different reason",
             reports.corosync_config_reload_error("different reason"),
         )
+
+class CannotRemoveAllClusterNodes(NameBuildTest):
+    code = codes.CANNOT_REMOVE_ALL_CLUSTER_NODES
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "No nodes would be left in the cluster, if you intend to "
+                "destroy the whole cluster, run 'pcs cluster destroy --all' "
+                "instead"
+            ),
+            reports.cannot_remove_all_cluster_nodes()
+        )
+
+class NodeUsedAsTieBreaker(NameBuildTest):
+    code = codes.NODE_USED_AS_TIE_BREAKER
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Node 'node2' with id '2' is used as a tie breaker for a "
+                "qdevice, run 'pcs quorum device update model "
+                "tie_breaker=<node id>' to change it"
+            ),
+            reports.node_used_as_tie_breaker("node2", 2)
+        )
