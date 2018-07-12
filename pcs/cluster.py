@@ -153,22 +153,19 @@ def cluster_cmd(argv):
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
-        if not argv:
-            usage.cluster(["node"])
-            sys.exit(1)
-
         node_command_map = {
-            "add-remote": cluster_command.node_add_remote,
+            "add": node_add,
             "add-guest": cluster_command.node_add_guest,
+            "add-outside": node_add_outside_cluster,
+            "add-remote": cluster_command.node_add_remote,
+            "clear": cluster_command.node_clear,
+            "remove": node_remove,
+            "remove-guest": cluster_command.node_remove_guest,
             "remove-remote": cluster_command.create_node_remove_remote(
                 resource.resource_remove
             ),
-            "remove-guest": cluster_command.node_remove_guest,
-            "clear": cluster_command.node_clear,
-            "add": node_add,
-            "remove_new": node_remove_new,
         }
-        if argv[0] in node_command_map:
+        if argv and argv[0] in node_command_map:
             try:
                 node_command_map[argv[0]](
                     utils.get_library_wrapper(),
@@ -182,7 +179,8 @@ def cluster_cmd(argv):
                     e, "cluster", "node " + argv[0]
                 )
         else:
-            cluster_node(argv)
+            usage.cluster(["node"])
+            sys.exit(1)
     elif (sub_cmd == "localnode"):
         cluster_localnode(argv)
     elif (sub_cmd == "uidgid"):
@@ -790,6 +788,7 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
             run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
 
+# TODO remove
 def cluster_node(argv):
     if len(argv) < 1:
         usage.cluster(["node"])
@@ -836,7 +835,7 @@ def cluster_node(argv):
 
     lib_env = utils.get_lib_env()
     modifiers = utils.get_modifiers()
-    node_remove(lib_env, node0, modifiers)
+    node_remove_old(lib_env, node0, modifiers)
 
 def node_add_outside_cluster(lib, argv, modifiers):
     #pylint: disable=unreachable
@@ -875,7 +874,8 @@ def node_add_outside_cluster(lib, argv, modifiers):
     except NodeCommunicationException as e:
         process_library_reports([node_communicator_exception_to_report_item(e)])
 
-def node_remove(lib_env, node0, modifiers):
+# TODO remove
+def node_remove_old(lib_env, node0, modifiers):
     if node0 not in utils.getNodesFromCorosyncConf():
         utils.err(
             "node '%s' does not appear to exist in configuration" % node0
@@ -942,7 +942,7 @@ def node_remove(lib_env, node0, modifiers):
         print("Warning: Using udpu transport on a CMAN cluster, "
             + "cluster restart is required to apply node removal")
 
-def node_remove_new(lib, argv, modifiers):
+def node_remove(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
     lib.cluster.remove_nodes(
