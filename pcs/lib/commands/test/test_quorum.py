@@ -512,6 +512,7 @@ class StatusTextTest(TestCase, CmanMixin):
             "status text"
         )
         mock_status.assert_called_once_with("mock_runner")
+    # TODO: add test for failure
 
 
 @mock.patch("pcs.lib.commands.quorum.qdevice_client.get_status_text")

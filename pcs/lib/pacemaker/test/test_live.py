@@ -657,7 +657,8 @@ class RemoveNode(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
                 {
-                    "node_name": "NODE_NAME",
+                    "node": None,
+                    "node_list_to_remove": ["NODE_NAME"],
                     "reason": expected_stderr,
                 }
             )

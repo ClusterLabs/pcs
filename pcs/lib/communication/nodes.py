@@ -372,8 +372,7 @@ class UpdateKnownHosts(
 
 
 class RemoveNodesFromCib(
-    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
-    AllAtOnceStrategyMixin, RunRemotelyBase,
+    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase,
 ):
     def __init__(self, report_processor, nodes_to_remove):
         super().__init__(report_processor)
@@ -384,6 +383,25 @@ class RemoveNodesFromCib(
             "remote/remove_nodes_from_cib",
             [("data_json", json.dumps(dict(node_list=self._nodes_to_remove)))],
         )
+
+    def _process_response(self, response):
+        report = self._get_response_report(response)
+        if report is not None:
+            self._report(report)
+            return
+        node_label = response.request.target.label
+        try:
+            output = json.loads(response.data)
+            if output["code"] != "success":
+                self._report(
+                    reports.node_remove_in_pacemaker_failed(
+                        self._nodes_to_remove,
+                        node=node_label,
+                        reason=output["message"],
+                    )
+                )
+        except (KeyError, json.JSONDecodeError):
+            self._report(reports.invalid_response_format(node_label))
 
 
 class SendPcsdSslCertAndKey(

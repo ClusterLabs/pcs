@@ -104,3 +104,60 @@ class CorosyncShortcuts(object):
                 returncode=returncode
             ),
         )
+
+    def quorum_status(
+        self, node_list=None, stdout=None, stderr="", returncode=0,
+        name="runner.corosync.quorum_status",
+    ):
+        if bool(node_list) == bool(stdout):
+            raise AssertionError(
+                "Exactly one of 'node_list', 'stdout' must be specified"
+            )
+        if node_list:
+            stdout = outdent("""\
+            Quorum information
+            ------------------
+            Date:             Fri Jan 16 13:03:28 2015
+            Quorum provider:  corosync_votequorum
+            Nodes:            {nodes_num}
+            Node ID:          1
+            Ring ID:          19860
+            Quorate:          Yes\n
+            Votequorum information
+            ----------------------
+            Expected votes:   {nodes_num}
+            Highest expected: {nodes_num}
+            Total votes:      {nodes_num}
+            Quorum:           {quorum_num}
+            Flags:            Quorate\n
+            Membership information
+            ----------------------
+                Nodeid      Votes    Qdevice Name
+            {nodes}\
+            """).format(
+                nodes_num=len(node_list),
+                quorum_num=(len(node_list)//2)+1,
+                nodes="".join([
+                    _quorum_status_node_fixture(node_id, node)
+                    for node_id, node in enumerate(node_list, 1)
+                ])
+            )
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "{binary} -p".format(
+                    binary=os.path.join(
+                        settings.corosync_binaries, "corosync-quorumtool"
+                    ),
+                ),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode
+            ),
+        )
+
+def _quorum_status_node_fixture(node_id, node_name, votes=1, is_local=False):
+    _local = " (local)" if is_local else ""
+    return (
+        f"         {node_id}          {votes}         NR {node_name}{_local}\n"
+    )

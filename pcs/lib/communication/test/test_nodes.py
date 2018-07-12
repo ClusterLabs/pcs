@@ -21,6 +21,13 @@ class SendPcsdSslCertAndKey(TestCase):
         pcs.lib.commands.test.test_pcsd
     """
 
+class RemoveNodesFromCib(TestCase):
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_remove_nodes.RemoveNodesFailureFromCib
+        pcs.lib.commands.test.cluster.test_remove_nodes.RemoveNodesSuccessMinimal
+    """
+
 class AvailabilityCheckerNode(TestCase):
     def setUp(self):
         self.node = "node1"

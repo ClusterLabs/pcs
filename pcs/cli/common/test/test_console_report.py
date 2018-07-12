@@ -1400,13 +1400,26 @@ class UseCommandNodeRemoveGuest(NameBuildTest):
 
 class NodeRemoveInPacemakerFailed(NameBuildTest):
     code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
-    def test_build_messages(self):
-        self.assert_message_from_info(
-            "unable to remove node 'NODE' from pacemaker: reason",
-            {
-                "node_name": "NODE",
-                "reason": "reason"
-            }
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Unable to remove node(s) 'NODE' from pacemaker: reason",
+            reports.node_remove_in_pacemaker_failed(
+                ["NODE"],
+                reason="reason"
+            )
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_report(
+            (
+                "node-a: Unable to remove node(s) 'NODE1', 'NODE2' from "
+                "pacemaker: reason"
+            ),
+            reports.node_remove_in_pacemaker_failed(
+                ["NODE1", "NODE2"],
+                node="node-a",
+                reason="reason"
+            )
         )
 
 class NodeToClearIsStillInCluster(NameBuildTest):

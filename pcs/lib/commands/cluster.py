@@ -1022,8 +1022,15 @@ def _get_validated_wait_timeout(report_processor, wait, start):
     return None
 
 
-def remove_nodes(env, node_list, force=False, skip_offline=False):
-    # TODO: doctext
+def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
+    """
+    Remove nodes from a cluster.
+
+    env LibraryEnvironment
+    node_list iterable -- names of nodes to remove
+    force_quorum_loss bool -- treat quorum loss as a warning if True
+    skip_offline bool -- treat unreachable nodes as warnings if True
+    """
     # consider rename node_list to make it clear it's a list of node names to remove
     _ensure_live_env(env) # raises if env is not live
 
@@ -1068,7 +1075,7 @@ def remove_nodes(env, node_list, force=False, skip_offline=False):
                 [target.label for target in offline_target_list]
             )
         )
-    if len(staying_online_target_list) == 0:
+    if not staying_online_target_list:
         report_processor.report(reports.all_cluster_nodes_offline())
 
     if skip_offline:
@@ -1076,10 +1083,11 @@ def remove_nodes(env, node_list, force=False, skip_offline=False):
             target.label for target in offline_target_list
             if target.label not in node_list
         ]
-        if staying_offline_nodes:
+        if staying_online_target_list and staying_offline_nodes:
             report_processor.report(
-                # TODO fix report
-                reports.nodes_to_remove_unreachable(staying_offline_nodes)
+                reports.unable_to_connect_to_all_remaining_node(
+                    staying_offline_nodes
+                )
             )
 
         leaving_offline_nodes = [
@@ -1103,28 +1111,31 @@ def remove_nodes(env, node_list, force=False, skip_offline=False):
         )
         com_cmd.set_targets(staying_online_target_list)
         run_com(env.get_node_communicator(), com_cmd)
-
-    # quorum check - local
-    # example: 5-node cluster, 3 online nodes, removing one online node,
-    # results in 4-node cluster with 2 online nodes => quorum lost
-    forceable_report_creator = reports.get_problem_creator(
-        # TODO fix force code
-        report_codes.FORCE_REMOVE_MULTIPLE_NODES, force
-    )
-    try:
-        if corosync_live.QuorumStatus(
-            corosync_live.get_quorum_status_text(env.cmd_runner())
-        ).stopping_nodes_cause_quorum_loss(node_list):
-            report_processor.report(
-                forceable_report_creator(reports.corosync_quorum_will_be_lost)
-            )
-    except corosync_live.QuorumStatusException as e:
-        report_processor.report(
-            forceable_report_creator(
-                reports.corosync_quorum_loss_unable_to_check,
-                reason=e.reason,
-            )
+    else:
+        # quorum check - local
+        # example: 5-node cluster, 3 online nodes, removing one online node,
+        # results in 4-node cluster with 2 online nodes => quorum lost
+        # Check quorum loss only if ATB does not need to be enabled. If it is
+        # required, cluster has to be turned off and therefore it loses quorum.
+        forceable_report_creator = reports.get_problem_creator(
+            report_codes.FORCE_QUORUM_LOSS, force_quorum_loss
         )
+        try:
+            if corosync_live.QuorumStatus.from_string(
+                corosync_live.get_quorum_status_text(env.cmd_runner())
+            ).stopping_nodes_cause_quorum_loss(node_list):
+                report_processor.report(
+                    forceable_report_creator(
+                        reports.corosync_quorum_will_be_lost
+                    )
+                )
+        except corosync_live.QuorumStatusException as e:
+            report_processor.report(
+                forceable_report_creator(
+                    reports.corosync_quorum_loss_unable_to_check,
+                    reason=e.reason,
+                )
+            )
 
     if report_processor.has_errors:
         raise LibraryError()
@@ -1159,8 +1170,15 @@ def remove_nodes(env, node_list, force=False, skip_offline=False):
 
 
 def remove_nodes_from_cib(env, node_list):
-    # TODO: doctext
+    """
+    Remove specified nodes from CIB. When pcmk is running 'crm_node -R <node>'
+    will be used. Otherwise nodes will be removed directly from CIB file.
+
+    env LibraryEnvironment
+    node_list iterable -- names of nodes to remove
+    """
     # TODO: more advanced error handling
+    # TODO: Tests
     if not env.is_cib_live:
         raise LibraryError(reports.live_environment_required(["CIB"]))
 

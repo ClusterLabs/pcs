@@ -50,6 +50,7 @@ class DestroyWarnOnFailure(
         self._unreachable_nodes = []
 
     def on_complete(self):
-        self._report(
-            reports.nodes_to_remove_unreachable(self._unreachable_nodes)
-        )
+        if self._unreachable_nodes:
+            self._report(
+                reports.nodes_to_remove_unreachable(self._unreachable_nodes)
+            )

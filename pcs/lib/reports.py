@@ -1834,15 +1834,21 @@ def node_to_clear_is_still_in_cluster(
         forceable=forceable
     )
 
-def node_remove_in_pacemaker_failed(node_name, reason):
+def node_remove_in_pacemaker_failed(
+    node_list_to_remove, node=None, reason=None
+):
     """
-    calling of crm_node --remove failed
-    string reason is caught reason
+    Removing nodes from pacemaker failed.
+
+    iterable node_list_to_remove -- nodes which should be removed
+    string node -- node on which operation was performed
+    string reason -- reason of failure
     """
     return ReportItem.error(
         report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
         info={
-            "node_name": node_name,
+            "node": node,
+            "node_list_to_remove": node_list_to_remove,
             "reason": reason,
         }
     )
@@ -3362,16 +3368,46 @@ def using_default_watchdog(watchdog, node):
     )
 
 def cannot_remove_all_cluster_nodes():
+    """
+    It is not possible to remove all cluster nodes using 'pcs cluster node
+    remove' command. 'pcs cluster destroy --all' should be used in such case.
+    """
     return ReportItem.error(
         report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES,
     )
 
 def unable_to_connect_to_any_remaining_node():
+    """
+    All ramaining cluster nodes are unreachable, therefore it is not possible
+    to remove nodes from the cluster.
+    """
     return ReportItem.error(
         report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE,
     )
 
+def unable_to_connect_to_all_remaining_node(node_list):
+    """
+    Some of remaining cluster nodes are unreachable. 'pcs cluster sync' should
+    be executed on now online nodes when the offline nodes come back online.
+
+    iterable node_list -- names of nodes which are staying in the cluster and
+        are currently unreachable
+    """
+    return ReportItem.warning(
+        report_codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE,
+        info=dict(
+            node_list=node_list,
+        )
+    )
+
 def nodes_to_remove_unreachable(node_list):
+    """
+    Nodes which should be removed are currently unreachable. 'pcs cluster
+    destroy' should be executed on these nodes when they come back online.
+
+    iterable node_list -- names of nodes which are being removed from the
+        cluster but they are currently unreachable
+    """
     return ReportItem.warning(
         report_codes.NODES_TO_REMOVE_UNREACHABLE,
         info=dict(
@@ -3380,6 +3416,13 @@ def nodes_to_remove_unreachable(node_list):
     )
 
 def node_used_as_tie_breaker(node, node_id):
+    """
+    Node which should be removed is currently used as a tie breaker for a
+    qdevice, therefore it is not possible to remove it from the cluster.
+
+    string node -- node name
+    string nide_id -- node id
+    """
     return ReportItem.error(
         report_codes.NODE_USED_AS_TIE_BREAKER,
         info=dict(
@@ -3391,6 +3434,12 @@ def node_used_as_tie_breaker(node, node_id):
 def corosync_quorum_will_be_lost(
     severity=ReportItemSeverity.ERROR, forceable=None,
 ):
+    """
+    Ongoing action will cause loss of the quorum in the cluster.
+
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
+    """
     return ReportItem(
         report_codes.COROSYNC_QUORUM_WILL_BE_LOST,
         severity,
@@ -3400,6 +3449,14 @@ def corosync_quorum_will_be_lost(
 def corosync_quorum_loss_unable_to_check(
     reason, severity=ReportItemSeverity.ERROR, forceable=None,
 ):
+    """
+    It is not possible to check if ongoing action will cause loss of the quorum
+    in the cluster due to specified reason.
+
+    string reason -- reason why it's not possible to perform the check
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
+    """
     return ReportItem(
         report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
         severity,

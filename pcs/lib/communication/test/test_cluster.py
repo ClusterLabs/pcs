@@ -1,6 +1,5 @@
 from unittest import TestCase, skip
 
-@skip("missing tests for pcs.lib.communication.cluster.Destroy")
 class Destroy(TestCase):
     """
     tested in:
@@ -10,3 +9,8 @@ class Destroy(TestCase):
         pcs.lib.commands.test.cluster.test_setup.SetupWithWait
         pcs.lib.commands.test.cluster.test_setup.Failures.test_cluster_destroy_failure
     """
+
+@skip("missing tests for pcs.lib.communication.cluster.DestroyWarnOnFailure")
+class DestroyWarnOnFailure(TestCase):
+    def test_dummy(self):
+        pass

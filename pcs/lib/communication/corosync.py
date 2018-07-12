@@ -46,7 +46,7 @@ class CheckCorosyncOffline(
                 report = reports.corosync_not_running_on_node_ok(node_label)
             else:
                 report = reports.corosync_running_on_node_fail(node_label)
-        except (ValueError, LookupError):
+        except (KeyError, json.JSONDecodeError):
             report = reports.corosync_not_running_check_node_error(
                 node_label, self._failure_severity, self._failure_forceable
             )

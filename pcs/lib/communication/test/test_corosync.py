@@ -20,4 +20,5 @@ class ReloadCorosyncConf(TestCase):
         pcs.lib.commands.test.cluster.test_add_nodes.AddNodesSuccessMinimal
         pcs.lib.commands.test.cluster.test_add_nodes.AddNodeFull
         pcs.lib.commands.test.cluster.test_add_nodes.FailureReloadCorosyncConf
+        pcs.lib.commands.test.cluster.test_remove_nodes.FailureCorosyncReload
     """

@@ -29,7 +29,7 @@ def _corosync_options_fixture(option_list, indent_level=2):
 
 
 def _get_two_node(nodes_num):
-    if nodes_num <= 2:
+    if nodes_num == 2:
         return [("two_node", "1")]
     return []
 
