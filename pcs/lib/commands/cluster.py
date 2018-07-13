@@ -1031,7 +1031,6 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
     force_quorum_loss bool -- treat quorum loss as a warning if True
     skip_offline bool -- treat unreachable nodes as warnings if True
     """
-    # consider rename node_list to make it clear it's a list of node names to remove
     _ensure_live_env(env) # raises if env is not live
 
     report_processor = SimpleReportProcessor(env.report_processor)
@@ -1046,6 +1045,14 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
         corosync_conf.get_nodes(),
         corosync_conf.get_quorum_device_settings(),
     ))
+    if report_processor.has_errors:
+        # If there is an error, there is usually not much sense in doing other
+        # validations:
+        # - if there would be no node left in the cluster, it's pointless
+        #   to check for quorum loss or if at least one remaining node is online
+        # - if only one node is being removed and it doesn't exist, it's again
+        #   pointless to check for other issues
+        raise LibraryError()
 
     target_report_list, cluster_nodes_target_list = (
         target_factory.get_target_list_with_reports(
@@ -1053,7 +1060,12 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
             skip_non_existing=skip_offline,
         )
     )
+    known_nodes = set([target.label for target in cluster_nodes_target_list])
+    unknown_nodes = set([
+        name for name in cluster_nodes_names if name not in known_nodes
+    ])
     report_processor.report_list(target_report_list)
+
     com_cmd = GetOnlineTargets(
         report_processor, ignore_offline_targets=skip_offline,
     )
@@ -1066,37 +1078,28 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
     staying_online_target_list = [
         target for target in online_target_list if target.label not in node_list
     ]
-    if offline_target_list:
-        report_processor.report(
-            reports.get_problem_creator(
-                report_codes.SKIP_OFFLINE_NODES, skip_offline
-            )(
-                reports.cluster_nodes_unreachable,
-                [target.label for target in offline_target_list]
-            )
-        )
     if not staying_online_target_list:
-        report_processor.report(reports.all_cluster_nodes_offline())
+        report_processor.report(
+            reports.unable_to_connect_to_any_remaining_node()
+        )
+        # If no remaining node is online, there is no point in checking quorum
+        # loss or anything as we would just get errors.
+        raise LibraryError()
 
     if skip_offline:
-        staying_offline_nodes = [
-            target.label for target in offline_target_list
-            if target.label not in node_list
-        ]
-        if staying_online_target_list and staying_offline_nodes:
+        staying_offline_nodes = (
+            [
+                target.label for target in offline_target_list
+                if target.label not in node_list
+            ]
+            +
+            [name for name in unknown_nodes if name not in node_list]
+        )
+        if staying_offline_nodes:
             report_processor.report(
                 reports.unable_to_connect_to_all_remaining_node(
                     staying_offline_nodes
                 )
-            )
-
-        leaving_offline_nodes = [
-            target.label for target in offline_target_list
-            if target.label in node_list
-        ]
-        if leaving_offline_nodes:
-            report_processor.report(
-                reports.nodes_to_remove_unreachable(leaving_offline_nodes)
             )
 
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
@@ -1140,11 +1143,21 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
     if report_processor.has_errors:
         raise LibraryError()
 
-    com_cmd = cluster.DestroyWarnOnFailure(report_processor)
-    com_cmd.set_targets([
-        target for target in online_target_list if target.label in node_list
-    ])
-    run_and_raise(env.get_node_communicator(), com_cmd)
+    # validations done
+
+    unknown_to_remove = [name for name in unknown_nodes if name in node_list]
+    if unknown_to_remove:
+        report_processor.report(
+            reports.nodes_to_remove_unreachable(unknown_to_remove)
+        )
+    targets_to_remove = [
+        target for target in cluster_nodes_target_list
+        if target.label in node_list
+    ]
+    if targets_to_remove:
+        com_cmd = cluster.DestroyWarnOnFailure(report_processor)
+        com_cmd.set_targets(targets_to_remove)
+        run_and_raise(env.get_node_communicator(), com_cmd)
 
     corosync_conf.remove_nodes(node_list)
     if atb_has_to_be_enabled:

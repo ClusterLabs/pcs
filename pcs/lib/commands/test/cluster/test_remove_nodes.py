@@ -28,7 +28,9 @@ def _get_two_node(nodes_num):
     return []
 
 
-def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
+def corosync_conf_fixture(
+    node_list=(), quorum_options=(), qdevice_net=False, qdevice_tie_breaker=None
+):
     nodes = []
     for node in node_list:
         nodes.append(dedent(
@@ -41,16 +43,23 @@ def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
         ))
     device = ""
     if qdevice_net:
+        if qdevice_tie_breaker:
+            qd_tie_breaker = f"\n            tie_breaker: {qdevice_tie_breaker}"
+        else:
+            qd_tie_breaker = ""
         device = outdent(
-            f"""
+            """
                 device {{
                     model: net
 
                     net {{
-                        host: {QDEVICE_HOST}
+                        host: {QDEVICE_HOST}{qd_tie_breaker}
                     }}
                 }}
             """
+        ).format(
+            QDEVICE_HOST=QDEVICE_HOST,
+            qd_tie_breaker=qd_tie_breaker,
         )
     return dedent(
         """\
@@ -1431,5 +1440,760 @@ class FailureClusterDestroy(TestCase):
                     report_codes.NODES_TO_REMOVE_UNREACHABLE,
                     node_list=self.nodes_to_remove,
                 )
+            ]
+        )
+
+
+class FailureValidationCorosync(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.existing_nodes = [f"node{i}" for i in range(3)]
+        self.existing_corosync_nodes = [
+            node_fixture(node, i)
+            for i, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(self.existing_nodes)
+        (self.config
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    _get_two_node(len(self.existing_nodes)),
+                    qdevice_net=True,
+                    qdevice_tie_breaker=1
+                )
+            )
+        )
+
+    def test_corosync_validation(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.existing_nodes + ["nodeX"]
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND,
+                    node="nodeX",
+                    searched_types=[]
+                ),
+                fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES),
+                fixture.error(
+                    report_codes.NODE_USED_AS_TIE_BREAKER,
+                    node="node0",
+                    node_id="1"
+                ),
+            ]
+        )
+
+
+class OfflineNodes(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.removing_num = 2
+        self.staying_num = 2
+        self.existing_nodes = [
+            f"node{i}" for i in range(self.staying_num + self.removing_num)
+        ]
+        self.nodes_to_remove = self.existing_nodes[-self.removing_num:]
+        self.nodes_to_stay = self.existing_nodes[:-self.removing_num]
+        self.existing_corosync_nodes = [
+            node_fixture(node, i)
+            for i, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.expected_reports = []
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        (self.config
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    _get_two_node(len(self.existing_nodes)),
+                )
+            )
+        )
+
+    def test_all_remaining_offline(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                    "response_code": 400,
+                    "output": "an error",
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+            ])
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node=self.nodes_to_stay[0],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_stay[1],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE
+                )
+            ]
+        )
+
+    def test_all_remaining_offline_forced(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                    "response_code": 400,
+                    "output": "an error",
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+            ])
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                skip_offline=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_stay[0],
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_stay[1],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE
+                )
+            ]
+        )
+
+    def test_some_remaining_offline(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+            ])
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node=self.nodes_to_stay[0],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_some_remaining_offline_forced(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+            ])
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+            .local.destroy_cluster(self.nodes_to_remove)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes[:-self.removing_num],
+                    _get_two_node(self.staying_num)
+                ),
+                [self.nodes_to_stay[1]],
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=[self.nodes_to_stay[1]],
+            )
+        )
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+            skip_offline=True
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_stay[0],
+                ),
+                fixture.warn(
+                    report_codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE,
+                    node_list=[self.nodes_to_stay[0]]
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_removed_offline(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                    "response_code": 400,
+                    "output": "an error",
+                },
+            ])
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node=self.nodes_to_remove[0],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_removed_offline_unforceable(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                    "response_code": 400,
+                    "output": "an error",
+                },
+            ])
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True,
+                skip_offline=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/check_auth",
+                    reason="an error"
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_removed_offline_forced(self):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes)
+            .http.host.check_auth(communication_list=[
+                {
+                    "label": self.nodes_to_stay[0],
+                },
+                {
+                    "label": self.nodes_to_stay[1],
+                },
+                {
+                    "label": self.nodes_to_remove[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+            ])
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.cluster_destroy(
+                communication_list=[
+                {
+                    "label": self.nodes_to_remove[0],
+                    "was_connected": False,
+                    "errno": 7,
+                    "error_msg": "an error",
+                },
+                {
+                    "label": self.nodes_to_remove[1],
+                },
+                ]
+            )
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes[:-self.removing_num],
+                    _get_two_node(self.staying_num)
+                ),
+                self.nodes_to_stay,
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
+            )
+        )
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+            skip_offline=True
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_remove[0],
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.info(
+                    report_codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=self.nodes_to_remove,
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/cluster_destroy",
+                    reason="an error"
+                ),
+                fixture.info(
+                    report_codes.CLUSTER_DESTROY_SUCCESS,
+                    node=self.nodes_to_remove[1],
+                ),
+                fixture.warn(
+                    report_codes.NODES_TO_REMOVE_UNREACHABLE,
+                    node_list=[self.nodes_to_remove[0]]
+                ),
+            ]
+        )
+
+    def test_all_remaining_unknown(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_remove)
+            .http.host.check_auth(node_labels=self.nodes_to_remove)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    host_list=self.nodes_to_stay
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE
+                )
+            ]
+        )
+
+    def test_all_remaining_unknown_forced(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_remove)
+            .http.host.check_auth(node_labels=self.nodes_to_remove)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                skip_offline=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=self.nodes_to_stay
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE
+                )
+            ]
+        )
+
+    def test_some_remaining_unknown(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_remove + [self.nodes_to_stay[0]])
+            .http.host.check_auth(
+                node_labels=([self.nodes_to_stay[0]] + self.nodes_to_remove)
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    host_list=[self.nodes_to_stay[1]]
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_some_remaining_unknown_forced(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_remove + [self.nodes_to_stay[0]])
+            .http.host.check_auth(
+                node_labels=([self.nodes_to_stay[0]] + self.nodes_to_remove)
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+            .local.destroy_cluster(self.nodes_to_remove)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes[:-self.removing_num],
+                    _get_two_node(self.staying_num)
+                ),
+                [self.nodes_to_stay[0]],
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=[self.nodes_to_stay[0]],
+            )
+        )
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+            skip_offline=True
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=[self.nodes_to_stay[1]]
+                ),
+                fixture.warn(
+                    report_codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE,
+                    node_list=[self.nodes_to_stay[1]]
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_all_removed_unknown(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_stay)
+            .http.host.check_auth(
+                node_labels=(self.nodes_to_stay)
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    host_list=self.nodes_to_remove
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_all_removed_unknown_forced(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_stay)
+            .http.host.check_auth(
+                node_labels=(self.nodes_to_stay)
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes[:-self.removing_num],
+                    _get_two_node(self.staying_num)
+                ),
+                self.nodes_to_stay
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay
+            )
+        )
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+            skip_offline=True
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=self.nodes_to_remove
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.warn(
+                    report_codes.NODES_TO_REMOVE_UNREACHABLE,
+                    node_list=self.nodes_to_remove
+                ),
+            ]
+        )
+
+    def test_some_removed_unknown(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_stay + [self.nodes_to_remove[0]])
+            .http.host.check_auth(
+                node_labels=(self.nodes_to_stay + [self.nodes_to_remove[0]])
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+                force_quorum_loss=True
+            ),
+            [
+            ]
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    host_list=[self.nodes_to_remove[1]]
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+            ]
+        )
+
+    def test_some_removed_unknown_forced(self):
+        (self.config
+            .env.set_known_nodes(self.nodes_to_stay + [self.nodes_to_remove[0]])
+            .http.host.check_auth(
+                node_labels=(self.nodes_to_stay + [self.nodes_to_remove[0]])
+            )
+            # SBD not installed
+            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .runner.corosync.quorum_status(self.existing_nodes)
+            .local.destroy_cluster([self.nodes_to_remove[0]])
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes[:-self.removing_num],
+                    _get_two_node(self.staying_num)
+                ),
+                self.nodes_to_stay
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay
+            )
+        )
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+            skip_offline=True
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=[self.nodes_to_remove[1]]
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.warn(
+                    report_codes.NODES_TO_REMOVE_UNREACHABLE,
+                    node_list=[self.nodes_to_remove[1]]
+                ),
             ]
         )

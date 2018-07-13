@@ -3396,7 +3396,7 @@ def unable_to_connect_to_all_remaining_node(node_list):
     return ReportItem.warning(
         report_codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE,
         info=dict(
-            node_list=node_list,
+            node_list=sorted(node_list),
         )
     )
 
@@ -3411,7 +3411,7 @@ def nodes_to_remove_unreachable(node_list):
     return ReportItem.warning(
         report_codes.NODES_TO_REMOVE_UNREACHABLE,
         info=dict(
-            node_list=node_list,
+            node_list=sorted(node_list),
         )
     )
 
