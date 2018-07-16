@@ -6,7 +6,22 @@ pcs daemon, which operates as a remote server for pcs and provides a web UI.
 
 ---
 
-### Installation from Source
+### Pcs Versions
+
+There are two pcs branches currently:
+* master
+  * This is where pcs-0.10 lives.
+  * Clusters running Pacemaker 2.x on top of Corosync 3.x are supported.
+  * The main development happens here.
+* pcs-0.9
+  * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with 
+    CMAN are supported.
+  * This branch is in maintenance mode - bugs are being fixed but only a subset
+    of new features lands here.
+
+---
+
+### Dependencies
 
 These are the runtime dependencies of pcs and pcsd:
 * python 3.6+
@@ -27,8 +42,9 @@ It is also recommended to have these:
   fonts-liberation2)
 * overpass fonts (package overpass-fonts)
 
-For managing clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync
-1.x use pcs-0.9.x which you can get from the 0.9 branch.
+---
+
+### Installation from Source
 
 Apart from the dependencies listed above, these are also required for
 installation:
