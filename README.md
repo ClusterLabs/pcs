@@ -6,7 +6,22 @@ pcs daemon, which operates as a remote server for pcs and provides a web UI.
 
 ---
 
-### Installation from Source
+### Pcs Versions
+
+There are two pcs branches currently:
+* master
+  * This is where pcs-0.10 lives.
+  * Clusters running Pacemaker 2.x on top of Corosync 3.x are supported.
+  * The main development happens here.
+* pcs-0.9
+  * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with 
+    CMAN are supported.
+  * This branch is in maintenance mode - bugs are being fixed but only a subset
+    of new features lands here.
+
+---
+
+### Dependencies
 
 These are the runtime dependencies of pcs and pcsd:
 * python 2.7+
@@ -16,8 +31,8 @@ These are the runtime dependencies of pcs and pcsd:
 * ruby 2.0.0+
 * killall (package psmisc)
 * openssl
-* corosync
-* pacemaker
+* corosync 2.x or 1.x
+* pacemaker 1.x
 
 It is also recommended to have these:
 * python-clufter / python3-clufter
@@ -29,9 +44,9 @@ If you plan to manage Corosync 1.x based clusters, you will also need:
 * cman
 * ccs
 
-It is however highly recommended for new clusters to use Corosync 2.x.
-Support for Corosync 1.x and CMAN has been deprecated in 0.9.160 and will be
-removed.
+---
+
+### Installation from Source
 
 Apart from the dependencies listed above, these are also required for
 installation:
