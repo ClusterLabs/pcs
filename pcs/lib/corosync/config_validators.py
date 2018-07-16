@@ -363,6 +363,39 @@ def add_nodes(
         )
     return report_items
 
+def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
+    """
+    Validate removing nodes
+
+    iterable nodes_names_to_remove -- list of names of nodes to remove
+    iterable existing_nodes -- list of all existing nodes
+    tuple quorum_device_settings -- output of get_quorum_device_settings
+    """
+    existing_node_names = [node.name for node in existing_nodes]
+    report_items = []
+    for node in set(nodes_names_to_remove) - set(existing_node_names):
+        report_items.append(reports.node_not_found(node))
+
+    if len(set(existing_node_names) - set(nodes_names_to_remove)) == 0:
+        report_items.append(reports.cannot_remove_all_cluster_nodes())
+
+    qdevice_model, qdevice_model_options, _, _ = quorum_device_settings
+    if qdevice_model == "net":
+        tie_breaker_nodeid = qdevice_model_options.get("tie_breaker")
+        if tie_breaker_nodeid not in [None, "lowest", "highest"]:
+            for node in existing_nodes:
+                if (
+                    node.name in nodes_names_to_remove
+                    and
+                    # "4" != 4, convert ids to string to detect a match for sure
+                    str(node.nodeid) == str(tie_breaker_nodeid)
+                ):
+                    report_items.append(
+                        reports.node_used_as_tie_breaker(node.name, node.nodeid)
+                    )
+
+    return report_items
+
 def create_link_list_udp(link_list):
     """
     Validate creating udp/udpu link (interface) list options

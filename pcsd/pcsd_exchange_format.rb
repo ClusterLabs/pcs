@@ -34,6 +34,15 @@ def PcsdExchangeFormat.validate_item_is_Hash(item_name, id, file_data)
   end
 end
 
+def PcsdExchangeFormat.validate_item_is_Array(item_name, data)
+  unless data.is_a? Array
+    raise PcsdExchangeFormat::Error.new(
+      item_name,
+      "Should be 'Array', but is '#{data.class}': #{JSON.generate(data)}"
+    )
+  end
+end
+
 def PcsdExchangeFormat.run_action(action_types, item_name, id, action_hash)
   unless action_hash.has_key?(:type)
     raise PcsdExchangeFormat::Error.for_item(item_name, id, "'type' is missing")

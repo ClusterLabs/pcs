@@ -1094,11 +1094,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_REMOVE_IN_PACEMAKER_FAILED: lambda info:
-        "unable to remove node '{node_name}' from pacemaker{reason_part}"
-        .format(
-            reason_part=format_optional(info["reason"], ": {0}"),
+        # TODO: Tests
+        (
+            "{_node}Unable to remove node(s) {_node_list} from pacemaker"
+            "{_reason_part}"
+        ).format(
+            _node=format_optional(info["node"], "{}: "),
+            _reason_part=format_optional(info["reason"], ": {0}"),
+            _node_list=format_list(info["node_list_to_remove"]),
             **info
-
         )
     ,
 
@@ -1729,5 +1733,47 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "No watchdog has been specified for node '{node}'. Using default "
             "watchdog '{watchdog}'"
         ).format(**info)
+    ,
+    codes.CANNOT_REMOVE_ALL_CLUSTER_NODES:
+        (
+            "No nodes would be left in the cluster, if you intend to destroy "
+            "the whole cluster, run 'pcs cluster destroy --all' instead"
+        )
+    ,
+    codes.UNABLE_TO_CONNECT_TO_ANY_REMAINING_NODE:
+        "Unable to connect to any remaining cluster node"
+    ,
+    codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE: lambda info:
+        (
+            "Remaining cluster nodes {_nodes} are unreachable, run 'pcs "
+            "cluster sync' on some now online node once they become available"
+        ).format(
+            _nodes=format_list(info["node_list"]),
+        )
+    ,
+    codes.NODES_TO_REMOVE_UNREACHABLE: lambda info:
+        (
+            "Removed nodes {_nodes} are unreachable, therefore it is not "
+            "possible to deconfigure them. Run 'pcs cluster destroy' on them "
+            "when available."
+        ).format(
+            _nodes=format_list(info["node_list"]),
+        )
+    ,
+    codes.NODE_USED_AS_TIE_BREAKER: lambda info:
+        (
+            "Node '{node}' with id '{node_id}' is used as a tie breaker for "
+            "a qdevice, run 'pcs quorum device update model "
+            "tie_breaker=<node id>' to change it"
+        ).format(**info)
+    ,
+    codes.COROSYNC_QUORUM_WILL_BE_LOST:
+        "This action will cause a loss of the quorum"
+    ,
+    codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK:
+        (
+            "Unable to determine whether this action will cause a loss of the "
+            "quorum"
+        )
     ,
 }

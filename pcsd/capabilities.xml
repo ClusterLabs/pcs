@@ -378,19 +378,11 @@
         daemon urls: remove_nodes
       </description>
     </capability>
-    <capability id="node.remove.local" in-pcs="1" in-pcsd="1">
-      <description>
-        Remove a node from a cluster on the local host only (pcs/pcsd internal
-        function).
-
-        pcs commands: cluster localnode remove
-        daemon urls: remove_node
-      </description>
-    </capability>
-    <capability id="node.remove.list" in-pcs="0" in-pcsd="1">
+    <capability id="node.remove.list" in-pcs="1" in-pcsd="1">
       <description>
         Remove several nodes from a cluster at once.
 
+        pcs commands: cluster node remove
         daemon urls: remove_nodes
       </description>
     </capability>

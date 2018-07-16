@@ -587,17 +587,12 @@ def add_node(
   return retval, out.join("\n") + stderror.join("\n")
 end
 
-def remove_node(auth_user, new_nodename, all=false)
-  if all
-    # we check for a quorum loss warning in remote_remove_nodes
-    out, stderror, retval = run_cmd(
-      auth_user, PCS, "cluster", "node", "remove", new_nodename, "--force"
-    )
-  else
-    out, stderror, retval = run_cmd(
-      auth_user, PCS, "cluster", "localnode", "remove", new_nodename
-    )
-  end
+def remove_node(auth_user, new_nodename)
+  # TODO update for the new node remove
+  # we check for a quorum loss warning in remote_remove_nodes
+  out, stderror, retval = run_cmd(
+    auth_user, PCS, "cluster", "node", "remove", new_nodename, "--force"
+  )
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
   corosync_nodes = get_corosync_nodes_names()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())

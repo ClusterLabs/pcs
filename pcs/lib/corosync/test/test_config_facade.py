@@ -595,6 +595,173 @@ class AddNodesTest(TestCase):
         ac(expected_config, facade.config.export())
 
 
+class RemoveNodes(TestCase):
+    def test_remove(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+
+            node {
+                ring0_addr: node3-addr1
+                name: node3
+                nodeid: 3
+            }
+
+            node {
+                ring0_addr: node5-addr1
+                name: node5
+                nodeid: 5
+            }
+        }
+
+        nodelist {
+            node {
+                ring0_addr: node3-addr1
+                ring1_addr: node3-addr2
+                name: node3
+                nodeid: 3
+            }
+
+            node {
+                ring0_addr: node4-addr1
+                ring1_addr: node4-addr2
+                name: node4
+                nodeid: 4
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_nodes(["node3", "node4", "nodeX"])
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+
+            node {
+                ring0_addr: node5-addr1
+                name: node5
+                nodeid: 5
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+    def test_enable_two_nodes(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+
+            node {
+                ring0_addr: node3-addr1
+                name: node3
+                nodeid: 3
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_nodes(["node3"])
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+            two_node: 1
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+    def test_disable_two_nodes(self):
+        config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring0_addr: node2-addr1
+                name: node2
+                nodeid: 2
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+            two_node: 1
+        }
+        """)
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_nodes(["node2"])
+        expected_config = outdent("""\
+        nodelist {
+            node {
+                ring0_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+        }
+
+        quorum {
+            provider: corosync_votequorum
+        }
+        """)
+        ac(expected_config, facade.config.export())
+
+
 class GetQuorumOptionsTest(TestCase):
     def test_no_quorum(self):
         config = ""

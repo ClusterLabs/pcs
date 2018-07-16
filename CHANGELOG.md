@@ -9,6 +9,8 @@
   versions has been removed.
 - `pcs resource failcount reset` command has been removed as `pcs resource
   cleanup` is doing exactly the same job. ([rhbz#1427273])
+- `pcs cluster node delete`, a deprecated alias to `pcs cluster node remove`,
+  has been removed
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
@@ -25,6 +27,9 @@
 - Improve `pcs quorum device add` usage and man page ([rhbz#1476862])
 - Removing resources using web UI when the operation takes longer than expected
   ([rhbz#1579911])
+- Removing a cluster node no longer leaves the node in the CIB and therefore
+  cluster status even if the removal is run on the node which is being removed
+  ([rhbz#1595829])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -55,6 +60,12 @@
   - Node names are now supported.
   - The syntax of the command has been changed to accommodate new features and
     to be consistent with other pcs commands.
+- The `pcs cluster node remove` has been overhauled ([rhbz#1158816],
+  [rhbz#1595829]):
+  - It works with Corosync 3.x only and supports knet as well as udp/udpu.
+  - It is now possible to remove more than one node at once.
+  - Removing a cluster node no longer leaves the node in the CIB and therefore
+    cluster status even if the removal is run on the node which is being removed
 - Node names are fully supported now and are no longer coupled with node
   addresses. It is possible to set up a cluster where Corosync communicates
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])
@@ -84,6 +95,7 @@
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
+[rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829
 
 
 ## [0.9.163] - 2018-02-20

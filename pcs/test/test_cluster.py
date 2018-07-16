@@ -455,17 +455,6 @@ class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
         )
 
-class NodeRemove(unittest.TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.pcs_runner = PcsRunner()
-
-    def test_fail_when_node_does_not_exists(self):
-        self.assert_pcs_fail(
-            "cluster node remove not-existent --force", #
-            "Error: node 'not-existent' does not appear to exist in"
-                " configuration\n"
-        )
-
 def _node(name, **kwargs):
     """ node dictionary fixture """
     return dict(name=name, **kwargs)

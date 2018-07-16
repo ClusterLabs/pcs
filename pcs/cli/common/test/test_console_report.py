@@ -1400,13 +1400,26 @@ class UseCommandNodeRemoveGuest(NameBuildTest):
 
 class NodeRemoveInPacemakerFailed(NameBuildTest):
     code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
-    def test_build_messages(self):
-        self.assert_message_from_info(
-            "unable to remove node 'NODE' from pacemaker: reason",
-            {
-                "node_name": "NODE",
-                "reason": "reason"
-            }
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Unable to remove node(s) 'NODE' from pacemaker: reason",
+            reports.node_remove_in_pacemaker_failed(
+                ["NODE"],
+                reason="reason"
+            )
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_report(
+            (
+                "node-a: Unable to remove node(s) 'NODE1', 'NODE2' from "
+                "pacemaker: reason"
+            ),
+            reports.node_remove_in_pacemaker_failed(
+                ["NODE1", "NODE2"],
+                node="node-a",
+                reason="reason"
+            )
         )
 
 class NodeToClearIsStillInCluster(NameBuildTest):
@@ -2927,4 +2940,54 @@ class CorosyncConfigReloadError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to reload corosync configuration: different reason",
             reports.corosync_config_reload_error("different reason"),
+        )
+
+class CannotRemoveAllClusterNodes(NameBuildTest):
+    code = codes.CANNOT_REMOVE_ALL_CLUSTER_NODES
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "No nodes would be left in the cluster, if you intend to "
+                "destroy the whole cluster, run 'pcs cluster destroy --all' "
+                "instead"
+            ),
+            reports.cannot_remove_all_cluster_nodes()
+        )
+
+class NodeUsedAsTieBreaker(NameBuildTest):
+    code = codes.NODE_USED_AS_TIE_BREAKER
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Node 'node2' with id '2' is used as a tie breaker for a "
+                "qdevice, run 'pcs quorum device update model "
+                "tie_breaker=<node id>' to change it"
+            ),
+            reports.node_used_as_tie_breaker("node2", 2)
+        )
+
+class UnableToConnectToAllRemainingNode(NameBuildTest):
+    code = codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Remaining cluster nodes 'node0', 'node1', 'node2' are "
+                "unreachable, run 'pcs cluster sync' on some now online node "
+                "once they become available"
+            ),
+            reports.unable_to_connect_to_all_remaining_node(
+                ["node1", "node0", "node2"]
+            )
+        )
+
+class NodesToRemoveUnreachable(NameBuildTest):
+    code = codes.NODES_TO_REMOVE_UNREACHABLE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Removed nodes 'node0', 'node1', 'node2' are unreachable, "
+                "therefore it is not possible to deconfigure them. Run 'pcs "
+                "cluster destroy' on them when available."
+            ),
+            reports.nodes_to_remove_unreachable(["node1", "node0", "node2"])
         )

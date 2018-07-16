@@ -747,8 +747,8 @@ Commands:
         --enable is specified configure cluster to start on the new node on
         boot.
 
-    node remove <node>
-        Shutdown specified node and remove it from the cluster.
+    node remove <node name> [<node name>]...
+        Shutdown specified nodes and remove them from the cluster.
 
     node add-remote <node host> [<node name>] [options]
            [op <operation action> <operation options> [<operation action>

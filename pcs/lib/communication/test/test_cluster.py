@@ -1,6 +1,5 @@
-from unittest import TestCase, skip
+from unittest import TestCase
 
-@skip("missing tests for pcs.lib.communication.cluster.Destroy")
 class Destroy(TestCase):
     """
     tested in:
@@ -9,4 +8,11 @@ class Destroy(TestCase):
         pcs.lib.commands.test.cluster.test_setup.Setup2NodeSuccessMinimal
         pcs.lib.commands.test.cluster.test_setup.SetupWithWait
         pcs.lib.commands.test.cluster.test_setup.Failures.test_cluster_destroy_failure
+    """
+
+class DestroyWarnOnFailure(TestCase):
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_remove_nodes.SuccessMinimal
+        pcs.lib.commands.test.cluster.test_remove_nodes.FailureClusterDestroy
     """

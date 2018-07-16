@@ -300,7 +300,7 @@ def remove_node(runner, node_name):
     if retval != 0:
         raise LibraryError(
             reports.node_remove_in_pacemaker_failed(
-                node_name,
+                [node_name],
                 reason=join_multilines([stderr, stdout])
             )
         )

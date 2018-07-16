@@ -30,10 +30,12 @@ from pcs.cli.common.reports import process_library_reports, build_report_message
 import pcs.cli.cluster.command as cluster_command
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
-from pcs.lib.communication.corosync import CheckCorosyncOffline
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.corosync import qdevice_net
+from pcs.lib.corosync import (
+    live as corosync_live,
+    qdevice_net,
+)
 from pcs.cli.common.console_report import warn, error
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
@@ -150,23 +152,21 @@ def cluster_cmd(argv):
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
-        if not argv:
-            usage.cluster(["node"])
-            sys.exit(1)
-
-        remote_node_command_map = {
-            "add-remote": cluster_command.node_add_remote,
+        node_command_map = {
+            "add": node_add,
             "add-guest": cluster_command.node_add_guest,
+            "add-outside": node_add_outside_cluster,
+            "add-remote": cluster_command.node_add_remote,
+            "clear": cluster_command.node_clear,
+            "remove": node_remove,
+            "remove-guest": cluster_command.node_remove_guest,
             "remove-remote": cluster_command.create_node_remove_remote(
                 resource.resource_remove
             ),
-            "remove-guest": cluster_command.node_remove_guest,
-            "clear": cluster_command.node_clear,
-            "add": node_add,
         }
-        if argv[0] in remote_node_command_map:
+        if argv and argv[0] in node_command_map:
             try:
-                remote_node_command_map[argv[0]](
+                node_command_map[argv[0]](
                     utils.get_library_wrapper(),
                     argv[1:],
                     utils.get_modifiers()
@@ -178,9 +178,8 @@ def cluster_cmd(argv):
                     e, "cluster", "node " + argv[0]
                 )
         else:
-            cluster_node(argv)
-    elif (sub_cmd == "localnode"):
-        cluster_localnode(argv)
+            usage.cluster(["node"])
+            sys.exit(1)
     elif (sub_cmd == "uidgid"):
         cluster_uidgid(argv)
     elif (sub_cmd == "corosync"):
@@ -202,6 +201,17 @@ def cluster_cmd(argv):
         else:
             usage.cluster()
             sys.exit(1)
+    elif (sub_cmd == "remove_nodes_from_cib"):
+        try:
+            remove_nodes_from_cib(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modifiers(),
+            )
+        except LibraryError as e:
+            process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
     else:
         usage.cluster()
         sys.exit(1)
@@ -355,13 +365,15 @@ def stop_cluster_nodes(nodes):
             if retval != 0:
                 error_list.append(node + ": " + data)
                 continue
-            quorum_info = utils.parse_quorumtool_output(data)
-            if quorum_info:
-                if not quorum_info["quorate"]:
+            try:
+                quorum_status = corosync_live.QuorumStatus.from_string(data)
+                if not quorum_status.is_quorate:
+                    # Get quorum status from a quorate node, non-quorate nodes
+                    # may provide inaccurate info. If no node is quorate, there
+                    # is no quorum to be lost and therefore no error to be
+                    # reported.
                     continue
-                if utils.is_node_stop_cause_quorum_loss(
-                    quorum_info, local=False, node_list=nodes
-                ):
+                if quorum_status.stopping_nodes_cause_quorum_loss(nodes):
                     utils.err(
                         "Stopping the node(s) will cause a loss of the quorum"
                         + ", use --force to override"
@@ -370,9 +382,10 @@ def stop_cluster_nodes(nodes):
                     # We have the info, no need to print errors
                     error_list = []
                     break
-            if not utils.is_node_offline_by_quorumtool_output(data):
-                error_list.append("Unable to get quorum status")
-            # else the node seems to be stopped already
+            except corosync_live.QuorumStatusException:
+                if not utils.is_node_offline_by_quorumtool_output(data):
+                    error_list.append(node + ": Unable to get quorum status")
+                # else the node seems to be stopped already
         if error_list:
             utils.err(
                 "Unable to determine whether stopping the nodes will cause "
@@ -447,7 +460,7 @@ def disable_cluster_nodes(nodes):
     if len(error_list) > 0:
         utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
-def destroy_cluster(argv, keep_going=False):
+def destroy_cluster(argv):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
@@ -460,17 +473,10 @@ def destroy_cluster(argv, keep_going=False):
         # destroy will stop any remaining cluster daemons
         node_errors = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)
         if node_errors:
-            if keep_going:
-                print(
-                    "Warning: unable to destroy cluster\n"
-                    +
-                    "\n".join(node_errors.values())
-                )
-            else:
-                utils.err(
-                    "unable to destroy cluster\n"
-                    + "\n".join(node_errors.values())
-                )
+            utils.err(
+                "unable to destroy cluster\n"
+                + "\n".join(node_errors.values())
+            )
 
 def stop_cluster(argv):
     if len(argv) > 0:
@@ -481,19 +487,22 @@ def stop_cluster(argv):
         output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
         # retval is 0 on success if node is not in partition with quorum
         # retval is 1 on error OR on success if node has quorum
-        quorum_info = utils.parse_quorumtool_output(output)
-        if quorum_info:
-            if utils.is_node_stop_cause_quorum_loss(quorum_info, local=True):
+        try:
+            if (
+                corosync_live.QuorumStatus.from_string(output)
+                    .stopping_local_node_cause_quorum_loss()
+            ):
                 utils.err(
                     "Stopping the node will cause a loss of the quorum"
                     + ", use --force to override"
                 )
-        elif not utils.is_node_offline_by_quorumtool_output(output):
-            utils.err(
-                "Unable to determine whether stopping the node will cause "
-                + "a loss of the quorum, use --force to override"
-            )
-        # else the node seems to be stopped already, proceed to be sure
+        except corosync_live.QuorumStatusException:
+            if not utils.is_node_offline_by_quorumtool_output(output):
+                utils.err(
+                    "Unable to determine whether stopping the node will cause "
+                    + "a loss of the quorum, use --force to override"
+                )
+            # else the node seems to be stopped already, proceed to be sure
 
     stop_all = (
         "--pacemaker" not in utils.pcs_options
@@ -734,90 +743,8 @@ def get_cib(argv):
         except IOError as e:
             utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
 
-
-def _ensure_cluster_is_offline_if_atb_should_be_enabled(
-    lib_env, node_num_modifier, skip_offline_nodes=False
-):
-    """
-    Check if cluster is offline if auto tie breaker should be enabled.
-    Raises LibraryError if ATB needs to be enabled cluster is not offline.
-
-    lib_env -- LibraryEnvironment
-    node_num_modifier -- number which wil be added to the number of nodes in
-        cluster when determining whenever ATB is needed.
-    skip_offline_nodes -- if True offline nodes will be skipped
-    """
-    if not lib_env.is_cman_cluster:
-        corosync_conf = lib_env.get_corosync_conf()
-        if lib_sbd.atb_has_to_be_enabled(
-            lib_env.cmd_runner(), corosync_conf, node_num_modifier
-        ):
-            print(
-                "Warning: auto_tie_breaker quorum option will be enabled to "
-                "make SBD fencing effecive after this change. Cluster has to "
-                "be offline to be able to make this change."
-            )
-            com_cmd = CheckCorosyncOffline(
-                lib_env.report_processor, skip_offline_nodes
-            )
-            com_cmd.set_targets(
-                lib_env.get_node_target_factory().get_target_list(
-                    corosync_conf.get_nodes_names(),
-                    skip_non_existing=skip_offline_nodes,
-                )
-            )
-            run_and_raise(lib_env.get_node_communicator(), com_cmd)
-
-
-def cluster_node(argv):
-    if len(argv) < 1:
-        usage.cluster(["node"])
-        sys.exit(1)
-
-    if argv[0] == "add-outside":
-        try:
-            node_add_outside_cluster(
-                utils.get_library_wrapper(),
-                argv[1:],
-                utils.get_modifiers(),
-            )
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "cluster", "node")
-        return
-    elif argv[0] not in ["remove","delete"]:
-        usage.cluster(["node"])
-        sys.exit(1)
-
-    if len(argv) != 2:
-        usage.cluster([" ".join(["node", argv[0]])])
-        sys.exit(1)
-
-    node = argv[1]
-    node0, dummy_node1 = utils.parse_multiring_node(node)
-    if not node0:
-        utils.err("missing ring 0 address of the node")
-
-    # allow to continue if removing a node with --force
-    if "--force" not in utils.pcs_options:
-        status, output = utils.checkAuthorization(node0)
-        if status != 0:
-            if status == 2:
-                msg = "pcsd is not running on {0}".format(node0)
-            elif status == 3:
-                msg = (
-                    "{node} is not yet authenticated "
-                    + " (try pcs host auth {node})"
-                ).format(node=node0)
-            else:
-                msg = output
-            msg += ", use --force to override"
-            utils.err(msg)
-
-    lib_env = utils.get_lib_env()
-    modifiers = utils.get_modifiers()
-    node_remove(lib_env, node0, modifiers)
-
 def node_add_outside_cluster(lib, argv, modifiers):
+    #pylint: disable=unreachable
     raise CmdLineInputError("not implemented") # TODO
     if len(argv) != 2:
         raise CmdLineInputError(
@@ -853,115 +780,14 @@ def node_add_outside_cluster(lib, argv, modifiers):
     except NodeCommunicationException as e:
         process_library_reports([node_communicator_exception_to_report_item(e)])
 
-def node_remove(lib_env, node0, modifiers):
-    if node0 not in utils.getNodesFromCorosyncConf():
-        utils.err(
-            "node '%s' does not appear to exist in configuration" % node0
-        )
-    if "--force" not in utils.pcs_options:
-        retval, data = utils.get_remote_quorumtool_output(node0)
-        if retval != 0:
-            utils.err(
-                "Unable to determine whether removing the node will cause "
-                + "a loss of the quorum, use --force to override\n"
-                + data
-            )
-        quorum_info = utils.parse_quorumtool_output(data)
-        if quorum_info:
-            if utils.is_node_stop_cause_quorum_loss(
-                quorum_info, local=False, node_list=[node0]
-            ):
-                utils.err(
-                    "Removing the node will cause a loss of the quorum"
-                    + ", use --force to override"
-                )
-        elif not utils.is_node_offline_by_quorumtool_output(data):
-            utils.err(
-                "Unable to determine whether removing the node will cause "
-                + "a loss of the quorum, use --force to override\n"
-                + data
-            )
-        # else the node seems to be stopped already, we're ok to proceed
-
-    try:
-        _ensure_cluster_is_offline_if_atb_should_be_enabled(
-            lib_env, -1, modifiers["skip_offline_nodes"]
-        )
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-
-    nodesRemoved = False
-    c_nodes = utils.getNodesFromCorosyncConf()
-    destroy_cluster([node0], keep_going=("--force" in utils.pcs_options))
-    for my_node in c_nodes:
-        if my_node == node0:
-            continue
-        retval, output = utils.removeLocalNode(my_node, node0)
-        if retval != 0:
-            utils.err(
-                "unable to remove %s on %s - %s" % (node0,my_node,output.strip()),
-                False
-            )
-        else:
-            if output[0] == 0:
-                print("%s: Corosync updated" % my_node)
-                nodesRemoved = True
-            else:
-                utils.err(
-                    "%s: Error executing command occured: %s" % (my_node, "".join(output[1])),
-                    False
-                )
-    if nodesRemoved == False:
-        utils.err("Unable to update any nodes")
-
-    output, retval = utils.reloadCorosync()
-    output, retval = utils.run(["crm_node", "--force", "-R", node0])
-    if utils.is_cman_with_udpu_transport():
-        print("Warning: Using udpu transport on a CMAN cluster, "
-            + "cluster restart is required to apply node removal")
-
-def cluster_localnode(argv):
-    if len(argv) != 2:
-        usage.cluster()
-        exit(1)
-    elif argv[0] in ["remove","delete"]:
-        node = argv[1]
-        if not utils.is_rhel6():
-            success = utils.removeNodeFromCorosync(node)
-        else:
-            success = utils.removeNodeFromClusterConf(node)
-
-# The removed node might be present in CIB. If it is, pacemaker will show it as
-# offline, no matter it's not in corosync / cman config any longer. We remove
-# the node by running 'crm_node -R <node>' on the node where the remove command
-# was ran. This only works if pacemaker is running. If it's not, we need
-# to remove the node manually from the CIB on all nodes.
-        cib_node_remove = None
-        if utils.usefile:
-            cib_node_remove = utils.filename
-        elif not utils.is_service_running(utils.cmd_runner(), "pacemaker"):
-            cib_node_remove = os.path.join(settings.cib_dir, "cib.xml")
-        if cib_node_remove:
-            original_usefile, original_filename = utils.usefile, utils.filename
-            utils.usefile = True
-            utils.filename = cib_node_remove
-            dummy_output, dummy_retval = utils.run([
-                "cibadmin",
-                "--delete-all",
-                "--force",
-                "--xpath=/cib/configuration/nodes/node[@uname='{0}']".format(
-                    node
-                ),
-            ])
-            utils.usefile, utils.filename = original_usefile, original_filename
-
-        if success:
-            print("%s: successfully removed!" % node)
-        else:
-            utils.err("unable to remove %s" % node)
-    else:
-        usage.cluster()
-        exit(1)
+def node_remove(lib, argv, modifiers):
+    if not argv:
+        raise CmdLineInputError()
+    lib.cluster.remove_nodes(
+        argv,
+        force_quorum_loss=modifiers["force"],
+        skip_offline=modifiers["skip_offline_nodes"],
+    )
 
 def cluster_uidgid(argv, silent_list = False):
     if len(argv) == 0:
@@ -1508,3 +1334,8 @@ def node_add(lib, argv, modifiers):
         force_unresolvable=modifiers["force"],
         skip_offline_nodes=modifiers["skip_offline_nodes"],
     )
+
+def remove_nodes_from_cib(lib, argv, modifiers):
+    if not argv:
+        raise CmdLineInputError("No nodes specified")
+    lib.cluster.remove_nodes_from_cib(argv)

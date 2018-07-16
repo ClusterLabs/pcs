@@ -305,8 +305,8 @@ Use 'watchdog' to specify a path to a watchdog on the new node, when SBD is enab
 
 If \fB\-\-start\fR is specified also start cluster on the new node, if \fB\-\-wait\fR is specified wait up to 'n' seconds for the new node to start. If \fB\-\-enable\fR is specified configure cluster to start on the new node on boot.
 .TP
-node remove <node>
-Shutdown specified node and remove it from the cluster.
+node remove <node name> [<node name>]...
+Shutdown specified nodes and remove them from the cluster.
 .TP
 node add\-remote <node host> [<node name>] [options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-wait\fR[=<n>]]
 Add the node to the cluster as a remote node. Sync all relevant configuration files to the new node. Start the node and configure it to start the cluster on boot. Options are port and reconnect_interval. Operations and meta belong to an underlying connection resource (ocf:pacemaker:remote). If \fB\-\-wait\fR is specified, wait up to 'n' seconds for the node to start.
