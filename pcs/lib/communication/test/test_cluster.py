@@ -1,4 +1,4 @@
-from unittest import TestCase, skip
+from unittest import TestCase
 
 class Destroy(TestCase):
     """
@@ -10,7 +10,9 @@ class Destroy(TestCase):
         pcs.lib.commands.test.cluster.test_setup.Failures.test_cluster_destroy_failure
     """
 
-@skip("missing tests for pcs.lib.communication.cluster.DestroyWarnOnFailure")
 class DestroyWarnOnFailure(TestCase):
-    def test_dummy(self):
-        pass
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_remove_nodes.SuccessMinimal
+        pcs.lib.commands.test.cluster.test_remove_nodes.FailureClusterDestroy
+    """

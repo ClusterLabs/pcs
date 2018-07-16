@@ -947,7 +947,7 @@ def node_remove_new(lib, argv, modifiers):
         raise CmdLineInputError()
     lib.cluster.remove_nodes(
         argv,
-        force=modifiers["force"],
+        force_quorum_loss=modifiers["force"],
         skip_offline=modifiers["skip_offline_nodes"],
     )
 

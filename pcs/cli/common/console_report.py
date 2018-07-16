@@ -1744,7 +1744,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to connect to any remaining cluster node"
     ,
     codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE: lambda info:
-        # TODO TESTS
         (
             "Remaining cluster nodes {_nodes} are unreachable, run 'pcs "
             "cluster sync' on some now online node once they become available"
@@ -1753,7 +1752,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
     codes.NODES_TO_REMOVE_UNREACHABLE: lambda info:
-        # TODO TESTS
         (
             "Removed nodes {_nodes} are unreachable, therefore it is not "
             "possible to deconfigure them. Run 'pcs cluster destroy' on them "

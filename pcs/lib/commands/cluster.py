@@ -9,7 +9,10 @@ from pcs.common import (
     ssl,
 )
 from pcs.common.node_communicator import HostNotFound
-from pcs.common.tools import format_environment_error
+from pcs.common.tools import (
+    format_environment_error,
+    join_multilines,
+)
 from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format, sbd
 from pcs.lib.booth import sync as booth_sync
@@ -1206,7 +1209,7 @@ def remove_nodes_from_cib(env, node_list):
     # using environment as this is a special case in which we have to edit CIB
     # file directly.
     for node in node_list:
-        dummy_stdout, dummy_stderr, retval = env.cmd_runner().run(
+        stdout, stderr, retval = env.cmd_runner().run(
             [
                 settings.cibadmin,
                 "--delete-all",
@@ -1216,4 +1219,9 @@ def remove_nodes_from_cib(env, node_list):
             env_extend={"CIB_file": os.path.join(settings.cib_dir, "cib.xml")}
         )
         if retval != 0:
-            raise LibraryError()
+            raise LibraryError(
+                reports.node_remove_in_pacemaker_failed(
+                    [node],
+                    reason=join_multilines([stderr, stdout])
+                )
+            )

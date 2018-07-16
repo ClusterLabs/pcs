@@ -3112,7 +3112,7 @@ def remove_nodes_from_cib(params, request, auth_user)
     check_permissions(auth_user, Permissions::WRITE)
     data = check_request_data_for_json(params, auth_user)
     PcsdExchangeFormat::validate_item_map_is_Hash("data_json", data)
-    PcsdExchangeFormat::validate_item_map_is_Array("node_list", data[:node_list])
+    PcsdExchangeFormat::validate_item_is_Array("node_list", data[:node_list])
 
     stdout, stderr, retval = run_cmd(
       auth_user, PCS, "cluster", "remove_nodes_from_cib", *data[:node_list]

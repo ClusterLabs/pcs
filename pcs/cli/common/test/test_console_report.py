@@ -2965,3 +2965,29 @@ class NodeUsedAsTieBreaker(NameBuildTest):
             ),
             reports.node_used_as_tie_breaker("node2", 2)
         )
+
+class UnableToConnectToAllRemainingNode(NameBuildTest):
+    code = codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Remaining cluster nodes 'node0', 'node1', 'node2' are "
+                "unreachable, run 'pcs cluster sync' on some now online node "
+                "once they become available"
+            ),
+            reports.unable_to_connect_to_all_remaining_node(
+                ["node1", "node0", "node2"]
+            )
+        )
+
+class NodesToRemoveUnreachable(NameBuildTest):
+    code = codes.NODES_TO_REMOVE_UNREACHABLE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Removed nodes 'node0', 'node1', 'node2' are unreachable, "
+                "therefore it is not possible to deconfigure them. Run 'pcs "
+                "cluster destroy' on them when available."
+            ),
+            reports.nodes_to_remove_unreachable(["node1", "node0", "node2"])
+        )
