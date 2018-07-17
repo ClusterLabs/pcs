@@ -16,3 +16,11 @@ class DestroyWarnOnFailure(TestCase):
         pcs.lib.commands.test.cluster.test_remove_nodes.SuccessMinimal
         pcs.lib.commands.test.cluster.test_remove_nodes.FailureClusterDestroy
     """
+
+class GetQuorumStatus(TestCase):
+    """
+    tested in:
+        pcs.lib.commands.test.cluster.test_remove_nodes.SuccessMinimal
+        pcs.lib.commands.test.cluster.test_remove_nodes.QuorumCheck
+        pcs.lib.commands.test.cluster.test_remove_nodes.FailureQuorumLoss
+    """

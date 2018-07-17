@@ -201,7 +201,10 @@ class SuccessMinimal(TestCase):
             .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name=sbd_installed_check)
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
@@ -589,6 +592,212 @@ class FailureAtbRequired(TestCase):
             ]
         )
 
+class QuorumCheck(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.expected_reports = []
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        staying_num = 5
+        removing_num = 4
+        self.existing_nodes = [
+            f"node{i}" for i in range(staying_num + removing_num)
+        ]
+        self.nodes_to_remove = self.existing_nodes[-removing_num:]
+        self.nodes_to_stay = self.existing_nodes[:-removing_num]
+        existing_corosync_nodes = [
+            node_fixture(node, i)
+            for i, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(self.existing_nodes)
+        (self.config
+            .corosync_conf.load_content(
+                corosync_conf_fixture(
+                    existing_corosync_nodes,
+                    _get_two_node(len(self.existing_nodes)),
+                )
+            )
+            .http.host.check_auth(node_labels=self.existing_nodes)
+        )
+        self.updated_corosync_conf_text = corosync_conf_fixture(
+            existing_corosync_nodes[:-removing_num]
+        )
+
+    def test_some_nodes_not_responding(self):
+        err_msg = "an error"
+        (self.config
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=self.nodes_to_remove[0],
+                        was_connected=False,
+                        errno=1,
+                        error_msg=err_msg,
+                    )],
+                    [dict(
+                        label=self.nodes_to_remove[1],
+                        response_code=400,
+                        output=err_msg,
+                    )],
+                    [dict(
+                        label=self.nodes_to_remove[2],
+                        output="Cannot initialize CMAP service",
+                    )],
+                    [dict(
+                        label=self.nodes_to_remove[3],
+                    )],
+                ]
+            )
+            .local.destroy_cluster(self.nodes_to_remove)
+            .local.distribute_and_reload_corosync_conf(
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
+            )
+        )
+
+        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ),
+            ]
+        )
+
+    def test_all_nodes_not_responding(self):
+        err_msg = "an error"
+        (self.config
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=node,
+                        was_connected=False,
+                        errno=1,
+                        error_msg=err_msg,
+                    )] for node in self.nodes_to_remove
+                ]
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+            )
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=node,
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ) for node in self.nodes_to_remove
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
+                    force_code=report_codes.FORCE_QUORUM_LOSS,
+                )
+            ]
+        )
+
+    def test_all_nodes_not_responding_forced(self):
+        err_msg = "an error"
+        (self.config
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=node,
+                        was_connected=False,
+                        errno=1,
+                        error_msg=err_msg,
+                    )] for node in self.nodes_to_remove
+                ]
+            )
+            .local.destroy_cluster(self.nodes_to_remove)
+            .local.distribute_and_reload_corosync_conf(
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
+            )
+        )
+
+        cluster.remove_nodes(
+            self.env_assist.get_env(),
+            self.nodes_to_remove,
+            force_quorum_loss=True,
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=node,
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ) for node in self.nodes_to_remove
+            ]
+            +
+            [
+                fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK)
+            ]
+        )
+
+    def test_all_nodes_not_running_cluster(self):
+        (self.config
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=node,
+                        output="Cannot initialize CMAP service",
+                    )] for node in self.nodes_to_remove
+                ]
+            )
+            .local.destroy_cluster(self.nodes_to_remove)
+            .local.distribute_and_reload_corosync_conf(
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
+            )
+            .http.pcmk.remove_nodes_from_cib(
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
+            )
+        )
+
+        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
+
+        self.env_assist.assert_reports(self.expected_reports)
+
 
 class FailureQuorumLoss(TestCase):
     # pylint: disable=too-many-instance-attributes
@@ -623,10 +832,25 @@ class FailureQuorumLoss(TestCase):
 
     def test_unable_to_get_quorum_status(self):
         err_msg = "Failure"
-        self.config.runner.corosync.quorum_status(
-            stdout=err_msg,
-            stderr=err_msg,
-            returncode=1,
+        self.config.http.host.get_quorum_status(
+            self.existing_nodes,
+            communication_list=[
+                [dict(
+                    label=self.nodes_to_remove[0],
+                    was_connected=False,
+                    errno=1,
+                    error_msg=err_msg,
+                )],
+                [dict(
+                    label=self.nodes_to_remove[1],
+                    response_code=400,
+                    output=err_msg,
+                )],
+                [dict(
+                    label=self.nodes_to_remove[2],
+                    output="not parsable output",
+                )],
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -640,9 +864,28 @@ class FailureQuorumLoss(TestCase):
             self.expected_reports
             +
             [
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                    reason=(
+                        "Missing required section(s): 'node_list', 'quorate', "
+                        "'quorum'"
+                    ),
+                    node=self.nodes_to_remove[2],
+                ),
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
-                    reason=err_msg,
                     force_code=report_codes.FORCE_QUORUM_LOSS,
                 ),
             ]
@@ -651,10 +894,25 @@ class FailureQuorumLoss(TestCase):
     def test_unable_to_get_quorum_status_force(self):
         err_msg = "Failure"
         (self.config
-            .runner.corosync.quorum_status(
-                stdout=err_msg,
-                stderr=err_msg,
-                returncode=1,
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=self.nodes_to_remove[0],
+                        was_connected=False,
+                        errno=1,
+                        error_msg=err_msg,
+                    )],
+                    [dict(
+                        label=self.nodes_to_remove[1],
+                        response_code=400,
+                        output=err_msg,
+                    )],
+                    [dict(
+                        label=self.nodes_to_remove[2],
+                        output="not parsable output",
+                    )],
+                ]
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -678,16 +936,38 @@ class FailureQuorumLoss(TestCase):
             +
             [
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/get_quorum_info",
                     reason=err_msg,
                 ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/get_quorum_info",
+                    reason=err_msg,
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                    reason=(
+                        "Missing required section(s): 'node_list', 'quorate', "
+                        "'quorum'"
+                    ),
+                    node=self.nodes_to_remove[2],
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK),
             ]
         )
 
     def test_unable_to_parse_quorum_status(self):
-        self.config.runner.corosync.quorum_status(
-            stdout="invalid format",
-            returncode=1,
+        self.config.http.host.get_quorum_status(
+            self.existing_nodes,
+            communication_list=[
+                [dict(
+                    label=node,
+                    output="not parsable output",
+                )] for node in self.nodes_to_remove
+            ]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -701,6 +981,17 @@ class FailureQuorumLoss(TestCase):
             self.expected_reports
             +
             [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                    reason=(
+                        "Missing required section(s): 'node_list', 'quorate', "
+                        "'quorum'"
+                    ),
+                    node=node,
+                ) for node in self.nodes_to_remove
+            ]
+            +
+            [
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
                     force_code=report_codes.FORCE_QUORUM_LOSS,
@@ -710,9 +1001,14 @@ class FailureQuorumLoss(TestCase):
 
     def test_unable_to_parse_quorum_status_force(self):
         (self.config
-            .runner.corosync.quorum_status(
-                stdout="invalid format",
-                returncode=1,
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [dict(
+                        label=node,
+                        output="not parsable output",
+                    )] for node in self.nodes_to_remove
+                ]
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -734,13 +1030,25 @@ class FailureQuorumLoss(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                    reason=(
+                        "Missing required section(s): 'node_list', 'quorate', "
+                        "'quorum'"
+                    ),
+                    node=node,
+                ) for node in self.nodes_to_remove
+            ]
+            +
             [fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK)]
         )
 
     def test_quorum_will_be_lost_force(self):
         (self.config
-            .runner.corosync.quorum_status(
-                self.nodes_to_stay + self.nodes_to_remove
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1]
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -766,8 +1074,9 @@ class FailureQuorumLoss(TestCase):
         )
 
     def test_quorum_will_be_lost(self):
-        self.config.runner.corosync.quorum_status(
-            self.nodes_to_stay + self.nodes_to_remove
+        self.config.http.host.get_quorum_status(
+            self.existing_nodes,
+            node_labels=self.nodes_to_remove[:1]
         )
 
         self.env_assist.assert_raise_library_error(
@@ -815,7 +1124,10 @@ class FailureRemoveFromCib(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
@@ -980,7 +1292,10 @@ class FailureCorosyncReload(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
             .http.corosync.set_corosync_conf(
                 corosync_conf_fixture(
@@ -1209,7 +1524,10 @@ class FailureCorosyncConfDistribution(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
         )
         self.expected_reports.extend(
@@ -1333,7 +1651,10 @@ class FailureClusterDestroy(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
         )
         self.updated_corosync_conf_text = corosync_conf_fixture(
             existing_corosync_nodes[:-removing_num]
@@ -1644,7 +1965,10 @@ class OfflineNodes(TestCase):
             ])
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -1692,7 +2016,10 @@ class OfflineNodes(TestCase):
             ])
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
@@ -1752,7 +2079,22 @@ class OfflineNodes(TestCase):
             ])
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [{
+                        "label": self.nodes_to_remove[0],
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": "an error",
+                    }],
+                    [{
+                        "label": self.nodes_to_remove[1],
+                        "response_code": 400,
+                        "output": "an error",
+                    }],
+                ]
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -1780,7 +2122,19 @@ class OfflineNodes(TestCase):
                     command="remote/check_auth",
                     reason="an error"
                 ),
-                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/get_quorum_info",
+                    reason="an error"
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.nodes_to_remove[1],
+                    command="remote/get_quorum_info",
+                    reason="an error"
+                ),
+                fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK),
             ]
         )
 
@@ -1805,7 +2159,10 @@ class OfflineNodes(TestCase):
             ])
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -1853,18 +2210,31 @@ class OfflineNodes(TestCase):
             ])
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                communication_list=[
+                    [{
+                        "label": self.nodes_to_remove[0],
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": "an error",
+                    }],
+                    [{
+                        "label": self.nodes_to_remove[1],
+                    }],
+                ]
+            )
             .http.host.cluster_destroy(
                 communication_list=[
-                {
-                    "label": self.nodes_to_remove[0],
-                    "was_connected": False,
-                    "errno": 7,
-                    "error_msg": "an error",
-                },
-                {
-                    "label": self.nodes_to_remove[1],
-                },
+                    {
+                        "label": self.nodes_to_remove[0],
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": "an error",
+                    },
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
             .local.distribute_and_reload_corosync_conf(
@@ -1892,6 +2262,12 @@ class OfflineNodes(TestCase):
                 fixture.warn(
                     report_codes.OMITTING_NODE,
                     node=self.nodes_to_remove[0],
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.nodes_to_remove[0],
+                    command="remote/get_quorum_info",
+                    reason="an error"
                 ),
                 fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
                 fixture.info(
@@ -1979,7 +2355,10 @@ class OfflineNodes(TestCase):
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -2011,7 +2390,10 @@ class OfflineNodes(TestCase):
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
@@ -2055,7 +2437,10 @@ class OfflineNodes(TestCase):
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=[],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -2075,7 +2460,7 @@ class OfflineNodes(TestCase):
                     force_code=report_codes.SKIP_OFFLINE_NODES,
                     host_list=self.nodes_to_remove
                 ),
-                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK),
             ]
         )
 
@@ -2087,7 +2472,10 @@ class OfflineNodes(TestCase):
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=[],
+            )
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes[:-self.removing_num],
@@ -2114,7 +2502,7 @@ class OfflineNodes(TestCase):
                     report_codes.HOST_NOT_FOUND,
                     host_list=self.nodes_to_remove
                 ),
-                fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
+                fixture.warn(report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK),
                 fixture.warn(
                     report_codes.NODES_TO_REMOVE_UNREACHABLE,
                     node_list=self.nodes_to_remove
@@ -2124,13 +2512,16 @@ class OfflineNodes(TestCase):
 
     def test_some_removed_unknown(self):
         (self.config
-            .env.set_known_nodes(self.nodes_to_stay + [self.nodes_to_remove[0]])
+            .env.set_known_nodes(self.nodes_to_stay + [self.nodes_to_remove[1]])
             .http.host.check_auth(
-                node_labels=(self.nodes_to_stay + [self.nodes_to_remove[0]])
+                node_labels=(self.nodes_to_stay + [self.nodes_to_remove[1]])
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=[self.nodes_to_remove[1]],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -2148,7 +2539,7 @@ class OfflineNodes(TestCase):
                 fixture.error(
                     report_codes.HOST_NOT_FOUND,
                     force_code=report_codes.SKIP_OFFLINE_NODES,
-                    host_list=[self.nodes_to_remove[1]]
+                    host_list=[self.nodes_to_remove[0]]
                 ),
                 fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST),
             ]
@@ -2162,7 +2553,10 @@ class OfflineNodes(TestCase):
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .runner.corosync.quorum_status(self.existing_nodes)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
+            )
             .local.destroy_cluster([self.nodes_to_remove[0]])
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(

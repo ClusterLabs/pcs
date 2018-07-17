@@ -55,7 +55,6 @@ from pcs.lib.corosync import (
     config_facade,
     config_validators,
     constants as corosync_constants,
-    live as corosync_live,
     qdevice_net,
 )
 from pcs.lib.env_tools import get_existing_nodes_names
@@ -1081,6 +1080,10 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
     staying_online_target_list = [
         target for target in online_target_list if target.label not in node_list
     ]
+    targets_to_remove = [
+        target for target in cluster_nodes_target_list
+        if target.label in node_list
+    ]
     if not staying_online_target_list:
         report_processor.report(
             reports.unable_to_connect_to_any_remaining_node()
@@ -1118,7 +1121,10 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
         com_cmd.set_targets(staying_online_target_list)
         run_com(env.get_node_communicator(), com_cmd)
     else:
-        # quorum check - local
+        # Check if removing the nodes would cause quorum loss. We ask the nodes
+        # to be removed for their view of quorum. If they are all stopped or
+        # not in a quorate partition, their removal cannot cause quorum loss.
+        # That's why we ask them and not the remaining nodes.
         # example: 5-node cluster, 3 online nodes, removing one online node,
         # results in 4-node cluster with 2 online nodes => quorum lost
         # Check quorum loss only if ATB does not need to be enabled. If it is
@@ -1126,20 +1132,20 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
         forceable_report_creator = reports.get_problem_creator(
             report_codes.FORCE_QUORUM_LOSS, force_quorum_loss
         )
-        try:
-            if corosync_live.QuorumStatus.from_string(
-                corosync_live.get_quorum_status_text(env.cmd_runner())
-            ).stopping_nodes_cause_quorum_loss(node_list):
+        com_cmd = cluster.GetQuorumStatus(report_processor)
+        com_cmd.set_targets(targets_to_remove)
+        failures, quorum_status = run_com(env.get_node_communicator(), com_cmd)
+        if quorum_status:
+            if quorum_status.stopping_nodes_cause_quorum_loss(node_list):
                 report_processor.report(
                     forceable_report_creator(
                         reports.corosync_quorum_will_be_lost
                     )
                 )
-        except corosync_live.QuorumStatusException as e:
+        elif failures or not targets_to_remove:
             report_processor.report(
                 forceable_report_creator(
                     reports.corosync_quorum_loss_unable_to_check,
-                    reason=e.reason,
                 )
             )
 
@@ -1153,10 +1159,6 @@ def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
         report_processor.report(
             reports.nodes_to_remove_unreachable(unknown_to_remove)
         )
-    targets_to_remove = [
-        target for target in cluster_nodes_target_list
-        if target.label in node_list
-    ]
     if targets_to_remove:
         com_cmd = cluster.DestroyWarnOnFailure(report_processor)
         com_cmd.set_targets(targets_to_remove)
@@ -1194,7 +1196,6 @@ def remove_nodes_from_cib(env, node_list):
     node_list iterable -- names of nodes to remove
     """
     # TODO: more advanced error handling
-    # TODO: Tests
     if not env.is_cib_live:
         raise LibraryError(reports.live_environment_required(["CIB"]))
 

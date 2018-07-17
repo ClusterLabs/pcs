@@ -1,6 +1,7 @@
 import json
 
 from pcs import settings
+from pcs.test.tools.misc import outdent
 from pcs.test.tools.command_env.mock_node_communicator import (
     place_communication,
     place_multinode_call,
@@ -228,3 +229,53 @@ class HostShortcuts(object):
             communication_list,
             action="remote/pacemaker_node_status",
         )
+
+    def get_quorum_status(
+        self, node_list=None, node_labels=None, communication_list=None,
+        name="http.host.get_quorum_status",
+    ):
+        output = ""
+        if node_list:
+            output = outdent("""\
+            Quorum information
+            ------------------
+            Date:             Fri Jan 16 13:03:28 2015
+            Quorum provider:  corosync_votequorum
+            Nodes:            {nodes_num}
+            Node ID:          1
+            Ring ID:          19860
+            Quorate:          Yes\n
+            Votequorum information
+            ----------------------
+            Expected votes:   {nodes_num}
+            Highest expected: {nodes_num}
+            Total votes:      {nodes_num}
+            Quorum:           {quorum_num}
+            Flags:            Quorate\n
+            Membership information
+            ----------------------
+                Nodeid      Votes    Qdevice Name
+            {nodes}\
+            """).format(
+                nodes_num=len(node_list),
+                quorum_num=(len(node_list)//2)+1,
+                nodes="".join([
+                    _quorum_status_node_fixture(node_id, node)
+                    for node_id, node in enumerate(node_list, 1)
+                ])
+            )
+
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/get_quorum_info",
+            output=output,
+        )
+
+def _quorum_status_node_fixture(node_id, node_name, votes=1, is_local=False):
+    _local = " (local)" if is_local else ""
+    return (
+        f"         {node_id}          {votes}         NR {node_name}{_local}\n"
+    )

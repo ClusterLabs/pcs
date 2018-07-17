@@ -1,8 +1,10 @@
 from pcs.common.node_communicator import RequestData
 from pcs.lib import reports
+from pcs.lib.corosync import live as corosync_live
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
+    OneByOneStrategyMixin,
     RunRemotelyBase,
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
@@ -54,3 +56,44 @@ class DestroyWarnOnFailure(
             self._report(
                 reports.nodes_to_remove_unreachable(self._unreachable_nodes)
             )
+
+
+class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
+    _quorum_status = None
+    _has_failure = False
+
+    def _get_request_data(self):
+        return RequestData("remote/get_quorum_info")
+
+    def _process_response(self, response):
+        report = response_to_report_item(
+            response, severity=ReportItemSeverity.WARNING
+        )
+        node = response.request.target.label
+        if report is not None:
+            self._has_failure = True
+            self._report(report)
+            return self._get_next_list()
+        if response.data.strip() == "Cannot initialize CMAP service":
+            # corosync is not running on the node, this is OK
+            return self._get_next_list()
+        try:
+            quorum_status = corosync_live.QuorumStatus.from_string(
+                response.data
+            )
+            if not quorum_status.is_quorate:
+                return self._get_next_list()
+            self._quorum_status = quorum_status
+        except corosync_live.QuorumStatusParsingException as e:
+            self._has_failure = True
+            self._report(
+                reports.corosync_quorum_get_status_error(
+                    e.reason,
+                    node=node,
+                    severity=ReportItemSeverity.WARNING,
+                )
+            )
+            return self._get_next_list()
+
+    def on_complete(self):
+        return self._has_failure, self._quorum_status

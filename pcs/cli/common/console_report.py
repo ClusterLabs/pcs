@@ -628,8 +628,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.COROSYNC_QUORUM_GET_STATUS_ERROR: lambda info:
-        "Unable to get quorum status: {reason}"
-        .format(**info)
+        "{_node}Unable to get quorum status: {reason}"
+        .format(
+            _node=format_optional(info["node"], "{}: "),
+            **info
+        )
     ,
 
     codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR: lambda info:

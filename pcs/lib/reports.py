@@ -841,15 +841,22 @@ def corosync_running_on_node_fail(node):
         info={"node": node}
     )
 
-def corosync_quorum_get_status_error(reason):
+def corosync_quorum_get_status_error(
+    reason, node=None, severity=ReportItemSeverity.ERROR,
+):
     """
-    unable to get runtime status of quorum on local node
-    string reason an error message
+    unable to get runtime status of quorum
+
+    string reason -- an error message
+    string node -- a node where the error occurred, local node if not specified
+    string severity -- report item severity
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+        severity,
         info={
             "reason": reason,
+            "node": node,
         }
     )
 
@@ -3447,21 +3454,16 @@ def corosync_quorum_will_be_lost(
     )
 
 def corosync_quorum_loss_unable_to_check(
-    reason, severity=ReportItemSeverity.ERROR, forceable=None,
+    severity=ReportItemSeverity.ERROR, forceable=None,
 ):
     """
     It is not possible to check if ongoing action will cause loss of the quorum
-    in the cluster due to specified reason.
 
-    string reason -- reason why it's not possible to perform the check
     string severity -- report item severity
     mixed forceable -- is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
         severity,
-        info=dict(
-            reason=reason,
-        ),
         forceable=forceable,
     )

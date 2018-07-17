@@ -2991,3 +2991,17 @@ class NodesToRemoveUnreachable(NameBuildTest):
             ),
             reports.nodes_to_remove_unreachable(["node1", "node0", "node2"])
         )
+
+class CorosyncQuorumGetStatusError(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_GET_STATUS_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to get quorum status: a reason",
+            reports.corosync_quorum_get_status_error("a reason")
+        )
+
+    def test_success_with_node(self):
+        self.assert_message_from_report(
+            "node1: Unable to get quorum status: a reason",
+            reports.corosync_quorum_get_status_error("a reason", "node1")
+        )
