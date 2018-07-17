@@ -417,7 +417,7 @@ class LibraryEnvironment(object):
         return NodeCommunicator(
             self.logger,
             self.report_processor,
-            self.__get_auth_tokens(),
+            self.__get_token_file()["tokens"],
             self.user_login,
             self.user_groups,
             self._request_timeout
