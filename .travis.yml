@@ -1,0 +1,30 @@
+dist: trusty
+sudo: false
+language: python
+matrix:
+  include:
+    - env: TOXENV=py36
+      python: 3.6
+    - language: ruby
+      rvm: 2.5
+install:
+  - |
+    if [ "${TRAVIS_PYTHON_VERSION}" != "" ]; then
+      pip install --upgrade setuptools
+      pip install --upgrade tox
+    else
+      pushd pcsd
+      gem install bundler
+      rm -f Gemfile.lock
+      bundle install --path vendor/bundle
+      popd
+    fi
+script:
+  - |
+    if [ "${TRAVIS_PYTHON_VERSION}" != "" ]; then
+      tox
+    else
+      pushd pcsd
+      bundle exec make -C test
+      popd
+    fi
