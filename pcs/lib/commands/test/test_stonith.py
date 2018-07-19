@@ -49,11 +49,11 @@ class Create(TestCase):
                 agent_filename="stonith_agent_fence_simple.xml"
             )
             .runner.cib.load()
-            .runner.pcmk.load_stonithd_metadata()
+            .runner.pcmk.load_fenced_metadata()
         )
 
     def tearDown(self):
-        StonithAgent.clear_stonithd_metadata_cache()
+        StonithAgent.clear_fenced_metadata_cache()
 
     def test_minimal_success(self):
         self.config.env.push_cib(resources=self.expected_cib)
@@ -137,11 +137,11 @@ class CreateInGroup(TestCase):
                 agent_filename="stonith_agent_fence_simple.xml"
             )
             .runner.cib.load()
-            .runner.pcmk.load_stonithd_metadata()
+            .runner.pcmk.load_fenced_metadata()
         )
 
     def tearDown(self):
-        StonithAgent.clear_stonithd_metadata_cache()
+        StonithAgent.clear_fenced_metadata_cache()
 
     def test_minimal_success(self):
         self.config.env.push_cib(resources=self.expected_cib)

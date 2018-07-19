@@ -27,7 +27,7 @@ large_xml = """
                     name="target-role" value="Stopped"
                 />
             </meta_attributes>
-            <docker run-command="/usr/sbin/pacemaker_remoted"
+            <docker run-command="/usr/sbin/pacemaker-remoted"
                 image="user:remote"
                 options="--user=root --log-driver=journald" replicas="20"
             />

@@ -2043,16 +2043,16 @@ def get_cluster_properties_definition():
     }
     sources = [
         {
-            "name": "pengine",
-            "path": settings.pengine_binary
+            "name": "pacemaker-schedulerd",
+            "path": settings.pacemaker_schedulerd,
         },
         {
-            "name": "crmd",
-            "path": settings.crmd_binary
+            "name": "pacemaker-controld",
+            "path": settings.pacemaker_controld,
         },
         {
-            "name": "cib",
-            "path": settings.cib_binary
+            "name": "pacemaker-based",
+            "path": settings.pacemaker_based,
         }
     ]
     definition = {}

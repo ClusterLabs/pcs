@@ -95,7 +95,7 @@ def full_status():
 
 def status_stonith_check():
     # We should read the default value from pacemaker. However that may slow
-    # pcs down as we need to run 'pengine metadata' to get it.
+    # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
     stonith_enabled = True
     stonith_devices = []
     stonith_devices_id_action = []

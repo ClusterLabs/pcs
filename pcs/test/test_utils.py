@@ -1695,7 +1695,7 @@ class UtilsTest(TestCase):
                 "longdesc": "",
                 "type": "integer",
                 "default": "0",
-                "source": "pengine"
+                "source": "pacemaker-schedulerd"
             },
             "no-quorum-policy": {
                 "name": "no-quorum-policy",
@@ -1704,7 +1704,7 @@ class UtilsTest(TestCase):
                 "type": "enum",
                 "default": "stop",
                 "enum": ["stop", "freeze", "ignore", "suicide"],
-                "source": "pengine"
+                "source": "pacemaker-schedulerd"
             },
             "enable-acl": {
                 "name": "enable-acl",
@@ -1806,7 +1806,7 @@ class UtilsTest(TestCase):
                 "longdesc": "",
                 "type": "integer",
                 "default": "0",
-                "source": "pengine"
+                "source": "pacemaker-schedulerd"
             },
             "no-quorum-policy": {
                 "name": "no-quorum-policy",
@@ -1815,7 +1815,7 @@ class UtilsTest(TestCase):
                 "type": "enum",
                 "default": "stop",
                 "enum": ["stop", "freeze", "ignore", "suicide"],
-                "source": "pengine"
+                "source": "pacemaker-schedulerd"
             },
             "enable-acl": {
                 "name": "enable-acl",

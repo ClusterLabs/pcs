@@ -75,6 +75,8 @@
 - `--watchdog` and `--device` options of `pcs stonith sbd enable` and `pcs
   stonith sbd device setup` commands have been replaced with `watchdog` and
   `device` options respectively
+- Update pacemaker daemon names to match changes in pacemaker-2.0
+  ([rhbz#1573344])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -92,6 +94,7 @@
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
+[rhbz#1573344]: https://bugzilla.redhat.com/show_bug.cgi?id=1573344
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667

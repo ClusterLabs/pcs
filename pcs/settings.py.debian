@@ -1,8 +1,8 @@
 from pcs.settings_default import *
 corosync_log_file = "/var/log/corosync/corosync.log"
-pengine_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pengine"
-crmd_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/crmd"
-cib_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/cib"
-stonithd_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/stonithd"
+pacemaker_schedulerd = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pacemaker-schedulerd"
+pacemaker_controld = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pacemaker-controld"
+pacemaker_based = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pacemaker-based"
+pacemaker_fenced = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pacemaker-fenced"
 pcsd_exec_location = "/usr/share/pcsd/"
 sbd_config = "/etc/default/sbd"

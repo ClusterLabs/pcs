@@ -1,8 +1,8 @@
 <?xml version="1.0"?><!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
-<resource-agent name="stonithd">
+<resource-agent name="pacemaker-fenced">
  <version>1.0</version>
- <longdesc lang="en">This is a fake resource that details the instance attributes handled by stonithd.</longdesc>
- <shortdesc lang="en">Options available for all stonith resources</shortdesc>
+ <longdesc lang="en">Instance attributes available for all "stonith"-class resources and used by Pacemaker's fence daemon, formerly known as stonithd</longdesc>
+ <shortdesc lang="en">Instance attributes available for all "stonith"-class resources</shortdesc>
  <parameters>
   <parameter name="priority" unique="0">
     <shortdesc lang="en">The priority of the stonith resource. Devices are tried in order of highest priority to lowest.</shortdesc>
@@ -46,7 +46,7 @@ The overall delay is derived from a random delay value adding this static delay 
   </parameter>
   <parameter name="pcmk_action_limit" unique="0">
     <shortdesc lang="en">The maximum number of actions can be performed in parallel on this device</shortdesc>
-    <longdesc lang="en">Pengine property concurrent-fencing=true needs to be configured first.
+    <longdesc lang="en">Cluster property concurrent-fencing=true needs to be configured first.
 Then use this to specify the maximum number of actions can be performed in parallel on this device. -1 is unlimited.</longdesc>
     <content type="integer" default="1"/>
   </parameter>

@@ -636,13 +636,13 @@ class FakeAgentMetadata(Agent):
     pass
 
 
-class StonithdMetadata(FakeAgentMetadata):
+class FencedMetadata(FakeAgentMetadata):
     def get_name(self):
-        return "stonithd"
+        return "pacemaker-fenced"
 
 
     def _get_parameter(self, parameter_element):
-        parameter = super(StonithdMetadata, self)._get_parameter(
+        parameter = super(FencedMetadata, self)._get_parameter(
             parameter_element
         )
         # Metadata are written in such a way that a longdesc text is a
@@ -659,7 +659,7 @@ class StonithdMetadata(FakeAgentMetadata):
 
     def _load_metadata(self):
         stdout, stderr, dummy_retval = self._runner.run(
-            [settings.stonithd_binary, "metadata"]
+            [settings.pacemaker_fenced, "metadata"]
         )
         metadata = stdout.strip()
         if not metadata:
@@ -828,11 +828,11 @@ class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
-    _stonithd_metadata = None
+    _fenced_metadata = None
 
     @classmethod
-    def clear_stonithd_metadata_cache(cls):
-        cls._stonithd_metadata = None
+    def clear_fenced_metadata_cache(cls):
+        cls._fenced_metadata = None
 
     def _prepare_name_parts(self, name):
         # pacemaker doesn't support stonith (nor resource) agents with : in type
@@ -849,7 +849,7 @@ class StonithAgent(CrmAgent):
                 super(StonithAgent, self).get_parameters()
             )
             +
-            self._get_stonithd_metadata().get_parameters()
+            self._get_fenced_metadata().get_parameters()
         )
 
     def validate_parameters(
@@ -914,14 +914,14 @@ class StonithAgent(CrmAgent):
                 filtered.append(param)
             # 'port' parameter is required by a fence agent, but it is filled
             # automatically by pacemaker based on 'pcmk_host_map' or
-            # 'pcmk_host_list' parameter (defined in stonithd metadata).
+            # 'pcmk_host_list' parameter (defined in fenced metadata).
             # Pacemaker marks the 'port' parameter as not required for us.
         return filtered
 
-    def _get_stonithd_metadata(self):
-        if not self.__class__._stonithd_metadata:
-            self.__class__._stonithd_metadata = StonithdMetadata(self._runner)
-        return self.__class__._stonithd_metadata
+    def _get_fenced_metadata(self):
+        if not self.__class__._fenced_metadata:
+            self.__class__._fenced_metadata = FencedMetadata(self._runner)
+        return self.__class__._fenced_metadata
 
     def get_provides_unfencing(self):
         # self.get_actions returns an empty list
