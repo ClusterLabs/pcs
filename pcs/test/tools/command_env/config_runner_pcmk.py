@@ -120,9 +120,9 @@ class PcmkShortcuts(object):
             instead=instead,
         )
 
-    def load_stonithd_metadata(
+    def load_fenced_metadata(
         self,
-        name="runner.pcmk.load_stonithd_metadata",
+        name="runner.pcmk.load_fenced_metadata",
         stdout=None,
         stderr="",
         returncode=0,
@@ -130,12 +130,12 @@ class PcmkShortcuts(object):
         before=None,
     ):
         """
-        Create a call for loading stonithd metadata - additional fence options
+        Create a call for loading fenced metadata - additional fence options
 
         string name -- the key of this call
-        string stdout -- stonithd stdout, default metadata if None
-        string stderr -- stonithd stderr
-        int returncode -- stonithd returncode
+        string stdout -- fenced stdout, default metadata if None
+        string stderr -- fenced stderr
+        int returncode -- fenced returncode
         string instead -- the key of a call instead of which this new call is to
             be placed
         string before -- the key of a call before which this new call is to be
@@ -144,10 +144,10 @@ class PcmkShortcuts(object):
         self.__calls.place(
             name,
             RunnerCall(
-                "/usr/libexec/pacemaker/stonithd metadata",
+                "/usr/libexec/pacemaker/pacemaker-fenced metadata",
                 stdout=(
                     stdout if stdout is not None
-                    else open(rc("stonithd_metadata.xml")).read()
+                    else open(rc("fenced_metadata.xml")).read()
                 ),
                 stderr=stderr,
                 returncode=returncode

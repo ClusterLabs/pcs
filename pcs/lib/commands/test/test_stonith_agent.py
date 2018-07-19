@@ -39,7 +39,7 @@ class TestListAgents(TestCase):
 
 
     def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
+        lib_ra.StonithAgent._fenced_metadata = None
 
 
     def test_list_all(self):
@@ -144,16 +144,8 @@ class TestListAgents(TestCase):
 
 
 @mock.patch.object(lib_ra.StonithAgent, "_load_metadata", autospec=True)
-@mock.patch.object(
-    lib_ra.StonithdMetadata,
-    "get_parameters",
-    lambda self: []
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(lib_ra.FencedMetadata, "get_parameters", lambda self: [])
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestDescribeAgent(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -180,7 +172,7 @@ class TestDescribeAgent(TestCase):
 
 
     def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
+        lib_ra.StonithAgent._fenced_metadata = None
 
 
     def test_success(self, mock_metadata):
@@ -241,12 +233,12 @@ class ValidateParameters(TestCase):
         self.get_metadata = patcher.start()
         self.get_metadata.return_value = self.metadata
 
-        patcher_stonithd = mock.patch.object(
-            lib_ra.StonithdMetadata, "_get_metadata"
+        patcher_fenced = mock.patch.object(
+            lib_ra.FencedMetadata, "_get_metadata"
         )
-        self.addCleanup(patcher_stonithd.stop)
-        self.get_stonithd_metadata = patcher_stonithd.start()
-        self.get_stonithd_metadata.return_value = etree.XML("""
+        self.addCleanup(patcher_fenced.stop)
+        self.get_fenced_metadata = patcher_fenced.start()
+        self.get_fenced_metadata.return_value = etree.XML("""
             <resource-agent>
                 <parameters />
             </resource-agent>

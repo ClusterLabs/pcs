@@ -9,8 +9,6 @@ KNOWN_HOSTS_FILE_NAME = 'known-hosts'
 PCSD_SETTINGS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_settings.conf"
 PCSD_USERS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_users.conf"
 
-PENGINE = "/usr/libexec/pacemaker/pengine"
-CIB_BINARY = '/usr/libexec/pacemaker/cib'
 CRM_MON = "/usr/sbin/crm_mon"
 CRM_NODE = "/usr/sbin/crm_node"
 CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"

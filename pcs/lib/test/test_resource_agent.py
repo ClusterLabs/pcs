@@ -1458,15 +1458,15 @@ class AgentMetadataValidateParameters(TestCase):
         )
 
 
-class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
+class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.agent = lib_ra.StonithdMetadata(self.mock_runner)
+        self.agent = lib_ra.FencedMetadata(self.mock_runner)
 
     def test_success(self):
         metadata = """
             <resource-agent>
-                <shortdesc>stonithd test metadata</shortdesc>
+                <shortdesc>pacemaker-fenced test metadata</shortdesc>
             </resource-agent>
         """
         self.mock_runner.run.return_value = (metadata, "", 0)
@@ -1477,7 +1477,7 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/stonithd", "metadata"]
+            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
         )
 
     def test_failed_to_get_xml(self):
@@ -1487,13 +1487,13 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
             {
-                "agent": "stonithd",
+                "agent": "pacemaker-fenced",
                 "message": "some error",
             }
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/stonithd", "metadata"]
+            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
         )
 
     def test_invalid_xml(self):
@@ -1503,20 +1503,20 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
             {
-                "agent": "stonithd",
+                "agent": "pacemaker-fenced",
                 "message": start_tag_error_text(),
             }
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/stonithd", "metadata"]
+            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
         )
 
 
 @patch_agent_object("_get_metadata")
-class StonithdMetadataGetParametersTest(TestCase):
+class FencedMetadataGetParametersTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.StonithdMetadata(
+        self.agent = lib_ra.FencedMetadata(
             mock.MagicMock(spec_set=CommandRunner)
         )
 
@@ -1697,7 +1697,7 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
     def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
+        lib_ra.StonithAgent._fenced_metadata = None
 
     def test_success(self):
         metadata = """
@@ -1734,7 +1734,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
         )
 
     def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
+        lib_ra.StonithAgent._fenced_metadata = None
 
     def test_success(self):
         metadata = """
@@ -1753,16 +1753,16 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                 </parameters>
             </resource-agent>
         """
-        stonithd_metadata = """
+        fenced_metadata = """
             <resource-agent>
                 <parameters>
-                    <parameter name="stonithd_param"/>
+                    <parameter name="fenced_param"/>
                 </parameters>
             </resource-agent>
         """
         self.mock_runner.run.side_effect = [
             (metadata, "", 0),
-            (stonithd_metadata, "", 0),
+            (fenced_metadata, "", 0),
         ]
 
         self.assertEqual(
@@ -1833,7 +1833,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "pcs_deprecated_warning": "",
                 },
                 {
-                    "name": "stonithd_param",
+                    "name": "fenced_param",
                     "longdesc": "",
                     "shortdesc": "",
                     "type": "string",
@@ -1860,7 +1860,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                  }
             ),
             mock.call(
-                ["/usr/libexec/pacemaker/stonithd", "metadata"]
+                ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
             ),
         ])
 
@@ -1874,7 +1874,7 @@ class StonithAgentMetadataGetProvidesUnfencingTest(TestCase):
         )
 
     def tearDown(self):
-        lib_ra.StonithAgent._stonithd_metadata = None
+        lib_ra.StonithAgent._fenced_metadata = None
 
     def test_true(self, mock_metadata):
         xml = """

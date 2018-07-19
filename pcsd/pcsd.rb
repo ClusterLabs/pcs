@@ -683,7 +683,7 @@ get '/managec/:cluster/cluster_properties' do
       definition = {
         'batch-limit' => {
           'name' => 'batch-limit',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => '0',
           'type' => 'integer',
           'shortdesc' => 'The number of jobs that pacemaker is allowed to execute in parallel.',
@@ -693,7 +693,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'no-quorum-policy' => {
           'name' => 'no-quorum-policy',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'stop',
           'type' => 'enum',
           'enum' => ['stop', 'freeze', 'ignore', 'suicide'],
@@ -708,7 +708,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'symmetric-cluster' => {
           'name' => 'symmetric-cluster',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'true',
           'type' => 'boolean',
           'shortdesc' => 'All resources can run anywhere by default.',
@@ -718,7 +718,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'stonith-enabled' => {
           'name' => 'stonith-enabled',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'true',
           'type' => 'boolean',
           'shortdesc' => 'Failed nodes are STONITH\'d',
@@ -728,7 +728,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'stonith-action' => {
           'name' => 'stonith-action',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'reboot',
           'type' => 'enum',
           'enum' => ['reboot', 'poweroff', 'off'],
@@ -739,7 +739,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'cluster-delay' => {
           'name' => 'cluster-delay',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => '60s',
           'type' => 'time',
           'shortdesc' => 'Round trip delay over the network (excluding action execution)',
@@ -749,7 +749,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'stop-orphan-resources' => {
           'name' => 'stop-orphan-resources',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'true',
           'type' => 'boolean',
           'shortdesc' => 'Should deleted resources be stopped',
@@ -759,7 +759,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'stop-orphan-actions' => {
           'name' => 'stop-orphan-actions',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'true',
           'type' => 'boolean',
           'shortdesc' => 'Should deleted actions be cancelled',
@@ -769,7 +769,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'start-failure-is-fatal' => {
           'name' => 'start-failure-is-fatal',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => 'true',
           'type' => 'boolean',
           'shortdesc' => 'Always treat start failures as fatal',
@@ -779,7 +779,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'pe-error-series-max' => {
           'name' => 'pe-error-series-max',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => '-1',
           'type' => 'integer',
           'shortdesc' => 'The number of PE inputs resulting in ERRORs to save',
@@ -789,7 +789,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'pe-warn-series-max' => {
           'name' => 'pe-warn-series-max',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => '5000',
           'type' => 'integer',
           'shortdesc' => 'The number of PE inputs resulting in WARNINGs to save',
@@ -799,7 +799,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'pe-input-series-max' => {
           'name' => 'pe-input-series-max',
-          'source' => 'pengine',
+          'source' => 'pacemaker-schedulerd',
           'default' => '4000',
           'type' => 'integer',
           'shortdesc' => 'The number of other PE inputs to save',
@@ -809,7 +809,7 @@ get '/managec/:cluster/cluster_properties' do
         },
         'enable-acl' => {
           'name' => 'enable-acl',
-          'source' => 'cib',
+          'source' => 'pacemaker-based',
           'default' => 'false',
           'type' => 'boolean',
           'shortdesc' => 'Enable CIB ACL',
