@@ -1312,7 +1312,7 @@ class FailOrWarnOp(ResourceTest):
             ,
             "Error: invalid resource operation option 'moni', allowed options"
                 " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
-                " interval-origin, name, on-fail, record-pending, requires,"
+                " interval-origin, name, on-fail, record-pending,"
                 " role, start-delay, timeout\n"
         )
 
@@ -1332,15 +1332,6 @@ class FailOrWarnOp(ResourceTest):
             ,
             "Error: 'abc' is not a valid role value, use Master, Slave,"
                 " Started, Stopped\n"
-        )
-
-    def test_fail_on_invalid_requires(self):
-        self.assert_pcs_fail_regardless_of_force(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor requires=Abc"
-            ,
-            "Error: 'Abc' is not a valid requires value, use fencing, nothing,"
-                " quorum, unfencing\n"
         )
 
     def test_fail_on_invalid_on_fail(self):

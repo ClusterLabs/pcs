@@ -156,3 +156,28 @@ class OperationAdd(
             "resource op add R start timeout=30 id=R",
             "Error: id 'R' is already in use, please specify another one\n"
         )
+
+    def test_unknown_option(self):
+        self.assert_pcs_fail(
+            "resource op add R start timeout=30 requires=quorum",
+            (
+                "Error: requires is not a valid op option (use --force to "
+                "override)\n"
+            )
+        )
+    def test_unknown_option_forced(self):
+        self.assert_effect(
+            "resource op add R start timeout=30 requires=quorum --force",
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                        <op id="R-start-interval-0s" interval="0s" name="start"
+                            requires="quorum" timeout="30"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )

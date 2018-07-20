@@ -956,7 +956,7 @@ def resource_operation_add(
     if "--force" not in utils.pcs_options:
         valid_attrs = ["id", "name", "interval", "description", "start-delay",
             "interval-origin", "timeout", "enabled", "record-pending", "role",
-            "requires", "on-fail", "OCF_CHECK_LEVEL"]
+            "on-fail", "OCF_CHECK_LEVEL"]
         valid_roles = ["Stopped", "Started", "Slave", "Master"]
         for key, value in op_properties:
             if key not in valid_attrs:

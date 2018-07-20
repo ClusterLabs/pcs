@@ -29,7 +29,6 @@ ATTRIBUTES = [
     "name",
     "on-fail",
     "record-pending",
-    "requires",
     "role",
     "start-delay",
     "timeout",
@@ -41,13 +40,6 @@ ROLE_VALUES = [
     "Started",
     "Slave",
     "Master",
-]
-
-REQUIRES_VALUES = [
-    "nothing",
-    "quorum",
-    "fencing",
-    "unfencing",
 ]
 
 ON_FAIL_VALUES = [
@@ -70,7 +62,6 @@ BOOLEAN_VALUES = [
 #normalize(key, value) -> normalized_value
 normalize = validate.option_value_normalization({
     "role": lambda value: value.lower().capitalize(),
-    "requires": lambda value: value.lower(),
     "on-fail": lambda value: value.lower(),
     "record-pending": lambda value: value.lower(),
     "enabled": lambda value: value.lower(),
@@ -131,7 +122,6 @@ def validate_operation_list(
     options_validators = [
         validate.is_required("name", "resource operation"),
         validate.value_in("role", ROLE_VALUES),
-        validate.value_in("requires", REQUIRES_VALUES),
         validate.value_in("on-fail", ON_FAIL_VALUES),
         validate.value_in("record-pending", BOOLEAN_VALUES),
         validate.value_in("enabled", BOOLEAN_VALUES),

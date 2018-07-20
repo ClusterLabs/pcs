@@ -82,6 +82,8 @@
   ([rhbz#1573344])
 - Watchdog devices are validated against a list provided by sbd
   ([rhbz#1578891])
+- Resource operation option `requires` is no longer accepted to match changes
+  in pacemaker-2.0 ([rhbz#1605185])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -106,6 +108,7 @@
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 [rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
+[rhbz#1605185]: https://bugzilla.redhat.com/show_bug.cgi?id=1605185
 
 
 ## [0.9.163] - 2018-02-20
