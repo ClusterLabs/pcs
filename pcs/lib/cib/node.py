@@ -85,7 +85,7 @@ def _create_node(tree, node_id, uname, node_type=None):
     etree tree -- node parent element
     string node_id -- node id
     string uname -- node name
-    string node_type -- optional node type (normal, member, ping, remote)
+    string node_type -- optional node type (member, ping, remote)
     """
     node = etree.SubElement(tree, "node", id=node_id, uname=uname)
     if node_type:

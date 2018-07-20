@@ -11,7 +11,6 @@ PCSD_USERS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_users.conf"
 
 CRM_MON = "/usr/sbin/crm_mon"
 CRM_NODE = "/usr/sbin/crm_node"
-CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
 COROSYNC_BINARIES = "/usr/sbin/"
 CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"

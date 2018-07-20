@@ -5,7 +5,7 @@
         <last_change time="Sun Jul  5 12:47:19 2015" user="" client="" origin="" />
         <stack type="corosync" />
         <current_dc present="true" version="1.1.12-a9c8177" name="node3" id="3" with_quorum="true" />
-        <nodes_configured number="3" expected_votes="unknown" />
+        <nodes_configured number="3" />
         <resources_configured number="24" />
     </summary>
     <nodes>

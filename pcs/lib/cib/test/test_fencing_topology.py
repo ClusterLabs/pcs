@@ -72,7 +72,7 @@ class StatusNodesMixin(object):
             <crm_mon version="1.1.15">
                 <summary>
                     <current_dc present="true" />
-                    <nodes_configured number="2" expected_votes="unknown" />
+                    <nodes_configured number="2" />
                     <resources_configured number="0" />
                 </summary>
                 <nodes>

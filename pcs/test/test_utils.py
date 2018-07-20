@@ -1672,14 +1672,14 @@ class UtilsTest(TestCase):
 
     def test_get_cluster_property_from_xml(self):
         el = ET.fromstring("""
-        <parameter name="default-resource-stickiness" unique="0">
+        <parameter name="an-integer-property" unique="0">
             <shortdesc lang="en"></shortdesc>
             <content type="integer" default="0"/>
             <longdesc lang="en"></longdesc>
         </parameter>
         """)
         expected = {
-            "name": "default-resource-stickiness",
+            "name": "an-integer-property",
             "shortdesc": "",
             "longdesc": "",
             "type": "integer",
@@ -1689,25 +1689,28 @@ class UtilsTest(TestCase):
 
     def test_get_cluster_property_default(self):
         definition = {
-            "default-resource-stickiness": {
-                "name": "default-resource-stickiness",
-                "shortdesc": "",
-                "longdesc": "",
+            "property-int": {
+                "name": "property-int",
+                "shortdesc": "int description",
+                "longdesc": "long int description",
                 "type": "integer",
                 "default": "0",
                 "source": "pacemaker-schedulerd"
             },
-            "no-quorum-policy": {
-                "name": "no-quorum-policy",
+            "property-enum": {
+                "name": "property-enum",
                 "shortdesc": "What to do when the cluster does not have quorum",
-                "longdesc": "What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide",
+                "longdesc": (
+                    "What to do when the cluster does not have quorum  "
+                    "Allowed values: stop, freeze, ignore, suicide"
+                ),
                 "type": "enum",
                 "default": "stop",
                 "enum": ["stop", "freeze", "ignore", "suicide"],
                 "source": "pacemaker-schedulerd"
             },
-            "enable-acl": {
-                "name": "enable-acl",
+            "property-bool": {
+                "name": "property-bool",
                 "shortdesc": "Enable CIB ACL",
                 "longdesc": "Enable CIB ACL",
                 "type": "boolean",
@@ -1716,17 +1719,15 @@ class UtilsTest(TestCase):
             }
         }
         self.assertEqual(
-            utils.get_cluster_property_default(
-                definition, "default-resource-stickiness"
-            ),
+            utils.get_cluster_property_default(definition, "property-int"),
             "0"
         )
         self.assertEqual(
-            utils.get_cluster_property_default(definition, "no-quorum-policy"),
+            utils.get_cluster_property_default(definition, "property-enum"),
             "stop"
         )
         self.assertEqual(
-            utils.get_cluster_property_default(definition, "enable-acl"),
+            utils.get_cluster_property_default(definition, "property-bool"),
             "false"
         )
         self.assertRaises(
@@ -1800,25 +1801,28 @@ class UtilsTest(TestCase):
 
     def test_validate_cluster_property(self):
         definition = {
-            "default-resource-stickiness": {
-                "name": "default-resource-stickiness",
-                "shortdesc": "",
-                "longdesc": "",
+            "property-int": {
+                "name": "property-int",
+                "shortdesc": "int description",
+                "longdesc": "long int description",
                 "type": "integer",
                 "default": "0",
                 "source": "pacemaker-schedulerd"
             },
-            "no-quorum-policy": {
-                "name": "no-quorum-policy",
+            "property-enum": {
+                "name": "property-enum",
                 "shortdesc": "What to do when the cluster does not have quorum",
-                "longdesc": "What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide",
+                "longdesc": (
+                    "What to do when the cluster does not have quorum  "
+                    "Allowed values: stop, freeze, ignore, suicide"
+                ),
                 "type": "enum",
                 "default": "stop",
                 "enum": ["stop", "freeze", "ignore", "suicide"],
                 "source": "pacemaker-schedulerd"
             },
-            "enable-acl": {
-                "name": "enable-acl",
+            "property-bool": {
+                "name": "property-bool",
                 "shortdesc": "Enable CIB ACL",
                 "longdesc": "Enable CIB ACL",
                 "type": "boolean",
@@ -1827,40 +1831,40 @@ class UtilsTest(TestCase):
             }
         }
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "default-resource-stickiness", "10"
+            definition, "property-int", "10"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "default-resource-stickiness", "-1"
+            definition, "property-int", "-1"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "no-quorum-policy", "freeze"
+            definition, "property-enum", "freeze"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "no-quorum-policy", "suicide"
+            definition, "property-enum", "suicide"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "enable-acl", "true"
+            definition, "property-bool", "true"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "enable-acl", "false"
+            definition, "property-bool", "false"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "enable-acl", "on"
+            definition, "property-bool", "on"
         ))
         self.assertTrue(utils.is_valid_cluster_property(
-            definition, "enable-acl", "OFF"
+            definition, "property-bool", "OFF"
         ))
         self.assertFalse(utils.is_valid_cluster_property(
-            definition, "default-resource-stickiness", "test"
+            definition, "property-int", "test"
         ))
         self.assertFalse(utils.is_valid_cluster_property(
-            definition, "default-resource-stickiness", "1.2"
+            definition, "property-int", "1.2"
         ))
         self.assertFalse(utils.is_valid_cluster_property(
-            definition, "no-quorum-policy", "invalid"
+            definition, "property-enum", "invalid"
         ))
         self.assertFalse(utils.is_valid_cluster_property(
-            definition, "enable-acl", "not"
+            definition, "property-bool", "not"
         ))
         self.assertRaises(
             utils.UnknownPropertyException,
