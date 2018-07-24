@@ -568,6 +568,7 @@ class NodeCommunicator(object):
         handler.setopt(pycurl.SSL_VERIFYHOST, 0)
         handler.setopt(pycurl.SSL_VERIFYPEER, 0)
         handler.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
+        handler.setopt(pycurl.HTTPHEADER, ["Expect: "])
         if cookies:
             handler.setopt(pycurl.COOKIE, ";".join(cookies).encode("utf-8"))
         if data:

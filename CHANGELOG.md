@@ -31,6 +31,8 @@
 - Removing a cluster node no longer leaves the node in the CIB and therefore
   cluster status even if the removal is run on the node which is being removed
   ([rhbz#1595829])
+- Possible race condition causing an HTTP 408 error when sending larger files
+  via pcs ([rhbz#1600169])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -103,6 +105,7 @@
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 [rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829
+[rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 
 
 ## [0.9.163] - 2018-02-20

@@ -388,6 +388,7 @@ def sendHTTPRequest(
     handler.setopt(pycurl.TIMEOUT_MS, int(timeout * 1000))
     handler.setopt(pycurl.SSL_VERIFYHOST, 0)
     handler.setopt(pycurl.SSL_VERIFYPEER, 0)
+    handler.setopt(pycurl.HTTPHEADER, ["Expect: "])
     if cookies:
         handler.setopt(pycurl.COOKIE, ";".join(cookies).encode("utf-8"))
     if data:
