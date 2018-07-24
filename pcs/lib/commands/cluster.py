@@ -379,8 +379,10 @@ def setup(
 
 def add_nodes(
     env, nodes, wait=False, start=False, enable=False, force=False,
-    force_unresolvable=False, skip_offline_nodes=False
+    force_unresolvable=False, skip_offline_nodes=False,
+    no_watchdog_validation=False,
 ):
+    # pylint: disable=too-many-locals
     """
     Add specified nodes to the local cluster
     Raise LibraryError on any error.
@@ -400,6 +402,8 @@ def add_nodes(
         treated as warnings
     skip_offline_nodes bool -- if True non fatal connection failures to other
         hosts are treated as warnings
+    no_watchdog_validation bool -- if True do not validate specified watchdogs
+        on remote hosts
     """
     _ensure_live_env(env) # raises if env is not live
 
@@ -604,12 +608,17 @@ def add_nodes(
 
     # Validate SBD on new nodes
     if is_sbd_enabled:
+        if no_watchdog_validation:
+            report_processor.report(reports.sbd_watchdog_validation_inactive())
         com_cmd = CheckSbd(report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
+            # Do not send watchdog if validation is turned off. Listing of
+            # available watchdogs in pcsd may restart the machine in some
+            # corner cases.
             com_cmd.add_request(
                 new_node_target,
-                watchdog=new_node["watchdog"],
+                watchdog="" if no_watchdog_validation else new_node["watchdog"],
                 device_list=new_node["devices"],
             )
         run_com(env.get_node_communicator(), com_cmd)

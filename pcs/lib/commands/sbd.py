@@ -119,7 +119,7 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
 def enable_sbd(
     lib_env, default_watchdog, watchdog_dict, sbd_options,
     default_device_list=None, node_device_dict=None, allow_unknown_opts=False,
-    ignore_offline_nodes=False,
+    ignore_offline_nodes=False, no_watchdog_validation=False,
 ):
     """
     Enable SBD on all nodes in cluster.
@@ -135,6 +135,8 @@ def enable_sbd(
         as value
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
+    no_watchdog_validation -- it True, do not validate existance of a watchdog
+        on the nodes
     """
     corosync_conf = lib_env.get_corosync_conf()
     node_list = corosync_conf.get_nodes_names()
@@ -183,11 +185,21 @@ def enable_sbd(
     online_targets = run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     # check if SBD can be enabled
+    if no_watchdog_validation:
+        lib_env.report_processor.report(
+            reports.sbd_watchdog_validation_inactive()
+        )
     com_cmd = CheckSbd(lib_env.report_processor)
     for target in online_targets:
         com_cmd.add_request(
             target,
-            full_watchdog_dict[target.label],
+            (
+                # Do not send watchdog if validation is turned off. Listing of
+                # available watchdogs in pcsd may restart the machine in some
+                # corner cases.
+                "" if no_watchdog_validation
+                else full_watchdog_dict[target.label]
+            ),
             full_device_dict[target.label] if using_devices else [],
         )
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -421,3 +433,25 @@ def set_message(lib_env, device, node_name, message):
         )
     lib_env.report_processor.process_list(report_item_list)
     sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
+
+
+def get_local_available_watchdogs(lib_env):
+    """
+    Returns available local watchdog devices.
+
+    lib_env LibraryEnvironment
+    """
+    return sbd.get_available_watchdogs(lib_env.cmd_runner())
+
+
+def test_local_watchdog(lib_env, watchdog=None):
+    """
+    Test local watchdog device by triggering it. System reset is expected. If
+    watchdog is not specified, available watchdog will be used if there is only
+    one.
+
+    lib_env LibraryEnvironment
+    watchdog string -- watchdog to trigger
+    """
+    lib_env.report_processor.report(reports.system_will_reset())
+    sbd.test_watchdog(lib_env.cmd_runner(), watchdog)

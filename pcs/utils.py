@@ -2220,6 +2220,7 @@ def get_modifiers():
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "wait": pcs_options.get("--wait", False),
+        "no_watchdog_validation": "--no-watchdog-validation" in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

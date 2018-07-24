@@ -3005,3 +3005,33 @@ class CorosyncQuorumGetStatusError(NameBuildTest):
             "node1: Unable to get quorum status: a reason",
             reports.corosync_quorum_get_status_error("a reason", "node1")
         )
+
+
+class SbdListWatchdogError(NameBuildTest):
+    code = codes.SBD_LIST_WATCHDOG_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to query available watchdogs from sbd: this is a reason",
+            reports.sbd_list_watchdog_error("this is a reason"),
+        )
+
+
+class SbdWatchdogNotSupported(NameBuildTest):
+    code = codes.SBD_WATCHDOG_NOT_SUPPORTED
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "node1: Watchdog '/dev/watchdog' is not supported (it may be a "
+                "software watchdog)"
+            ),
+            reports.sbd_watchdog_not_supported("node1", "/dev/watchdog"),
+        )
+
+
+class SbdWatchdogTestError(NameBuildTest):
+    code = codes.SBD_WATCHDOG_TEST_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to initialize test of the watchdog: some reason",
+            reports.sbd_watchdog_test_error("some reason"),
+        )

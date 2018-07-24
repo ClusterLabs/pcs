@@ -1142,6 +1142,162 @@ class AddNodeFull(TestCase):
 
         self.env_assist.assert_reports(self.expected_reports)
 
+    def test_watchdog_not_supported(self):
+        sbd_config = "SBD_DEVICE=/device\n"
+        (self.config
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
+            .runner.cib.load()
+            .local.read_sbd_config(sbd_config)
+            .http.host.check_auth(node_labels=self.existing_nodes)
+            .local.atb_needed(self.existing_nodes)
+            .local.get_host_info(self.new_nodes)
+            .http.sbd.check_sbd(
+                communication_list=[
+                    dict(
+                        label=node,
+                        output=json.dumps({
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "watchdog": {
+                                "exist": True,
+                                "path": _get_watchdog(node),
+                                "is_supported": False,
+                            },
+                            "device_list": [
+                                dict(
+                                    path=dev,
+                                    exist=True,
+                                    block_device=True
+                                ) for dev in _get_devices(node)
+                            ],
+                        }),
+                        param_list=[
+                            ("watchdog", _get_watchdog(node)),
+                            ("device_list", json.dumps(_get_devices(node))),
+                        ]
+                    ) for node in self.new_nodes
+                ],
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [
+                    dict(
+                        name=node,
+                        addrs=_get_addrs(node),
+                        watchdog=_get_watchdog(node),
+                        devices=_get_devices(node),
+                    ) for node in self.new_nodes
+                ],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            +
+            [
+                fixture.error(
+                    report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
+                    node=node,
+                    watchdog=_get_watchdog(node),
+                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
+                ) for node in self.new_nodes
+            ]
+        )
+
+    def test_no_watchdog_validation(self):
+        sbd_config = "SBD_DEVICE=/device\n"
+        (self.config
+            .corosync_conf.load_content(
+                corosync_conf_fixture(self.existing_corosync_nodes)
+            )
+            .runner.cib.load()
+            .local.read_sbd_config(sbd_config)
+            .http.host.check_auth(node_labels=self.existing_nodes)
+            .local.atb_needed(self.existing_nodes)
+            .local.get_host_info(self.new_nodes)
+            .http.sbd.check_sbd(
+                communication_list=[
+                    dict(
+                        label=node,
+                        output=json.dumps({
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "device_list": [
+                                dict(
+                                    path=dev,
+                                    exist=True,
+                                    block_device=True
+                                ) for dev in _get_devices(node)
+                            ],
+                        }),
+                        param_list=[
+                            ("watchdog", ""),
+                            ("device_list", json.dumps(_get_devices(node))),
+                        ]
+                    ) for node in self.new_nodes
+                ],
+            )
+            .http.host.update_known_hosts(
+                node_labels=self.new_nodes,
+                to_add_hosts=self.existing_nodes + self.new_nodes,
+            )
+            .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
+            .fs.isdir(settings.booth_config_dir, return_value=False)
+            .local.no_file_sync()
+            .local.pcsd_ssl_cert_sync(self.new_nodes)
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes
+                    +
+                    [
+                        corosync_node_fixture(node_id, node, _get_addrs(node))
+                        for node_id, node in enumerate(
+                            self.new_nodes, len(self.existing_nodes) + 1
+                        )
+                    ],
+                    [("auto_tie_breaker", "1")],
+                ),
+                self.existing_nodes,
+                self.new_nodes,
+            )
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [
+                dict(
+                    name=node,
+                    addrs=_get_addrs(node),
+                    watchdog=_get_watchdog(node),
+                    devices=_get_devices(node),
+                ) for node in self.new_nodes
+            ],
+            no_watchdog_validation=True,
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.info(report_codes.SBD_CHECK_STARTED),
+                fixture.warn(report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
+            ]
+            +
+            [
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
+                for node in self.new_nodes
+            ]
+        )
+
     def test_atb_needed(self):
         sbd_config = ""
         (self.config

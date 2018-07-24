@@ -1333,6 +1333,7 @@ def node_add(lib, argv, modifiers):
         force=modifiers["force"],
         force_unresolvable=modifiers["force"],
         skip_offline_nodes=modifiers["skip_offline_nodes"],
+        no_watchdog_validation=modifiers["no_watchdog_validation"],
     )
 
 def remove_nodes_from_cib(lib, argv, modifiers):

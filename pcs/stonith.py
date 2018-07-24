@@ -17,6 +17,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.lib import sbd
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
@@ -460,12 +461,82 @@ def sbd_cmd(lib, argv, modifiers):
             local_sbd_config(lib, argv, modifiers)
         elif cmd == "device":
             sbd_device_cmd(lib, argv, modifiers)
+        elif cmd == "watchdog":
+            sbd_watchdog_cmd(lib, argv, modifiers)
         else:
+            cmd = ""
             raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
             e, "stonith", "sbd {0}".format(cmd)
         )
+
+
+def sbd_watchdog_cmd(lib, argv, modifiers):
+    if len(argv) == 0:
+        raise CmdLineInputError()
+    cmd = argv.pop(0)
+    try:
+        if cmd == "list":
+            sbd_watchdog_list(lib, argv, modifiers)
+        elif cmd == "list_json":
+            sbd_watchdog_list_json(lib, argv, modifiers)
+        elif cmd == "test":
+            sbd_watchdog_test(lib, argv, modifiers)
+        else:
+            cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "stonith", "sbd watchdog {0}".format(cmd)
+        )
+
+
+def sbd_watchdog_list(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+
+    available_watchdogs = lib.sbd.get_local_available_watchdogs()
+    supported_watchdog_list = [
+        wd for wd, wd_info in available_watchdogs.items()
+        if wd_info["caution"] is None
+    ]
+    unsupported_watchdog_list = [
+        wd for wd in available_watchdogs
+        if wd not in supported_watchdog_list
+    ]
+
+    if supported_watchdog_list:
+        print("Supported watchdog(s):")
+        for watchdog in supported_watchdog_list:
+            print("  {}".format(watchdog))
+
+    if unsupported_watchdog_list:
+        print("Unsupported watchdog(s):")
+        for watchdog in unsupported_watchdog_list:
+            print("  {}".format(watchdog))
+
+
+def sbd_watchdog_list_json(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+    print(json.dumps(lib.sbd.get_local_available_watchdogs()))
+
+
+def sbd_watchdog_test(lib, argv, modifiers):
+    if len(argv) > 1:
+        raise CmdLineInputError()
+    print(
+        "Warning: This operation is expected to force-reboot this system "
+        "without following any shutdown procedures."
+    )
+    if utils.get_terminal_input("Proceed? [no/yes]: ") != "yes":
+        return
+    watchdog = None
+    if len(argv) == 1:
+        watchdog = argv[0]
+    lib.sbd.test_local_watchdog(watchdog)
+
 
 def sbd_device_cmd(lib, argv, modifiers):
     if len(argv) == 0:
@@ -509,6 +580,7 @@ def sbd_enable(lib, argv, modifiers):
         node_device_dict=node_device_dict if node_device_dict else None,
         allow_unknown_opts=modifiers["force"],
         ignore_offline_nodes=modifiers["skip_offline_nodes"],
+        no_watchdog_validation=modifiers["no_watchdog_validation"],
     )
 
 def _sbd_parse_node_specific_options(arg_list):

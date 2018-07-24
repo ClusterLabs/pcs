@@ -580,3 +580,8 @@ class ValidateDeviceDictTest(TestCase):
                 ),
             ]
         )
+
+class GetAvailableWatchdogs(TestCase):
+    """
+    Tested in pcs.lib.commands.test.sbd.test_watchdog_list
+    """

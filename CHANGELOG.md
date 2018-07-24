@@ -16,6 +16,7 @@
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
 - Options to filter failures by an operation and its interval in `pcs resource
   cleanup` and `pcs resource failcount show` commands ([rhbz#1427273])
+- Commands for listing and testing watchdog devices ([rhbz#1578891])
 
 ### Fixed
 - `pcs cib-push diff-against=` does not consider an empty diff as an error
@@ -77,6 +78,8 @@
   `device` options respectively
 - Update pacemaker daemon names to match changes in pacemaker-2.0
   ([rhbz#1573344])
+- Watchdog devices are validated against a list provided by sbd
+  ([rhbz#1578891])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -96,6 +99,7 @@
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1573344]: https://bugzilla.redhat.com/show_bug.cgi?id=1573344
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
+[rhbz#1578891]: https://bugzilla.redhat.com/show_bug.cgi?id=1578891
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 [rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829

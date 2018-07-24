@@ -1,3 +1,4 @@
+import re
 from os import path
 
 from pcs import settings
@@ -318,3 +319,35 @@ def set_message(cmd_runner, device, node_name, message):
         raise LibraryError(reports.sbd_device_message_error(
             device, node_name, message, std_err
         ))
+
+
+def get_available_watchdogs(cmd_runner):
+    regex = (
+        r"\[\d+\] (?P<watchdog>.+)$\n"
+        r"Identity: (?P<identity>.+)$\n"
+        r"Driver: (?P<driver>.+)$"
+        r"(\nCAUTION: (?P<caution>.+)$)?"
+    )
+    std_out, std_err, ret_val = cmd_runner.run(
+        [settings.sbd_binary, "query-watchdog"]
+    )
+    if ret_val != 0:
+        raise LibraryError(reports.sbd_list_watchdog_error(std_err))
+    return {
+        match.group("watchdog"): {
+            key: match.group(key) for key in ["identity", "driver", "caution"]
+        } for match in re.finditer(regex, std_out, re.MULTILINE)
+    }
+
+
+def test_watchdog(cmd_runner, watchdog=None):
+    cmd = [settings.sbd_binary, "test-watchdog"]
+    if watchdog:
+        cmd.extend(["-w", watchdog])
+    dummy_std_out, std_err, ret_val = cmd_runner.run(cmd)
+    if ret_val:
+        if "Multiple watchdog devices discovered" in std_err:
+            raise LibraryError(reports.sbd_watchdog_test_multiple_devices())
+        raise LibraryError(reports.sbd_watchdog_test_error(std_err))
+    else:
+        raise LibraryError(reports.sbd_watchdog_test_failed())

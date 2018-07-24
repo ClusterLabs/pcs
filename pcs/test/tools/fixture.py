@@ -227,6 +227,7 @@ def check_sbd_comm_success_fixture(node, watchdog, device_list):
             "watchdog": {
                 "exist": True,
                 "path": watchdog,
+                "is_supported": True,
             },
             "device_list": [
                 dict(path=dev, exist=True, block_device=True)

@@ -1442,6 +1442,7 @@ class SbdEnable(TestCase):
             node_device_dict=None,
             allow_unknown_opts=False,
             ignore_offline_nodes=False,
+            no_watchdog_validation=False,
         )
         default_kwargs.update(kwargs)
         self.sbd.enable_sbd.assert_called_once_with(
@@ -1452,6 +1453,7 @@ class SbdEnable(TestCase):
         all_modifiers = dict(
             force=False,
             skip_offline_nodes=False,
+            no_watchdog_validation=False,
         )
         all_modifiers.update(modifiers or {})
         stonith.sbd_enable(self.lib, argv, all_modifiers)
@@ -1500,10 +1502,16 @@ class SbdEnable(TestCase):
         )
 
     def test_modifiers(self):
-        self.call_cmd([], modifiers={"force": "A", "skip_offline_nodes": "B"})
+        self.call_cmd([], modifiers={
+            "force": "A",
+            "skip_offline_nodes": "B",
+            "no_watchdog_validation": "C",
+        })
         self.assert_called_with(
             None, dict(), dict(),
-            allow_unknown_opts="A", ignore_offline_nodes="B"
+            allow_unknown_opts="A",
+            ignore_offline_nodes="B",
+            no_watchdog_validation="C",
         )
 
 class SbdDeviceSetup(TestCase):

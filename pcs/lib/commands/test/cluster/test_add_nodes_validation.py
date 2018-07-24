@@ -1325,23 +1325,24 @@ class ClusterStatus(TestCase):
             ]
         )
 
-    def fixture_sbd_check_input(self, suffix):
+    def fixture_sbd_check_input(self, suffix, has_wd=True):
         return [
-            ("watchdog", f"/dev/watchdog{suffix}"),
+            ("watchdog", f"/dev/watchdog{suffix}" if has_wd else ""),
             ("device_list", json.dumps([f"/dev/sda{suffix}"])),
         ]
 
     def fixture_sbd_check_output(
-        self, suffix, sbd_installed=True, wd_exists=True, device_exists=True,
-        device_block=True
+        self, suffix, sbd_installed=True, wd_exists=True, wd_is_supported=True,
+        device_exists=True, device_block=True, has_wd=True,
     ):
-        return json.dumps({
+        result = {
             "sbd": {
                 "installed": sbd_installed,
             },
             "watchdog": {
                 "exist": wd_exists,
                 "path": f"/dev/watchdog{suffix}",
+                "is_supported": wd_is_supported,
             },
             "device_list": [
                 {
@@ -1350,11 +1351,18 @@ class ClusterStatus(TestCase):
                     "block_device": device_block,
                 },
             ],
-        })
+        }
+        if has_wd:
+            result["watchdog"] = {
+                "exist": wd_exists,
+                "path": f"/dev/watchdog{suffix}",
+                "is_supported": wd_is_supported,
+            }
+        return json.dumps(result)
 
     def test_sbd_check(self):
-        existing_nodes = ["node1", "node2", "node3"]
-        new_nodes = [f"new{i}" for i in range(1, 9)]
+        existing_nodes = ["node1", "node2", "node3", "node4"]
+        new_nodes = [f"new{i}" for i in range(1, 10)]
         patch_getaddrinfo(self, new_nodes)
         (self.config
             .env.set_known_nodes(existing_nodes + new_nodes)
@@ -1381,7 +1389,7 @@ class ClusterStatus(TestCase):
                     {
                         "label": "new2",
                         "output": self.fixture_sbd_check_output(
-                            2, wd_exists=False
+                            2, wd_exists=False, wd_is_supported=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(2),
                     },
@@ -1422,6 +1430,13 @@ class ClusterStatus(TestCase):
                         "output": self.fixture_sbd_check_output(8),
                         "param_list": self.fixture_sbd_check_input(8),
                     },
+                    {
+                        "label": "new9",
+                        "output": self.fixture_sbd_check_output(
+                            9, wd_is_supported=False,
+                        ),
+                        "param_list": self.fixture_sbd_check_input(9),
+                    },
                 ]
             )
         )
@@ -1434,7 +1449,7 @@ class ClusterStatus(TestCase):
                         "name": f"new{i}",
                         "watchdog": f"/dev/watchdog{i}",
                         "devices": [f"/dev/sda{i}"],
-                    } for i in range(1, 9)
+                    } for i in range(1, 10)
                 ],
             )
         )
@@ -1454,7 +1469,8 @@ class ClusterStatus(TestCase):
                 fixture.error(
                     report_codes.WATCHDOG_NOT_FOUND,
                     node="new2",
-                    watchdog="/dev/watchdog2"
+                    watchdog="/dev/watchdog2",
+                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 ),
                 fixture.error(
                     report_codes.SBD_DEVICE_DOES_NOT_EXIST,
@@ -1482,6 +1498,94 @@ class ClusterStatus(TestCase):
                     command="remote/check_sbd",
                     reason="an error",
                 ),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new8")
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new8"),
+                fixture.error(
+                    report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
+                    node="new9",
+                    watchdog="/dev/watchdog9",
+                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
+                ),
+            ]
+        )
+
+    def test_sbd_check_forced(self):
+        existing_nodes = ["node1", "node2", "node3", "node4"]
+        new_nodes = [f"new{i}" for i in range(1, 4)]
+        patch_getaddrinfo(self, new_nodes)
+        (self.config
+            .env.set_known_nodes(existing_nodes + new_nodes)
+            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .corosync_conf.load_content(
+                corosync_conf_fixture([
+                    node_fixture(node, i)
+                    for i, node in enumerate(existing_nodes, 1)
+                ])
+            )
+            .runner.cib.load()
+            .local.read_sbd_config("SBD_DEVICE=/device\n")
+            .http.host.check_auth(node_labels=existing_nodes)
+            .local.get_host_info(new_nodes)
+            .http.sbd.check_sbd(
+                communication_list=[
+                    {
+                        "label": "new1",
+                        "output": self.fixture_sbd_check_output(
+                            1, sbd_installed=False, has_wd=False,
+                        ),
+                        "param_list": self.fixture_sbd_check_input(
+                            1, has_wd=False,
+                        ),
+                    },
+                    {
+                        "label": "new2",
+                        "output": self.fixture_sbd_check_output(
+                            2, has_wd=False,
+                        ),
+                        "param_list": self.fixture_sbd_check_input(
+                            2, has_wd=False,
+                        ),
+                    },
+                    {
+                        "label": "new3",
+                        "output": self.fixture_sbd_check_output(
+                            3, has_wd=False,
+                        ),
+                        "param_list": self.fixture_sbd_check_input(
+                            3, has_wd=False,
+                        ),
+                    },
+                ]
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [
+                    {
+                        "name": f"new{i}",
+                        "watchdog": f"/dev/watchdog{i}",
+                        "devices": [f"/dev/sda{i}"],
+                    } for i in range(1, 4)
+                ],
+                no_watchdog_validation=True,
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                ) for node in new_nodes
+            ]
+            +
+            [
+                fixture.info(report_codes.SBD_CHECK_STARTED),
+                fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new2"),
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new3"),
+                fixture.warn(report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
             ]
         )
