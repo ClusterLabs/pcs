@@ -75,6 +75,10 @@ class MockCurl(object):
         self._opts = {}
 
     def setopt(self, opt, val):
+        if isinstance(val, list):
+           # in tests we use set operations (e.g. assertLessEqual) which
+           # require hashable values
+           val = tuple(val)
         if val is None:
             self.unsetopt(opt)
         else:

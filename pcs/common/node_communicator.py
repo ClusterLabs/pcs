@@ -532,6 +532,7 @@ def _create_request_handle(request, cookies, timeout):
     handle.setopt(pycurl.SSL_VERIFYHOST, 0)
     handle.setopt(pycurl.SSL_VERIFYPEER, 0)
     handle.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
+    handle.setopt(pycurl.HTTPHEADER, ["Expect: "])
     if cookies:
         handle.setopt(
             pycurl.COOKIE, _dict_to_cookies(cookies).encode("utf-8")

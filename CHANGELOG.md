@@ -5,9 +5,12 @@
 ### Fixed
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
 - Test of watchdog devices ([rhbz#1475318])
+- Possible race condition causing an HTTP 408 error when sending larger files
+  via pcs ([rhbz#1600169])
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
+[rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 
 
 ## [0.9.165] - 2018-06-21

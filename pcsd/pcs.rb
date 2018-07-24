@@ -513,6 +513,7 @@ def send_request(
     :httpget => (post ? 0 : 1),
     :nosignal => 1, # required for multi-threading
   })
+  req.compose_header('Expect', '')
   return_code = req.perform
   if return_code == :ok
     return req.response_code, req.response_body
