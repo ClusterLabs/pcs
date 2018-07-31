@@ -170,7 +170,7 @@ class CibShortcuts(object):
         name="runner.cib.diff",
         stdout="resulting diff",
         stderr="",
-        returncode=0
+        returncode=1 # 0 -> old and new are the same, 1 -> old and new differ
     ):
         """
         Create a call for diffing two CIBs stored in two files

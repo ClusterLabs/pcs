@@ -616,14 +616,14 @@ def cluster_push(argv):
             "crm_diff", "--original", diff_against, "--new", filename,
             "--no-version"
         ]
-        patch, error, dummy_retval = runner.run(command)
-        # dummy_retval == 1 means one of two things:
-        # a) an error has occured
-        # b) --original and --new differ
-        # therefore it's of no use to see if an error occurred
-        if error.strip():
+        patch, error, retval = runner.run(command)
+        #  0 (CRM_EX_OK) - success with no difference
+        #  1 (CRM_EX_ERROR) - success with difference
+        # 64 (CRM_EX_USAGE) - usage error
+        # 65 (CRM_EX_DATAERR) - XML fragments not parseable
+        if retval > 1:
             utils.err("unable to diff the CIBs:\n" + error)
-        if not patch.strip():
+        if retval == 0:
             print(
                 "The new CIB is the same as the original CIB, nothing to push."
             )

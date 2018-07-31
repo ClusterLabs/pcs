@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 from unittest import mock, TestCase
 
@@ -72,12 +71,12 @@ Stonith options:
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
             "stonith describe fence_noexist",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
+            stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error)\n"
-                "$", re.MULTILINE
+                "provide valid metadata: Agent fence_noexist not found or does "
+                "not support meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:fence_noexist failed: Input/output "
+                "error\n"
             )
         )
 
@@ -102,24 +101,23 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testStonithCreation(self):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
+            stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error), use "
-                "--force to override\n"
-                "$", re.MULTILINE
+                "provide valid metadata: Agent fence_noexist not found or does "
+                "not support meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:fence_noexist failed: Input/output "
+                "error, use --force to override\n"
             )
         )
 
         self.assert_pcs_success(
             "stonith create test1 fence_noexist --force",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
+            stdout_full=(
                 "Warning: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error)\n"
-                "$", re.MULTILINE
+                "provide valid metadata: Agent fence_noexist not found or does "
+                "not support meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:fence_noexist failed: Input/output "
+                "error\n"
             )
         )
 

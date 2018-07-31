@@ -288,6 +288,22 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
             expected_in_processor=False
         )
 
+    def test_diff_is_empty(self):
+        (self.config
+            .runner.cib.load(filename=self.cib_can_diff)
+            .runner.cib.diff(
+                self.tmpfile_old.name,
+                self.tmpfile_new.name,
+                stdout="",
+                stderr="",
+                returncode=1
+            )
+        )
+        env = self.env_assist.get_env()
+        env.get_cib()
+        env.push_cib()
+        self.env_assist.assert_reports(self.push_reports())
+
     def test_diff_fails(self):
         (self.config
             .runner.cib.load(filename=self.cib_can_diff)
@@ -295,7 +311,7 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 self.tmpfile_old.name,
                 self.tmpfile_new.name,
                 stderr="invalid cib",
-                returncode=1
+                returncode=65
             )
         )
         env = self.env_assist.get_env()

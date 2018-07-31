@@ -52,7 +52,7 @@ sbd_config = "/etc/sysconfig/sbd"
 sbd_max_device_num = 3
 # message types are also mentioned in docs, change there as well
 sbd_message_types = ["test", "reset", "off", "crashdump", "exit", "clear"]
-pacemaker_wait_timeout_status = 62
+pacemaker_wait_timeout_status = 124
 booth_config_dir = "/etc/booth"
 booth_binary = "/usr/sbin/booth"
 default_request_timeout = 60

@@ -170,8 +170,10 @@ class GetCibXmlTest(LibraryPacemakerTest):
 
     def test_scope_error(self):
         expected_stdout = "some info"
-        expected_stderr = "some error"
-        expected_retval = 6
+        # yes, the numbers do not match, tested and verified with
+        # pacemaker-2.0.0-1.fc29.1.x86_64
+        expected_stderr = "Call cib_query failed (-6): No such device or address"
+        expected_retval = 105
         scope = "test_scope"
         mock_runner = get_runner(
             expected_stdout,
@@ -315,27 +317,24 @@ class UpgradeCibTest(TestCase):
         )
 
     def test_error(self):
-        error = "Call cib_upgrade failed (-62): Timer expired"
-        mock_runner = get_runner("", error, 62)
+        expected_stdout = "some info"
+        expected_stderr = "some error"
+        expected_retval = 1
+        mock_runner = get_runner(
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
         assert_raise_library_error(
             lambda: lib._upgrade_cib(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
                 {
-                    "reason": error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
-        mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/cibadmin", "--upgrade", "--force"]
-        )
-
-    def test_already_at_latest_schema(self):
-        error = ("Call cib_upgrade failed (-211): Schema is already "
-            "the latest available")
-        mock_runner = get_runner("", error, 211)
-        lib._upgrade_cib(mock_runner)
         mock_runner.run.assert_called_once_with(
             ["/usr/sbin/cibadmin", "--upgrade", "--force"]
         )
@@ -1085,7 +1084,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
     def test_wait_error_timeout(self):
         expected_stdout = "some info"
         expected_stderr = "some error"
-        expected_retval = 62
+        expected_retval = 124
         mock_runner = get_runner(
             expected_stdout,
             expected_stderr,

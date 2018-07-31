@@ -84,6 +84,7 @@
   ([rhbz#1578891])
 - Resource operation option `requires` is no longer accepted to match changes
   in pacemaker-2.0 ([rhbz#1605185])
+- Update pacemaker exit codes to match changes in pacemaker-2.0 ([rhbz#1536121])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -97,6 +98,7 @@
 [rhbz#1427273]: https://bugzilla.redhat.com/show_bug.cgi?id=1427273
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
+[rhbz#1536121]: https://bugzilla.redhat.com/show_bug.cgi?id=1536121
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366

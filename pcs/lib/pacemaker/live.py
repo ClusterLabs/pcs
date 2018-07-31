@@ -14,9 +14,8 @@ from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
 
 
-__EXITCODE_WAIT_TIMEOUT = 62
-__EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 6
-__EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE = 211
+__EXITCODE_WAIT_TIMEOUT = 124
+__EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 105
 __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 
 class CrmMonErrorException(LibraryError):
@@ -138,12 +137,14 @@ def diff_cibs_xml(runner, reporter, cib_old_xml, cib_new_xml):
         cib_new_tmp_file.name,
         "--no-version",
     ]
-    # dummy_retval == 1 means one of two things:
-    # a) an error has occured
-    # b) --original and --new differ
-    # therefore it's of no use to see if an error occurred
-    stdout, stderr, dummy_retval = runner.run(command)
-    if stderr.strip():
+    #  0 (CRM_EX_OK) - success with no difference
+    #  1 (CRM_EX_ERROR) - success with difference
+    # 64 (CRM_EX_USAGE) - usage error
+    # 65 (CRM_EX_DATAERR) - XML fragments not parseable
+    stdout, stderr, retval = runner.run(command)
+    if retval == 0:
+        return ""
+    if retval > 1:
         raise LibraryError(
             reports.cib_diff_error(stderr.strip(), cib_old_xml, cib_new_xml)
         )
@@ -189,10 +190,10 @@ def _upgrade_cib(runner):
     stdout, stderr, retval = runner.run(
         [__exec("cibadmin"), "--upgrade", "--force"]
     )
-    # If we are already on the latest schema available, do not consider it an
-    # error. We do not know here what version is required. The caller however
-    # knows and is responsible for dealing with it.
-    if retval not in (0, __EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE):
+    # If we are already on the latest schema available, cibadmin exits with 0.
+    # That is fine. We do not know here what version is required anyway. The
+    # caller knows that and is responsible for dealing with it.
+    if retval != 0:
         raise LibraryError(
             reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
         )

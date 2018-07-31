@@ -1,4 +1,3 @@
-import re
 import unittest
 
 from pcs import utils
@@ -58,12 +57,12 @@ class PlainStonith(ResourceTest):
     def test_error_when_not_valid_agent(self):
         self.assert_pcs_fail(
             "stonith create S absent",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
+            stdout_full=(
                 "Error: Agent 'absent' is not installed or does not provide "
-                "valid metadata: Metadata query for stonith:absent failed: "
-                "(-5|Input/output error), use --force to override\n"
-                "$", re.MULTILINE
+                "valid metadata: Agent absent not found or does not support "
+                "meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:absent failed: Input/output error, "
+                "use --force to override\n"
             )
         )
 
@@ -79,12 +78,11 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            output_regexp=re.compile("^"
+            output=(
                 "Warning: Agent 'absent' is not installed or does not provide "
-                    "valid metadata: Metadata query for stonith:absent failed: "
-                    "(-5|Input/output error)\n"
-                "$", re.MULTILINE
+                "valid metadata: Agent absent not found or does not support "
+                "meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:absent failed: Input/output error\n"
             )
         )
 

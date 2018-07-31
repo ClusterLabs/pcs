@@ -9,7 +9,7 @@ from pcs.test.tools.xml import etree_to_str
 
 
 DEFAULT_WAIT_TIMEOUT = 10
-WAIT_TIMEOUT_EXPIRED_RETURNCODE = 62
+WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
 AGENT_FILENAME_MAP = {
     "ocf:heartbeat:Dummy": "resource_agent_ocf_heartbeat_dummy.xml",
     "ocf:pacemaker:remote": "resource_agent_ocf_pacemaker_remote.xml",
@@ -206,9 +206,8 @@ class PcmkShortcuts(object):
 
         string name -- key of the call
         string stderr -- stderr of wait command
-        int returncode -- has default value 0 if stderr is empty and has default
-            configured value (62) if stderr is not empty. However the explicitly
-            specified returncode is used if the returncode is specified.
+        int returncode -- returncode of the wait command, defaults to 0 if
+            stderr is empty and to 124 if stderr is not empty
         """
         if returncode is None:
             returncode = self.default_wait_error_returncode if stderr else 0
