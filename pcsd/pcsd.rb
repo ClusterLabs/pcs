@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'sinatra/cookies'
 require 'rexml/document'
 require 'webrick'
 require 'webrick/https'
@@ -103,7 +102,7 @@ helpers do
   end
 
   def protect_by_token!
-    @auth_user = PCSAuth.loginByToken(cookies)
+    @auth_user = PCSAuth.loginByToken(request.cookies)
     unless @auth_user
       halt [401, '{"notauthorized":"true"}']
     end
