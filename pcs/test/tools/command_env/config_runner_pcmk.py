@@ -40,6 +40,22 @@ def fixture_state_resources_xml(
         )
     )
 
+def fixture_state_node_xml(
+    id, name, type="member", online=True, standby=False, standby_onfail=False,
+    maintenance=False, pending=False, unclean=False, shutdown=False,
+    expected_up=True, is_dc=False, resources_running=0
+):
+    attrs = locals()
+    xml_attrs = []
+    for attr_name, attr_value in attrs.items():
+        if attr_value is True:
+            attr_value = "true"
+        elif attr_value is False:
+            attr_value = "false"
+        xml_attrs.append('{0}="{1}"'.format(attr_name, attr_value))
+    return "<node {0}/>".format(" ".join(xml_attrs))
+
+
 class PcmkShortcuts(object):
     def __init__(self, calls):
         self.__calls = calls
@@ -48,7 +64,8 @@ class PcmkShortcuts(object):
 
     def load_state(
         self, name="runner.pcmk.load_state", filename="crm_mon.minimal.xml",
-        resources=None, raw_resources=None
+        resources=None, raw_resources=None, nodes=None, stdout="", stderr="",
+        returncode=0
     ):
         """
         Create call for loading pacemaker state.
@@ -56,18 +73,63 @@ class PcmkShortcuts(object):
         string name -- key of the call
         string filename -- points to file with the status in the content
         string resources -- xml - resources section, will be put to state
+        string nodes -- iterable of node dicts
+        string stdout -- crm_mon's stdout
+        string stderr -- crm_mon's stderr
+        int returncode -- crm_mon's returncode
         """
+        if (
+            (resources or raw_resources is not None or nodes)
+            and
+            (stdout or stderr or returncode)
+        ):
+            raise AssertionError(
+                "Cannot specify resources or nodes when stdout, stderr or "
+                "returncode is specified"
+            )
         if resources and raw_resources is not None:
             raise AssertionError(
                 "Cannot use 'resources' and 'raw_resources' together"
             )
 
+        if (stdout or stderr or returncode):
+            self.__calls.place(
+                name,
+                RunnerCall(
+                    "crm_mon --one-shot --as-xml --inactive",
+                    stdout=stdout,
+                    stderr=stderr,
+                    returncode=returncode
+                )
+            )
+            return
+
         state = etree.fromstring(open(rc(filename)).read())
+
         if raw_resources is not None:
             resources = fixture_state_resources_xml(**raw_resources)
-
         if resources:
             state.append(complete_state_resources(etree.fromstring(resources)))
+
+        if nodes:
+            nodes_element = state.find("./nodes")
+            for node in nodes:
+                nodes_element.append(
+                    etree.fromstring(fixture_state_node_xml(**node))
+                )
+
+        # set correct number of nodes and resources into the status
+        resources_count = len(state.xpath(" | ".join([
+            "./resources/bundle",
+            "./resources/clone",
+            "./resources/group",
+            "./resources/resource",
+        ])))
+        nodes_count = len(state.findall("./nodes/node"))
+        state.find("./summary/nodes_configured").set("number", str(nodes_count))
+        state.find("./summary/resources_configured").set(
+            "number", str(resources_count)
+        )
 
         self.__calls.place(
             name,
@@ -149,6 +211,41 @@ class PcmkShortcuts(object):
                     stdout if stdout is not None
                     else open(rc("fenced_metadata.xml")).read()
                 ),
+                stderr=stderr,
+                returncode=returncode
+            ),
+            before=before,
+            instead=instead,
+        )
+
+    def local_node_name(
+        self, name="runner.pcmk.local_node_name", instead=None, before=None,
+        node_name="", stdout="", stderr="", returncode=0
+    ):
+        """
+        Create a call for crm_node --name
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string node_name -- resulting node name
+        string stdout -- crm_node's stdout
+        string stderr -- crm_node's stderr
+        int returncode -- crm_node's returncode
+        """
+        if node_name and (stdout or stderr or returncode):
+            raise AssertionError(
+                "Cannot specify node_name when stdout, stderr or returncode is "
+                "specified"
+            )
+        cmd = ["crm_node", "--name"]
+        self.__calls.place(
+            name,
+            RunnerCall(
+                " ".join(cmd),
+                stdout=(node_name if node_name else stdout),
                 stderr=stderr,
                 returncode=returncode
             ),

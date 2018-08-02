@@ -243,33 +243,14 @@ def wait_for_idle(runner, timeout=None):
 ### nodes
 
 def get_local_node_name(runner):
-    # It would be possible to run "crm_node --name" to get the name in one call,
-    # but it returns false names when cluster is not running (or we are on
-    # a remote node). Getting node id first is reliable since it fails in those
-    # cases.
-    stdout, dummy_stderr, retval = runner.run(
-        [__exec("crm_node"), "--cluster-id"]
-    )
+    stdout, stderr, retval = runner.run([__exec("crm_node"), "--name"])
     if retval != 0:
         raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node id not found")
+            reports.pacemaker_local_node_name_not_found(
+                join_multilines([stderr, stdout])
+            )
         )
-    node_id = stdout.strip()
-
-    stdout, dummy_stderr, retval = runner.run(
-        [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
-    )
-    if retval != 0:
-        raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node name not found")
-        )
-    node_name = stdout.strip()
-
-    if node_name == "(null)":
-        raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node name is null")
-        )
-    return node_name
+    return stdout.strip()
 
 def get_local_node_status(runner):
     try:

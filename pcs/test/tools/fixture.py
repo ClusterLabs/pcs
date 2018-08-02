@@ -4,6 +4,13 @@ from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
 
+def state_node(
+    id, name, type="member", online=True, standby=False,
+    standby_onfail=False, maintenance=False, pending=False, unclean=False,
+    shutdown=False, expected_up=True, is_dc=False, resources_running=0
+):
+    return locals()
+
 def complete_state_resources(resource_status):
     for resource in resource_status.xpath(".//resource"):
         _default_element_attributes(

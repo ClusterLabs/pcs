@@ -33,37 +33,6 @@ class LibraryPacemakerTest(TestCase):
     def crm_mon_cmd(self):
         return [self.path("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
 
-class LibraryPacemakerNodeStatusTest(LibraryPacemakerTest):
-    def setUp(self):
-        self.status = XmlManipulation.from_file(rc("crm_mon.minimal.xml"))
-
-    def fixture_get_node_status(self, node_name, node_id):
-        return {
-            "id": node_id,
-            "name": node_name,
-            "type": "member",
-            "online": True,
-            "standby": False,
-            "standby_onfail": False,
-            "maintenance": True,
-            "pending": True,
-            "unclean": False,
-            "shutdown": False,
-            "expected_up": True,
-            "is_dc": True,
-            "resources_running": 7,
-        }
-
-    def fixture_add_node_status(self, node_attrs):
-        xml_attrs = []
-        for name, value in node_attrs.items():
-            if value is True:
-                value = "true"
-            elif value is False:
-                value = "false"
-            xml_attrs.append('{0}="{1}"'.format(name, value))
-        node_xml = "<node {0}/>".format(" ".join(xml_attrs))
-        self.status.append_to_first_tag_name("nodes", node_xml)
 
 class GetClusterStatusXmlTest(LibraryPacemakerTest):
     def test_success(self):
@@ -428,210 +397,100 @@ class EnsureCibVersionTest(TestCase):
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
-class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
+
+class GetLocalNodeStatusTest(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
     def test_offline(self):
-        expected_stdout = "some info"
-        expected_stderr = "some error"
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+        (self.config
+            .runner.pcmk.load_state(
+                stderr="error: Could not connect to cluster (is it running?)",
+                returncode=102
+            )
         )
 
-        self.assertEqual(
-            {"offline": True},
-            lib.get_local_node_status(mock_runner)
-        )
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+        env = self.env_assist.get_env()
+        real_status = lib.get_local_node_status(env.cmd_runner())
+        self.assertEqual(dict(offline=True), real_status)
 
     def test_invalid_status(self):
-        expected_stdout = "invalid xml"
-        expected_stderr = ""
-        expected_retval = 0
-        mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+        (self.config
+            .runner.pcmk.load_state(stdout="invalid xml")
         )
 
-        assert_raise_library_error(
-            lambda: lib.get_local_node_status(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.BAD_CLUSTER_STATE_FORMAT,
-                {}
-            )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_local_node_status(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.BAD_CLUSTER_STATE_FORMAT,
+                    force_code=None
+                )
+            ],
+            expected_in_processor=False
         )
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
     def test_success(self):
-        node_id = "id_1"
-        node_name = "name_1"
-        node_status = self.fixture_get_node_status(node_name, node_id)
-        expected_status = dict(node_status, offline=False)
-        self.fixture_add_node_status(
-            self.fixture_get_node_status("name_2", "id_2")
-        )
-        self.fixture_add_node_status(node_status)
-        self.fixture_add_node_status(
-            self.fixture_get_node_status("name_3", "id_3")
+        (self.config
+            .runner.pcmk.load_state(nodes=[
+                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
+            ])
+            .runner.pcmk.local_node_name(node_name="name_2")
         )
 
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_node"), "--cluster-id"]),
-            mock.call(
-                [self.path("crm_node"), "--name-for-id={0}".format(node_id)]
-            ),
-        ]
-        return_value_list = [
-            (str(self.status), "", 0),
-            (node_id, "", 0),
-            (node_name, "", 0)
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        real_status = lib.get_local_node_status(mock_runner)
-
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
-        self.assertEqual(expected_status, real_status)
+        env = self.env_assist.get_env()
+        real_status = lib.get_local_node_status(env.cmd_runner())
+        self.assertEqual(
+            dict(offline=False, **fixture.state_node("2", "name_2")),
+            real_status
+        )
 
     def test_node_not_in_status(self):
-        node_id = "id_1"
-        node_name = "name_1"
-        node_name_bad = "name_X"
-        node_status = self.fixture_get_node_status(node_name, node_id)
-        self.fixture_add_node_status(node_status)
+        (self.config
+            .runner.pcmk.load_state(nodes=[
+                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
+            ])
+            .runner.pcmk.local_node_name(node_name="name_X")
+        )
 
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_node"), "--cluster-id"]),
-            mock.call(
-                [self.path("crm_node"), "--name-for-id={0}".format(node_id)]
-            ),
-        ]
-        return_value_list = [
-            (str(self.status), "", 0),
-            (node_id, "", 0),
-            (node_name_bad, "", 0)
-        ]
-        mock_runner.run.side_effect = return_value_list
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_local_node_status(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND,
+                    force_code=None,
+                    node="name_X",
+                    searched_types=[]
+                )
+            ],
+            expected_in_processor=False
+        )
 
-        assert_raise_library_error(
-            lambda: lib.get_local_node_status(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.NODE_NOT_FOUND,
-                {"node": node_name_bad}
+    def test_error_getting_node_name(self):
+        (self.config
+            .runner.pcmk.load_state(nodes=[
+                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
+            ])
+            .runner.pcmk.local_node_name(
+                stdout="some info", stderr="some error", returncode=1
             )
         )
 
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
-
-    def test_error_1(self):
-        node_id = "id_1"
-        node_name = "name_1"
-        node_status = self.fixture_get_node_status(node_name, node_id)
-        self.fixture_add_node_status(node_status)
-
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_node"), "--cluster-id"]),
-        ]
-        return_value_list = [
-            (str(self.status), "", 0),
-            ("", "some error", 1),
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        assert_raise_library_error(
-            lambda: lib.get_local_node_status(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-                {"reason": "node id not found"}
-            )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_local_node_status(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                    force_code=None,
+                    reason="some error\nsome info"
+                )
+            ],
+            expected_in_processor=False
         )
 
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
-
-    def test_error_2(self):
-        node_id = "id_1"
-        node_name = "name_1"
-        node_status = self.fixture_get_node_status(node_name, node_id)
-        self.fixture_add_node_status(node_status)
-
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_node"), "--cluster-id"]),
-            mock.call(
-                [self.path("crm_node"), "--name-for-id={0}".format(node_id)]
-            ),
-        ]
-        return_value_list = [
-            (str(self.status), "", 0),
-            (node_id, "", 0),
-            ("", "some error", 1),
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        assert_raise_library_error(
-            lambda: lib.get_local_node_status(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-                {"reason": "node name not found"}
-            )
-        )
-
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
-
-    def test_error_3(self):
-        node_id = "id_1"
-        node_name = "name_1"
-        node_status = self.fixture_get_node_status(node_name, node_id)
-        self.fixture_add_node_status(node_status)
-
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_node"), "--cluster-id"]),
-            mock.call(
-                [self.path("crm_node"), "--name-for-id={0}".format(node_id)]
-            ),
-        ]
-        return_value_list = [
-            (str(self.status), "", 0),
-            (node_id, "", 0),
-            ("(null)", "", 0),
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        assert_raise_library_error(
-            lambda: lib.get_local_node_status(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-                {"reason": "node name is null"}
-            )
-        )
-
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
 
 class RemoveNode(LibraryPacemakerTest):
     def test_success(self):
