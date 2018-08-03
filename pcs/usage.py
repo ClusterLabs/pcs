@@ -388,13 +388,15 @@ Commands:
     group add <group id> <resource id> [resource id] ... [resource id]
               [--before <resource id> | --after <resource id>] [--wait[=n]]
         Add the specified resource to the group, creating the group if it does
-        not exist.  If the resource is present in another group it is moved
-        to the new group.  You can use --before or --after to specify
-        the position of the added resources relatively to some resource already
-        existing in the group.  If --wait is specified, pcs will wait up to 'n'
-        seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
-        specified it defaults to 60 minutes.
+        not exist. If the resource is present in another group it is moved to
+        the new group. You can use --before or --after to specify the position
+        of the added resources relatively to some resource already existing in
+        the group. By adding resources to a group they are already in and
+        specifying --after or --before you can move the resources in the group.
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        operation to finish (including moving resources if appropriate) and
+        then return 0 on success or 1 on error. If 'n' is not specified it
+        defaults to 60 minutes.
 
     group remove <group id> <resource id> [resource id] ... [resource id]
           [--wait[=n]]
@@ -878,6 +880,10 @@ Commands:
         device to start and then return 0 if the stonith device is started, or 1
         if the stonith device has not yet started.  If 'n' is not specified it
         defaults to 60 minutes.
+        Example: Create a device for nodes node1 and node2
+            pcs stonith create MyFence fence_virt pcmk_host_list=node1,node2
+        Example: Use port p1 for node n1 and ports p2 and p3 for node n2
+            pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 
     update <stonith id> [stonith device options]
         Add/Change options to specified stonith id.
@@ -1036,9 +1042,6 @@ Commands:
         following any shutdown procedures using a watchdog. If no watchdog is
         specified, available watchdog will be used if only one watchdog device
         is available on the local system.
-
-Examples:
-    pcs stonith create MyStonith fence_virt pcmk_host_list=f1
 """
     if pout:
         print(sub_usage(args, output))
