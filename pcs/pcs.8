@@ -148,7 +148,7 @@ meta <resource id | group id | master id | clone id> <meta options> [\fB\-\-wait
 Add specified options to the specified resource, group, master/slave or clone.  Meta options should be in the format of name=value, options may be removed by setting an option without a value.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified it defaults to 60 minutes.  Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
 .TP
 group add <group id> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] [\fB\-\-wait\fR[=n]]
-Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+Add the specified resource to the group, creating the group if it does not exist. If the resource is present in another group it is moved to the new group. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group. By adding resources to a group they are already in and specifying \fB\-\-after\fR or \fB\-\-before\fR you can move the resources in the group. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 group remove <group id> <resource id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the specified resource(s) from the group, removing the group if no resources remain in it. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
@@ -362,8 +362,15 @@ describe <stonith agent> [\fB\-\-full\fR]
 Show options for specified stonith agent. If \fB\-\-full\fR is specified, all options including advanced ones are shown.
 .TP
 create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-group\fR <group id> [\fB\-\-before\fR <stonith id> | \fB\-\-after\fR <stonith id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
-Create stonith device with specified type and options. If \fB\-\-group\fR is specified the stonith device is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added stonith device relatively to some stonith device already existing in the group. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes. 
+Create stonith device with specified type and options. If \fB\-\-group\fR is specified the stonith device is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added stonith device relatively to some stonith device already existing in the group. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
 
+Example: Create a device for nodes node1 and node2
+.br
+pcs stonith create MyFence fence_virt pcmk_host_list=node1,node2
+.br
+Example: Use port p1 for node n1 and ports p2 and p3 for node n2
+.br
+pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 .TP
 update <stonith id> [stonith device options]
 Add/Change options to specified stonith id.
