@@ -30,7 +30,6 @@ build_gems_without_bundler:
 	vendor/cache/rack-protection-2.0.3.gem \
 	vendor/cache/rack-test-1.0.0.gem \
 	vendor/cache/sinatra-2.0.3.gem \
-	vendor/cache/sinatra-contrib-2.0.3.gem \
 	vendor/cache/thread_safe-0.3.6.gem \
 	vendor/cache/tilt-2.0.8.gem \
 	vendor/cache/tzinfo-1.2.5.gem \
