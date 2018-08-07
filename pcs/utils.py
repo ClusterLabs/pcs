@@ -37,7 +37,6 @@ from pcs.cli.common.reports import (
     process_library_reports,
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
-from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
 import pcs.cli.booth.env
 
 from pcs.lib import reports, sbd
@@ -2181,7 +2180,7 @@ def get_middleware_factory():
             pcs_options.get("--corosync_conf", None)
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--name", DEFAULT_BOOTH_NAME),
+            pcs_options.get("--name", None),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
         ),

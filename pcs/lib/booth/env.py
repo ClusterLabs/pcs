@@ -11,6 +11,8 @@ from pcs.lib.env_file import GhostFile, RealFile
 from pcs.lib.errors import LibraryError
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 
+DEFAULT_BOOTH_NAME = "booth"
+
 
 def get_booth_env_file_name(name, extension):
     report_list = []
@@ -65,7 +67,11 @@ def set_keyfile_access(file_path):
 class BoothEnv(object):
     def __init__(self, report_processor, env_data):
         self.__report_processor = report_processor
-        self.__name = env_data["name"]
+        self.__name = (
+            env_data["name"]
+            if env_data["name"] is not None
+            else DEFAULT_BOOTH_NAME
+        )
         if "config_file" in env_data:
             self.__config = GhostFile(
                 file_role=env_file_role_codes.BOOTH_CONFIG,
@@ -80,9 +86,9 @@ class BoothEnv(object):
         else:
             self.__config = RealFile(
                 file_role=env_file_role_codes.BOOTH_CONFIG,
-                file_path=get_config_file_name(env_data["name"]),
+                file_path=get_config_file_name(self.name),
             )
-            self.__set_key_path(get_key_path(env_data["name"]))
+            self.__set_key_path(get_key_path(self.name))
 
     def __set_key_path(self, path):
         self.__key_path = path

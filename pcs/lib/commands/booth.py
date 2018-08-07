@@ -98,15 +98,16 @@ def config_destroy(env, ignore_config_load_problems=False):
     env.booth.remove_config()
 
 
-def config_text(env, name, node_name=None):
+def config_text(env, node_name=None):
     """
     get configuration in raw format
-    string name -- name of booth instance whose config should be returned
     string node_name -- get the config from specified node or local host if None
     """
     if node_name is None:
         # TODO add name support
         return env.booth.get_config_content()
+
+    name = env.booth.name
 
     com_cmd = BoothGetConfig(env.report_processor, name)
     com_cmd.set_targets([
@@ -145,17 +146,17 @@ def config_ticket_remove(env, ticket_name):
     )
     env.booth.push_config(build(booth_configuration))
 
-def create_in_cluster(env, name, ip, allow_absent_resource_agent=False):
+def create_in_cluster(env, ip, allow_absent_resource_agent=False):
     """
     Create group with ip resource and booth resource
 
     LibraryEnvironment env provides all for communication with externals
-    string name identifies booth instance
     string ip determines float ip for the operation of the booth
     bool allow_absent_resource_agent is flag allowing create booth resource even
         if its agent is not installed
     """
     resources_section = get_resources(env.get_cib())
+    name = env.booth.name
 
     booth_config_file_path = get_config_file_name(name)
     if resource.find_for_config(resources_section, booth_config_file_path):
@@ -195,26 +196,28 @@ def create_in_cluster(env, name, ip, allow_absent_resource_agent=False):
 
     env.push_cib()
 
-def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
+def remove_from_cluster(env, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
     resource.get_remover(resource_remove)(
-        _find_resource_elements_for_operation(env, name, allow_remove_multiple)
+        _find_resource_elements_for_operation(
+            env, env.booth.name, allow_remove_multiple
+        )
     )
 
-def restart(env, name, resource_restart, allow_multiple):
+def restart(env, resource_restart, allow_multiple):
     #TODO resource_restart is provisional hack until resources are not moved to
     #lib
     for booth_element in _find_resource_elements_for_operation(
-        env, name, allow_multiple
+        env, env.booth.name, allow_multiple
     ):
         resource_restart([booth_element.attrib["id"]])
 
-def ticket_operation(operation, env, name, ticket, site_ip):
+def ticket_operation(operation, env, ticket, site_ip):
     if not site_ip:
         site_ip_list = resource.find_bound_ip(
             get_resources(env.get_cib()),
-            get_config_file_name(name)
+            get_config_file_name(env.booth.name)
         )
         if len(site_ip_list) != 1:
             raise LibraryError(
@@ -241,12 +244,11 @@ def ticket_operation(operation, env, name, ticket, site_ip):
 ticket_grant = partial(ticket_operation, "grant")
 ticket_revoke = partial(ticket_operation, "revoke")
 
-def config_sync(env, name, skip_offline_nodes=False):
+def config_sync(env, skip_offline_nodes=False):
     """
     Send specified local booth configuration to all nodes in cluster.
 
     env -- LibraryEnvironment
-    name -- booth instance name
     skip_offline_nodes -- if True offline nodes will be skipped
     """
     config = env.booth.get_config_content()
@@ -256,7 +258,7 @@ def config_sync(env, name, skip_offline_nodes=False):
     )
     com_cmd = BoothSendConfig(
         env.report_processor,
-        name,
+        env.booth.name,
         config,
         authfile=authfile_path,
         authfile_data=authfile_content,
@@ -271,15 +273,15 @@ def config_sync(env, name, skip_offline_nodes=False):
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 
-def enable_booth(env, name=None):
+def enable_booth(env):
     """
     Enable specified instance of booth service. Currently it is supported only
     systemd systems.
 
     env -- LibraryEnvironment
-    name -- string, name of booth instance
     """
     external.ensure_is_systemd()
+    name = env.booth.name
     try:
         external.enable_service(env.cmd_runner(), "booth", name)
     except external.EnableServiceError as e:
@@ -291,15 +293,15 @@ def enable_booth(env, name=None):
     ))
 
 
-def disable_booth(env, name=None):
+def disable_booth(env):
     """
     Disable specified instance of booth service. Currently it is supported only
     systemd systems.
 
     env -- LibraryEnvironment
-    name -- string, name of booth instance
     """
     external.ensure_is_systemd()
+    name = env.booth.name
     try:
         external.disable_service(env.cmd_runner(), "booth", name)
     except external.DisableServiceError as e:
@@ -311,16 +313,16 @@ def disable_booth(env, name=None):
     ))
 
 
-def start_booth(env, name=None):
+def start_booth(env):
     """
     Start specified instance of booth service. Currently it is supported only
     systemd systems. On non systems it can be run like this:
         BOOTH_CONF_FILE=<booth-file-path> /etc/initd/booth-arbitrator
 
     env -- LibraryEnvironment
-    name -- string, name of booth instance
     """
     external.ensure_is_systemd()
+    name = env.booth.name
     try:
         external.start_service(env.cmd_runner(), "booth", name)
     except external.StartServiceError as e:
@@ -332,15 +334,15 @@ def start_booth(env, name=None):
     ))
 
 
-def stop_booth(env, name=None):
+def stop_booth(env):
     """
     Stop specified instance of booth service. Currently it is supported only
     systemd systems.
 
     env -- LibraryEnvironment
-    name -- string, name of booth instance
     """
     external.ensure_is_systemd()
+    name = env.booth.name
     try:
         external.stop_service(env.cmd_runner(), "booth", name)
     except external.StopServiceError as e:
@@ -352,15 +354,15 @@ def stop_booth(env, name=None):
     ))
 
 
-def pull_config(env, node_name, name):
+def pull_config(env, node_name):
     """
     Get config from specified node and save it on local system. It will
     rewrite existing files.
 
     env -- LibraryEnvironment
     node_name -- string, name of node from which config should be fetched
-    name -- string, name of booth instance of which config should be fetched
     """
+    name = env.booth.name
     env.report_processor.process(
         booth_reports.booth_fetching_config_from_node_started(node_name, name)
     )
@@ -391,7 +393,8 @@ def pull_config(env, node_name, name):
         raise LibraryError(reports.invalid_response_format(node_name))
 
 
-def get_status(env, name=None):
+def get_status(env):
+    name = env.booth.name
     return {
         "status": status.get_daemon_status(env.cmd_runner(), name),
         "ticket": status.get_tickets_status(env.cmd_runner(), name),

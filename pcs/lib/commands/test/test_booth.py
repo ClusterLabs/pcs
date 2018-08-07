@@ -24,6 +24,17 @@ from pcs.lib.external import (
     StopServiceError
 )
 
+def _booth_env_fixture(name):
+    booth_env = mock.MagicMock()
+    booth_env.name = name
+    return booth_env
+
+
+def _env_fixture(booth_name):
+    env = mock.MagicMock(spec_set=LibraryEnvironment)
+    env.booth = _booth_env_fixture(booth_name)
+    return env
+
 patch_commands = create_patcher("pcs.lib.commands.booth")
 
 @mock.patch("pcs.lib.tools.generate_key", return_value="key value")
@@ -33,7 +44,7 @@ class ConfigSetupTest(TestCase):
     def test_successfuly_build_and_write_to_std_path(
         self, mock_validate_peers, mock_build, mock_generate_key
     ):
-        env = mock.MagicMock()
+        env = _env_fixture("booth_name")
         commands.config_setup(
             env,
             booth_configuration=[
@@ -56,7 +67,10 @@ class ConfigSetupTest(TestCase):
     def test_sanitize_peers_before_validation(
         self, mock_validate_peers, mock_build, mock_generate_key
     ):
-        commands.config_setup(env=mock.MagicMock(), booth_configuration={})
+        commands.config_setup(
+            env=_env_fixture("booth_name"),
+            booth_configuration={},
+        )
         mock_validate_peers.assert_called_once_with([], [])
 
 
@@ -66,8 +80,7 @@ class ConfigDestroyTest(TestCase):
     @patch_commands("external.is_service_running", mock.Mock(return_value=True))
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[True]))
     def test_raises_when_booth_config_in_use(self):
-        env = mock.MagicMock()
-        env.booth.name = "somename"
+        env = _env_fixture("somename")
 
         assert_raise_library_error(
             lambda: commands.config_destroy(env),
@@ -101,8 +114,7 @@ class ConfigDestroyTest(TestCase):
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
     @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
     def test_raises_when_cannot_get_content_of_config(self):
-        env = mock.MagicMock()
-        env.booth.name = "somename"
+        env = _env_fixture("somename")
         assert_raise_library_error(
             lambda: commands.config_destroy(env),
             (
@@ -117,8 +129,7 @@ class ConfigDestroyTest(TestCase):
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
     @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
     def test_remove_config_even_if_cannot_get_its_content_when_forced(self):
-        env = mock.MagicMock()
-        env.booth.name = "somename"
+        env = _env_fixture("somename")
         env.report_processor = MockLibraryReportProcessor()
         commands.config_destroy(env, ignore_config_load_problems=True)
         env.booth.remove_config.assert_called_once_with()
@@ -206,7 +217,7 @@ class ConfigSyncTest(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            lambda: commands.config_sync(self.env_assist.get_env()),
             []
         )
         self.env_assist.assert_reports(
@@ -250,9 +261,7 @@ class ConfigSyncTest(TestCase):
             )
         )
 
-        commands.config_sync(
-            self.env_assist.get_env(), self.name, skip_offline_nodes=True
-        )
+        commands.config_sync(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             [
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
@@ -295,7 +304,7 @@ class ConfigSyncTest(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            lambda: commands.config_sync(self.env_assist.get_env()),
             []
         )
         self.env_assist.assert_reports(
@@ -340,9 +349,7 @@ class ConfigSyncTest(TestCase):
             )
         )
 
-        commands.config_sync(
-            self.env_assist.get_env(), self.name, skip_offline_nodes=True
-        )
+        commands.config_sync(self.env_assist.get_env(),skip_offline_nodes=True)
         self.env_assist.assert_reports(
             [
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
@@ -488,15 +495,16 @@ class ConfigSyncTest(TestCase):
 @mock.patch("pcs.lib.external.enable_service")
 class EnableBoothTest(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
+        self.name = "booth_name"
+        self.mock_env = _env_fixture(self.name)
         self.mock_rep = MockLibraryReportProcessor()
         self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_env.cmd_runner.return_value = self.mock_run
         self.mock_env.report_processor = self.mock_rep
 
     def test_success(self, mock_enable, mock_is_systemctl):
-        commands.enable_booth(self.mock_env, "name")
-        mock_enable.assert_called_once_with(self.mock_run, "booth", "name")
+        commands.enable_booth(self.mock_env)
+        mock_enable.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
@@ -506,15 +514,15 @@ class EnableBoothTest(TestCase):
                 {
                     "service": "booth",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )]
         )
 
     def test_failed(self, mock_enable, mock_is_systemctl):
-        mock_enable.side_effect = EnableServiceError("booth", "msg", "name")
+        mock_enable.side_effect = EnableServiceError("booth", "msg", self.name)
         assert_raise_library_error(
-            lambda: commands.enable_booth(self.mock_env, "name"),
+            lambda: commands.enable_booth(self.mock_env),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_ENABLE_ERROR,
@@ -522,11 +530,11 @@ class EnableBoothTest(TestCase):
                     "service": "booth",
                     "reason": "msg",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )
         )
-        mock_enable.assert_called_once_with(self.mock_run, "booth", "name")
+        mock_enable.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
 
 
@@ -534,15 +542,16 @@ class EnableBoothTest(TestCase):
 @mock.patch("pcs.lib.external.disable_service")
 class DisableBoothTest(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
+        self.name = "booth_name"
+        self.mock_env = _env_fixture(self.name)
         self.mock_rep = MockLibraryReportProcessor()
         self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_env.cmd_runner.return_value = self.mock_run
         self.mock_env.report_processor = self.mock_rep
 
     def test_success(self, mock_disable, mock_is_systemctl):
-        commands.disable_booth(self.mock_env, "name")
-        mock_disable.assert_called_once_with(self.mock_run, "booth", "name")
+        commands.disable_booth(self.mock_env)
+        mock_disable.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
@@ -552,15 +561,17 @@ class DisableBoothTest(TestCase):
                 {
                     "service": "booth",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )]
         )
 
     def test_failed(self, mock_disable, mock_is_systemctl):
-        mock_disable.side_effect = DisableServiceError("booth", "msg", "name")
+        mock_disable.side_effect = DisableServiceError(
+            "booth", "msg", self.name
+        )
         assert_raise_library_error(
-            lambda: commands.disable_booth(self.mock_env, "name"),
+            lambda: commands.disable_booth(self.mock_env),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_DISABLE_ERROR,
@@ -568,11 +579,11 @@ class DisableBoothTest(TestCase):
                     "service": "booth",
                     "reason": "msg",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )
         )
-        mock_disable.assert_called_once_with(self.mock_run, "booth", "name")
+        mock_disable.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
 
 
@@ -580,15 +591,16 @@ class DisableBoothTest(TestCase):
 @mock.patch("pcs.lib.external.start_service")
 class StartBoothTest(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
+        self.name = "booth_name"
+        self.mock_env = _env_fixture(self.name)
         self.mock_rep = MockLibraryReportProcessor()
         self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_env.cmd_runner.return_value = self.mock_run
         self.mock_env.report_processor = self.mock_rep
 
     def test_success(self, mock_start, mock_is_systemctl):
-        commands.start_booth(self.mock_env, "name")
-        mock_start.assert_called_once_with(self.mock_run, "booth", "name")
+        commands.start_booth(self.mock_env)
+        mock_start.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
@@ -598,15 +610,15 @@ class StartBoothTest(TestCase):
                 {
                     "service": "booth",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )]
         )
 
     def test_failed(self, mock_start, mock_is_systemctl):
-        mock_start.side_effect = StartServiceError("booth", "msg", "name")
+        mock_start.side_effect = StartServiceError("booth", "msg", self.name)
         assert_raise_library_error(
-            lambda: commands.start_booth(self.mock_env, "name"),
+            lambda: commands.start_booth(self.mock_env),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_START_ERROR,
@@ -614,11 +626,11 @@ class StartBoothTest(TestCase):
                     "service": "booth",
                     "reason": "msg",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )
         )
-        mock_start.assert_called_once_with(self.mock_run, "booth", "name")
+        mock_start.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
 
 
@@ -626,15 +638,16 @@ class StartBoothTest(TestCase):
 @mock.patch("pcs.lib.external.stop_service")
 class StopBoothTest(TestCase):
     def setUp(self):
-        self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
+        self.name = "booth_name"
+        self.mock_env = _env_fixture(self.name)
         self.mock_rep = MockLibraryReportProcessor()
         self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_env.cmd_runner.return_value = self.mock_run
         self.mock_env.report_processor = self.mock_rep
 
     def test_success(self, mock_stop, mock_is_systemctl):
-        commands.stop_booth(self.mock_env, "name")
-        mock_stop.assert_called_once_with(self.mock_run, "booth", "name")
+        commands.stop_booth(self.mock_env)
+        mock_stop.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
@@ -644,15 +657,15 @@ class StopBoothTest(TestCase):
                 {
                     "service": "booth",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )]
         )
 
     def test_failed(self, mock_stop, mock_is_systemctl):
-        mock_stop.side_effect = StopServiceError("booth", "msg", "name")
+        mock_stop.side_effect = StopServiceError("booth", "msg", self.name)
         assert_raise_library_error(
-            lambda: commands.stop_booth(self.mock_env, "name"),
+            lambda: commands.stop_booth(self.mock_env),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_STOP_ERROR,
@@ -660,11 +673,11 @@ class StopBoothTest(TestCase):
                     "service": "booth",
                     "reason": "msg",
                     "node": None,
-                    "instance": "name",
+                    "instance": self.name,
                 }
             )
         )
-        mock_stop.assert_called_once_with(self.mock_run, "booth", "name")
+        mock_stop.assert_called_once_with(self.mock_run, "booth", self.name)
         mock_is_systemctl.assert_called_once_with()
 
 def _get_booth_file_path(file):
@@ -711,18 +724,14 @@ class PullConfigSuccess(PullConfigBase):
         )
 
     def test_success(self):
-        commands.pull_config(
-            self.env_assist.get_env(), self.node_name, self.name
-        )
+        commands.pull_config(self.env_assist.get_env(), self.node_name)
 
         self.env_assist.assert_reports(self.report_list)
 
     def test_success_config_exists(self):
         self.config.fs.exists(self.config_path, True, instead="fs.exists")
 
-        commands.pull_config(
-            self.env_assist.get_env(), self.node_name, self.name
-        )
+        commands.pull_config(self.env_assist.get_env(), self.node_name)
 
         self.env_assist.assert_reports(
             self.report_list
@@ -755,7 +764,7 @@ class PullConfigFailure(PullConfigBase):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -783,7 +792,7 @@ class PullConfigFailure(PullConfigBase):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [],
         )
@@ -810,7 +819,7 @@ class PullConfigFailure(PullConfigBase):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [],
         )
@@ -836,7 +845,7 @@ class PullConfigFailure(PullConfigBase):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [],
         )
@@ -859,7 +868,7 @@ class PullConfigFailure(PullConfigBase):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [],
         )
@@ -942,9 +951,7 @@ class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
         self._set_pwd_mock(pwd_mock)
         self._set_grp_mock(grp_mock)
 
-        commands.pull_config(
-            self.env_assist.get_env(), self.node_name, self.name
-        )
+        commands.pull_config(self.env_assist.get_env(), self.node_name)
 
         self.env_assist.assert_reports(self.report_list)
 
@@ -958,9 +965,7 @@ class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
             instead="fs.exists.authfile",
         )
 
-        commands.pull_config(
-            self.env_assist.get_env(), self.node_name, self.name
-        )
+        commands.pull_config(self.env_assist.get_env(), self.node_name)
 
         self.env_assist.assert_reports(
             self.report_list
@@ -988,9 +993,7 @@ class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
             )
         )
 
-        commands.pull_config(
-            self.env_assist.get_env(), self.node_name, self.name
-        )
+        commands.pull_config(self.env_assist.get_env(), self.node_name)
 
         self.env_assist.assert_reports(
             self.report_list
@@ -1029,7 +1032,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
         )
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -1055,7 +1058,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -1082,7 +1085,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -1114,7 +1117,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -1151,7 +1154,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name, self.name
+                self.env_assist.get_env(), self.node_name
             ),
             [
                 fixture.error(
@@ -1176,7 +1179,7 @@ class TicketOperationTest(TestCase):
         mock_find_bound_ip.return_value = []
         assert_raise_library_error(
             lambda: commands.ticket_operation(
-                "grant", mock.Mock(), "booth", "ABC", site_ip=None
+                "grant", _env_fixture("booth_name"), "ABC", site_ip=None
             ),
             (
                 Severities.ERROR,
@@ -1192,7 +1195,7 @@ class TicketOperationTest(TestCase):
         )
         assert_raise_library_error(
             lambda: commands.ticket_operation(
-                "grant", mock_env, "booth", "ABC", site_ip="1.2.3.4"
+                "grant", mock_env, "ABC", site_ip="1.2.3.4"
             ),
             (
                 Severities.ERROR,
@@ -1211,7 +1214,7 @@ class CreateInClusterTest(TestCase):
     def test_raises_when_is_created_already(self):
         assert_raise_library_error(
             lambda: commands.create_in_cluster(
-                mock.MagicMock(), "somename", ip="1.2.3.4",
+                _env_fixture("somename"), ip="1.2.3.4"
             ),
             (
                 Severities.ERROR,
