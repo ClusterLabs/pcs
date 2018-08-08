@@ -35,6 +35,7 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
+from pcs.common.tools import Version
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
@@ -46,6 +47,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
+from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _share_authkey, _destroy_pcmk_remote_env
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.communication.corosync import CheckCorosyncOffline
@@ -74,6 +76,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
+from pcs.lib.env import  MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.env_tools import get_nodes
 from pcs.lib.node import NodeAddresses
 from pcs.lib import node_communication_format
@@ -1566,21 +1569,62 @@ def cluster_push(argv):
 
     if diff_against:
         try:
-            xml.dom.minidom.parse(diff_against)
+            original_cib = xml.dom.minidom.parse(diff_against)
         except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
             utils.err("unable to parse original cib: %s" % e)
+
+        def unable_to_diff(reason):
+            return error(
+                "unable to diff against original cib '{0}': {1}"
+                .format(diff_against, reason)
+            )
+
+        cib_element_list = original_cib.getElementsByTagName("cib")
+
+        if len(cib_element_list) != 1:
+            raise unable_to_diff("there is not exactly one 'cib' element")
+
+        crm_feature_set = cib_element_list[0].getAttribute("crm_feature_set")
+        if not crm_feature_set:
+            raise unable_to_diff(
+                "the 'cib' element is missing 'crm_feature_set' value"
+            )
+
+        match = re.match(VERSION_FORMAT, crm_feature_set)
+        if not match:
+            raise unable_to_diff(
+                "the attribute 'crm_feature_set' of the element 'cib' has an"
+                " invalid value: '{0}'".format(crm_feature_set)
+            )
+        crm_feature_set_version = Version(
+            int(match.group("major")),
+            int(match.group("minor")),
+            int(match.group("rev")) if match.group("rev") else None
+        )
+
+        if crm_feature_set_version < MIN_FEATURE_SET_VERSION_FOR_DIFF:
+            raise unable_to_diff(
+                (
+                    "the 'crm_feature_set' version is '{0}'"
+                    " but at least version '{1}' is required"
+                ).format(
+                    crm_feature_set_version,
+                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
+                )
+            )
+
         runner = utils.cmd_runner()
         command = [
             "crm_diff", "--original", diff_against, "--new", filename,
             "--no-version"
         ]
-        patch, error, dummy_retval = runner.run(command)
+        patch, stderr, dummy_retval = runner.run(command)
         # dummy_retval == 1 means one of two things:
         # a) an error has occured
         # b) --original and --new differ
         # therefore it's of no use to see if an error occurred
-        if error.strip():
-            utils.err("unable to diff the CIBs:\n" + error)
+        if stderr.strip():
+            utils.err("unable to diff the CIBs:\n" + stderr)
         if not patch.strip():
             print(
                 "The new CIB is the same as the original CIB, nothing to push."
@@ -1588,9 +1632,9 @@ def cluster_push(argv):
             sys.exit(0)
 
         command = ["cibadmin", "--patch", "--xml-pipe"]
-        output, error, retval = runner.run(command, patch)
+        output, stderr, retval = runner.run(command, patch)
         if retval != 0:
-            utils.err("unable to push cib\n" + error + output)
+            utils.err("unable to push cib\n" + stderr + output)
 
     else:
         command = ["cibadmin", "--replace", "--xml-file", filename]

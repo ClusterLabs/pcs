@@ -7,9 +7,12 @@
 - Test of watchdog devices ([rhbz#1475318])
 - Possible race condition causing an HTTP 408 error when sending larger files
   via pcs ([rhbz#1600169])
+- Support `diff-against` option of `pcs cluster cib-push` only for
+  crm\_feature\_set > 3.0.8 ([rhbz#1488044])
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
+[rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 
 

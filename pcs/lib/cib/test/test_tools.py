@@ -436,6 +436,21 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             )
         )
 
+    def test_invalid_version_at_end(self):
+        assert_raise_library_error(
+            lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
+                etree.XML('<cib validate-with="pacemaker-1.2.3x"/>')
+            ),
+            (
+                severities.ERROR,
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                {
+                    "reason": "the attribute 'validate-with' of the element"
+                        " 'cib' has an invalid value: 'pacemaker-1.2.3x'"
+                }
+            )
+        )
+
     def test_no_revision(self):
         self.assertEqual(
             Version(1, 2),
@@ -503,6 +518,20 @@ class getCibCrmFeatureSet(TestCase):
                 reason=(
                     "the attribute 'crm_feature_set' of the element 'cib' has "
                     "an invalid value: '3'"
+                )
+            )
+        )
+
+    def test_invalid_version_at_end(self):
+        assert_raise_library_error(
+            lambda: lib.get_cib_crm_feature_set(
+                etree.XML('<cib crm_feature_set="3.0.9x" />')
+            ),
+            fixture.error(
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                reason=(
+                    "the attribute 'crm_feature_set' of the element 'cib' has "
+                    "an invalid value: '3.0.9x'"
                 )
             )
         )
