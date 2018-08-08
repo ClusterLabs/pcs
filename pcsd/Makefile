@@ -20,7 +20,7 @@ build_gems_without_bundler:
 	vendor/cache/ffi-${FFI_VERSION}.gem \
 	vendor/cache/json-2.1.0.gem \
 	vendor/cache/multi_json-1.13.1.gem \
-	vendor/cache/musterman-1.0.2.gem \
+	vendor/cache/mustermann-1.0.2.gem \
 	vendor/cache/open4-1.3.4.gem \
 	vendor/cache/rack-2.0.5.gem \
 	vendor/cache/rack-protection-2.0.3.gem \
