@@ -20,6 +20,15 @@ class Mixin:
             )
 
     async def session_auth_user(self, username, password, sign_rejection=True):
+        """
+        Make user authorization and refresh storage.
+
+        bool sing_rejection -- flag according to which will be decided whether
+            to manipulate with session in storage in case of failed
+            authorization. It allows not to touch session for ajax calls when
+            authorization fails. It keeps previous behavior and should be
+            reviewed.
+        """
         # initialize session since it should be used without `init_session`
         self.__session = self.__storage.provide(self.__sid_from_client)
         self.__refresh_auth(

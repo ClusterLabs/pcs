@@ -6,7 +6,8 @@ from tornado.httputil import HTTPHeaders
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.daemon import ruby_pcsd, auth
+from pcs.daemon import ruby_pcsd, auth, app_session, session
+from tornado.httputil import parse_cookie
 
 USER = "user"
 GROUPS = ["group1", "group2"]
@@ -71,6 +72,70 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.code, self.wrapper.status_code)
         self.assert_headers_contains(response.headers, self.wrapper.headers)
         self.assertEqual(response.body, self.wrapper.body)
+
+
+class AppUiTest(AppTest):
+    def setUp(self):
+        self.user_auth_info = UserAuthInfo()
+        self.groups_valid = True
+        self.session_storage = session.Storage(lifetime_seconds=10)
+        self.setup_patch("check_user_groups", self.check_user_groups)
+        super().setUp()
+
+    async def check_user_groups(self, username):
+        self.assertEqual(username, USER)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.groups_valid
+        )
+
+    def extract_sid(self, response):
+        return self.assert_session_in_response(response)
+
+    def assert_session_in_response(self, response, sid=None):
+        self.assertTrue("Set-Cookie" in response.headers)
+        cookie = parse_cookie(response.headers["Set-Cookie"])
+        self.assertTrue(app_session.PCSD_SESSION, cookie)
+        if sid:
+            self.assertEqual(cookie[app_session.PCSD_SESSION], sid)
+        return cookie[app_session.PCSD_SESSION]
+
+    def fetch(self, path, **kwargs):
+        if "sid" in kwargs:
+            if "headers" not in kwargs:
+                kwargs["headers"] = {}
+            kwargs["headers"]["Cookie"] =  (
+                f"{app_session.PCSD_SESSION}={kwargs['sid']}"
+            )
+            del kwargs["sid"]
+
+        if "is_ajax" in kwargs:
+            if "headers" not in kwargs:
+                kwargs["headers"] = {}
+            kwargs["headers"]["X-Requested-With"] = "XMLHttpRequest"
+            del kwargs["is_ajax"]
+
+
+        if "follow_redirects" not in kwargs:
+            kwargs["follow_redirects"] = False
+
+        return super().fetch(path, **kwargs)
+
+    def create_login_session(self):
+        return self.session_storage.login(
+            sid=None,
+            username=USER,
+            groups=GROUPS
+        )
+
+    def assert_success_response(self, response, expected_body):
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.body.decode(), expected_body)
+
+    def assert_unauth_ajax(self, response):
+        self.assertEqual(response.code, 401)
+        self.assertEqual(response.body, b'{"notauthorized":"true"}')
 
 class UserAuthInfo:
     # pylint: disable=too-few-public-methods

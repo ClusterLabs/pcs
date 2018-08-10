@@ -9,13 +9,15 @@ from tornado.web import Application
 
 from pcs import settings
 from pcs.common.system import is_systemd
-from pcs.daemon import (
+from pcs.daemon import(
     app_gui,
     app_remote,
+    app_spa,
+    app_ui,
     log,
     ruby_pcsd,
     session,
-    ssl,
+    ssl
     systemd,
 )
 from pcs.daemon.env import prepare_env
@@ -68,7 +70,20 @@ def configure_app(
         )
 
         if not disable_gui:
+            spa_root = "/ui/"
             routes.extend(
+                app_ui.get_routes(redirect_root_to=spa_root)
+                +
+                app_spa.get_routes(
+                    url_prefix=spa_root,
+                    app_dir=os.path.join(public_dir, "ui"),
+                    fallback_page_path=os.path.join(
+                        public_dir,
+                        "spa_instructions.html",
+                    ),
+                    session_storage=session_storage,
+                )
+                +
                 app_gui.get_routes(
                     session_storage,
                     ruby_pcsd_wrapper,
