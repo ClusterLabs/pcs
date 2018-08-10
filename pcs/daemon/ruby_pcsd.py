@@ -58,6 +58,11 @@ def process_response_logs(rb_log_list):
             group_id=group_id
         )
 
+def log_communication(request_json, stdout, stderr):
+    log.pcsd.debug(f"Request for ruby pcsd wrapper: '{request_json}'")
+    log.pcsd.debug(f"Response stdout from ruby pcsd wrapper: '{stdout}'")
+    log.pcsd.debug(f"Response stderr from ruby pcsd wrapper: '{stderr}'")
+
 class Wrapper:
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -138,6 +143,8 @@ class Wrapper:
             )
             raise HTTPError(500)
         else:
+            if self.__debug:
+                log_communication(request_json, stdout, stderr)
             process_response_logs(response["logs"])
             return response
 
@@ -178,8 +185,5 @@ class Wrapper:
 
     def __log_bad_response(self, error_message, request_json, stdout, stderr):
         log.pcsd.error(error_message)
-        if not self.__debug:
-            return
-        log.pcsd.debug(f"Request for ruby pcsd wrapper: '{request_json}'")
-        log.pcsd.debug(f"Response stdout from ruby pcsd wrapper: '{stdout}'")
-        log.pcsd.debug(f"Response stderr from ruby pcsd wrapper: '{stderr}'")
+        if self.__debug:
+            log_communication(request_json, stdout, stderr)
