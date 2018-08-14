@@ -71,7 +71,10 @@ from pcs.lib.communication.nodes import (
 from pcs.lib.communication.tools import run as run_com_cmd
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
-from pcs.lib.pacemaker.live import has_wait_for_idle_support
+from pcs.lib.pacemaker.live import (
+    EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE,
+    has_wait_for_idle_support,
+)
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
     is_boolean,
@@ -126,14 +129,25 @@ def checkAndUpgradeCIB(major,minor,rev):
     cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
     if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
         return False
-    cluster_upgrade()
+    cluster_upgrade(error_on_latest_schema=False)
     return True
 
-def cluster_upgrade():
+def cluster_upgrade(error_on_latest_schema=True):
     output, retval = run(["cibadmin", "--upgrade", "--force"])
-    if retval != 0:
+    if retval == 0:
+        print("Cluster CIB has been upgraded to latest version")
+    elif retval == EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE:
+        message = "Cluster CIB schema is already the latest version"
+        # For "pcs cluster cib-upgrade" we keep the previous behavior of
+        # exiting with 1. For automatic upgrades initiated by pcs commands we
+        # keep going so pcs has a chance to test the resulting schema version
+        # and report to the user.
+        if error_on_latest_schema:
+            err(message)
+        else:
+            print(message)
+    else:
         err("unable to upgrade cluster: %s" % output)
-    print("Cluster CIB has been upgraded to latest version")
 
 def cluster_upgrade_to_version(required_version):
     checkAndUpgradeCIB(*required_version)

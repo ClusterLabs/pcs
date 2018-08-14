@@ -22,7 +22,7 @@ from pcs.lib.xml_tools import etree_to_str
 
 __EXITCODE_WAIT_TIMEOUT = 62
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 6
-__EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE = 211
+EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE = 211
 __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 
 class CrmMonErrorException(LibraryError):
@@ -198,7 +198,7 @@ def _upgrade_cib(runner):
     # If we are already on the latest schema available, do not consider it an
     # error. We do not know here what version is required. The caller however
     # knows and is responsible for dealing with it.
-    if retval not in (0, __EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE):
+    if retval not in (0, EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE):
         raise LibraryError(
             reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
         )
