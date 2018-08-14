@@ -19,8 +19,10 @@
 - Commands for listing and testing watchdog devices ([rhbz#1578891])
 
 ### Fixed
-- `pcs cib-push diff-against=` does not consider an empty diff as an error
-  ([ghpull#166])
+- `pcs cluster cib-push diff-against=` does not consider an empty diff as
+  an error ([ghpull#166])
+- `pcs cluster cib-push diff-against=` exits gracefully with an error message if
+  crm\_feature\_set < 3.0.9 ([rhbz#1488044])
 - `pcs resource update` does not create an empty meta\_attributes element any
   more ([rhbz#1568353])
 - `pcs resource debug-*` commands provide debug messages even with
@@ -98,6 +100,7 @@
 [rhbz#1427273]: https://bugzilla.redhat.com/show_bug.cgi?id=1427273
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
+[rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
 [rhbz#1536121]: https://bugzilla.redhat.com/show_bug.cgi?id=1536121
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243

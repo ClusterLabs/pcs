@@ -10,7 +10,7 @@ from pcs.lib.pacemaker.values import (
 )
 from pcs.lib.xml_tools import get_root, get_sub_element
 
-_VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
+VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
 
 class IdProvider(object):
     """
@@ -283,7 +283,7 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
     return _get_cib_version(
         cib,
         "validate-with",
-        re.compile(r"pacemaker-{0}".format(_VERSION_FORMAT))
+        re.compile(r"pacemaker-{0}".format(VERSION_FORMAT))
     )
 
 def get_cib_crm_feature_set(cib, none_if_missing=False):
@@ -297,6 +297,6 @@ def get_cib_crm_feature_set(cib, none_if_missing=False):
     return _get_cib_version(
         cib,
         "crm_feature_set",
-        re.compile(_VERSION_FORMAT),
+        re.compile(VERSION_FORMAT),
         none_if_missing=none_if_missing
     )

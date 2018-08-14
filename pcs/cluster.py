@@ -1,10 +1,11 @@
+import datetime
+import json
 import math
 import os
+import re
 import subprocess
 import sys
 import tempfile
-import datetime
-import json
 import time
 import xml.dom.minidom
 
@@ -20,7 +21,6 @@ from pcs import (
     utils,
 )
 from pcs.utils import parallel_for_nodes
-from pcs.common.node_communicator import HostNotFound
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     CmdLineInputError,
@@ -28,7 +28,10 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
 import pcs.cli.cluster.command as cluster_command
+from pcs.common.node_communicator import HostNotFound
+from pcs.common.tools import Version
 from pcs.lib import sbd as lib_sbd
+from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.tools import run_and_raise
@@ -36,7 +39,7 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.common.console_report import warn, error
+from pcs.cli.common.console_report import error, warn
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     disable_service,
@@ -44,6 +47,7 @@ from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
+from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.env_tools import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
 
@@ -608,21 +612,62 @@ def cluster_push(argv):
 
     if diff_against:
         try:
-            xml.dom.minidom.parse(diff_against)
+            original_cib = xml.dom.minidom.parse(diff_against)
         except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
             utils.err("unable to parse original cib: %s" % e)
+
+        def unable_to_diff(reason):
+            return error(
+                "unable to diff against original cib '{0}': {1}"
+                .format(diff_against, reason)
+            )
+
+        cib_element_list = original_cib.getElementsByTagName("cib")
+
+        if len(cib_element_list) != 1:
+            raise unable_to_diff("there is not exactly one 'cib' element")
+
+        crm_feature_set = cib_element_list[0].getAttribute("crm_feature_set")
+        if not crm_feature_set:
+            raise unable_to_diff(
+                "the 'cib' element is missing 'crm_feature_set' value"
+            )
+
+        match = re.match(VERSION_FORMAT, crm_feature_set)
+        if not match:
+            raise unable_to_diff(
+                "the attribute 'crm_feature_set' of the element 'cib' has an"
+                " invalid value: '{0}'".format(crm_feature_set)
+            )
+        crm_feature_set_version = Version(
+            int(match.group("major")),
+            int(match.group("minor")),
+            int(match.group("rev")) if match.group("rev") else None
+        )
+
+        if crm_feature_set_version < MIN_FEATURE_SET_VERSION_FOR_DIFF:
+            raise unable_to_diff(
+                (
+                    "the 'crm_feature_set' version is '{0}'"
+                    " but at least version '{1}' is required"
+                ).format(
+                    crm_feature_set_version,
+                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
+                )
+            )
+
         runner = utils.cmd_runner()
         command = [
             "crm_diff", "--original", diff_against, "--new", filename,
             "--no-version"
         ]
-        patch, error, retval = runner.run(command)
+        patch, stderr, retval = runner.run(command)
         #  0 (CRM_EX_OK) - success with no difference
         #  1 (CRM_EX_ERROR) - success with difference
         # 64 (CRM_EX_USAGE) - usage error
         # 65 (CRM_EX_DATAERR) - XML fragments not parseable
         if retval > 1:
-            utils.err("unable to diff the CIBs:\n" + error)
+            utils.err("unable to diff the CIBs:\n" + stderr)
         if retval == 0:
             print(
                 "The new CIB is the same as the original CIB, nothing to push."
@@ -630,9 +675,9 @@ def cluster_push(argv):
             sys.exit(0)
 
         command = ["cibadmin", "--patch", "--xml-pipe"]
-        output, error, retval = runner.run(command, patch)
+        output, stderr, retval = runner.run(command, patch)
         if retval != 0:
-            utils.err("unable to push cib\n" + error + output)
+            utils.err("unable to push cib\n" + stderr + output)
 
     else:
         command = ["cibadmin", "--replace", "--xml-file", filename]

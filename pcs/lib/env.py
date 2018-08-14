@@ -50,6 +50,8 @@ from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
 
+MIN_FEATURE_SET_VERSION_FOR_DIFF = Version(3, 0, 9)
+
 class LibraryEnvironment(object):
     # pylint: disable=too-many-instance-attributes
 
@@ -204,10 +206,14 @@ class LibraryEnvironment(object):
         # only check the version if a CIB has been loaded, otherwise the push
         # fails anyway. By my testing it seems that only the source CIB's
         # version matters.
-        if self.__loaded_cib_diff_source_feature_set < Version(3, 0, 9):
+        if(
+            self.__loaded_cib_diff_source_feature_set
+            <
+            MIN_FEATURE_SET_VERSION_FOR_DIFF
+        ):
             self.report_processor.process(
                 reports.cib_push_forced_full_due_to_crm_feature_set(
-                    Version(3, 0, 9),
+                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
                     self.__loaded_cib_diff_source_feature_set
                 )
             )
