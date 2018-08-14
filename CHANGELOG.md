@@ -87,6 +87,8 @@
 - Resource operation option `requires` is no longer accepted to match changes
   in pacemaker-2.0 ([rhbz#1605185])
 - Update pacemaker exit codes to match changes in pacemaker-2.0 ([rhbz#1536121])
+- `pcs cluster cib-upgrade` no longer exits with an error if the CIB schema is
+  already the latest available (this has been changed in pacemaker-2.0)
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
