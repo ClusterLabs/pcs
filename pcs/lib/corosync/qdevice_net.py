@@ -27,6 +27,16 @@ __qdevice_certutil = os.path.join(
     settings.corosync_binaries,
     "corosync-qdevice-net-certutil"
 )
+__nss_certificate_db_files = (
+    # old NSS DB format
+    "cert8.db",
+    "key3.db",
+    "secmod.db",
+    # new NSS DB format
+    "cert9.db",
+    "key4.db",
+    "pkcs11.txt",
+)
 
 class QnetdNotRunningException(Exception):
     pass
@@ -85,7 +95,7 @@ def qdevice_setup(runner):
     """
     initialize qdevice on local host
     """
-    if external.is_dir_nonempty(settings.corosync_qdevice_net_server_certs_dir):
+    if qdevice_initialized():
         raise LibraryError(reports.qdevice_already_initialized(__model))
 
     stdout, stderr, retval = runner.run([
@@ -103,10 +113,9 @@ def qdevice_initialized():
     """
     check if qdevice server certificate database has been initialized
     """
-    return os.path.exists(os.path.join(
-        settings.corosync_qdevice_net_server_certs_dir,
-        "cert8.db"
-    ))
+    return _nss_certificate_db_initialized(
+        settings.corosync_qdevice_net_server_certs_dir
+    )
 
 def qdevice_destroy():
     """
@@ -282,10 +291,9 @@ def client_initialized():
     """
     check if qdevice net client certificate database has been initialized
     """
-    return os.path.exists(os.path.join(
-        settings.corosync_qdevice_net_client_certs_dir,
-        "cert8.db"
-    ))
+    return _nss_certificate_db_initialized(
+        settings.corosync_qdevice_net_client_certs_dir
+    )
 
 def client_destroy():
     """
@@ -372,6 +380,12 @@ def client_import_certificate_and_key(runner, pk12_certificate):
                 join_multilines([stderr, stdout])
             )
         )
+
+def _nss_certificate_db_initialized(cert_db_path):
+    for filename in __nss_certificate_db_files:
+        if os.path.exists(os.path.join(cert_db_path, filename)):
+            return True
+    return False
 
 def _store_to_tmpfile(data, report_func):
     try:

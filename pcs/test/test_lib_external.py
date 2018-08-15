@@ -1471,35 +1471,6 @@ class KillServicesTest(TestCase):
         )
 
 
-@mock.patch("os.listdir")
-@mock.patch("os.path.isdir")
-@mock.patch("os.path.exists")
-class IsDirNonemptyTest(TestCase):
-    def test_path_does_not_exist(self, mock_exists, mock_isdir, mock_listdir):
-        mock_exists.return_value = False
-        self.assertFalse(lib.is_dir_nonempty("path"))
-        mock_isdir.assert_not_called()
-        mock_listdir.assert_not_called()
-
-    def test_path_is_not_dir(self, mock_exists, mock_isdir, mock_listdir):
-        mock_exists.return_value = True
-        mock_isdir.return_value = False
-        self.assertTrue(lib.is_dir_nonempty("path"))
-        mock_listdir.assert_not_called()
-
-    def test_dir_is_empty(self, mock_exists, mock_isdir, mock_listdir):
-        mock_exists.return_value = True
-        mock_isdir.return_value = True
-        mock_listdir.return_value = []
-        self.assertFalse(lib.is_dir_nonempty("path"))
-
-    def test_dir_is_not_empty(self, mock_exists, mock_isdir, mock_listdir):
-        mock_exists.return_value = True
-        mock_isdir.return_value = True
-        mock_listdir.return_value = ["a_file"]
-        self.assertTrue(lib.is_dir_nonempty("path"))
-
-
 @mock.patch("pcs.lib.external.is_systemctl")
 class IsServiceEnabledTest(TestCase):
     def setUp(self):

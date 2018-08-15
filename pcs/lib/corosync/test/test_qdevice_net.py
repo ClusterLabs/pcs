@@ -30,22 +30,22 @@ class CertificateTestCase(TestCase):
         self.mock_tmpfile = mock.MagicMock()
         self.mock_tmpfile.name = "tmpfile path"
 
-@mock.patch("pcs.lib.corosync.qdevice_net.external.is_dir_nonempty")
+@mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 class QdeviceSetupTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
 
-    def test_success(self, mock_is_dir_nonempty):
-        mock_is_dir_nonempty.return_value = False
+    def test_success(self, mock_initialized):
+        mock_initialized.return_value = False
         self.mock_runner.run.return_value = ("initialized", "", 0)
 
         lib.qdevice_setup(self.mock_runner)
 
-        mock_is_dir_nonempty.assert_called_once_with(_qnetd_cert_dir)
+        mock_initialized.assert_called_once_with()
         self.mock_runner.run.assert_called_once_with([_qnetd_cert_tool, "-i"])
 
-    def test_cert_db_exists(self, mock_is_dir_nonempty):
-        mock_is_dir_nonempty.return_value = True
+    def test_cert_db_exists(self, mock_initialized):
+        mock_initialized.return_value = True
 
         assert_raise_library_error(
             lambda: lib.qdevice_setup(self.mock_runner),
@@ -56,11 +56,11 @@ class QdeviceSetupTest(TestCase):
             )
         )
 
-        mock_is_dir_nonempty.assert_called_once_with(_qnetd_cert_dir)
+        mock_initialized.assert_called_once_with()
         self.mock_runner.run.assert_not_called()
 
-    def test_init_tool_fail(self, mock_is_dir_nonempty):
-        mock_is_dir_nonempty.return_value = False
+    def test_init_tool_fail(self, mock_initialized):
+        mock_initialized.return_value = False
         self.mock_runner.run.return_value = ("stdout", "test error", 1)
 
         assert_raise_library_error(
@@ -75,7 +75,7 @@ class QdeviceSetupTest(TestCase):
             )
         )
 
-        mock_is_dir_nonempty.assert_called_once_with(_qnetd_cert_dir)
+        mock_initialized.assert_called_once_with()
         self.mock_runner.run.assert_called_once_with([_qnetd_cert_tool, "-i"])
 
 

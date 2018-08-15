@@ -44,14 +44,6 @@ class KillServicesError(ManageServiceError):
     pass
 
 
-def is_dir_nonempty(path):
-    if not os.path.exists(path):
-        return False
-    if not os.path.isdir(path):
-        return True
-    return len(os.listdir(path)) > 0
-
-
 def _get_service_name(service, instance=None):
     return "{0}{1}.service".format(
         service, "" if instance is None else "@{0}".format(instance)

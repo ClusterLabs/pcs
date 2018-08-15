@@ -35,6 +35,8 @@
   ([rhbz#1595829])
 - Possible race condition causing an HTTP 408 error when sending larger files
   via pcs ([rhbz#1600169])
+- Configuring QDevice works even if NSS with the new db format (cert9.db,
+  key4.db, pkcs11.txt) is used ([rhbz#1596721])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -114,6 +116,7 @@
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 [rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829
+[rhbz#1596721]: https://bugzilla.redhat.com/show_bug.cgi?id=1596721
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 [rhbz#1605185]: https://bugzilla.redhat.com/show_bug.cgi?id=1605185
 
