@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
-from tornado.web import Application
+from tornado.web import Application, RedirectHandler
 
 from pcs import settings
 from pcs.common.system import is_systemd
@@ -13,11 +13,10 @@ from pcs.daemon import(
     app_gui,
     app_remote,
     app_spa,
-    app_ui,
     log,
     ruby_pcsd,
     session,
-    ssl
+    ssl,
     systemd,
 )
 from pcs.daemon.env import prepare_env
@@ -72,7 +71,7 @@ def configure_app(
         if not disable_gui:
             spa_root = "/ui/"
             routes.extend(
-                app_ui.get_routes(redirect_root_to=spa_root)
+                [(r"/", RedirectHandler, dict(url=spa_root))]
                 +
                 app_spa.get_routes(
                     url_prefix=spa_root,

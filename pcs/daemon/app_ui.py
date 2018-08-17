@@ -1,4 +1,4 @@
-from tornado.web import Finish, StaticFileHandler, RequestHandler
+from tornado.web import Finish, StaticFileHandler
 
 from pcs.daemon.app_common import EnhanceHeadersMixin
 
@@ -34,17 +34,3 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
         # future.
         self.set_header_nosniff_content_type()
         self.set_strict_transport_security()
-
-class RootHandler(RequestHandler):
-    #pylint: disable=abstract-method
-    def initialize(self, redirect_to):
-        #pylint: disable=arguments-differ
-        self.__redirect_to = redirect_to
-
-    def get(self, *args, **kwargs):
-        self.redirect(self.__redirect_to)
-
-def get_routes(redirect_root_to="/ui/"):
-    return [
-        (r"/", RootHandler, dict(redirect_to=redirect_root_to)),
-    ]
