@@ -1,6 +1,6 @@
 from tornado.web import Finish, StaticFileHandler
 
-from pcs.daemon.app_common import EnhanceHeadersMixin
+from pcs.daemon.app.app_common import EnhanceHeadersMixin
 
 class AjaxMixin:
     """

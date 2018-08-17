@@ -5,9 +5,10 @@ from pcs_test.tools.misc import(
     create_setup_patch_mixin,
     get_test_resource as rc,
 )
-from pcs_test.tier0.daemon import fixtures_app
+from pcs_test.tier0.daemon.app import fixtures_app
 
-from pcs.daemon import app_gui, auth, ruby_pcsd
+from pcs.daemon import auth, ruby_pcsd
+from pcs.daemon.app import app_gui
 
 
 USER = "user"

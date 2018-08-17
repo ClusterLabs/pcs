@@ -3,7 +3,7 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler
 
 from pcs_test.tier0.daemon.test_session import AssertMixin
-from pcs_test.tier0.daemon.fixtures_app import(
+from pcs_test.tier0.daemon.app.fixtures_app import(
     USER,
     GROUPS,
     PASSWORD,
@@ -12,7 +12,8 @@ from pcs_test.tier0.daemon.fixtures_app import(
 )
 from pcs_test.tools.misc import create_setup_patch_mixin
 
-from pcs.daemon import session, app_session
+from pcs.daemon import session
+from pcs.daemon.app import app_session
 
 # pylint: disable=too-many-ancestors
 

@@ -9,16 +9,8 @@ from tornado.web import Application, RedirectHandler
 
 from pcs import settings
 from pcs.common.system import is_systemd
-from pcs.daemon import(
-    app_gui,
-    app_remote,
-    app_spa,
-    log,
-    ruby_pcsd,
-    session,
-    ssl,
-    systemd,
-)
+from pcs.daemon import log, ruby_pcsd, session, ssl, systemd
+from pcs.daemon.app import app_gui, app_remote, app_spa
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 

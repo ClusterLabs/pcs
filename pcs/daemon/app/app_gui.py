@@ -1,8 +1,9 @@
 import os.path
 
-from pcs.daemon import app_session, ruby_pcsd, session
-from pcs.daemon.app_common import BaseHandler, Sinatra
-from pcs.daemon.app_ui import AjaxMixin, StaticFile
+from pcs.daemon import ruby_pcsd, session
+from pcs.daemon.app import app_session
+from pcs.daemon.app.app_common import BaseHandler, Sinatra
+from pcs.daemon.app.app_ui import AjaxMixin, StaticFile
 
 class SinatraGui(app_session.Mixin, Sinatra):
     """

@@ -1,7 +1,7 @@
 from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
-from pcs.daemon.app_common import Sinatra
+from pcs.daemon.app.app_common import Sinatra
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 

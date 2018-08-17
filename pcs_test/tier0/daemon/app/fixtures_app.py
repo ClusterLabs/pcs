@@ -2,12 +2,12 @@ from base64 import b64encode
 from pprint import pformat
 from urllib.parse import urlencode
 
-from tornado.httputil import HTTPHeaders
+from tornado.httputil import HTTPHeaders, parse_cookie
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.daemon import ruby_pcsd, auth, app_session, session
-from tornado.httputil import parse_cookie
+from pcs.daemon import ruby_pcsd, auth, session
+from pcs.daemon.app import app_session
 
 USER = "user"
 GROUPS = ["group1", "group2"]
@@ -105,7 +105,7 @@ class AppUiTest(AppTest):
         if "sid" in kwargs:
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
-            kwargs["headers"]["Cookie"] =  (
+            kwargs["headers"]["Cookie"] = (
                 f"{app_session.PCSD_SESSION}={kwargs['sid']}"
             )
             del kwargs["sid"]

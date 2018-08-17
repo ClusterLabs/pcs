@@ -1,16 +1,17 @@
 import logging
 import os
 
-from pcs.daemon import app_spa, auth
-from pcs.daemon.test import fixtures_app
-from pcs.test.tools.misc import(
+from pcs.daemon import auth
+from pcs.daemon.app import app_spa
+from pcs_test.tier0.daemon.app import fixtures_app
+from pcs_test.tools.misc import(
     create_setup_patch_mixin,
     get_test_resource as rc,
 )
 
 USER = "user"
 PASSWORD = "password"
-LOGIN_BODY ={"username": USER, "password": PASSWORD}
+LOGIN_BODY = {"username": USER, "password": PASSWORD}
 PUBLIC_DIR = rc("web_public")
 PREFIX = "/ui/"
 SPA_DIR = os.path.join(PUBLIC_DIR, PREFIX)
@@ -85,13 +86,13 @@ class Login(AppTest):
         )
 
     def test_login_attempt_failed(self):
-        self.user_auth_info.valid=False
+        self.user_auth_info.valid = False
         self.assert_unauth_ajax(
             self.post(f'{PREFIX}login', LOGIN_BODY, is_ajax=True)
         )
 
     def test_login_attempt_succeeded(self):
-        self.user_auth_info.valid=True
+        self.user_auth_info.valid = True
         response = self.post(f'{PREFIX}login', LOGIN_BODY, is_ajax=True)
         self.assert_success_response(
             response,
