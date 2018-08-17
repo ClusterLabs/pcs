@@ -9,7 +9,7 @@ from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import create_setup_patch_mixin
 
 from pcs.daemon import ruby_pcsd, http_server
-from pcs.daemon.app import app_remote
+from pcs.daemon.app import sinatra_remote
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -24,7 +24,7 @@ class AppTest(fixtures_app.AppTest):
         super().setUp()
 
     def get_routes(self):
-        return app_remote.get_routes(
+        return sinatra_remote.get_routes(
             self.wrapper,
             self.lock,
             self.https_server_manage,
@@ -46,7 +46,9 @@ class SetCerts(AppTest):
         self.https_server_manage.reload_certs.assert_not_called()
 
 class Auth(
-    AppTest, create_setup_patch_mixin(app_remote), fixtures_app.UserAuthMixin
+    AppTest,
+    create_setup_patch_mixin(sinatra_remote),
+    fixtures_app.UserAuthMixin
 ):
     # pylint: disable=too-many-ancestors
     def setUp(self):

@@ -8,7 +8,7 @@ from pcs_test.tools.misc import(
 from pcs_test.tier0.daemon.app import fixtures_app
 
 from pcs.daemon import auth, ruby_pcsd
-from pcs.daemon.app import app_gui
+from pcs.daemon.app import sinatra_ui
 
 
 USER = "user"
@@ -24,14 +24,14 @@ if not os.path.exists(CSS_DIR):
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(
-    fixtures_app.AppUiTest, create_setup_patch_mixin(app_gui.app_session)
+    fixtures_app.AppUiTest, create_setup_patch_mixin(sinatra_ui.app_session)
 ):
     def setUp(self):
         self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_GUI)
         super().setUp()
 
     def get_routes(self):
-        return app_gui.get_routes(
+        return sinatra_ui.get_routes(
             self.session_storage,
             self.wrapper,
             PUBLIC_DIR,

@@ -1,7 +1,7 @@
 from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
-from pcs.daemon.app.app_common import Sinatra
+from pcs.daemon.app.sinatra_common import Sinatra
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
 
@@ -29,7 +29,7 @@ class SyncConfigMutualExclusive(SinatraRemote):
     def initialize(
         self, sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
     ):
-        #pylint: disable=arguments-differ
+        #pylint: disable=arguments-differ, attribute-defined-outside-init
         super().initialize(ruby_pcsd_wrapper)
         self.__sync_config_lock = sync_config_lock
 
@@ -52,7 +52,7 @@ class SetCerts(SinatraRemote):
         ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
         https_server_manage: HttpsServerManage
     ):
-        #pylint: disable=arguments-differ
+        #pylint: disable=arguments-differ, attribute-defined-outside-init
         super().initialize(ruby_pcsd_wrapper)
         self.__https_server_manage = https_server_manage
 

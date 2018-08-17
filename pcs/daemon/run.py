@@ -10,7 +10,7 @@ from tornado.web import Application, RedirectHandler
 from pcs import settings
 from pcs.common.system import is_systemd
 from pcs.daemon import log, ruby_pcsd, session, ssl, systemd
-from pcs.daemon.app import app_gui, app_remote, app_spa
+from pcs.daemon.app import sinatra_ui, sinatra_remote, ui
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -54,28 +54,28 @@ def configure_app(
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """
-        routes = app_remote.get_routes(
+        routes = sinatra_remote.get_routes(
             ruby_pcsd_wrapper,
             sync_config_lock,
             https_server_manage,
         )
 
         if not disable_gui:
-            spa_root = "/ui/"
+            ui_root_url = "/ui/"
             routes.extend(
-                [(r"/", RedirectHandler, dict(url=spa_root))]
+                [(r"/", RedirectHandler, dict(url=ui_root_url))]
                 +
-                app_spa.get_routes(
-                    url_prefix=spa_root,
+                ui.get_routes(
+                    url_prefix=ui_root_url,
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
                         public_dir,
-                        "spa_instructions.html",
+                        "ui_instructions.html",
                     ),
                     session_storage=session_storage,
                 )
                 +
-                app_gui.get_routes(
+                sinatra_ui.get_routes(
                     session_storage,
                     ruby_pcsd_wrapper,
                     public_dir

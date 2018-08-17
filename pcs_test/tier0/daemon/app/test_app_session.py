@@ -13,7 +13,7 @@ from pcs_test.tier0.daemon.app.fixtures_app import(
 from pcs_test.tools.misc import create_setup_patch_mixin
 
 from pcs.daemon import session
-from pcs.daemon.app import app_session
+from pcs.daemon.app import session as app_session
 
 # pylint: disable=too-many-ancestors
 

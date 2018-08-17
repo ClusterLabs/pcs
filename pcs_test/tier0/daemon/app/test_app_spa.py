@@ -2,7 +2,7 @@ import logging
 import os
 
 from pcs.daemon import auth
-from pcs.daemon.app import app_spa
+from pcs.daemon.app import ui
 from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import(
     create_setup_patch_mixin,
@@ -25,7 +25,7 @@ if not os.path.exists(SPA_DIR):
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(
-    fixtures_app.AppUiTest, create_setup_patch_mixin(app_spa.app_session)
+    fixtures_app.AppUiTest, create_setup_patch_mixin(ui.app_session)
 ):
     def setUp(self):
         self.index_content = "<html/>"
@@ -39,7 +39,7 @@ class AppTest(
         super().tearDown()
 
     def get_routes(self):
-        return app_spa.get_routes(
+        return ui.get_routes(
             url_prefix=PREFIX,
             app_dir=SPA_DIR,
             fallback_page_path=FALLBACK,

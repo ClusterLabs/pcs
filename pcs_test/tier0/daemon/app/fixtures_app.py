@@ -7,7 +7,7 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
 from pcs.daemon import ruby_pcsd, auth, session
-from pcs.daemon.app import app_session
+from pcs.daemon.app.session import PCSD_SESSION
 
 USER = "user"
 GROUPS = ["group1", "group2"]
@@ -96,18 +96,16 @@ class AppUiTest(AppTest):
     def assert_session_in_response(self, response, sid=None):
         self.assertTrue("Set-Cookie" in response.headers)
         cookie = parse_cookie(response.headers["Set-Cookie"])
-        self.assertTrue(app_session.PCSD_SESSION, cookie)
+        self.assertTrue(PCSD_SESSION, cookie)
         if sid:
-            self.assertEqual(cookie[app_session.PCSD_SESSION], sid)
-        return cookie[app_session.PCSD_SESSION]
+            self.assertEqual(cookie[PCSD_SESSION], sid)
+        return cookie[PCSD_SESSION]
 
-    def fetch(self, path, **kwargs):
+    def fetch(self, path, raise_error=False, **kwargs):
         if "sid" in kwargs:
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
-            kwargs["headers"]["Cookie"] = (
-                f"{app_session.PCSD_SESSION}={kwargs['sid']}"
-            )
+            kwargs["headers"]["Cookie"] = f"{PCSD_SESSION}={kwargs['sid']}"
             del kwargs["sid"]
 
         if "is_ajax" in kwargs:
@@ -120,7 +118,7 @@ class AppUiTest(AppTest):
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
 
-        return super().fetch(path, **kwargs)
+        return super().fetch(path, raise_error=raise_error, **kwargs)
 
     def create_login_session(self):
         return self.session_storage.login(
