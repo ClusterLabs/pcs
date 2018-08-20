@@ -64,6 +64,7 @@ logging {{
     to_logfile: yes
     logfile: {logfile}
     to_syslog: yes
+    timestamp: on
 }}
 """
 

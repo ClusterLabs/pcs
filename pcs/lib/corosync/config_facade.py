@@ -54,6 +54,7 @@ class ConfigFacade(object):
         logging_section.add_attribute("to_logfile", "yes")
         logging_section.add_attribute("logfile", settings.corosync_log_file)
         logging_section.add_attribute("to_syslog", "yes")
+        logging_section.add_attribute("timestamp", "on")
 
         for node_id, node_options in enumerate(node_list, 1):
             nodelist_section.add_section(

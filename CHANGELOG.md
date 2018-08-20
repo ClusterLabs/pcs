@@ -91,6 +91,7 @@
 - Update pacemaker exit codes to match changes in pacemaker-2.0 ([rhbz#1536121])
 - `pcs cluster cib-upgrade` no longer exits with an error if the CIB schema is
   already the latest available (this has been changed in pacemaker-2.0)
+- Pcs now configures corosync to put timestamps in its log ([rhbz#1615420])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -119,6 +120,7 @@
 [rhbz#1596721]: https://bugzilla.redhat.com/show_bug.cgi?id=1596721
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 [rhbz#1605185]: https://bugzilla.redhat.com/show_bug.cgi?id=1605185
+[rhbz#1615420]: https://bugzilla.redhat.com/show_bug.cgi?id=1615420
 
 
 ## [0.9.163] - 2018-02-20
