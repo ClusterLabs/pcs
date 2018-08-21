@@ -1135,32 +1135,13 @@ def cluster_verify(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * -V - more verbose output
-    TODO: position parameter should be removed in favour of -f
+      * --full - more verbose output
     """
-    modifiers.ensure_only_supported("-f", "-V")
-    if len(argv) > 1:
+    modifiers.ensure_only_supported("-f", "--full")
+    if argv:
         raise CmdLineInputError()
 
-    if argv:
-        filename = argv[0]
-        if not utils.usefile:
-            #We must operate on given cib everywhere.
-            utils.usefile = True
-            utils.filename = filename
-        elif os.path.abspath(filename) == os.path.abspath(utils.filename):
-            warn("File '{0}' specified twice".format(os.path.abspath(filename)))
-        else:
-            raise error(
-                "Ambiguous cib filename specification: '{0}' vs  -f '{1}'"
-                .format(filename, utils.filename)
-            )
-
-    try:
-        # TODO: -V option should be replaced with for e.g. --full
-        lib.cluster.verify(verbose=modifiers.get("-V"))
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
+    lib.cluster.verify(verbose=modifiers.get("--full"))
 
 def cluster_report(dummy_lib, argv, modifiers):
     """

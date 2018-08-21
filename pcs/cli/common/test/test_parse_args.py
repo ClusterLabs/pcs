@@ -555,7 +555,6 @@ class InputModifiersTest(TestCase):
             "--pacemaker",
             "--skip-offline",
             "--start",
-            "-V",
         ]
         self.val_opts = [
             "--after",

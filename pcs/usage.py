@@ -819,11 +819,11 @@ Commands:
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
 
-    verify [-V] [filename]
-        Checks the pacemaker configuration (cib) for syntax and common
-        conceptual errors.  If no filename is specified the check is
-        performed on the currently running cluster.  If -V is used
-        more verbose output will be printed.
+    verify [--full] [-f <filename>]
+        Checks the pacemaker configuration (CIB) for syntax and common
+        conceptual errors. If no filename is specified the check is performed
+        on the currently running cluster. If --full is used more verbose output
+        will be printed.
 
     report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D H:M:S"]] <dest>
         Create a tarball containing everything needed when reporting cluster

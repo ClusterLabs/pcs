@@ -6,8 +6,7 @@ ARG_TYPE_DELIMITER = "%"
 
 # h = help, f = file,
 # p = password (cluster auth), u = user (cluster auth),
-# V = verbose (cluster verify)
-PCS_SHORT_OPTIONS = "hf:p:u:V"
+PCS_SHORT_OPTIONS = "hf:p:u:"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
     "force", "skip-offline", "autocorrect", "interactive", "autodelete",
@@ -364,7 +363,6 @@ class InputModifiers(object):
             "--pacemaker": "--pacemaker" in options,
             "--skip-offline": "--skip-offline" in options,
             "--start": "--start" in options,
-            "-V": "-V" in options,
             # string values
             "--after": options.get("--after", None),
             "--before": options.get("--before", None),
