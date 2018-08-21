@@ -112,10 +112,13 @@ def append_new(
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
     # TODO create the proper element once more container_types are supported
     # by pacemaker
-    docker_element = etree.SubElement(bundle_element, "docker")
+    if container_type == 'docker':
+        container_element = etree.SubElement(bundle_element, "docker")
+    elif container_type == 'podman':
+        container_element = etree.SubElement(bundle_element, "podman")
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
-    update_attributes_remove_empty(docker_element, container_options)
+    update_attributes_remove_empty(container_element, container_options)
     if network_options or port_map:
         network_element = etree.SubElement(bundle_element, "network")
         # Do not add options with empty values. When updating, an empty value
@@ -305,7 +308,7 @@ def get_inner_resource(bundle_el):
     return None
 
 def _validate_container_type(container_type):
-    return validate.value_in("type", ("docker", ), "container type")({
+    return validate.value_in("type", ("docker", "podman"), "container type")({
         "type": container_type,
     })
 
