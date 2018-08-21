@@ -22,16 +22,11 @@ from pcs.cli.common.errors import CmdLineInputError
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
-cluster_conf_file = rc("cluster.conf")
-cluster_conf_tmp = rc("cluster.conf.tmp")
 
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner( temp_cib, cluster_conf_file=cluster_conf_tmp
-        )
-        if os.path.exists(cluster_conf_tmp):
-            os.unlink(cluster_conf_tmp)
+        self.pcs_runner = PcsRunner(temp_cib)
 
     def testNodeStandby(self):
         # only basic test, standby subcommands were moved to 'pcs node'
@@ -157,80 +152,10 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         ))
 
     def testUIDGID(self):
-        if utils.is_rhel6():
-            os.system("cp {0} {1}".format(cluster_conf_file, cluster_conf_tmp))
 
-            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "No uidgids configured in cluster.conf\n")
 
-            o,r = pcs(temp_cib, "cluster uidgid blah --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            assert o.startswith("\nUsage:")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            assert o.startswith("\nUsage:")
-
-            o,r = pcs(temp_cib, "cluster uidgid add --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            assert o.startswith("\nUsage:")
-
-            o,r = pcs(temp_cib, "cluster uidgid add blah --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm blah --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "cluster uidgid add uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            ac(o, "Error: unable to add uidgid\nError: uidgid entry already exists with uid=zzz, gid=\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid add gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "cluster uidgid add uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\nUID/GID: gid=bbb, uid=aaa\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 1
-            ac(o, "Error: unable to remove uidgid\nError: unable to find uidgid with uid=, gid=bbb\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=aaa gid=bbb --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "cluster uidgid --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=zzz --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "config --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            assert o.find("UID/GID: gid=yyy, uid=") != -1
-
-            o,r = pcs(temp_cib, "cluster uidgid rm gid=yyy --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "config --cluster_conf={0}".format(cluster_conf_tmp))
-            assert r == 0
-            assert o.find("No uidgids") == -1
+        if False:
+            pass
         else:
             o,r = pcs(temp_cib, "cluster uidgid")
             assert r == 0

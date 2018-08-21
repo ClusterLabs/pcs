@@ -1,13 +1,5 @@
-import unittest
-
-from pcs import utils
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.cib_resource.stonith_common import need_load_xvm_fence_agent
-
-need_fence_scsi_providing_unfencing = unittest.skipUnless(
-    not utils.is_rhel6(),
-    "test requires system where stonith agent 'fence_scsi' provides unfencing"
-)
 
 class PlainStonith(ResourceTest):
     @need_load_xvm_fence_agent
@@ -25,7 +17,6 @@ class PlainStonith(ResourceTest):
             </resources>"""
         )
 
-    @need_fence_scsi_providing_unfencing
     def test_base_with_agent_that_provides_unfencing(self):
         self.assert_effect(
             "stonith create S fence_scsi",
@@ -187,7 +178,6 @@ class WithMeta(ResourceTest):
             </resources>"""
         )
 
-    @need_fence_scsi_providing_unfencing
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
         self.assert_effect(
             "stonith create S fence_scsi meta provides=something",

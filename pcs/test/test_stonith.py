@@ -269,9 +269,6 @@ class StonithTest(TestCase, AssertPcsMixin):
         ))
 
     def test_stonith_create_provides_unfencing(self):
-        if utils.is_rhel6():
-            return
-
         output, returnVal = pcs(
             temp_cib,
             "stonith create f1 fence_scsi"
@@ -309,58 +306,6 @@ class StonithTest(TestCase, AssertPcsMixin):
   Meta Attrs: provides=unfencing 
   Operations: monitor interval=60s (f2-monitor-interval-60s)
  Resource: f3 (class=stonith type=fence_scsi)
-  Meta Attrs: provides=unfencing 
-  Operations: monitor interval=60s (f3-monitor-interval-60s)
- Resource: f4 (class=stonith type=fence_xvm)
-  Meta Attrs: provides=something 
-  Operations: monitor interval=60s (f4-monitor-interval-60s)
-""")
-        self.assertEqual(0, returnVal)
-
-    def test_stonith_create_provides_unfencing_rhel6(self):
-        if not utils.is_rhel6():
-            return
-
-        output, returnVal = pcs(
-            temp_cib,
-            "stonith create f1 fence_mpath key=abc"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "stonith create f2 fence_mpath key=abc meta provides=unfencing"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "stonith create f3 fence_mpath key=abc meta provides=something"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "stonith create f4 fence_xvm meta provides=something"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "stonith show --full")
-        ac(output, """\
- Resource: f1 (class=stonith type=fence_mpath)
-  Attributes: key=abc
-  Meta Attrs: provides=unfencing 
-  Operations: monitor interval=60s (f1-monitor-interval-60s)
- Resource: f2 (class=stonith type=fence_mpath)
-  Attributes: key=abc
-  Meta Attrs: provides=unfencing 
-  Operations: monitor interval=60s (f2-monitor-interval-60s)
- Resource: f3 (class=stonith type=fence_mpath)
-  Attributes: key=abc
   Meta Attrs: provides=unfencing 
   Operations: monitor interval=60s (f3-monitor-interval-60s)
  Resource: f4 (class=stonith type=fence_xvm)

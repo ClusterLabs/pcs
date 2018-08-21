@@ -347,11 +347,6 @@ class LibraryEnvironment(object):
 
 
     def is_node_in_cluster(self):
-        if self.is_cman_cluster:
-            #TODO --cluster_conf is not propagated here. So no live check not
-            #needed here. But this should not be permanently
-            return os.path.exists(settings.corosync_conf_file)
-
         if not self.is_corosync_conf_live:
             raise AssertionError(
                 "Cannot check if node is in cluster with mocked corosync_conf."

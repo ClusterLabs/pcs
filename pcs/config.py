@@ -94,19 +94,14 @@ def config_show(argv):
     if (
         utils.hasCorosyncConf()
         and
-        (
-            utils.is_rhel6()
-            or
-            (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
-        )
+        (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
     ):
-        # with corosync 1 and cman, uid gid is part of cluster.conf file
         # with corosync 2, uid gid is in a separate directory
         cluster.cluster_uidgid([], True)
     if (
         "--corosync_conf" in utils.pcs_options
         or
-        (not utils.is_rhel6() and utils.hasCorosyncConf())
+        utils.hasCorosyncConf()
     ):
         print()
         print("Quorum:")
@@ -422,8 +417,7 @@ def config_restore_local(infile_name, infile_obj):
     except EnvironmentError as e:
         utils.err("unable to remove %s: %s" % (sig_path, e))
 
-def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
-    rhel6 = utils.is_rhel6() if force_rhel6 is None else force_rhel6
+def config_backup_path_list(with_uid_gid=False):
     corosync_attrs = {
         "mtime": int(time.time()),
         "mode": 0o644,
@@ -467,25 +461,17 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
             "rename": True,
             "pre_store_call": _ensure_etc_pacemaker_exists,
         },
-    }
-    if rhel6:
-        file_list["cluster.conf"] = {
-            "path": settings.cluster_conf_file,
-            "required": True,
-            "attrs": dict(corosync_attrs),
-        }
-    else:
-        file_list["corosync.conf"] = {
+        "corosync.conf": {
             "path": settings.corosync_conf_file,
             "required": True,
             "attrs": dict(corosync_attrs),
-        }
-        file_list["uidgid.d"] = {
+        },
+        "uidgid.d": {
             "path": settings.corosync_uidgid_dir.rstrip("/"),
             "required": False,
             "attrs": dict(corosync_attrs),
-        }
-        file_list["pcs_settings.conf"] = {
+        },
+        "pcs_settings.conf": {
             "path": settings.pcsd_settings_conf_location,
             "required": False,
             "attrs": {
@@ -497,6 +483,7 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
                 "gid": 0,
             },
         }
+    }
     return file_list
 
 
@@ -612,7 +599,7 @@ def config_import_cman(argv):
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
-    output_format = "cluster.conf" if utils.is_rhel6() else "corosync.conf"
+    output_format = "corosync.conf"
     dist = None
     invalid_args = False
     for arg in argv:
@@ -624,7 +611,7 @@ def config_import_cman(argv):
                 dry_run_output = value
             elif name == "output-format":
                 if value in (
-                    "cluster.conf", "corosync.conf",
+                    "corosync.conf",
                     "pcs-commands", "pcs-commands-verbose",
                 ):
                     output_format = value
@@ -650,22 +637,10 @@ def config_import_cman(argv):
     interactive = "--interactive" in utils.pcs_options
 
     if dist is not None:
-        if output_format == "cluster.conf":
-            if not clufter.facts.cluster_pcs_flatiron("linux", dist.split(",")):
-                utils.err("dist does not match output-format")
-        elif output_format == "corosync.conf":
-            if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
-                utils.err("dist does not match output-format")
-    elif (
-        (output_format == "cluster.conf" and utils.is_rhel6())
-        or
-        (output_format == "corosync.conf" and not utils.is_rhel6())
-    ):
-        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
-    elif output_format == "cluster.conf":
-        dist = "redhat,6.7,Santiago"
+        if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
+            utils.err("dist does not match output-format")
     elif output_format == "corosync.conf":
-        dist = "redhat,7.1,Maipo"
+        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
     else:
         # for output-format=pcs-command[-verbose]
         dist = ",".join(platform.linux_distribution(full_distribution_name=0))
@@ -685,10 +660,7 @@ def config_import_cman(argv):
         clufter_args["editor"] = os.environ["EDITOR"]
     if debug:
         logging.getLogger("clufter").setLevel(logging.DEBUG)
-    if output_format == "cluster.conf":
-        clufter_args["ccs_pcmk"] = {"passin": "bytestring"}
-        cmd_name = "ccs2pcs-flatiron"
-    elif output_format == "corosync.conf":
+    if output_format == "corosync.conf":
         clufter_args["coro"] = {"passin": "struct"}
         cmd_name = "ccs2pcs-needle"
     elif output_format in ("pcs-commands", "pcs-commands-verbose"):
@@ -731,9 +703,7 @@ def config_import_cman(argv):
         return
 
     # put new config files into tarball
-    file_list = config_backup_path_list(
-        force_rhel6=(output_format == "cluster.conf")
-    )
+    file_list = config_backup_path_list()
     for file_item in file_list.values():
         file_item["attrs"]["uname"] = "root"
         file_item["attrs"]["gname"] = "root"
@@ -750,52 +720,44 @@ def config_import_cman(argv):
             "cib.xml",
             **file_list["cib.xml"]["attrs"]
         )
-        if output_format == "cluster.conf":
-            utils.tar_add_file_data(
-                tarball,
-                clufter_args_obj.ccs_pcmk["passout"],
-                "cluster.conf",
-                **file_list["cluster.conf"]["attrs"]
-            )
-        else:
-            # put uidgid into separate files
-            fmt_simpleconfig = clufter.format_manager.FormatManager.init_lookup(
-                'simpleconfig'
-            ).plugins['simpleconfig']
-            corosync_struct = []
-            uidgid_list = []
-            for section in clufter_args_obj.coro["passout"][2]:
-                if section[0] == "uidgid":
-                    uidgid_list.append(section[1])
-                else:
-                    corosync_struct.append(section)
-            corosync_conf_data = fmt_simpleconfig(
-                "struct", ("corosync", (), corosync_struct)
+        # put uidgid into separate files
+        fmt_simpleconfig = clufter.format_manager.FormatManager.init_lookup(
+            'simpleconfig'
+        ).plugins['simpleconfig']
+        corosync_struct = []
+        uidgid_list = []
+        for section in clufter_args_obj.coro["passout"][2]:
+            if section[0] == "uidgid":
+                uidgid_list.append(section[1])
+            else:
+                corosync_struct.append(section)
+        corosync_conf_data = fmt_simpleconfig(
+            "struct", ("corosync", (), corosync_struct)
+        )("bytestring")
+        utils.tar_add_file_data(
+            tarball,
+            corosync_conf_data,
+            "corosync.conf",
+            **file_list["corosync.conf"]["attrs"]
+        )
+        for uidgid in uidgid_list:
+            uid = ""
+            gid = ""
+            for item in uidgid:
+                if item[0] == "uid":
+                    uid = item[1]
+                if item[0] == "gid":
+                    gid = item[1]
+            filename = utils.get_uid_gid_file_name(uid, gid)
+            uidgid_data = fmt_simpleconfig(
+                "struct", ("corosync", (), [("uidgid", uidgid, None)])
             )("bytestring")
             utils.tar_add_file_data(
                 tarball,
-                corosync_conf_data,
-                "corosync.conf",
-                **file_list["corosync.conf"]["attrs"]
+                uidgid_data,
+                "uidgid.d/" + filename,
+                **file_list["uidgid.d"]["attrs"]
             )
-            for uidgid in uidgid_list:
-                uid = ""
-                gid = ""
-                for item in uidgid:
-                    if item[0] == "uid":
-                        uid = item[1]
-                    if item[0] == "gid":
-                        gid = item[1]
-                filename = utils.get_uid_gid_file_name(uid, gid)
-                uidgid_data = fmt_simpleconfig(
-                    "struct", ("corosync", (), [("uidgid", uidgid, None)])
-                )("bytestring")
-                utils.tar_add_file_data(
-                    tarball,
-                    uidgid_data,
-                    "uidgid.d/" + filename,
-                    **file_list["uidgid.d"]["attrs"]
-                )
         tarball.close()
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to create tarball: %s" % e)
@@ -879,7 +841,7 @@ def config_export_pcs_commands(argv, verbose=False):
         clufter_args["silent"] = False
         clufter_args["noguidance"] = False
     clufter_args_obj = type(str("ClufterOptions"), (object, ), clufter_args)
-    cmd_name = "pcs2pcscmd-flatiron" if utils.is_rhel6() else "pcs2pcscmd-needle"
+    cmd_name = "pcs2pcscmd-needle"
 
     # run convertor
     run_clufter(

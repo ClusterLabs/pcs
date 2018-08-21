@@ -75,20 +75,5 @@ def corosync_conf_existing(local_file_path):
     return apply
 
 
-def cluster_conf_read_only(local_file_path):
-    def apply(next_in_line, env, *args, **kwargs):
-        if local_file_path:
-            try:
-                env.cluster_conf_data = open(local_file_path).read()
-            except EnvironmentError as e:
-                raise error("Unable to read {0}: {1}".format(
-                    local_file_path,
-                    e.strerror
-                ))
-
-        return next_in_line(env, *args, **kwargs)
-    return apply
-
-
 def create_middleware_factory(**kwargs):
     return namedtuple('MiddlewareFactory', kwargs.keys())(**kwargs)

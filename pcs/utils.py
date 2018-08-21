@@ -48,7 +48,6 @@ from pcs.lib.external import (
     DisableServiceError,
     enable_service,
     EnableServiceError,
-    is_cman_cluster as lib_is_cman_cluster,
     is_proxy_set,
     is_service_enabled,
     is_service_running,
@@ -249,16 +248,10 @@ def getCorosyncConfig(node):
     return sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
 
 def setCorosyncConfig(node,config):
-    if is_rhel6():
-        data = urlencode({'cluster_conf':config})
-        (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
-        if status != 0:
-            err("Unable to set cluster.conf: {0}".format(data))
-    else:
-        data = urlencode({'corosync_conf':config})
-        (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
-        if status != 0:
-            err("Unable to set corosync config: {0}".format(data))
+    data = urlencode({'corosync_conf':config})
+    (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
+    if status != 0:
+        err("Unable to set corosync config: {0}".format(data))
 
 def getPacemakerNodeStatus(node):
     return sendHTTPRequest(
@@ -509,9 +502,6 @@ def getCorosyncConf(conf=None):
     return out
 
 def reloadCorosync():
-    if is_rhel6():
-        output, retval = run(["cman_tool", "version", "-r", "-S"])
-        return output, retval
     output, retval = run(["corosync-cfgtool", "-R"])
     return output, retval
 
@@ -1552,26 +1542,19 @@ def getResourceType(resource):
     return resClass + ":" + resProvider + ":" + resType
 
 def getClusterName():
-    if is_rhel6():
-        try:
-            dom = parse(settings.cluster_conf_file)
-            return dom.documentElement.getAttribute("name")
-        except (IOError,xml.parsers.expat.ExpatError):
-            pass
-    else:
-        try:
-            f = open(settings.corosync_conf_file,'r')
-            conf = corosync_conf_parser.parse_string(f.read())
-            f.close()
-            # mimic corosync behavior - the last cluster_name found is used
-            cluster_name = None
-            for totem in conf.get_sections("totem"):
-                for attrs in totem.get_attributes("cluster_name"):
-                    cluster_name = attrs[1]
-            if cluster_name:
-                return cluster_name
-        except (IOError, corosync_conf_parser.CorosyncConfParserException):
-            pass
+    try:
+        f = open(settings.corosync_conf_file,'r')
+        conf = corosync_conf_parser.parse_string(f.read())
+        f.close()
+        # mimic corosync behavior - the last cluster_name found is used
+        cluster_name = None
+        for totem in conf.get_sections("totem"):
+            for attrs in totem.get_attributes("cluster_name"):
+                cluster_name = attrs[1]
+        if cluster_name:
+            return cluster_name
+    except (IOError, corosync_conf_parser.CorosyncConfParserException):
+        pass
 
     # there is no corosync.conf or cluster.conf on remote nodes, we can try to
     # get cluster name from pacemaker
@@ -1651,14 +1634,6 @@ def verify_cert_key_pair(cert, key):
 
     return errors
 
-
-def is_rhel6():
-    return is_cman_cluster()
-
-@lru_cache()
-def is_cman_cluster():
-    return lib_is_cman_cluster(cmd_runner())
-
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
     if exit_after_error:
@@ -1695,12 +1670,9 @@ def serviceStatus(prefix):
 
 def enableServices():
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
-    if is_rhel6():
-        service_list = ["pacemaker"]
-    else:
-        service_list = ["corosync", "pacemaker"]
-        if need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
+    service_list = ["corosync", "pacemaker"]
+    if need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
 
     report_item_list = []
     for service in service_list:
@@ -2183,9 +2155,6 @@ def get_middleware_factory():
             pcs_options.get("--name", None),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
-        ),
-        cluster_conf_read_only=middleware.cluster_conf_read_only(
-            pcs_options.get("--cluster_conf", None)
         ),
     )
 

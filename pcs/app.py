@@ -102,8 +102,6 @@ def main(argv=None):
             utils.filename = filename
         elif o == "--corosync_conf":
             settings.corosync_conf_file = a
-        elif o == "--cluster_conf":
-            settings.cluster_conf_file = a
         elif o == "--version":
             print(settings.pcs_version)
             if full:
