@@ -137,7 +137,9 @@ def get_uid_gid_file_name(uid, gid):
 # Reads in uid file and returns dict of values {'uid':'theuid', 'gid':'thegid'}
 def read_uid_gid_file(filename):
     uidgid = {}
-    with open(settings.corosync_uidgid_dir + filename, "r") as myfile:
+    with open(
+        os.path.join(settings.corosync_uidgid_dir, filename), "r"
+    ) as myfile:
         data = myfile.read().split('\n')
     in_uidgid = False
     for line in data:
@@ -164,12 +166,14 @@ def write_uid_gid_file(uid,gid):
     if len(find_uid_gid_files(uid,gid)) != 0:
         err("uidgid file with uid=%s and gid=%s already exists" % (uid,gid))
 
-    while os.path.exists(settings.corosync_uidgid_dir + filename):
+    while os.path.exists(os.path.join(settings.corosync_uidgid_dir, filename)):
         counter = counter + 1
         filename = orig_filename + "-" + str(counter)
 
     data = "uidgid {\n  uid: %s\ngid: %s\n}\n" % (uid,gid)
-    with open(settings.corosync_uidgid_dir + filename,'w') as uidgid_file:
+    with open(
+        os.path.join(settings.corosync_uidgid_dir, filename), 'w'
+    ) as uidgid_file:
         uidgid_file.write(data)
 
 def find_uid_gid_files(uid,gid):
@@ -200,7 +204,7 @@ def remove_uid_gid_file(uid,gid):
 
     file_removed = False
     for uidgid_file in find_uid_gid_files(uid,gid):
-        os.remove(settings.corosync_uidgid_dir + uidgid_file)
+        os.remove(os.path.join(settings.corosync_uidgid_dir, uidgid_file))
         file_removed = True
 
     return file_removed
