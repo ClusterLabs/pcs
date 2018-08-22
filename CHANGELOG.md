@@ -9,6 +9,7 @@
   via pcs ([rhbz#1600169])
 - Support `diff-against` option of `pcs cluster cib-push` only for
   crm\_feature\_set > 3.0.8 ([rhbz#1488044])
+- `pcs resource delete` accepts only one resource
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318

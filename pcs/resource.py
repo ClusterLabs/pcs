@@ -110,7 +110,7 @@ def resource_cmd(argv):
             res_id = argv_next.pop(0)
             resource_meta(res_id, argv_next)
         elif sub_cmd == "delete":
-            if len(argv_next) == 0:
+            if len(argv_next) != 1:
                 usage.resource(["delete"])
                 sys.exit(1)
             res_id = argv_next.pop(0)
