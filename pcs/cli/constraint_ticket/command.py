@@ -11,7 +11,14 @@ def create_with_set(lib, argv, modifiers):
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
         "autocorrect" allows correct resource to its clone/master parent
+
+    Options:
+      * --autocorrect - can repair to clone
+      * --force - allow resource inside clone (or master), allow duplicate
+        element
+      * -f - CIB file
     """
+    modifiers.ensure_only_supported("--autocorrect", "--force", "-f")
     command.create_with_set(
         lib.constraint_ticket.set,
         argv,
@@ -26,7 +33,14 @@ def add(lib, argv, modifiers):
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
         "autocorrect" allows correct resource to its clone/master parent
+
+    Options:
+      * --autocorrect - allow autocorrection
+      * --force - allow resource inside clone (or master), allow duplicate
+        element
+      * -f - CIB file
     """
+    modifiers.ensure_only_supported("--autocorrect", "--force", "-f")
     ticket, resource_id, resource_role, options = parse_args.parse_add(argv)
     if "rsc-role" in options:
         raise CmdLineInputError(
@@ -41,12 +55,17 @@ def add(lib, argv, modifiers):
         ticket,
         resource_id,
         options,
-        autocorrection_allowed=modifiers["autocorrect"],
-        resource_in_clone_alowed=modifiers["force"],
-        duplication_alowed=modifiers["force"],
+        autocorrection_allowed=modifiers.get("--autocorrect"),
+        resource_in_clone_alowed=modifiers.get("--force"),
+        duplication_alowed=modifiers.get("--force"),
     )
 
 def remove(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 2:
         raise CmdLineInputError()
     ticket, resource_id = argv
@@ -59,7 +78,12 @@ def show(lib, argv, modifiers):
     object lib exposes library
     list argv see usage for "constraint colocation show"
     dict like object modifiers can contain "full"
+
+    Options:
+      * --full - print more details
+      * -f - CIB file
     """
+    modifiers.ensure_only_supported("-f", "--full")
     print("\n".join(command.show(
         "Ticket Constraints:",
         lib.constraint_ticket.show,

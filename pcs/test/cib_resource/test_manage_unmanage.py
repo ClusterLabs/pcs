@@ -62,13 +62,13 @@ class ManageUnmanage(
             )
 
     def test_unmanage_none(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource unmanage",
             "Error: You must specify resource(s) to unmanage\n"
         )
 
     def test_manage_none(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource manage",
             "Error: You must specify resource(s) to manage\n"
         )

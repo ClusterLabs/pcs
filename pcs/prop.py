@@ -7,35 +7,48 @@ from pcs import (
     utils,
 )
 
-def property_cmd(argv):
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.lib.errors import LibraryError
+
+def property_cmd(lib, argv, modifiers):
     if len(argv) == 0:
         argv = ["list"]
 
-    sub_cmd = argv.pop(0)
-    if sub_cmd == "help":
-        usage.property(argv)
-    elif sub_cmd == "set":
-        set_property(argv)
-    elif sub_cmd == "unset":
-        unset_property(argv)
-    elif sub_cmd == "list" or sub_cmd == "show":
-        list_property(argv)
-    elif sub_cmd == "get_cluster_properties_definition":
-        print(json.dumps(utils.get_cluster_properties_definition()))
-    else:
-        usage.property()
-        sys.exit(1)
+    try:
+        sub_cmd = argv.pop(0)
+        if sub_cmd == "help":
+            usage.property(argv)
+        elif sub_cmd == "set":
+            set_property(lib, argv, modifiers)
+        elif sub_cmd == "unset":
+            unset_property(lib, argv, modifiers)
+        elif sub_cmd == "list" or sub_cmd == "show":
+            list_property(lib, argv, modifiers)
+        elif sub_cmd == "get_cluster_properties_definition":
+            print_cluster_properties_definition(lib, argv, modifiers)
+        else:
+            raise CmdLineInputError()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "property", sub_cmd)
 
 
-def set_property(argv):
+def set_property(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --node - node name, if set node attributes for this node will be set
+      * --force - allow unknown options
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("--node", "--force", "-f")
     if not argv:
-        usage.property(['set'])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     prop_def_dict = utils.get_cluster_properties_definition()
-    nodes_attr = "--node" in utils.pcs_options
+    nodes_attr = modifiers.get("--node")
     failed = False
-    forced = "--force" in utils.pcs_options
+    forced = modifiers.get("--force")
     properties = {}
     for arg in argv:
         args = arg.split('=')
@@ -73,7 +86,7 @@ def set_property(argv):
 
     if nodes_attr:
         for prop, value in properties.items():
-            utils.set_node_attribute(prop, value, utils.pcs_options["--node"])
+            utils.set_node_attribute(prop, value, nodes_attr)
     else:
         cib_dom = utils.get_cib_dom()
         for prop, value in properties.items():
@@ -81,38 +94,59 @@ def set_property(argv):
         utils.replace_cib_configuration(cib_dom)
 
 
-def unset_property(argv):
+def unset_property(lib, argv, modifiers):
+    """
+    Options:
+      * --node - node name, if set node attributes for this node will be set
+      * --force - no error when removing not existing properties
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("--node", "--force", "-f")
     if len(argv) < 1:
-        usage.property()
-        sys.exit(1)
+        raise CmdLineInputError()
 
-    if "--node" in utils.pcs_options:
+    if modifiers.is_specified("--node"):
         for arg in argv:
-            utils.set_node_attribute(arg, "",utils.pcs_options["--node"])
+            utils.set_node_attribute(arg, "", modifiers.get("--node"))
     else:
         cib_dom = utils.get_cib_dom()
         for arg in argv:
             utils.set_cib_property(arg, "", cib_dom)
         utils.replace_cib_configuration(cib_dom)
 
-def list_property(argv):
+def list_property(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --all - list all properties
+      * --defaults - list only default values of properties
+    """
+    modifiers.ensure_only_supported("--defaults", "--all", "-f")
+    if len(argv) > 1:
+        raise CmdLineInputError()
     print_all = len(argv) == 0
 
-    if "--all" in utils.pcs_options and "--defaults" in utils.pcs_options:
+    if modifiers.is_specified("--all") and modifiers.is_specified("--defaults"):
         utils.err("you cannot specify both --all and --defaults")
 
-    if "--all" in utils.pcs_options or "--defaults" in utils.pcs_options:
-        if len(argv) != 0:
-            utils.err("you cannot specify a property when using --all or --defaults")
+    if modifiers.get("--all") or modifiers.get("--defaults"):
+        if not print_all:
+            utils.err(
+                "you cannot specify a property when using --all or --defaults"
+            )
         properties = get_default_properties()
     else:
         properties = {}
 
-    if "--defaults" not in utils.pcs_options:
-        properties = utils.get_set_properties(
+    if not modifiers.get("--defaults"):
+        configured_properties = utils.get_set_properties(
             None if print_all else argv[0],
             properties
         )
+        if modifiers.get("--all"):
+            properties.update(configured_properties)
+        else:
+            properties = configured_properties
 
     print("Cluster Properties:")
     for prop,val in sorted(properties.items()):
@@ -126,8 +160,21 @@ def list_property(argv):
         node.attribute_print(node_attributes)
 
 def get_default_properties():
+    """
+    Commandline options: no options
+    """
     parameters = {}
     prop_def_dict = utils.get_cluster_properties_definition()
     for name, prop in prop_def_dict.items():
         parameters[name] = prop["default"]
     return parameters
+
+
+def print_cluster_properties_definition(dummy_lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if not argv:
+        raise CmdLineInputError()
+    print(json.dumps(utils.get_cluster_properties_definition()))

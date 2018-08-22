@@ -76,4 +76,7 @@ def corosync_conf_existing(local_file_path):
 
 
 def create_middleware_factory(**kwargs):
+    """
+    Commandline options: no options
+    """
     return namedtuple('MiddlewareFactory', kwargs.keys())(**kwargs)

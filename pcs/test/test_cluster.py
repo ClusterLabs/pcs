@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+from functools import partial
 from unittest import mock
 
 from pcs.test.tools.assertions import (
@@ -17,11 +18,25 @@ from pcs.test.tools.pcs_runner import (
     PcsRunner,
 )
 
-from pcs import cluster, utils
+from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
+
+def _dict_to_modifiers(options):
+    def _convert_val(val):
+        if val is True:
+            return ""
+        return val
+    return InputModifiers(
+        {
+            f"--{opt}": _convert_val(val)
+            for opt, val in options.items()
+            if val is not False
+        }
+    )
 
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -38,6 +53,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         ac(output, "")
         assert returnVal == 0
 
+    @unittest.skip("TODO: remove")
     def testRemoteNode(self):
         #pylint: disable=trailing-whitespace
         o,r = pcs(
@@ -151,59 +167,64 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             """
         ))
 
+class UidGidTest(unittest.TestCase):
+    def setUp(self):
+        self.uid_gid_dir = rc("uid_gid.d")
+        if not os.path.exists(self.uid_gid_dir):
+            os.mkdir(self.uid_gid_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.uid_gid_dir)
+
     def testUIDGID(self):
+        _pcs = partial(pcs, None, uid_gid_dir=self.uid_gid_dir)
+        o,r = _pcs("cluster uidgid")
+        ac(o, "No uidgids configured in cluster.conf\n")
+        assert r == 0
 
+        o,r = _pcs("cluster uidgid add")
+        assert r == 1
+        assert o.startswith("\nUsage:")
 
-        if False:
-            pass
-        else:
-            o,r = pcs(temp_cib, "cluster uidgid")
-            assert r == 0
-            ac(o, "No uidgids configured in cluster.conf\n")
+        o,r = _pcs("cluster uidgid rm")
+        assert r == 1
+        assert o.startswith("\nUsage:")
 
-            o,r = pcs(temp_cib, "cluster uidgid add")
-            assert r == 1
-            assert o.startswith("\nUsage:")
+        o,r = _pcs("cluster uidgid xx")
+        assert r == 1
+        assert o.startswith("\nUsage:")
 
-            o,r = pcs(temp_cib, "cluster uidgid rm")
-            assert r == 1
-            assert o.startswith("\nUsage:")
+        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        assert r == 0
+        ac(o, "")
 
-            o,r = pcs(temp_cib, "cluster uidgid xx")
-            assert r == 1
-            assert o.startswith("\nUsage:")
+        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
+        assert r == 1
 
-            o,r = pcs(temp_cib, "cluster uidgid add uid=testuid gid=testgid")
-            assert r == 0
-            ac(o, "")
+        o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid2")
+        assert r == 1
+        ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
 
-            o,r = pcs(temp_cib, "cluster uidgid add uid=testuid gid=testgid")
-            assert r == 1
-            ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
+        o,r = _pcs("cluster uidgid rm uid=testuid gid=testgid2")
+        assert r == 1
+        ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
 
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid2 gid=testgid2")
-            assert r == 1
-            ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
+        o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
+        assert r == 1
+        ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
 
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid gid=testgid2")
-            assert r == 1
-            ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
+        o,r = _pcs("cluster uidgid")
+        assert r == 0
+        ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid2 gid=testgid")
-            assert r == 1
-            ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
+        o,r = _pcs("cluster uidgid rm uid=testuid gid=testgid")
+        ac(o, "")
+        assert r == 0
 
-            o,r = pcs(temp_cib, "cluster uidgid")
-            assert r == 0
-            ac(o, "UID/GID: uid=testuid gid=testgid\n")
-
-            o,r = pcs(temp_cib, "cluster uidgid rm uid=testuid gid=testgid")
-            assert r == 0
-            ac(o, "")
-
-            o,r = pcs(temp_cib, "cluster uidgid")
-            assert r == 0
-            ac(o, "No uidgids configured in cluster.conf\n")
+        o,r = _pcs("cluster uidgid")
+        assert r == 0
+        ac(o, "No uidgids configured in cluster.conf\n")
 
 
 class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
@@ -236,7 +257,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
 
 class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        self.pcs_runner = PcsRunner()
+        self.pcs_runner = PcsRunner(cib_file=None)
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
@@ -251,7 +272,7 @@ class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
 
 class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        self.pcs_runner = PcsRunner()
+        self.pcs_runner = PcsRunner(cib_file=None)
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
@@ -296,14 +317,9 @@ class ClusterSetup(unittest.TestCase):
         )
 
     def call_cmd_without_cluster_name(self, argv, modifiers=None):
-        all_modifiers = {
-            "enable": False,
-            "force": False,
-            "start": False,
-            "wait": False,
-        }
-        all_modifiers.update(modifiers or {})
-        cluster.cluster_setup(self.lib, argv, all_modifiers)
+        cluster.cluster_setup(
+            self.lib, argv, _dict_to_modifiers(modifiers or {})
+        )
 
     def call_cmd(self, argv, modifiers=None):
         self.call_cmd_without_cluster_name(
@@ -637,9 +653,7 @@ class NodeAdd(unittest.TestCase):
         )
 
     def call_cmd(self, argv, modifiers=None):
-        all_modifiers = dict(self._default_kwargs)
-        all_modifiers.update(modifiers or {})
-        cluster.node_add(self.lib, argv, all_modifiers)
+        cluster.node_add(self.lib, argv, _dict_to_modifiers(modifiers or {}))
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -728,9 +742,11 @@ class NodeAdd(unittest.TestCase):
             cm.exception.message
         )
 
-    def assert_modifiers(self, modifiers):
+    def assert_modifiers(self, modifiers, cmd_params=None):
+        if cmd_params is None:
+            cmd_params = modifiers
         self.call_cmd([self.hostname], modifiers)
-        self.assert_called_with([_node(self.hostname)], **modifiers)
+        self.assert_called_with([_node(self.hostname)], **cmd_params)
 
     def test_enable(self):
         self.assert_modifiers(dict(enable=True))
@@ -751,21 +767,37 @@ class NodeAdd(unittest.TestCase):
         self.assert_modifiers(dict(start=True, wait="10"))
 
     def test_force(self):
-        self.assert_modifiers(dict(force=True, force_unresolvable=True))
+        self.assert_modifiers(
+            dict(force=True), dict(force=True, force_unresolvable=True)
+        )
 
     def test_skip_offline(self):
-        self.assert_modifiers(dict(skip_offline_nodes=True))
+        self.assert_modifiers(
+            {"skip-offline": True}, dict(skip_offline_nodes=True)
+        )
 
     def test_no_watchdog_validation(self):
-        self.assert_modifiers(dict(no_watchdog_validation=True))
+        self.assert_modifiers(
+            {"no-watchdog-validation": True}, dict(no_watchdog_validation=True)
+        )
 
     def test_all_modifiers(self):
-        self.assert_modifiers(dict(
-            enable=True,
-            start=True,
-            wait="15",
-            force=True,
-            force_unresolvable=True,
-            skip_offline_nodes=True,
-            no_watchdog_validation=True,
-        ))
+        self.assert_modifiers(
+            {
+                "enable": True,
+                "start": True,
+                "wait": "15",
+                "force": True,
+                "skip-offline": True,
+                "no-watchdog-validation": True,
+            },
+            dict(
+                enable=True,
+                start=True,
+                wait="15",
+                force=True,
+                force_unresolvable=True,
+                skip_offline_nodes=True,
+                no_watchdog_validation=True,
+            )
+        )

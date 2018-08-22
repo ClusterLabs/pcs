@@ -55,6 +55,13 @@ def _parse_addr(addr):
 
 
 def auth_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * -u - username
+      * -p - password
+      * --request-timeout - timeout for HTTP requests
+    """
+    modifiers.ensure_only_supported("-u", "-p", "--request-timeout")
     if not argv:
         raise CmdLineInputError("No host specified")
     host_dict = {
@@ -71,6 +78,11 @@ def auth_cmd(lib, argv, modifiers):
 
 
 def deauth_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --request-timeout - timeout for HTTP requests
+    """
+    modifiers.ensure_only_supported("--request-timeout")
     if len(argv) < 1:
         # Object of type 'dict_keys' is not JSON serializable, make it a list
         remove_hosts = list(utils.read_known_hosts_file().keys())

@@ -1,5 +1,3 @@
-import sys
-
 from pcs import (
     stonith,
     usage,
@@ -29,7 +27,7 @@ def quorum_cmd(lib, argv, modifiers):
             quorum_device_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "unblock":
             # TODO switch to new architecture
-            quorum_unblock_cmd(argv_next)
+            quorum_unblock_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             quorum_update_cmd(lib, argv_next, modifiers)
         else:
@@ -81,12 +79,20 @@ def quorum_device_heuristics_cmd(lib, argv, modifiers):
 
 
 def quorum_config_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --corosync_conf - mocked corosync configuration file
+    """
+    modifiers.ensure_only_supported("--corosync_conf")
     if argv:
         raise CmdLineInputError()
     config = lib.quorum.get_config()
     print("\n".join(quorum_config_to_str(config)))
 
 def quorum_config_to_str(config):
+    """
+    Commandline options: no options
+    """
     lines = []
 
     lines.append("Options:")
@@ -128,24 +134,43 @@ def quorum_config_to_str(config):
     return lines
 
 def quorum_expected_votes_cmd(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.quorum.set_expected_votes_live(argv[0])
 
 def quorum_status_cmd(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if argv:
         raise CmdLineInputError()
     print(lib.quorum.status())
 
 def quorum_update_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --skip-offline - skip offline nodes
+      * --force - force changes
+      * --corosync_conf - mocked corosync configuration file
+      * --request-timeout - HTTP timeout, has effect only if --corosync_conf is
+        not specified
+    """
+    modifiers.ensure_only_supported(
+        "--skip-offline", "--force", "--corosync_conf", "--request-timeout"
+    )
     options = parse_args.prepare_options(argv)
     if not options:
         raise CmdLineInputError()
 
     lib.quorum.set_options(
         options,
-        skip_offline_nodes=modifiers["skip_offline_nodes"],
-        force=modifiers["force"]
+        skip_offline_nodes=modifiers.get("--skip-offline"),
+        force=modifiers.get("--force"),
     )
 
 def _parse_quorum_device_groups(arg_list):
@@ -167,6 +192,17 @@ def _parse_quorum_device_groups(arg_list):
     return groups
 
 def quorum_device_add_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown model or options
+      * --skip-offline - skip offline nodes
+      * --request-timeout - HTTP timeout, has effect only if --corosync_conf is
+        not specified
+      * --corosync_conf - mocked corosync configuration file
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--skip-offline", "--request-timeout", "--corosync_conf"
+    )
     groups = _parse_quorum_device_groups(argv)
     model_and_model_options = groups.get("model", [])
     # we expect "model" keyword once, followed by the actual model value
@@ -188,25 +224,51 @@ def quorum_device_add_cmd(lib, argv, modifiers):
         model_options,
         generic_options,
         heuristics_options,
-        force_model=modifiers["force"],
-        force_options=modifiers["force"],
-        skip_offline_nodes=modifiers["skip_offline_nodes"]
+        force_model=modifiers.get("--force"),
+        force_options=modifiers.get("--force"),
+        skip_offline_nodes=modifiers.get("--skip-offline"),
     )
 
 def quorum_device_remove_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --skip-offline - skip offline nodes
+      * --corosync_conf - mocked corosync configuration file
+      * --request-timeout - HTTP timeout, has effect only if --corosync_conf is
+        not specified
+    """
+    modifiers.ensure_only_supported(
+        "--skip-offline", "--request-timeout", "--corosync_conf"
+    )
     if argv:
         raise CmdLineInputError()
 
     lib.quorum.remove_device(
-        skip_offline_nodes=modifiers["skip_offline_nodes"]
+        skip_offline_nodes=modifiers.get("--skip-offline")
     )
 
 def quorum_device_status_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --full - more detailed output
+    """
+    modifiers.ensure_only_supported("--full")
     if argv:
         raise CmdLineInputError()
-    print(lib.quorum.status_device(modifiers["full"]))
+    print(lib.quorum.status_device(modifiers.get("--full")))
 
 def quorum_device_update_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown options
+      * --skip-offline - skip offline nodes
+      * --corosync_conf - mocked corosync configuration file
+      * --request-timeout - HTTP timeout, has effect only if --corosync_conf is
+        not specified
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--skip-offline", "--request-timeout", "--corosync_conf"
+    )
     groups = _parse_quorum_device_groups(argv)
     if not groups:
         raise CmdLineInputError()
@@ -223,20 +285,37 @@ def quorum_device_update_cmd(lib, argv, modifiers):
         model_options,
         generic_options,
         heuristics_options,
-        force_options=modifiers["force"],
-        skip_offline_nodes=modifiers["skip_offline_nodes"]
+        force_options=modifiers.get("--force"),
+        skip_offline_nodes=modifiers.get("--skip-offline"),
     )
 
 def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --skip-offline - skip offline nodes
+      * --corosync_conf - mocked corosync configuration file
+      * --request-timeout - HTTP timeout, has effect only if --corosync_conf is
+        not specified
+    """
+    modifiers.ensure_only_supported(
+        "--skip-offline", "--corosync_conf", "--request-timeout"
+    )
     if argv:
         raise CmdLineInputError()
-    lib.quorum.remove_device_heuristics()
+    lib.quorum.remove_device_heuristics(
+        skip_offline_nodes=modifiers.get("--skip-offline"),
+    )
 
 # TODO switch to new architecture, move to lib
-def quorum_unblock_cmd(argv):
+def quorum_unblock_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - no error when removing non existing property and no warning
+        about this action
+    """
+    modifiers.ensure_only_supported("--force")
     if len(argv) > 0:
-        usage.quorum(["unblock"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     output, retval = utils.run(
         ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]
@@ -253,7 +332,7 @@ def quorum_unblock_cmd(argv):
     )
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
-    if "--force" not in utils.pcs_options:
+    if modifiers.get("--force"):
         answer = utils.get_terminal_input(
             (
                 "WARNING: If node(s) {nodes} are not powered off or they do"
@@ -266,7 +345,10 @@ def quorum_unblock_cmd(argv):
             print("Canceled")
             return
     for node in unjoined_nodes:
-        stonith.stonith_confirm([node], skip_question=True)
+        # pass --force so no warning will be displayed
+        stonith.stonith_confirm(
+            lib, [node], parse_args.InputModifiers({"--force": ""})
+        )
 
     output, retval = utils.run(
         ["corosync-cmapctl", "-s", "quorum.cancel_wait_for_all", "u8", "1"]

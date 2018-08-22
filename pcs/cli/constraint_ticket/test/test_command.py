@@ -1,7 +1,16 @@
 from unittest import mock, TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.constraint_ticket import command
+
+def _modifiers(force=True, autocorrect=True):
+    options = {}
+    if force:
+        options["--force"] = ""
+    if autocorrect:
+        options["--autocorrect"] = ""
+    return InputModifiers(options)
 
 class AddTest(TestCase):
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
@@ -13,7 +22,7 @@ class AddTest(TestCase):
         lib.constraint_ticket = mock.MagicMock()
         lib.constraint_ticket.add = mock.MagicMock()
 
-        command.add(lib, ["argv"], {"force": True, "autocorrect": True})
+        command.add(lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
         lib.constraint_ticket.add.assert_called_once_with(
@@ -31,11 +40,7 @@ class AddTest(TestCase):
         lib = None
         self.assertRaises(
             CmdLineInputError,
-            lambda: command.add(
-                lib,
-                ["argv"],
-                {"force": True, "autocorrect": True},
-            )
+            lambda: command.add(lib, ["argv"], _modifiers())
         )
 
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
@@ -47,7 +52,7 @@ class AddTest(TestCase):
         lib.constraint_ticket = mock.MagicMock()
         lib.constraint_ticket.add = mock.MagicMock()
 
-        command.add(lib, ["argv"], {"force": True, "autocorrect": True})
+        command.add(lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
         lib.constraint_ticket.add.assert_called_once_with(
@@ -63,19 +68,19 @@ class RemoveTest(TestCase):
         self.assertRaises(CmdLineInputError, lambda: command.remove(
             mock.MagicMock(),
             ["TICKET"],
-            {},
+            _modifiers(False, False),
         ))
         self.assertRaises(CmdLineInputError, lambda: command.remove(
             mock.MagicMock(),
             ["TICKET", "RESOURCE", "SOMETHING_ELSE"],
-            {},
+            _modifiers(False, False),
         ))
 
     def test_call_library_remove_with_correct_attrs(self):
         lib = mock.MagicMock(
             constraint_ticket=mock.MagicMock(remove=mock.Mock())
         )
-        command.remove(lib, ["TICKET", "RESOURCE"], {})
+        command.remove(lib, ["TICKET", "RESOURCE"], _modifiers(False, False))
         lib.constraint_ticket.remove.assert_called_once_with(
             "TICKET", "RESOURCE",
         )

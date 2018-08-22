@@ -1,3 +1,4 @@
+from pcs.cli.common.console_report import format_list
 from pcs.cli.common.errors import CmdLineInputError
 
 
@@ -10,7 +11,7 @@ PCS_SHORT_OPTIONS = "hf:p:u:V"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
     "force", "skip-offline", "autocorrect", "interactive", "autodelete",
-    "all", "full", "groups", "local", "wait", "config", "async",
+    "all", "full", "groups", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
@@ -18,7 +19,6 @@ PCS_LONG_OPTIONS = [
     "from=", "to=", "after=", "before=",
     "corosync_conf=", "cluster_conf=",
     "booth-conf=", "booth-key=",
-    "remote",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
@@ -70,6 +70,8 @@ def split_option(arg):
     CmdLineInputError if the argument cannot be splitted.
 
     string arg -- commandline argument
+
+    Commandline options: no options
     """
     if "=" not in arg:
         raise CmdLineInputError("missing value of '{0}' option".format(arg))
@@ -78,7 +80,11 @@ def split_option(arg):
     return arg.split("=", 1)
 
 def prepare_options(cmdline_args, allowed_repeatable_options=()):
-    """return dictionary of options from commandline key=value args"""
+    """
+    return dictionary of options from commandline key=value args
+
+    Commandline options: no options
+    """
     options = dict()
     for arg in cmdline_args:
         name, value = split_option(arg)
@@ -326,3 +332,82 @@ def upgrade_args(arg_list):
         else:
             upgraded_args.append(arg)
     return upgraded_args
+
+
+class InputModifiers(object):
+    def __init__(self, options):
+        self._defined_options = set(options.keys())
+        self._options = dict(options)
+        self._options.update({
+            # boolean values
+            "--all": "--all" in options,
+            "--autocorrect": "--autocorrect" in options,
+            "--autodelete": "--autodelete" in options,
+            "--config": "--config" in options,
+            "--corosync": "--corosync" in options,
+            "--debug": "--debug" in options,
+            "--defaults": "--defaults" in options,
+            "--disabled": "--disabled" in options,
+            "--enable": "--enable" in options,
+            "--force": "--force" in options,
+            "--full": "--full" in options,
+            "--groups": "--groups" in options,
+            "--hide-inactive": "--hide-inactive" in options,
+            "--interactive": "--interactive" in options,
+            "--local": "--local" in options,
+            "--master": "--master" in options,
+            "--monitor": "--monitor" in options,
+            "--no-default-ops": "--no-default-ops" in options,
+            "--nodesc": "--nodesc" in options,
+            "--no-watchdog-validation": "--no-watchdog-validation" in options,
+            "--off": "--off" in options,
+            "--pacemaker": "--pacemaker" in options,
+            "--skip-offline": "--skip-offline" in options,
+            "--start": "--start" in options,
+            "-V": "-V" in options,
+            # string values
+            "--after": options.get("--after", None),
+            "--before": options.get("--before", None),
+            "--booth-conf": options.get("--booth-conf", None),
+            "--booth-key": options.get("--booth-key", None),
+            "--corosync_conf": options.get("--corosync_conf", None),
+            "--from": options.get("--from", None),
+            "--group": options.get("--group", None),
+            "--name": options.get("--name", None),
+            "--node": options.get("--node", None),
+            "--request-timeout": options.get("--request-timeout", None),
+            "--to": options.get("--to", None),
+            "--wait": options.get("--wait", False),
+            "-f": options.get("-f", None),
+            "-p": options.get("-p", None),
+            "-u": options.get("-u", None),
+        })
+
+    def get_subset(self, *options):
+        return InputModifiers(
+            {opt: self.get(opt) for opt in options if self.is_specified(opt)}
+        )
+
+    def ensure_only_supported(self, *supported_options):
+        unsupported_options = (
+            # --debug is supported in all commands
+            self._defined_options - set(supported_options) - set(["--debug"])
+        )
+        if unsupported_options:
+            raise CmdLineInputError(
+                "Specified options {} are not supported in this command".format(
+                    format_list(list(unsupported_options))
+                )
+            )
+
+    def is_specified(self, option):
+        return option in self._defined_options
+
+    def get(self, option, default=None):
+        if option in self._defined_options:
+            return self._options[option]
+        if default is not None:
+            return default
+        if option in self._options:
+            return self._options[option]
+        raise AssertionError(f"Non existing default value for '{option}'")

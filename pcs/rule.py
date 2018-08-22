@@ -7,6 +7,9 @@ from pcs import utils
 # main functions
 
 def parse_argv(argv, extra_options=None):
+    """
+    Commandline options: no options
+    """
     options = {
         "id": None,
         "role": None,
@@ -31,6 +34,9 @@ def parse_argv(argv, extra_options=None):
     return options, argv
 
 def dom_rule_add(dom_element, options, rule_argv):
+    """
+    Commandline options: no options
+    """
     # validate options
     if options.get("score") and options.get("score-attribute"):
         utils.err("can not specify both score and score-attribute")

@@ -22,9 +22,9 @@ def acl_cmd(lib, argv, modifiers):
         elif sub_cmd == "show":
             show_acl_config(lib, argv_next, modifiers)
         elif sub_cmd == "enable":
-            acl_enable(argv_next)
+            acl_enable(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
-            acl_disable(argv_next)
+            acl_disable(lib, argv_next, modifiers)
         elif sub_cmd == "role":
             acl_role(lib, argv_next, modifiers)
         elif sub_cmd in ["target", "user"]:
@@ -50,9 +50,14 @@ def _print_list_of_objects(obj_list, transformation_fn):
 
 
 def show_acl_config(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
     # TODO move to lib once lib supports cluster properties
     # enabled/disabled should be part of the structure returned
     # by lib.acl.get_config
+    modifiers.ensure_only_supported("-f")
     properties = utils.get_set_properties(defaults=prop.get_default_properties())
     acl_enabled = properties.get("enable-acl", "").lower()
     if is_true(acl_enabled):
@@ -67,13 +72,23 @@ def show_acl_config(lib, argv, modifiers):
     _print_list_of_objects(data.get("role_list", []), role_to_str)
 
 
-def acl_enable(argv):
+def acl_enable(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
     # TODO move to lib once lib supports cluster properties
-    prop.set_property(["enable-acl=true"])
+    modifiers.ensure_only_supported("-f")
+    prop.set_property(lib, ["enable-acl=true"], modifiers.get_subset("-f"))
 
-def acl_disable(argv):
+def acl_disable(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
     # TODO move to lib once lib supports cluster properties
-    prop.set_property(["enable-acl=false"])
+    modifiers.ensure_only_supported("-f")
+    prop.set_property(lib, ["enable-acl=false"], modifiers.get_subset("-f"))
 
 
 def acl_role(lib, argv, modifiers):
@@ -114,14 +129,24 @@ def acl_user(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(e, "acl", "user {0}".format(sub_cmd))
 
 
-def user_create(lib, argv, dummy_modifiers):
+def user_create(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 1:
         raise CmdLineInputError()
     user_name, role_list = argv[0], argv[1:]
     lib.acl.create_target(user_name, role_list)
 
 
-def user_delete(lib, argv, dummy_modifiers):
+def user_delete(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.acl.remove_target(argv[0])
@@ -146,14 +171,24 @@ def acl_group(lib, argv, modifiers):
         )
 
 
-def group_create(lib, argv, dummy_modifiers):
+def group_create(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 1:
         raise CmdLineInputError()
     group_name, role_list = argv[0], argv[1:]
     lib.acl.create_group(group_name, role_list)
 
 
-def group_delete(lib, argv, dummy_modifiers):
+def group_delete(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.acl.remove_group(argv[0])
@@ -179,6 +214,9 @@ def acl_permission(lib, argv, modifiers):
 
 
 def argv_to_permission_info_list(argv):
+    """
+    Commandline options: no options
+    """
     if len(argv) % 3 != 0:
         raise CmdLineInputError()
 
@@ -203,6 +241,11 @@ def argv_to_permission_info_list(argv):
 
 
 def role_create(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 1:
         raise CmdLineInputError()
 
@@ -217,6 +260,11 @@ def role_create(lib, argv, modifiers):
 
 
 def role_delete(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         raise CmdLineInputError()
 
@@ -224,6 +272,9 @@ def role_delete(lib, argv, modifiers):
 
 
 def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
+    """
+    Commandline options: no options
+    """
     argv_len = len(argv)
     if argv_len < 2:
         raise CmdLineInputError()
@@ -250,7 +301,12 @@ def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
         raise CmdLineInputError()
 
 
-def role_assign(lib, argv, dummy_modifiers):
+def role_assign(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     _role_assign_unassign(
         argv,
         "to",
@@ -261,29 +317,45 @@ def role_assign(lib, argv, dummy_modifiers):
 
 
 def role_unassign(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --autodelete - autodelete empty targets, groups
+    """
+    modifiers.ensure_only_supported("-f", "--autodelete")
     _role_assign_unassign(
         argv,
         "from",
         lambda role_id, ug_id: lib.acl.unassign_role_not_specific(
-            role_id, ug_id, modifiers.get("autodelete", False)
+            role_id, ug_id, modifiers.get("--autodelete")
         ),
         lambda role_id, ug_id: lib.acl.unassign_role_from_target(
-            role_id, ug_id, modifiers.get("autodelete", False)
+            role_id, ug_id, modifiers.get("--autodelete")
         ),
         lambda role_id, ug_id: lib.acl.unassign_role_from_group(
-            role_id, ug_id, modifiers.get("autodelete", False)
+            role_id, ug_id, modifiers.get("--autodelete")
         )
     )
 
 
-def permission_add(lib, argv, dummy_modifiers):
+def permission_add(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 4:
         raise CmdLineInputError()
     role_id, argv_next = argv[0], argv[1:]
     lib.acl.add_permission(role_id, argv_to_permission_info_list(argv_next))
 
 
-def run_permission_delete(lib, argv, dummy_modifiers):
+def run_permission_delete(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.acl.remove_permission(argv[0])

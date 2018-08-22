@@ -10,6 +10,7 @@ from pcs.test.tools.pcs_runner import PcsRunner
 class StonithWarningTest(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
     temp_cib = rc("temp-cib.xml")
+    corosync_conf = rc("corosync.conf")
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
@@ -40,6 +41,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
     def test_warning_stonith_action(self):
         self.fixture_stonith_action()
         self.fixture_resource()
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
@@ -53,6 +55,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
     def test_warning_stonith_method_cycle(self):
         self.fixture_stonith_cycle()
         self.fixture_resource()
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
@@ -67,6 +70,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.fixture_stonith_action()
         self.fixture_stonith_cycle()
         self.fixture_resource()
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
@@ -79,6 +83,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         )
 
     def test_warn_when_no_stonith(self):
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\
@@ -91,6 +96,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
     def test_disabled_stonith_does_not_care_about_missing_devices(self):
         self.assert_pcs_success("property set stonith-enabled=false")
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "status",
             stdout_start=dedent("""\

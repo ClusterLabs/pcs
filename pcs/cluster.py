@@ -51,185 +51,202 @@ from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.env_tools import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
 
-def cluster_cmd(argv):
+def cluster_cmd(lib, argv, modifiers):
     if len(argv) == 0:
         usage.cluster()
         exit(1)
 
     sub_cmd = argv.pop(0)
-    if (sub_cmd == "help"):
-        usage.cluster([" ".join(argv)] if argv else [])
-    elif (sub_cmd == "setup"):
-        try:
-            cluster_setup(
-                utils.get_library_wrapper(), argv, utils.get_modifiers()
-            )
-        except LibraryError as e:
-            process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
-    elif (sub_cmd == "sync"):
-        sync_nodes(
-            utils.get_corosync_conf_facade().get_nodes_names(),
-            utils.getCorosyncConf()
-        )
-    elif (sub_cmd == "status"):
-        status.cluster_status(argv)
-    elif (sub_cmd == "pcsd-status"):
-        status.cluster_pcsd_status(argv)
-    elif (sub_cmd == "certkey"):
-        cluster_certkey(argv)
-    elif (sub_cmd == "auth"):
-        try:
-            cluster_auth_cmd(
-                utils.get_library_wrapper(), argv, utils.get_modifiers()
-            )
-        except LibraryError as e:
-            process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
-    elif (sub_cmd == "start"):
-        if "--all" in utils.pcs_options:
-            if argv:
-                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-            start_cluster_all()
-        else:
-            start_cluster(argv)
-    elif (sub_cmd == "stop"):
-        if "--all" in utils.pcs_options:
-            if argv:
-                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-            stop_cluster_all()
-        else:
-            stop_cluster(argv)
-    elif (sub_cmd == "kill"):
-        kill_cluster(argv)
-    elif (sub_cmd == "standby"):
-        try:
-            node.node_standby_cmd(
-                utils.get_library_wrapper(),
-                argv,
-                utils.get_modifiers(),
-                True
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "node", "standby")
-    elif (sub_cmd == "unstandby"):
-        try:
-            node.node_standby_cmd(
-                utils.get_library_wrapper(),
-                argv,
-                utils.get_modifiers(),
-                False
-            )
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "node", "unstandby")
-    elif (sub_cmd == "enable"):
-        if "--all" in utils.pcs_options:
-            if argv:
-                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-            enable_cluster_all()
-        else:
-            enable_cluster(argv)
-    elif (sub_cmd == "disable"):
-        if "--all" in utils.pcs_options:
-            if argv:
-                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-            disable_cluster_all()
-        else:
-            disable_cluster(argv)
-    elif (sub_cmd == "remote-node"):
-        try:
+    try:
+        if (sub_cmd == "help"):
+            usage.cluster([" ".join(argv)] if argv else [])
+        elif (sub_cmd == "setup"):
+            cluster_setup(lib, argv, modifiers)
+        elif (sub_cmd == "sync"):
+            sync_nodes(lib, argv, modifiers)
+        elif (sub_cmd == "status"):
+            status.cluster_status(lib, argv, modifiers)
+        elif (sub_cmd == "pcsd-status"):
+            status.cluster_pcsd_status(lib, argv, modifiers)
+        elif (sub_cmd == "certkey"):
+            pcsd.pcsd_certkey(lib, argv, modifiers)
+        elif (sub_cmd == "auth"):
+            cluster_auth_cmd(lib, argv, modifiers)
+        elif (sub_cmd == "start"):
+            cluster_start_cmd(lib, argv, modifiers)
+        elif (sub_cmd == "stop"):
+            cluster_stop_cmd(lib, argv, modifiers)
+        elif (sub_cmd == "kill"):
+            kill_cluster(lib, argv, modifiers)
+        elif (sub_cmd == "standby"):
+            node.node_standby_cmd(lib, argv, modifiers, enable=True)
+        elif (sub_cmd == "unstandby"):
+            node.node_standby_cmd(lib, argv, modifiers, enable=False)
+        elif (sub_cmd == "enable"):
+            cluster_enable_cmd(lib, argv, modifiers)
+        elif (sub_cmd == "disable"):
+            cluster_disable_cmd(lib, argv, modifiers)
+        # TODO: remove remote-node
+        elif (sub_cmd == "remote-node"):
             cluster_remote_node(argv)
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-    elif (sub_cmd == "cib"):
-        get_cib(argv)
-    elif (sub_cmd == "cib-push"):
-        cluster_push(argv)
-    elif (sub_cmd == "cib-upgrade"):
-        utils.cluster_upgrade()
-    elif (sub_cmd == "edit"):
-        cluster_edit(argv)
-    elif (sub_cmd == "node"):
-        node_command_map = {
-            "add": node_add,
-            "add-guest": cluster_command.node_add_guest,
-            "add-outside": node_add_outside_cluster,
-            "add-remote": cluster_command.node_add_remote,
-            "clear": cluster_command.node_clear,
-            "remove": node_remove,
-            "remove-guest": cluster_command.node_remove_guest,
-            "remove-remote": cluster_command.create_node_remove_remote(
-                resource.resource_remove
-            ),
-        }
-        if argv and argv[0] in node_command_map:
-            try:
-                node_command_map[argv[0]](
-                    utils.get_library_wrapper(),
-                    argv[1:],
-                    utils.get_modifiers()
-                )
-            except LibraryError as e:
-                process_library_reports(e.args)
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(
-                    e, "cluster", "node " + argv[0]
-                )
+        elif (sub_cmd == "cib"):
+            get_cib(lib, argv, modifiers)
+        elif (sub_cmd == "cib-push"):
+            cluster_push(lib, argv, modifiers)
+        elif (sub_cmd == "cib-upgrade"):
+            cluster_cib_upgrade_cmd(lib, argv, modifiers)
+        elif (sub_cmd == "edit"):
+            cluster_edit(lib, argv, modifiers)
+        elif (sub_cmd == "node"):
+            node_command_map = {
+                "add": node_add,
+                "add-guest": cluster_command.node_add_guest,
+                "add-outside": node_add_outside_cluster,
+                "add-remote": cluster_command.node_add_remote,
+                "clear": cluster_command.node_clear,
+                "remove": node_remove,
+                "remove-guest": cluster_command.node_remove_guest,
+                "remove-remote": cluster_command.create_node_remove_remote(
+                    resource.resource_remove
+                ),
+            }
+            if argv and argv[0] in node_command_map:
+                try:
+                    node_command_map[argv[0]](lib, argv[1:], modifiers)
+                except CmdLineInputError as e:
+                    utils.exit_on_cmdline_input_errror(
+                        e, "cluster", "node " + argv[0]
+                    )
+            else:
+                raise CmdLineInputError()
+        elif (sub_cmd == "uidgid"):
+            cluster_uidgid(lib, argv, modifiers)
+        elif (sub_cmd == "corosync"):
+            cluster_get_corosync_conf(lib, argv, modifiers)
+        elif (sub_cmd == "reload"):
+            cluster_reload(lib, argv, modifiers)
+        elif (sub_cmd == "destroy"):
+            cluster_destroy(lib, argv, modifiers)
+        elif (sub_cmd == "verify"):
+            cluster_verify(lib, argv, modifiers)
+        elif (sub_cmd == "report"):
+            cluster_report(lib, argv, modifiers)
+        elif (sub_cmd == "quorum"):
+            if argv and argv[0] == "unblock":
+                quorum.quorum_unblock_cmd(lib, argv[1:], modifiers)
+            else:
+                raise CmdLineInputError()
+        elif (sub_cmd == "remove_nodes_from_cib"):
+            remove_nodes_from_cib(lib, argv, modifiers)
         else:
-            usage.cluster(["node"])
-            sys.exit(1)
-    elif (sub_cmd == "uidgid"):
-        cluster_uidgid(argv)
-    elif (sub_cmd == "corosync"):
-        cluster_get_corosync_conf(argv)
-    elif (sub_cmd == "reload"):
-        cluster_reload(argv)
-    elif (sub_cmd == "destroy"):
-        try:
-            cluster_destroy(argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
-    elif (sub_cmd == "verify"):
-        cluster_verify(argv)
-    elif (sub_cmd == "report"):
-        cluster_report(argv)
-    elif (sub_cmd == "quorum"):
-        if argv and argv[0] == "unblock":
-            quorum.quorum_unblock_cmd(argv[1:])
-        else:
-            usage.cluster()
-            sys.exit(1)
-    elif (sub_cmd == "remove_nodes_from_cib"):
-        try:
-            remove_nodes_from_cib(
-                utils.get_library_wrapper(),
-                argv,
-                utils.get_modifiers(),
-            )
-        except LibraryError as e:
-            process_library_reports(e.args)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except LibraryError as e:
+        process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
+
+def cluster_cib_upgrade_cmd(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if argv:
+        raise CmdLineInputError()
+    utils.cluster_upgrade()
+
+def cluster_disable_cmd(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --all - disable all cluster nodes
+      * --request-timeout - timeout for HTTP requests - effective only when at
+        least one node has been specified or --all has been used
+    """
+    modifiers.ensure_only_supported("--all", "--request-timeout")
+    if modifiers.get("--all"):
+        if argv:
+            utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
+        disable_cluster_all()
     else:
-        usage.cluster()
-        sys.exit(1)
+        disable_cluster(argv)
 
-def sync_nodes(nodes,config):
+def cluster_enable_cmd(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --all - enable all cluster nodes
+      * --request-timeout - timeout for HTTP requests - effective only when at
+        least one node has been specified or --all has been used
+    """
+    modifiers.ensure_only_supported("--all", "--request-timeout")
+    if modifiers.get("--all"):
+        if argv:
+            utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
+        enable_cluster_all()
+    else:
+        enable_cluster(argv)
+
+def cluster_stop_cmd(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --force - no error when possible quorum loss
+      * --request-timeout - timeout for HTTP requests - effective only when at
+        least one node has been specified
+      * --pacemaker - stop pacemaker, only effective when no node has been
+        specified
+      * --corosync - stop corosync, only effective when no node has been
+        specified
+      * --all - stop all cluster nodes
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--request-timeout", "--pacemaker", "--corosync", "--all",
+    )
+    if modifiers.get("--all"):
+        if argv:
+            utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
+        stop_cluster_all()
+    else:
+        stop_cluster(argv)
+
+def cluster_start_cmd(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --wait
+      * --request-timeout - timeout for HTTP requests, have effect only if at
+        least one node have been specified
+      * --all - start all cluster nodes
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--request-timeout", "--all", "--corosync_conf"
+    )
+    if modifiers.get("--all"):
+        if argv:
+            utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
+        start_cluster_all()
+    else:
+        start_cluster(argv)
+
+def sync_nodes(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --request-timeout - timeout for HTTP requests
+    """
+    modifiers.ensure_only_supported("--request-timeout")
+    if argv:
+        raise CmdLineInputError()
+    config = utils.getCorosyncConf()
+    nodes = utils.get_corosync_conf_facade(conf_text=config).get_nodes_names()
     for node in nodes:
-        utils.setCorosyncConfig(node,config)
-
-
-def cluster_certkey(argv):
-    return pcsd.pcsd_certkey(argv)
+        utils.setCorosyncConfig(node, config)
 
 
 def start_cluster(argv):
+    """
+    Commandline options:
+      * --wait
+      * --request-timeout - timeout for HTTP requests, have effect only if at
+        least one node have been specified
+    """
     wait = False
     wait_timeout = None
     if "--wait" in utils.pcs_options:
@@ -257,6 +274,11 @@ def start_cluster(argv):
         wait_for_nodes_started([], wait_timeout)
 
 def start_cluster_all():
+    """
+    Commandline options:
+      * --wait
+      * --request-timeout - timeout for HTTP requests
+    """
     wait = False
     wait_timeout = None
     if "--wait" in utils.pcs_options:
@@ -270,6 +292,10 @@ def start_cluster_all():
         wait_for_nodes_started(all_nodes, wait_timeout)
 
 def start_cluster_nodes(nodes):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     # Large clusters take longer time to start up. So we make the timeout longer
     # for each 8 nodes:
     #  1 -  8 nodes: 1 * timeout
@@ -290,6 +316,9 @@ def start_cluster_nodes(nodes):
         )
 
 def is_node_fully_started(node_status):
+    """
+    Commandline options: no options
+    """
     return (
         "online" in node_status and "pending" in node_status
         and
@@ -297,6 +326,9 @@ def is_node_fully_started(node_status):
     )
 
 def wait_for_local_node_started(stop_at, interval):
+    """
+    Commandline options: no options
+    """
     try:
         while True:
             time.sleep(interval)
@@ -313,6 +345,10 @@ def wait_for_local_node_started(stop_at, interval):
         )
 
 def wait_for_remote_node_started(node, stop_at, interval):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     while True:
         time.sleep(interval)
         code, output = utils.getPacemakerNodeStatus(node)
@@ -332,6 +368,11 @@ def wait_for_remote_node_started(node, stop_at, interval):
             return 1, "Waiting timeout"
 
 def wait_for_nodes_started(node_list, timeout=None):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP request, effective only if
+        node_list is not empty list
+    """
     timeout = 60 * 15 if timeout is None else timeout
     interval = 2
     stop_at = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
@@ -350,9 +391,19 @@ def wait_for_nodes_started(node_list, timeout=None):
             utils.err("unable to verify all nodes have started")
 
 def stop_cluster_all():
+    """
+    Commandline options:
+      * --force - no error when possible quorum loss
+      * --request-timeout - timeout for HTTP requests
+    """
     stop_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def stop_cluster_nodes(nodes):
+    """
+    Commandline options:
+      * --force - no error when possible quorum loss
+      * --request-timeout - timeout for HTTP requests
+    """
     all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
@@ -429,6 +480,11 @@ def stop_cluster_nodes(nodes):
         utils.err("unable to stop all nodes")
 
 def enable_cluster(argv):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests, effective only if at
+        least one node has been specified
+    """
     if len(argv) > 0:
         enable_cluster_nodes(argv)
         return
@@ -439,6 +495,11 @@ def enable_cluster(argv):
         process_library_reports(e.args)
 
 def disable_cluster(argv):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests, effective only if at
+        least one node has been specified
+    """
     if len(argv) > 0:
         disable_cluster_nodes(argv)
         return
@@ -449,22 +510,42 @@ def disable_cluster(argv):
         process_library_reports(e.args)
 
 def enable_cluster_all():
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     enable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def disable_cluster_all():
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     disable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
 
 def enable_cluster_nodes(nodes):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     error_list = utils.map_for_error_list(utils.enableCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to enable all nodes\n" + "\n".join(error_list))
 
 def disable_cluster_nodes(nodes):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     error_list = utils.map_for_error_list(utils.disableCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
 def destroy_cluster(argv):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
@@ -483,6 +564,14 @@ def destroy_cluster(argv):
             )
 
 def stop_cluster(argv):
+    """
+    Commandline options:
+      * --force - no error when possible quorum loss
+      * --request-timeout - timeout for HTTP requests - effective only when at
+        least one node has been specified
+      * --pacemaker - stop pacemaker, only effective when no node has been
+        specified
+    """
     if len(argv) > 0:
         stop_cluster_nodes(argv)
         return
@@ -519,6 +608,9 @@ def stop_cluster(argv):
         stop_cluster_corosync()
 
 def stop_cluster_pacemaker():
+    """
+    Commandline options: no options
+    """
     print("Stopping Cluster (pacemaker)...")
     output, retval = utils.stop_service("pacemaker")
     if retval != 0:
@@ -526,6 +618,9 @@ def stop_cluster_pacemaker():
         utils.err("unable to stop pacemaker")
 
 def stop_cluster_corosync():
+    """
+    Commandline options: no options
+    """
     print("Stopping Cluster (corosync)...")
     service_list = []
     if utils.need_to_handle_qdevice_service():
@@ -537,7 +632,11 @@ def stop_cluster_corosync():
             print(output)
             utils.err("unable to stop {0}".format(service))
 
-def kill_cluster(argv):
+def kill_cluster(dummy_lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     dummy_output, dummy_retval = kill_local_cluster_services()
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
@@ -545,6 +644,9 @@ def kill_cluster(argv):
 #        sys.exit(1)
 
 def kill_local_cluster_services():
+    """
+    Commandline options: no options
+    """
     all_cluster_daemons = [
         # Daemons taken from cluster-clean script in pacemaker
         "pacemaker-attrd",
@@ -563,17 +665,23 @@ def kill_local_cluster_services():
     ]
     return utils.run(["killall", "-9"] + all_cluster_daemons)
 
-def cluster_push(argv):
+def cluster_push(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --wait
+      * --config - push only configuration section of CIB
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("--wait", "--config", "-f")
     if len(argv) > 2:
-        usage.cluster(["cib-push"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     filename = None
     scope = None
     timeout = None
     diff_against = None
 
-    if "--wait" in utils.pcs_options:
+    if modifiers.get("--wait"):
         timeout = utils.validate_wait_get_timeout()
     for arg in argv:
         if "=" not in arg:
@@ -581,7 +689,7 @@ def cluster_push(argv):
         else:
             arg_name, arg_value = arg.split("=", 1)
             if arg_name == "scope":
-                if "--config" in utils.pcs_options:
+                if modifiers.get("--config"):
                     utils.err("Cannot use both scope and --config")
                 if not utils.is_valid_cib_scope(arg_value):
                     utils.err("invalid CIB scope '%s'" % arg_value)
@@ -590,15 +698,13 @@ def cluster_push(argv):
             elif arg_name == "diff-against":
                 diff_against = arg_value
             else:
-                usage.cluster(["cib-push"])
-                sys.exit(1)
-    if "--config" in utils.pcs_options:
+                raise CmdLineInputError()
+    if modifiers.get("--config"):
         scope = "configuration"
     if diff_against and scope:
         utils.err("Cannot use both scope and diff-against")
     if not filename:
-        usage.cluster(["cib-push"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     try:
         new_cib_dom = xml.dom.minidom.parse(filename)
@@ -689,7 +795,7 @@ def cluster_push(argv):
 
     print("CIB updated")
 
-    if "--wait" not in utils.pcs_options:
+    if not modifiers.is_specified("--wait"):
         return
     cmd = ["crm_resource", "--wait"]
     if timeout:
@@ -703,30 +809,34 @@ def cluster_push(argv):
             msg.append("\n" + output)
         utils.err("\n".join(msg).strip())
 
-def cluster_edit(argv):
+def cluster_edit(lib, argv, modifiers):
+    """
+    Options:
+      * --config - edit configuration section of CIB
+      * -f - CIB file
+      * --wait
+    """
+    modifiers.ensure_only_supported("--config", "--wait", "-f")
     if 'EDITOR' in os.environ:
         if len(argv) > 1:
-            usage.cluster(["edit"])
-            sys.exit(1)
+            raise CmdLineInputError()
 
         scope = None
         scope_arg = ""
         for arg in argv:
             if "=" not in arg:
-                usage.cluster(["edit"])
-                sys.exit(1)
+                raise CmdLineInputError()
             else:
                 arg_name, arg_value = arg.split("=", 1)
-                if arg_name == "scope" and "--config" not in utils.pcs_options:
+                if arg_name == "scope" and not modifiers.get("--config"):
                     if not utils.is_valid_cib_scope(arg_value):
                         utils.err("invalid CIB scope '%s'" % arg_value)
                     else:
                         scope_arg = arg
                         scope = arg_value
                 else:
-                    usage.cluster(["edit"])
-                    sys.exit(1)
-        if "--config" in utils.pcs_options:
+                    raise CmdLineInputError()
+        if modifiers.get("--config"):
             scope = "configuration"
             # Leave scope_arg empty as cluster_push will pick up a --config
             # option from utils.pcs_options
@@ -747,15 +857,24 @@ def cluster_edit(argv):
         if newcib == cib:
             print("CIB not updated, no changes detected")
         else:
-            cluster_push([arg for arg in [tempcib.name, scope_arg] if arg])
+            cluster_push(
+                lib,
+                [arg for arg in [tempcib.name, scope_arg] if arg],
+                modifiers.get_subset("--wait", "--config", "-f"),
+            )
 
     else:
         utils.err("$EDITOR environment variable is not set")
 
-def get_cib(argv):
+def get_cib(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --config show configuration section of CIB
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("--config", "-f")
     if len(argv) > 2:
-        usage.cluster(["cib"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     filename = None
     scope = None
@@ -764,15 +883,14 @@ def get_cib(argv):
             filename = arg
         else:
             arg_name, arg_value = arg.split("=", 1)
-            if arg_name == "scope" and "--config" not in utils.pcs_options:
+            if arg_name == "scope" and not modifiers.get("--config"):
                 if not utils.is_valid_cib_scope(arg_value):
                     utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
                     scope = arg_value
             else:
-                usage.cluster(["cib"])
-                sys.exit(1)
-    if "--config" in utils.pcs_options:
+                raise CmdLineInputError()
+    if modifiers.get("--config"):
         scope = "configuration"
 
     if not filename:
@@ -789,7 +907,11 @@ def get_cib(argv):
             utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
 
 def node_add_outside_cluster(lib, argv, modifiers):
+    """
+    Options: TODO after overhaul of this command
+    """
     #pylint: disable=unreachable
+    modifiers.ensure_only_supported()
     raise CmdLineInputError("not implemented") # TODO
     if len(argv) != 2:
         raise CmdLineInputError(
@@ -826,15 +948,28 @@ def node_add_outside_cluster(lib, argv, modifiers):
         process_library_reports([node_communicator_exception_to_report_item(e)])
 
 def node_remove(lib, argv, modifiers):
+    """
+    Options:
+      * --force - continue even though the action may cause qourum loss
+      * --skip-offline - skip unreachable nodes
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--skip-offline", "--request-timeout",
+    )
     if not argv:
         raise CmdLineInputError()
     lib.cluster.remove_nodes(
         argv,
-        force_quorum_loss=modifiers["force"],
-        skip_offline=modifiers["skip_offline_nodes"],
+        force_quorum_loss=modifiers.get("--force"),
+        skip_offline=modifiers.get("--skip-offline"),
     )
 
-def cluster_uidgid(argv, silent_list = False):
+def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if len(argv) == 0:
         found = False
         uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
@@ -882,14 +1017,17 @@ def cluster_uidgid(argv, silent_list = False):
                 utils.err("no uidgid files with uid=%s and gid=%s found" % (uid,gid))
 
     else:
-        usage.cluster(["uidgid"])
-        exit(1)
+        raise CmdLineInputError()
 
-def cluster_get_corosync_conf(argv):
-
+def cluster_get_corosync_conf(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --request-timeout - timeout for HTTP requests, effetive only when at
+        least one node has been specified
+    """
+    modifiers.ensure_only_supported("--request-timeout")
     if len(argv) > 1:
-        usage.cluster()
-        exit(1)
+        raise CmdLineInputError()
 
     if len(argv) == 0:
         print(utils.getCorosyncConf().rstrip())
@@ -902,10 +1040,13 @@ def cluster_get_corosync_conf(argv):
     else:
         print(output.rstrip())
 
-def cluster_reload(argv):
+def cluster_reload(dummy_lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if len(argv) != 1 or argv[0] != "corosync":
-        usage.cluster(["reload"])
-        exit(1)
+        raise CmdLineInputError()
 
     output, retval = utils.reloadCorosync()
     if retval != 0 or "invalid option" in output:
@@ -914,10 +1055,16 @@ def cluster_reload(argv):
 
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
-def cluster_destroy(argv):
+def cluster_destroy(lib, argv, modifiers):
+    """
+    Options:
+      * --all - destroy cluster on all cluster nodes => destroy whole cluster
+      * --request-timeout - timeout of HTTP requests, effective only with --all
+    """
+    modifiers.ensure_only_supported("--all", "--request-timeout")
     if argv:
         raise CmdLineInputError()
-    if "--all" in utils.pcs_options:
+    if modifiers.get("--all"):
         # destroy remote and guest nodes
         cib = None
         lib_env = utils.get_lib_env()
@@ -984,10 +1131,16 @@ def cluster_destroy(argv):
             # we do not want to fail if qdevice was not set up
             pass
 
-def cluster_verify(argv):
+def cluster_verify(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * -V - more verbose output
+    TODO: position parameter should be removed in favour of -f
+    """
+    modifiers.ensure_only_supported("-f", "-V")
     if len(argv) > 1:
-        usage.cluster("verify")
-        raise SystemExit(1)
+        raise CmdLineInputError()
 
     if argv:
         filename = argv[0]
@@ -1003,21 +1156,27 @@ def cluster_verify(argv):
                 .format(filename, utils.filename)
             )
 
-    lib = utils.get_library_wrapper()
     try:
-        lib.cluster.verify(verbose="-V" in utils.pcs_options)
+        # TODO: -V option should be replaced with for e.g. --full
+        lib.cluster.verify(verbose=modifiers.get("-V"))
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-def cluster_report(argv):
+def cluster_report(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --force - overwrite existing file
+      * --from - timestamp
+      * --to - timestamp
+    """
+    modifiers.ensure_only_supported("--force", "--from", "--to")
     if len(argv) != 1:
-        usage.cluster(["report"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     outfile = argv[0]
     dest_outfile = outfile + ".tar.bz2"
     if os.path.exists(dest_outfile):
-        if "--force" not in utils.pcs_options:
+        if not modifiers.get("--force"):
             utils.err(dest_outfile + " already exists, use --force to overwrite")
         else:
             try:
@@ -1027,11 +1186,11 @@ def cluster_report(argv):
     crm_report_opts = []
 
     crm_report_opts.append("-f")
-    if "--from" in utils.pcs_options:
-        crm_report_opts.append(utils.pcs_options["--from"])
-        if "--to" in utils.pcs_options:
+    if modifiers.is_specified("--from"):
+        crm_report_opts.append(modifiers.get("--from"))
+        if modifiers.is_specified("--to"):
             crm_report_opts.append("-t")
-            crm_report_opts.append(utils.pcs_options["--to"])
+            crm_report_opts.append(modifiers.get("--to"))
     else:
         yesterday = datetime.datetime.now() - datetime.timedelta(1)
         crm_report_opts.append(yesterday.strftime("%Y-%m-%d %H:%M"))
@@ -1064,6 +1223,8 @@ def cluster_report(argv):
     print(newoutput)
 
 def cluster_remote_node(argv):
+    lib = None
+    modifiers = None
     usage_add = """\
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
@@ -1100,8 +1261,9 @@ def cluster_remote_node(argv):
         if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
             utils.err("unable to find resource '%s'" % rsc)
         resource.resource_update(
-            rsc,
-            ["meta", "remote-node="+hostname] + argv,
+            lib,
+            [rsc, "meta", "remote-node="+hostname] + argv,
+            modifiers,
             deal_with_guest_change=False
         )
 
@@ -1156,6 +1318,10 @@ def cluster_remote_node(argv):
 def send_local_configs(
     node_name_list, clear_local_cluster_permissions=False, force=False
 ):
+    """
+    Commandline options:
+      * --request-timeout - timeout of HTTP requests
+    """
     pcsd_data = {
         "nodes": node_name_list,
         "force": force,
@@ -1186,6 +1352,16 @@ def send_local_configs(
 
 
 def cluster_auth_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --corosync_conf - corosync.conf file
+      * --request-timeout - timeout of HTTP requests
+      * -u - username
+      * -p - password
+    """
+    modifiers.ensure_only_supported(
+        "--corosync_conf", "--request-timeout", "-u", "-p"
+    )
     if argv:
         raise CmdLineInputError()
     lib_env = utils.get_lib_env()
@@ -1255,6 +1431,9 @@ def cluster_auth_cmd(lib, argv, modifiers):
 def _parse_node_options(
     node, options, additional_options=(), additional_repeatable_options=()
 ):
+    """
+    Commandline options: no options
+    """
     ADDR_OPT_KEYWORD = "addr"
     supported_options = {ADDR_OPT_KEYWORD} | set(additional_options)
     repeatable_options = {ADDR_OPT_KEYWORD} | set(additional_repeatable_options)
@@ -1278,6 +1457,9 @@ TRANSPORT_DEFAULT_SECTION = "__default__"
 KNET_KEYWORD = "knet"
 LINK_KEYWORD = "link"
 def _parse_transport(transport_args):
+    """
+    Commandline options: no options
+    """
     if len(transport_args) < 1:
         raise CmdLineInputError(
             "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
@@ -1305,6 +1487,15 @@ def _parse_transport(transport_args):
 
 
 def cluster_setup(lib, argv, modifiers):
+    """
+    Options:
+      * --wait - only effective when used with --start
+      * --start - start cluster
+      * --enable - enable cluster
+      * --force - some validation issues and unresolvable addresses are treated
+        as warnings
+    """
+    modifiers.ensure_only_supported("--wait", "--start", "--enable", "--force")
     DEFAULT_TRANSPORT_TYPE = KNET_KEYWORD
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -1345,14 +1536,30 @@ def cluster_setup(lib, argv, modifiers):
         quorum_options=parse_args.prepare_options(
             parsed_args.get("quorum", [])
         ),
-        wait=modifiers["wait"],
-        start=modifiers["start"],
-        enable=modifiers["enable"],
-        force=modifiers["force"],
-        force_unresolvable=modifiers["force"]
+        wait=modifiers.get("--wait"),
+        start=modifiers.get("--start"),
+        enable=modifiers.get("--enable"),
+        force=modifiers.get("--force"),
+        force_unresolvable=modifiers.get("--force"),
     )
 
 def node_add(lib, argv, modifiers):
+    """
+    Options:
+      * --wait - wait until new node will start up, effective only when --start
+        is specified
+      * --start - start new node
+      * --enable - enable new node
+      * --force - treat validation issues and not resolvable addresses as
+        warnings instead of errors
+      * --skip-offline - skip unreachable nodes
+      * --no-watchdog-validation - do not validatate watchdogs
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--start", "--enable", "--force", "--skip-offline",
+        "--no-watchdog-validation", "--request-timeout",
+    )
     if not argv:
         raise CmdLineInputError()
 
@@ -1370,16 +1577,20 @@ def node_add(lib, argv, modifiers):
         del node_dict[DEVICE_KEYWORD]
     lib.cluster.add_nodes(
         nodes=[node_dict],
-        wait=modifiers["wait"],
-        start=modifiers["start"],
-        enable=modifiers["enable"],
-        force=modifiers["force"],
-        force_unresolvable=modifiers["force"],
-        skip_offline_nodes=modifiers["skip_offline_nodes"],
-        no_watchdog_validation=modifiers["no_watchdog_validation"],
+        wait=modifiers.get("--wait"),
+        start=modifiers.get("--start"),
+        enable=modifiers.get("--enable"),
+        force=modifiers.get("--force"),
+        force_unresolvable=modifiers.get("--force"),
+        skip_offline_nodes=modifiers.get("--skip-offline"),
+        no_watchdog_validation=modifiers.get("--no-watchdog-validation"),
     )
 
 def remove_nodes_from_cib(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if not argv:
         raise CmdLineInputError("No nodes specified")
     lib.cluster.remove_nodes_from_cib(argv)

@@ -18,9 +18,9 @@ def pcsd_cmd(lib, argv, modifiers):
         if sub_cmd == "help":
             usage.pcsd(argv_next)
         elif sub_cmd == "deauth":
-            pcsd_deauth(argv_next)
+            pcsd_deauth(lib, argv_next, modifiers)
         elif sub_cmd == "certkey":
-            pcsd_certkey(argv_next)
+            pcsd_certkey(lib, argv_next, modifiers)
         elif sub_cmd == "sync-certificates":
             pcsd_sync_certs(lib, argv_next, modifiers)
         else:
@@ -30,10 +30,14 @@ def pcsd_cmd(lib, argv, modifiers):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "pcsd", sub_cmd)
 
-def pcsd_certkey(argv):
+def pcsd_certkey(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --force - overwrite existing file
+    """
+    modifiers.ensure_only_supported("--force")
     if len(argv) != 2:
-        usage.pcsd(["certkey"])
-        exit(1)
+        raise CmdLineInputError()
 
     certfile = argv[0]
     keyfile = argv[1]
@@ -51,8 +55,16 @@ def pcsd_certkey(argv):
             utils.err(err, False)
         sys.exit(1)
 
-    if "--force" not in utils.pcs_options and (os.path.exists(settings.pcsd_cert_location) or os.path.exists(settings.pcsd_key_location)):
-        utils.err("certificate and/or key already exists, your must use --force to overwrite")
+    if (
+        not modifiers.get("--force")
+        and
+        (
+            os.path.exists(settings.pcsd_cert_location)
+            or
+            os.path.exists(settings.pcsd_key_location)
+        )
+    ):
+        utils.err("certificate and/or key already exists, use --force to overwrite")
 
     try:
         try:
@@ -77,13 +89,22 @@ def pcsd_certkey(argv):
     print("Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect")
 
 def pcsd_sync_certs(lib, argv, modifiers):
+    """
+    Options:
+      * --skip-offline - skip offline nodes
+    """
+    modifiers.ensure_only_supported("--skip-offline")
     if len(argv) > 0:
         raise CmdLineInputError()
     lib.pcsd.synchronize_ssl_certificate(
-        skip_offline=modifiers["skip_offline_nodes"]
+        skip_offline=modifiers.get("--skip-offline")
     )
 
-def pcsd_deauth(argv):
+def pcsd_deauth(dummy_lib, argv, modifiers):
+    """
+    Options: No options
+    """
+    modifiers.ensure_only_supported()
     filepath = settings.pcsd_users_conf_location
     if len(argv) < 1:
         try:

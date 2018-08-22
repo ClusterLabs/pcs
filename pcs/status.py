@@ -18,34 +18,34 @@ from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
 def status_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        full_status()
-        sys.exit(0)
-
-    sub_cmd, argv_next = argv[0], argv[1:]
     try:
+        if len(argv) < 1:
+            full_status(lib, argv, modifiers)
+            sys.exit(0)
+
+        sub_cmd, argv_next = argv[0], argv[1:]
         if sub_cmd == "help":
             usage.status(argv_next)
         elif sub_cmd == "booth":
             booth_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "corosync":
-            corosync_status()
+            corosync_status(lib, argv_next, modifiers)
         elif sub_cmd == "cluster":
-            cluster_status(argv_next)
+            cluster_status(lib, argv_next, modifiers)
         elif sub_cmd == "groups":
-            resource.resource_group_list(argv_next)
+            resource.resource_group_list(lib, argv_next, modifiers)
         elif sub_cmd == "nodes":
-            nodes_status(argv_next)
+            nodes_status(lib, argv_next, modifiers)
         elif sub_cmd == "pcsd":
-            cluster_pcsd_status(argv_next)
+            cluster_pcsd_status(lib, argv_next, modifiers)
         elif sub_cmd == "qdevice":
             qdevice_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "quorum":
             quorum_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "resources":
-            resource.resource_show(argv_next)
+            resource.resource_show(lib, argv_next, modifiers)
         elif sub_cmd == "xml":
-            xml_status()
+            xml_status(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -53,14 +53,32 @@ def status_cmd(lib, argv, modifiers):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
 
-def full_status():
-    if "--hide-inactive" in utils.pcs_options and "--full" in utils.pcs_options:
+def full_status(lib, argv, modifiers):
+    """
+    Options:
+      * --hide-inactive - hide inactive resources
+      * --full - show full details, node attributes and failcount
+      * -f - CIB file, crm_mon accepts CIB_file environment variable
+      * --corosync_conf - file corocync.conf
+      * --request-timeout - HTTP timeout for node authorization check
+    """
+    modifiers.ensure_only_supported(
+        "--hide-inactive", "--full", "-f", "--corosync_conf",
+        "--request-timeout",
+    )
+    if argv:
+        raise CmdLineInputError()
+    if (
+        modifiers.is_specified("--hide-inactive")
+        and
+        modifiers.is_specified("--full")
+    ):
         utils.err("you cannot specify both --hide-inactive and --full")
 
     monitor_command = ["crm_mon", "--one-shot"]
-    if "--hide-inactive" not in utils.pcs_options:
+    if not modifiers.get("--hide-inactive"):
         monitor_command.append('--inactive')
-    if "--full" in utils.pcs_options:
+    if modifiers.get("--full"):
         monitor_command.extend(
             ["--show-detail", "--show-node-attributes", "--failcounts"]
         )
@@ -69,16 +87,13 @@ def full_status():
 
     if (retval != 0):
         utils.err("cluster is not currently running on this node")
+    print("Cluster name: %s" % utils.getClusterName())
 
-    if not utils.usefile or "--corosync_conf" in utils.pcs_options:
-        cluster_name = utils.getClusterName()
-        print("Cluster name: %s" % cluster_name)
-
-    status_stonith_check()
+    status_stonith_check(modifiers)
 
     print(output)
 
-    if "--full" in utils.pcs_options:
+    if modifiers.get("--full"):
         tickets, retval = utils.run(["crm_ticket", "-L"])
         if retval != 0:
             print("WARNING: Unable to get information about tickets")
@@ -87,13 +102,24 @@ def full_status():
             print("Tickets:")
             print("\n".join(indent(tickets.split("\n"))))
 
-    if not utils.usefile:
-        if  "--full" in utils.pcs_options and utils.hasCorosyncConf():
-            print_pcsd_daemon_status()
+    if not (
+        modifiers.is_specified("-f")
+        or
+        modifiers.is_specified("--corosync_conf")
+    ):
+        # do this only if in live environment
+        if modifiers.get("--full"):
+            print_pcsd_daemon_status(lib, modifiers)
             print()
         utils.serviceStatus("  ")
 
-def status_stonith_check():
+def status_stonith_check(modifiers):
+    """
+    Commandline options:
+      * -f - CIB file, to get stonith devices and cluster property
+        stonith-enabled from CIB, to determine whenever we are working with
+        files or cluster
+    """
     # We should read the default value from pacemaker. However that may slow
     # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
     stonith_enabled = True
@@ -139,7 +165,7 @@ def status_stonith_check():
                                 resource.getAttribute("id")
                             )
 
-    if not utils.usefile:
+    if not modifiers.is_specified("-f"):
         # check if SBD daemon is running
         try:
             sbd_running = utils.is_service_running(
@@ -172,8 +198,16 @@ def status_stonith_check():
         )
 
 # Parse crm_mon for status
-def nodes_status(argv):
+def nodes_status(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file - for config subcommand and not for both or corosync
+      * --corosync_conf - only for config subcommand
+
+    NOTE: modifiers check is in subcommand
+    """
     if len(argv) == 1 and (argv[0] == "config"):
+        modifiers.ensure_only_supported("-f", "--corosync_conf")
         if utils.hasCorosyncConf():
             corosync_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         else:
@@ -196,6 +230,7 @@ def nodes_status(argv):
         return
 
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
+        modifiers.ensure_only_supported()
         all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
@@ -211,6 +246,7 @@ def nodes_status(argv):
         if argv[0] != "both":
             sys.exit(0)
 
+    modifiers.ensure_only_supported("-f")
     info_dom = utils.getClusterState()
 
     nodes = info_dom.getElementsByTagName("nodes")
@@ -262,7 +298,16 @@ def nodes_status(argv):
     print(" ".join([" Maintenance:"] + remote_maintenancenodes))
     print(" ".join([" Offline:"] + remote_offlinenodes))
 
-def cluster_status(argv):
+def cluster_status(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --request-timeout - HTTP timeout for checking status of pcsd, no effect
+        if -f is specified
+    """
+    modifiers.ensure_only_supported("-f", "--request-timeout")
+    if argv:
+        raise CmdLineInputError()
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
@@ -279,18 +324,31 @@ def cluster_status(argv):
         else:
             print("",line)
 
-    if not utils.usefile and utils.hasCorosyncConf():
+    if not modifiers.is_specified("-f") and utils.hasCorosyncConf():
         print()
-        print_pcsd_daemon_status()
+        print_pcsd_daemon_status(lib, modifiers)
 
-def corosync_status():
+def corosync_status(dummy_lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
     (output, retval) = utils.run(["corosync-quorumtool", "-l"])
     if retval != 0:
         utils.err("corosync not running")
     else:
         print(output.rstrip())
 
-def xml_status():
+def xml_status(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if argv:
+        raise CmdLineInputError()
     (output, retval) = utils.run(["crm_mon", "-1", "-r", "-X"])
 
     if (retval != 0):
@@ -298,16 +356,27 @@ def xml_status():
     print(output.rstrip())
 
 def is_service_running(service):
+    """
+    Used in module pcs.config
+    Commandline options: no options
+    """
     if utils.is_systemctl():
         dummy_output, retval = utils.run(["systemctl", "status", service])
     else:
         dummy_output, retval = utils.run(["service", service, "status"])
     return retval == 0
 
-def print_pcsd_daemon_status():
+def print_pcsd_daemon_status(lib, modifiers):
+    """
+    Commandline options:
+      * --request-timeout - HTTP timeout for node authorization check or when
+        not running under root to call local pcsd
+    """
     print("PCSD Status:")
     if os.getuid() == 0:
-        cluster_pcsd_status([], True)
+        cluster_pcsd_status(
+            lib, [], modifiers.get_subset("--request-timeout"), dont_exit=True
+        )
     else:
         err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
             ['status', 'pcsd'], True
@@ -323,6 +392,9 @@ def print_pcsd_daemon_status():
 def check_nodes(node_list, prefix=""):
     """
     Print pcsd status on node_list, return if there is any pcsd not online
+
+    Commandline options:
+      * --request-timeout - HTTP timeout for node authorization check
     """
     STATUS_ONLINE = 0
     status_desc_map = {
@@ -346,7 +418,12 @@ def check_nodes(node_list, prefix=""):
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
-def cluster_pcsd_status(argv, dont_exit=False):
+def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
+    """
+    Options:
+      * --request-timeout - HTTP timeout for node authorization check
+    """
+    modifiers.ensure_only_supported("--request-timeout")
     bad_nodes = False
     if len(argv) == 0:
         nodes = utils.get_corosync_conf_facade().get_nodes_names()

@@ -5,6 +5,9 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 
 def _node_add_remote_separate_host_and_name(arg_list):
+    """
+    Commandline options: no options
+    """
     node_host = arg_list[0]
     if len(arg_list) == 1:
         node_name = node_host
@@ -19,6 +22,22 @@ def _node_add_remote_separate_host_and_name(arg_list):
     return node_host, node_name, rest_args
 
 def node_add_remote(lib, arg_list, modifiers):
+    """
+    Options:
+      * --wait
+      * --force - allow incomplete distribution of files, allow pcmk remote
+        service to fail
+      * --skip-offline - skip offline nodes
+      * --request-timeout - HTTP request timeout
+      * --no-default-ops - do not use default operations
+      For tests:
+      * --corosync_conf
+      * -f
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--force", "--skip-offline", "--request-timeout",
+        "--corosync_conf", "-f", "--no-default-ops",
+    )
     if not arg_list:
         raise CmdLineInputError()
 
@@ -27,7 +46,7 @@ def node_add_remote(lib, arg_list, modifiers):
     )
 
     parts = parse_resource_create_args(rest_args)
-    force = modifiers["force"]
+    force = modifiers.get("--force")
 
     lib.remote_node.node_add_remote(
         node_host,
@@ -35,29 +54,59 @@ def node_add_remote(lib, arg_list, modifiers):
         parts["op"],
         parts["meta"],
         parts["options"],
-        skip_offline_nodes=modifiers["skip_offline_nodes"],
+        skip_offline_nodes=modifiers.get("--skip-offline"),
         allow_incomplete_distribution=force,
         allow_pacemaker_remote_service_fail=force,
         allow_invalid_operation=force,
         allow_invalid_instance_attributes=force,
-        use_default_operations=not modifiers["no-default-ops"],
-        wait=modifiers["wait"],
+        use_default_operations=not modifiers.get("--no-default-ops"),
+        wait=modifiers.get("--wait"),
     )
 
 def create_node_remove_remote(remove_resource):
     def node_remove_remote(lib, arg_list, modifiers):
-        if not arg_list:
+        """
+        Options:
+          * --force - allow multiple nodes removal, allow pcmk remote service
+            to fail, don't stop a resource before its deletion (this is side
+            effect of old resource delete command used here)
+          * --skip-offline - skip offline nodes
+          * --request-timeout - HTTP request timeout
+          For tests:
+          * --corosync_conf
+          * -f
+        """
+        modifiers.ensure_only_supported(
+            "--force", "--skip-offline", "--request-timeout",
+            "--corosync_conf", "-f",
+        )
+        if len(arg_list) != 1:
             raise CmdLineInputError()
         lib.remote_node.node_remove_remote(
             arg_list[0],
             remove_resource,
-            skip_offline_nodes=modifiers["skip_offline_nodes"],
-            allow_remove_multiple_nodes=modifiers["force"],
-            allow_pacemaker_remote_service_fail=modifiers["force"],
+            skip_offline_nodes=modifiers.get("--skip-offline"),
+            allow_remove_multiple_nodes=modifiers.get("--force"),
+            allow_pacemaker_remote_service_fail=modifiers.get("--force"),
         )
     return node_remove_remote
 
 def node_add_guest(lib, arg_list, modifiers):
+    """
+    Options:
+      * --wait
+      * --force - allow incomplete distribution of files, allow pcmk remote
+        service to fail
+      * --skip-offline - skip offline nodes
+      * --request-timeout - HTTP request timeout
+      For tests:
+      * --corosync_conf
+      * -f
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--force", "--skip-offline", "--request-timeout",
+        "--corosync_conf", "-f",
+    )
     if len(arg_list) < 2:
         raise CmdLineInputError()
 
@@ -70,29 +119,49 @@ def node_add_guest(lib, arg_list, modifiers):
         node_name,
         resource_id,
         meta_options,
-        skip_offline_nodes=modifiers["skip_offline_nodes"],
-        allow_incomplete_distribution=modifiers["force"],
-        allow_pacemaker_remote_service_fail=modifiers["force"],
-        wait=modifiers["wait"],
+        skip_offline_nodes=modifiers.get("--skip-offline"),
+        allow_incomplete_distribution=modifiers.get("--force"),
+        allow_pacemaker_remote_service_fail=modifiers.get("--force"),
+        wait=modifiers.get("--wait"),
     )
 
 def node_remove_guest(lib, arg_list, modifiers):
-    if not arg_list:
+    """
+    Options:
+      * --wait
+      * --force - allow multiple nodes removal, allow pcmk remote service to
+        fail
+      * --skip-offline - skip offline nodes
+      * --request-timeout - HTTP request timeout
+      For tests:
+      * --corosync_conf
+      * -f
+    """
+    modifiers.ensure_only_supported(
+        "--wait", "--force", "--skip-offline", "--request-timeout",
+        "--corosync_conf", "-f",
+    )
+    if len(arg_list) != 1:
         raise CmdLineInputError()
 
     lib.remote_node.node_remove_guest(
         arg_list[0],
-        skip_offline_nodes=modifiers["skip_offline_nodes"],
-        allow_remove_multiple_nodes=modifiers["force"],
-        allow_pacemaker_remote_service_fail=modifiers["force"],
-        wait=modifiers["wait"],
+        skip_offline_nodes=modifiers.get("--skip-offline"),
+        allow_remove_multiple_nodes=modifiers.get("--force"),
+        allow_pacemaker_remote_service_fail=modifiers.get("--force"),
+        wait=modifiers.get("--wait"),
     )
 
 def node_clear(lib, arg_list, modifiers):
+    """
+    Options:
+      * --force - allow to clear a cluster node
+    """
+    modifiers.ensure_only_supported("--force")
     if len(arg_list) != 1:
         raise CmdLineInputError()
 
     lib.cluster.node_clear(
         arg_list[0],
-        allow_clear_cluster_node=modifiers["force"]
+        allow_clear_cluster_node=modifiers.get("--force")
     )

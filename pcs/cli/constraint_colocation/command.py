@@ -10,7 +10,14 @@ def create_with_set(lib, argv, modifiers):
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
         "autocorrect" allows correct resource to its clone/master parent
+
+    Options:
+      * --autocorrect - can repair to clone
+      * --force - allow resource inside clone (or master), allow duplicate
+        element
+      * -f - CIB file
     """
+    modifiers.ensure_only_supported("-f", "--force", "--autocorrect")
     command.create_with_set(
         lib.constraint_colocation.set,
         argv,
@@ -23,7 +30,12 @@ def show(lib, argv, modifiers):
     object lib exposes library
     list argv see usage for "constraint colocation show"
     dict like object modifiers can contain "full"
+
+    Options:
+      * --full - print more details
+      * -f - CIB file
     """
+    modifiers.ensure_only_supported("-f", "--full")
     print("\n".join(command.show(
          "Colocation Constraints:",
         lib.constraint_colocation.show,

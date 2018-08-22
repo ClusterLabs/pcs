@@ -37,6 +37,10 @@
   via pcs ([rhbz#1600169])
 - Configuring QDevice works even if NSS with the new db format (cert9.db,
   key4.db, pkcs11.txt) is used ([rhbz#1596721])
+- Options starting with '-' and '--' are no longer accepted by commands for
+  which those options have no effect ([rhbz#1533866])
+- When a user makes an error in a pcs command, usage for that specific command
+  is printed instead of printing the whole usage
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -106,6 +110,7 @@
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
+[rhbz#1533866]: https://bugzilla.redhat.com/show_bug.cgi?id=1533866
 [rhbz#1536121]: https://bugzilla.redhat.com/show_bug.cgi?id=1536121
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243

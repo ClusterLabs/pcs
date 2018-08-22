@@ -45,6 +45,9 @@ def is_node_name_in_options(options):
     return "remote-node" in options
 
 def get_guest_option_value(options, default=None):
+    """
+    Commandline options: no options
+    """
     return options.get("remote-node", default)
 
 def validate_set_as_guest(

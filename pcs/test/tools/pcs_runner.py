@@ -6,35 +6,31 @@ from pcs import utils
 
 __pcs_location = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "pcs"
+    "pcs_for_tests"
 )
 _temp_cib = rc("temp-cib.xml")
 
 
 class PcsRunner(object):
     def __init__(
-        self, cib_file=_temp_cib, corosync_conf_file=None, cluster_conf_file=None
+        self, cib_file=_temp_cib, corosync_conf_file=None,
+        corosync_conf_opt=None
     ):
         self.cib_file = cib_file
-        self.corosync_conf_file = (
-            rc("corosync.conf") if corosync_conf_file is None
-            else corosync_conf_file
-        )
-        self.cluster_conf_file = (
-            rc("cluster.conf") if cluster_conf_file is None
-            else cluster_conf_file
-        )
+        self.corosync_conf_file = corosync_conf_file
+        self.corosync_conf_opt = corosync_conf_opt
 
     def run(self, args):
-        args_with_files = (
-            "--corosync_conf={0} ".format(self.corosync_conf_file)
-            + "--cluster_conf={0} ".format(self.cluster_conf_file)
-            + args
+        return pcs(
+            self.cib_file, args, corosync_conf_file=self.corosync_conf_file,
+            corosync_conf_opt=self.corosync_conf_opt
         )
-        return pcs(self.cib_file, args_with_files)
 
 
-def pcs(testfile, args):
+def pcs(
+    cib_file, args, corosync_conf_file=None, uid_gid_dir=None,
+    corosync_conf_opt=None
+):
     """
     Run pcs with -f on specified file
     Return tuple with:
@@ -54,13 +50,15 @@ def pcs(testfile, args):
             if arg.find("'") != -1 and not (arg[0] == "'" and arg[-1] == "'"):
                 in_quote = True
 
-    conf_opts = []
-    if "--corosync_conf" not in args:
-        corosync_conf = rc("corosync.conf")
-        conf_opts.append("--corosync_conf=" + corosync_conf)
-    if "--cluster_conf" not in args:
-        cluster_conf = rc("cluster.conf")
-        conf_opts.append("--cluster_conf=" + cluster_conf)
-    return utils.run(
-        [__pcs_location, "-f", testfile] + conf_opts + arg_split_temp
-    )
+    env = {}
+    env_pcs_settings_prefix = "PCS.SETTINGS."
+    if corosync_conf_file:
+        env[f"{env_pcs_settings_prefix}corosync_conf_file"] = corosync_conf_file
+    if uid_gid_dir:
+        env[f"{env_pcs_settings_prefix}corosync_uidgid_dir"] = uid_gid_dir
+    cmd = [__pcs_location] + arg_split_temp
+    if cib_file:
+        cmd.extend(["-f", cib_file])
+    if corosync_conf_opt:
+        cmd.extend(["--corosync_conf", corosync_conf_opt])
+    return utils.run(cmd, env_extend=env)

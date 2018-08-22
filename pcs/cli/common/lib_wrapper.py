@@ -180,10 +180,7 @@ def load_module(env, middleware_factory, name):
     if name == "cluster":
         return bind_all(
             env,
-            middleware.build(
-                middleware_factory.cib,
-                middleware_factory.corosync_conf_existing,
-            ),
+            middleware.build(middleware_factory.cib),
             {
                 "add_nodes": cluster.add_nodes,
                 "node_clear": cluster.node_clear,

@@ -51,6 +51,9 @@ def parse_create(arg_list):
     return parts
 
 def _parse_bundle_groups(arg_list):
+    """
+    Commandline options: no options
+    """
     repeatable_keyword_list = ["port-map", "storage-map"]
     keyword_list = ["meta", "container", "network"] + repeatable_keyword_list
     groups = group_by_keywords(
@@ -76,6 +79,9 @@ def _parse_bundle_groups(arg_list):
     return groups
 
 def parse_bundle_create_options(arg_list):
+    """
+    Commandline options: no options
+    """
     groups = _parse_bundle_groups(arg_list)
     container_options = groups.get("container", [])
     container_type = ""
@@ -100,6 +106,9 @@ def parse_bundle_create_options(arg_list):
 def _split_bundle_map_update_op_and_options(
     map_arg_list, result_parts, map_name
 ):
+    """
+    Commandline options: no options
+    """
     if len(map_arg_list) < 2:
         raise _bundle_map_update_not_valid(map_name)
     op, options = map_arg_list[0], map_arg_list[1:]
@@ -111,6 +120,9 @@ def _split_bundle_map_update_op_and_options(
         raise _bundle_map_update_not_valid(map_name)
 
 def _bundle_map_update_not_valid(map_name):
+    """
+    Commandline options: no options
+    """
     return CmdLineInputError(
         (
             "When using '{map}' you must specify either 'add' and options or "
@@ -119,6 +131,9 @@ def _bundle_map_update_not_valid(map_name):
     )
 
 def parse_bundle_update_options(arg_list):
+    """
+    Commandline options: no options
+    """
     groups = _parse_bundle_groups(arg_list)
     port_map = {"add": [], "remove": []}
     for map_group in groups.get("port-map", []):

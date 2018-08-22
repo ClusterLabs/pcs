@@ -67,8 +67,6 @@ def recipient_cmd(*args):
         )
 
 
-
-
 def ensure_only_allowed_options(parameter_dict, allowed_list):
     for arg, value in parameter_dict.items():
         if arg not in allowed_list:
@@ -78,6 +76,11 @@ def ensure_only_allowed_options(parameter_dict, allowed_list):
 
 
 def alert_add(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
 
@@ -95,6 +98,11 @@ def alert_add(lib, argv, modifiers):
 
 
 def alert_update(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
 
@@ -114,6 +122,11 @@ def alert_update(lib, argv, modifiers):
 
 
 def alert_remove(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 1:
         raise CmdLineInputError()
 
@@ -121,6 +134,12 @@ def alert_remove(lib, argv, modifiers):
 
 
 def recipient_add(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --force - allows not unique recipient values
+    """
+    modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 2:
         raise CmdLineInputError()
 
@@ -137,11 +156,17 @@ def recipient_add(lib, argv, modifiers):
         prepare_options(sections["meta"]),
         recipient_id=main_args.get("id", None),
         description=main_args.get("description", None),
-        allow_same_value=modifiers["force"]
+        allow_same_value=modifiers.get("--force")
     )
 
 
 def recipient_update(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --force - allows not unique recipient values
+    """
+    modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 1:
         raise CmdLineInputError()
 
@@ -157,11 +182,16 @@ def recipient_update(lib, argv, modifiers):
         prepare_options(sections["meta"]),
         recipient_value=main_args.get("value", None),
         description=main_args.get("description", None),
-        allow_same_value=modifiers["force"]
+        allow_same_value=modifiers.get("--force")
     )
 
 
 def recipient_remove(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) < 1:
         raise CmdLineInputError()
 
@@ -216,6 +246,11 @@ def _recipient_to_str(recipient):
 
 
 def print_alert_config(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
 
@@ -228,8 +263,14 @@ def print_alert_config(lib, argv, modifiers):
         print(" No alerts defined")
 
 
-def print_alerts_in_json(lib, argv, dummy_modifiers):
-    # This is used only by pcsd, will be removed in new architecture
+def print_alerts_in_json(lib, argv, modifiers):
+    """
+    This is used only by pcsd, will be removed in new architecture
+
+    Options:
+      * -f - CIB file (in lib wrapper)
+    """
+    modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
 

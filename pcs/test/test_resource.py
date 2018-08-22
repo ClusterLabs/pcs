@@ -4,7 +4,7 @@ import re
 from random import shuffle
 import shutil
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import mock, skip, TestCase
 
 from pcs.test.tools.assertions import (
     ac,
@@ -36,7 +36,7 @@ temp_large_cib  = os.path.join(RESOURCES_TMP, "temp-cib-large.xml")
 
 class ResourceDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner = PcsRunner(None)
 
     def fixture_description(self, advanced=False):
         advanced_params = (
@@ -1584,6 +1584,7 @@ monitor interval=20 (A-monitor-interval-20)
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
+        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success("config",outdent("""\
             Cluster Name: test99
             Corosync Nodes:
@@ -1767,6 +1768,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == ""
 
+        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success("config", outdent(
             """\
             Cluster Name: test99
@@ -1822,6 +1824,7 @@ monitor interval=20 (A-monitor-interval-20)
               Options:
             """
         ))
+        self.pcs_runner.corosync_conf_file = None
 
         output, returnVal = pcs(temp_large_cib, "resource master dummylarge")
         ac(output, '')
@@ -2593,15 +2596,15 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource move",
             "Error: must specify a resource to move\n"
         )
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource ban",
             "Error: must specify a resource to ban\n"
         )
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource clear",
             "Error: must specify a resource to clear\n"
         )
@@ -2922,6 +2925,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             )
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def testDebugStartCloneGroup(self):
         o,r = pcs(temp_cib, "resource create D0 ocf:heartbeat:Dummy --group DGroup")
         ac(o,"")
@@ -3979,7 +3986,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             )
         )
 
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource enable dummy3 dummyX",
             "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
         )
@@ -3999,7 +4006,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             )
         )
 
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource disable dummy1 dummyX",
             "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
         )
@@ -4930,7 +4937,7 @@ class BundleDeleteTest(BundleCommon):
 class BundleGroup(BundleCommon):
     def test_group_add_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource group add bundles B",
             "Error: Unable to find resource: B\n"
         )
@@ -4938,7 +4945,7 @@ class BundleGroup(BundleCommon):
     def test_group_add_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource group add group R",
             "Error: cannot group bundle resources\n"
         )
@@ -4946,14 +4953,14 @@ class BundleGroup(BundleCommon):
     def test_group_remove_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource group remove B R",
             "Error: Group 'B' does not exist\n"
         )
 
     def test_ungroup_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource ungroup B",
             "Error: Group 'B' does not exist\n"
         )
@@ -4963,14 +4970,14 @@ class BundleGroup(BundleCommon):
 class BundleCloneMaster(BundleCommon):
     def test_clone_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource clone B",
             "Error: unable to find group or resource: B\n"
         )
 
     def test_master_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource master B",
             "Error: Unable to find resource or group with id B\n"
         )
@@ -4978,7 +4985,7 @@ class BundleCloneMaster(BundleCommon):
     def test_clone_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource clone R",
             "Error: cannot clone bundle resource\n"
         )
@@ -4986,14 +4993,14 @@ class BundleCloneMaster(BundleCommon):
     def test_master_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource master R",
             "Error: cannot make a master/slave resource from a bundle resource\n"
         )
 
     def test_unclone_bundle(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource unclone B",
             "Error: could not find resource: B\n"
         )
@@ -5034,7 +5041,7 @@ class BundleMiscCommands(BundleCommon):
 
     def test_op_remove(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource op remove B monitor interval=30",
             "Error: Unable to find resource: B\n"
         )
@@ -5055,11 +5062,15 @@ class BundleMiscCommands(BundleCommon):
 
     def test_utilization(self):
         self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "resource utilization B aaa=10",
             "Error: Unable to find a resource: B\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_start_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
@@ -5067,6 +5078,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-start a bundle\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_start_with_resource(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -5075,6 +5090,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-start a bundle, try the bundle's resource: R\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_stop_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
@@ -5082,6 +5101,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-stop a bundle\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_stop_with_resource(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -5090,6 +5113,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-stop a bundle, try the bundle's resource: R\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_monitor_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
@@ -5097,6 +5124,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-monitor a bundle\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_monitor_with_resource(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -5105,6 +5136,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-monitor a bundle, try the bundle's resource: R\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_promote_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
@@ -5112,6 +5147,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-promote a bundle\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_promote_with_resource(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -5120,6 +5159,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-promote a bundle, try the bundle's resource: R\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_demote_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
@@ -5127,6 +5170,10 @@ class BundleMiscCommands(BundleCommon):
             "Error: unable to debug-demote a bundle\n"
         )
 
+    @skip(
+        "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
+        "command itself"
+    )
     def test_debug_demote_with_resource(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")

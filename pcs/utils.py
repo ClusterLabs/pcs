@@ -32,6 +32,7 @@ from pcs.cli.common import (
 )
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.reports import (
     build_report_message,
     process_library_reports,
@@ -79,6 +80,9 @@ class UnknownPropertyException(Exception):
     pass
 
 def getValidateWithVersion(dom):
+    """
+    Commandline options: no options
+    """
     cib = dom.getElementsByTagName("cib")
     if len(cib) != 1:
         err("Bad cib")
@@ -96,6 +100,10 @@ def getValidateWithVersion(dom):
 # Check the current pacemaker version in cib and upgrade it if necessary
 # Returns False if not upgraded and True if upgraded
 def checkAndUpgradeCIB(major,minor,rev):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
     if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
         return False
@@ -103,12 +111,20 @@ def checkAndUpgradeCIB(major,minor,rev):
     return True
 
 def cluster_upgrade():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     output, retval = run(["cibadmin", "--upgrade", "--force"])
     if retval != 0:
         err("unable to upgrade cluster: %s" % output)
     print("Cluster CIB has been upgraded to latest version")
 
 def cluster_upgrade_to_version(required_version):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     checkAndUpgradeCIB(*required_version)
     dom = get_cib_dom()
     current_version = getValidateWithVersion(dom)
@@ -125,17 +141,31 @@ def cluster_upgrade_to_version(required_version):
 
 # Check status of node
 def checkStatus(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/status', None, False, False)
 
 # Check and see if we're authorized (faster than a status check)
 def checkAuthorization(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/check_auth', None, False, False)
 
 def get_uid_gid_file_name(uid, gid):
+    """
+    Commandline options: no options
+    """
     return "pcs-uidgid-%s-%s" % (uid, gid)
 
 # Reads in uid file and returns dict of values {'uid':'theuid', 'gid':'thegid'}
 def read_uid_gid_file(filename):
+    """
+    Commandline options: no options
+    """
     uidgid = {}
     with open(
         os.path.join(settings.corosync_uidgid_dir, filename), "r"
@@ -160,6 +190,9 @@ def read_uid_gid_file(filename):
     return uidgid
 
 def write_uid_gid_file(uid,gid):
+    """
+    Commandline options: no options
+    """
     orig_filename = get_uid_gid_file_name(uid,gid)
     filename = orig_filename
     counter = 0
@@ -177,6 +210,9 @@ def write_uid_gid_file(uid,gid):
         uidgid_file.write(data)
 
 def find_uid_gid_files(uid,gid):
+    """
+    Commandline options: no options
+    """
     if uid == "" and gid == "":
         return []
 
@@ -199,6 +235,9 @@ def find_uid_gid_files(uid,gid):
 # Removes all uid/gid files with the specified uid/gid, returns false if we
 # couldn't find one
 def remove_uid_gid_file(uid,gid):
+    """
+    Commandline options: no options
+    """
     if uid == "" and gid == "":
         return False
 
@@ -210,6 +249,9 @@ def remove_uid_gid_file(uid,gid):
     return file_removed
 
 def read_known_hosts_file():
+    """
+    Commandline options: no options
+    """
     output, retval = run_pcsdcli("read_known_hosts")
     data = {}
     if (
@@ -231,6 +273,10 @@ def read_known_hosts_file():
     return data
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
+    """
+    Commandline options: no options
+    NOTE: callback send_http_request_function may use --request-timeout
+    """
     def repeater(node, *args, **kwargs):
         repeats_left = repeat_count
         while True:
@@ -249,20 +295,36 @@ def repeat_if_timeout(send_http_request_function, repeat_count=15):
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
 
 def setCorosyncConfig(node,config):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     data = urlencode({'corosync_conf':config})
     (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
     if status != 0:
         err("Unable to set corosync config: {0}".format(data))
 
 def getPacemakerNodeStatus(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(
         node, "remote/pacemaker_node_status", None, False, False
     )
 
 def startCluster(node, quiet=False, timeout=None):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(
         node,
         "remote/cluster_start",
@@ -272,16 +334,28 @@ def startCluster(node, quiet=False, timeout=None):
     )
 
 def stopPacemaker(node, quiet=False, force=True):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return stopCluster(
         node, pacemaker=True, corosync=False, quiet=quiet, force=force
     )
 
 def stopCorosync(node, quiet=False, force=True):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return stopCluster(
         node, pacemaker=False, corosync=True, quiet=quiet, force=force
     )
 
 def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     data = dict()
     timeout = None
     if pacemaker and not corosync:
@@ -302,23 +376,47 @@ def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
     )
 
 def enableCluster(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/cluster_enable', None, False, True)
 
 def disableCluster(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/cluster_disable', None, False, True)
 
 def destroyCluster(node, quiet=False):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, 'remote/cluster_destroy', None, not quiet, not quiet)
 
 def restoreConfig(node, tarball_data):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     data = urlencode({"tarball": tarball_data})
     return sendHTTPRequest(node, "remote/config_restore", data, False, True)
 
 def pauseConfigSyncing(node, delay_seconds=300):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     data = urlencode({"sync_thread_pause": delay_seconds})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 def resumeConfigSyncing(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     data = urlencode({"sync_thread_resume": 1})
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
@@ -334,6 +432,11 @@ def resumeConfigSyncing(node):
 def sendHTTPRequest(
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+      * --debug
+    """
     port = None
     addr = host
     token = None
@@ -453,6 +556,9 @@ def sendHTTPRequest(
 
 
 def __get_cookie_list(token):
+    """
+    Commandline options: no options
+    """
     cookies = []
     if token:
         cookies.append("token=" + token)
@@ -473,15 +579,23 @@ def __get_cookie_list(token):
                 cookies.append("{0}={1}".format(name, value))
     return cookies
 
-def get_corosync_conf_facade(conf_path=None, conf_text=None):
+def get_corosync_conf_facade(conf_text=None):
+    """
+    Commandline options:
+      * --corosync_conf - path to a mocked corosync.conf is set directly to
+        settings
+    """
     try:
         return corosync_conf_facade.from_string(
-            getCorosyncConf(conf_path) if conf_text is None else conf_text
+            getCorosyncConf() if conf_text is None else conf_text
         )
     except corosync_conf_parser.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
 
 def getNodeAttributesFromPacemaker():
+    """
+    Commandline options: no options
+    """
     try:
         return [
             node.attrs
@@ -491,25 +605,37 @@ def getNodeAttributesFromPacemaker():
         process_library_reports(e.args)
 
 
-def hasCorosyncConf(conf=None):
-    if not conf:
-        conf = settings.corosync_conf_file
-    return os.path.isfile(conf)
+def hasCorosyncConf():
+    """
+    Commandline options:
+      * --corosync_conf - path to a mocked corosync.conf is set directly to
+        settings
+    """
+    return os.path.isfile(settings.corosync_conf_file)
 
-def getCorosyncConf(conf=None):
-    if not conf:
-        conf = settings.corosync_conf_file
+def getCorosyncConf():
+    """
+    Commandline options:
+      * --corosync_conf - path to a mocked corosync.conf is set directly to
+        settings
+    """
     try:
-        out = open(conf).read()
+        out = open(settings.corosync_conf_file).read()
     except IOError as e:
-        err("Unable to read %s: %s" % (conf, e.strerror))
+        err("Unable to read %s: %s" % (settings.corosync_conf_file, e.strerror))
     return out
 
 def reloadCorosync():
+    """
+    Commandline options: no options
+    """
     output, retval = run(["corosync-cfgtool", "-R"])
     return output, retval
 
 def getCorosyncActiveNodes():
+    """
+    Commandline options: no options
+    """
     output,retval = run(["corosync-cmapctl"])
     if retval != 0:
         return []
@@ -549,6 +675,12 @@ def getCorosyncActiveNodes():
 
 # is it needed to handle corosync-qdevice service when managing cluster services
 def need_to_handle_qdevice_service():
+    """
+    Commandline options: no options
+      * --corosync_conf - path to a mocked corosync.conf is set directly to
+        settings but it doesn't make sense for contexts in which this function
+        is used
+    """
     try:
         cfg = corosync_conf_facade.from_string(
             open(settings.corosync_conf_file).read()
@@ -589,6 +721,11 @@ def run(
     args, ignore_stderr=False, string_for_stdin=None, env_extend=None,
     binary_output=False
 ):
+    """
+    Commandline options:
+      * -f - CIB file (effective only for some pacemaker tools)
+      * --debug
+    """
     if not env_extend:
         env_extend = dict()
     env_var = env_extend
@@ -645,6 +782,10 @@ def run(
 
 @lru_cache()
 def cmd_runner():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     env_vars = dict()
     if usefile:
         env_vars["CIB_file"] = filename
@@ -657,6 +798,14 @@ def cmd_runner():
     )
 
 def run_pcsdcli(command, data=None):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP request, applicable for commands:
+        * remove_known_hosts - only when running on cluster node (sync will
+            be initiated)
+        * auth
+        * send_local_configs
+    """
     if not data:
         data = dict()
     env_var = dict()
@@ -702,6 +851,10 @@ def run_pcsdcli(command, data=None):
     return output_json, retval
 
 def auth_hosts(host_dict):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP request
+    """
     output, retval = run_pcsdcli('auth', dict(nodes=host_dict))
     if retval == 0 and output['status'] == 'access_denied':
         err('Access denied')
@@ -748,6 +901,10 @@ def auth_hosts(host_dict):
     err('Unable to communicate with pcsd')
 
 def call_local_pcsd(argv, interactive_auth=False, std_in=None):
+    """
+    Commandline options:
+      * --request-timeout - timeout of call to local pcsd
+    """
     # some commands cannot be run under a non-root account
     # so we pass those commands to locally running pcsd to execute them
     # returns [list_of_errors, exit_code, stdout, stderr]
@@ -816,6 +973,10 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
         return [['Unable to communicate with pcsd'], 1, '', '']
 
 def map_for_error_list(callab, iterab):
+    """
+    Commandline options: no options
+    NOTE: callback 'callab' may use some options
+    """
     error_list = []
     for item in iterab:
         (retval, err) = callab(item)
@@ -824,6 +985,9 @@ def map_for_error_list(callab, iterab):
     return error_list
 
 def run_parallel(worker_list, wait_seconds=1):
+    """
+    Commandline options: no options
+    """
     thread_list = []
     for worker in worker_list:
         thread = threading.Thread(target=worker)
@@ -838,17 +1002,27 @@ def run_parallel(worker_list, wait_seconds=1):
                 thread_list.remove(thread)
 
 def create_task(report, action, node, *args, **kwargs):
+    """
+    Commandline options: no options
+    """
     def worker():
         returncode, output = action(node, *args, **kwargs)
         report(node, returncode, output)
     return worker
 
 def create_task_list(report, action, node_list, *args, **kwargs):
+    """
+    Commandline options: no options
+    """
     return [
         create_task(report, action, node, *args, **kwargs) for node in node_list
     ]
 
 def parallel_for_nodes(action, node_list, *args, **kwargs):
+    """
+    Commandline options: no options
+    NOTE: callback 'action' may use some cmd options
+    """
     node_errors = dict()
     def report(node, returncode, output):
         message = '{0}: {1}'.format(node, output.strip())
@@ -860,9 +1034,12 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
     )
     return node_errors
 
-# Check is something exists in the CIB, if it does return it, if not, return
-#  an empty string
+# Check if something exists in the CIB
 def does_exist(xpath_query):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
     dummy_output,retval = run(args)
     if (retval != 0):
@@ -870,6 +1047,9 @@ def does_exist(xpath_query):
     return True
 
 def get_group_children(group_id):
+    """
+    Commandline options: no options
+    """
     child_resources = []
     dom = get_cib_dom()
     groups = dom.getElementsByTagName("group")
@@ -883,6 +1063,9 @@ def get_group_children(group_id):
     return child_resources
 
 def dom_get_clone_ms_resource(dom, clone_ms_id):
+    """
+    Commandline options: no options
+    """
     clone_ms = (
         dom_get_clone(dom, clone_ms_id)
         or
@@ -893,6 +1076,9 @@ def dom_get_clone_ms_resource(dom, clone_ms_id):
     return None
 
 def dom_elem_get_clone_ms_resource(clone_ms):
+    """
+    Commandline options: no options
+    """
     for child in clone_ms.childNodes:
         if (
             child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
@@ -903,6 +1089,9 @@ def dom_elem_get_clone_ms_resource(clone_ms):
     return None
 
 def dom_get_resource_clone_ms_parent(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     resource = (
         dom_get_resource(dom, resource_id)
         or
@@ -913,39 +1102,60 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
     return None
 
 def dom_elem_get_resource_clone_ms_parent(resource):
+    """
+    Commandline options: no options
+    """
     return dom_get_parent_by_tag_names(resource, ["clone", "master"])
 
 def dom_get_resource_bundle_parent(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     resource = dom_get_resource(dom, resource_id)
     if resource:
         return dom_get_parent_by_tag_names(resource, ["bundle"])
     return None
 
 def dom_get_master(dom, master_id):
+    """
+    Commandline options: no options
+    """
     for master in dom.getElementsByTagName("master"):
         if master.getAttribute("id") == master_id:
             return master
     return None
 
 def dom_get_clone(dom, clone_id):
+    """
+    Commandline options: no options
+    """
     for clone in dom.getElementsByTagName("clone"):
         if clone.getAttribute("id") == clone_id:
             return clone
     return None
 
 def dom_get_group(dom, group_id):
+    """
+    Commandline options: no options
+    """
     for group in dom.getElementsByTagName("group"):
         if group.getAttribute("id") == group_id:
             return group
     return None
 
 def dom_get_bundle(dom, bundle_id):
+    """
+    Commandline options: no options
+    """
     for bundle in dom.getElementsByTagName("bundle"):
         if bundle.getAttribute("id") == bundle_id:
             return bundle
     return None
 
 def dom_get_resource_bundle(bundle_el):
+    """
+    Commandline options: no options
+    """
     for child in bundle_el.childNodes:
         if (
             child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
@@ -956,6 +1166,9 @@ def dom_get_resource_bundle(bundle_el):
     return None
 
 def dom_get_group_clone(dom, group_id):
+    """
+    Commandline options: no options
+    """
     for clone in dom.getElementsByTagName("clone"):
         group = dom_get_group(clone, group_id)
         if group:
@@ -963,6 +1176,9 @@ def dom_get_group_clone(dom, group_id):
     return None
 
 def dom_get_group_masterslave(dom, group_id):
+    """
+    Commandline options: no options
+    """
     for master in dom.getElementsByTagName("master"):
         group = dom_get_group(master, group_id)
         if group:
@@ -970,12 +1186,18 @@ def dom_get_group_masterslave(dom, group_id):
     return None
 
 def dom_get_resource(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     for primitive in dom.getElementsByTagName("primitive"):
         if primitive.getAttribute("id") == resource_id:
             return primitive
     return None
 
 def dom_get_any_resource(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     return (
         dom_get_resource(dom, resource_id)
         or
@@ -987,9 +1209,16 @@ def dom_get_any_resource(dom, resource_id):
     )
 
 def is_stonith_resource(resource_id):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
 
 def dom_get_resource_clone(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     for clone in dom.getElementsByTagName("clone"):
         resource = dom_get_resource(clone, resource_id)
         if resource:
@@ -997,6 +1226,9 @@ def dom_get_resource_clone(dom, resource_id):
     return None
 
 def dom_get_resource_masterslave(dom, resource_id):
+    """
+    Commandline options: no options
+    """
     for master in dom.getElementsByTagName("master"):
         resource = dom_get_resource(master, resource_id)
         if resource:
@@ -1007,6 +1239,10 @@ def dom_get_resource_masterslave(dom, resource_id):
 # there is a duplicate code in pcs/lib/cib/constraint/constraint.py
 # please use function in pcs/lib/cib/constraint/constraint.py
 def validate_constraint_resource(dom, resource_id):
+    """
+    Commandline options:
+      * --force - allow constraint on any resource
+    """
     resource_el = (
         dom_get_clone(dom, resource_id)
         or
@@ -1067,6 +1303,9 @@ def validate_constraint_resource(dom, resource_id):
 
 
 def dom_get_resource_remote_node_name(dom_resource):
+    """
+    Commandline options: no options
+    """
     if dom_resource.tagName != "primitive":
         return None
     if (
@@ -1080,6 +1319,9 @@ def dom_get_resource_remote_node_name(dom_resource):
     return dom_get_meta_attr_value(dom_resource, "remote-node")
 
 def dom_get_meta_attr_value(dom_resource, meta_name):
+    """
+    Commandline options: no options
+    """
     for meta in dom_resource.getElementsByTagName("meta_attributes"):
         for nvpair in meta.getElementsByTagName("nvpair"):
             if nvpair.getAttribute("name") == meta_name:
@@ -1087,18 +1329,27 @@ def dom_get_meta_attr_value(dom_resource, meta_name):
     return None
 
 def dom_get_element_with_id(dom, tag_name, element_id):
+    """
+    Commandline options: no options
+    """
     for elem in dom.getElementsByTagName(tag_name):
         if elem.hasAttribute("id") and elem.getAttribute("id") == element_id:
             return elem
     return None
 
 def dom_get_node(dom, node_name):
+    """
+    Commandline options: no options
+    """
     for e in dom.getElementsByTagName("node"):
         if e.hasAttribute("uname") and e.getAttribute("uname") == node_name:
             return e
     return None
 
 def dom_get_children_by_tag_name(dom_el, tag_name):
+    """
+    Commandline options: no options
+    """
     return [
         node
         for node in dom_el.childNodes
@@ -1113,6 +1364,9 @@ def dom_get_child_by_tag_name(dom_el, tag_name):
     return None
 
 def dom_get_parent_by_tag_names(dom_el, tag_names):
+    """
+    Commandline options: no options
+    """
     parent = dom_el.parentNode
     while parent:
         if not isinstance(parent, xml.dom.minidom.Element):
@@ -1123,6 +1377,9 @@ def dom_get_parent_by_tag_names(dom_el, tag_names):
     return None
 
 def dom_attrs_to_list(dom_el, with_id=False):
+    """
+    Commandline options: no options
+    """
     attributes = [
         "%s=%s" % (name, value)
         for name, value in sorted(dom_el.attributes.items()) if name != "id"
@@ -1133,6 +1390,9 @@ def dom_attrs_to_list(dom_el, with_id=False):
 
 # moved to pcs.lib.pacemaker.state
 def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
+    """
+    Commandline options: no options
+    """
     for clone in cluster_state.getElementsByTagName("clone"):
         if clone.getAttribute("id") == resource_id:
             for child in clone.childNodes:
@@ -1165,6 +1425,10 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
 # moved to pcs.lib.pacemaker.state
 # see pcs.lib.commands.resource for usage
 def resource_running_on(resource, passed_state=None, stopped=False):
+    """
+    Commandline options:
+      * -f - has effect but doesn't make sense to check state of resource
+    """
     nodes_started = []
     nodes_master = []
     nodes_slave = []
@@ -1229,10 +1493,18 @@ def agent_action_to_cmdline_format(action):
     return op
 
 def check_pacemaker_supports_resource_wait():
+    """
+    Commandline options: no options
+    """
     if not has_wait_for_idle_support(cmd_runner()):
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
 def validate_wait_get_timeout(need_cib_support=True):
+    """
+    Commandline options:
+      * --wait
+      * -f - to check if -f and --wait are not used simultaneously
+    """
     if need_cib_support:
         check_pacemaker_supports_resource_wait()
         if usefile:
@@ -1251,6 +1523,10 @@ def validate_wait_get_timeout(need_cib_support=True):
 
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
     output,retval = run(args)
     if (retval != 0):
@@ -1258,6 +1534,10 @@ def get_cib_xpath(xpath_query):
     return output
 
 def get_cib(scope=None):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     command = ["cibadmin", "-l", "-Q"]
     if scope:
         command.append("--scope=%s" % scope)
@@ -1270,6 +1550,10 @@ def get_cib(scope=None):
     return output
 
 def get_cib_dom():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     try:
         dom = parseString(get_cib())
         return dom
@@ -1277,6 +1561,10 @@ def get_cib_dom():
         err("unable to get cib")
 
 def get_cib_etree():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     try:
         root = ET.fromstring(get_cib())
         return root
@@ -1284,6 +1572,9 @@ def get_cib_etree():
         err("unable to get cib")
 
 def is_etree(var):
+    """
+    Commandline options: no options
+    """
     return (
         var.__class__ == xml.etree.ElementTree.Element
         or
@@ -1297,6 +1588,10 @@ def is_etree(var):
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     if is_etree(dom):
         #etree returns string in bytes: b'xml'
         #python 3 removed .encode() from byte strings
@@ -1313,6 +1608,9 @@ def replace_cib_configuration(dom):
         err("Unable to update cib\n"+output)
 
 def is_valid_cib_scope(scope):
+    """
+    Commandline options: no options
+    """
     return scope in [
         "configuration", "nodes", "resources", "constraints", "crm_config",
         "rsc_defaults", "op_defaults", "status",
@@ -1321,6 +1619,9 @@ def is_valid_cib_scope(scope):
 # Checks to see if id exists in the xml dom passed
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
 def does_id_exist(dom, check_id):
+    """
+    Commandline options: no options
+    """
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
     if is_etree(dom):
@@ -1356,6 +1657,9 @@ def does_id_exist(dom, check_id):
 # to the end of the id and increments it until a unique id is found
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
 def find_unique_id(dom, check_id):
+    """
+    Commandline options: no options
+    """
     counter = 1
     temp_id = check_id
     while does_id_exist(dom,temp_id):
@@ -1367,6 +1671,9 @@ def find_unique_id(dom, check_id):
 # operations
 # pacemaker differentiates between operations only by name and interval
 def operation_exists(operations_el, op_el):
+    """
+    Commandline options: no options
+    """
     existing = []
     op_name = op_el.getAttribute("name")
     op_interval = get_timeout_seconds(op_el.getAttribute("interval"), True)
@@ -1380,6 +1687,9 @@ def operation_exists(operations_el, op_el):
     return existing
 
 def operation_exists_by_name(operations_el, op_el):
+    """
+    Commandline options: no options
+    """
     existing = []
     op_name = op_el.getAttribute("name")
     op_role = op_el.getAttribute("role") or "Started"
@@ -1400,6 +1710,9 @@ def operation_exists_by_name(operations_el, op_el):
     return existing
 
 def get_operation_ocf_check_level(operation_el):
+    """
+    Commandline options: no options
+    """
     for attr_el in operation_el.getElementsByTagName("instance_attributes"):
         for nvpair_el in attr_el.getElementsByTagName("nvpair"):
             if nvpair_el.getAttribute("name") == "OCF_CHECK_LEVEL":
@@ -1412,6 +1725,10 @@ def set_unmanaged(resource):
     return run(args)
 
 def get_node_attributes(filter_node=None, filter_attr=None):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     node_config = get_cib_xpath("//nodes")
     if (node_config == ""):
         err("unable to get crm_config, is pacemaker running?")
@@ -1435,6 +1752,11 @@ def get_node_attributes(filter_node=None, filter_attr=None):
     return nas
 
 def set_node_attribute(prop, value, node):
+    """
+    Commandline options:
+      * -f - CIB file
+      * --force - no error if attribute to delete doesn't exist
+    """
     if (value == ""):
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--query"])
         if r != 0 and "--force" not in pcs_options:
@@ -1454,6 +1776,11 @@ def set_node_attribute(prop, value, node):
 # If the property exists, remove it and replace it with the new property
 # If the value is blank, then we just remove it
 def set_cib_property(prop, value, cib_dom=None):
+    """
+    Commandline options:
+      * -f - CIB file
+      * --force - no error when removing non existing property
+    """
     update_cib = cib_dom is None
     if update_cib:
         crm_config = get_cib_xpath("//crm_config")
@@ -1491,6 +1818,8 @@ def getTerminalSize(fd=1):
     lines x 80 columns if both methods fail.
 
     :param fd: file descriptor (default: 1=stdout)
+
+    Commandline options: no options
     """
     try:
         import fcntl, termios, struct
@@ -1506,6 +1835,9 @@ def getTerminalSize(fd=1):
     return hw
 
 def get_terminal_input(message=None):
+    """
+    Commandline options: no options
+    """
     if message:
         sys.stdout.write(message)
         sys.stdout.flush()
@@ -1518,6 +1850,9 @@ def get_terminal_input(message=None):
         sys.exit(1)
 
 def get_terminal_password(message="Password: "):
+    """
+    Commandline options: no options
+    """
     if sys.stdin.isatty():
         try:
             return getpass.getpass(message)
@@ -1530,10 +1865,18 @@ def get_terminal_password(message="Password: "):
 # Returns an xml dom containing the current status of the cluster
 # DEPRECATED, please use ClusterState(getClusterStateXml()) instead
 def getClusterState():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     return parseString(getClusterStateXml())
 
 # DEPRECATED, please use lib.pacemaker.live.get_cluster_status_xml in new code
 def getClusterStateXml():
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     xml, returncode = run(["crm_mon", "--one-shot", "--as-xml", "--inactive"])
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
@@ -1546,6 +1889,12 @@ def getResourceType(resource):
     return resClass + ":" + resProvider + ":" + resType
 
 def getClusterName():
+    """
+    Commandline options:
+      * -f - CIB file if there is no corosync.conf
+      * --corosync_conf - path to a mocked corosync.conf is set directly to
+        settings
+    """
     try:
         f = open(settings.corosync_conf_file,'r')
         conf = corosync_conf_parser.parse_string(f.read())
@@ -1571,7 +1920,9 @@ def getClusterName():
     return ""
 
 def write_empty_cib(cibfile):
-
+    """
+    Commandline options: no options
+    """
     empty_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <cib admin_epoch="0" epoch="1" num_updates="1" validate-with="pacemaker-1.2">
   <configuration>
@@ -1588,6 +1939,9 @@ def write_empty_cib(cibfile):
 
 # Test if 'var' is a score or option (contains an '=')
 def is_score_or_opt(var):
+    """
+    Commandline options: no options
+    """
     if is_score(var):
         return True
     elif var.find('=') != -1:
@@ -1595,9 +1949,15 @@ def is_score_or_opt(var):
     return False
 
 def is_score(var):
+    """
+    Commandline options: no options
+    """
     return is_score_value(var)
 
 def validate_xml_id(var, description="id"):
+    """
+    Commandline options: no options
+    """
     try:
         validate_id(var, description)
     except LibraryError as e:
@@ -1605,11 +1965,17 @@ def validate_xml_id(var, description="id"):
     return True, ""
 
 def is_iso8601_date(var):
+    """
+    Commandline options: no options
+    """
     # using pacemaker tool to check if a value is a valid pacemaker iso8601 date
     dummy_output, retVal = run(["iso8601", "-d", var])
     return retVal == 0
 
 def verify_cert_key_pair(cert, key):
+    """
+    Commandline options: no options
+    """
     errors = []
     cert_modulus = ""
     key_modulus = ""
@@ -1645,6 +2011,9 @@ def err(errorText, exit_after_error=True):
 
 
 def serviceStatus(prefix):
+    """
+    Commandline options: no options
+    """
     print("Daemon Status:")
     service_def = [
         # (
@@ -1673,6 +2042,9 @@ def serviceStatus(prefix):
             pass
 
 def enableServices():
+    """
+    Commandline options: no options
+    """
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
@@ -1690,6 +2062,9 @@ def enableServices():
         raise LibraryError(*report_item_list)
 
 def disableServices():
+    """
+    Commandline options: no options
+    """
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
@@ -1707,6 +2082,9 @@ def disableServices():
         raise LibraryError(*report_item_list)
 
 def start_service(service):
+    """
+    Commandline options: no options
+    """
     if is_systemctl():
         stdout, stderr, retval = cmd_runner().run([
             _systemctl, "start", service
@@ -1716,6 +2094,9 @@ def start_service(service):
     return join_multilines([stderr, stdout]), retval
 
 def stop_service(service):
+    """
+    Commandline options: no options
+    """
     if is_systemctl():
         stdout, stderr, retval = cmd_runner().run([_systemctl, "stop", service])
     else:
@@ -1723,6 +2104,10 @@ def stop_service(service):
     return join_multilines([stderr, stdout]), retval
 
 def write_file(path, data, permissions=0o644, binary=False):
+    """
+    Commandline options:
+      * --force - overwrite a file if it already exists
+    """
     if os.path.exists(path):
         if "--force" not in pcs_options:
             return False, "'%s' already exists, use --force to overwrite" % path
@@ -1743,6 +2128,9 @@ def tar_add_file_data(
     tarball, data, name, mode=None, uid=None, gid=None, uname=None, gname=None,
     mtime=None
 ):
+    """
+    Commandline options: no options
+    """
     info = tarfile.TarInfo(name)
     info.size = len(data)
     info.type = tarfile.REGTYPE
@@ -1762,6 +2150,9 @@ def tar_add_file_data(
     data_io.close()
 
 def simulate_cib(cib_dom):
+    """
+    Commandline options: no options
+    """
     new_cib_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
     transitions_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
     output, retval = run(
@@ -1785,6 +2176,9 @@ def simulate_cib(cib_dom):
         err("Unable to run crm_simulate:\n%s" % e)
 
 def get_operations_from_transitions(transitions_dom):
+    """
+    Commandline options: no options
+    """
     operation_list = []
     watched_operations = (
         "start", "stop", "promote", "demote", "migrate_from", "migrate_to"
@@ -1811,6 +2205,11 @@ def get_operations_from_transitions(transitions_dom):
     return op_list
 
 def get_resources_location_from_operations(cib_dom, resources_operations):
+    """
+    Commandline options:
+      * --force - allow constraints on any resource, may not have any effect as
+        an invalid constraint is ignored anyway
+    """
     locations = {}
     for res_op in resources_operations:
         operation = res_op["operation"]
@@ -1846,13 +2245,23 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
     return locations_clean
 
 def get_remote_quorumtool_output(node):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     return sendHTTPRequest(node, "remote/get_quorum_info", None, False, False)
 
 # return True if quorumtool_output is a string returned when the node is off
 def is_node_offline_by_quorumtool_output(quorum_info):
+    """
+    Commandline options: no options
+    """
     return quorum_info.strip() == "Cannot initialize CMAP service"
 
 def dom_prepare_child_element(dom_element, tag_name, id):
+    """
+    Commandline options: no options
+    """
     dom = dom_element.ownerDocument
     child_elements = []
     for child in dom_element.childNodes:
@@ -1868,6 +2277,9 @@ def dom_prepare_child_element(dom_element, tag_name, id):
     return child_element
 
 def dom_update_nv_pair(dom_element, name, value, id_prefix=""):
+    """
+    Commandline options: no options
+    """
     dom = dom_element.ownerDocument
     element_found = False
     for el in dom_element.getElementsByTagName("nvpair"):
@@ -1889,6 +2301,9 @@ def dom_update_nv_pair(dom_element, name, value, id_prefix=""):
 # Passed an array of strings ["a=b","c=d"], return array of tuples
 # [("a","b"),("c","d")]
 def convert_args_to_tuples(ra_values):
+    """
+    Commandline options: no options
+    """
     ret = []
     for ra_val in ra_values:
         if ra_val.count("=") != 0:
@@ -1904,6 +2319,9 @@ def is_int(val):
         return False
 
 def dom_update_utilization(dom_element, attributes, id_prefix=""):
+    """
+    Commandline options: no options
+    """
     utilization = dom_prepare_child_element(
         dom_element,
         "utilization",
@@ -1924,6 +2342,9 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
         )
 
 def dom_update_meta_attr(dom_element, attributes):
+    """
+    Commandline options: no options
+    """
     if not attributes:
         return
 
@@ -1942,6 +2363,9 @@ def dom_update_meta_attr(dom_element, attributes):
         )
 
 def get_utilization(element, filter_name=None):
+    """
+    Commandline options: no options
+    """
     utilization = {}
     for e in element.getElementsByTagName("utilization"):
         for u in e.getElementsByTagName("nvpair"):
@@ -1955,12 +2379,18 @@ def get_utilization(element, filter_name=None):
     return utilization
 
 def get_utilization_str(element, filter_name=None):
+    """
+    Commandline options: no options
+    """
     output = []
     for name, value in sorted(get_utilization(element, filter_name).items()):
         output.append(name + "=" + value)
     return " ".join(output)
 
 def is_valid_cluster_property(prop_def_dict, property, value):
+    """
+    Commandline options: no options
+    """
     if property not in prop_def_dict:
         raise UnknownPropertyException(
             "unknown cluster property: '{0}'".format(property)
@@ -1973,6 +2403,9 @@ def is_valid_cluster_property(prop_def_dict, property, value):
 
 
 def is_valid_cib_value(type, value, enum_options=[]):
+    """
+    Commandline options: no options
+    """
     type = type.lower()
     if type == "enum":
         return value in enum_options
@@ -1994,6 +2427,9 @@ def get_cluster_property_default(prop_def_dict, prop):
 
 
 def get_cluster_properties_definition():
+    """
+    Commandline options: no options
+    """
     # we don't want to change these properties
     banned_props = ["dc-version", "cluster-infrastructure"]
     basic_props = [
@@ -2062,6 +2498,9 @@ def get_cluster_properties_definition():
 
 
 def get_cluster_property_from_xml(etree_el):
+    """
+    Commandline options: no options
+    """
     property = {
         "name": etree_el.get("name", ""),
         "shortdesc": "",
@@ -2095,6 +2534,12 @@ def get_cluster_property_from_xml(etree_el):
     return property
 
 def get_lib_env():
+    """
+    Commandline options:
+      * -f - CIB file
+      * --corosync_conf - corosync.conf file
+      * --request-timeout - timeout of HTTP requests
+    """
     user = None
     groups = None
     if os.geteuid() == 0:
@@ -2130,6 +2575,11 @@ def get_lib_env():
     )
 
 def get_cli_env():
+    """
+    Commandline options:
+      * --debug
+      * --request-timeout
+    """
     user = None
     groups = None
     if os.geteuid() == 0:
@@ -2150,6 +2600,14 @@ def get_cli_env():
     return env
 
 def get_middleware_factory():
+    """
+    Commandline options:
+      * --corosync_conf
+      * --name
+      * --booth-conf
+      * --booth-key
+      * -f
+    """
     return middleware.create_middleware_factory(
         cib=middleware.cib(filename if usefile else None, touch_cib_file),
         corosync_conf_existing=middleware.corosync_conf_existing(
@@ -2163,38 +2621,18 @@ def get_middleware_factory():
     )
 
 def get_library_wrapper():
+    """
+    Commandline options:
+      * --debug
+      * --request-timeout
+      * --corosync_conf
+      * --name
+      * --booth-conf
+      * --booth-key
+      * -f
+    NOTE: usage of options may depend on used middleware for particular command
+    """
     return Library(get_cli_env(), get_middleware_factory())
-
-
-def get_modifiers():
-    #please keep in mind that this is not final implemetation
-    #beside missing support of other possible options, cases may arise that can
-    #not be solved using a dict - for example "wait" - maybe there will be
-    #global default for it and maybe there will appear need for local default...
-    #there is possible create class extending dict, so dict like access in
-    #commands is not an issue
-    return {
-        "after": pcs_options.get("--after", None),
-        "all": "--all" in pcs_options,
-        "async": "--async" in pcs_options,
-        "autocorrect": "--autocorrect" in pcs_options,
-        "autodelete": "--autodelete" in pcs_options,
-        "before": pcs_options.get("--before", None),
-        "corosync_conf": pcs_options.get("--corosync_conf", None),
-        "describe": "--nodesc" not in pcs_options,
-        "disabled": "--disabled" in pcs_options,
-        "enable": "--enable" in pcs_options,
-        "force": "--force" in pcs_options,
-        "full": "--full" in pcs_options,
-        "group": pcs_options.get("--group", None),
-        "monitor": "--monitor" in pcs_options,
-        "name": pcs_options.get("--name", None),
-        "no-default-ops": "--no-default-ops" in pcs_options,
-        "skip_offline_nodes": "--skip-offline" in pcs_options,
-        "start": "--start" in pcs_options,
-        "wait": pcs_options.get("--wait", False),
-        "no_watchdog_validation": "--no-watchdog-validation" in pcs_options,
-    }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
     if error and error.message:
@@ -2207,6 +2645,10 @@ def get_report_processor():
     return LibraryReportProcessorToConsole(debug=("--debug" in pcs_options))
 
 def get_set_properties(prop_name=None, defaults=None):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     properties = {} if defaults is None else dict(defaults)
     (output, retVal) = run(["cibadmin","-Q","--scope", "crm_config"])
     if retVal != 0:
@@ -2221,6 +2663,11 @@ def get_set_properties(prop_name=None, defaults=None):
 
 
 def get_user_and_pass():
+    """
+    Commandline options:
+      * -u - username
+      * -p - password
+    """
     if "-u" in pcs_options:
         username = pcs_options["-u"]
     else:
@@ -2231,3 +2678,7 @@ def get_user_and_pass():
     else:
         password = get_terminal_password()
     return username, password
+
+
+def get_input_modifiers():
+    return InputModifiers(pcs_options)

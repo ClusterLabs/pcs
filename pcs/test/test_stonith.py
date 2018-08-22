@@ -2,9 +2,10 @@ import os
 import shutil
 from unittest import mock, TestCase
 
-from pcs import stonith, utils
+from pcs import stonith
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
@@ -47,7 +48,7 @@ skip_unless_fencing_level_attribute_supported = skip_unless_pacemaker_version(
 
 class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner = PcsRunner(cib_file=None)
 
     def test_success(self):
         self.assert_pcs_success(
@@ -226,6 +227,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Warning: required stonith options 'ipaddr', 'login' are missing\n"
         )
 
+        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success("config show", outdent(
             """\
             Cluster Name: test99
@@ -412,13 +414,15 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def testStonithFenceConfirm(self):
-        output, returnVal = pcs(temp_cib, "stonith fence blah blah")
-        assert returnVal == 1
-        assert output == "Error: must specify one (and only one) node to fence\n"
-
-        output, returnVal = pcs(temp_cib, "stonith confirm blah blah")
-        assert returnVal == 1
-        assert output == "Error: must specify one (and only one) node to confirm fenced\n"
+        self.pcs_runner.cib_file = None
+        self.assert_pcs_fail(
+            "stonith fence blah blah",
+            "Error: must specify one (and only one) node to fence\n"
+        )
+        self.assert_pcs_fail(
+            "stonith confirm blah blah",
+            "Error: must specify one (and only one) node to confirm fenced\n"
+        )
 
     def testPcmkHostList(self):
         self.assert_pcs_success(
@@ -625,14 +629,15 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
 
     def testNoStonithWarning(self):
-        o,r = pcs(temp_cib, "status")
+        corosync_conf = rc("corosync_conf")
+        o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
         assert "WARNING: no stonith devices and " in o
 
         o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "status")
+        o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
         assert "WARNING: no stonith devices and " not in o
 
         self.assert_pcs_success(
@@ -644,7 +649,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "status")
+        o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
         assert "WARNING: no stonith devices and " not in o
 
 
@@ -1095,6 +1100,7 @@ class LevelConfig(LevelTestsBase):
         self.assert_pcs_success("stonith level config", "")
         self.assert_pcs_success("stonith level", "")
         self.assert_pcs_success("stonith", "NO stonith devices configured\n")
+        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success(
             "config",
             self.full_config.format(devices="", levels="")
@@ -1114,6 +1120,7 @@ class LevelConfig(LevelTestsBase):
                 """
             ) + "\n".join(indent(self.config_lines, 1)) + "\n"
         )
+        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success(
             "config",
             self.full_config.format(
@@ -1371,6 +1378,19 @@ class LevelVerify(LevelTestsBase):
             )
         )
 
+def _dict_to_modifiers(options):
+    def _convert_val(val):
+        if val is True:
+            return ""
+        return val
+    return InputModifiers(
+        {
+            f"--{opt}": _convert_val(val)
+            for opt, val in options.items()
+            if val is not False
+        }
+    )
+
 class SbdEnable(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["sbd"])
@@ -1393,13 +1413,7 @@ class SbdEnable(TestCase):
         )
 
     def call_cmd(self, argv, modifiers=None):
-        all_modifiers = dict(
-            force=False,
-            skip_offline_nodes=False,
-            no_watchdog_validation=False,
-        )
-        all_modifiers.update(modifiers or {})
-        stonith.sbd_enable(self.lib, argv, all_modifiers)
+        stonith.sbd_enable(self.lib, argv, _dict_to_modifiers(modifiers or {}))
 
     def test_no_args(self):
         self.call_cmd([])
@@ -1446,15 +1460,15 @@ class SbdEnable(TestCase):
 
     def test_modifiers(self):
         self.call_cmd([], modifiers={
-            "force": "A",
-            "skip_offline_nodes": "B",
-            "no_watchdog_validation": "C",
+            "force": "",
+            "skip-offline": "",
+            "no-watchdog-validation": "",
         })
         self.assert_called_with(
             None, dict(), dict(),
-            allow_unknown_opts="A",
-            ignore_offline_nodes="B",
-            no_watchdog_validation="C",
+            allow_unknown_opts=True,
+            ignore_offline_nodes=True,
+            no_watchdog_validation=True,
         )
 
 class SbdDeviceSetup(TestCase):
@@ -1473,7 +1487,9 @@ class SbdDeviceSetup(TestCase):
             force=True, # otherwise it asks interactively for confirmation
         )
         all_modifiers.update(modifiers or {})
-        stonith.sbd_setup_block_device(self.lib, argv, all_modifiers)
+        stonith.sbd_setup_block_device(
+            self.lib, argv, _dict_to_modifiers(all_modifiers)
+        )
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:

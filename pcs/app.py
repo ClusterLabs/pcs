@@ -154,52 +154,16 @@ def main(argv=None):
         "stonith": stonith.stonith_cmd,
         "property": prop.property_cmd,
         "constraint": constraint.constraint_cmd,
-        "acl": lambda argv: acl.acl_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "status": lambda argv: status.status_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
+        "acl": acl.acl_cmd,
+        "status": status.status_cmd,
         "config": config.config_cmd,
-        "pcsd": lambda argv: pcsd.pcsd_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "node": lambda argv: node.node_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "quorum": lambda argv: quorum.quorum_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "qdevice": lambda argv: qdevice.qdevice_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "alert": lambda args: alert.alert_cmd(
-            utils.get_library_wrapper(),
-            args,
-            utils.get_modifiers()
-        ),
-        "booth": lambda argv: booth.booth_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
-        "host": lambda argv: host.host_cmd(
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_modifiers()
-        ),
+        "pcsd": pcsd.pcsd_cmd,
+        "node": node.node_cmd,
+        "quorum": quorum.quorum_cmd,
+        "qdevice": qdevice.qdevice_cmd,
+        "alert": alert.alert_cmd,
+        "booth": booth.booth_cmd,
+        "host": host.host_cmd,
     }
     if command not in cmd_map:
         usage.main()
@@ -207,7 +171,11 @@ def main(argv=None):
     # root can run everything directly, also help can be displayed,
     # working on a local file also do not need to run under root
     if (os.getuid() == 0) or (argv and argv[0] == "help") or usefile:
-        cmd_map[command](argv)
+        cmd_map[command](
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_input_modifiers(),
+        )
         return
     # specific commands need to be run under root account, pass them to pcsd
     # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
@@ -264,4 +232,8 @@ def main(argv=None):
                 sys.stderr.write(std_err)
             sys.exit(exitcode)
             return
-    cmd_map[command](argv)
+    cmd_map[command](
+        utils.get_library_wrapper(),
+        argv,
+        utils.get_input_modifiers(),
+    )

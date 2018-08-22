@@ -18,7 +18,11 @@ temp_conf = rc("corosync.conf.tmp")
 class TestBase(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(coro_conf, temp_conf)
-        self.pcs_runner = PcsRunner(corosync_conf_file=temp_conf)
+        # The tested commands work differently when non-live corosync.conf
+        # (--corosync_conf) is used. In these tests it is not possible to cover
+        # all the live config behavior, so we stick to using a non-live config.
+        # Live behavior is tested in pcs.lib.commands.test.test_quorum.
+        self.pcs_runner = PcsRunner(cib_file=None, corosync_conf_opt=temp_conf)
 
     def fixture_conf_qdevice(self):
         shutil.copy(coro_qdevice_conf, temp_conf)
@@ -310,7 +314,7 @@ Warning: invalid heuristics option 'e', allowed options are: interval, mode, syn
 
 class DeviceRemoveTest(TestBase):
     def test_no_device(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "quorum device remove",
             "Error: no quorum device is defined in this cluster\n"
         )
@@ -326,7 +330,7 @@ class DeviceRemoveTest(TestBase):
         )
 
     def test_bad_options(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "quorum device remove net",
             stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
         )
@@ -334,13 +338,13 @@ class DeviceRemoveTest(TestBase):
 
 class DeviceHeuristicsRemove(TestBase):
     def test_no_device(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "quorum device heuristics remove",
             "Error: no quorum device is defined in this cluster\n"
         )
 
     def test_bad_options(self):
-        self.assert_pcs_fail_regardless_of_force(
+        self.assert_pcs_fail(
             "quorum device heuristics remove option",
             stdout_start="\nUsage: pcs quorum <command>\n    device heuristics "
                 "remove\n"

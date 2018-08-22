@@ -1,6 +1,6 @@
 import os
 import shutil
-from unittest import skipUnless, TestCase
+from unittest import skipUnless, TestCase, skip
 
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
 from pcs.test.tools.misc import get_test_resource as rc
@@ -60,6 +60,10 @@ class BoothMixin(AssertPcsMixin):
         return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
 class SetupTest(BoothMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.cib_file = None
+
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -143,12 +147,16 @@ class SetupTest(BoothMixin, TestCase):
 
 class DestroyTest(BoothMixin, TestCase):
     def test_failed_when_using_mocked_booth_env(self):
+        self.pcs_runner.cib_file = None
         self.assert_pcs_fail(
             "booth destroy",
-            "Error: This command does not support '--booth-conf', '--booth-key'"
-                "\n"
+            (
+                "Error: Specified options '--booth-conf', '--booth-key' are "
+                "not supported in this command\n"
+            )
         )
 
+    @skip("Untesteable without -f")
     @need_booth_resource_agent
     def test_failed_when_booth_in_cib(self):
         ensure_booth_config_not_exists()
@@ -172,13 +180,18 @@ class DestroyTest(BoothMixin, TestCase):
 class BoothTest(TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
+        self.pcs_runner = PcsRunner(None)
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
         )
+        self.pcs_runner.cib_file = TEMP_CIB
 
 class AddTicketTest(BoothTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.cib_file = None
+
     def test_success_add_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA expire=10")
         self.assert_pcs_success("booth config", stdout_full=console_report(
@@ -234,6 +247,10 @@ class AddTicketTest(BoothTest):
 
 
 class RemoveTicketTest(BoothTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.cib_file = None
+
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
@@ -258,7 +275,16 @@ class RemoveTicketTest(BoothTest):
         )
 
 @need_booth_resource_agent
-class CreateTest(BoothTest):
+class CreateTest(AssertPcsMixin, TestCase):
+    def setUp(self):
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(None)
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            fake_file("booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3")
+        )
+        self.pcs_runner.cib_file = TEMP_CIB
+
     def test_sucessfully_create_booth_resource_group(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
@@ -283,7 +309,16 @@ class CreateTest(BoothTest):
         ])
 
 @need_booth_resource_agent
-class RemoveTest(BoothTest):
+class RemoveTest(AssertPcsMixin, TestCase):
+    def setUp(self):
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(None)
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            fake_file("booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3")
+        )
+        self.pcs_runner.cib_file = TEMP_CIB
+
     def test_failed_when_no_booth_configuration_created(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_fail("booth remove", [
@@ -357,10 +392,12 @@ class RemoveTest(BoothTest):
             "Deleting Resource - some-id",
         ])
 
+@skip("Untesteable without -f")
 class TicketGrantTest(BoothTest):
     def test_failed_when_implicit_site_but_not_correct_confgiuration_in_cib(
         self
     ):
+        self.pcs_runner.cib_file = None
         self.assert_pcs_success("booth ticket add T1")
         #no resource in cib
         self.assert_pcs_fail("booth ticket grant T1", [
@@ -369,13 +406,15 @@ class TicketGrantTest(BoothTest):
             ,
         ])
 
+@skip("Untesteable without -f")
 class TicketRevokeTest(BoothTest):
     def test_failed_when_implicit_site_but_not_correct_confgiuration_in_cib(
         self
     ):
+        self.pcs_runner.cib_file = None
         self.assert_pcs_success("booth ticket add T1")
         #no resource in cib
-        self.assert_pcs_fail("booth ticket revoke T1", [
+        self.assert_pcs_fail_original("booth ticket revoke T1", [
             "Error: cannot determine local site ip, please specify site"
                 " parameter"
             ,
@@ -383,8 +422,7 @@ class TicketRevokeTest(BoothTest):
 
 class ConfigTest(TestCase, BoothMixin):
     def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
+        self.pcs_runner = PcsRunner(None)
 
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()

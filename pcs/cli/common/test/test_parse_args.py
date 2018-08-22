@@ -13,6 +13,7 @@ from pcs.cli.common.parse_args import(
     is_long_option_expecting_value,
     is_option_expecting_value,
     upgrade_args,
+    InputModifiers,
 )
 from pcs.cli.common.errors import CmdLineInputError
 
@@ -524,3 +525,158 @@ class UpgradeArgs(TestCase):
                 "second"
             ])
         )
+
+
+class InputModifiersTest(TestCase):
+    def setUp(self):
+        self.supported = ["a", "b", "c"]
+        self.bool_opts = [
+            "--all",
+            "--autocorrect",
+            "--autodelete",
+            "--config",
+            "--corosync",
+            "--debug",
+            "--defaults",
+            "--disabled",
+            "--enable",
+            "--force",
+            "--full",
+            "--groups",
+            "--hide-inactive",
+            "--interactive",
+            "--local",
+            "--master",
+            "--monitor",
+            "--no-default-ops",
+            "--no-watchdog-validation",
+            "--nodesc",
+            "--off",
+            "--pacemaker",
+            "--skip-offline",
+            "--start",
+            "-V",
+        ]
+        self.val_opts = [
+            "--after",
+            "--before",
+            "--booth-conf",
+            "--booth-key",
+            "--corosync_conf",
+            "--from",
+            "--group",
+            "--name",
+            "--node",
+            "--request-timeout",
+            "--to",
+            # "--wait", # --wait is a special case, it has its own tests
+            "-f",
+            "-p",
+            "-u",
+        ]
+
+    def _get_specified(self, *keys):
+        return {key: i for i, key in enumerate(keys)}
+
+    def ensure(self, *specified):
+        InputModifiers(self._get_specified(*specified)).ensure_only_supported(
+            *self.supported
+        )
+
+    def test_supported_one(self):
+        self.ensure("a")
+
+    def test_supported_multiple(self):
+        self.ensure("a", "b")
+
+    def test_not_supported_one(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.ensure("a", "e")
+        self.assertEqual(
+            "Specified options 'e' are not supported in this command",
+            cm.exception.message
+        )
+
+    def test_not_supported_multiple(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.ensure("a", "g", "d", "c", "b", "e")
+        self.assertEqual(
+            "Specified options 'd', 'e', 'g' are not supported in this command",
+            cm.exception.message
+        )
+
+    def test_get_existing(self):
+        self.assertEqual(1, InputModifiers({"a": 1}).get("a"))
+
+    def test_get_existing_with_default(self):
+        self.assertEqual(1, InputModifiers({"a": 1}).get("a", default=2))
+
+    def test_multiple_get_existing(self):
+        self.assertEqual(
+            2, InputModifiers(dict(c=3, a=1, b=2)).get("b")
+        )
+
+    def test_multiple_get_existing_with_default(self):
+        self.assertEqual(
+            2, InputModifiers(dict(c=3, a=1, b=2)).get("b", default=1)
+        )
+
+    def test_default(self):
+        self.assertEqual(2, InputModifiers({"a": 1}).get("b", default=2))
+
+    def test_debug_implicit(self):
+        InputModifiers({"--debug": ""}).ensure_only_supported()
+
+    def test_bool_options(self):
+        for opt in self.bool_opts:
+            with self.subTest(opt=opt):
+                self.assertTrue(InputModifiers({opt: ""}).get(opt), opt)
+
+    def test_bool_options_defaults(self):
+        for opt in self.bool_opts:
+            with self.subTest(opt=opt):
+                self.assertFalse(InputModifiers({}).get(opt), opt)
+
+    def test_val_options(self):
+        val = "something"
+        for opt in self.val_opts:
+            with self.subTest(opt=opt):
+                self.assertEqual(val, InputModifiers({opt: val}).get(opt), opt)
+
+    def test_val_options_defaults(self):
+        for opt in self.val_opts:
+            with self.subTest(opt=opt):
+                self.assertIsNone(InputModifiers({}).get(opt), opt)
+
+    def test_wait(self):
+        opt = "--wait"
+        val = "something"
+        self.assertEqual(val, InputModifiers({opt: val}).get(opt))
+
+    def test_wait_default(self):
+        self.assertFalse(InputModifiers({}).get("--wait"))
+
+    def test_explicit_default(self):
+        val = "something"
+        self.assertEqual(val, InputModifiers({}).get("--force", default=val))
+
+    def test_explicit_default_not_used(self):
+        opt = "--force"
+        self.assertTrue(InputModifiers({opt: ""}).get(opt, default=False))
+
+    def test_get_non_existing(self):
+        opt = "not_existing_option"
+        with self.assertRaises(AssertionError) as cm:
+            InputModifiers({}).get(opt)
+        self.assertEqual(
+            f"Non existing default value for '{opt}'", str(cm.exception)
+        )
+
+    def test_is_specified(self):
+        self.assertTrue(InputModifiers({"a": "1"}).is_specified("a"))
+
+    def test_not_specified(self):
+        self.assertFalse(InputModifiers({"a": "1"}).is_specified("b"))
+
+    def test_not_specified_default(self):
+        self.assertFalse(InputModifiers({"a": "1"}).is_specified("--debug"))

@@ -1,6 +1,7 @@
 from unittest import mock, TestCase
 
 from pcs.cli.booth import command
+from pcs.cli.common.parse_args import InputModifiers
 
 
 class ConfigSetupTest(TestCase):
@@ -15,9 +16,7 @@ class ConfigSetupTest(TestCase):
                 "sites", "1.1.1.1", "2.2.2.2", "4.4.4.4",
                 "arbitrators", "3.3.3.3"
             ],
-            modifiers={
-                "force": False,
-            }
+            modifiers=InputModifiers({}),
         )
         lib.booth.config_setup.assert_called_once_with(
             [
@@ -26,7 +25,7 @@ class ConfigSetupTest(TestCase):
                 {"key": "site", "value": "4.4.4.4", "details": []},
                 {"key": "arbitrator", "value": "3.3.3.3", "details": []},
             ],
-            False
+            overwrite_existing=False
         )
 
 class ConfigTicketAddTest(TestCase):
@@ -37,7 +36,7 @@ class ConfigTicketAddTest(TestCase):
         command.config_ticket_add(
             lib,
             arg_list=["TICKET_A", "timeout=10"],
-            modifiers={"force": True}
+            modifiers=InputModifiers({"--force": ""})
         )
         lib.booth.config_ticket_add.assert_called_once_with(
             "TICKET_A",

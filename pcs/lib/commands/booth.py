@@ -47,17 +47,18 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
 
 def config_destroy(env, ignore_config_load_problems=False):
     env.booth.command_expect_live_env()
-    env.command_expect_live_corosync_env()
+    if not env.is_cib_live:
+        raise LibraryError(reports.live_environment_required(["CIB"]))
 
     name = env.booth.name
     config_is_used = partial(booth_reports.booth_config_is_used, name)
 
     report_list = []
 
-    if(env.is_node_in_cluster() and resource.find_for_config(
+    if resource.find_for_config(
         get_resources(env.get_cib()),
         get_config_file_name(name),
-    )):
+    ):
         report_list.append(config_is_used("in cluster resource"))
 
     #Only systemd is currently supported. Initd does not supports multiple
@@ -213,7 +214,9 @@ def restart(env, resource_restart, allow_multiple):
     ):
         resource_restart([booth_element.attrib["id"]])
 
-def ticket_operation(operation, env, ticket, site_ip):
+def _ticket_operation(operation, env, ticket, site_ip):
+    if not env.is_cib_live:
+        raise LibraryError(reports.live_environment_required(["CIB"]))
     if not site_ip:
         site_ip_list = resource.find_bound_ip(
             get_resources(env.get_cib()),
@@ -241,8 +244,8 @@ def ticket_operation(operation, env, ticket, site_ip):
             )
         )
 
-ticket_grant = partial(ticket_operation, "grant")
-ticket_revoke = partial(ticket_operation, "revoke")
+ticket_grant = partial(_ticket_operation, "grant")
+ticket_revoke = partial(_ticket_operation, "revoke")
 
 def config_sync(env, skip_offline_nodes=False):
     """

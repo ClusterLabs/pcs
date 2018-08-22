@@ -1,5 +1,8 @@
 from pcs.test.cib_resource.common import ResourceTest
-from pcs.test.tools.misc import outdent
+from pcs.test.tools.misc import (
+    outdent,
+    get_test_resource as rc,
+)
 
 def fixture_nolive_add_report(node_name):
     return outdent(f"""\
@@ -19,8 +22,15 @@ def fixture_nolive_remove_report(host_list):
     ).format(hosts=", ".join("'{0}'".format(host) for host in host_list))
 
 
+class RemoteTest(ResourceTest):
+    corosync_conf = rc("corosync.conf")
 
-class NodeAddRemote(ResourceTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+
+
+class NodeAddRemote(RemoteTest):
     def test_fail_on_duplicit_host_specification(self):
         self.assert_pcs_fail(
             "cluster node add-remote HOST remote-node server=DIFFERENT",
@@ -135,9 +145,11 @@ class NodeAddRemote(ResourceTest):
         )
 
     def test_fail_when_server_already_used_as_guest(self):
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create G ocf:heartbeat:Dummy --no-default-ops",
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
             fixture_nolive_add_report("node-host")
@@ -147,8 +159,9 @@ class NodeAddRemote(ResourceTest):
             "Error: 'node-host' already exists\n"
         )
 
-class NodeAddGuest(ResourceTest):
+class NodeAddGuest(RemoteTest):
     def create_resource(self):
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
             "resource create G ocf:heartbeat:Dummy --no-default-ops",
             """<resources>
@@ -161,6 +174,7 @@ class NodeAddGuest(ResourceTest):
                 </primitive>
             </resources>""",
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
@@ -184,6 +198,7 @@ class NodeAddGuest(ResourceTest):
         )
 
     def test_fail_when_resource_has_already_remote_node_meta(self):
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create already-guest-node ocf:heartbeat:Dummy"
                 " meta remote-node=some --force"
@@ -191,6 +206,7 @@ class NodeAddGuest(ResourceTest):
             "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest some-host already-guest-node",
             "Error: the resource 'already-guest-node' is already a guest node\n"
@@ -230,7 +246,9 @@ class NodeAddGuest(ResourceTest):
 
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
         self.create_resource()
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success("resource create CONFLICT ocf:heartbeat:Dummy")
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest CONFLICT G",
             "Error: 'CONFLICT' already exists\n"
@@ -238,7 +256,9 @@ class NodeAddGuest(ResourceTest):
 
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
         self.create_resource()
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "cluster node add-guest node-host G",
             fixture_nolive_add_report("node-host")
@@ -250,11 +270,13 @@ class NodeAddGuest(ResourceTest):
 
     def test_fail_when_guest_node_conflicts_with_existing_remote(self):
         self.create_resource()
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
             "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest node-host G",
             "Error: 'node-host' already exists\n"
@@ -262,11 +284,13 @@ class NodeAddGuest(ResourceTest):
 
     def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
         self.create_resource()
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-host --force",
             "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest R G",
             "Error: 'R' already exists\n"
@@ -302,6 +326,7 @@ class NodeAddGuest(ResourceTest):
             "cluster node add-guest node-host G",
             fixture_nolive_add_report("node-host")
         )
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource update G meta remote-node=node-host",
         )
@@ -338,7 +363,7 @@ class NodeAddGuest(ResourceTest):
             output=fixture_nolive_add_report("node-name")
         )
 
-class NodeRemoveRemote(ResourceTest):
+class NodeRemoveRemote(RemoteTest):
     def test_fail_when_node_does_not_exists(self):
         self.assert_pcs_fail(
             "cluster node remove-remote not-existent",
@@ -347,6 +372,7 @@ class NodeRemoveRemote(ResourceTest):
         )
 
     def fixture_remote_node(self):
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
             "resource create NODE-NAME ocf:pacemaker:remote server=NODE-HOST"
                 " --no-default-ops --force"
@@ -371,6 +397,7 @@ class NodeRemoveRemote(ResourceTest):
             "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
     def fixture_multiple_remote_nodes(self):
         #bypass pcs validation mechanisms (including expected future validation)
@@ -459,8 +486,9 @@ class NodeRemoveRemote(ResourceTest):
             )
         )
 
-class NodeRemoveGuest(ResourceTest):
+class NodeRemoveGuest(RemoteTest):
     def fixture_guest_node(self):
+        self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
             "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops"
                 " meta remote-node=NODE-NAME remote-addr=NODE-HOST --force"
@@ -487,6 +515,7 @@ class NodeRemoveGuest(ResourceTest):
             "Warning: this command is not sufficient for creating a guest node, use"
                 " 'pcs cluster node add-guest'\n"
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
     def test_fail_when_node_does_not_exists(self):
         self.assert_pcs_fail(

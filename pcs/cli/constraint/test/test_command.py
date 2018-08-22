@@ -1,6 +1,7 @@
 from unittest import mock, TestCase
 
 from pcs.cli.constraint import command
+from pcs.cli.common.parse_args import InputModifiers
 
 def fixture_constraint():
     return {
@@ -46,7 +47,7 @@ class ShowTest(TestCase):
             "caption",
             load_constraints=lambda: {"plain": [], "with_resource_sets": []},
             format_options=lambda: None,
-            modifiers={"full": False}
+            modifiers=InputModifiers({})
         ))
 
     def test_show_constraints_full(self):
@@ -68,6 +69,6 @@ class ShowTest(TestCase):
                 "caption",
                 load_constraints,
                 format_options,
-                {"full": True}
+                InputModifiers({"--full": ""})
             )
         )

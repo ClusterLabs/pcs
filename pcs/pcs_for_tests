@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+import os
+import os.path
+import sys
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# We prevent to import some module from this dir instead of e.g. standard module.
+# There is no reason to import anything from this module.
+sys.path.remove(CURRENT_DIR)
+
+# Add pcs package.
+PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
+sys.path.insert(0, PACKAGE_DIR)
+
+
+from pcs import (
+    app,
+    settings,
+)
+
+settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+settings.corosync_conf_file = None
+settings.corosync_uidgid_dir = None
+prefix = "PCS.SETTINGS."
+
+for opt, val in os.environ.items():
+    if opt.startswith(prefix):
+        setattr(settings, opt[len(prefix):], val)
+
+app.main(sys.argv[1:])

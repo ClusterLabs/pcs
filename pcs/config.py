@@ -43,63 +43,77 @@ import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 import pcs.cli.constraint_ticket.command as ticket_command
 from pcs.cli.common.console_report import indent
+from pcs.cli.common.errors import CmdLineInputError
 
 
-def config_cmd(argv):
+def config_cmd(lib, argv, modifiers):
     if len(argv) == 0:
-        config_show(argv)
+        config_show(lib, argv, modifiers)
         return
 
-    sub_cmd = argv.pop(0)
-    if sub_cmd == "help":
-        usage.config(argv)
-    elif sub_cmd == "show":
-        config_show(argv)
-    elif sub_cmd == "backup":
-        config_backup(argv)
-    elif sub_cmd == "restore":
-        config_restore(argv)
-    elif sub_cmd == "checkpoint":
-        if not argv:
-            config_checkpoint_list()
-        elif argv[0] == "view":
-            config_checkpoint_view(argv[1:])
-        elif argv[0] == "restore":
-            config_checkpoint_restore(argv[1:])
+    try:
+        sub_cmd = argv.pop(0)
+        if sub_cmd == "help":
+            usage.config(argv)
+        elif sub_cmd == "show":
+            config_show(lib, argv, modifiers)
+        elif sub_cmd == "backup":
+            config_backup(lib, argv, modifiers)
+        elif sub_cmd == "restore":
+            config_restore(lib, argv, modifiers)
+        elif sub_cmd == "checkpoint":
+            if not argv:
+                config_checkpoint_list(lib, argv, modifiers)
+            elif argv[0] == "view":
+                config_checkpoint_view(lib, argv[1:], modifiers)
+            elif argv[0] == "restore":
+                config_checkpoint_restore(lib, argv[1:], modifiers)
+            else:
+                raise CmdLineInputError()
+        elif sub_cmd == "import-cman":
+            config_import_cman(lib, argv, modifiers)
+        elif sub_cmd == "export":
+            if not argv:
+                raise CmdLineInputError()
+            elif argv[0] == "pcs-commands":
+                config_export_pcs_commands(lib, argv[1:], modifiers)
+            elif argv[0] == "pcs-commands-verbose":
+                config_export_pcs_commands(
+                    lib, argv[1:], modifiers, verbose=True
+                )
+            else:
+                raise CmdLineInputError()
         else:
-            usage.config(["checkpoint"])
-            sys.exit(1)
-    elif sub_cmd == "import-cman":
-        config_import_cman(argv)
-    elif sub_cmd == "export":
-        if not argv:
-            usage.config(["export"])
-            sys.exit(1)
-        elif argv[0] == "pcs-commands":
-            config_export_pcs_commands(argv[1:])
-        elif argv[0] == "pcs-commands-verbose":
-            config_export_pcs_commands(argv[1:], True)
-        else:
-            usage.config(["export"])
-            sys.exit(1)
-    else:
-        usage.config()
-        sys.exit(1)
+            raise CmdLineInputError()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "config", sub_cmd)
 
-def config_show(argv):
+def config_show(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file, when getting cluster name on remote node (corosync.conf
+        doesn't exist)
+      * --corosync_conf - corosync.conf file
+    """
+    modifiers.ensure_only_supported("-f", "--corosync_conf")
     print("Cluster Name: %s" % utils.getClusterName())
-    status.nodes_status(["config"])
+    status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
     print()
-    config_show_cib()
+    config_show_cib(lib)
     if (
         utils.hasCorosyncConf()
         and
-        (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
+        not modifiers.is_specified("-f")
+        and
+        not modifiers.is_specified("--corosync_conf")
     ):
-        # with corosync 2, uid gid is in a separate directory
-        cluster.cluster_uidgid([], True)
+        cluster.cluster_uidgid(
+            lib, [], modifiers.get_subset(), silent_list=True
+        )
     if (
-        "--corosync_conf" in utils.pcs_options
+        modifiers.is_specified("--corosync_conf")
         or
         utils.hasCorosyncConf()
     ):
@@ -111,18 +125,30 @@ def config_show(argv):
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
-def config_show_cib():
-    lib = utils.get_library_wrapper()
-    modifiers = utils.get_modifiers()
-
+def config_show_cib(lib):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     print("Resources:")
-    utils.pcs_options["--all"] = 1
+    # update of pcs_options will change output of resource.resource_show([])
     utils.pcs_options["--full"] = 1
-    resource.resource_show([])
+    # get latest modifiers object after updating pcs_options
+    modifiers = utils.get_input_modifiers()
+    resource.resource_show(
+        lib,
+        [],
+        modifiers.get_subset("-f", "--full", "--groups", "--hide-inactive")
+    )
 
     print()
     print("Stonith Devices:")
-    resource.resource_show([], True)
+    resource.resource_show(
+        lib,
+        [],
+        modifiers.get_subset("-f", "--full", "--groups", "--hide-inactive"),
+        stonith=True,
+    )
     print("Fencing Levels:")
     levels = stonith.stonith_level_config_to_str(
         lib.fencing_topology.get_config()
@@ -131,24 +157,30 @@ def config_show_cib():
         print("\n".join(indent(levels, 2)))
 
     print()
-    constraint.location_show([])
-    order_command.show(lib, [], modifiers)
-    colocation_command.show(lib, [], modifiers)
-    ticket_command.show(lib, [], modifiers)
+    constraint.location_show(lib, [], modifiers.get_subset("-f", "--full"))
+    order_command.show(lib, [], modifiers.get_subset("-f", "--full"))
+    colocation_command.show(lib, [], modifiers.get_subset("-f", "--full"))
+    ticket_command.show(lib, [], modifiers.get_subset("-f", "--full"))
 
     print()
-    alert.print_alert_config(lib, [], modifiers)
+    alert.print_alert_config(lib, [], modifiers.get_subset("-f"))
 
     print()
-    del utils.pcs_options["--all"]
     print("Resources Defaults:")
     resource.show_defaults("rsc_defaults", indent=" ")
     print("Operations Defaults:")
     resource.show_defaults("op_defaults", indent=" ")
     print()
-    prop.list_property([])
+    prop.list_property(
+        lib, [], modifiers.get_subset("--defaults", "--all", "-f")
+    )
 
-def config_backup(argv):
+def config_backup(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --force - overwrite file if already exists
+    """
+    modifiers.ensure_only_supported("--force")
     if len(argv) > 1:
         usage.config(["backup"])
         sys.exit(1)
@@ -174,6 +206,9 @@ def config_backup(argv):
             sys.stdout.write(tar_data)
 
 def config_backup_local():
+    """
+    Commandline options: no options
+    """
     file_list = config_backup_path_list()
     tar_data = BytesIO()
 
@@ -196,7 +231,14 @@ def config_backup_local():
     tar_data.close()
     return tar
 
-def config_restore(argv):
+def config_restore(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --local - restore config only on local node
+      * --request-timeout - timeout for HTTP requests, used only if --local was
+        not defined or user is not root
+    """
+    modifiers.ensure_only_supported("--local", "--request-timeout")
     if len(argv) > 1:
         usage.config(["restore"])
         sys.exit(1)
@@ -212,14 +254,14 @@ def config_restore(argv):
             infile_obj = BytesIO(sys.stdin.read())
 
     if os.getuid() == 0:
-        if "--local" in utils.pcs_options:
+        if modifiers.get("--local"):
             config_restore_local(infile_name, infile_obj)
         else:
             config_restore_remote(infile_name, infile_obj)
     else:
         new_argv = ['config', 'restore']
         new_stdin = None
-        if '--local' in utils.pcs_options:
+        if modifiers.get("--local"):
             new_argv.append('--local')
         if infile_name:
             new_argv.append(os.path.abspath(infile_name))
@@ -237,6 +279,10 @@ def config_restore(argv):
         sys.exit(exitcode)
 
 def config_restore_remote(infile_name, infile_obj):
+    """
+    Commandline options:
+      * --request-timeout - timeout for HTTP requests
+    """
     extracted = {
         "version.txt": "",
         "corosync.conf": "",
@@ -320,6 +366,9 @@ def config_restore_remote(infile_name, infile_obj):
         utils.err("unable to restore all nodes\n" + "\n".join(error_list))
 
 def config_restore_local(infile_name, infile_obj):
+    """
+    Commandline options: no options
+    """
     if (
         status.is_service_running("cman")
         or
@@ -418,6 +467,10 @@ def config_restore_local(infile_name, infile_obj):
         utils.err("unable to remove %s: %s" % (sig_path, e))
 
 def config_backup_path_list(with_uid_gid=False):
+    """
+    Commandline options: no option
+    NOTE: corosync.conf path may be altered using --corosync_conf
+    """
     corosync_attrs = {
         "mtime": int(time.time()),
         "mode": 0o644,
@@ -488,6 +541,9 @@ def config_backup_path_list(with_uid_gid=False):
 
 
 def _get_uid(user_name):
+    """
+    Commandline options: no options
+    """
     try:
         return pwd.getpwnam(user_name).pw_uid
     except KeyError:
@@ -495,6 +551,9 @@ def _get_uid(user_name):
 
 
 def _get_gid(group_name):
+    """
+    Commandline options: no options
+    """
     try:
         return grp.getgrnam(group_name).gr_gid
     except KeyError:
@@ -504,6 +563,9 @@ def _get_gid(group_name):
 
 
 def _ensure_etc_pacemaker_exists():
+    """
+    Commandline options: no options
+    """
     dir_name = os.path.dirname(settings.pacemaker_authkey_file)
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
@@ -516,6 +578,9 @@ def _ensure_etc_pacemaker_exists():
 
 
 def config_backup_check_version(version):
+    """
+    Commandline options: no options
+    """
     try:
         version_number = int(version)
         supported_version = config_backup_version()
@@ -535,13 +600,25 @@ def config_backup_check_version(version):
         utils.err("Cannot determine version of the backup")
 
 def config_backup_add_version_to_tarball(tarball, version=None):
+    """
+    Commandline options: no options
+    """
     ver = version if version is not None else str(config_backup_version())
     return utils.tar_add_file_data(tarball, ver.encode("utf-8"), "version.txt")
 
 def config_backup_version():
+    """
+    Commandline options: no options
+    """
     return 1
 
-def config_checkpoint_list():
+def config_checkpoint_list(dummy_lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
     try:
         file_list = os.listdir(settings.cib_dir)
     except OSError as e:
@@ -570,7 +647,11 @@ def config_checkpoint_list():
             % (cib_info[1], datetime.datetime.fromtimestamp(round(cib_info[0])))
         )
 
-def config_checkpoint_view(argv):
+def config_checkpoint_view(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
     if len(argv) != 1:
         usage.config(["checkpoint", "view"])
         sys.exit(1)
@@ -579,9 +660,14 @@ def config_checkpoint_view(argv):
     utils.filename = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
     if not os.path.isfile(utils.filename):
         utils.err("unable to read the checkpoint")
-    config_show_cib()
+    config_show_cib(lib)
 
-def config_checkpoint_restore(argv):
+def config_checkpoint_restore(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file, a checkpoint will be restored into a specified file
+    """
+    modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         usage.config(["checkpoint", "restore"])
         sys.exit(1)
@@ -593,7 +679,16 @@ def config_checkpoint_restore(argv):
         utils.err("unable to read the checkpoint: %s" % e)
     utils.replace_cib_configuration(snapshot_dom)
 
-def config_import_cman(argv):
+def config_import_cman(dummy_lib, argv, modifiers):
+    """
+    Options:
+      * --force - skip checks, overwrite files
+      * --interactive - interactive issue resolving
+      * --request-timeout - effective only when ouput is not specified
+    """
+    modifiers.ensure_only_supported(
+        "--force", "interactive", "--request-timeout",
+    )
     if no_clufter:
         utils.err("Unable to perform a CMAN cluster conversion due to missing python-clufter package")
     # prepare convertor options
@@ -632,9 +727,9 @@ def config_import_cman(argv):
     if invalid_args or not dry_run_output:
         usage.config(["import-cman"])
         sys.exit(1)
-    debug = "--debug" in utils.pcs_options
-    force = "--force" in utils.pcs_options
-    interactive = "--interactive" in utils.pcs_options
+    debug = modifiers.get("--debug")
+    force = modifiers.get("--force")
+    interactive = modifiers.get("--interactive")
 
     if dist is not None:
         if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
@@ -774,7 +869,17 @@ def config_import_cman(argv):
         config_restore_remote(None, tar_data)
     tar_data.close()
 
-def config_export_pcs_commands(argv, verbose=False):
+def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
+    """
+    Options:
+      * --force - skip checks, overwrite files
+      * --interactive - interactive issue resolving
+      * -f - CIB file
+      * --corosync_conf
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--interactive", "-f", "--corosync_conf"
+    )
     if no_clufter:
         utils.err(
             "Unable to perform export due to missing python-clufter package"
@@ -859,6 +964,10 @@ def config_export_pcs_commands(argv, verbose=False):
             utils.err(message)
 
 def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
+    """
+    Commandline options: no options used but messages which include --force,
+      --debug and --interactive are generated
+    """
     try:
         result = None
         cmd_manager = clufter.command_manager.CommandManager.init_lookup(

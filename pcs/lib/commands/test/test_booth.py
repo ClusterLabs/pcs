@@ -1178,7 +1178,7 @@ class TicketOperationTest(TestCase):
     ):
         mock_find_bound_ip.return_value = []
         assert_raise_library_error(
-            lambda: commands.ticket_operation(
+            lambda: commands._ticket_operation(
                 "grant", _env_fixture("booth_name"), "ABC", site_ip=None
             ),
             (
@@ -1194,7 +1194,7 @@ class TicketOperationTest(TestCase):
             cmd_runner=mock.Mock(return_value=mock.MagicMock(run=mock_run))
         )
         assert_raise_library_error(
-            lambda: commands.ticket_operation(
+            lambda: commands._ticket_operation(
                 "grant", mock_env, "ABC", site_ip="1.2.3.4"
             ),
             (

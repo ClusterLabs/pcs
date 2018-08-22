@@ -1055,7 +1055,7 @@ class UtilsTest(TestCase):
         )
 
     def test_get_operations_from_transitions(self):
-        transitions = utils.parse(rc("transitions01.xml"))
+        transitions = xml.dom.minidom.parse(rc("transitions01.xml"))
         self.assertEqual(
             [
                 {
@@ -1098,7 +1098,7 @@ class UtilsTest(TestCase):
             utils.get_operations_from_transitions(transitions)
         )
 
-        transitions = utils.parse(rc("transitions02.xml"))
+        transitions = xml.dom.minidom.parse(rc("transitions02.xml"))
         self.assertEqual(
             [
                 {

@@ -47,46 +47,82 @@ def node_cmd(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(e, "node", sub_cmd)
 
 def node_attribute_cmd(lib, argv, modifiers):
-    if modifiers["name"] and len(argv) > 1:
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --force - allows not unique recipient values
+      * --name - specify attribute name to filter out
+    """
+    modifiers.ensure_only_supported("-f", "--force", "--name")
+    if modifiers.get("--name") and len(argv) > 1:
         raise CmdLineInputError()
     if len(argv) == 0:
-        attribute_show_cmd(filter_attr=modifiers["name"])
+        attribute_show_cmd(filter_attr=modifiers.get("--name"))
     elif len(argv) == 1:
-        attribute_show_cmd(argv.pop(0), filter_attr=modifiers["name"])
+        attribute_show_cmd(argv.pop(0), filter_attr=modifiers.get("--name"))
     else:
+        # --force is used only when setting attributes
         attribute_set_cmd(argv.pop(0), argv)
 
 def node_utilization_cmd(lib, argv, modifiers):
-    if modifiers["name"] and len(argv) > 1:
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --name - specify attribute name to filter out
+    """
+    modifiers.ensure_only_supported("-f", "--name")
+    if modifiers.get("--name") and len(argv) > 1:
         raise CmdLineInputError()
     if len(argv) == 0:
-        print_node_utilization(filter_name=modifiers["name"])
+        print_node_utilization(filter_name=modifiers.get("--name"))
     elif len(argv) == 1:
-        print_node_utilization(argv.pop(0), filter_name=modifiers["name"])
+        print_node_utilization(argv.pop(0), filter_name=modifiers.get("--name"))
     else:
         set_node_utilization(argv.pop(0), argv)
 
 def node_maintenance_cmd(lib, argv, modifiers, enable):
-    if len(argv) > 0 and modifiers["all"]:
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --wait - wait for node to change state
+      * --all - all cluster nodes
+    """
+    modifiers.ensure_only_supported("-f", "--wait", "--all")
+    if len(argv) > 0 and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-    if modifiers["all"]:
-        lib.node.maintenance_unmaintenance_all(enable, modifiers["wait"])
+    wait = modifiers.get("--wait")
+    if modifiers.get("--all"):
+        lib.node.maintenance_unmaintenance_all(enable, wait)
     elif argv:
-        lib.node.maintenance_unmaintenance_list(enable, argv, modifiers["wait"])
+        lib.node.maintenance_unmaintenance_list(enable, argv, wait)
     else:
-        lib.node.maintenance_unmaintenance_local(enable, modifiers["wait"])
+        # -f cannot be used when editing local node
+        lib.node.maintenance_unmaintenance_local(enable, wait)
 
 def node_standby_cmd(lib, argv, modifiers, enable):
-    if len(argv) > 0 and modifiers["all"]:
+    """
+    Options:
+      * -f - CIB file (in lib wrapper)
+      * --wait - wait for node to change state
+      * --all - all cluster nodes
+    """
+    modifiers.ensure_only_supported("-f", "--wait", "--all")
+    if len(argv) > 0 and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-    if modifiers["all"]:
-        lib.node.standby_unstandby_all(enable, modifiers["wait"])
+    wait = modifiers.get("--wait")
+    if modifiers.get("--all"):
+        lib.node.standby_unstandby_all(enable, wait)
     elif argv:
-        lib.node.standby_unstandby_list(enable, argv, modifiers["wait"])
+        lib.node.standby_unstandby_list(enable, argv, wait)
     else:
-        lib.node.standby_unstandby_local(enable, modifiers["wait"])
+        # -f cannot be used when editing local node
+        lib.node.standby_unstandby_local(enable, wait)
 
 def set_node_utilization(node, argv):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     cib = utils.get_cib_dom()
     node_el = utils.dom_get_node(cib, node)
     if node_el is None:
@@ -115,6 +151,10 @@ def set_node_utilization(node, argv):
     utils.replace_cib_configuration(cib)
 
 def print_node_utilization(filter_node=None, filter_name=None):
+    """
+    Commandline options:
+      * -f - CIB file
+    """
     cib = utils.get_cib_dom()
 
     node_element_list = cib.getElementsByTagName("node")
@@ -150,12 +190,19 @@ def print_node_utilization(filter_node=None, filter_name=None):
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))
 
-def node_pacemaker_status(lib, argv, modifiers):
+def node_pacemaker_status(lib, argv, dummy_modifiers):
+    """
+    Internal pcs-pcsd command
+    """
     print(json.dumps(
         lib_pacemaker.get_local_node_status(utils.cmd_runner())
     ))
 
 def attribute_show_cmd(filter_node=None, filter_attr=None):
+    """
+    Commandline options:
+      * -f - CIB file (in lib wrapper)
+    """
     node_attributes = utils.get_node_attributes(
         filter_node=filter_node,
         filter_attr=filter_attr
@@ -164,10 +211,18 @@ def attribute_show_cmd(filter_node=None, filter_attr=None):
     attribute_print(node_attributes)
 
 def attribute_set_cmd(node, argv):
+    """
+    Commandline options:
+      * -f - CIB file
+      * --force - no error if attribute to delete doesn't exist
+    """
     for name, value in prepare_options(argv).items():
         utils.set_node_attribute(name, value, node)
 
 def attribute_print(node_attributes):
+    """
+    Commandline options: no options
+    """
     for node in sorted(node_attributes.keys()):
         line_parts = [" " + node + ":"]
         for name, value in sorted(node_attributes[node].items()):

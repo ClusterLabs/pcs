@@ -332,7 +332,7 @@ Role: role2
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "acl role delete role1 --autodelete")
+        o,r = pcs(temp_cib, "acl role delete role1")
         ac(o,"")
         assert r == 0
 

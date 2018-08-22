@@ -9,13 +9,19 @@ def create_with_set(create_with_set_library_call, argv, modifiers):
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
         "autocorrect" allows correct resource to its clone/master parent
+
+    Commandline options:
+      * --autocorrect - can repair to clone
+      * --force - allow resource inside clone (or master), allow duplicate
+        element
+      * -f - CIB file
     """
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
     create_with_set_library_call(
         resource_set_list, constraint_options,
-        can_repair_to_clone=modifiers["autocorrect"],
-        resource_in_clone_alowed=modifiers["force"],
-        duplication_alowed=modifiers["force"],
+        can_repair_to_clone=modifiers.get("--autocorrect"),
+        resource_in_clone_alowed=modifiers.get("--force"),
+        duplication_alowed=modifiers.get("--force"),
     )
 
 def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
@@ -24,6 +30,8 @@ def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
     list of dict constraint_list see constraint in pcs/lib/exchange_formats.md
     bool with_id have to show id with options
     int indent_step is count of spaces for indenting
+
+    Commandline options: no options
     """
     return ["Resource Sets:"] + indent(
         [
@@ -42,8 +50,12 @@ def show(caption, load_constraints, format_options, modifiers):
     callable format_options takes dict of options and show_detail flag (bool)
         and returns string with constraint formated for commandline
     modifiers dict like object with command modifiers
+
+    Commandline options:
+      * -f - CIB file
+      * --full - print more details
     """
-    show_detail = modifiers["full"]
+    show_detail = modifiers.get("--full")
     constraints = load_constraints()
 
     line_list = [caption]
