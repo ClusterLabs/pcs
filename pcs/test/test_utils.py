@@ -1687,54 +1687,6 @@ class UtilsTest(TestCase):
         }
         self.assertEqual(expected, utils.get_cluster_property_from_xml(el))
 
-    def test_get_cluster_property_default(self):
-        definition = {
-            "property-int": {
-                "name": "property-int",
-                "shortdesc": "int description",
-                "longdesc": "long int description",
-                "type": "integer",
-                "default": "0",
-                "source": "pacemaker-schedulerd"
-            },
-            "property-enum": {
-                "name": "property-enum",
-                "shortdesc": "What to do when the cluster does not have quorum",
-                "longdesc": (
-                    "What to do when the cluster does not have quorum  "
-                    "Allowed values: stop, freeze, ignore, suicide"
-                ),
-                "type": "enum",
-                "default": "stop",
-                "enum": ["stop", "freeze", "ignore", "suicide"],
-                "source": "pacemaker-schedulerd"
-            },
-            "property-bool": {
-                "name": "property-bool",
-                "shortdesc": "Enable CIB ACL",
-                "longdesc": "Enable CIB ACL",
-                "type": "boolean",
-                "default": "false",
-                "source": "cib"
-            }
-        }
-        self.assertEqual(
-            utils.get_cluster_property_default(definition, "property-int"),
-            "0"
-        )
-        self.assertEqual(
-            utils.get_cluster_property_default(definition, "property-enum"),
-            "stop"
-        )
-        self.assertEqual(
-            utils.get_cluster_property_default(definition, "property-bool"),
-            "false"
-        )
-        self.assertRaises(
-            utils.UnknownPropertyException,
-            utils.get_cluster_property_default, definition, "non-existing"
-        )
-
     def test_is_valid_cib_value_unknown_type(self):
         # should be always true
         self.assertTrue(utils.is_valid_cib_value("unknown", "test"))

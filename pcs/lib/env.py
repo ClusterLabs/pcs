@@ -1,6 +1,3 @@
-import os.path
-
-from pcs import settings
 from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
@@ -18,7 +15,6 @@ from pcs.lib.communication.tools import (
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
-    exists_local_corosync_conf,
     get_local_corosync_conf,
     get_local_cluster_conf,
     reload_config as reload_corosync_config,
@@ -344,20 +340,6 @@ class LibraryEnvironment(object):
     @property
     def is_cluster_conf_live(self):
         return self._cluster_conf_data is None
-
-
-    def is_node_in_cluster(self):
-        if not self.is_corosync_conf_live:
-            raise AssertionError(
-                "Cannot check if node is in cluster with mocked corosync_conf."
-            )
-        return exists_local_corosync_conf()
-
-    def command_expect_live_corosync_env(self):
-        if not self.is_corosync_conf_live:
-            raise LibraryError(
-                reports.live_environment_required(["COROSYNC_CONF"])
-            )
 
     @property
     def is_corosync_conf_live(self):

@@ -28,9 +28,6 @@ def get_local_cluster_conf():
         raise LibraryError(reports.cluster_conf_read_error(path, e.strerror))
 
 
-def exists_local_corosync_conf():
-    return os.path.exists(settings.corosync_conf_file)
-
 def reload_config(runner):
     """
     Ask corosync to reload its configuration

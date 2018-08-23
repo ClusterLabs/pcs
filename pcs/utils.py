@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 import xml.dom.minidom
-from xml.dom.minidom import parseString, parse
+from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 import re
 import json
@@ -1357,12 +1357,6 @@ def dom_get_children_by_tag_name(dom_el, tag_name):
             and node.tagName == tag_name
    ]
 
-def dom_get_child_by_tag_name(dom_el, tag_name):
-    children = dom_get_children_by_tag_name(dom_el, tag_name)
-    if children:
-        return children[0]
-    return None
-
 def dom_get_parent_by_tag_names(dom_el, tag_names):
     """
     Commandline options: no options
@@ -1485,13 +1479,6 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         "nodes_slave": nodes_slave,
     }
 
-def agent_action_to_cmdline_format(action):
-    op = [action["name"]]
-    for key in action.keys():
-        if key != "name" and action[key] != "0":
-            op.append("{0}={1}".format(key, action[key]))
-    return op
-
 def check_pacemaker_supports_resource_wait():
     """
     Commandline options: no options
@@ -1575,16 +1562,7 @@ def is_etree(var):
     """
     Commandline options: no options
     """
-    return (
-        var.__class__ == xml.etree.ElementTree.Element
-        or
-        (
-            # in python3 _ElementInterface does not exist
-            hasattr(xml.etree.ElementTree, "_ElementInterface")
-            and
-            var.__class__ == xml.etree.ElementTree._ElementInterface
-        )
-    )
+    return var.__class__ == xml.etree.ElementTree.Element
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
@@ -1718,11 +1696,6 @@ def get_operation_ocf_check_level(operation_el):
             if nvpair_el.getAttribute("name") == "OCF_CHECK_LEVEL":
                 return nvpair_el.getAttribute("value")
     return None
-
-def set_unmanaged(resource):
-    args = ["crm_resource", "--resource", resource, "--set-parameter",
-            "is-managed", "--meta", "--parameter-value", "false"]
-    return run(args)
 
 def get_node_attributes(filter_node=None, filter_attr=None):
     """
@@ -1881,12 +1854,6 @@ def getClusterStateXml():
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
     return xml
-
-def getResourceType(resource):
-    resClass = resource.getAttribute("class")
-    resProvider = resource.getAttribute("provider")
-    resType = resource.getAttribute("type")
-    return resClass + ":" + resProvider + ":" + resType
 
 def getClusterName():
     """
@@ -2416,14 +2383,6 @@ def is_valid_cib_value(type, value, enum_options=[]):
     if type == "time":
         return get_timeout_seconds(value) is not None
     return True
-
-
-def get_cluster_property_default(prop_def_dict, prop):
-    if prop not in prop_def_dict:
-        raise UnknownPropertyException(
-            "unknown cluster property: '{0}'".format(prop)
-        )
-    return prop_def_dict[prop]["default"]
 
 
 def get_cluster_properties_definition():

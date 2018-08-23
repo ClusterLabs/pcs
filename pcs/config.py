@@ -200,10 +200,7 @@ def config_backup(dummy_lib, argv, modifiers):
             utils.err(message)
     else:
         # in python3 stdout accepts str so we need to use buffer
-        if hasattr(sys.stdout, "buffer"):
-            sys.stdout.buffer.write(tar_data)
-        else:
-            sys.stdout.write(tar_data)
+        sys.stdout.buffer.write(tar_data)
 
 def config_backup_local():
     """
@@ -248,10 +245,7 @@ def config_restore(dummy_lib, argv, modifiers):
         infile_name = argv[0]
     if not infile_name:
         # in python3 stdin returns str so we need to use buffer
-        if hasattr(sys.stdin, "buffer"):
-            infile_obj = BytesIO(sys.stdin.buffer.read())
-        else:
-            infile_obj = BytesIO(sys.stdin.read())
+        infile_obj = BytesIO(sys.stdin.buffer.read())
 
     if os.getuid() == 0:
         if modifiers.get("--local"):
