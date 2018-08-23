@@ -1,0 +1,46 @@
+language: generic
+
+sudo: required
+
+env:
+  global:
+    - SRC_PATH=/src/pcs
+  matrix:
+    # some tests are disabled
+    # systemd is not running in the container
+    #   pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance
+    #   pcs.test.test_resource.ResourceTest.testLSBResource
+    # issues with openssl
+    #   pcs.daemon.test.test_ssl.PcsdSSLTest.test_raises_when_ssl_files_are_damaged
+    #   pcs.daemon.test.test_ssl.Pair.test_error_if_files_with_bad_content
+    #   pcs.daemon.test.test_env.Prepare.test_report_invalid_ssl_ciphers
+    # difference in url data encoding
+    #   pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data"
+    - DIST=fedora29
+      RUBY_BIN=/usr/bin/ruby
+      PYTHON_TEST_ARGS="--all-but
+        pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance
+        pcs.test.test_resource.ResourceTest.testLSBResource
+        pcs.daemon.test.test_ssl.PcsdSSLTest.test_raises_when_ssl_files_are_damaged
+        pcs.daemon.test.test_ssl.Pair.test_error_if_files_with_bad_content
+        pcs.daemon.test.test_env.Prepare.test_report_invalid_ssl_ciphers
+        pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data"
+
+services:
+  - docker
+
+before_install:
+  - docker build
+    --build-arg src_path=$SRC_PATH
+    -t $DIST
+    -f test/$DIST/Dockerfile
+    .
+
+script:
+  # python test suite
+  - docker run $DIST $SRC_PATH/pcs/test/suite.py -v --vanilla $PYTHON_TEST_ARGS
+  # ruby test suite
+  - docker run $DIST $RUBY_BIN
+     -I $SRC_PATH/pcsd
+     -I $SRC_PATH/pcsd/test
+     $SRC_PATH/pcsd/test/test_all_suite.rb

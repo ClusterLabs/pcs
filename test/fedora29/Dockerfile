@@ -1,0 +1,42 @@
+FROM fedora:29
+
+ARG src_path
+
+# repo updates-testing temporarily disabled because of metadata fetching error
+RUN dnf install -y --disablerepo updates-testing \
+        # python
+        python3 \
+        python3-lxml \
+        python3-mock \
+        python3-pycurl \
+        python3-pyOpenSSL \
+        python3-tornado \
+        # ruby
+        ruby \
+        ruby-devel \
+        rubygem-bundler \
+        rubygem-backports \
+        rubygem-ethon \
+        rubygem-ffi \
+        rubygem-io-console \
+        rubygem-json \
+        rubygem-multi_json \
+        rubygem-open4 \
+        rubygem-rack \
+        rubygem-rack-protection \
+        rubygem-rack-test \
+        rubygem-sinatra \
+        rubygem-tilt \
+        rubygem-test-unit \
+        # cluster stack
+        corosync \
+        pacemaker \
+        pacemaker-cli \
+        fence-agents-scsi \
+        fence-agents-apc \
+        fence-agents-ilo2 \
+        fence-agents-ipmilan \
+        fence-virt \
+        booth-site
+
+COPY . $src_path
