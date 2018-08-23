@@ -344,10 +344,10 @@ def test_watchdog(cmd_runner, watchdog=None):
     cmd = [settings.sbd_binary, "test-watchdog"]
     if watchdog:
         cmd.extend(["-w", watchdog])
-    dummy_std_out, std_err, ret_val = cmd_runner.run(cmd)
+    std_out, dummy_std_err, ret_val = cmd_runner.run(cmd)
     if ret_val:
-        if "Multiple watchdog devices discovered" in std_err:
+        if "Multiple watchdog devices discovered" in std_out:
             raise LibraryError(reports.sbd_watchdog_test_multiple_devices())
-        raise LibraryError(reports.sbd_watchdog_test_error(std_err))
+        raise LibraryError(reports.sbd_watchdog_test_error(std_out))
     else:
         raise LibraryError(reports.sbd_watchdog_test_failed())
