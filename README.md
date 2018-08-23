@@ -13,7 +13,7 @@ There are two pcs branches currently:
   * This is where pcs-0.10 lives.
   * Clusters running Pacemaker 2.x on top of Corosync 3.x are supported.
   * The main development happens here.
-* pcs-0.9
+* pcs-0.9 [![Build Status](https://travis-ci.org/ClusterLabs/pcs.svg?branch=pcs-0.9)](https://travis-ci.org/ClusterLabs/pcs)
   * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with 
     CMAN are supported.
   * This branch is in maintenance mode - bugs are being fixed but only a subset
