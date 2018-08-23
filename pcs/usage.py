@@ -87,9 +87,9 @@ def sub_usage(args, output):
         if begin_printing:
             ret += line + "\n"
 
-    if ret != "":
+    if ret.strip() != "":
         return "\n" + usage + "\n" + ret.rstrip() + "\n"
-    return output
+    return sub_usage([" ".join(args[0].split()[:-1])], output)
 
 def dict_depth(d, depth=0):
     if not isinstance(d, dict) or not d:
