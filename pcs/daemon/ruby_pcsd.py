@@ -66,8 +66,8 @@ def log_communication(request_json, stdout, stderr):
 class Wrapper:
     # pylint: disable=too-many-instance-attributes
     def __init__(
-        self, gem_home, pcsd_cmdline_entry, debug=False, ruby_executable="ruby",
-        https_proxy=None, no_proxy=None
+        self, pcsd_cmdline_entry, gem_home=None, debug=False,
+        ruby_executable="ruby", https_proxy=None, no_proxy=None
     ):
         self.__gem_home = gem_home
         self.__pcsd_cmdline_entry = pcsd_cmdline_entry
@@ -103,9 +103,11 @@ class Wrapper:
 
     async def send_to_ruby(self, request_json):
         env = {
-            "GEM_HOME": self.__gem_home,
             "PCSD_DEBUG": "true" if self.__debug else "false"
         }
+        if self.__gem_home is not None:
+            env["GEM_HOME"] = self.__gem_home
+
         if self.__no_proxy is not None:
             env["NO_PROXY"] = self.__no_proxy
         if self.__https_proxy is not None:

@@ -166,6 +166,8 @@ class EnvLoader:
         return self.__has_true_in_environ(PCSD_DEBUG)
 
     def gem_home(self):
+        if settings.pcsd_gem_path is None:
+            return None
         return self.__in_pcsd_path(
             settings.pcsd_gem_path,
             "Ruby gem location"

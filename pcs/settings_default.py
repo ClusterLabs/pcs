@@ -74,6 +74,8 @@ default_ssl_options = ",".join([
     "OP_NO_TLSv1",
     "OP_NO_TLSv1_1",
 ])
+# Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
+# not exists.
 pcsd_gem_path = "vendor/bundle/ruby"
 ruby_executable = "/usr/bin/ruby"
 

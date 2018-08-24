@@ -85,8 +85,8 @@ def main():
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
-        gem_home=env.GEM_HOME,
         pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
+        gem_home=env.GEM_HOME,
         debug=env.PCSD_DEBUG,
         ruby_executable=settings.ruby_executable,
         https_proxy=env.HTTPS_PROXY,
