@@ -446,7 +446,7 @@ def resource_create(lib, argv, modifiers):
 
     parts = parse_create_args(argv[2:])
 
-    parts_sections = ["clone", "bundle"]
+    parts_sections = ["clone", "promotable", "bundle"]
     defined_options = [opt for opt in parts_sections if opt in parts]
     if modifiers.is_specified("--group"):
         defined_options.append("group")
@@ -474,6 +474,11 @@ def resource_create(lib, argv, modifiers):
         elif modifiers.is_specified("--after"):
             raise error("you cannot use --after without --group")
 
+    if "promotable" in parts and "promotable" in parts["promotable"]:
+        raise error(
+            "you cannot specify both promotable option and promotable keyword"
+        )
+
     settings = dict(
         allow_absent_agent=modifiers.get("--force"),
         allow_invalid_operation=modifiers.get("--force"),
@@ -490,6 +495,14 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             parts["clone"],
+            **settings
+        )
+    elif "promotable" in parts:
+        lib.resource.create_as_clone(
+            ra_id, ra_type, parts["op"],
+            parts["meta"],
+            parts["options"],
+            dict(**parts["promotable"], promotable="true"),
             **settings
         )
     elif "bundle" in parts:

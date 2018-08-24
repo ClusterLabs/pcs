@@ -1,10 +1,15 @@
 import re
+from unittest import mock, TestCase
 
+from pcs import resource
+from pcs.cli.common.parse_args import InputModifiers
+from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_supports_systemd,
 )
+from pcs.test.tools.pcs_runner import PcsRunner
 from pcs.test.cib_resource.common import ResourceTest
 
 
@@ -756,6 +761,60 @@ class SuccessClone(ResourceTest):
         )
 
 
+class Promotable(TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["create_as_clone"])
+        self.lib.resource = self.resource
+        # used for tests where code does not even call lib, so cib is not needed
+        self.pcs_runner = PcsRunner(cib_file=None)
+
+    def fixture_options(
+        self, allow_absent_agent=False,
+        allow_invalid_instance_attributes=False, allow_invalid_operation=False,
+        allow_not_suitable_command=False, ensure_disabled=False,
+        use_default_operations=True, wait=False
+    ):
+        options = locals()
+        del options["self"]
+        return options
+
+    def test_alias_for_clone(self):
+        resource.resource_create(
+            self.lib,
+            ["R", "ocf:pacemaker:Stateful", "promotable", "a=b", "c=d"],
+            InputModifiers({})
+        )
+        self.resource.create_as_clone.assert_called_once_with(
+            "R", "ocf:pacemaker:Stateful", [], {}, {},
+            {"a": "b", "c": "d", "promotable": "true"},
+            **self.fixture_options()
+        )
+
+    def test_fail_on_promotable(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=a",
+            "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+        )
+
+    def test_fail_on_promotable_true(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=true",
+            "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+        )
+
+    def test_fail_on_promotable_false(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=false",
+            "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+        )
+
 @skip_unless_pacemaker_supports_bundle
 class Bundle(ResourceTest):
     empty_cib = rc("cib-empty-2.8.xml")
@@ -841,7 +900,8 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --group G"
             ,
-            "Error: you can specify only one of clone, bundle or --group\n"
+            "Error: you can specify only one of clone, promotable, bundle or "
+                "--group\n"
         )
 
     def test_error_bundle_clone_combination(self):
@@ -849,7 +909,8 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " bundle bundle_id"
             ,
-            "Error: you can specify only one of clone, bundle or --group\n"
+            "Error: you can specify only one of clone, promotable, bundle or "
+                "--group\n"
         )
 
     def test_error_bundle_group_combination(self):
@@ -857,7 +918,8 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
                 " bundle bundle_id"
             ,
-            "Error: you can specify only one of clone, bundle or --group\n"
+            "Error: you can specify only one of clone, promotable, bundle or "
+                "--group\n"
         )
 
     def test_fail_when_nonexisting_agent(self):

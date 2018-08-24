@@ -210,14 +210,15 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [clone [<clone options>] | bundle <bundle id> |
-           --group <group id> [--before <resource id> | --after <resource id>]]
-           [--disabled] [--no-default-ops] [--wait[=n]]
-        Create specified resource. If clone is used a clone resource is created.
+           [clone [<clone options>] | promotable <promotable options> |
+           --group <group id> [--before <resource id> | --after <resource id>] |
+           bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
+        Create specified resource. If clone is used a clone resource is
+        created. If promotable is used a promotable clone resource is created.
         If --group is specified the resource is added to the group named. You
         can use --before or --after to specify the position of the added
-        resource relatively to some resource already existing in the group.
-        If bundle is used, the resource will be created inside of the specified
+        resource relatively to some resource already existing in the group. If
+        bundle is used, the resource will be created inside of the specified
         bundle. If --disabled is specified the resource is not started
         automatically. If --no-default-ops is specified, only monitor
         operations are created for the resource and all other operations use

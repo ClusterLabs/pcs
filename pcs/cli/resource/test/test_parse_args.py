@@ -45,6 +45,17 @@ class ParseCreateArgs(TestCase):
             },
         })
 
+    def test_only_promotable(self):
+        self.assert_produce(["promotable", "a=b", "c=d"], {
+            "meta": {},
+            "options": {},
+            "op": [],
+            "promotable": {
+                "a": "b",
+                "c": "d",
+            },
+        })
+
     def test_only_operations(self):
         self.assert_produce([
             "op", "monitor", "a=b", "c=d", "start", "e=f",

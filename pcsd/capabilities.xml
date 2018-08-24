@@ -921,6 +921,13 @@
         daemon urls: update_resource (param: resource_id not set)
       </description>
     </capability>
+    <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="0">
+      <description>
+        Put a newly created resource into a promotable clone.
+
+        pcs commands: resource create ... promotable
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
       <description>
         Set resource meta attributes when creating a resource. When creating a
