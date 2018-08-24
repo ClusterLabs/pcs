@@ -13,15 +13,20 @@
   has been removed
 - Deprecated commands `pcs cluster remote-node add | remove` have been removed
   as they were replaced with `pcs cluster node add-guest | remove-guest`
-- `pcs resource create` no longer allows creating master resources as they are
-  deprecated in Pacemaker 2.x; use `pcs resource create ... promotable` or
-  `pcs resource create ... clone promotable=true` instead ([rhbz#1542288])
+- Ability to create master resources has been removed as they are deprecated in
+  Pacemaker 2.x ([rhbz#1542288])
+  - Instead of `pcs resource create ... master` use `pcs resource create ...
+    promotable` or `pcs resource create ... clone promotable=true`
+  - Instead of `pcs resource master` use `pcs resource promotable` or `pcs
+    resource clone ... promotable=true`
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
 - Options to filter failures by an operation and its interval in `pcs resource
   cleanup` and `pcs resource failcount show` commands ([rhbz#1427273])
 - Commands for listing and testing watchdog devices ([rhbz#1578891])
+- Commands for creating promotable clone resources `pcs resource promotable`
+  and `pcs resource create ... promotable` ([rhbz#1542288])
 
 ### Fixed
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as
@@ -107,8 +112,6 @@
 - Pcs now configures corosync to put timestamps in its log ([rhbz#1615420])
 - Option `-V` has been replaced with `--full` and a CIB file can be specified
   only using option `-f` in `pcs cluster verify`
-- Master resources have been replaced with promotable clone resources in
-  accordance with changes in pacemaker-2.0 ([rhbz#1542288])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure

@@ -8,6 +8,34 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.xml import etree_to_str
 
 
+def wrap_element_by_master(cib_file, resource_id, master_id=None):
+    cib_tree = etree.parse(cib_file, etree.XMLParser(huge_tree=True)).getroot()
+    element = cib_tree.find(f'.//*[@id="{resource_id}"]')
+    final_master_id = (
+        master_id if master_id is not None else f"{resource_id}-master"
+    )
+    master_element = _xml_to_element(f"""
+        <master id="{final_master_id}">
+        </master>
+    """)
+    element.getparent().append(master_element)
+    master_element.append(element)
+    final_xml = etree_to_str(cib_tree)
+
+    environ = dict(os.environ)
+    environ["CIB_file"] = cib_file
+    runner = CommandRunner(
+        mock.MagicMock(logging.Logger),
+        MockLibraryReportProcessor(),
+        environ
+    )
+    stdout, stderr, retval = runner.run([
+        "cibadmin", "--replace", "--scope", "resources", "--xml-pipe",
+    ], stdin_string=final_xml)
+    assert retval == 0, (
+        "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
+    )
+
 def fixture_master_xml(name, all_ops=True):
     default_ops = f"""
             <op id="{name}-notify-interval-0s" interval="0s" name="notify"

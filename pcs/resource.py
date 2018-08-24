@@ -110,10 +110,10 @@ def resource_cmd(lib, argv, modifiers):
             resource_group(lib, ["remove"] + argv_next, modifiers)
         elif sub_cmd == "clone":
             resource_clone(lib, argv_next, modifiers)
+        elif sub_cmd == "promotable":
+            resource_clone(lib, argv_next, modifiers, promotable=True)
         elif sub_cmd == "unclone":
             resource_clone_master_remove(lib, argv_next, modifiers)
-        elif sub_cmd == "master":
-            resource_master(lib, argv_next, modifiers)
         elif sub_cmd == "enable":
             resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
@@ -1374,7 +1374,7 @@ def resource_group_add_cmd(lib, argv, modifiers):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_clone(dummy_lib, argv, modifiers):
+def resource_clone(dummy_lib, argv, modifiers, promotable=False):
     """
     Options:
       * --wait
@@ -1390,7 +1390,9 @@ def resource_clone(dummy_lib, argv, modifiers):
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
 
-    cib_dom, clone_id = resource_clone_create(cib_dom, argv)
+    cib_dom, clone_id = resource_clone_create(
+        cib_dom, argv, promotable=promotable
+    )
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
     utils.replace_cib_configuration(cib_dom)
 
@@ -1411,7 +1413,9 @@ def resource_clone(dummy_lib, argv, modifiers):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_clone_create(cib_dom, argv, update_existing=False):
+def resource_clone_create(
+    cib_dom, argv, update_existing=False, promotable=False
+):
     """
     Commandline options: no options
     """
@@ -1453,6 +1457,14 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if op_values:
         utils.err("op settings must be changed on base resource, not the clone")
     final_meta = prepare_options(generic_values + meta_values)
+    if promotable:
+        if "promotable" in final_meta:
+            utils.err(
+                "you cannot specify both promotable option and promotable "
+                "keyword"
+            )
+        else:
+            final_meta["promotable"] = "true"
     utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
 
     return cib_dom, clone.getAttribute("id")
@@ -1513,52 +1525,6 @@ def resource_clone_master_remove(dummy_lib, argv, modifiers):
             args.extend(["--timeout=%s" % wait_timeout])
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource_id)
-        if retval == 0:
-            print(running_on["message"])
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            msg.append(running_on["message"])
-            if output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
-
-def resource_master(dummy_lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-      * --wait
-    """
-    modifiers.ensure_only_supported("-f", "--wait")
-    non_option_args_count = 0
-    for arg in argv:
-        if arg.find("=") == -1:
-            non_option_args_count += 1
-    if non_option_args_count < 1:
-        usage.resource()
-        sys.exit(1)
-    if non_option_args_count == 1:
-        res_id = argv[0]
-        master_id = None
-    else:
-        master_id = argv.pop(0)
-        res_id = argv[0]
-    cib_dom = utils.get_cib_dom()
-
-    if modifiers.is_specified("--wait"):
-        wait_timeout = utils.validate_wait_get_timeout()
-
-    cib_dom, master_id = resource_master_create(cib_dom, argv, False, master_id)
-    cib_dom = constraint.constraint_resource_update(res_id, cib_dom)
-    utils.replace_cib_configuration(cib_dom)
-
-    if modifiers.is_specified("--wait"):
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(master_id)
         if retval == 0:
             print(running_on["message"])
         else:

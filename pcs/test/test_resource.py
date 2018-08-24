@@ -11,7 +11,11 @@ from pcs.test.tools.assertions import (
     AssertPcsMixin,
 )
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
-from pcs.test.tools.fixture_cib import fixture_master_xml, fixture_to_cib
+from pcs.test.tools.fixture_cib import (
+    fixture_master_xml,
+    fixture_to_cib,
+    wrap_element_by_master,
+)
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -171,7 +175,10 @@ class ResourceTest(TestCase, AssertPcsMixin):
             "resource group add TestGroup2 ClusterIP2 ClusterIP3"
         )
         self.assert_pcs_success("resource clone ClusterIP4")
-        self.assert_pcs_success("resource master Master ClusterIP5")
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "ClusterIP5", master_id="Master")
 
     def testCaseInsensitive(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
@@ -1359,9 +1366,10 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, r)
         ac(o, "")
 
-        o, r = pcs(temp_cib, "resource master A0")
-        self.assertEqual(0, r)
-        ac(o, "")
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "A0")
 
         o, r = pcs(temp_cib, "resource group add A0-master A6")
         ac(o, "Error: 'A0-master' is already a master/slave resource\n")
@@ -1556,9 +1564,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master gr2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "gr2")
 
         output, returnVal = pcs(temp_cib, "resource show")
         ac(output, outdent("""\
@@ -1827,9 +1836,10 @@ monitor interval=20 (A-monitor-interval-20)
         ))
         self.pcs_runner.corosync_conf_file = None
 
-        output, returnVal = pcs(temp_large_cib, "resource master dummylarge")
-        ac(output, '')
-        assert returnVal == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_large_cib, "dummylarge")
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
         ac(output, 'Deleting Resource - dummylarge\n')
@@ -1842,9 +1852,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, '')
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource master dummies")
-        ac(output, '')
-        assert returnVal == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_large_cib, "dummies")
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummies")
         ac(output, outdent(
@@ -1960,9 +1971,10 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource master GroupMaster Group")
-        assert returnVal == 0
-        assert output == "", [output]
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "Group", master_id="GroupMaster")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2010,7 +2022,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
     def testUnclone(self):
-        # see also BundleCloneMaster
+        # see also BundleClone
         output, returnVal = pcs(
             temp_cib,
             "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy"
@@ -2179,7 +2191,7 @@ monitor interval=20 (A-monitor-interval-20)
         ))
 
     def testUncloneMaster(self):
-        # see also BundleCloneMaster
+        # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful",
             "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
@@ -2204,9 +2216,10 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(1, returnVal)
 
         # unclone with a cloned primitive specified
-        output, returnVal = pcs(temp_cib, "resource master dummy2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "dummy2")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2242,9 +2255,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master gr")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "gr")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2276,9 +2290,10 @@ monitor interval=20 (A-monitor-interval-20)
         ))
 
         # unclone with a cloned group specified
-        output, returnVal = pcs(temp_cib, "resource master gr")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "gr")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2314,9 +2329,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master gr")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "gr")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2350,9 +2366,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master gr")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "gr")
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2419,44 +2436,56 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
         assert r == 0
 
+    def testPromotableGroupMember(self):
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group AG2"
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG"
         )
         ac(o,"")
         assert r == 0
 
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops D3 ocf:heartbeat:Dummy --group AG2"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG"
         )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master D2")
+        o,r = pcs(temp_cib, "resource promotable D0")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource")
+        o,r = pcs(temp_cib, "resource --full")
         ac(o,"""\
- Clone Set: D0-clone [D0]
- Clone Set: D1-clone [D1]
- Resource Group: AG2
-     D3\t(ocf::heartbeat:Dummy):\tStopped
- Master/Slave Set: D2-master [D2]
+ Group: AG
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+ Clone: D0-clone
+  Meta Attrs: promotable=true 
+  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master D3")
+        o,r = pcs(temp_cib, "resource promotable D1")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource")
-        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n Master/Slave Set: D2-master [D2]\n Master/Slave Set: D3-master [D3]\n")
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o,"""\
+ Clone: D0-clone
+  Meta Attrs: promotable=true 
+  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
+ Clone: D1-clone
+  Meta Attrs: promotable=true 
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+""")
         assert r == 0
 
     def testCloneMaster(self):
-        # see also BundleCloneMaster
+        # see also BundleClone
         output, returnVal  = pcs(
             temp_cib,
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
@@ -2475,32 +2504,48 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert returnVal == 0
         assert output == "", [output]
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D3 ocf:heartbeat:Dummy"
+        )
+        assert returnVal == 0
+        assert output == "", [output]
 
         output, returnVal = pcs(temp_cib, "resource clone D0")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource unclone D0")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource promotable D3 promotable=false"
+        )
+        assert returnVal == 1
+        assert output == "Error: you cannot specify both promotable option and promotable keyword\n", [output]
+
+        output, returnVal = pcs(temp_cib, "resource promotable D3")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource clone D0")
-        assert returnVal == 0
-        assert output == "", [output]
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "D1", master_id="D1-master-custom")
 
-        output, returnVal = pcs(temp_cib, "resource master D1-master-custom D1")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource master D2")
-        assert returnVal == 0
-        assert output == "", [output]
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "D2")
 
         self.assert_pcs_success("resource show --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
              Clone: D0-clone
               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
+             Clone: D3-clone
+              Meta Attrs: promotable=true 
+              Resource: D3 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
              Master: D1-master-custom
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -2530,7 +2575,12 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success("resource show --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
+             Clone: D3-clone
+              Meta Attrs: promotable=true 
+              Resource: D3 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
              Master: D1-master-custom
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -2903,9 +2953,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master group1")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "group1")
 
         self.assert_pcs_fail(
             "resource move group1-master --master",
@@ -2978,6 +3029,37 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o," Clone Set: DGroup-clone [DGroup]\n")
 
         o,r = pcs(temp_cib, "resource clone DGroup")
+        ac(o,"Error: cannot clone a group that has already been cloned\n")
+        assert r == 1
+
+    def testGroupPromotableCreation(self):
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup"
+        )
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "resource promotable DGroup1")
+        ac(o,"Error: unable to find group or resource: DGroup1\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource promotable DGroup")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "resource show --full")
+        assert r == 0
+        # pylint:disable=trailing-whitespace
+        ac(o,"""\
+ Clone: DGroup-clone
+  Meta Attrs: promotable=true 
+  Group: DGroup
+   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+""")
+
+        o,r = pcs(temp_cib, "resource promotable DGroup")
         ac(o,"Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
@@ -3097,10 +3179,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             """
         ))
 
-    def testResourceMasterId(self):
+    def testResourcePromotableId(self):
         output, returnVal = pcs(
             temp_cib,
-            "resource create --no-default-ops dummy-master ocf:heartbeat:Dummy"
+            "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3112,37 +3194,41 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master dummy")
+        output, returnVal = pcs(temp_cib, "resource promotable dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource show --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
-             Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
-             Master: dummy-master-1
+             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
+             Clone: dummy-clone-1
+              Meta Attrs: promotable=true 
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
         ))
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success(
+            "resource delete dummy",
+            "Deleting Resource - dummy\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "resource master dummy-master dummy")
-        ac(output, "Error: dummy-master already exists in the cib\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource master dummy-master0 dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy promotable"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource show --full", outdent(
+            # pylint:disable=trailing-whitespace
             """\
-             Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
-             Master: dummy-master0
+             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
+             Clone: dummy-clone-1
+              Meta Attrs: promotable=true 
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3244,8 +3330,12 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
             "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AA"
         )
         assert r == 0
-        o,r = pcs(temp_cib, "resource master AA")
-        assert r == 0
+
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "AA")
+
         o,r = pcs(temp_cib, "constraint location AA-master prefers rh7-1")
         assert r == 0
 
@@ -3280,8 +3370,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         )
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master AGMaster AG")
-        assert r == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "AG", master_id="AGMaster")
 
         self.assert_pcs_fail(
             "resource create --no-default-ops A ocf:heartbeat:Dummy",
@@ -4060,7 +4152,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"Error: interval=5s does not appear to be a valid operation action\n")
         assert r == 1
 
-    def testCloneMasterBadResources(self):
+    def testCloneBadResources(self):
         self.setupClusterA(temp_cib)
         o,r = pcs(temp_cib, "resource clone ClusterIP4")
         ac(o,"Error: ClusterIP4 is already a clone resource\n")
@@ -4070,11 +4162,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource master ClusterIP4")
+        o,r = pcs(temp_cib, "resource promotable ClusterIP4")
         ac(o,"Error: ClusterIP4 is already a clone resource\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource master ClusterIP5")
+        o,r = pcs(temp_cib, "resource promotable ClusterIP5")
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
@@ -4290,9 +4382,10 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
 
-        output, retVal = pcs(temp_cib, "resource master dummies")
-        ac(output, "")
-        assert retVal == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "dummies")
 
         self.assert_pcs_success("resource show dummies-master", outdent(
             """\
@@ -4321,9 +4414,10 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ))
         assert retVal == 0
 
-        output, retVal = pcs(temp_cib, "resource master dummies")
-        ac(output, "")
-        assert retVal == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "dummies")
 
         self.assert_pcs_success("resource show dummies-master", outdent(
             """\
@@ -4933,19 +5027,12 @@ class BundleGroup(BundleCommon):
 
 
 @skip_unless_pacemaker_supports_bundle
-class BundleCloneMaster(BundleCommon):
+class BundleClone(BundleCommon):
     def test_clone_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
             "resource clone B",
             "Error: unable to find group or resource: B\n"
-        )
-
-    def test_master_bundle(self):
-        self.fixture_bundle("B")
-        self.assert_pcs_fail(
-            "resource master B",
-            "Error: Unable to find resource or group with id B\n"
         )
 
     def test_clone_primitive(self):
@@ -4954,14 +5041,6 @@ class BundleCloneMaster(BundleCommon):
         self.assert_pcs_fail(
             "resource clone R",
             "Error: cannot clone bundle resource\n"
-        )
-
-    def test_master_primitive(self):
-        self.fixture_bundle("B")
-        self.fixture_primitive("R", "B")
-        self.assert_pcs_fail(
-            "resource master R",
-            "Error: cannot make a master/slave resource from a bundle resource\n"
         )
 
     def test_unclone_bundle(self):

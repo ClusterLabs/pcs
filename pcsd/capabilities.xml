@@ -1086,28 +1086,27 @@
         pcs commands: resource clone
       </description>
     </capability>
-    <capability id="pcmk.resource.master" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.promotable" in-pcs="1" in-pcsd="0">
       <description>
-        Turn an existing resource to a master/slave resource and the other way
-        around.
+        Turn an existing resource to a promotable clone resource and the other
+        way around.
 
-        pcs commands: resource master, resource unclone
-        daemon urls: update_resource, resource_master, resource_unclone
+        pcs commands: resource promotable, resource unclone
       </description>
     </capability>
-    <capability id="pcmk.resource.master.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.promotable.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect.
 
-        pcs commands: resource master -- wait, resource unclone --wait
+        pcs commands: resource promotable --wait, resource unclone --wait
       </description>
     </capability>
-    <capability id="pcmk.resource.master.meta-in-create" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.promotable.meta-in-create" in-pcs="1" in-pcsd="0">
       <description>
-        Set master/slave meta attributes when turning an existing resource to a
-        master/slave resource.
+        Set promotable clone meta attributes when turning an existing resource
+        to a promotable clone resource.
 
-        pcs commands: resource master
+        pcs commands: resource promotable
       </description>
     </capability>
     <capability id="pcmk.resource.bundle" in-pcs="1" in-pcsd="0">

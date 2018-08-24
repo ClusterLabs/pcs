@@ -9,7 +9,11 @@ from pcs.test.tools.assertions import (
     console_report,
 )
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
-from pcs.test.tools.fixture_cib import fixture_master_xml, fixture_to_cib
+from pcs.test.tools.fixture_cib import (
+    fixture_master_xml,
+    fixture_to_cib,
+    wrap_element_by_master,
+)
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
@@ -85,9 +89,10 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource master Master D4"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "D4", master_id="Master")
 
     def testConstraintRules(self):
         self.fixture_resources()
@@ -983,9 +988,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master statefulG")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "statefulG")
 
         o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1")
         ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
@@ -1101,9 +1107,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master statefulG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "statefulG")
 
         output, returnVal = pcs(temp_cib,
             "constraint location stateful1 prefers rh7-1 --autocorrect"
@@ -1791,47 +1798,6 @@ Ticket Constraints:
 """)
         assert returnVal == 0
 
-    def testConstraintResourceMasterUpdate(self):
-        self.fixture_resources()
-        output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D1 then D5")
-        ac(output, """\
-Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D6 then D1")
-        ac(output, """\
-Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource master D1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: D1-master
-    Enabled on: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
-Ordering Constraints:
-  start D1-master then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
-  start D6 then start D1-master (kind:Mandatory) (id:order-D6-D1-mandatory)
-Colocation Constraints:
-  D1-master with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
-Ticket Constraints:
-""")
-        assert returnVal == 0
-
     def testConstraintGroupCloneUpdate(self):
         self.fixture_resources()
         output, returnVal = pcs(temp_cib, "resource group add DG D1")
@@ -1873,51 +1839,6 @@ Ordering Constraints:
   start D6 then start DG-clone (kind:Mandatory) (id:order-D6-DG-mandatory)
 Colocation Constraints:
   DG-clone with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
-Ticket Constraints:
-""")
-        assert returnVal == 0
-
-    def testConstraintGroupMasterUpdate(self):
-        self.fixture_resources()
-        output, returnVal = pcs(temp_cib, "resource group add DG D1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order DG then D5")
-        ac(output, """\
-Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D6 then DG")
-        ac(output, """\
-Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource master DG")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: DG-master
-    Enabled on: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
-Ordering Constraints:
-  start DG-master then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
-  start D6 then start DG-master (kind:Mandatory) (id:order-D6-DG-mandatory)
-Colocation Constraints:
-  DG-master with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
 Ticket Constraints:
 """)
         assert returnVal == 0

@@ -159,11 +159,11 @@ Remove the group (note: this does not remove any resources from the cluster) or 
 clone <resource id | group id> [clone options]... [\fB\-\-wait\fR[=n]]
 Set up the specified resource or group as a clone. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting clone instances if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
+promotable <resource id | group id> [clone options]... [\fB\-\-wait\fR[=n]]
+Set up the specified resource or group as a promotable clone. This is an alias for 'pcs resource clone <resource id> promotable=true'.
+.TP
 unclone <resource id | group id> [\fB\-\-wait\fR[=n]]
 Remove the clone which contains the specified group or resource (the resource or group will not be removed).  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including stopping clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
-.TP
-master [<master/slave id>] <resource id | group id> [options] [\fB\-\-wait\fR[=n]]
-Configure a resource or group as a multi\-state (master/slave) resource.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and promoting resource instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.  Note: to remove a master you must remove the resource/group it contains.
 .TP
 bundle create <bundle id> container <container type> [<container options>] [network <network options>] [port\-map <port options>]... [storage\-map <storage options>]... [meta <meta options>] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
 Create a new bundle encapsulating no resources. The bundle can be used either as it is or a resource may be put into it at any time. If \fB\-\-disabled\fR is specified, the bundle is not started automatically. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the bundle to start and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
