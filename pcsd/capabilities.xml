@@ -897,10 +897,10 @@
     <capability id="pcmk.resource.create" in-pcs="1" in-pcsd="1">
       <description>
         Create a resource (including specifying its options). Optionally put
-        the resource into a new clone, master/slave or to an existing or new
-        group. When putting the resource to a group, optionally specify the
-        resource's position in the group. Optionally disable the resource upon
-        its creation.
+        the resource into a new clone or to an existing or new group. When
+        putting the resource to a group, optionally specify the resource's
+        position in the group. Optionally disable the resource upon its
+        creation.
 
         pcs commands: resource create
         daemon urls: update_resource (param: resource_id not set)
@@ -913,12 +913,19 @@
         pcs commands: resource create ... bundle
       </description>
     </capability>
+    <capability id="pcmk.resource.create.no-master" in-pcs="1" in-pcsd="1">
+      <description>
+        It is not possible to create master resources.
+
+        pcs commands: resource create
+        daemon urls: update_resource (param: resource_id not set)
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
       <description>
         Set resource meta attributes when creating a resource. When creating a
         resource as a clone resource, it is possible to set clone meta
-        attributes. When creating a resource into a master/slave resource, it is
-        possible to set master/slave meta attributes.
+        attributes.
 
         pcs commands: resource create
       </description>

@@ -24,7 +24,7 @@ def parse_create_simple(arg_list):
 def parse_create(arg_list):
     groups = group_by_keywords(
         arg_list,
-        set(["op", "meta", "clone", "master", "bundle"]),
+        set(["op", "meta", "clone", "bundle"]),
         implicit_first_group_key="options",
         group_repeated_keywords=["op"],
         only_found_keywords=True,
@@ -41,9 +41,6 @@ def parse_create(arg_list):
 
     if "clone" in groups:
         parts["clone"] = prepare_options(groups["clone"])
-
-    if "master" in groups:
-        parts["master"] = prepare_options(groups["master"])
 
     if "bundle" in groups:
         parts["bundle"] = groups["bundle"]

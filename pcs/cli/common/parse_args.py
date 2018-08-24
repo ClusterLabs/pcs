@@ -311,7 +311,6 @@ def upgrade_args(arg_list):
     list arg_list contains command line arguments
     """
     upgraded_args = []
-    args_without_options = filter_out_options(arg_list)
     for arg in arg_list:
         if arg in ["--cloneopt", "--clone"]:
             #for every commands - kept as it was previously
@@ -320,14 +319,6 @@ def upgrade_args(arg_list):
             #for every commands - kept as it was previously
             upgraded_args.append("clone")
             upgraded_args.append(arg.split('=', 1)[1])
-        elif(
-            #only for resource create - currently the only known problematic
-            #place
-            arg == "--master"
-            and
-            args_without_options[:2] == ["resource", "create"]
-        ):
-            upgraded_args.append("master")
         else:
             upgraded_args.append(arg)
     return upgraded_args

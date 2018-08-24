@@ -11,6 +11,7 @@ from pcs.test.tools.assertions import (
     AssertPcsMixin,
 )
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
+from pcs.test.tools.fixture_cib import fixture_master_xml, fixture_to_cib
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -2842,12 +2843,9 @@ Ticket Constraints:
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --master"
-        )
-        assert returnVal == 0
-        assert output == "", [output]
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
 
         output, returnVal  = pcs(temp_cib, "resource move D1")
         assert returnVal == 1
@@ -2889,8 +2887,9 @@ Ticket Constraints:
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Master: D2-master
-              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
+              Resource: D2 (class=ocf provider=pacemaker type=Stateful)
+               Operations: monitor interval=10 role=Master timeout=20 (D2-monitor-interval-10)
+                           monitor interval=11 role=Slave timeout=20 (D2-monitor-interval-11)
             """
         ))
 
@@ -2942,9 +2941,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create D3 ocf:heartbeat:Dummy --master")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("D3"))
 
         o,r = pcs(temp_cib, "resource debug-start DGroup")
         ac(o,"Error: unable to debug-start a group, try one of the group's resource(s) (D0,D1)\n")
@@ -3144,28 +3143,6 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
              Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
              Master: dummy-master0
-              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-            """
-        ))
-
-        self.assert_pcs_success(
-            "resource delete dummy",
-            "Deleting Resource - dummy\n"
-        )
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --master"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        self.assert_pcs_success("resource show --full", outdent(
-            """\
-             Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-master-monitor-interval-10s)
-             Master: dummy-master-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3759,10 +3736,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         # pcs/lib/commands/test/resource/test_resource_enable_disable.py .
         # However those test the pcs library. I'm leaving these tests here to
         # test the cli part for now.
-        self.assert_pcs_success(
-            "resource create --no-default-ops dummy ocf:pacemaker:Stateful --master",
-            "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
-        )
+
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("dummy", all_ops=False))
 
         # disable primitive, enable master
         output, retVal = pcs(temp_cib, "resource disable dummy")
@@ -4800,21 +4777,21 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         ))
 
     def test_no_op_allowed_in_master_update(self):
-        self.assert_pcs_success(
-            "resource create dummy ocf:heartbeat:Dummy --master"
-        )
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("dummy"))
+        show = outdent(
             """\
              Master: dummy-master
-              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
-                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
-                           start interval=0s timeout=20s (dummy-start-interval-0s)
-                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
+              Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+               Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
+                           monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
+                           notify interval=0s timeout=5 (dummy-notify-interval-0s)
+                           start interval=0s timeout=20 (dummy-start-interval-0s)
+                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
-        ))
+        )
+        self.assert_pcs_success("resource show dummy-master", show)
         self.assert_pcs_fail(
             "resource update dummy-master op stop timeout=300",
             "Error: op settings must be changed on base resource, not the master\n"
@@ -4823,18 +4800,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             "resource update dummy-master foo=bar op stop timeout=300",
             "Error: op settings must be changed on base resource, not the master\n"
         )
-        self.assert_pcs_success("resource show dummy-master", outdent(
-            """\
-             Master: dummy-master
-              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
-                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
-                           start interval=0s timeout=20s (dummy-start-interval-0s)
-                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
-            """
-        ))
+        self.assert_pcs_success("resource show dummy-master", show)
 
 class ResourceRemoveWithTicketTest(TestCase, AssertPcsMixin):
     def setUp(self):

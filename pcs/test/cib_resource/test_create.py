@@ -224,27 +224,6 @@ class Success(ResourceTest):
             </resources>"""
         )
 
-    def test_with_master(self):
-        self.assert_effect(
-            [
-                "resource create R ocf:heartbeat:Dummy --no-default-ops --master",
-                "resource create R ocf:heartbeat:Dummy --no-default-ops master",
-            ],
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                </master>
-            </resources>"""
-        )
-
     def test_create_with_options_and_meta(self):
         self.assert_effect(
             "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
@@ -645,176 +624,6 @@ class SuccessGroup(ResourceTest):
             </resources>"""
         )
 
-class SuccessMaster(ResourceTest):
-    def test_disable_is_on_master_element(self):
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled "
-                " --master"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-target-role"
-                            name="target-role" value="Stopped"
-                        />
-                    </meta_attributes>
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                </master>
-            </resources>"""
-        )
-
-    def test_put_options_after_master_as_its_meta_fix_1(self):
-        """
-        fixes rhbz 1378107 (do not use master options as primitive options)
-        """
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy state=a"
-                " --master is-managed=false --force"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-state"
-                                name="state" value="a"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20s"
-                            />
-                            <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20s"
-                            />
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                            <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20s"
-                            />
-                            <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20s"
-                            />
-                            <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-is-managed"
-                            name="is-managed" value="false"
-                    />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
-
-    def test_put_options_after_master_as_its_meta_fix_2(self):
-        """
-        fixes bz 1378107 (do not use master options as operations)
-        """
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy state=a op monitor"
-                " interval=10s --master is-managed=false --force"
-                " --no-default-ops"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-state"
-                                name="state" value="a"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-is-managed"
-                            name="is-managed" value="false"
-                    />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
-
-    def test_do_not_steal_primitive_meta_options(self):
-        """
-        fixes rhbz 1378107
-        """
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy meta a=b --master b=c"
-                " --no-default-ops"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <meta_attributes id="R-meta_attributes">
-                            <nvpair id="R-meta_attributes-a" name="a"
-                                value="b"
-                            />
-                        </meta_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-b" name="b"
-                            value="c"
-                        />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
-
-    def test_takes_master_meta_attributes(self):
-        self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-                " ip=192.168.0.99 --master cidr_netmask=32"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="IPaddr2"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-ip" name="ip"
-                                value="192.168.0.99"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-cidr_netmask"
-                            name="cidr_netmask" value="32"
-                        />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
 
 class SuccessClone(ResourceTest):
     def test_clone_does_not_overshadow_meta_options(self):
@@ -1032,26 +841,7 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --group G"
             ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
-        )
-
-    def test_error_master_clone_combination(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
-                " --master"
-            ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
-        )
-
-    def test_error_master_group_combination(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --master"
-                " --group G"
-            ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
+            "Error: you can specify only one of clone, bundle or --group\n"
         )
 
     def test_error_bundle_clone_combination(self):
@@ -1059,17 +849,7 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " bundle bundle_id"
             ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
-        )
-
-    def test_error_bundle_master_combination(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --master"
-                " bundle bundle_id"
-            ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
+            "Error: you can specify only one of clone, bundle or --group\n"
         )
 
     def test_error_bundle_group_combination(self):
@@ -1077,8 +857,7 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
                 " bundle bundle_id"
             ,
-            "Error: you can specify only one of clone, master, bundle or"
-                " --group\n"
+            "Error: you can specify only one of clone, bundle or --group\n"
         )
 
     def test_fail_when_nonexisting_agent(self):

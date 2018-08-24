@@ -320,8 +320,8 @@ class FilterOutNonOptionNegativeNumbers(TestCase):
 
     def test_remove_follower_of_long_unsigned_option(self):
         self.assertEqual(
-            ["first", "--master"],
-            filter_out_non_option_negative_numbers(["first", "--master", "-1"])
+            ["first", "--clone"],
+            filter_out_non_option_negative_numbers(["first", "--clone", "-1"])
         )
 
     def test_does_not_remove_dash(self):
@@ -362,7 +362,7 @@ class FilterOutOptions(TestCase):
     def test_remove_unsigned_long_option(self):
         self.assertEqual(
             ["first", "second"],
-            filter_out_options(["first", "--master", "second"])
+            filter_out_options(["first", "--clone", "second"])
         )
 
     def test_remove_signed_long_option_with_value(self):
@@ -436,7 +436,7 @@ class IsLongOptionExpectingValue(TestCase):
         self.assertTrue(is_long_option_expecting_value("--name"))
 
     def test_returns_false_on_long_option_without_value(self):
-        self.assertFalse(is_long_option_expecting_value("--master"))
+        self.assertFalse(is_long_option_expecting_value("--clone"))
 
     def test_returns_false_on_unknown_long_option(self):
         self.assertFalse(is_long_option_expecting_value("--not-specified-long-opt"))
@@ -461,7 +461,7 @@ class IsOptionExpectingValue(TestCase):
         self.assertFalse(is_option_expecting_value("-h"))
 
     def test_returns_false_on_long_option_without_value(self):
-        self.assertFalse(is_option_expecting_value("--master"))
+        self.assertFalse(is_option_expecting_value("--clone"))
 
     def test_returns_false_on_unknown_short_option(self):
         self.assertFalse(is_option_expecting_value("-x"))
@@ -500,30 +500,6 @@ class UpgradeArgs(TestCase):
         self.assertEqual(
             ["first", "clone", "1", "second"],
             upgrade_args(["first", "--cloneopt=1", "second"])
-        )
-
-    def test_upgrade_2dash_master_in_resource_create(self):
-        self.assertEqual(
-            ["resource", "create", "master", "second"],
-            upgrade_args(["resource", "create", "--master", "second"])
-        )
-
-    def test_dont_upgrade_2dash_master_outside_of_resource_create(self):
-        self.assertEqual(
-            ["first", "--master", "second"],
-            upgrade_args(["first", "--master", "second"])
-        )
-
-    def test_upgrade_2dash_master_in_resource_create_with_complications(self):
-        self.assertEqual(
-            [
-                "-f", "path/to/file", "resource", "-V", "create", "master",
-                "second"
-            ],
-            upgrade_args([
-                "-f", "path/to/file", "resource", "-V", "create", "--master",
-                "second"
-            ])
         )
 
 

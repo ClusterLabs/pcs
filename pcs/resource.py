@@ -445,11 +445,11 @@ def resource_create(lib, argv, modifiers):
     ra_type = argv[1]
 
     parts = parse_create_args(argv[2:])
-    parts_sections = ["clone", "master", "bundle"]
+
+    parts_sections = ["clone", "bundle"]
     defined_options = [opt for opt in parts_sections if opt in parts]
     if modifiers.is_specified("--group"):
         defined_options.append("group")
-
     if len(
         set(defined_options).intersection(set(parts_sections + ["group"]))
     ) > 1:
@@ -490,14 +490,6 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             parts["clone"],
-            **settings
-        )
-    elif "master" in parts:
-        lib.resource.create_as_master(
-            ra_id, ra_type, parts["op"],
-            parts["meta"],
-            parts["options"],
-            parts["master"],
             **settings
         )
     elif "bundle" in parts:

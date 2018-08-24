@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from functools import partial
 
 from pcs.common import report_codes
 from pcs.common.tools import Version
@@ -238,8 +237,8 @@ def create(
         if ensure_disabled:
             resource.common.disable(primitive_element)
 
-def _create_as_clone_common(
-    tag, env, resource_id, resource_agent_name,
+def create_as_clone(
+    env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes, clone_meta_options,
     allow_absent_agent=False,
     allow_invalid_operation=False,
@@ -250,13 +249,8 @@ def _create_as_clone_common(
     allow_not_suitable_command=False,
 ):
     """
-    Create resource in some kind of clone (clone or master).
+    Create resource in a clone
 
-    Currently the only difference between commands "create_as_clone" and
-    "create_as_master" is in tag. So the commands create_as_clone and
-    create_as_master are created by passing tag with partial.
-
-    string tag is any clone tag. Currently it can be "clone" or "master".
     LibraryEnvironment env provides all for communication with externals
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
@@ -316,7 +310,6 @@ def _create_as_clone_common(
             use_default_operations,
         )
         clone_element = resource.clone.append_new(
-            tag,
             resources_section,
             primitive_element,
             clone_meta_options,
@@ -406,9 +399,6 @@ def create_in_group(
             adjacent_resource_id,
             put_after_adjacent,
         )
-
-create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
-create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
 
 def create_into_bundle(
     env, resource_id, resource_agent_name,

@@ -1,7 +1,11 @@
 """
 Module for stuff related to clones.
-Multi-state resources are a specialization of clone resources. So this module
-include stuffs related to master.
+
+Previously, promotable clones were implemented in pacemaker as 'master'
+elements whereas regular clones were 'clone' elemets. Since pacemaker-2.0,
+promotable clones are clones with meta attribute promotable=true. Master
+elements are deprecated yet still supported in pacemaker. We provide read-only
+support for them to be able to read, process and display CIBs containing them.
 """
 from lxml import etree
 
@@ -22,36 +26,32 @@ def is_master(resource_el):
 def is_any_clone(resource_el):
     return resource_el.tag in ALL_TAGS
 
-def create_id(clone_tag, primitive_element):
+def create_id(primitive_element):
     """
     Create id for clone element based on contained primitive_element.
 
-    string clone_tag is tag of clone element. Specialization of "clone" is
-        "master" and this function is common for both - "clone" and "master".
     etree.Element primitive_element is resource which will be cloned.
         It must be connected into the cib to ensure that the resulting id is
         unique!
     """
     return find_unique_id(
         primitive_element,
-        "{0}-{1}".format(primitive_element.get("id"), clone_tag)
+        "{0}-{1}".format(primitive_element.get("id"), TAG_CLONE)
     )
 
-def append_new(clone_tag, resources_section, primitive_element, options):
+def append_new(resources_section, primitive_element, options):
     """
     Append a new clone element (containing the primitive_element) to the
     resources_section.
 
-    string clone_tag is tag of clone element. Expected values are "clone" and
-        "master".
     etree.Element resources_section is place where new clone will be appended.
     etree.Element primitive_element is resource which will be cloned.
     dict options is source for clone meta options
     """
     clone_element = etree.SubElement(
         resources_section,
-        clone_tag,
-        id=create_id(clone_tag, primitive_element),
+        TAG_CLONE,
+        id=create_id(primitive_element),
     )
     clone_element.append(primitive_element)
 
