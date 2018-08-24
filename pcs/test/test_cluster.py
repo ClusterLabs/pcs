@@ -11,7 +11,6 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_version,
-    outdent,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -53,119 +52,6 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         ac(output, "")
         assert returnVal == 0
 
-    @unittest.skip("TODO: remove")
-    def testRemoteNode(self):
-        #pylint: disable=trailing-whitespace
-        o,r = pcs(
-            temp_cib,
-            "resource create D1 ocf:heartbeat:Dummy --no-default-ops"
-        )
-        assert r==0 and o==""
-
-        o,r = pcs(
-            temp_cib,
-            "resource create D2 ocf:heartbeat:Dummy --no-default-ops"
-        )
-        assert r==0 and o==""
-
-        o,r = pcs(temp_cib, "cluster remote-node rh7-2g D1")
-        assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
-
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2g D1 --force")
-        assert r==0
-        self.assertEqual(
-            o,
-            "Warning: this command is deprecated, use 'pcs cluster node"
-                " add-guest'\n"
-        )
-
-        o,r = pcs(
-            temp_cib,
-            "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400"
-            " remote-connect-timeout=50 --force"
-        )
-        assert r==0
-        self.assertEqual(
-            o,
-            "Warning: this command is deprecated, use 'pcs cluster node"
-                " add-guest'\n"
-        )
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-2g 
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
-              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
-            """
-        ))
-
-        o,r = pcs(temp_cib, "cluster remote-node remove")
-        assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
-
-        self.assert_pcs_fail(
-            "cluster remote-node remove rh7-2g",
-            "Error: this command is deprecated, use 'pcs cluster node"
-            " remove-guest', use --force to override\n"
-        )
-        self.assert_pcs_success(
-            "cluster remote-node remove rh7-2g --force",
-            "Warning: this command is deprecated, use 'pcs cluster node"
-            " remove-guest'\n"
-        )
-
-        self.assert_pcs_fail(
-            "cluster remote-node add rh7-2g NOTARESOURCE --force",
-            "Error: unable to find resource 'NOTARESOURCE'\n"
-                "Warning: this command is deprecated, use"
-                " 'pcs cluster node add-guest'\n"
-            ,
-        )
-
-        self.assert_pcs_fail(
-            "cluster remote-node remove rh7-2g",
-            "Error: this command is deprecated, use 'pcs cluster node"
-                " remove-guest', use --force to override\n"
-        )
-        self.assert_pcs_fail(
-            "cluster remote-node remove rh7-2g --force",
-            "Error: unable to remove: cannot find remote-node 'rh7-2g'\n"
-            "Warning: this command is deprecated, use 'pcs cluster node"
-                " remove-guest'\n"
-        )
-
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
-              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
-            """
-        ))
-
-        self.assert_pcs_fail(
-            "cluster remote-node remove rh7-1",
-            "Error: this command is deprecated, use 'pcs cluster node"
-                " remove-guest', use --force to override\n"
-        )
-        self.assert_pcs_success(
-            "cluster remote-node remove rh7-1 --force",
-            "Warning: this command is deprecated, use 'pcs cluster node"
-                " remove-guest'\n"
-        )
-
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
-            """
-        ))
 
 class UidGidTest(unittest.TestCase):
     def setUp(self):

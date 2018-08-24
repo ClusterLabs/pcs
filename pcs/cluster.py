@@ -10,7 +10,6 @@ import time
 import xml.dom.minidom
 
 from pcs import (
-    constraint,
     node,
     pcsd,
     quorum,
@@ -86,9 +85,6 @@ def cluster_cmd(lib, argv, modifiers):
             cluster_enable_cmd(lib, argv, modifiers)
         elif (sub_cmd == "disable"):
             cluster_disable_cmd(lib, argv, modifiers)
-        # TODO: remove remote-node
-        elif (sub_cmd == "remote-node"):
-            cluster_remote_node(argv)
         elif (sub_cmd == "cib"):
             get_cib(lib, argv, modifiers)
         elif (sub_cmd == "cib-push"):
@@ -1202,98 +1198,6 @@ def cluster_report(dummy_lib, argv, modifiers):
     if retval != 0:
         utils.err(newoutput)
     print(newoutput)
-
-def cluster_remote_node(argv):
-    lib = None
-    modifiers = None
-    usage_add = """\
-    remote-node add <hostname> <resource id> [options]
-        Enables the specified resource as a remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n')."""
-    usage_remove = """\
-    remote-node remove <hostname>
-        Disables any resources configured to be remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n')."""
-
-    if len(argv) < 1:
-        print("\nUsage: pcs cluster remote-node...")
-        print(usage_add)
-        print()
-        print(usage_remove)
-        print()
-        sys.exit(1)
-
-    command = argv.pop(0)
-    if command == "add":
-        if len(argv) < 2:
-            print("\nUsage: pcs cluster remote-node add...")
-            print(usage_add)
-            print()
-            sys.exit(1)
-        if "--force" in utils.pcs_options:
-            warn("this command is deprecated, use 'pcs cluster node add-guest'")
-        else:
-            raise error(
-                "this command is deprecated, use 'pcs cluster node add-guest'"
-                ", use --force to override"
-            )
-        hostname = argv.pop(0)
-        rsc = argv.pop(0)
-        if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
-            utils.err("unable to find resource '%s'" % rsc)
-        resource.resource_update(
-            lib,
-            [rsc, "meta", "remote-node="+hostname] + argv,
-            modifiers,
-            deal_with_guest_change=False
-        )
-
-    elif command in ["remove","delete"]:
-        if len(argv) < 1:
-            print("\nUsage: pcs cluster remote-node remove...")
-            print(usage_remove)
-            print()
-            sys.exit(1)
-        if "--force" in utils.pcs_options:
-            warn(
-                "this command is deprecated, use"
-                " 'pcs cluster node remove-guest'"
-            )
-        else:
-            raise error(
-                "this command is deprecated, use 'pcs cluster node"
-                " remove-guest', use --force to override"
-            )
-        hostname = argv.pop(0)
-        dom = utils.get_cib_dom()
-        nvpairs = dom.getElementsByTagName("nvpair")
-        nvpairs_to_remove = []
-        for nvpair in nvpairs:
-            if nvpair.getAttribute("name") == "remote-node" and nvpair.getAttribute("value") == hostname:
-                for np in nvpair.parentNode.getElementsByTagName("nvpair"):
-                    if np.getAttribute("name").startswith("remote-"):
-                        nvpairs_to_remove.append(np)
-
-        if len(nvpairs_to_remove) == 0:
-            utils.err("unable to remove: cannot find remote-node '%s'" % hostname)
-
-        for nvpair in nvpairs_to_remove[:]:
-            nvpair.parentNode.removeChild(nvpair)
-        dom = constraint.remove_constraints_containing_node(dom, hostname)
-        utils.replace_cib_configuration(dom)
-        if not utils.usefile:
-            output, retval = utils.run([
-                "crm_node", "--force", "--remove", hostname
-            ])
-            if retval != 0:
-                utils.err("unable to remove: {0}".format(output))
-    else:
-        print("\nUsage: pcs cluster remote-node...")
-        print(usage_add)
-        print()
-        print(usage_remove)
-        print()
-        sys.exit(1)
 
 
 def send_local_configs(

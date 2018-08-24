@@ -2056,12 +2056,17 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "cluster remote-node remove guest1 --force"
+            temp_cib,
+            "cluster node remove-guest guest1",
+            corosync_conf_opt=rc("corosync.conf"),
         )
         ac(
             output,
-            "Warning: this command is deprecated, use 'pcs cluster node"
-                " remove-guest'\n"
+            outdent("""\
+            running 'pacemaker_remote stop' on 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+            running 'pacemaker_remote disable' on 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+            'pacemaker authkey' remove from 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+            """)
         )
         self.assertEqual(0, returnVal)
 
@@ -2070,8 +2075,10 @@ Ticket Constraints:
 Location Constraints:
   Resource: D1
     Enabled on: node1 (score:100) (id:location-D1-node1-100)
+    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
   Resource: D2
     Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -2105,6 +2112,8 @@ Ticket Constraints:
         ac(output, outdent(
            """\
             Removing Constraint - location-vm-guest1-node1-INFINITY
+            Removing Constraint - location-D1-guest1-200
+            Removing Constraint - location-D2-guest1--400
             Deleting Resource - vm-guest1
             """
         ))

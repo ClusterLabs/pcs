@@ -11,6 +11,8 @@
   cleanup` is doing exactly the same job. ([rhbz#1427273])
 - `pcs cluster node delete`, a deprecated alias to `pcs cluster node remove`,
   has been removed
+- Deprecated commands `pcs cluster remote-node add | remove` have been removed
+  as they were replaced with `pcs cluster node add-guest | remove-guest`
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
