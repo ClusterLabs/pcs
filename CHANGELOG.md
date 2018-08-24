@@ -12,6 +12,8 @@
 - `pcs resource delete` accepts only one resource
 - Show more user friendly error message when testing watchdog device and
   multiple devices are present ([rhbz#1475318])
+- Do not distinguish betwen supported and unsupported watchdog devices as SBD
+  cannot reliably provide such information ([rhbz#1475318])
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
