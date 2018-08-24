@@ -569,25 +569,13 @@ def sbd_watchdog_list(lib, argv, modifiers):
         raise CmdLineInputError()
 
     available_watchdogs = lib.sbd.get_local_available_watchdogs()
-    supported_watchdog_list = [
-        wd for wd, wd_info in available_watchdogs.items()
-        if wd_info["caution"] is None
-    ]
-    unsupported_watchdog_list = [
-        wd for wd in available_watchdogs
-        if wd not in supported_watchdog_list
-    ]
 
-    if supported_watchdog_list:
-        print("Supported watchdog(s):")
-        for watchdog in supported_watchdog_list:
+    if available_watchdogs:
+        print("Available watchdog(s):")
+        for watchdog in sorted(available_watchdogs.keys()):
             print("  {}".format(watchdog))
-
-    if unsupported_watchdog_list:
-        print("Unsupported watchdog(s):")
-        for watchdog in unsupported_watchdog_list:
-            print("  {}".format(watchdog))
-
+    else:
+        print("No available watchdog")
 
 def sbd_watchdog_list_json(lib, argv, modifiers):
     """

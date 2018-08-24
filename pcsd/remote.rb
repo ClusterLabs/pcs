@@ -2289,7 +2289,10 @@ def check_sbd(param, request, auth_user)
         :path => watchdog,
         :exist => exists,
         :is_supported => (
-          exists and available_watchdogs[watchdog]['caution'] == nil
+          # this method is not reliable so all watchdog devices listed by SBD
+          # will be listed as supported for now
+          # exists and available_watchdogs[watchdog]['caution'] == nil
+          exists
         ),
       }
     rescue JSON::ParserError

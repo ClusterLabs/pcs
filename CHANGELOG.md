@@ -45,6 +45,8 @@
   is printed instead of printing the whole usage
 - Show more user friendly error message when testing watchdog device and
   multiple devices are present ([rhbz#1578891])
+- Do not distinguish betwen supported and unsupported watchdog devices as SBD
+  cannot reliably provide such information ([rhbz#1578891])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
