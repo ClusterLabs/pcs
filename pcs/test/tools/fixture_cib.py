@@ -36,7 +36,7 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
         "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
     )
 
-def fixture_master_xml(name, all_ops=True):
+def fixture_master_xml(name, all_ops=True, meta_dict=None):
     default_ops = f"""
             <op id="{name}-notify-interval-0s" interval="0s" name="notify"
                 timeout="5"
@@ -48,6 +48,19 @@ def fixture_master_xml(name, all_ops=True):
                 timeout="20"
             />
     """
+    meta_xml = ''
+    if meta_dict:
+        meta_lines = (
+            [f'<meta_attributes id="{name}-master-meta_attributes">']
+            +
+            [
+                f'<nvpair id="{name}-master-meta_attributes-{key}"                   name="{key}" value="{val}"/>'
+                for key, val in meta_dict.items()
+            ]
+            +
+            ['</meta_attributes>']
+        )
+        meta_xml = "\n".join(meta_lines)
     master = f"""
       <master id="{name}-master">
         <primitive class="ocf" id="{name}" provider="pacemaker" type="Stateful">
@@ -61,9 +74,10 @@ def fixture_master_xml(name, all_ops=True):
     """
     if all_ops:
         master += default_ops
-    master += """
+    master += f"""
           </operations>
         </primitive>
+        {meta_xml}
       </master>
     """
     return master

@@ -27,6 +27,9 @@
 - Commands for listing and testing watchdog devices ([rhbz#1578891])
 - Commands for creating promotable clone resources `pcs resource promotable`
   and `pcs resource create ... promotable` ([rhbz#1542288])
+- `pcs resource update` and `pcs resource meta` commands change master
+  resources to promotable clone resources because master resources are
+  deprecated in Pacemaker 2.x ([rhbz#1542288])
 
 ### Fixed
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as

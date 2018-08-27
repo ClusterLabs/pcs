@@ -6,6 +6,7 @@ import shutil
 from textwrap import dedent
 from unittest import mock, skip, TestCase
 
+from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
@@ -39,7 +40,7 @@ large_cib = rc("cib-large.xml")
 temp_large_cib  = os.path.join(RESOURCES_TMP, "temp-cib-large.xml")
 
 
-class ResourceDescribeTest(TestCase, AssertPcsMixin):
+class ResourceDescribe(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(None)
 
@@ -138,7 +139,7 @@ class ResourceDescribeTest(TestCase, AssertPcsMixin):
         )
 
 
-class ResourceTest(TestCase, AssertPcsMixin):
+class Resource(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
@@ -3934,8 +3935,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
+            # pylint:disable=trailing-whitespace
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true 
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3952,8 +3955,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource show dummy-master", outdent(
             # pylint:disable=trailing-whitespace
             """\
-             Master: dummy-master
-              Meta Attrs: target-role=Stopped 
+             Clone: dummy-master
+              Meta Attrs: promotable=true target-role=Stopped 
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3965,8 +3968,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
+            # pylint:disable=trailing-whitespace
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true 
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -4792,7 +4797,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
 
-class ResourcesReferencedFromAclTest(TestCase, AssertPcsMixin):
+class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -4888,15 +4893,193 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource show dummy-master", show)
         self.assert_pcs_fail(
             "resource update dummy-master op stop timeout=300",
-            "Error: op settings must be changed on base resource, not the master\n"
+            "Error: op settings must be changed on base resource, not the clone\n"
         )
         self.assert_pcs_fail(
             "resource update dummy-master foo=bar op stop timeout=300",
-            "Error: op settings must be changed on base resource, not the master\n"
+            "Error: op settings must be changed on base resource, not the clone\n"
         )
         self.assert_pcs_success("resource show dummy-master", show)
 
-class ResourceRemoveWithTicketTest(TestCase, AssertPcsMixin):
+
+class TransforMasterToClone(ResourceTest):
+    def test_transform_master_without_meta_on_meta(self):
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(self.temp_cib, fixture_master_xml("dummy"))
+        self.assert_effect(
+            "resource meta dummy-master a=b",
+            """<resources>
+                <clone id="dummy-master">
+                    <primitive class="ocf" id="dummy" provider="pacemaker"
+                        type="Stateful"
+                    >
+                        <operations>
+                            <op id="dummy-monitor-interval-10" interval="10"
+                                name="monitor" role="Master" timeout="20"
+                            />
+                            <op id="dummy-monitor-interval-11" interval="11"
+                                name="monitor" role="Slave" timeout="20"
+                            />
+                            <op id="dummy-notify-interval-0s" interval="0s"
+                                name="notify" timeout="5"
+                            />
+                            <op id="dummy-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="dummy-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="dummy-master-meta_attributes">
+                        <nvpair id="dummy-master-meta_attributes-promotable"
+                              name="promotable" value="true"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                            value="b"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
+    def test_transform_master_with_meta_on_meta(self):
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(
+            self.temp_cib,
+            fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C"))
+        )
+        self.assert_effect(
+            "resource meta dummy-master a=AA b= d=D promotable=",
+            """<resources>
+                <clone id="dummy-master">
+                    <primitive class="ocf" id="dummy" provider="pacemaker"
+                        type="Stateful"
+                    >
+                        <operations>
+                            <op id="dummy-monitor-interval-10" interval="10"
+                                name="monitor" role="Master" timeout="20"
+                            />
+                            <op id="dummy-monitor-interval-11" interval="11"
+                                name="monitor" role="Slave" timeout="20"
+                            />
+                            <op id="dummy-notify-interval-0s" interval="0s"
+                                name="notify" timeout="5"
+                            />
+                            <op id="dummy-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="dummy-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="dummy-master-meta_attributes">
+                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                            value="AA"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-c" name="c"
+                            value="C"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-d" name="d"
+                            value="D"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
+    def test_transform_master_without_meta_on_update(self):
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(self.temp_cib, fixture_master_xml("dummy"))
+        self.assert_effect(
+            "resource update dummy-master meta a=b",
+            """<resources>
+                <clone id="dummy-master">
+                    <primitive class="ocf" id="dummy" provider="pacemaker"
+                        type="Stateful"
+                    >
+                        <operations>
+                            <op id="dummy-monitor-interval-10" interval="10"
+                                name="monitor" role="Master" timeout="20"
+                            />
+                            <op id="dummy-monitor-interval-11" interval="11"
+                                name="monitor" role="Slave" timeout="20"
+                            />
+                            <op id="dummy-notify-interval-0s" interval="0s"
+                                name="notify" timeout="5"
+                            />
+                            <op id="dummy-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="dummy-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="dummy-master-meta_attributes">
+                        <nvpair id="dummy-master-meta_attributes-promotable"
+                              name="promotable" value="true"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                            value="b"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
+    def test_transform_master_with_meta_on_update(self):
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(
+            self.temp_cib,
+            fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C"))
+        )
+        self.assert_effect(
+            "resource update dummy-master meta a=AA b= d=D promotable=",
+            """<resources>
+                <clone id="dummy-master">
+                    <primitive class="ocf" id="dummy" provider="pacemaker"
+                        type="Stateful"
+                    >
+                        <operations>
+                            <op id="dummy-monitor-interval-10" interval="10"
+                                name="monitor" role="Master" timeout="20"
+                            />
+                            <op id="dummy-monitor-interval-11" interval="11"
+                                name="monitor" role="Slave" timeout="20"
+                            />
+                            <op id="dummy-notify-interval-0s" interval="0s"
+                                name="notify" timeout="5"
+                            />
+                            <op id="dummy-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="dummy-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="dummy-master-meta_attributes">
+                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                            value="AA"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-c" name="c"
+                            value="C"
+                        />
+                        <nvpair id="dummy-master-meta_attributes-d" name="d"
+                            value="D"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
+class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -4955,7 +5138,7 @@ class BundleCommon(
 
 
 @skip_unless_pacemaker_supports_bundle
-class BundleDeleteTest(BundleCommon):
+class BundleDelete(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
         self.assert_effect(
@@ -5102,7 +5285,7 @@ class BundleMiscCommands(BundleCommon):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
             "resource meta B aaa=bbb",
-            "Error: unable to find a resource/clone/master/group: B\n"
+            "Error: unable to find a resource/clone/group: B\n"
         )
 
     def test_utilization(self):
@@ -5228,7 +5411,7 @@ class BundleMiscCommands(BundleCommon):
         )
 
 
-class ResourceUpdateSpcialChecks(TestCase, AssertPcsMixin):
+class ResourceUpdateSpecialChecks(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
