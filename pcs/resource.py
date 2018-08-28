@@ -1865,11 +1865,8 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     if not group_match:
         utils.err("Group '%s' does not exist" % group_name)
 
-    if group_match.parentNode.tagName == "master" and group_match.getElementsByTagName("primitive").length > 1:
-        utils.err("Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete %s'." % group_name)
 
     resources_to_move = []
-
     if all_resources:
         for resource in group_match.getElementsByTagName("primitive"):
             resources_to_move.append(resource)
@@ -1881,21 +1878,31 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
             else:
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
-    if group_match.parentNode.tagName in ["clone", "master"]:
-        res_in_group = len(group_match.getElementsByTagName("primitive"))
-        if (
-            res_in_group > 1
-            and
-            (all_resources or (len(resources_to_move) == res_in_group))
-        ):
-            utils.err("Cannot remove more than one resource from cloned group")
+    # If the group is in a clone, we don't delete the clone as there may be
+    # constraints associated with it which the user may want to keep. However,
+    # there may be several resources in the group. In that case there is no way
+    # to figure out which one of them should stay in the clone. So we forbid
+    # removing all resources from a cloned group unless there is just one
+    # resource.
+    # This creates an inconsistency:
+    # - consider a cloned group with two resources
+    # - move one resource from the group - it becomes a primitive
+    # - move the last resource from the group - it stays in the clone
+    # So far there has been no request to change this behavior. Unless there is
+    # a request / reason to change it, we'll keep it that way.
+    is_cloned_group = group_match.parentNode.tagName in ["clone", "master"]
+    res_in_group = len(group_match.getElementsByTagName("primitive"))
+    if (
+        is_cloned_group
+        and
+        res_in_group > 1
+        and
+        len(resources_to_move) == res_in_group
+    ):
+        utils.err("Cannot remove all resources from a cloned group")
 
     target_node = group_match.parentNode
-    if (
-        target_node.tagName in ["clone", "master"]
-        and
-        len(group_match.getElementsByTagName("primitive")) > 1
-    ):
+    if is_cloned_group and res_in_group > 1:
         target_node = dom.getElementsByTagName("resources")[0]
     for resource in resources_to_move:
         resource.parentNode.removeChild(resource)

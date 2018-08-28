@@ -2386,8 +2386,8 @@ monitor interval=20 (A-monitor-interval-20)
         ))
 
         output, returnVal = pcs(temp_cib, "resource unclone dummy2")
-        ac(output, "Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete gr'.\n")
-        self.assertEqual(1, returnVal)
+        ac(output, "")
+        self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
@@ -2396,9 +2396,9 @@ monitor interval=20 (A-monitor-interval-20)
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
                             monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
-               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+             Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+              Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
+                          monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
             """
         ))
 
@@ -3392,7 +3392,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         )
 
         o,r = pcs(temp_cib, "resource ungroup AG")
-        ac(o,"Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete AG'.\n")
+        ac(o,"Error: Cannot remove all resources from a cloned group\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource delete B")
@@ -3458,14 +3458,14 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         output, returnVal = pcs(temp_cib, "resource ungroup DG")
         ac(
             output,
-            "Error: Cannot remove more than one resource from cloned group\n"
+            "Error: Cannot remove all resources from a cloned group\n"
         )
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG D1 D2")
         ac(
             output,
-            "Error: Cannot remove more than one resource from cloned group\n"
+            "Error: Cannot remove all resources from a cloned group\n"
         )
         self.assertEqual(1, returnVal)
 
