@@ -503,11 +503,10 @@ class BundleShow(TestCase, AssertPcsMixin):
             --disabled
         """)
         self.assert_pcs_success("resource show B1", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Bundle: B1
               Docker: image=pcs:test
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
             """
         ))
 
@@ -548,7 +547,6 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
         )
         self.assert_pcs_success("resource show B1", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Bundle: B1
               Docker: image=pcs:test masters=2 options="a b c" replicas=4
@@ -559,7 +557,7 @@ class BundleShow(TestCase, AssertPcsMixin):
               Storage Mapping:
                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-              Meta Attrs: is-managed=false target-role=Stopped 
+              Meta Attrs: is-managed=false target-role=Stopped
               Resource: A (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
             """

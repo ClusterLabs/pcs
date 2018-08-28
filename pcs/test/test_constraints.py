@@ -994,51 +994,51 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         wrap_element_by_master(temp_cib, "statefulG")
 
         o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location statefulG prefers rh7-1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location stateful1 rule #uname eq rh7-1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location statefulG rule #uname eq rh7-1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order stateful1 then dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order dummy1 then statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order set stateful1 dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order set dummy1 statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation add dummy1 with statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation set dummy1 stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation set statefulG dummy1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint --full")
@@ -1058,7 +1058,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint order set stateful1 dummy1 --force")
-        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
+        ac(o,"Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1 --force")
@@ -1066,7 +1066,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint colocation set stateful1 dummy1 --force")
-        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
+        ac(o,"Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint --full")
@@ -2941,7 +2941,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
         ])
 
     def test_show(self):
-        #pylint: disable=trailing-whitespace
         self.fixture()
         self.assert_pcs_success(
             "constraint location show --full",

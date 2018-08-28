@@ -84,12 +84,12 @@ def resource_for_constraint_is_multiinstance(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    when setting up a constraint a resource in a clone or a master was specified
+    when setting up a constraint a resource in a type of a clone was specified
     resource_id string specified resource
-    parent_type string "clone" or "master"
-    parent_id clone or master resource id
-    severity report item severity
-    forceable is this report item forceable? by what category?
+    parent_type string type of a clone (clone, bundle...)
+    parent_id string clone resource id
+    severity string report item severity
+    forceable mixed is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,

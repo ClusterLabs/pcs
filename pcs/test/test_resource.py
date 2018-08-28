@@ -1373,7 +1373,7 @@ monitor interval=20 (A-monitor-interval-20)
         wrap_element_by_master(temp_cib, "A0")
 
         o, r = pcs(temp_cib, "resource group add A0-master A6")
-        ac(o, "Error: 'A0-master' is already a master/slave resource\n")
+        ac(o, "Error: 'A0-master' is already a clone resource\n")
         self.assertEqual(1, r)
 
         output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
@@ -1621,7 +1621,8 @@ monitor interval=20 (A-monitor-interval-20)
               Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
                Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
-             Master: Master
+             Clone: Master
+              Meta Attrs: promotable=true
               Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
                Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
@@ -1892,11 +1893,10 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success("resource show D0", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
               Attributes: test=testB test2=testC test4=test4A test3=testD
-              Meta Attrs: test6= test7=test7a 
+              Meta Attrs: test6= test7=test7a
               Operations: monitor interval=35 (D0-monitor-interval-35)
             """
         ))
@@ -1942,13 +1942,13 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, """\
  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
   Attributes: test=testC test2=test2a
-  Meta Attrs: test5=test5a test7=test7a 
+  Meta Attrs: test5=test5a test7=test7a
   Operations: monitor interval=35 (D0-monitor-interval-35)
  Group: TestRG
-  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2 
+  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
    Attributes: test=testA test2=test2a
-   Meta Attrs: d1meta=superd1meta 
+   Meta Attrs: d1meta=superd1meta
    Operations: monitor interval=30 (D1-monitor-interval-30)
 """)
         assert returnVal == 0
@@ -1979,7 +1979,8 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
-             Master: GroupMaster
+             Clone: GroupMaster
+              Meta Attrs: promotable=true
               Group: Group
                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                 Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
@@ -2228,7 +2229,8 @@ monitor interval=20 (A-monitor-interval-20)
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
-             Master: dummy2-master
+             Clone: dummy2-master
+              Meta Attrs: promotable=true
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
@@ -2263,7 +2265,8 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
-             Master: gr-master
+             Clone: gr-master
+              Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
@@ -2298,7 +2301,8 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
-             Master: gr-master
+             Clone: gr-master
+              Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
@@ -2340,7 +2344,8 @@ monitor interval=20 (A-monitor-interval-20)
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
               Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
                           monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
-             Master: gr-master
+             Clone: gr-master
+              Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
@@ -2374,7 +2379,8 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
-             Master: gr-master
+             Clone: gr-master
+              Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
@@ -2391,7 +2397,8 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource --full", outdent(
             """\
-             Master: gr-master
+             Clone: gr-master
+              Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                 Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
@@ -2462,7 +2469,7 @@ monitor interval=20 (A-monitor-interval-20)
   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
  Clone: D0-clone
-  Meta Attrs: promotable=true 
+  Meta Attrs: promotable=true
   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
    Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
 """)
@@ -2475,11 +2482,11 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource --full")
         ac(o,"""\
  Clone: D0-clone
-  Meta Attrs: promotable=true 
+  Meta Attrs: promotable=true
   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
    Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
  Clone: D1-clone
-  Meta Attrs: promotable=true 
+  Meta Attrs: promotable=true
   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
 """)
@@ -2538,19 +2545,20 @@ monitor interval=20 (A-monitor-interval-20)
         wrap_element_by_master(temp_cib, "D2")
 
         self.assert_pcs_success("resource show --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: D0-clone
               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
              Clone: D3-clone
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Master: D1-master-custom
+             Clone: D1-master-custom
+              Meta Attrs: promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Master: D2-master
+             Clone: D2-master
+              Meta Attrs: promotable=true
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
@@ -2576,13 +2584,13 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success("resource show --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: D3-clone
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Master: D1-master-custom
+             Clone: D1-master-custom
+              Meta Attrs: promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
@@ -2937,7 +2945,8 @@ Ticket Constraints:
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Master: D2-master
+             Clone: D2-master
+              Meta Attrs: promotable=true
               Resource: D2 (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (D2-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (D2-monitor-interval-11)
@@ -3051,10 +3060,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         o,r = pcs(temp_cib, "resource show --full")
         assert r == 0
-        # pylint:disable=trailing-whitespace
         ac(o,"""\
  Clone: DGroup-clone
-  Meta Attrs: promotable=true 
+  Meta Attrs: promotable=true
   Group: DGroup
    Resource: D1 (class=ocf provider=heartbeat type=Dummy)
     Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -3200,12 +3208,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource show --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
              Clone: dummy-clone-1
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3224,12 +3231,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource show --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
              Clone: dummy-clone-1
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3256,10 +3262,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, r)
 
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
-              Meta Attrs: foo=bar 
+              Meta Attrs: foo=bar
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
@@ -3268,10 +3273,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource update D1-clone bar=baz")
 
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
-              Meta Attrs: foo=bar bar=baz 
+              Meta Attrs: bar=baz foo=bar
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
@@ -3282,10 +3286,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, "")
 
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: D1-clone
-              Meta Attrs: bar=baz 
+              Meta Attrs: bar=baz
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
@@ -3406,7 +3409,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_success("resource show --full", outdent(
             """\
-             Master: AGMaster
+             Clone: AGMaster
+              Meta Attrs: promotable=true
               Resource: A (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
@@ -3518,10 +3522,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         self.assert_pcs_success("resource show D1", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
             """
         ))
@@ -3539,11 +3542,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: bundle/clone/group/master/resource 'NoExist' does not exist\n")
+        ac(o,"Error: bundle/clone/group/resource 'NoExist' does not exist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: bundle/clone/group/master/resource 'NoExist' does not exist\n")
+        ac(o,"Error: bundle/clone/group/resource 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
@@ -3774,10 +3777,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-clone", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-clone
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3803,10 +3805,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-clone", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-clone
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """
@@ -3845,7 +3846,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_success("resource show dummy-master", outdent(
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3863,7 +3865,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_success("resource show dummy-master", outdent(
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3885,7 +3888,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_success("resource show dummy-master", outdent(
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3907,7 +3911,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_success("resource show dummy-master", outdent(
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3920,10 +3925,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
-             Master: dummy-master
-              Meta Attrs: target-role=Stopped 
+             Clone: dummy-master
+              Meta Attrs: promotable=true target-role=Stopped
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3935,10 +3939,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-master
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3953,10 +3956,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-master
-              Meta Attrs: promotable=true target-role=Stopped 
+              Meta Attrs: promotable=true target-role=Stopped
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -3968,10 +3970,9 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Clone: dummy-master
-              Meta Attrs: promotable=true 
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -4010,13 +4011,12 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
@@ -4028,16 +4028,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4047,14 +4046,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4062,19 +4060,18 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_fail(
             "resource enable dummy3 dummyX",
-            "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
+            "Error: bundle/clone/group/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4082,19 +4079,18 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         self.assert_pcs_fail(
             "resource disable dummy1 dummyX",
-            "Error: bundle/clone/group/master/resource 'dummyX' does not exist\n"
+            "Error: bundle/clone/group/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4164,7 +4160,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
         o,r = pcs(temp_cib, "resource clone ClusterIP5")
-        ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
+        ac(o,"Error: ClusterIP5 is already a clone resource\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource promotable ClusterIP4")
@@ -4172,10 +4168,10 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
         o,r = pcs(temp_cib, "resource promotable ClusterIP5")
-        ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
+        ac(o,"Error: ClusterIP5 is already a clone resource\n")
         assert r == 1
 
-    def groupMSAndClone(self):
+    def testGroupMSAndClone(self):
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
@@ -4183,28 +4179,25 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --master"
-        )
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
 
         o,r = pcs(temp_cib, "resource group add DG D1")
         ac(o,"Error: cannot group clone resources\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource group add DG D2")
-        ac(o,"Error: cannot group master/slave resources\n")
+        ac(o,"Error: cannot group clone resources\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy --master --group xxx --clone")
-        ac(o,"Warning: --group ignored when creating a clone\nWarning: --master ignored when creating a clone\n")
-        assert r == 0
+        o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone")
+        ac(o,"Error: you can specify only one of clone, promotable, bundle or --group\n")
+        assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D4 ocf:heartbeat:Dummy --master --group xxx")
-        ac(o,"Warning: --group ignored when creating a master\n")
-        assert r == 0
+        o,r = pcs(temp_cib, "resource create --no-default-ops D4 ocf:heartbeat:Dummy promotable --group xxx")
+        ac(o,"Error: you can specify only one of clone, promotable, bundle or --group\n")
+        assert r == 1
 
     def testResourceCloneGroup(self):
         o,r = pcs(
@@ -4394,7 +4387,8 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
         self.assert_pcs_success("resource show dummies-master", outdent(
             """\
-             Master: dummies-master
+             Clone: dummies-master
+              Meta Attrs: promotable=true
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                 Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
@@ -4426,7 +4420,8 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
         self.assert_pcs_success("resource show dummies-master", outdent(
             """\
-             Master: dummies-master
+             Clone: dummies-master
+              Meta Attrs: promotable=true
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                 Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
@@ -4534,33 +4529,32 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
 
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
             """
         ))
@@ -4583,25 +4577,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
               Group: GRC
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
@@ -4626,7 +4619,6 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
@@ -4639,14 +4631,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
             """
         ))
@@ -4669,22 +4661,21 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
               Group: GRC
@@ -4881,7 +4872,8 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         fixture_to_cib(temp_cib, fixture_master_xml("dummy"))
         show = outdent(
             """\
-             Master: dummy-master
+             Clone: dummy-master
+              Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)

@@ -681,10 +681,10 @@ class IdBelongsToUnexpectedType(NameBuildTest):
     code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
     def test_build_message_with_data(self):
         self.assert_message_from_info(
-            "'ID' is not a clone/master/resource",
+            "'ID' is not a clone/resource",
             {
                 "id": "ID",
-                "expected_types": ["primitive", "master", "clone"],
+                "expected_types": ["primitive", "clone"],
                 "current_type": "op",
             }
         )
@@ -2426,10 +2426,10 @@ class IdNotFound(NameBuildTest):
 
     def test_id_and_type(self):
         self.assert_message_from_info(
-            "clone/master/resource 'ID' does not exist",
+            "clone/resource 'ID' does not exist",
             {
                 "id": "ID",
-                "expected_types": ["primitive", "master", "clone"],
+                "expected_types": ["primitive", "clone"],
                 "context_type": "",
                 "context_id": "",
             }

@@ -87,15 +87,15 @@ class ResourceForConstraintIsMultiinstanceTest(TestCase):
             codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE
         ]
 
-    def test_build_message_for_master(self):
+    def test_build_message(self):
         self.assertEqual(
-            "RESOURCE_PRIMITIVE is a master/slave resource, you should use the"
-                " master id: RESOURCE_MASTER when adding constraints"
+            "RESOURCE_PRIMITIVE is a clone resource, you should use the"
+                " clone id: RESOURCE_CLONE when adding constraints"
             ,
             self.build({
                 "resource_id": "RESOURCE_PRIMITIVE",
-                "parent_type": "master",
-                "parent_id": "RESOURCE_MASTER"
+                "parent_type": "clone",
+                "parent_id": "RESOURCE_CLONE"
             })
         )
 

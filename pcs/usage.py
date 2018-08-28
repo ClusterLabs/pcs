@@ -233,9 +233,9 @@ Commands:
                 ip=192.168.0.99 cidr_netmask=32 nic=eth2 \\
                 op monitor interval=30s
 
-    delete <resource id|group id|master id|clone id>
-        Deletes the resource, group, master or clone (and all resources within
-        the group/master/clone).
+    delete <resource id|group id|bundle id|clone id>
+        Deletes the resource, group, bundle or clone (and all resources within
+        the group/bundle/clone).
 
     enable <resource id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
@@ -256,10 +256,10 @@ Commands:
 
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the
-        resource is a clone or master/slave it will be restarted only on
-        the node specified.  If --wait is specified, then we will wait
-        up to 'n' seconds for the resource to be restarted and return 0 if
-        the restart was successful or 1 if it was not.
+        resource is a clone or bundle it will be restarted only on the node
+        specified. If --wait is specified, then we will wait up to 'n' seconds
+        for the resource to be restarted and return 0 if the restart was
+        successful or 1 if it was not.
 
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
@@ -371,14 +371,14 @@ Commands:
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined operations.
 
-    meta <resource id | group id | master id | clone id> <meta options>
+    meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
-        Add specified options to the specified resource, group, master/slave
-        or clone.  Meta options should be in the format of name=value, options
-        may be removed by setting an option without a value.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the changes to take
-        effect and then return 0 if the changes have been processed or 1
-        otherwise.  If 'n' is not specified it defaults to 60 minutes.
+        Add specified options to the specified resource, group or clone. Meta
+        options should be in the format of name=value, options may be removed
+        by setting an option without a value. If --wait is specified, pcs will
+        wait up to 'n' seconds for the changes to take effect and then return 0
+        if the changes have been processed or 1 otherwise. If 'n' is not
+        specified it defaults to 60 minutes.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group id> <resource id> [resource id] ... [resource id]

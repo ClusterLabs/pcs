@@ -228,7 +228,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource unmanage A B",
-            "Error: bundle/clone/group/master/resource 'B' does not exist\n"
+            "Error: bundle/clone/group/resource 'B' does not exist\n"
         )
         self.assert_resources_xml_in_cib(
             """
@@ -249,7 +249,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource manage A B",
-            "Error: bundle/clone/group/master/resource 'B' does not exist\n"
+            "Error: bundle/clone/group/resource 'B' does not exist\n"
         )
         self.assert_resources_xml_in_cib(
             """

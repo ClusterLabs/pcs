@@ -52,7 +52,7 @@ def find_valid_resource_id(
         report_processor.process(
             reports.resource_for_constraint_is_multiinstance(
                 resource_element.attrib["id"],
-                clone.tag,
+                "clone" if clone.tag == "master" else clone.tag,
                 clone.attrib["id"],
                 ReportItemSeverity.WARNING,
             )
@@ -61,7 +61,7 @@ def find_valid_resource_id(
 
     raise LibraryError(reports.resource_for_constraint_is_multiinstance(
         resource_element.attrib["id"],
-        clone.tag,
+        "clone" if clone.tag == "master" else clone.tag,
         clone.attrib["id"],
         ReportItemSeverity.ERROR,
         #repair to clone is workaround for web ui, so we put only information

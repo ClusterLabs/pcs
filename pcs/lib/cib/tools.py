@@ -157,7 +157,7 @@ def find_element_by_tag_and_id(
         raise LibraryError(
             reports.id_belongs_to_unexpected_type(
                 element_id,
-                expected_types=tag_list,
+                expected_types=id_type_list,
                 current_type=element.tag
             ) if element.tag not in tag_list
             else reports.object_with_id_in_unexpected_context(

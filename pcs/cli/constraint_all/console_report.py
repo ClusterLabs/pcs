@@ -51,12 +51,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE: lambda info:
         (
-            "{resource_id} is a {mode} resource, you should use the"
+            "{resource_id} is a {parent_type} resource, you should use the"
             " {parent_type} id: {parent_id} when adding constraints"
         ).format(
-            mode="master/slave" if info["parent_type"] == "master"
-                else info["parent_type"]
-            ,
             **info
         )
     ,

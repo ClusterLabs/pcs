@@ -1098,14 +1098,8 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
         dom_get_group(dom, resource_id)
     )
     if resource:
-        return dom_elem_get_resource_clone_ms_parent(resource)
+        return dom_get_parent_by_tag_names(resource, ["clone", "master"])
     return None
-
-def dom_elem_get_resource_clone_ms_parent(resource):
-    """
-    Commandline options: no options
-    """
-    return dom_get_parent_by_tag_names(resource, ["clone", "master"])
 
 def dom_get_resource_bundle_parent(dom, resource_id):
     """
@@ -1275,18 +1269,10 @@ def validate_constraint_resource(dom, resource_id):
     if "--force" in pcs_options:
         return True, "", clone_el.getAttribute("id")
 
-    if clone_el.tagName == "clone":
+    if clone_el.tagName in ["clone", "master"]:
         return (
             False,
             "%s is a clone resource, you should use the clone id: %s "
-                "when adding constraints. Use --force to override."
-                % (resource_id, clone_el.getAttribute("id")),
-            clone_el.getAttribute("id")
-        )
-    if clone_el.tagName == "master":
-        return (
-            False,
-            "%s is a master/slave resource, you should use the master id: %s "
                 "when adding constraints. Use --force to override."
                 % (resource_id, clone_el.getAttribute("id")),
             clone_el.getAttribute("id")

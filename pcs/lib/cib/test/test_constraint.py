@@ -95,7 +95,7 @@ class FindValidResourceId(TestCase):
         mock_find_parent.return_value = fixture_element("master", "master_id")
         assert_raise_library_error(
             lambda: self.find(id="resourceA"),
-            self.fixture_error_multiinstance("master", "master_id"),
+            self.fixture_error_multiinstance("clone", "master_id"),
         )
 
     def test_refuse_when_resource_is_in_bundle(
@@ -180,7 +180,7 @@ class FindValidResourceId(TestCase):
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
             [
-                self.fixture_warning_multiinstance("master", "master_id"),
+                self.fixture_warning_multiinstance("clone", "master_id"),
             ]
         )
 
