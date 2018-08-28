@@ -34,7 +34,6 @@ def remote(params, request, auth_user)
       :get_quorum_info => method(:get_quorum_info),
       :get_cib => method(:get_cib),
       :get_corosync_conf => method(:get_corosync_conf_remote),
-      :set_cluster_conf => method(:set_cluster_conf),
       :set_corosync_conf => method(:set_corosync_conf),
       :get_sync_capabilities => method(:get_sync_capabilities),
       :set_sync_options => method(:set_sync_options),
@@ -451,20 +450,6 @@ def get_corosync_conf_remote(params, request, auth_user)
   return get_corosync_conf()
 end
 
-def set_cluster_conf(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  if params[:cluster_conf] != nil and params[:cluster_conf].strip != ""
-    Cfgsync::ClusterConf.backup()
-    Cfgsync::ClusterConf.from_text(params[:cluster_conf]).save()
-    return 200, 'Updated cluster.conf...'
-  else
-    $logger.info "Invalid cluster.conf file"
-    return 400, 'Failed to update cluster.conf...'
-  end
-end
-
 # deprecated, use /remote/put_file (note that put_file doesn't support backup
 # yet)
 def set_corosync_conf(params, request, auth_user)
@@ -750,15 +735,13 @@ def get_sw_versions(params, request, auth_user)
     "pcs" => get_pcsd_version(),
     "pacemaker" => get_pacemaker_version(),
     "corosync" => get_corosync_version(),
-    "cman" => get_cman_version(),
   }
   return JSON.generate(versions)
 end
 
 def remote_node_available(params, request, auth_user)
   if (
-    (not ISRHEL6 and File.exist?(Cfgsync::CorosyncConf.file_path)) or
-    (ISRHEL6 and File.exist?(Cfgsync::ClusterConf.file_path)) or
+    File.exist?(Cfgsync::CorosyncConf.file_path) or \
     File.exist?("/var/lib/pacemaker/cib/cib.xml")
   )
     return JSON.generate({:node_available => false})
@@ -1038,7 +1021,6 @@ def node_status(params, request, auth_user)
     :uptime => node.uptime,
     :corosync => node.corosync,
     :pacemaker => node.pacemaker,
-    :cman => node.cman,
     :corosync_enabled => node.corosync_enabled,
     :pacemaker_enabled => node.pacemaker_enabled,
     :pacemaker_remote => node.services[:pacemaker_remote][:running],
@@ -1058,7 +1040,6 @@ def node_status(params, request, auth_user)
     :node_attr => node_attr,
     :fence_levels => status[:fence_levels],
     :need_ring1_address => status[:need_ring1_address],
-    :is_cman_with_udpu_transport => status[:is_cman_with_udpu_transport],
     :acls => status[:acls],
     :username => status[:username]
   }

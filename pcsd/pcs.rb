@@ -709,11 +709,6 @@ def need_ring1_address?()
   return false
 end
 
-# TODO remove - it makes no sense with knet
-def is_cman_with_udpu_transport?
-  return false
-end
-
 def get_resource_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
     auth_user, params[:cluster], 'get_avail_resource_agents'
@@ -914,23 +909,6 @@ def get_pacemaker_version()
   begin
     stdout, stderror, retval = run_cmd(
       PCSAuth.getSuperuserAuth(), PACEMAKERD, "-$"
-    )
-  rescue
-    stdout = []
-  end
-  if retval == 0
-    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
-    if match
-      return match[1..3].collect { | x | x.to_i }
-    end
-  end
-  return nil
-end
-
-def get_cman_version()
-  begin
-    stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), CMAN_TOOL, "-V"
     )
   rescue
     stdout = []
@@ -1566,7 +1544,6 @@ def get_node_status(auth_user, cib_dom)
       },
       :cluster_settings => {},
       :need_ring1_address => need_ring1_address?,
-      :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
       :acls => get_acls(auth_user, cib_dom),
       :username => auth_user[:username],
       :fence_levels => get_fence_levels(auth_user, cib_dom),
@@ -1723,7 +1700,7 @@ end
 
 def status_v1_to_v2(status)
   new_status = status.select { |k,_|
-    [:cluster_name, :username, :is_cman_with_udpu_transport,
+    [:cluster_name, :username,
      :need_ring1_address, :cluster_settings, :constraints,
      :corosync_online, :corosync_offline, :pacemaker_online, :pacemaker_standby,
      :pacemaker_offline, :acls, :fence_levels
@@ -1740,7 +1717,7 @@ def status_v1_to_v2(status)
   }
   new_status[:resource_list] = resources_hash
   new_status[:node] = status.select { |k,_|
-    [:uptime, :corosync, :pacemaker, :cman, :corosync_enabled,
+    [:uptime, :corosync, :pacemaker, :corosync_enabled,
      :pacemaker_enabled, :pcsd_enabled
     ].include?(k)
   }

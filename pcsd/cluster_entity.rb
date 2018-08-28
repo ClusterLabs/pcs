@@ -1023,7 +1023,7 @@ module ClusterEntity
 
   class Node < JSONable
     attr_accessor :id, :error_list, :warning_list, :status, :quorum, :uptime,
-                  :name, :corosync, :pacemaker, :cman, :corosync_enabled,
+                  :name, :corosync, :pacemaker, :corosync_enabled,
                   :pacemaker_enabled, :pcsd_enabled, :services, :sbd_config
 
     def initialize
@@ -1036,7 +1036,7 @@ module ClusterEntity
       @name = nil
       @services = {}
       [
-        :pacemaker, :pacemaker_remote, :corosync, :pcsd, :cman, :sbd
+        :pacemaker, :pacemaker_remote, :corosync, :pcsd, :sbd
       ].each do |service|
         @services[service] = {
           :installed => nil,
@@ -1046,7 +1046,6 @@ module ClusterEntity
       end
       @corosync = false
       @pacemaker = false
-      @cman = false
       @corosync_enabled = false
       @pacemaker_enabled = false
       @pcsd_enabled = false
@@ -1064,7 +1063,6 @@ module ClusterEntity
       node.corosync_enabled = node.services[:corosync][:enabled]
       node.pacemaker = node.services[:pacemaker][:running]
       node.pacemaker_enabled = node.services[:pacemaker][:enabled]
-      node.cman = node.services[:cman][:running]
       node.pcsd_enabled = node.services[:pcsd][:enabled]
 
       node_online = (node.corosync and node.pacemaker)

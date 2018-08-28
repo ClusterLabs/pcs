@@ -65,7 +65,7 @@ class UidGidTest(unittest.TestCase):
     def testUIDGID(self):
         _pcs = partial(pcs, None, uid_gid_dir=self.uid_gid_dir)
         o,r = _pcs("cluster uidgid")
-        ac(o, "No uidgids configured in cluster.conf\n")
+        ac(o, "No uidgids configured\n")
         assert r == 0
 
         o,r = _pcs("cluster uidgid add")
@@ -110,7 +110,7 @@ class UidGidTest(unittest.TestCase):
 
         o,r = _pcs("cluster uidgid")
         assert r == 0
-        ac(o, "No uidgids configured in cluster.conf\n")
+        ac(o, "No uidgids configured\n")
 
 
 class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):

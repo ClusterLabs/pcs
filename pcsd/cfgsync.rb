@@ -17,7 +17,6 @@ end
 
 # trick with defined? allows to prefill this constants in tests
 CFG_COROSYNC_CONF = COROSYNC_CONF unless defined? CFG_COROSYNC_CONF
-CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = PCSD_SETTINGS_CONF_LOCATION unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_KNOWN_HOSTS = known_hosts_file_path() unless defined? CFG_PCSD_KNOWN_HOSTS
 
@@ -246,31 +245,6 @@ module Cfgsync
       parsed = CfgKnownHosts.new(self.text)
       parsed.data_version = new_version
       return parsed.text
-    end
-  end
-
-
-  class ClusterConf < Config
-    @name = "cluster.conf"
-    @file_path = ::CFG_CLUSTER_CONF
-    @file_perm = 0644
-
-    protected
-
-    def get_version()
-      dom = REXML::Document.new(self.text)
-      if dom.root and dom.root.name == 'cluster'
-        return dom.root.attributes['config_version'].to_i
-      end
-      return 0
-    end
-
-    def set_version(new_version)
-      dom = REXML::Document.new(self.text)
-      if dom.root and dom.root.name == 'cluster'
-        dom.root.attributes['config_version'] = new_version
-      end
-      return dom.to_s
     end
   end
 
@@ -678,7 +652,7 @@ module Cfgsync
 
 
   def self.cluster_cfg_class()
-    return ISRHEL6 ? ClusterConf : CorosyncConf
+    return CorosyncConf
   end
 
   def self.get_cfg_classes()

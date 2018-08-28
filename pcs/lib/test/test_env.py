@@ -57,42 +57,6 @@ class LibraryEnvironmentTest(TestCase):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual([], env.user_groups)
 
-    @patch_env("is_cman_cluster")
-    def test_is_cman_cluster(self, mock_is_cman):
-        mock_is_cman.return_value = True
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        self.assertTrue(env.is_cman_cluster)
-        self.assertTrue(env.is_cman_cluster)
-        self.assertEqual(1, mock_is_cman.call_count)
-
-
-    @patch_env("get_local_cluster_conf")
-    def test_get_cluster_conf_live(self, mock_get_local_cluster_conf):
-        env = LibraryEnvironment(
-            self.mock_logger, self.mock_reporter, cluster_conf_data=None
-        )
-        mock_get_local_cluster_conf.return_value = "cluster.conf data"
-        self.assertEqual("cluster.conf data", env.get_cluster_conf_data())
-        mock_get_local_cluster_conf.assert_called_once_with()
-
-    @patch_env("get_local_cluster_conf")
-    def test_get_cluster_conf_not_live(self, mock_get_local_cluster_conf):
-        env = LibraryEnvironment(
-            self.mock_logger, self.mock_reporter, cluster_conf_data="data"
-        )
-        self.assertEqual("data", env.get_cluster_conf_data())
-        self.assertEqual(0, mock_get_local_cluster_conf.call_count)
-
-    def test_is_cluster_conf_live_live(self):
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        self.assertTrue(env.is_cluster_conf_live)
-
-    def test_is_cluster_conf_live_not_live(self):
-        env = LibraryEnvironment(
-            self.mock_logger, self.mock_reporter, cluster_conf_data="data"
-        )
-        self.assertFalse(env.is_cluster_conf_live)
-
 @patch_env("CommandRunner")
 class CmdRunner(TestCase):
     def setUp(self):

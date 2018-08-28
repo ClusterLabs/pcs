@@ -280,7 +280,6 @@ def config_restore_remote(infile_name, infile_obj):
     extracted = {
         "version.txt": "",
         "corosync.conf": "",
-        "cluster.conf": "",
     }
     try:
         tarball = tarfile.open(infile_name, "r|*", infile_obj)
@@ -317,8 +316,6 @@ def config_restore_remote(infile_name, infile_obj):
                 status["corosync"]
                 or
                 status["pacemaker"]
-                or
-                status["cman"]
                 or
                 # not supported by older pcsd, do not fail if not present
                 status.get("pacemaker_remote", False)
@@ -364,8 +361,6 @@ def config_restore_local(infile_name, infile_obj):
     Commandline options: no options
     """
     if (
-        status.is_service_running("cman")
-        or
         status.is_service_running("corosync")
         or
         status.is_service_running("pacemaker")

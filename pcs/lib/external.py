@@ -267,26 +267,6 @@ def get_systemd_services(runner):
     return service_list
 
 
-def is_cman_cluster(runner):
-    """
-    Detect if underlaying locally installed cluster is CMAN based
-    """
-    # Checking corosync version works in most cases and supports non-rhel
-    # distributions as well as running (manually compiled) corosync2 on rhel6.
-    # - corosync2 does not support cman at all
-    # - corosync1 runs with cman on rhel6
-    # - corosync1 can be used without cman, but we don't support it anyways
-    # - corosync2 is the default result if errors occur
-    stdout, dummy_stderr, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync"),
-        "-v"
-    ])
-    if retval != 0:
-        return False
-    match = re.search(r"version\D+(\d+)", stdout)
-    return match is not None and match.group(1) == "1"
-
-
 def is_proxy_set(env_dict):
     """
     Returns True whenever any of proxy environment variables (https_proxy,

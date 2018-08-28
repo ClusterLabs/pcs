@@ -16,11 +16,9 @@ from pcs.lib.communication.tools import (
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
     get_local_corosync_conf,
-    get_local_cluster_conf,
     reload_config as reload_corosync_config,
 )
 from pcs.lib.external import (
-    is_cman_cluster,
     is_service_running,
     CommandRunner,
     NodeCommunicator,
@@ -62,7 +60,6 @@ class LibraryEnvironment(object):
         booth=None,
         pacemaker=None,
         known_hosts_getter=None,
-        cluster_conf_data=None,
         request_timeout=None,
     ):
         self._logger = logger
@@ -71,7 +68,6 @@ class LibraryEnvironment(object):
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
-        self._cluster_conf_data = cluster_conf_data
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
@@ -79,7 +75,6 @@ class LibraryEnvironment(object):
         #the authkey
         self._pacemaker =  PacemakerEnv()
         self._request_timeout = request_timeout
-        self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
@@ -114,12 +109,6 @@ class LibraryEnvironment(object):
     @property
     def user_groups(self):
         return self._user_groups
-
-    @property
-    def is_cman_cluster(self):
-        if self._is_cman_cluster is None:
-            self._is_cman_cluster = is_cman_cluster(self.cmd_runner())
-        return self._is_cman_cluster
 
     def get_cib(self, minimal_version=None):
         if self.__loaded_cib_diff_source is not None:
@@ -330,16 +319,6 @@ class LibraryEnvironment(object):
             report_list += com_cmd.error_list
             if report_list:
                 raise LibraryError()
-
-    def get_cluster_conf_data(self):
-        if self.is_cluster_conf_live:
-            return get_local_cluster_conf()
-        return self._cluster_conf_data
-
-
-    @property
-    def is_cluster_conf_live(self):
-        return self._cluster_conf_data is None
 
     @property
     def is_corosync_conf_live(self):

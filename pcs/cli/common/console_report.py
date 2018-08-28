@@ -867,10 +867,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(cluster_list=", ".join(info["clusters"]))
     ,
 
-    codes.CMAN_UNSUPPORTED_COMMAND:
-        "This command is not supported on CMAN clusters"
-    ,
-
     codes.ID_ALREADY_EXISTS: lambda info:
         "'{id}' already exists"
         .format(**info)
@@ -1576,15 +1572,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "effective. Cluster has to be offline to be able to make this change."
     ,
 
-    codes.CLUSTER_CONF_LOAD_ERROR_INVALID_FORMAT: lambda info:
-        "unable to get cluster.conf: {reason}"
-        .format(**info)
-    ,
-
-    codes.CLUSTER_CONF_READ_ERROR: lambda info:
-        "Unable to read {path}: {reason}"
-        .format(**info)
-    ,
     codes.USE_COMMAND_NODE_ADD_REMOTE: lambda info:
         (
             "this command is not sufficient for creating a remote connection,"

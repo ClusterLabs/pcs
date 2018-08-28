@@ -9,62 +9,30 @@ require 'config.rb'
 
 class TestCfgsync < Test::Unit::TestCase
   def test_compare_version()
-    cfg1 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg1 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg2 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg2 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg3 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test1"/>'
+    cfg3 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "format_version": 2}'
     )
-    cfg4 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test2"/>'
+    cfg4 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "clusters": [], "format_version": 2}'
     )
 
     assert(cfg1 == cfg2)
     assert(cfg1 < cfg3)
     assert(cfg1 < cfg4)
     assert(cfg3 > cfg1)
-    assert_equal("0ebab34c8034fd1cb268d1170de935a183d156cf", cfg3.hash)
-    assert_equal("0f22e8a496ae00815d8bcbf005fd7b645ba9f617", cfg4.hash)
-    assert(cfg3 < cfg4)
+    assert_equal("e28c7dfa675fdba4c55b8e3e7a854a252426514f", cfg3.hash)
+    assert_equal("21ceb5ff1c8b35b9b79adabcfdac30849666a6f7", cfg4.hash)
+    assert(cfg3 > cfg4)
 
     newest = [cfg1, cfg2, cfg3, cfg4].shuffle!.max
     assert_equal(2, newest.version)
-    assert_equal('0f22e8a496ae00815d8bcbf005fd7b645ba9f617', newest.hash)
-  end
-end
-
-
-class TestClusterConf < Test::Unit::TestCase
-  def setup()
-    FileUtils.cp(File.join(CURRENT_DIR, "cluster.conf"), CFG_CLUSTER_CONF)
-  end
-
-  def test_basics()
-    assert_equal("cluster.conf", Cfgsync::ClusterConf.name)
-    text = '<cluster config_version="3" name="test1"/>'
-
-    cfg = Cfgsync::ClusterConf.from_text(text)
-    assert_equal(text, cfg.text)
-    assert_equal(3, cfg.version)
-    assert_equal("1c0ff62f0749bea0b877599a02f6557573f286e2", cfg.hash)
-
-    cfg.version = 4
-    assert_equal(4, cfg.version)
-    assert_equal("<cluster config_version='4' name='test1'/>", cfg.text)
-    assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
-
-    assert_equal(4, cfg.version)
-    assert_equal("<cluster config_version='4' name='test1'/>", cfg.text)
-    assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
-  end
-
-  def test_file()
-    cfg = Cfgsync::ClusterConf.from_file()
-    assert_equal(9, cfg.version)
-    assert_equal("198bda4b748ef646de867cb850cd3ad208c36d8b", cfg.hash)
+    assert_equal('e28c7dfa675fdba4c55b8e3e7a854a252426514f', newest.hash)
   end
 end
 
@@ -497,17 +465,17 @@ class TestConfigFetcher < Test::Unit::TestCase
   end
 
   def test_find_newest_config()
-    cfg1 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg1 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg2 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg2 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg3 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test1"/>'
+    cfg3 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "clusters": [], "format_version": 2}'
     )
-    cfg4 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test2"/>'
+    cfg4 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "format_version": 2}'
     )
     assert(cfg1 == cfg2)
     assert(cfg1 < cfg3)
@@ -538,24 +506,24 @@ class TestConfigFetcher < Test::Unit::TestCase
   end
 
   def test_fetch()
-    cfg1 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg1 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg2 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="1" name="test1"/>'
+    cfg2 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 1, "format_version": 2}'
     )
-    cfg3 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test1"/>'
+    cfg3 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "clusters": [], "format_version": 2}'
     )
-    cfg4 = Cfgsync::ClusterConf.from_text(
-      '<cluster config_version="2" name="test2"/>'
+    cfg4 = Cfgsync::PcsdSettings.from_text(
+      '{"data_version": 2, "format_version": 2}'
     )
     assert(cfg1 == cfg2)
     assert(cfg1 < cfg3)
     assert(cfg1 < cfg4)
     assert(cfg3 < cfg4)
-    cfg_name = Cfgsync::ClusterConf.name
-    fetcher = ConfigFetcherMock.new({}, [Cfgsync::ClusterConf], nil, nil)
+    cfg_name = Cfgsync::PcsdSettings.name
+    fetcher = ConfigFetcherMock.new({}, [Cfgsync::PcsdSettings], nil, nil)
 
     # local config is synced
     fetcher.set_configs_local({cfg_name => cfg1})

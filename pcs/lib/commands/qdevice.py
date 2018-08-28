@@ -14,7 +14,6 @@ def qdevice_setup(lib_env, model, enable, start):
     bool enable make qdevice service start on boot
     bool start start qdevice now
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     qdevice_net.qdevice_setup(lib_env.cmd_runner())
     lib_env.report_processor.process(
@@ -31,7 +30,6 @@ def qdevice_destroy(lib_env, model, proceed_if_used=False):
     string model qdevice model to destroy
     bool procced_if_used destroy qdevice even if it is used by clusters
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _check_qdevice_not_used(
         lib_env.report_processor,
@@ -51,7 +49,6 @@ def qdevice_status_text(lib_env, model, verbose=False, cluster=None):
     bool verbose get more detailed output
     string cluster show information only about specified cluster
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     runner = lib_env.cmd_runner()
     try:
@@ -69,7 +66,6 @@ def qdevice_enable(lib_env, model):
     """
     make qdevice start automatically on boot on local host
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _service_enable(lib_env, qdevice_net.qdevice_enable)
 
@@ -77,7 +73,6 @@ def qdevice_disable(lib_env, model):
     """
     make qdevice not start automatically on boot on local host
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _service_disable(lib_env, qdevice_net.qdevice_disable)
 
@@ -85,7 +80,6 @@ def qdevice_start(lib_env, model):
     """
     start qdevice now on local host
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _service_start(lib_env, qdevice_net.qdevice_start)
 
@@ -95,7 +89,6 @@ def qdevice_stop(lib_env, model, proceed_if_used=False):
     string model qdevice model to destroy
     bool procced_if_used stop qdevice even if it is used by clusters
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _check_qdevice_not_used(
         lib_env.report_processor,
@@ -109,7 +102,6 @@ def qdevice_kill(lib_env, model):
     """
     kill qdevice now on local host
     """
-    _ensure_not_cman(lib_env)
     _check_model(model)
     _service_kill(lib_env, qdevice_net.qdevice_kill)
 
@@ -121,7 +113,6 @@ def qdevice_net_sign_certificate_request(
     string certificate_request base64 encoded certificate request
     string cluster_name name of the cluster to which qdevice is being added
     """
-    _ensure_not_cman(lib_env)
     try:
         certificate_request_data = base64.b64decode(certificate_request)
     except (TypeError, binascii.Error):
@@ -143,7 +134,6 @@ def client_net_setup(lib_env, ca_certificate):
     Intialize qdevice net client on local host
     ca_certificate base64 encoded qnetd CA certificate
     """
-    _ensure_not_cman(lib_env)
     try:
         ca_certificate_data = base64.b64decode(ca_certificate)
     except (TypeError, binascii.Error):
@@ -159,7 +149,6 @@ def client_net_import_certificate(lib_env, certificate):
     Import qnetd client certificate to local node certificate storage
     certificate base64 encoded qnetd client certificate
     """
-    _ensure_not_cman(lib_env)
     try:
         certificate_data = base64.b64decode(certificate)
     except (TypeError, binascii.Error):
@@ -177,12 +166,7 @@ def client_net_destroy(lib_env):
     """
     delete qdevice client config files on local host
     """
-    _ensure_not_cman(lib_env)
     qdevice_net.client_destroy()
-
-def _ensure_not_cman(lib_env):
-    if lib_env.is_cman_cluster:
-        raise LibraryError(reports.cman_unsupported_command())
 
 def _check_model(model):
     if model != "net":

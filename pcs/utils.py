@@ -736,7 +736,7 @@ def run(
         touch_cib_file(filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
+    if command[0:3] == "crm" or command in ["cibadmin", "iso8601"]:
         args[0] = settings.pacemaker_binaries + command
     elif command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
@@ -1876,7 +1876,7 @@ def getClusterName():
     except (IOError, corosync_conf_parser.CorosyncConfParserException):
         pass
 
-    # there is no corosync.conf or cluster.conf on remote nodes, we can try to
+    # there is no corosync.conf on remote nodes, we can try to
     # get cluster name from pacemaker
     try:
         return get_set_properties("cluster-name")["cluster-name"]
@@ -1987,7 +1987,6 @@ def serviceStatus(prefix):
         #     service name,
         #     display even if not enabled nor running
         # )
-        ("cman", False),
         ("corosync", True),
         ("pacemaker", True),
         ("pacemaker_remote", False),

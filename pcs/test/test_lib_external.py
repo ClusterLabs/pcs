@@ -1,5 +1,4 @@
 import logging
-import os.path
 from subprocess import DEVNULL
 from unittest import mock, TestCase
 
@@ -1109,41 +1108,6 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             self.assertEqual(e, exc)
         self.assertTrue(raised)
 
-
-class IsCmanClusterTest(TestCase):
-    def template_test(self, version_description, is_cman, corosync_retval=0):
-        mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
-        mock_runner.run.return_value = (
-            "Corosync Cluster Engine{0}\nCopyright (c) 2006-2009 Red Hat, Inc."
-                .format(version_description)
-            ,
-            "",
-            corosync_retval
-        )
-        self.assertEqual(is_cman, lib.is_cman_cluster(mock_runner))
-        mock_runner.run.assert_called_once_with([
-            os.path.join(settings.corosync_binaries, "corosync"),
-            "-v"
-        ])
-
-    def test_is_not_cman(self):
-        self.template_test(", version '2.3.4'", is_cman=False)
-
-    def test_is_cman(self):
-        self.template_test(", version '1.4.7'", is_cman=True)
-
-    def test_bad_version_format(self):
-        self.template_test(", nonsense '2.3.4'", is_cman=False)
-
-    def test_no_version(self):
-        self.template_test("", is_cman=False)
-
-    def test_corosync_error(self):
-        self.template_test(
-            ", version '1.4.7'",
-            is_cman=False,
-            corosync_retval=1
-        )
 
 @mock.patch("pcs.lib.external.is_systemctl")
 @mock.patch("pcs.lib.external.is_service_installed")

@@ -982,7 +982,7 @@ def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
                 print(line)
                 found = True
         if not found and not silent_list:
-            print("No uidgids configured in cluster.conf")
+            print("No uidgids configured")
         return
 
     command = argv.pop(0)

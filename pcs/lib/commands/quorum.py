@@ -19,7 +19,6 @@ def get_config(lib_env):
     Extract and return quorum configuration from corosync.conf
     lib_env LibraryEnvironment
     """
-    __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
     device = None
     if cfg.has_quorum_device():
@@ -76,7 +75,6 @@ def set_options(lib_env, options, skip_offline_nodes=False, force=False):
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     bool force -- force changes
     """
-    __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
     lib_env.report_processor.process_list(
         corosync_conf_validators.update_quorum_options(
@@ -100,7 +98,6 @@ def status_text(lib_env):
     """
     Get quorum runtime status in plain text
     """
-    __ensure_not_cman(lib_env)
     try:
         return corosync_live.get_quorum_status_text(lib_env.cmd_runner())
     except corosync_live.QuorumStatusReadException as e:
@@ -111,7 +108,6 @@ def status_device_text(lib_env, verbose=False):
     Get quorum device client runtime status in plain text
     bool verbose get more detailed output
     """
-    __ensure_not_cman(lib_env)
     return qdevice_client.get_status_text(lib_env.cmd_runner(), verbose)
 
 def add_device(
@@ -129,8 +125,6 @@ def add_device(
     bool force_options -- continue even if options are not valid
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
-    __ensure_not_cman(lib_env)
-
     cfg = lib_env.get_corosync_conf()
     if cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_already_defined())
@@ -217,7 +211,6 @@ def update_device(
     bool force_options -- continue even if options are not valid
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
-    __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_not_defined())
@@ -248,7 +241,6 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
 
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
-    __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_not_defined())
@@ -260,8 +252,6 @@ def remove_device(lib_env, skip_offline_nodes=False):
     Stop using quorum device, distribute and reload configs if live
     skip_offline_nodes continue even if not all nodes are accessible
     """
-    __ensure_not_cman(lib_env)
-
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_not_defined())
@@ -315,9 +305,6 @@ def set_expected_votes_live(lib_env, expected_votes):
     set expected votes in live cluster to specified value
     numeric expected_votes desired value of expected votes
     """
-    if lib_env.is_cman_cluster:
-        raise LibraryError(reports.cman_unsupported_command())
-
     try:
         votes_int = int(expected_votes)
         if votes_int < 1:
@@ -330,7 +317,3 @@ def set_expected_votes_live(lib_env, expected_votes):
         ))
 
     corosync_live.set_expected_votes(lib_env.cmd_runner(), votes_int)
-
-def __ensure_not_cman(lib_env):
-    if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
-        raise LibraryError(reports.cman_unsupported_command())

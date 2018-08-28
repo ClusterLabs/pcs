@@ -9,5 +9,4 @@ class Env(object):
         self.pacemaker = None
         self.known_hosts_getter = None
         self.debug = False
-        self.cluster_conf_data = None
         self.request_timeout = None

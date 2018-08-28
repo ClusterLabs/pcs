@@ -16,7 +16,7 @@ PCS_LONG_OPTIONS = [
     "no-default-ops", "defaults", "nodesc",
     "clone", "master", "name=", "group=", "node=",
     "from=", "to=", "after=", "before=",
-    "corosync_conf=", "cluster_conf=",
+    "corosync_conf=",
     "booth-conf=", "booth-key=",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",

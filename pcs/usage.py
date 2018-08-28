@@ -682,7 +682,7 @@ Commands:
 
     sync
         Sync corosync configuration to all nodes found from current
-        corosync.conf file (cluster.conf on systems running Corosync 1.x).
+        corosync.conf file.
 
     cib [filename] [scope=<scope> | --config]
         Get the raw xml from the CIB (Cluster Information Base).  If a filename
