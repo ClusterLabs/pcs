@@ -34,7 +34,10 @@ from pcs.lib.pacemaker.state import (
     _get_primitive_roles_with_nodes,
     _get_primitives_for_state_check,
 )
-from pcs.lib.pacemaker.values import timeout_to_seconds
+from pcs.lib.pacemaker.values import (
+    is_true as is_pacemaker_true,
+    timeout_to_seconds,
+)
 import pcs.lib.resource_agent as lib_ra
 
 
@@ -549,6 +552,7 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
       * --wait
     """
     modifiers.ensure_only_supported("-f", "--master", "--wait")
+    move = not clear and not ban
     other_options = []
     if len(argv) == 0:
         if clear:
@@ -562,7 +566,12 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
     resource_id = argv.pop(0)
 
     if (clear and len(argv) > 1) or len(argv) > 2:
-        usage.resource()
+        if clear:
+            usage.resource(["clear"])
+        elif ban:
+            usage.resource(["ban"])
+        else:
+            usage.resource(["move"])
         sys.exit(1)
 
     dest_node = None
@@ -584,65 +593,82 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
         raise CmdLineInputError()
 
     dom = utils.get_cib_dom()
-    if (
-        not utils.dom_get_resource(dom, resource_id)
-        and
-        not utils.dom_get_group(dom, resource_id)
-        and
-        not utils.dom_get_master(dom, resource_id)
-        and
-        not utils.dom_get_clone(dom, resource_id)
-        and
-        not utils.dom_get_bundle(dom, resource_id)
-    ):
+    resource_element = (
+        utils.dom_get_any_resource(dom, resource_id)
+        or
+        utils.dom_get_bundle(dom, resource_id)
+    )
+    if not resource_element:
         utils.err("%s is not a valid resource" % resource_id)
 
-    if (
-        not clear and not ban
-        and
-        (
-            utils.dom_get_clone(dom, resource_id)
-            or
-            utils.dom_get_resource_clone(dom, resource_id)
-            or
-            utils.dom_get_group_clone(dom, resource_id)
-            or
-            utils.dom_get_bundle(dom, resource_id)
+    is_clone = False
+    is_in_clone = False
+    is_promotable_clone = False
+    is_in_promotable_clone = False
+    promotable_clone_id = None
+    if utils.dom_get_bundle(dom, resource_id):
+        is_clone = True
+    elif utils.dom_get_clone(dom, resource_id):
+        is_clone = True
+        meta_promotable = utils.dom_get_meta_attr_value(
+            resource_element, "promotable"
         )
+        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
+            is_promotable_clone = True
+            promotable_clone_id = resource_id
+    elif utils.dom_get_master(dom, resource_id):
+        is_clone = True
+        is_promotable_clone = True
+        promotable_clone_id = resource_id
+    elif (
+        utils.dom_get_resource_clone(dom, resource_id)
+        or
+        utils.dom_get_group_clone(dom, resource_id)
     ):
-        utils.err("cannot move cloned resources")
+        is_in_clone = True
+        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        meta_promotable = utils.dom_get_meta_attr_value(parent, "promotable")
+        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
+            is_in_promotable_clone = True
+            promotable_clone_id = parent.getAttribute("id")
+    elif (
+        utils.dom_get_resource_masterslave(dom, resource_id)
+        or
+        utils.dom_get_group_masterslave(dom, resource_id)
+    ):
+        is_in_clone = True
+        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        is_in_promotable_clone = True
+        promotable_clone_id = parent.getAttribute("id")
 
     if (
-        not clear and not ban
+        move
+        and
+        (is_clone or is_in_clone)
+        and not
+        (is_promotable_clone or is_in_promotable_clone)
+    ):
+        utils.err("cannot move cloned resources")
+    if (
+        move
         and
         not modifiers.is_specified("--master")
         and
-        (
-            utils.dom_get_resource_masterslave(dom, resource_id)
-            or
-            utils.dom_get_group_masterslave(dom, resource_id)
-        )
+        (is_promotable_clone or is_in_promotable_clone)
     ):
-        master = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
         utils.err(
-            "to move Master/Slave resources you must use --master "
-                "and the master id (%s)"
-            % master.getAttribute("id")
+            "to move promotable clone resources you must use --master "
+                "and the clone id (%s)"
+            % promotable_clone_id
         )
-
-    if (
-        modifiers.is_specified("--master")
-        and
-        not utils.dom_get_master(dom, resource_id)
-    ):
-        master_clone = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
-        if master_clone and master_clone.tagName == "master":
+    if modifiers.is_specified("--master") and not is_promotable_clone:
+        if promotable_clone_id:
             utils.err(
-                "when specifying --master you must use the master id (%s)"
-                % master_clone.getAttribute("id")
+                "when specifying --master you must use the promotable clone id (%s)"
+                % promotable_clone_id
             )
         else:
-            utils.err("when specifying --master you must use the master id")
+            utils.err("when specifying --master you must use the promotable clone id")
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
@@ -683,9 +709,22 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
             else:
                 output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node] + other_options)
     if ret != 0:
-        if "Resource '"+resource_id+"' not moved: active in 0 locations." in output:
+        if "Resource '"+resource_id+"' not moved: active in 0 locations" in output:
             utils.err("You must specify a node when moving/banning a stopped resource")
-        utils.err ("error moving/banning/clearing resource\n" + output)
+        new_lines = ["error moving/banning/clearing resource"]
+        for line in output.split("\n"):
+            if not line.strip():
+                continue
+            line = line.replace(
+                "--ban --master --node <name>",
+                f"pcs resource ban {resource_id} <node> --master"
+            )
+            line = line.replace(
+                "--ban --node <name>",
+                f"pcs resource ban {resource_id} <node>"
+            )
+            new_lines.append(line)
+        print("\n".join(new_lines))
     else:
         warning_re = re.compile(
             r"WARNING: Creating rsc_location constraint '([^']+)' "

@@ -2806,7 +2806,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource move dummy rh7-1 --master")
         ac(output, """\
-Error: when specifying --master you must use the master id
+Error: when specifying --master you must use the promotable clone id
 """)
         self.assertEqual(1, returnVal)
 
@@ -2836,6 +2836,7 @@ Error: when specifying --master you must use the master id
         ac(output, "")
         self.assertEqual(0, returnVal)
 
+        # move
         output, returnVal = pcs(temp_cib, "resource move D1")
         ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
@@ -2855,6 +2856,112 @@ Error: when specifying --master you must use the master id
         output, returnVal = pcs(temp_cib, "resource move DG-clone")
         ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
+
+        # move --master
+        output, returnVal = pcs(temp_cib, "resource move D1 --master")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D2 --master")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG --master")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEqual(1, returnVal)
+
+        # ban
+        output, returnVal = pcs(temp_cib, "resource ban D1")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # ban --master
+        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        # clear
+        output, returnVal = pcs(temp_cib, "resource clear D1")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        # clear --master
+        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
+        self.assertEqual(1, returnVal)
+
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
@@ -2887,103 +2994,379 @@ Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
-    def testNoMoveMSClone(self):
-        output, returnVal  = pcs(
+    def testPromotableCloneMoveBanClear(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
             temp_cib,
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy promotable"
         )
-        assert returnVal == 0
-        assert output == "", [output]
+        ac(output, "")
+        self.assertEqual(0, returnVal)
 
-        output, returnVal  = pcs(
+        output, returnVal = pcs(
             temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
         )
-        assert returnVal == 0
-        assert output == "", [output]
+        ac(output, "")
+        self.assertEqual(0, returnVal)
 
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
+        output, returnVal = pcs(temp_cib, "resource promotable DG")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
 
-        output, returnVal  = pcs(temp_cib, "resource move D1")
-        assert returnVal == 1
-        assert output == "Error: cannot move cloned resources\n", [output]
+        # move
+        output, returnVal = pcs(temp_cib, "resource move D1")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
 
-        output, returnVal  = pcs(temp_cib, "resource move D1-clone")
-        assert returnVal == 1
-        assert output == "Error: cannot move cloned resources\n", [output]
+        output, returnVal = pcs(temp_cib, "resource move D1-clone")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
 
-        output, returnVal  = pcs(temp_cib, "resource move D2")
-        assert returnVal == 1
-        assert output == "Error: to move Master/Slave resources you must use --master and the master id (D2-master)\n", [output]
+        output, returnVal = pcs(temp_cib, "resource move D2")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
 
-        output, returnVal  = pcs(temp_cib, "resource move D2 --master")
-        ac(output,"Error: when specifying --master you must use the master id (D2-master)\n")
-        assert returnVal == 1
+        output, returnVal = pcs(temp_cib, "resource move DG")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
 
-        self.assert_pcs_fail(
-            "resource move D2-master --master",
-            # pacemaker 1.1.18 changes --host to --node
-            stdout_regexp=re.compile("^"
-                "Error: error moving/banning/clearing resource\n"
-                "Resource 'D2-master' not moved: active in 0 locations "
-                    "\(promoted in 0\).\n"
-                "You can prevent 'D2-master' from running on a specific "
-                    "location with: --ban --(host|node) <name>\n"
-                "You can prevent 'D2-master' from being promoted at a specific "
-                    "location with: --ban --master --(host|node) <name>\n"
-                "Error performing operation: Invalid argument\n\n"
-                "$", re.MULTILINE
-            )
-        )
+        output, returnVal = pcs(temp_cib, "resource move DG-clone")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
-            """\
-             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-             Clone: D1-clone
-              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Clone: D2-master
-              Meta Attrs: promotable=true
-              Resource: D2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (D2-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (D2-monitor-interval-11)
-            """
-        ))
+        # move --master
+        output, returnVal = pcs(temp_cib, "resource move D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
 
-    def testMasterOfGroupMove(self):
-        o,r = pcs(
-            temp_cib,
-            "resource create stateful ocf:pacemaker:Stateful --group group1"
-        )
-        ac(o, """\
-Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # ban
+        output, returnVal = pcs(temp_cib, "resource ban D1")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # ban --master
+        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # clear
+        output, returnVal = pcs(temp_cib, "resource clear D1")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        # clear --master
+        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
+        ac(output, """\
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
+This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
 """)
-        assert r == 0
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: DG-clone
+    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
+Ordering Constraints:
+Colocation Constraints:
+Ticket Constraints:
+""")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+Ticket Constraints:
+""")
+        self.assertEqual(0, returnVal)
+
+    def testMasterMoveBanClear(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
+        ac(output, "")
+        self.assertEqual(0, returnVal)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "group1")
+        wrap_element_by_master(temp_cib, "D1", master_id="D1-clone")
 
-        self.assert_pcs_fail(
-            "resource move group1-master --master",
-            # pacemaker 1.1.18 changes --host to --node
-            stdout_regexp=re.compile("^"
-                "Error: error moving/banning/clearing resource\n"
-                "Resource 'group1-master' not moved: active in 0 locations "
-                    "\(promoted in 0\).\n"
-                "You can prevent 'group1-master' from running on a specific "
-                    "location with: --ban --(host|node) <name>\n"
-                "You can prevent 'group1-master' from being promoted at a "
-                    "specific location with: --ban --master --(host|node) "
-                    "<name>\n"
-                "Error performing operation: Invalid argument\n\n"
-                "$", re.MULTILINE
-            )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
         )
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "DG", master_id="DG-clone")
+
+        # move
+        output, returnVal = pcs(temp_cib, "resource move D1")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D1-clone")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D2")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG-clone")
+        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        # move --master
+        output, returnVal = pcs(temp_cib, "resource move D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # ban
+        output, returnVal = pcs(temp_cib, "resource ban D1")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # ban --master
+        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
+        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
+        self.assertEqual(1, returnVal)
+
+        # clear
+        output, returnVal = pcs(temp_cib, "resource clear D1")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        # clear --master
+        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG --master")
+        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
+        ac(output, """\
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
+This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+""")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: DG-clone
+    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
+Ordering Constraints:
+Colocation Constraints:
+Ticket Constraints:
+""")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+Ticket Constraints:
+""")
+        self.assertEqual(0, returnVal)
 
     @skip(
         "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
