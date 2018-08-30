@@ -115,6 +115,8 @@
 - Pcs now configures corosync to put timestamps in its log ([rhbz#1615420])
 - Option `-V` has been replaced with `--full` and a CIB file can be specified
   only using option `-f` in `pcs cluster verify`
+- Master resources are now called promotable clone resources to match changes
+  in pacemaker-2.0 ([rhbz#1542288])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
