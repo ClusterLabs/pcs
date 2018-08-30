@@ -240,7 +240,7 @@ endif
 	cp -r pcsd ${DEST_LIB}
 	install -m 644 -D pcsd/pcsd.conf ${DEST_CONF}/pcsd
 	install -d ${DESTDIR}/etc/pam.d
-	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
+	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 ifeq ($(IS_DEBIAN),true)
 	$(call use-debian-alternative,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
