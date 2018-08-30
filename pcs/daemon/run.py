@@ -1,6 +1,7 @@
 import os
 import signal
 import socket
+from pathlib import Path
 
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
@@ -74,6 +75,7 @@ def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
+    Path(settings.pcsd_log_location).touch(mode=0o600, exist_ok=True)
     log.setup(settings.pcsd_log_location)
 
     env = prepare_env(os.environ, log.pcsd)

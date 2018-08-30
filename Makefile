@@ -218,7 +218,6 @@ install_python_part: install_bundled_libs
 	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
 	# pcs SNMP install
 	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
-	install -d ${DESTDIR}/var/log/pcs
 	install -d ${DEST_SNMP_MIB}
 	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
@@ -236,7 +235,7 @@ install: install_python_part
 ifeq ($(BUILD_GEMS),true)
 	make -C pcsd build_gems
 endif
-	mkdir -p ${DESTDIR}/var/log/pcsd
+	install -d -m 700 ${DESTDIR}/var/log/pcsd
 	mkdir -p ${DEST_LIB}
 	cp -r pcsd ${DEST_LIB}
 	install -m 644 -D pcsd/pcsd.conf ${DEST_CONF}/pcsd
