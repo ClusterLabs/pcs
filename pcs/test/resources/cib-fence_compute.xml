@@ -1,0 +1,22 @@
+<cib epoch="557" num_updates="122" admin_epoch="0" validate-with="pacemaker-2.0" crm_feature_set="3.0.9" update-origin="rh7-3" update-client="crmd" cib-last-written="Thu Aug 23 16:49:17 2012" have-quorum="0" dc-uuid="2">
+  <configuration>
+    <crm_config/>
+    <nodes>
+    </nodes>
+    <resources>
+      <primitive class="stonith" id="test" type="fence_compute">
+        <instance_attributes id="test-instance_attributes">
+          <nvpair id="test-instance_attributes-auth_url" name="auth_url" value="test1"/>
+          <nvpair id="test-instance_attributes-compute_domain" name="compute_domain" value="val3"/>
+          <nvpair id="test-instance_attributes-project_domain" name="project_domain" value="val1"/>
+          <nvpair id="test-instance_attributes-user_domain" name="user_domain" value="val2"/>
+        </instance_attributes>
+        <operations>
+          <op id="test-monitor-interval-60s" interval="60s" name="monitor"/>
+        </operations>
+      </primitive> 
+    </resources>
+    <constraints/>
+  </configuration>
+  <status/>
+</cib>

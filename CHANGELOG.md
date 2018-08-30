@@ -14,11 +14,14 @@
   multiple devices are present ([rhbz#1475318])
 - Do not distinguish betwen supported and unsupported watchdog devices as SBD
   cannot reliably provide such information ([rhbz#1475318])
+- Instance attributes setting for fence agents `fence_compute` and
+  `fence_evacuate` ([rhbz#1623181])
 
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
 [rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
+[rhbz#1623181]: https://bugzilla.redhat.com/show_bug.cgi?id=1623181
 
 
 ## [0.9.165] - 2018-06-21

@@ -2961,3 +2961,12 @@ def resource_in_bundle_not_accessible(
         ),
         forceable=forceable,
     )
+
+def transforming_parameter_alias(alias, param):
+    return ReportItem.warning(
+        report_codes.TRANSFORMING_PARAMETER_ALIAS,
+        info=dict(
+            alias=alias,
+            param=param,
+        )
+    )

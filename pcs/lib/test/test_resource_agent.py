@@ -7,6 +7,7 @@ from __future__ import (
 from lxml import etree
 from functools import partial
 
+from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
     assert_raise_library_error,
@@ -2175,3 +2176,144 @@ class AbsentResourceAgentTest(TestCase):
         self.assertEqual(([], []), absent.validate_parameters_values({
             "whatever": "anything"
         }))
+
+
+class AliasTransformationTest(TestCase):
+    def setUp(self):
+        self.agent = lib_ra.Agent(
+            mock.MagicMock(spec_set=CommandRunner)
+        )
+
+    def test_empty_transformation_table(self):
+        params = {
+            "project_domain": "value1",
+            "project-domain": "value2",
+        }
+        self.assertEqual((params, [], []), self.agent.transform_aliases(params))
+
+    @patch_agent_object(
+        "_get_aliases_transformation_table",
+        lambda self: {
+            "project_domain": "project-domain",
+            "user_domain": "user-domain",
+            "compute_domain": "compute-domain",
+        },
+    )
+    def test_transform(self):
+        params = {
+            "project_domain": "value1",
+            "some_parameter": "value3",
+            "compute-domain": "value4",
+        }
+        transformed_params, to_remove, report_list = (
+            self.agent.transform_aliases(params)
+        )
+        self.assertEqual(
+            sorted(["project_domain", "compute_domain"]),
+            sorted(to_remove)
+        )
+        self.assertEqual(
+            {
+                "project-domain": "value1",
+                "some_parameter": "value3",
+                "compute-domain": "value4",
+            },
+            transformed_params,
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.warn(
+                    report_codes.TRANSFORMING_PARAMETER_ALIAS,
+                    alias="project_domain",
+                    param="project-domain",
+                ),
+            ]
+        )
+
+    @patch_agent_object(
+        "_get_aliases_transformation_table",
+        lambda self: {
+            "project_domain": "project-domain",
+            "user_domain": "user-domain",
+            "compute_domain": "compute-domain",
+        },
+    )
+    def test_both_specified(self):
+        params = {
+            "project_domain": "value1",
+            "project-domain": "value2",
+            "user_domain": "value3",
+            "user-domain": "value4",
+            "some_parameter": "value5",
+            "compute_domain": "value6",
+        }
+        transformed_params, to_remove, report_list = (
+            self.agent.transform_aliases(params)
+        )
+        self.assertEqual(
+            sorted(["compute_domain", "project_domain", "user_domain"]),
+            sorted(to_remove),
+        )
+        self.assertEqual(
+            {
+                "project-domain": "value2",
+                "user-domain": "value4",
+                "some_parameter": "value5",
+                "compute-domain": "value6",
+            },
+            transformed_params,
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    option_names=["project-domain", "project_domain"],
+                    option_type=None,
+                ),
+                fixture.error(
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    option_names=["user-domain", "user_domain"],
+                    option_type=None,
+                ),
+                fixture.warn(
+                    report_codes.TRANSFORMING_PARAMETER_ALIAS,
+                    alias="compute_domain",
+                    param="compute-domain",
+                ),
+            ]
+        )
+
+class StonithAgentParameterAliasTransformationTest(TestCase):
+    def setUp(self):
+        self.runner = mock.MagicMock(spec_set=CommandRunner)
+        self.transforamtion_table = {
+            "project_domain": "project-domain",
+            "user_domain": "user-domain",
+            "compute_domain": "compute-domain",
+        }
+
+    def test_fence_compute(self):
+        self.assertEquals(
+            self.transforamtion_table,
+            lib_ra.StonithAgent(
+                    self.runner, "fence_compute"
+            )._get_aliases_transformation_table()
+        )
+
+    def test_fence_evacuate(self):
+        self.assertEquals(
+            self.transforamtion_table,
+            lib_ra.StonithAgent(
+                    self.runner, "fence_evacuate"
+            )._get_aliases_transformation_table()
+        )
+
+    def test_some_other_agent(self):
+        self.assertEquals(
+            {},
+            lib_ra.StonithAgent(
+                    self.runner, "fence_dummy"
+            )._get_aliases_transformation_table()
+        )

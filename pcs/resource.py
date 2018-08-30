@@ -753,7 +753,7 @@ def resource_update(res_id,args, deal_with_guest_change=True):
     else:
         instance_attributes = instance_attributes[0]
 
-    params = utils.convert_args_to_tuples(ra_values)
+    params = dict(utils.convert_args_to_tuples(ra_values))
 
     resClass = resource.getAttribute("class")
     resProvider = resource.getAttribute("provider")
@@ -768,13 +768,19 @@ def resource_update(res_id,args, deal_with_guest_change=True):
                     resClass, resProvider, resType
                 ).full_name
             )
+        params, to_remove, report_list = metadata.transform_aliases(params)
+        if report_list:
+            utils.process_library_reports(report_list)
+
         report_list = metadata.validate_parameters(
-            dict(params),
+            params,
             allow_invalid=("--force" in utils.pcs_options),
             update=True
         )
         if report_list:
             utils.process_library_reports(report_list)
+        for param in to_remove:
+            params[param] = ""
     except lib_ra.ResourceAgentError as e:
         severity = (
             ReportItemSeverity.WARNING if "--force" in utils.pcs_options
@@ -786,7 +792,7 @@ def resource_update(res_id,args, deal_with_guest_change=True):
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-    for (key,val) in params:
+    for (key,val) in params.items():
         ia_found = False
         for ia in instance_attributes.getElementsByTagName("nvpair"):
             if ia.getAttribute("name") == key:
@@ -796,7 +802,7 @@ def resource_update(res_id,args, deal_with_guest_change=True):
                 else:
                     ia.setAttribute("value", val)
                 break
-        if not ia_found:
+        if not ia_found and val:
             ia = dom.createElement("nvpair")
             ia.setAttribute("id", res_id + "-instance_attributes-" + key)
             ia.setAttribute("name", key)
