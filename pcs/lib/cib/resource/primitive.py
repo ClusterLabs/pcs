@@ -71,11 +71,6 @@ def create(
         allow_invalid=allow_invalid_operation,
     )
 
-    instance_attributes, dummy_to_remove, report_list = (
-        resource_agent.transform_aliases(instance_attributes)
-    )
-    report_processor.process_list(report_list)
-
     report_processor.process_list(
         resource_agent.validate_parameters(
             instance_attributes,

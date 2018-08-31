@@ -469,53 +469,6 @@ class Agent(object):
             "obsoletes": parameter_element.get("obsoletes", None),
         })
 
-    def _get_aliases_transformation_table(self):
-        """
-        This method should be overriden in descendants.
-
-        Returns dictionary in which keys represent an alias and its value is
-        real name which should be used instead.
-        """
-        return {}
-
-    def transform_aliases(self, parameters):
-        """
-        Transform parameters aliases to their real values according to a
-        transformation table provided by method
-        _get_aliases_transformation_table
-        Returns tuple of transformed parameters and report list.
-
-        parameters dict -- parameters specified by the user
-        """
-        report_list = []
-        output_params = {}
-        to_remove = []
-        transformation_table = self._get_aliases_transformation_table()
-        reversed_transformation_table = dict([
-            (real, alias) for alias, real in transformation_table.items()
-        ])
-
-        for param, val in parameters.items():
-            if param in transformation_table:
-                real_param = transformation_table[param]
-                if real_param in parameters:
-                    report_list.append(
-                        reports.mutually_exclusive_options(
-                            [real_param, param], None)
-                    )
-                    continue
-                report_list.append(
-                    reports.transforming_parameter_alias(param, real_param)
-                )
-                output_params[real_param] = val
-                to_remove.append(param)
-            else:
-                output_params[param] = val
-                if param in reversed_transformation_table:
-                    to_remove.append(reversed_transformation_table[param])
-
-        return output_params, to_remove, report_list
-
     def validate_parameters(
         self, parameters,
         parameters_type="resource",
@@ -904,15 +857,6 @@ class StonithAgent(CrmAgent):
             +
             self._get_stonithd_metadata().get_parameters()
         )
-
-    def _get_aliases_transformation_table(self):
-        if self.get_name() in ("fence_compute", "fence_evacuate"):
-            return {
-                "project_domain": "project-domain",
-                "user_domain": "user-domain",
-                "compute_domain": "compute-domain",
-            }
-        return {}
 
     def validate_parameters(
         self, parameters,

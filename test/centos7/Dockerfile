@@ -35,7 +35,6 @@ RUN yum install -y \
         fence-agents-apc \
         fence-agents-ilo2 \
         fence-agents-ipmilan \
-        fence-agents-compute \
         fence-virt \
         booth-site
 

@@ -1438,7 +1438,4 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "cluster inside bundle '{bundle_id}', at least one of bundle "
             "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
-    ,
-    codes.TRANSFORMING_PARAMETER_ALIAS: lambda info:
-        "Using '{param}' instead of '{alias}'".format(**info)
 }
