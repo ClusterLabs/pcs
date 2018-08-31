@@ -469,6 +469,14 @@ class Agent(object):
             "obsoletes": parameter_element.get("obsoletes", None),
         })
 
+    def _get_always_allowed_parameters(self):
+        """
+        This method should be overriden in descendants.
+
+        Returns set of always allowed parameters of a agent.
+        """
+        return set()
+
     def validate_parameters(
         self, parameters,
         parameters_type="resource",
@@ -518,13 +526,17 @@ class Agent(object):
         agent_params = self.get_parameters()
 
         required_missing = []
+        always_allowed = self._get_always_allowed_parameters()
         for attr in agent_params:
             if attr["required"] and attr["name"] not in parameters_values:
                 required_missing.append(attr["name"])
 
         valid_attrs = [attr["name"] for attr in agent_params]
         return (
-            [attr for attr in parameters_values if attr not in valid_attrs],
+            [
+                attr for attr in parameters_values
+                if attr not in valid_attrs and attr not in always_allowed
+            ],
             required_missing
         )
 
@@ -857,6 +869,14 @@ class StonithAgent(CrmAgent):
             +
             self._get_stonithd_metadata().get_parameters()
         )
+
+    def _get_always_allowed_parameters(self):
+        if self.get_name() in ("fence_compute", "fence_evacuate"):
+            return set([
+                "project-domain", "project_domain", "user-domain",
+                "user_domain", "compute-domain", "compute_domain",
+            ])
+        return set()
 
     def validate_parameters(
         self, parameters,

@@ -1275,6 +1275,23 @@ class AgentMetadataValidateParametersValuesTest(TestCase):
             (["obsoletes"], ["deprecated"])
         )
 
+    @patch_agent_object(
+        "_get_always_allowed_parameters",
+        lambda self: set(["always_allowed", "another-one", "last_one"])
+    )
+    def test_always_allowed(self, mock_metadata):
+        mock_metadata.return_value = self.metadata
+        self.assertEqual(
+            self.agent.validate_parameters_values({
+                "another_required_param": "value1",
+                "required_param": "value2",
+                "test_param": "value3",
+                "always_allowed": "value4",
+                "another-one": "value5",
+            }),
+            ([], [])
+        )
+
 
 class AgentMetadataValidateParameters(TestCase):
     def setUp(self):
@@ -2175,3 +2192,36 @@ class AbsentResourceAgentTest(TestCase):
         self.assertEqual(([], []), absent.validate_parameters_values({
             "whatever": "anything"
         }))
+
+
+class StonithAgentAlwaysAllowedParametersTest(TestCase):
+    def setUp(self):
+        self.runner = mock.MagicMock(spec_set=CommandRunner)
+        self.always_allowed = set([
+            "project-domain", "project_domain", "user-domain", "user_domain",
+            "compute-domain", "compute_domain",
+        ])
+
+    def test_fence_compute(self):
+        self.assertEquals(
+            self.always_allowed,
+            lib_ra.StonithAgent(
+                self.runner, "fence_compute"
+            )._get_always_allowed_parameters()
+        )
+
+    def test_fence_evacuate(self):
+        self.assertEquals(
+            self.always_allowed,
+            lib_ra.StonithAgent(
+                self.runner, "fence_evacuate"
+            )._get_always_allowed_parameters()
+        )
+
+    def test_some_other_agent(self):
+        self.assertEquals(
+            set(),
+            lib_ra.StonithAgent(
+                self.runner, "fence_dummy"
+            )._get_always_allowed_parameters()
+        )

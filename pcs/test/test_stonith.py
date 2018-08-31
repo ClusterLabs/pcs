@@ -469,6 +469,69 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         )
 
+    def test_stonith_compute_evacuate_always_allowed_parameters(self):
+        self.assert_pcs_success(
+            "stonith create test1 fence_compute auth_url=test1 project_domain=val1 project-domain=val2 user_domain=val3 user-domain=val4 compute_domain=val5 compute-domain=val6",
+        )
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test1 (class=stonith type=fence_compute)
+                  Attributes: auth_url=test1 compute-domain=val6 compute_domain=val5 project-domain=val2 project_domain=val1 user-domain=val4 user_domain=val3
+                  Operations: monitor interval=60s (test1-monitor-interval-60s)
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "stonith create test2 fence_evacuate auth_url=test2 project_domain=val0 project-domain=val1 user_domain=val2 user-domain=val3 compute_domain=val4 compute-domain=val5",
+        )
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test1 (class=stonith type=fence_compute)
+                  Attributes: auth_url=test1 compute-domain=val6 compute_domain=val5 project-domain=val2 project_domain=val1 user-domain=val4 user_domain=val3
+                  Operations: monitor interval=60s (test1-monitor-interval-60s)
+                 Resource: test2 (class=stonith type=fence_evacuate)
+                  Attributes: auth_url=test2 compute-domain=val5 compute_domain=val4 project-domain=val1 project_domain=val0 user-domain=val3 user_domain=val2
+                  Operations: monitor interval=60s (test2-monitor-interval-60s)
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "stonith update test1 auth_url=new0 project_domain=new1 project-domain=new2 user_domain=new3 user-domain=new4 compute_domain=new5 compute-domain=new6",
+        )
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test1 (class=stonith type=fence_compute)
+                  Attributes: auth_url=new0 compute-domain=new6 compute_domain=new5 project-domain=new2 project_domain=new1 user-domain=new4 user_domain=new3
+                  Operations: monitor interval=60s (test1-monitor-interval-60s)
+                 Resource: test2 (class=stonith type=fence_evacuate)
+                  Attributes: auth_url=test2 compute-domain=val5 compute_domain=val4 project-domain=val1 project_domain=val0 user-domain=val3 user_domain=val2
+                  Operations: monitor interval=60s (test2-monitor-interval-60s)
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "stonith update test2 auth_url=new1 project_domain=new2 project-domain=new3 user_domain=new4 user-domain=new5 compute_domain=new6 compute-domain=new7",
+        )
+        self.assert_pcs_success(
+            "stonith show --full",
+            outdent(
+                """\
+                 Resource: test1 (class=stonith type=fence_compute)
+                  Attributes: auth_url=new0 compute-domain=new6 compute_domain=new5 project-domain=new2 project_domain=new1 user-domain=new4 user_domain=new3
+                  Operations: monitor interval=60s (test1-monitor-interval-60s)
+                 Resource: test2 (class=stonith type=fence_evacuate)
+                  Attributes: auth_url=new1 compute-domain=new7 compute_domain=new6 project-domain=new3 project_domain=new2 user-domain=new5 user_domain=new4
+                  Operations: monitor interval=60s (test2-monitor-interval-60s)
+                """
+            )
+        )
+
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
         assert returnVal == 1
