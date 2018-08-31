@@ -1003,8 +1003,7 @@
     </capability>
     <capability id="pcmk.resource.update-meta" in-pcs="1" in-pcsd="1">
       <description>
-        Update a meta attribute of a (primitive, clone, master/slave, group)
-        resource.
+        Update a meta attribute of a (primitive, clone, group) resource.
 
         pcs commands: resource meta
         daemon urls: add_meta_attr_remote
@@ -1270,8 +1269,7 @@
     <capability id="pcmk.resource.restart" in-pcs="1" in-pcsd="0">
       <description>
         Restart a resource, allow specifying a node for multi-node resources
-        (clones, master/slaves, bundles), allow waiting for the resource to
-        restart.
+        (clones, bundles), allow waiting for the resource to restart.
 
         pcs commands: resource restart
       </description>
