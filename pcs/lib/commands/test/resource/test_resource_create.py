@@ -1110,7 +1110,7 @@ class CreateInToBundle(TestCase):
         (self.config
             .runner.pcmk.load_agent()
             .runner.cib.load(
-                filename="cib-empty.xml",
+                filename="cib-empty-2.0.xml",
                 name="load_cib_old_version"
             )
             .runner.cib.upgrade()

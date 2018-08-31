@@ -30,7 +30,7 @@ class BundleCreateCommon(
 
 @skip_unless_pacemaker_supports_bundle
 class BundleCreateUpgradeCib(BundleCreateCommon):
-    empty_cib = rc("cib-empty.xml")
+    empty_cib = rc("cib-empty-2.0.xml")
 
     def test_success(self):
         self.assert_effect(

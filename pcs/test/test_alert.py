@@ -10,7 +10,7 @@ from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.pcs_runner import PcsRunner
 
 
-old_cib = rc("cib-empty.xml")
+old_cib = rc("cib-empty-2.0.xml")
 empty_cib = rc("cib-empty-2.5.xml")
 temp_cib = rc("temp-cib.xml")
 

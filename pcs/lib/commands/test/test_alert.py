@@ -83,7 +83,7 @@ class CreateAlertTest(TestCase):
     def test_create_upgrade(self):
         (self.config
             .runner.cib.load(
-                filename="cib-empty.xml",
+                filename="cib-empty-2.0.xml",
                 name="load_cib_old_version"
             )
             .runner.cib.upgrade()

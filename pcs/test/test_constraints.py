@@ -26,7 +26,7 @@ CONSTRAINTS_TMP = rc("test_constraints")
 if not os.path.exists(CONSTRAINTS_TMP):
     os.makedirs(CONSTRAINTS_TMP)
 
-empty_cib = rc("cib-empty.xml")
+empty_cib = rc("cib-empty-2.0.xml")
 temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
@@ -2902,7 +2902,7 @@ class LocationTypePattern(ConstraintEffect):
 
 @skip_unless_location_rsc_pattern
 class LocationTypePatternWithCibUpgrade(LocationTypePattern):
-    empty_cib = rc("cib-empty.xml")
+    empty_cib = rc("cib-empty-2.0.xml")
 
     def stdout(self):
         return "Cluster CIB has been upgraded to latest version\n"
