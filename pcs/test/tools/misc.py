@@ -91,8 +91,8 @@ def skip_unless_pacemaker_features(version_tuple, feature):
     )
 
 skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
-    (3, 0, 12),
-    "bundle resources"
+    (3, 1, 0),
+    "bundle resources with promoted-max attribute"
 )
 
 def skip_unless_pacemaker_supports_systemd():

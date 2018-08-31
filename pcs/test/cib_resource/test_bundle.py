@@ -30,9 +30,11 @@ class BundleCreateCommon(
 
 @skip_unless_pacemaker_supports_bundle
 class BundleCreateUpgradeCib(BundleCreateCommon):
-    empty_cib = rc("cib-empty-2.0.xml")
+    def setUp(self):
+        self.pcs_runner = PcsRunner(self.temp_cib)
 
     def test_success(self):
+        shutil.copy(rc("cib-empty-2.0.xml"), self.temp_cib)
         self.assert_effect(
             "resource bundle create B1 container docker image=pcs:test",
             """
@@ -45,10 +47,26 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
             "CIB has been upgraded to the latest schema version.\n"
         )
 
+    def test_upgrade_for_promoted_max(self):
+        shutil.copy(rc("cib-empty-2.8.xml"), self.temp_cib)
+        self.assert_effect(
+            "resource bundle create B1 container docker image=pcs:test "
+                "promoted-max=2"
+            ,
+            """
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" promoted-max="2" />
+                    </bundle>
+                </resources>
+            """,
+            "CIB has been upgraded to the latest schema version.\n"
+        )
+
 
 @skip_unless_pacemaker_supports_bundle
 class BundleCreate(BundleCreateCommon):
-    empty_cib = rc("cib-empty-2.8.xml")
+    empty_cib = rc("cib-empty.xml")
 
     def test_minimal(self):
         self.assert_effect(
@@ -77,7 +95,7 @@ class BundleCreate(BundleCreateCommon):
                 network ip-range-start=192.168.100.200
                 storage-map id=B1-storage-map source-dir=/tmp/docker2a
                     target-dir=/tmp/docker2b
-                container image=pcs:test masters=0
+                container image=pcs:test promoted-max=0
                 meta is-managed=false
                 storage-map source-dir-root=/tmp/docker3a
                     target-dir=/tmp/docker3b
@@ -90,9 +108,9 @@ class BundleCreate(BundleCreateCommon):
                     <bundle id="B1">
                         <docker
                             image="pcs:test"
-                            masters="0"
                             network="extra_network_settings"
                             options="extra_options"
+                            promoted-max="0"
                             replicas="4"
                             replicas-per-host="2"
                             run-command="/bin/true"
@@ -153,6 +171,35 @@ class BundleCreate(BundleCreateCommon):
             """
         )
 
+    def test_deprecated_masters(self):
+        self.assert_effect(
+            """
+                resource bundle create B1
+                container docker image=pcs:test masters=0
+            """,
+            """
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" masters="0" />
+                    </bundle>
+                </resources>
+            """,
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+
+    def test_deprecated_masters_and_promoted_max(self):
+        self.assert_pcs_fail(
+            """
+                resource bundle create B1
+                container docker image=pcs:test masters=0 promoted-max=0
+            """,
+            "Error: Only one of container options 'masters' and 'promoted-max' "
+                "can be used\n"
+                "Warning: container option 'masters' is deprecated and should "
+                "not be used, use promoted-max instead\n"
+        )
+
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle",
@@ -184,8 +231,8 @@ class BundleCreate(BundleCreateCommon):
                 extra=option
             """,
             "Error: invalid container option 'extra', allowed options are: "
-                "image, masters, network, options, replicas, replicas-per-host,"
-                " run-command, use --force to override\n"
+                "image, masters, network, options, promoted-max, replicas, "
+                "replicas-per-host, run-command, use --force to override\n"
         )
 
     def test_unknown_option_forced(self):
@@ -237,8 +284,23 @@ class BundleCreate(BundleCreateCommon):
 
 
 @skip_unless_pacemaker_supports_bundle
+class BundleUpdateUpgradeCib(BundleCreateCommon):
+    def setUp(self):
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    def test_upgrade_for_promoted_max(self):
+        shutil.copy(rc("cib-empty-2.8.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource bundle create B container docker image=pcs:test"
+        )
+        self.assert_pcs_success(
+            "resource bundle update B container promoted-max=3",
+            "CIB has been upgraded to the latest schema version.\n"
+        )
+
+@skip_unless_pacemaker_supports_bundle
 class BundleUpdate(BundleCreateCommon):
-    empty_cib = rc("cib-empty-2.8.xml")
+    empty_cib = rc("cib-empty.xml")
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
@@ -251,7 +313,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             ("""
                 resource bundle create {0}
-                container docker image=pcs:test replicas=4 masters=2
+                container docker image=pcs:test replicas=4 promoted-max=2
                 network control-port=12345 host-interface=eth0 host-netmask=24
                 port-map internal-port=1000 port=2000
                 port-map internal-port=1001 port=2001
@@ -296,7 +358,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_effect(
             """
                 resource bundle update B
-                container masters= replicas=6 replicas-per-host=2
+                container promoted-max= replicas=6 replicas-per-host=2
                 network control-port= host-interface=eth1
                     ip-range-start=192.168.100.200
                 port-map remove B-port-map-2000 B-port-map-2002
@@ -354,14 +416,118 @@ class BundleUpdate(BundleCreateCommon):
             """
         )
 
+    def test_deprecated_masters_set(self):
+        # Setting both deprecated options and their new variants is tested in
+        # self.test_options_errors. This shows deprecated options emit warning
+        # even when not forced.
+        self.fixture_bundle("B")
+        self.assert_effect(
+            "resource bundle update B container masters=2",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" masters="2" />
+                    </bundle>
+                </resources>
+            """,
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+
+    def test_delete_masters(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container masters=2",
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+        self.assert_effect(
+            "resource bundle update B container masters=",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" />
+                    </bundle>
+                </resources>
+            """,
+        )
+
+    def test_delete_masters_and_promoted_max(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container masters= promoted-max=",
+        )
+
+    def test_masters_set_after_promoted_max(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container promoted-max=3",
+        )
+        self.assert_pcs_fail(
+            "resource bundle update B container masters=2",
+            "Error: Cannot set container option 'masters' because container "
+                "option 'promoted-max' is already set\n"
+                "Warning: container option 'masters' is deprecated and should "
+                "not be used, use promoted-max instead\n"
+        )
+
+    def test_masters_set_after_promoted_max_with_remove(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container promoted-max=3",
+        )
+        self.assert_effect(
+            "resource bundle update B container masters=2 promoted-max=",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" masters="2" />
+                    </bundle>
+                </resources>
+            """,
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+
+    def test_promoted_max_set_after_masters(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container masters=2",
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+        self.assert_pcs_fail(
+            "resource bundle update B container promoted-max=3",
+            "Error: Cannot set container option 'promoted-max' because "
+                "container option 'masters' is already set\n"
+        )
+
+    def test_promoted_max_set_after_masters_with_remove(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_success(
+            "resource bundle update B container masters=2",
+            "Warning: container option 'masters' is deprecated and should not "
+                "be used, use promoted-max instead\n"
+        )
+        self.assert_effect(
+            "resource bundle update B container masters= promoted-max=3",
+            """
+                <resources>
+                    <bundle id="B">
+                        <docker image="pcs:test" promoted-max="3" />
+                    </bundle>
+                </resources>
+            """,
+        )
+
     def test_force_unknown_option(self):
         self.fixture_bundle("B")
 
         self.assert_pcs_fail(
             "resource bundle update B container extra=option",
             "Error: invalid container option 'extra', allowed options are: "
-                "image, masters, network, options, replicas, replicas-per-host,"
-                " run-command, use --force to override\n"
+                "image, masters, network, options, promoted-max, replicas, "
+                "replicas-per-host, run-command, use --force to override\n"
         )
         # Test that pcs allows to specify options it does not know about. This
         # ensures some kind of forward compatibility, so the user will be able
@@ -409,7 +575,7 @@ class BundleUpdate(BundleCreateCommon):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleShow(TestCase, AssertPcsMixin):
-    empty_cib = rc("cib-empty-2.8.xml")
+    empty_cib = rc("cib-empty.xml")
     temp_cib = rc("temp-cib.xml")
 
     def setUp(self):
@@ -431,14 +597,14 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container docker image=pcs:test masters=2 replicas=4
+                container docker image=pcs:test promoted-max=2 replicas=4
                     options='a b c'
             """
         )
         self.assert_pcs_success("resource show B1", outdent(
             """\
              Bundle: B1
-              Docker: image=pcs:test masters=2 options="a b c" replicas=4
+              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
             """
         ))
 
@@ -532,7 +698,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             """
                 resource bundle create B1
-                container docker image=pcs:test masters=2 replicas=4
+                container docker image=pcs:test promoted-max=2 replicas=4
                     options='a b c'
                 network host-interface=eth0 host-netmask=24 control-port=12345
                 port-map id=B1-port-map-1001 internal-port=2002 port=2000
@@ -549,7 +715,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource show B1", outdent(
             """\
              Bundle: B1
-              Docker: image=pcs:test masters=2 options="a b c" replicas=4
+              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
               Network: control-port=12345 host-interface=eth0 host-netmask=24
               Port Mapping:
                internal-port=2002 port=2000 (B1-port-map-1001)

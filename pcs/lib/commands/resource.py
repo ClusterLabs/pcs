@@ -524,6 +524,9 @@ def bundle_create(
     storage_map = storage_map or []
     meta_attributes = meta_attributes or {}
 
+    required_cib_version=Version(2, 8, 0)
+    if "promoted-max" in container_options:
+        required_cib_version=Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
@@ -533,7 +536,7 @@ def bundle_create(
             or
             resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=Version(2, 8, 0)
+        required_cib_version=required_cib_version
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
@@ -595,11 +598,14 @@ def bundle_update(
     storage_map_remove = storage_map_remove or []
     meta_attributes = meta_attributes or {}
 
+    required_cib_version=Version(2, 8, 0)
+    if "promoted-max" in container_options:
+        required_cib_version=Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
         [bundle_id],
-        required_cib_version=Version(2, 8, 0)
+        required_cib_version=required_cib_version
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources

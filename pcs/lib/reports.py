@@ -215,6 +215,27 @@ def prerequisite_option_must_be_disabled(
         }
     )
 
+def prerequisite_option_must_not_be_set(
+    option_name, prerequisite_name, option_type="", prerequisite_type=""
+):
+    """
+    The option_name cannot be set because the prerequisite_name is already set
+
+    string option_name -- an option which depends on the prerequisite_option
+    string prerequisite_name -- the prerequisite option
+    string option_type -- describes the option
+    string prerequisite_type -- describes the prerequisite_option
+    """
+    return ReportItem.error(
+        report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
+        info={
+            "option_name": option_name,
+            "option_type": option_type,
+            "prerequisite_name": prerequisite_name,
+            "prerequisite_type": prerequisite_type,
+        }
+    )
+
 def required_option_of_alternatives_is_missing(
     option_names, option_type=None
 ):
@@ -336,7 +357,7 @@ def deprecated_option(
     Specified option name is deprecated and has been replaced by other option(s)
 
     string option_name -- the deprecated option
-    iterable or string replaced_by_options -- new option(s) to be used instead
+    iterable replaced_by_options -- new option(s) to be used instead
     string option_type -- option description
     string severity -- report item severity
     string forceable -- a category by which the report is forceable

@@ -1124,6 +1124,13 @@
         pcs commands: resource bundle
       </description>
     </capability>
+    <capability id="pcmk.resource.bundle.container-docker.promoted-max" in-pcs="1" in-pcsd="0">
+      <description>
+        Support promoted-max option of docker container in bundle resources.
+
+        pcs commands: resource bundle
+      </description>
+    </capability>
     <capability id="pcmk.resource.bundle.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect when creating or updating a bundle

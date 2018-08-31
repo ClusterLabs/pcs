@@ -991,6 +991,25 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
         )
 
 
+class PrerequisiteOptionMustNotBeSet(NameBuildTest):
+    code = codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET
+    def test_without_type(self):
+        self.assert_message_from_report(
+            "Cannot set option 'a' because option 'b' is already set",
+            reports.prerequisite_option_must_not_be_set(
+                "a", "b",
+            )
+        )
+
+    def test_with_type(self):
+        self.assert_message_from_report(
+            "Cannot set some option 'a' because other option 'b' is already set",
+            reports.prerequisite_option_must_not_be_set(
+                "a", "b", option_type="some", prerequisite_type="other",
+            )
+        )
+
+
 class PrerequisiteOptionMustBeDisabled(NameBuildTest):
     code = codes.PREREQUISITE_OPTION_MUST_BE_DISABLED
     def test_without_type(self):
