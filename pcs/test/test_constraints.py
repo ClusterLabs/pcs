@@ -2590,7 +2590,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
-    temp_cib = rc("test_constraints/temp-cib.xml")
+    temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -2759,7 +2759,7 @@ class ConstraintEffect(
         )
     )
 ):
-    temp_cib = rc("test_constraints/temp-cib.xml")
+    temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):

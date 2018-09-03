@@ -5278,6 +5278,8 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
 
 
 class TransforMasterToClone(ResourceTest):
+    temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
+
     def test_transform_master_without_meta_on_meta(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -5489,7 +5491,7 @@ class BundleCommon(
         )
     )
 ):
-    temp_cib = rc("test_resource/temp-cib.xml")
+    temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty-2.8.xml")
 
     def setUp(self):
