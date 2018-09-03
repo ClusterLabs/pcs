@@ -10,6 +10,7 @@ from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
     LibraryError,
+    ReportItemSeverity,
     ReportListAnalyzer,
 )
 from pcs.lib.pacemaker.values import sanitize_id
@@ -26,6 +27,7 @@ _docker_options = set((
     "masters",
     "network",
     "options",
+    "promoted-max",
     "run-command",
     "replicas",
     "replicas-per-host",
@@ -314,11 +316,23 @@ def _validate_container_docker_options_new(options, force_options):
         validate.is_required("image", "container"),
         validate.value_not_empty("image", "image name"),
         validate.value_nonnegative_integer("masters"),
+        validate.value_nonnegative_integer("promoted-max"),
+        validate.mutually_exclusive(["masters", "promoted-max"], "container"),
         validate.value_positive_integer("replicas"),
         validate.value_positive_integer("replicas-per-host"),
     ]
+    deprecation_reports = []
+    if "masters" in options:
+        deprecation_reports.append(
+            reports.deprecated_option(
+                "masters", ["promoted-max"], "container",
+                severity=ReportItemSeverity.WARNING
+            )
+        )
     return (
         validate.run_collection_of_option_validators(options, validators)
+        +
+        deprecation_reports
         +
         validate.names_in(
             _docker_options,
@@ -340,6 +354,10 @@ def _validate_container_docker_options_update(
             validate.value_nonnegative_integer("masters")
         ),
         validate.value_empty_or_valid(
+            "promoted-max",
+            validate.value_nonnegative_integer("promoted-max")
+        ),
+        validate.value_empty_or_valid(
             "replicas",
             validate.value_positive_integer("replicas")
         ),
@@ -348,8 +366,60 @@ def _validate_container_docker_options_update(
             validate.value_positive_integer("replicas-per-host")
         ),
     ]
+    # CIB does not allow both to be set. Deleting both is not a problem,
+    # though. Deleting one while setting another also works and is further
+    # checked bellow.
+    if not (
+        options.get("masters", "") == ""
+        or
+        options.get("promoted-max", "") == ""
+    ):
+        validators.append(
+            validate.mutually_exclusive(
+                ["masters", "promoted-max"],
+                "container"
+            )
+        )
+
+    deprecation_reports = []
+    if options.get("masters"):
+        # If the user wants to delete the masters option, do not report it is
+        # deprecated. They may be removing it because they just found out it is
+        # deprecated.
+        deprecation_reports.append(
+            reports.deprecated_option(
+                "masters", ["promoted-max"], "container",
+                severity=ReportItemSeverity.WARNING
+            )
+        )
+    # Do not allow to set masters if promoted-max is set unless promoted-max is
+    # going to be removed now. Do the same check also the other way around. CIB
+    # only allows one of them to be set.
+    if (
+        options.get("masters")
+        and
+        docker_el.get("promoted-max") and options.get("promoted-max") != ""
+    ):
+        deprecation_reports.append(
+            reports.prerequisite_option_must_not_be_set(
+                "masters", "promoted-max", "container", "container"
+            )
+        )
+    if (
+        options.get("promoted-max")
+        and
+        docker_el.get("masters") and options.get("masters") != ""
+    ):
+        deprecation_reports.append(
+            reports.prerequisite_option_must_not_be_set(
+                "promoted-max", "masters", "container", "container"
+            )
+        )
+
     return (
         validate.run_collection_of_option_validators(options, validators)
+        +
+        deprecation_reports
         +
         validate.names_in(
             # allow to remove options even if they are not allowed

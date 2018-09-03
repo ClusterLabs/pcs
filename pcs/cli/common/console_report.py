@@ -325,6 +325,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET: lambda info:
+        (
+            "Cannot set {_opt_desc}option '{option_name}' because "
+            "{_pre_desc}option '{prerequisite_name}' is already set"
+        ).format(
+            _opt_desc=format_optional(info.get("option_type"), "{0} "),
+            _pre_desc=format_optional(info.get("prerequisite_type"), "{0} "),
+            **info
+        )
+    ,
+
     codes.PREREQUISITE_OPTION_IS_MISSING: lambda info:
         (
             "If {opt_desc}option '{option_name}' is specified, "

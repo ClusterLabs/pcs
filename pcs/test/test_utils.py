@@ -566,7 +566,7 @@ class UtilsTest(TestCase):
         )
 
         message = (
-            "%s is a master/slave resource, you should use the master id: "
+            "%s is a clone resource, you should use the clone id: "
             "%s when adding constraints. Use --force to override."
         )
         self.assertEqual(

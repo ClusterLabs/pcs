@@ -18,7 +18,7 @@ TIMEOUT=10
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.8.xml"
+    base_cib_filename="cib-empty.xml"
 )
 
 
@@ -30,7 +30,6 @@ def simple_bundle_create(env, wait=TIMEOUT, disabled=False):
         wait=wait,
     )
 
-fixture_cib_pre = "<resources />"
 fixture_resources_bundle_simple = """
     <resources>
         <bundle id="B1">
@@ -85,7 +84,7 @@ class MinimalCreate(TestCase):
         (self.config
             .runner.cib.load(
                 name="load_cib_old_version",
-                filename="cib-empty.xml",
+                filename="cib-empty-2.0.xml",
                 before="runner.cib.load"
             )
             .runner.cib.upgrade(before="runner.cib.load")
@@ -110,6 +109,7 @@ class CreateDocker(TestCase):
         "masters",
         "network",
         "options",
+        "promoted-max",
         "replicas",
         "replicas-per-host",
         "run-command",
@@ -117,7 +117,7 @@ class CreateDocker(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
     def test_minimal(self):
         self.config.env.push_cib(resources=fixture_resources_bundle_simple)
@@ -130,9 +130,9 @@ class CreateDocker(TestCase):
                     <bundle id="B1">
                         <docker
                             image="pcs:test"
-                            masters="0"
                             network="extra network settings"
                             options="extra options"
+                            promoted-max="0"
                             replicas="4"
                             replicas-per-host="2"
                             run-command="/bin/true"
@@ -145,14 +145,84 @@ class CreateDocker(TestCase):
             self.env_assist.get_env(), "B1", "docker",
             container_options={
                 "image": "pcs:test",
-                "masters": "0",
                 "network": "extra network settings",
                 "options": "extra options",
+                "promoted-max": "0",
                 "run-command": "/bin/true",
                 "replicas": "4",
                 "replicas-per-host": "2",
             }
         )
+
+    def test_cib_upgrade_promoted_max(self):
+        (self.config
+            .runner.cib.load(
+                name="load_cib_old_version",
+                filename="cib-empty-2.8.xml",
+                before="runner.cib.load"
+            )
+            .runner.cib.upgrade(before="runner.cib.load")
+            .env.push_cib(
+                resources="""
+                    <resources>
+                        <bundle id="B1">
+                            <docker image="pcs:test" promoted-max="0" />
+                        </bundle>
+                    </resources>
+                """
+            )
+        )
+
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            container_options={
+                "image": "pcs:test",
+                "promoted-max": "0",
+            }
+        )
+
+        self.env_assist.assert_reports([
+            (
+                severities.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {
+                },
+                None
+            ),
+        ])
+
+    def test_deprecated_options(self):
+        # Setting both deprecated options and their new variants is tested in
+        # self.test_options_errors. This shows deprecated options emit warning
+        # even when not forced.
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:test" masters="1" />
+                    </bundle>
+                </resources>
+            """,
+        )
+        resource.bundle_create(
+            self.env_assist.get_env(), "B1", "docker",
+            {
+                "image": "pcs:test",
+                "masters": "1",
+            },
+        )
+        self.env_assist.assert_reports([
+            (
+                severities.WARNING,
+                report_codes.DEPRECATED_OPTION,
+                {
+                    "option_name": "masters",
+                    "option_type": "container",
+                    "replaced_by": ["promoted-max"],
+                },
+                None
+            ),
+        ])
 
     def test_options_errors(self):
         self.env_assist.assert_raise_library_error(
@@ -162,6 +232,7 @@ class CreateDocker(TestCase):
                     "replicas-per-host": "0",
                     "replicas": "0",
                     "masters": "-1",
+                    "promoted-max": "-2",
                 },
                 force_options=True
             ),
@@ -189,6 +260,25 @@ class CreateDocker(TestCase):
                     severities.ERROR,
                     report_codes.INVALID_OPTION_VALUE,
                     {
+                        "option_name": "promoted-max",
+                        "option_value": "-2",
+                        "allowed_values": "a non-negative integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_names": ["masters", "promoted-max", ],
+                        "option_type": "container",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
                         "option_name": "replicas",
                         "option_value": "0",
                         "allowed_values": "a positive integer",
@@ -207,6 +297,18 @@ class CreateDocker(TestCase):
                 ),
             ]
         )
+        self.env_assist.assert_reports([
+            (
+                severities.WARNING,
+                report_codes.DEPRECATED_OPTION,
+                {
+                    "option_name": "masters",
+                    "option_type": "container",
+                    "replaced_by": ["promoted-max"],
+                },
+                None
+            ),
+        ])
 
     def test_empty_image(self):
         self.env_assist.assert_raise_library_error(
@@ -298,7 +400,7 @@ class CreateWithNetwork(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
 
     def test_no_options(self):
@@ -440,7 +542,7 @@ class CreateWithPortMap(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
     def test_no_options(self):
         self.config.env.push_cib(resources=fixture_resources_bundle_simple)
@@ -708,7 +810,7 @@ class CreateWithStorageMap(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
 
     def test_several_mappings_and_handle_their_ids(self):
@@ -917,7 +1019,7 @@ class CreateWithStorageMap(TestCase):
 class CreateWithMeta(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
     def test_success(self):
         self.config.env.push_cib(
@@ -964,10 +1066,11 @@ class CreateWithMeta(TestCase):
             ensure_disabled=True
         )
 
+
 class CreateWithAllOptions(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=fixture_cib_pre)
+        self.config.runner.cib.load()
 
     def test_success(self):
         self.config.env.push_cib(
@@ -976,9 +1079,9 @@ class CreateWithAllOptions(TestCase):
                     <bundle id="B1">
                         <docker
                             image="pcs:test"
-                            masters="0"
                             network="extra network settings"
                             options="extra options"
+                            promoted-max="0"
                             replicas="4"
                             replicas-per-host="2"
                             run-command="/bin/true"
@@ -1032,7 +1135,7 @@ class CreateWithAllOptions(TestCase):
             self.env_assist.get_env(), "B1", "docker",
             container_options={
                 "image": "pcs:test",
-                "masters": "0",
+                "promoted-max": "0",
                 "network": "extra network settings",
                 "options": "extra options",
                 "run-command": "/bin/true",
@@ -1133,7 +1236,7 @@ class Wait(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (self.config
             .runner.pcmk.can_wait()
-            .runner.cib.load(resources=fixture_cib_pre)
+            .runner.cib.load()
         )
 
     def test_wait_fail(self):

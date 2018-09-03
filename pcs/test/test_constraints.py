@@ -9,6 +9,11 @@ from pcs.test.tools.assertions import (
     console_report,
 )
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
+from pcs.test.tools.fixture_cib import (
+    fixture_master_xml,
+    fixture_to_cib,
+    wrap_element_by_master,
+)
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
@@ -21,7 +26,7 @@ CONSTRAINTS_TMP = rc("test_constraints")
 if not os.path.exists(CONSTRAINTS_TMP):
     os.makedirs(CONSTRAINTS_TMP)
 
-empty_cib = rc("cib-empty.xml")
+empty_cib = rc("cib-empty-2.0.xml")
 temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
@@ -36,6 +41,9 @@ skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
 
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+
+    def fixture_resources(self):
         with open(temp_cib, "w") as temp_cib_file:
             temp_cib_file.write(self.fixture_cib_cache())
 
@@ -81,11 +89,13 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource master Master D4"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "D4", master_id="Master")
 
     def testConstraintRules(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D1 rule score=222 '#uname' eq c00n03")
         assert output == "", [output]
         assert returnVal == 0
@@ -221,6 +231,7 @@ Ticket Constraints:
 """)
 
     def testAdvancedConstraintRule(self):
+        self.fixture_resources()
         o,r = pcs(temp_cib, "constraint location D1 rule score=INFINITY not_defined pingd or pingd lte 0")
         ac(o,"")
         assert r == 0
@@ -244,6 +255,7 @@ Ticket Constraints:
         assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n", output
 
     def testMultipleOrderConstraints(self):
+        self.fixture_resources()
         o,r = pcs(temp_cib, "constraint order stop D1 then stop D2")
         ac(o,"Adding D1 D2 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n")
         assert r == 0
@@ -261,6 +273,7 @@ Ticket Constraints:
         "constraints with the require-all option"
     )
     def testOrderConstraintRequireAll(self):
+        self.fixture_resources()
         o,r = pcs(temp_cib, "cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
@@ -280,6 +293,7 @@ Ticket Constraints:
         assert r == 0
 
     def testAllConstraints(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
 
@@ -297,8 +311,9 @@ Ticket Constraints:
         assert returnVal == 0
         ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
 
+    # see also BundleLocation
     def testLocationConstraints(self):
-        # see also BundleLocation
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
 
@@ -320,6 +335,7 @@ Ticket Constraints:
         assert output.startswith("\nUsage: pcs constraint"), output
 
     def testConstraintRemoval(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
 
@@ -341,47 +357,18 @@ Ticket Constraints:
         ac(output, "Location Constraints:\n")
         assert returnVal == 0
 
+    # see also BundleColocation
     def testColocationConstraints(self):
-        # see also BundleColocation
-        line = "resource create M1 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create M2 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create M3 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M4 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M5 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M6 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M7 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M8 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M9 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M10 ocf:heartbeat:Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        self.fixture_resources()
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, "\n".join(
+            ["<resources>"]
+            +
+            [fixture_master_xml(f"M{i}") for i in range(1, 11)]
+            +
+            ["</resources>"]
+        ))
 
         o, r = pcs(temp_cib, "constraint colocation add D1 D3-clone")
         assert r == 0 and o == "", o
@@ -414,8 +401,9 @@ Ticket Constraints:
         assert r == 0
         ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\nTicket Constraints:\n')
 
+    # see also BundleColocation
     def testColocationSets(self):
-        # see also BundleColocation
+        self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -677,8 +665,9 @@ Colocation Constraints:
         ac(o,"Ordering Constraints:\n")
         assert r == 0
 
+    # see also BundleOrder
     def testOrderSets(self):
-        # see also BundleOrder
+        self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -827,6 +816,7 @@ Ticket Constraints:
         self.assertEqual(0, retValue)
 
     def testLocationConstraintRule(self):
+        self.fixture_resources()
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
         assert r == 0 and o == "", o
 
@@ -926,9 +916,9 @@ Ticket Constraints:
         assert returnVal == 1
 
     def testLocationBadRules(self):
-        o,r = pcs(temp_cib, "resource create stateful0 ocf:heartbeat:Dummy --master")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("stateful0"))
 
         o,r = pcs(temp_cib, "constraint location stateful0 rule role=master '#uname' eq rh7-1 --force")
         ac(o,"")
@@ -947,9 +937,9 @@ Ticket Constraints:
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create stateful1 ocf:heartbeat:Dummy --master")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("stateful1"))
 
         o,r = pcs(temp_cib, "constraint location stateful1 rule rulename '#uname' eq rh7-1 --force")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n")
@@ -986,11 +976,9 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create stateful1 ocf:pacemaker:Stateful --master")
-        ac(o, """\
-Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
-""")
-        assert r == 0
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("stateful1"))
 
         o,r = pcs(temp_cib,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
@@ -1000,56 +988,57 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource master statefulG")
-        ac(o,"")
-        assert r == 0
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "statefulG")
 
         o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location statefulG prefers rh7-1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location stateful1 rule #uname eq rh7-1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location statefulG rule #uname eq rh7-1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order stateful1 then dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order dummy1 then statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order set stateful1 dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint order set dummy1 statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation add dummy1 with statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation set dummy1 stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint colocation set statefulG dummy1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint --full")
@@ -1069,7 +1058,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint order set stateful1 dummy1 --force")
-        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
+        ac(o,"Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint colocation add stateful1 with dummy1 --force")
@@ -1077,7 +1066,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint colocation set stateful1 dummy1 --force")
-        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
+        ac(o,"Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint --full")
@@ -1106,13 +1095,9 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib,
-            "resource create stateful1 ocf:pacemaker:Stateful --master"
-        )
-        ac(output, """\
-Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
-""")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("stateful1"))
 
         output, returnVal = pcs(temp_cib,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
@@ -1122,9 +1107,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource master statefulG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master(temp_cib, "statefulG")
 
         output, returnVal = pcs(temp_cib,
             "constraint location stateful1 prefers rh7-1 --autocorrect"
@@ -1717,7 +1703,11 @@ Ticket Constraints:
 
     def testMissingRole(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
-        o,r = pcs(temp_cib, "resource create stateful0 ocf:pacemaker:Stateful --master")
+
+        # pcs no longer allows creating masters but supports existing ones. In
+        # order to test it, we need to put a master in the CIB without pcs.
+        fixture_to_cib(temp_cib, fixture_master_xml("stateful0"))
+
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
         o,r = pcs(temp_cib, "constraint")
@@ -1768,6 +1758,7 @@ Ticket Constraints:
         assert returnVal == 0
 
     def testConstraintResourceCloneUpdate(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
         ac(output, "")
         assert returnVal == 0
@@ -1807,47 +1798,8 @@ Ticket Constraints:
 """)
         assert returnVal == 0
 
-    def testConstraintResourceMasterUpdate(self):
-        output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D1 then D5")
-        ac(output, """\
-Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D6 then D1")
-        ac(output, """\
-Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource master D1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: D1-master
-    Enabled on: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
-Ordering Constraints:
-  start D1-master then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
-  start D6 then start D1-master (kind:Mandatory) (id:order-D6-D1-mandatory)
-Colocation Constraints:
-  D1-master with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
-Ticket Constraints:
-""")
-        assert returnVal == 0
-
     def testConstraintGroupCloneUpdate(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "resource group add DG D1")
         ac(output, "")
         assert returnVal == 0
@@ -1891,51 +1843,8 @@ Ticket Constraints:
 """)
         assert returnVal == 0
 
-    def testConstraintGroupMasterUpdate(self):
-        output, returnVal = pcs(temp_cib, "resource group add DG D1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order DG then D5")
-        ac(output, """\
-Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint order D6 then DG")
-        ac(output, """\
-Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
-""")
-        assert returnVal == 0
-
-        assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource master DG")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: DG-master
-    Enabled on: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
-Ordering Constraints:
-  start DG-master then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
-  start D6 then start DG-master (kind:Mandatory) (id:order-D6-DG-mandatory)
-Colocation Constraints:
-  DG-master with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
-Ticket Constraints:
-""")
-        assert returnVal == 0
-
     def testRemoteNodeConstraintsRemove(self):
+        self.fixture_resources()
         # constraints referencing the remote node's name,
         # deleting the remote node resource
         output, returnVal = pcs(
@@ -2120,6 +2029,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testDuplicateOrder(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint order D1 then D2")
         ac(output, """\
 Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
@@ -2212,6 +2122,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testDuplicateColocation(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D2")
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2294,6 +2205,7 @@ Ticket Constraints:
 """)
 
     def testDuplicateSetConstraints(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2")
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2400,6 +2312,7 @@ Ticket Constraints:
 """)
 
     def testDuplicateLocationRules(self):
+        self.fixture_resources()
         output, returnVal = pcs(temp_cib, "constraint location D1 rule #uname eq node1")
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2488,6 +2401,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testConstraintsCustomId(self):
+        self.fixture_resources()
         output, returnVal = pcs(
             temp_cib,
             "constraint colocation add D1 with D2 id=1id"
@@ -2676,7 +2590,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
-    temp_cib = rc("test_constraints/temp-cib.xml")
+    temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -2845,7 +2759,7 @@ class ConstraintEffect(
         )
     )
 ):
-    temp_cib = rc("test_constraints/temp-cib.xml")
+    temp_cib = os.path.join(CONSTRAINTS_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -2988,7 +2902,7 @@ class LocationTypePattern(ConstraintEffect):
 
 @skip_unless_location_rsc_pattern
 class LocationTypePatternWithCibUpgrade(LocationTypePattern):
-    empty_cib = rc("cib-empty.xml")
+    empty_cib = rc("cib-empty-2.0.xml")
 
     def stdout(self):
         return "Cluster CIB has been upgraded to latest version\n"
@@ -3027,7 +2941,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
         ])
 
     def test_show(self):
-        #pylint: disable=trailing-whitespace
         self.fixture()
         self.assert_pcs_success(
             "constraint location show --full",

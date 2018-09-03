@@ -302,16 +302,16 @@ class StonithTest(TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
  Resource: f1 (class=stonith type=fence_scsi)
-  Meta Attrs: provides=unfencing 
+  Meta Attrs: provides=unfencing
   Operations: monitor interval=60s (f1-monitor-interval-60s)
  Resource: f2 (class=stonith type=fence_scsi)
-  Meta Attrs: provides=unfencing 
+  Meta Attrs: provides=unfencing
   Operations: monitor interval=60s (f2-monitor-interval-60s)
  Resource: f3 (class=stonith type=fence_scsi)
-  Meta Attrs: provides=unfencing 
+  Meta Attrs: provides=unfencing
   Operations: monitor interval=60s (f3-monitor-interval-60s)
  Resource: f4 (class=stonith type=fence_xvm)
-  Meta Attrs: provides=something 
+  Meta Attrs: provides=something
   Operations: monitor interval=60s (f4-monitor-interval-60s)
 """)
         self.assertEqual(0, returnVal)

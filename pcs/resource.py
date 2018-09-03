@@ -34,7 +34,10 @@ from pcs.lib.pacemaker.state import (
     _get_primitive_roles_with_nodes,
     _get_primitives_for_state_check,
 )
-from pcs.lib.pacemaker.values import timeout_to_seconds
+from pcs.lib.pacemaker.values import (
+    is_true as is_pacemaker_true,
+    timeout_to_seconds,
+)
 import pcs.lib.resource_agent as lib_ra
 
 
@@ -110,10 +113,10 @@ def resource_cmd(lib, argv, modifiers):
             resource_group(lib, ["remove"] + argv_next, modifiers)
         elif sub_cmd == "clone":
             resource_clone(lib, argv_next, modifiers)
+        elif sub_cmd == "promotable":
+            resource_clone(lib, argv_next, modifiers, promotable=True)
         elif sub_cmd == "unclone":
             resource_clone_master_remove(lib, argv_next, modifiers)
-        elif sub_cmd == "master":
-            resource_master(lib, argv_next, modifiers)
         elif sub_cmd == "enable":
             resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
@@ -445,11 +448,11 @@ def resource_create(lib, argv, modifiers):
     ra_type = argv[1]
 
     parts = parse_create_args(argv[2:])
-    parts_sections = ["clone", "master", "bundle"]
+
+    parts_sections = ["clone", "promotable", "bundle"]
     defined_options = [opt for opt in parts_sections if opt in parts]
     if modifiers.is_specified("--group"):
         defined_options.append("group")
-
     if len(
         set(defined_options).intersection(set(parts_sections + ["group"]))
     ) > 1:
@@ -474,6 +477,11 @@ def resource_create(lib, argv, modifiers):
         elif modifiers.is_specified("--after"):
             raise error("you cannot use --after without --group")
 
+    if "promotable" in parts and "promotable" in parts["promotable"]:
+        raise error(
+            "you cannot specify both promotable option and promotable keyword"
+        )
+
     settings = dict(
         allow_absent_agent=modifiers.get("--force"),
         allow_invalid_operation=modifiers.get("--force"),
@@ -492,12 +500,12 @@ def resource_create(lib, argv, modifiers):
             parts["clone"],
             **settings
         )
-    elif "master" in parts:
-        lib.resource.create_as_master(
+    elif "promotable" in parts:
+        lib.resource.create_as_clone(
             ra_id, ra_type, parts["op"],
             parts["meta"],
             parts["options"],
-            parts["master"],
+            dict(**parts["promotable"], promotable="true"),
             **settings
         )
     elif "bundle" in parts:
@@ -544,6 +552,7 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
       * --wait
     """
     modifiers.ensure_only_supported("-f", "--master", "--wait")
+    move = not clear and not ban
     other_options = []
     if len(argv) == 0:
         if clear:
@@ -557,7 +566,12 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
     resource_id = argv.pop(0)
 
     if (clear and len(argv) > 1) or len(argv) > 2:
-        usage.resource()
+        if clear:
+            usage.resource(["clear"])
+        elif ban:
+            usage.resource(["ban"])
+        else:
+            usage.resource(["move"])
         sys.exit(1)
 
     dest_node = None
@@ -579,65 +593,82 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
         raise CmdLineInputError()
 
     dom = utils.get_cib_dom()
-    if (
-        not utils.dom_get_resource(dom, resource_id)
-        and
-        not utils.dom_get_group(dom, resource_id)
-        and
-        not utils.dom_get_master(dom, resource_id)
-        and
-        not utils.dom_get_clone(dom, resource_id)
-        and
-        not utils.dom_get_bundle(dom, resource_id)
-    ):
+    resource_element = (
+        utils.dom_get_any_resource(dom, resource_id)
+        or
+        utils.dom_get_bundle(dom, resource_id)
+    )
+    if not resource_element:
         utils.err("%s is not a valid resource" % resource_id)
 
-    if (
-        not clear and not ban
-        and
-        (
-            utils.dom_get_clone(dom, resource_id)
-            or
-            utils.dom_get_resource_clone(dom, resource_id)
-            or
-            utils.dom_get_group_clone(dom, resource_id)
-            or
-            utils.dom_get_bundle(dom, resource_id)
+    is_clone = False
+    is_in_clone = False
+    is_promotable_clone = False
+    is_in_promotable_clone = False
+    promotable_clone_id = None
+    if utils.dom_get_bundle(dom, resource_id):
+        is_clone = True
+    elif utils.dom_get_clone(dom, resource_id):
+        is_clone = True
+        meta_promotable = utils.dom_get_meta_attr_value(
+            resource_element, "promotable"
         )
+        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
+            is_promotable_clone = True
+            promotable_clone_id = resource_id
+    elif utils.dom_get_master(dom, resource_id):
+        is_clone = True
+        is_promotable_clone = True
+        promotable_clone_id = resource_id
+    elif (
+        utils.dom_get_resource_clone(dom, resource_id)
+        or
+        utils.dom_get_group_clone(dom, resource_id)
     ):
-        utils.err("cannot move cloned resources")
+        is_in_clone = True
+        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        meta_promotable = utils.dom_get_meta_attr_value(parent, "promotable")
+        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
+            is_in_promotable_clone = True
+            promotable_clone_id = parent.getAttribute("id")
+    elif (
+        utils.dom_get_resource_masterslave(dom, resource_id)
+        or
+        utils.dom_get_group_masterslave(dom, resource_id)
+    ):
+        is_in_clone = True
+        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        is_in_promotable_clone = True
+        promotable_clone_id = parent.getAttribute("id")
 
     if (
-        not clear and not ban
+        move
+        and
+        (is_clone or is_in_clone)
+        and not
+        (is_promotable_clone or is_in_promotable_clone)
+    ):
+        utils.err("cannot move cloned resources")
+    if (
+        move
         and
         not modifiers.is_specified("--master")
         and
-        (
-            utils.dom_get_resource_masterslave(dom, resource_id)
-            or
-            utils.dom_get_group_masterslave(dom, resource_id)
-        )
+        (is_promotable_clone or is_in_promotable_clone)
     ):
-        master = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
         utils.err(
-            "to move Master/Slave resources you must use --master "
-                "and the master id (%s)"
-            % master.getAttribute("id")
+            "to move promotable clone resources you must use --master "
+                "and the clone id (%s)"
+            % promotable_clone_id
         )
-
-    if (
-        modifiers.is_specified("--master")
-        and
-        not utils.dom_get_master(dom, resource_id)
-    ):
-        master_clone = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
-        if master_clone and master_clone.tagName == "master":
+    if modifiers.is_specified("--master") and not is_promotable_clone:
+        if promotable_clone_id:
             utils.err(
-                "when specifying --master you must use the master id (%s)"
-                % master_clone.getAttribute("id")
+                "when specifying --master you must use the promotable clone id (%s)"
+                % promotable_clone_id
             )
         else:
-            utils.err("when specifying --master you must use the master id")
+            utils.err("when specifying --master you must use the promotable clone id")
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
@@ -678,9 +709,22 @@ def resource_move(dummy_lib, argv, modifiers, clear=False, ban=False):
             else:
                 output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node] + other_options)
     if ret != 0:
-        if "Resource '"+resource_id+"' not moved: active in 0 locations." in output:
+        if "Resource '"+resource_id+"' not moved: active in 0 locations" in output:
             utils.err("You must specify a node when moving/banning a stopped resource")
-        utils.err ("error moving/banning/clearing resource\n" + output)
+        new_lines = ["error moving/banning/clearing resource"]
+        for line in output.split("\n"):
+            if not line.strip():
+                continue
+            line = line.replace(
+                "--ban --master --node <name>",
+                f"pcs resource ban {resource_id} <node> --master"
+            )
+            line = line.replace(
+                "--ban --node <name>",
+                f"pcs resource ban {resource_id} <node>"
+            )
+            new_lines.append(line)
+        print("\n".join(new_lines))
     else:
         warning_re = re.compile(
             r"WARNING: Creating rsc_location constraint '([^']+)' "
@@ -820,18 +864,16 @@ def resource_update(dummy_lib, args, modifiers, deal_with_guest_change=True):
     resource = utils.dom_get_resource(dom, res_id)
     if not resource:
         clone = utils.dom_get_clone(dom, res_id)
-        if clone:
+        master = utils.dom_get_master(dom, res_id)
+        if clone or master:
+            if master:
+                clone = transform_master_to_clone(master)
             clone_child = utils.dom_elem_get_clone_ms_resource(clone)
             if clone_child:
                 child_id = clone_child.getAttribute("id")
-                return resource_update_clone_master(
-                    dom, clone, "clone", child_id, args, wait, wait_timeout
+                return resource_update_clone(
+                    dom, clone, child_id, args, wait, wait_timeout
                 )
-        master = utils.dom_get_master(dom, res_id)
-        if master:
-            return resource_update_clone_master(
-                dom, master, "master", res_id, args, wait, wait_timeout
-            )
         utils.err("Unable to find resource: %s" % res_id)
 
     instance_attributes = resource.getElementsByTagName("instance_attributes")
@@ -997,17 +1039,16 @@ def resource_update(dummy_lib, args, modifiers, deal_with_guest_change=True):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_update_clone_master(
-    dom, clone, clone_type, res_id, args, wait, wait_timeout
+def resource_update_clone(
+    dom, clone, res_id, args, wait, wait_timeout
 ):
     """
     Commandline options:
       * -f - CIB file
     """
-    if clone_type == "clone":
-        dom, dummy_clone_id = resource_clone_create(dom, [res_id] + args, True)
-    elif clone_type == "master":
-        dom, dummy_master_id = resource_master_create(dom, [res_id] + args, True)
+    dom, dummy_clone_id = resource_clone_create(
+        dom, [res_id] + args, update_existing=True
+    )
 
     utils.replace_cib_configuration(dom)
 
@@ -1029,6 +1070,22 @@ def resource_update_clone_master(
             utils.err("\n".join(msg).strip())
 
     return dom
+
+def transform_master_to_clone(master_element):
+    # create a new clone element with the same id
+    dom = master_element.ownerDocument
+    clone_element = dom.createElement("clone")
+    clone_element.setAttribute("id", master_element.getAttribute("id"))
+    # place it next to the master element
+    master_element.parentNode.insertBefore(clone_element, master_element)
+    # move all master's children to the clone
+    while master_element.firstChild:
+        clone_element.appendChild(master_element.firstChild)
+    # remove the master
+    master_element.parentNode.removeChild(master_element)
+    # set meta to make the clone promotable
+    utils.dom_update_meta_attr(clone_element, [("promotable", "true")])
+    return clone_element
 
 def resource_operation_add(
     dom, res_id, argv, validate_strict=True, before_op=None
@@ -1238,10 +1295,14 @@ def resource_meta(dummy_lib, argv, modifiers):
     )
 
     dom = utils.get_cib_dom()
-    resource_el = utils.dom_get_any_resource(dom, res_id)
 
+    master = utils.dom_get_master(dom, res_id)
+    if master:
+        resource_el = transform_master_to_clone(master)
+    else:
+        resource_el = utils.dom_get_any_resource(dom, res_id)
     if resource_el is None:
-        utils.err("unable to find a resource/clone/master/group: %s" % res_id)
+        utils.err("unable to find a resource/clone/group: %s" % res_id)
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
@@ -1369,7 +1430,7 @@ def resource_group_add_cmd(lib, argv, modifiers):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_clone(dummy_lib, argv, modifiers):
+def resource_clone(dummy_lib, argv, modifiers, promotable=False):
     """
     Options:
       * --wait
@@ -1385,7 +1446,9 @@ def resource_clone(dummy_lib, argv, modifiers):
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
 
-    cib_dom, clone_id = resource_clone_create(cib_dom, argv)
+    cib_dom, clone_id = resource_clone_create(
+        cib_dom, argv, promotable=promotable
+    )
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
     utils.replace_cib_configuration(cib_dom)
 
@@ -1406,7 +1469,9 @@ def resource_clone(dummy_lib, argv, modifiers):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_clone_create(cib_dom, argv, update_existing=False):
+def resource_clone_create(
+    cib_dom, argv, update_existing=False, promotable=False
+):
     """
     Commandline options: no options
     """
@@ -1421,14 +1486,19 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
         utils.err("cannot clone bundle resource")
 
     if not update_existing:
-        if utils.dom_get_resource_clone(cib_dom, name):
+        if (
+            utils.dom_get_resource_clone(cib_dom, name)
+            or
+            utils.dom_get_resource_masterslave(cib_dom, name)
+        ):
             utils.err("%s is already a clone resource" % name)
 
-        if utils.dom_get_group_clone(cib_dom, name):
+        if (
+            utils.dom_get_group_clone(cib_dom, name)
+            or
+            utils.dom_get_group_masterslave(cib_dom, name)
+        ):
             utils.err("cannot clone a group that has already been cloned")
-
-    if utils.dom_get_resource_masterslave(cib_dom, name):
-        utils.err("%s is already a master/slave resource" % name)
 
     # If element is currently in a group and it's the last member, we get rid of the group
     if element.parentNode.tagName == "group" and element.parentNode.getElementsByTagName("primitive").length <= 1:
@@ -1448,6 +1518,14 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if op_values:
         utils.err("op settings must be changed on base resource, not the clone")
     final_meta = prepare_options(generic_values + meta_values)
+    if promotable:
+        if "promotable" in final_meta:
+            utils.err(
+                "you cannot specify both promotable option and promotable "
+                "keyword"
+            )
+        else:
+            final_meta["promotable"] = "true"
     utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
 
     return cib_dom, clone.getAttribute("id")
@@ -1518,123 +1596,6 @@ def resource_clone_master_remove(dummy_lib, argv, modifiers):
             if output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
-
-def resource_master(dummy_lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-      * --wait
-    """
-    modifiers.ensure_only_supported("-f", "--wait")
-    non_option_args_count = 0
-    for arg in argv:
-        if arg.find("=") == -1:
-            non_option_args_count += 1
-    if non_option_args_count < 1:
-        usage.resource()
-        sys.exit(1)
-    if non_option_args_count == 1:
-        res_id = argv[0]
-        master_id = None
-    else:
-        master_id = argv.pop(0)
-        res_id = argv[0]
-    cib_dom = utils.get_cib_dom()
-
-    if modifiers.is_specified("--wait"):
-        wait_timeout = utils.validate_wait_get_timeout()
-
-    cib_dom, master_id = resource_master_create(cib_dom, argv, False, master_id)
-    cib_dom = constraint.constraint_resource_update(res_id, cib_dom)
-    utils.replace_cib_configuration(cib_dom)
-
-    if modifiers.is_specified("--wait"):
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(master_id)
-        if retval == 0:
-            print(running_on["message"])
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            msg.append(running_on["message"])
-            if output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
-
-def resource_master_create(dom, argv, update=False, master_id=None):
-    """
-    Commandline options: no options
-    """
-    master_id_autogenerated = False
-    if update:
-        master_id = argv.pop(0)
-    elif not master_id:
-        master_id = argv[0] + "-master"
-        master_id_autogenerated = True
-
-    if (update):
-        master_found = False
-        for master in dom.getElementsByTagName("master"):
-            if master.getAttribute("id") == master_id:
-                master_element = master
-                master_found = True
-                break
-        if not master_found:
-            utils.err("Unable to find multi-state resource with id %s" % master_id)
-    else:
-        rg_id = argv.pop(0)
-        if not master_id_autogenerated and utils.does_id_exist(dom, master_id):
-            utils.err("%s already exists in the cib" % master_id)
-
-        if utils.dom_get_resource_clone(dom, rg_id):
-            utils.err("%s is already a clone resource" % rg_id)
-
-        if utils.dom_get_resource_masterslave(dom, rg_id):
-            utils.err("%s is already a master/slave resource" % rg_id)
-
-        resources = dom.getElementsByTagName("resources")[0]
-        rg_found = False
-        for resource in (resources.getElementsByTagName("primitive") +
-            resources.getElementsByTagName("group")):
-            if resource.getAttribute("id") == rg_id:
-                rg_found = True
-                break
-        if not rg_found:
-            utils.err("Unable to find resource or group with id %s" % rg_id)
-
-        if resource.parentNode.tagName == "bundle":
-            utils.err(
-                "cannot make a master/slave resource from a bundle resource"
-            )
-
-        # If the resource elements parent is a group, and it's the last
-        # element in the group, we remove the group
-        if resource.parentNode.tagName == "group" and resource.parentNode.getElementsByTagName("primitive").length <= 1:
-            resource.parentNode.parentNode.removeChild(resource.parentNode)
-
-        master_element = dom.createElement("master")
-        if master_id_autogenerated:
-            master_element.setAttribute(
-                "id", utils.find_unique_id(dom, master_id)
-            )
-        else:
-            master_element.setAttribute("id", master_id)
-        resource.parentNode.removeChild(resource)
-        master_element.appendChild(resource)
-        resources.appendChild(master_element)
-
-    if len(argv) > 0:
-        generic_values, op_values, meta_values = parse_resource_options(argv)
-        if op_values:
-            utils.err("op settings must be changed on base resource, not the master")
-        final_meta = prepare_options(generic_values + meta_values)
-        utils.dom_update_meta_attr(master_element, list(final_meta.items()))
-
-    return dom, master_element.getAttribute("id")
 
 def resource_remove_cmd(dummy_lib, argv, modifiers):
     """
@@ -1950,11 +1911,8 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     if not group_match:
         utils.err("Group '%s' does not exist" % group_name)
 
-    if group_match.parentNode.tagName == "master" and group_match.getElementsByTagName("primitive").length > 1:
-        utils.err("Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete %s'." % group_name)
 
     resources_to_move = []
-
     if all_resources:
         for resource in group_match.getElementsByTagName("primitive"):
             resources_to_move.append(resource)
@@ -1966,21 +1924,31 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
             else:
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
-    if group_match.parentNode.tagName in ["clone", "master"]:
-        res_in_group = len(group_match.getElementsByTagName("primitive"))
-        if (
-            res_in_group > 1
-            and
-            (all_resources or (len(resources_to_move) == res_in_group))
-        ):
-            utils.err("Cannot remove more than one resource from cloned group")
+    # If the group is in a clone, we don't delete the clone as there may be
+    # constraints associated with it which the user may want to keep. However,
+    # there may be several resources in the group. In that case there is no way
+    # to figure out which one of them should stay in the clone. So we forbid
+    # removing all resources from a cloned group unless there is just one
+    # resource.
+    # This creates an inconsistency:
+    # - consider a cloned group with two resources
+    # - move one resource from the group - it becomes a primitive
+    # - move the last resource from the group - it stays in the clone
+    # So far there has been no request to change this behavior. Unless there is
+    # a request / reason to change it, we'll keep it that way.
+    is_cloned_group = group_match.parentNode.tagName in ["clone", "master"]
+    res_in_group = len(group_match.getElementsByTagName("primitive"))
+    if (
+        is_cloned_group
+        and
+        res_in_group > 1
+        and
+        len(resources_to_move) == res_in_group
+    ):
+        utils.err("Cannot remove all resources from a cloned group")
 
     target_node = group_match.parentNode
-    if (
-        target_node.tagName in ["clone", "master"]
-        and
-        len(group_match.getElementsByTagName("primitive")) > 1
-    ):
+    if is_cloned_group and res_in_group > 1:
         target_node = dom.getElementsByTagName("resources")[0]
     for resource in resources_to_move:
         resource.parentNode.removeChild(resource)
@@ -2010,10 +1978,12 @@ def resource_group_add(cib_dom, group_name, resource_ids):
     if not mygroup:
         if utils.dom_get_resource(resources_element, group_name):
             utils.err("'%s' is already a resource" % group_name)
-        if utils.dom_get_clone(resources_element, group_name):
+        if (
+            utils.dom_get_clone(resources_element, group_name)
+            or
+            utils.dom_get_master(resources_element, group_name)
+        ):
             utils.err("'%s' is already a clone resource" % group_name)
-        if utils.dom_get_master(resources_element, group_name):
-            utils.err("'%s' is already a master/slave resource" % group_name)
         mygroup = cib_dom.createElement("group")
         mygroup.setAttribute("id", group_name)
         resources_element.appendChild(mygroup)
@@ -2053,9 +2023,7 @@ def resource_group_add(cib_dom, group_name, resource_ids):
             if resource.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
             if resource.getAttribute("id") == resource_id:
-                if resource.parentNode.tagName == "master":
-                    utils.err("cannot group master/slave resources")
-                if resource.parentNode.tagName == "clone":
+                if resource.parentNode.tagName in ["clone", "master"]:
                     utils.err("cannot group clone resources")
                 if resource.parentNode.tagName == "bundle":
                     utils.err("cannot group bundle resources")
@@ -2301,7 +2269,7 @@ def resource_restart(dummy_lib, argv, modifiers):
         utils.dom_get_resource_bundle_parent(dom, resource)
     )
     if real_res:
-        print("Warning: using %s... (if a resource is a clone, master/slave or bundle you must use the clone, master/slave or bundle name)" % real_res.getAttribute("id"))
+        print("Warning: using %s... (if a resource is a clone or bundle you must use the clone or bundle name)" % real_res.getAttribute("id"))
         resource = real_res.getAttribute("id")
 
     args = ["crm_resource", "--restart", "--resource", resource]
@@ -2314,7 +2282,7 @@ def resource_restart(dummy_lib, argv, modifiers):
             or
             utils.dom_get_bundle(dom, resource)
         ):
-            utils.err("can only restart on a specific node for a clone, master/slave or bundle resource")
+            utils.err("can only restart on a specific node for a clone or bundle resource")
         args.extend(["--node", node])
 
     if modifiers.is_specified("--wait"):
@@ -2364,7 +2332,7 @@ def resource_force_action(dummy_lib, argv, modifiers):
         utils.dom_get_bundle(dom, resource)
     ):
         utils.err(
-            "unable to find a resource/clone/master/group/bundle: {0}".format(
+            "unable to find a resource/clone/group/bundle: {0}".format(
                 resource
             )
         )
@@ -2386,18 +2354,15 @@ def resource_force_action(dummy_lib, argv, modifiers):
                 action, ",".join(group_resources)
             )
         )
-    if utils.dom_get_clone(dom, resource):
+    if (
+        utils.dom_get_clone(dom, resource)
+        or
+        utils.dom_get_master(dom, resource)
+    ):
         clone_resource = utils.dom_get_clone_ms_resource(dom, resource)
         utils.err(
             "unable to {0} a clone, try the clone's resource: {1}".format(
                 action, clone_resource.getAttribute("id")
-            )
-        )
-    if utils.dom_get_master(dom, resource):
-        master_resource = utils.dom_get_clone_ms_resource(dom, resource)
-        utils.err(
-            "unable to {0} a master, try the master's resource: {1}".format(
-                action, master_resource.getAttribute("id")
             )
         )
 
@@ -2469,7 +2434,7 @@ def is_managed(resource_id):
                 if primitive_el.getAttribute("managed") == "false":
                     return False
             return True
-    utils.err("unable to find a resource/clone/master/group: %s" % resource_id)
+    utils.err("unable to find a resource/clone/group: %s" % resource_id)
 
 def resource_failcount(lib, argv, modifiers):
     """
@@ -2661,9 +2626,9 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         return
     if node.tag == "master":
-        print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
+        print(spaces + "Clone: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
         print_instance_vars_string(node, spaces)
-        print_meta_vars_string(node, spaces)
+        print_meta_vars_string(node, spaces, dict(promotable="true"))
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
@@ -2750,16 +2715,19 @@ def print_instance_vars_string(node, spaces):
     if output:
         print(spaces + " Attributes: " + " ".join(output))
 
-def print_meta_vars_string(node, spaces):
+def print_meta_vars_string(node, spaces, extra_vars_dict=None):
     """
     Commandline options: no options
     """
-    output = ""
-    mvars = node.findall(str("meta_attributes/nvpair"))
-    for mvar in mvars:
-        output += mvar.attrib["name"] + "=" + mvar.attrib["value"] + " "
-    if output != "":
-        print(spaces + " Meta Attrs: " + output)
+    meta = {
+        mvar.attrib["name"]: mvar.attrib["value"]
+        for mvar in node.findall(str("meta_attributes/nvpair"))
+    }
+    if extra_vars_dict:
+        meta.update(extra_vars_dict)
+    pairs = [f'{name}={value}' for name, value in sorted(meta.items())]
+    if pairs:
+        print(spaces + " Meta Attrs: " + " ".join(pairs))
 
 def print_operations(node, spaces):
     """
@@ -2964,7 +2932,7 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
         if resources_not_found:
             for res_id in resources_not_found:
                 utils.err(
-                    "unable to find a resource/clone/master/group: {0}".format(
+                    "unable to find a resource/clone/group: {0}".format(
                         res_id
                     ),
                     False

@@ -1,7 +1,101 @@
+import logging
 from lxml import etree
+import os
+from unittest import mock
 
+from pcs.lib.external import CommandRunner
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.xml import etree_to_str
 
+
+def wrap_element_by_master(cib_file, resource_id, master_id=None):
+    cib_tree = etree.parse(cib_file, etree.XMLParser(huge_tree=True)).getroot()
+    element = cib_tree.find(f'.//*[@id="{resource_id}"]')
+    final_master_id = (
+        master_id if master_id is not None else f"{resource_id}-master"
+    )
+    master_element = _xml_to_element(f"""
+        <master id="{final_master_id}">
+        </master>
+    """)
+    element.getparent().append(master_element)
+    master_element.append(element)
+    final_xml = etree_to_str(cib_tree)
+
+    environ = dict(os.environ)
+    environ["CIB_file"] = cib_file
+    runner = CommandRunner(
+        mock.MagicMock(logging.Logger),
+        MockLibraryReportProcessor(),
+        environ
+    )
+    stdout, stderr, retval = runner.run([
+        "cibadmin", "--replace", "--scope", "resources", "--xml-pipe",
+    ], stdin_string=final_xml)
+    assert retval == 0, (
+        "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
+    )
+
+def fixture_master_xml(name, all_ops=True, meta_dict=None):
+    default_ops = f"""
+            <op id="{name}-notify-interval-0s" interval="0s" name="notify"
+                timeout="5"
+            />
+            <op id="{name}-start-interval-0s" interval="0s" name="start"
+                timeout="20"
+            />
+            <op id="{name}-stop-interval-0s" interval="0s" name="stop"
+                timeout="20"
+            />
+    """
+    meta_xml = ''
+    if meta_dict:
+        meta_lines = (
+            [f'<meta_attributes id="{name}-master-meta_attributes">']
+            +
+            [
+                f'<nvpair id="{name}-master-meta_attributes-{key}"                   name="{key}" value="{val}"/>'
+                for key, val in meta_dict.items()
+            ]
+            +
+            ['</meta_attributes>']
+        )
+        meta_xml = "\n".join(meta_lines)
+    master = f"""
+      <master id="{name}-master">
+        <primitive class="ocf" id="{name}" provider="pacemaker" type="Stateful">
+          <operations>
+            <op id="{name}-monitor-interval-10" interval="10" name="monitor"
+                role="Master" timeout="20"
+            />
+            <op id="{name}-monitor-interval-11" interval="11" name="monitor"
+                role="Slave" timeout="20"
+            />
+    """
+    if all_ops:
+        master += default_ops
+    master += f"""
+          </operations>
+        </primitive>
+        {meta_xml}
+      </master>
+    """
+    return master
+
+def fixture_to_cib(cib_file, xml):
+    environ = dict(os.environ)
+    environ["CIB_file"] = cib_file
+    runner = CommandRunner(
+        mock.MagicMock(logging.Logger),
+        MockLibraryReportProcessor(),
+        environ
+    )
+    stdout, stderr, retval = runner.run([
+        "cibadmin", "--create", "--scope", "resources", "--xml-text", xml
+    ])
+    assert retval == 0, (
+        "Error running fixture_to_cib:\n" + stderr + "\n" + stdout
+    )
 
 def _replace(element_to_replace, new_element):
     parent = element_to_replace.getparent()

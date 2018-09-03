@@ -210,15 +210,15 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [clone [<clone options>] | master [<master options>] |
-           --group <group id> [--before <resource id> | --after <resource id>]
-           | bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
+           [clone [<clone options>] | promotable <promotable options> |
+           --group <group id> [--before <resource id> | --after <resource id>] |
+           bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
         Create specified resource. If clone is used a clone resource is
-        created. If master is specified a master/slave resource is created.
+        created. If promotable is used a promotable clone resource is created.
         If --group is specified the resource is added to the group named. You
         can use --before or --after to specify the position of the added
-        resource relatively to some resource already existing in the group.
-        If bundle is used, the resource will be created inside of the specified
+        resource relatively to some resource already existing in the group. If
+        bundle is used, the resource will be created inside of the specified
         bundle. If --disabled is specified the resource is not started
         automatically. If --no-default-ops is specified, only monitor
         operations are created for the resource and all other operations use
@@ -233,9 +233,9 @@ Commands:
                 ip=192.168.0.99 cidr_netmask=32 nic=eth2 \\
                 op monitor interval=30s
 
-    delete <resource id|group id|master id|clone id>
-        Deletes the resource, group, master or clone (and all resources within
-        the group/master/clone).
+    delete <resource id|group id|bundle id|clone id>
+        Deletes the resource, group, bundle or clone (and all resources within
+        the group/bundle/clone).
 
     enable <resource id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
@@ -256,10 +256,10 @@ Commands:
 
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the
-        resource is a clone or master/slave it will be restarted only on
-        the node specified.  If --wait is specified, then we will wait
-        up to 'n' seconds for the resource to be restarted and return 0 if
-        the restart was successful or 1 if it was not.
+        resource is a clone or bundle it will be restarted only on the node
+        specified. If --wait is specified, then we will wait up to 'n' seconds
+        for the resource to be restarted and return 0 if the restart was
+        successful or 1 if it was not.
 
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
@@ -293,30 +293,30 @@ Commands:
 
     move <resource id> [destination node] [--master] [lifetime=<lifetime>]
          [--wait[=n]]
-        Move the resource off the node it is currently running on by creating a
-        -INFINITY location constraint to ban the node.  If destination node is
-        specified the resource will be moved to that node by creating an
-        INFINITY location constraint to prefer the destination node.  If
+        Move the resource off the node it is currently running on by creating
+        a -INFINITY location constraint to ban the node. If destination node is
+        specified the resource will be moved to that node by creating
+        an INFINITY location constraint to prefer the destination node. If
         --master is used the scope of the command is limited to the master role
-        and you must use the master id (instead of the resource id).  If
-        lifetime is specified then the constraint will expire after that time,
-        otherwise it defaults to infinity and the constraint can be cleared
-        manually with 'pcs resource clear' or 'pcs constraint delete'.  If
-        --wait is specified, pcs will wait up to 'n' seconds for the resource
-        to move and then return 0 on success or 1 on error.  If 'n' is not
-        specified it defaults to 60 minutes.
+        and you must use the promotable clone id (instead of the resource id).
+        If lifetime is specified then the constraint will expire after that
+        time, otherwise it defaults to infinity and the constraint can be
+        cleared manually with 'pcs resource clear' or 'pcs constraint delete'.
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        resource to move and then return 0 on success or 1 on error.  If 'n' is
+        not specified it defaults to 60 minutes.
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
     ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
-        current node it is running on if no node is specified) by creating a
-        -INFINITY location constraint.  If --master is used the scope of the
-        command is limited to the master role and you must use the master id
-        (instead of the resource id).  If lifetime is specified then the
-        constraint will expire after that time, otherwise it defaults to
+        current node it is running on if no node is specified) by creating
+        a -INFINITY location constraint. If --master is used the scope of the
+        command is limited to the master role and you must use the promotable
+        clone id (instead of the resource id). If lifetime is specified then
+        the constraint will expire after that time, otherwise it defaults to
         infinity and the constraint can be cleared manually with 'pcs resource
-        clear' or 'pcs constraint delete'.  If --wait is specified, pcs will
+        clear' or 'pcs constraint delete'. If --wait is specified, pcs will
         wait up to 'n' seconds for the resource to move and then return 0
         on success or 1 on error. If 'n' is not specified it defaults to 60
         minutes.
@@ -371,14 +371,14 @@ Commands:
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined operations.
 
-    meta <resource id | group id | master id | clone id> <meta options>
+    meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
-        Add specified options to the specified resource, group, master/slave
-        or clone.  Meta options should be in the format of name=value, options
-        may be removed by setting an option without a value.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the changes to take
-        effect and then return 0 if the changes have been processed or 1
-        otherwise.  If 'n' is not specified it defaults to 60 minutes.
+        Add specified options to the specified resource, group or clone. Meta
+        options should be in the format of name=value, options may be removed
+        by setting an option without a value. If --wait is specified, pcs will
+        wait up to 'n' seconds for the changes to take effect and then return 0
+        if the changes have been processed or 1 otherwise. If 'n' is not
+        specified it defaults to 60 minutes.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group id> <resource id> [resource id] ... [resource id]
@@ -417,20 +417,16 @@ Commands:
         on success or 1 on error. If 'n' is not specified it defaults to 60
         minutes.
 
+    promotable <resource id | group id> [clone options]... [--wait[=n]]
+        Set up the specified resource or group as a promotable clone. This is
+        an alias for 'pcs resource clone <resource id> promotable=true'.
+
     unclone <resource id | group id> [--wait[=n]]
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed).  If --wait is specified, pcs
         will wait up to 'n' seconds for the operation to finish (including
         stopping clone instances if appropriate) and then return 0 on success
         or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
-
-    master [<master/slave id>] <resource id | group id> [options] [--wait[=n]]
-        Configure a resource or group as a multi-state (master/slave) resource.
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        operation to finish (including starting and promoting resource
-        instances if appropriate) and then return 0 on success or 1 on error.
-        If 'n' is not specified it defaults to 60 minutes.
-        Note: to remove a master you must remove the resource/group it contains.
 
     bundle create <bundle id> container <container type> [<container options>]
             [network <network options>] [port-map <port options>]...

@@ -18,7 +18,6 @@ class AppendNewCommon(TestCase):
 
     def assert_clone_effect(self, options, xml):
         clone.append_new(
-            clone.TAG_CLONE,
             self.resources,
             self.primitive,
             options

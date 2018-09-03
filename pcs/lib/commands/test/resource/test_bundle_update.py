@@ -18,7 +18,7 @@ TIMEOUT=10
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.8.xml"
+    base_cib_filename="cib-empty.xml"
 )
 
 def simple_bundle_update(env, wait=TIMEOUT):
@@ -97,11 +97,10 @@ class Basics(TestCase):
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
 
-
     def test_cib_upgrade(self):
         (self.config
             .runner.cib.load(
-                filename="cib-empty.xml",
+                filename="cib-empty-2.0.xml",
                 name="load_cib_old_version"
             )
             .runner.cib.upgrade()
@@ -127,12 +126,14 @@ class Basics(TestCase):
             ),
         ])
 
+
 class ContainerDocker(TestCase):
     allowed_options = [
         "image",
         "masters",
         "network",
         "options",
+        "promoted-max",
         "replicas",
         "replicas-per-host",
         "run-command",
@@ -145,6 +146,30 @@ class ContainerDocker(TestCase):
             </bundle>
         </resources>
     """
+    fixture_cib_masters = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" masters="2" />
+            </bundle>
+        </resources>
+    """
+    fixture_cib_promoted_max = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" promoted-max="3" />
+            </bundle>
+        </resources>
+    """
+    fixture_report_deprecated_masters = (
+        severities.WARNING,
+        report_codes.DEPRECATED_OPTION,
+        {
+            "option_name": "masters",
+            "option_type": "container",
+            "replaced_by": ["promoted-max"],
+        },
+        None
+    )
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -155,7 +180,9 @@ class ContainerDocker(TestCase):
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" masters="3" replicas="6"/>
+                            <docker image="pcs:test" promoted-max="3"
+                                replicas="6"
+                            />
                         </bundle>
                     </resources>
                 """
@@ -177,7 +204,7 @@ class ContainerDocker(TestCase):
             container_options={
                 "options": "test",
                 "replicas": "3",
-                "masters": "",
+                "promoted-max": "",
             }
         )
 
@@ -270,6 +297,246 @@ class ContainerDocker(TestCase):
                 "extra": "",
             },
             force_options=True
+        )
+
+    def test_cib_upgrade_on_promoted_max(self):
+        (self.config
+            .runner.cib.load(
+                filename="cib-empty-2.8.xml",
+                name="load_cib_old_version"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(
+                resources="""
+                    <resources>
+                        <bundle id="B1">
+                            <docker image="pcs:test" />
+                        </bundle>
+                    </resources>
+                """
+            )
+            .env.push_cib(
+                resources="""
+                    <resources>
+                        <bundle id="B1">
+                            <docker image="pcs:test" promoted-max="1" />
+                        </bundle>
+                    </resources>
+                """
+            )
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "promoted-max": "1",
+            }
+        )
+        self.env_assist.assert_reports([
+            (
+                severities.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {
+                },
+                None
+            ),
+        ])
+
+    def test_options_error(self):
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                container_options={
+                    "masters": "-1",
+                    "promoted-max": "-2",
+                    "replicas": "0",
+                    "replicas-per-host": "0",
+                }
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "masters",
+                        "option_value": "-1",
+                        "allowed_values": "a non-negative integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "promoted-max",
+                        "option_value": "-2",
+                        "allowed_values": "a non-negative integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_names": ["masters", "promoted-max", ],
+                        "option_type": "container",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "replicas",
+                        "option_value": "0",
+                        "allowed_values": "a positive integer",
+                    },
+                    None
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "replicas-per-host",
+                        "option_value": "0",
+                        "allowed_values": "a positive integer",
+                    },
+                    None
+                ),
+            ]
+        )
+        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+
+    def test_deprecated_options_set(self):
+        # Setting both deprecated options and their new variants is tested in
+        # self.test_options_errors. This shows deprecated options emit warning
+        # even when not forced.
+        (self.config
+            .runner.cib.load(resources=fixture_resources_minimal)
+            .env.push_cib(resources=self.fixture_cib_masters)
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "2",
+            }
+        )
+        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+
+    def test_deprecated_options_remove(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_masters)
+            .env.push_cib(resources=fixture_resources_minimal)
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "",
+            }
+        )
+
+    def test_delete_masters_and_promoted_max(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_masters)
+            .env.push_cib(resources=fixture_resources_minimal)
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "",
+                "promoted-max": "",
+            }
+        )
+
+    def test_masters_set_after_promoted_max(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_promoted_max)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                container_options={
+                    "masters": "2",
+                }
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
+                    {
+                        "option_name": "masters",
+                        "option_type": "container",
+                        "prerequisite_name": "promoted-max",
+                        "prerequisite_type": "container",
+                    },
+                    None
+                ),
+            ]
+        )
+        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+
+    def test_masters_set_after_promoted_max_with_remove(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_promoted_max)
+            .env.push_cib(resources=self.fixture_cib_masters)
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "2",
+                "promoted-max": "",
+            }
+        )
+        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+
+    def test_promoted_max_set_after_masters(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_masters)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                container_options={
+                    "promoted-max": "3",
+                }
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
+                    {
+                        "option_name": "promoted-max",
+                        "option_type": "container",
+                        "prerequisite_name": "masters",
+                        "prerequisite_type": "container",
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_promoted_max_set_after_masters_with_remove(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_masters)
+            .env.push_cib(resources=self.fixture_cib_promoted_max)
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "",
+                "promoted-max": "3",
+            }
         )
 
 

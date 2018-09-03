@@ -897,10 +897,10 @@
     <capability id="pcmk.resource.create" in-pcs="1" in-pcsd="1">
       <description>
         Create a resource (including specifying its options). Optionally put
-        the resource into a new clone, master/slave or to an existing or new
-        group. When putting the resource to a group, optionally specify the
-        resource's position in the group. Optionally disable the resource upon
-        its creation.
+        the resource into a new clone or to an existing or new group. When
+        putting the resource to a group, optionally specify the resource's
+        position in the group. Optionally disable the resource upon its
+        creation.
 
         pcs commands: resource create
         daemon urls: update_resource (param: resource_id not set)
@@ -913,12 +913,26 @@
         pcs commands: resource create ... bundle
       </description>
     </capability>
+    <capability id="pcmk.resource.create.no-master" in-pcs="1" in-pcsd="1">
+      <description>
+        It is not possible to create master resources.
+
+        pcs commands: resource create
+        daemon urls: update_resource (param: resource_id not set)
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="0">
+      <description>
+        Put a newly created resource into a promotable clone.
+
+        pcs commands: resource create ... promotable
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
       <description>
         Set resource meta attributes when creating a resource. When creating a
         resource as a clone resource, it is possible to set clone meta
-        attributes. When creating a resource into a master/slave resource, it is
-        possible to set master/slave meta attributes.
+        attributes.
 
         pcs commands: resource create
       </description>
@@ -989,8 +1003,7 @@
     </capability>
     <capability id="pcmk.resource.update-meta" in-pcs="1" in-pcsd="1">
       <description>
-        Update a meta attribute of a (primitive, clone, master/slave, group)
-        resource.
+        Update a meta attribute of a (primitive, clone, group) resource.
 
         pcs commands: resource meta
         daemon urls: add_meta_attr_remote
@@ -1072,28 +1085,27 @@
         pcs commands: resource clone
       </description>
     </capability>
-    <capability id="pcmk.resource.master" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.promotable" in-pcs="1" in-pcsd="0">
       <description>
-        Turn an existing resource to a master/slave resource and the other way
-        around.
+        Turn an existing resource to a promotable clone resource and the other
+        way around.
 
-        pcs commands: resource master, resource unclone
-        daemon urls: update_resource, resource_master, resource_unclone
+        pcs commands: resource promotable, resource unclone
       </description>
     </capability>
-    <capability id="pcmk.resource.master.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.promotable.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect.
 
-        pcs commands: resource master -- wait, resource unclone --wait
+        pcs commands: resource promotable --wait, resource unclone --wait
       </description>
     </capability>
-    <capability id="pcmk.resource.master.meta-in-create" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.promotable.meta-in-create" in-pcs="1" in-pcsd="0">
       <description>
-        Set master/slave meta attributes when turning an existing resource to a
-        master/slave resource.
+        Set promotable clone meta attributes when turning an existing resource
+        to a promotable clone resource.
 
-        pcs commands: resource master
+        pcs commands: resource promotable
       </description>
     </capability>
     <capability id="pcmk.resource.bundle" in-pcs="1" in-pcsd="0">
@@ -1108,6 +1120,13 @@
     <capability id="pcmk.resource.bundle.container-docker" in-pcs="1" in-pcsd="0">
       <description>
         Support docker container in bundle resources.
+
+        pcs commands: resource bundle
+      </description>
+    </capability>
+    <capability id="pcmk.resource.bundle.container-docker.promoted-max" in-pcs="1" in-pcsd="0">
+      <description>
+        Support promoted-max option of docker container in bundle resources.
 
         pcs commands: resource bundle
       </description>
@@ -1257,8 +1276,7 @@
     <capability id="pcmk.resource.restart" in-pcs="1" in-pcsd="0">
       <description>
         Restart a resource, allow specifying a node for multi-node resources
-        (clones, master/slaves, bundles), allow waiting for the resource to
-        restart.
+        (clones, bundles), allow waiting for the resource to restart.
 
         pcs commands: resource restart
       </description>

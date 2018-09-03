@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from functools import partial
 
 from pcs.common import report_codes
 from pcs.common.tools import Version
@@ -238,8 +237,8 @@ def create(
         if ensure_disabled:
             resource.common.disable(primitive_element)
 
-def _create_as_clone_common(
-    tag, env, resource_id, resource_agent_name,
+def create_as_clone(
+    env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes, clone_meta_options,
     allow_absent_agent=False,
     allow_invalid_operation=False,
@@ -250,13 +249,8 @@ def _create_as_clone_common(
     allow_not_suitable_command=False,
 ):
     """
-    Create resource in some kind of clone (clone or master).
+    Create resource in a clone
 
-    Currently the only difference between commands "create_as_clone" and
-    "create_as_master" is in tag. So the commands create_as_clone and
-    create_as_master are created by passing tag with partial.
-
-    string tag is any clone tag. Currently it can be "clone" or "master".
     LibraryEnvironment env provides all for communication with externals
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
@@ -316,7 +310,6 @@ def _create_as_clone_common(
             use_default_operations,
         )
         clone_element = resource.clone.append_new(
-            tag,
             resources_section,
             primitive_element,
             clone_meta_options,
@@ -406,9 +399,6 @@ def create_in_group(
             adjacent_resource_id,
             put_after_adjacent,
         )
-
-create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
-create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)
 
 def create_into_bundle(
     env, resource_id, resource_agent_name,
@@ -534,6 +524,9 @@ def bundle_create(
     storage_map = storage_map or []
     meta_attributes = meta_attributes or {}
 
+    required_cib_version=Version(2, 8, 0)
+    if "promoted-max" in container_options:
+        required_cib_version=Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
@@ -543,7 +536,7 @@ def bundle_create(
             or
             resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=Version(2, 8, 0)
+        required_cib_version=required_cib_version
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
@@ -605,11 +598,14 @@ def bundle_update(
     storage_map_remove = storage_map_remove or []
     meta_attributes = meta_attributes or {}
 
+    required_cib_version=Version(2, 8, 0)
+    if "promoted-max" in container_options:
+        required_cib_version=Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
         [bundle_id],
-        required_cib_version=Version(2, 8, 0)
+        required_cib_version=required_cib_version
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
@@ -702,7 +698,7 @@ def _resource_list_enable_disable(resource_el_list, func, cluster_state):
             report_list.append(
                 reports.id_not_found(
                     res_id,
-                    ["primitive", "clone", "master", "group", "bundle"]
+                    ["primitive", "clone", "group", "bundle"]
                )
             )
     return report_list
@@ -844,7 +840,16 @@ def _find_resources_or_raise(
                     find_element_by_tag_and_id(
                         resource_tags,
                         resources_section,
-                        res_id
+                        res_id,
+                        # pacemaker-2.0 deprecated masters. We treat masters as
+                        # clones. Do not report we were looking for a master,
+                        # say we were looking for a clone instead. Since we
+                        # look for all resource types including clones, just
+                        # drop the master.
+                        id_types=[
+                            tag for tag in resource_tags
+                            if tag != resource.clone.TAG_MASTER
+                        ]
                     )
                 )
             )
