@@ -110,6 +110,15 @@ def skip_if_service_enabled(service_name):
         "Service {0} must be disabled".format(service_name),
     )
 
+def skip_unless_lsb_network_available():
+    output, dummy_stderr, dummy_retval = runner.run(
+        ["crm_resource", "--list-agents", "lsb"]
+    )
+    return skipUnless(
+        "network" in output.splitlines(),
+        "lsb:network resource agent is not available"
+    )
+
 def create_patcher(target_prefix_or_module):
     """
     Return function for patching tests with preconfigured target prefix

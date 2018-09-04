@@ -20,6 +20,7 @@ from pcs.test.tools.fixture_cib import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
+    skip_unless_lsb_network_available,
     skip_unless_pacemaker_supports_bundle,
 )
 from pcs.test.tools.pcs_runner import (
@@ -1027,21 +1028,37 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         assert o == ""
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource show --full")
         assert r == 0
         ac(o, outdent(
             """\
-             ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
-             Resource Group: TestGroup1
-                 ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped
-             Clone Set: ClusterIP4-clone [ClusterIP4]
-             Master/Slave Set: Master [ClusterIP5]
-             Resource Group: AGroup
-                 A2\t(ocf::heartbeat:Dummy):\tStopped
-                 A4\t(ocf::heartbeat:Dummy):\tStopped
-                 A5\t(ocf::heartbeat:Dummy):\tStopped
-             A1\t(ocf::heartbeat:Dummy):\tStopped
-             A3\t(ocf::heartbeat:Dummy):\tStopped
+             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
+             Group: TestGroup1
+              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+             Clone: ClusterIP4-clone
+              Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
+             Clone: Master
+              Meta Attrs: promotable=true
+              Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+             Group: AGroup
+              Resource: A2 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (A2-monitor-interval-10s)
+              Resource: A4 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (A4-monitor-interval-10s)
+              Resource: A5 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (A5-monitor-interval-10s)
+             Resource: A1 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10s timeout=20s (A1-monitor-interval-10s)
+             Resource: A3 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10s timeout=20s (A3-monitor-interval-10s)
             """
         ))
 
@@ -1570,11 +1587,16 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr2")
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource show --full")
         ac(output, outdent("""\
-             Resource Group: gr1
-                 d1\t(ocf::heartbeat:Dummy):\tStopped
-             Master/Slave Set: gr2-master [gr2]
+             Group: gr1
+              Resource: d1 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (d1-monitor-interval-10s)
+             Clone: gr2-master
+              Meta Attrs: promotable=true
+              Group: gr2
+               Resource: d2 (class=ocf provider=heartbeat type=Dummy)
+                Operations: monitor interval=10s timeout=20s (d2-monitor-interval-10s)
             """
         ))
         self.assertEqual(0, returnVal)
@@ -1583,11 +1605,13 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource show --full")
         ac(output, outdent("""\
-             Resource Group: gr1
-                 d1\t(ocf::heartbeat:Dummy):\tStopped
-                 d2\t(ocf::heartbeat:Dummy):\tStopped
+             Group: gr1
+              Resource: d1 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (d1-monitor-interval-10s)
+              Resource: d2 (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10s timeout=20s (d2-monitor-interval-10s)
             """
         ))
         self.assertEqual(0, returnVal)
@@ -2600,6 +2624,7 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
+    @skip_unless_lsb_network_available()
     def testLSBResource(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:network foo=bar",
@@ -2746,7 +2771,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
         ac(output, """\
 Location Constraints:
   Resource: dummy
@@ -2782,7 +2807,7 @@ This will prevent dummy from running on rh7-1 until the constraint is removed. T
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
         ac(output, """\
 Location Constraints:
   Resource: dummy

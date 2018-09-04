@@ -22,11 +22,18 @@ def damage_ssl_files():
     with open(KEY, "w") as key:
         key.write("bad content")
 
-DAMAGED_SSL_FILES_ERRORS = (
+# various versions of OpenSSL / PyOpenSSL emit different messages
+DAMAGED_SSL_FILES_ERRORS_1 = (
     f"Invalid SSL certificate '{CERT}':"
         " 'PEM routines:PEM_read_bio:no start line'"
     ,
     f"Invalid SSL key '{KEY}': 'PEM routines:PEM_read_bio:no start line'"
+)
+DAMAGED_SSL_FILES_ERRORS_2 = (
+    f"Invalid SSL certificate '{CERT}':"
+        " 'PEM routines:get_name:no start line'"
+    ,
+    f"Invalid SSL key '{KEY}': 'PEM routines:get_name:no start line'"
 )
 
 class Pair(TestCase):
@@ -43,7 +50,14 @@ class Pair(TestCase):
 
     def test_error_if_files_with_bad_content(self):
         damage_ssl_files()
-        self.assertEqual(self.pair.check(), list(DAMAGED_SSL_FILES_ERRORS))
+        self.assertTrue(
+            self.pair.check()
+            in
+            [
+                list(DAMAGED_SSL_FILES_ERRORS_1),
+                list( DAMAGED_SSL_FILES_ERRORS_2)
+            ]
+        )
 
     def test_error_if_cert_does_not_match_key(self):
         self.pair.regenerate(SERVER_NAME)
@@ -78,7 +92,11 @@ class PcsdSSLTest(TestCase):
         damage_ssl_files()
         with self.assertRaises(SSLCertKeyException) as ctx_manager:
             self.pcsd_ssl.guarantee_valid_certs()
-        self.assertEqual(ctx_manager.exception.args, DAMAGED_SSL_FILES_ERRORS)
+        self.assertTrue(
+            ctx_manager.exception.args
+            in
+            [DAMAGED_SSL_FILES_ERRORS_1, DAMAGED_SSL_FILES_ERRORS_2]
+        )
 
     def test_context_uses_given_options(self):
         self.pcsd_ssl.guarantee_valid_certs()

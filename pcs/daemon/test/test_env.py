@@ -117,7 +117,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
 
 
     def test_report_invalid_ssl_ciphers(self):
-        environ = {env.PCSD_SSL_CIPHERS: "invalid"}
+        environ = {env.PCSD_SSL_CIPHERS: "invalid ;@{}+ ciphers"}
         self.assert_environ_produces_modified_pcsd_env(
             environ,
             specific_env_values={**environ, "has_errors": True},
