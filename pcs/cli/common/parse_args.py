@@ -17,7 +17,7 @@ PCS_LONG_OPTIONS = [
     "clone", "master", "name=", "group=", "node=",
     "from=", "to=", "after=", "before=",
     "corosync_conf=",
-    "booth-conf=", "booth-key=",
+    "booth-conf=", "booth-key=", "no-watchdog-validation",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
