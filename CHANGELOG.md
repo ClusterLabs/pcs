@@ -62,6 +62,8 @@
   multiple devices are present ([rhbz#1578891])
 - Do not distinguish betwen supported and unsupported watchdog devices as SBD
   cannot reliably provide such information ([rhbz#1578891])
+- `pcs config` no longer crashes when `crm_mon` prints something to stderr
+  ([rhbz#1578955])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -150,6 +152,7 @@
 [rhbz#1573344]: https://bugzilla.redhat.com/show_bug.cgi?id=1573344
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898
 [rhbz#1578891]: https://bugzilla.redhat.com/show_bug.cgi?id=1578891
+[rhbz#1578955]: https://bugzilla.redhat.com/show_bug.cgi?id=1578955
 [rhbz#1579911]: https://bugzilla.redhat.com/show_bug.cgi?id=1579911
 [rhbz#1588667]: https://bugzilla.redhat.com/show_bug.cgi?id=1588667
 [rhbz#1595829]: https://bugzilla.redhat.com/show_bug.cgi?id=1595829

@@ -46,7 +46,10 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
-                WARNING: following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+
+                WARNINGS:
+                Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+
                 Stack: unknown
                 Current DC: NONE
             """)
@@ -60,7 +63,10 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
-                WARNING: following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+
+                WARNINGS:
+                Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+
                 Stack: unknown
                 Current DC: NONE
             """)
@@ -75,8 +81,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
-                WARNING: following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
-                WARNING: following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+
+                WARNINGS:
+                Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+                Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+
                 Stack: unknown
                 Current DC: NONE
             """)
@@ -88,7 +97,10 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             "status",
             stdout_start=dedent("""\
                 Cluster name: test99
-                WARNING: no stonith devices and stonith-enabled is not false
+
+                WARNINGS:
+                No stonith devices and stonith-enabled is not false
+
                 Stack: unknown
                 Current DC: NONE
             """)

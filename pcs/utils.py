@@ -1836,7 +1836,10 @@ def getClusterStateXml():
     Commandline options:
       * -f - CIB file
     """
-    xml, returncode = run(["crm_mon", "--one-shot", "--as-xml", "--inactive"])
+    xml, returncode = run(
+        ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
+        ignore_stderr=True
+    )
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
     return xml

@@ -631,14 +631,14 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testNoStonithWarning(self):
         corosync_conf = rc("corosync_conf")
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "WARNING: no stonith devices and " in o
+        assert "No stonith devices and stonith-enabled is not false" in o
 
         o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "WARNING: no stonith devices and " not in o
+        assert "No stonith devices and stonith-enabled is not false" not in o
 
         self.assert_pcs_success(
             "stonith delete test_stonith",

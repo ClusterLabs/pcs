@@ -83,15 +83,28 @@ def full_status(lib, argv, modifiers):
             ["--show-detail", "--show-node-attributes", "--failcounts"]
         )
 
-    output, retval = utils.run(monitor_command)
+    stdout, stderr, retval = utils.cmd_runner().run(monitor_command)
 
     if (retval != 0):
         utils.err("cluster is not currently running on this node")
+
+    warnings = []
+    if stderr.strip():
+        for line in stderr.strip().splitlines():
+            if line.startswith("DEBUG: "):
+                if modifiers.get("--full"):
+                    warnings.append(line)
+            else:
+                warnings.append(line)
+    warnings.extend(status_stonith_check(modifiers))
+
     print("Cluster name: %s" % utils.getClusterName())
-
-    status_stonith_check(modifiers)
-
-    print(output)
+    if warnings:
+        print()
+        print("WARNINGS:")
+        print("\n".join(warnings))
+        print()
+    print(stdout)
 
     if modifiers.get("--full"):
         tickets, retval = utils.run(["crm_ticket", "-L"])
@@ -122,6 +135,7 @@ def status_stonith_check(modifiers):
     """
     # We should read the default value from pacemaker. However that may slow
     # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
+    warnings = []
     stonith_enabled = True
     stonith_devices = []
     stonith_devices_id_action = []
@@ -176,11 +190,13 @@ def status_stonith_check(modifiers):
             pass
 
     if stonith_enabled and not stonith_devices and not sbd_running:
-        print("WARNING: no stonith devices and stonith-enabled is not false")
+        warnings.append(
+            "No stonith devices and stonith-enabled is not false"
+        )
 
     if stonith_devices_id_action:
-        print(
-            "WARNING: following stonith devices have the 'action' option set, "
+        warnings.append(
+            "Following stonith devices have the 'action' option set, "
             "it is recommended to set {0} instead: {1}".format(
                 ", ".join(
                     ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
@@ -189,13 +205,14 @@ def status_stonith_check(modifiers):
             )
         )
     if stonith_devices_id_method_cycle:
-        print(
-            "WARNING: following stonith devices have the 'method' option set "
+        warnings.append(
+            "Following stonith devices have the 'method' option set "
             "to 'cycle' which is potentially dangerous, please consider using "
             "'onoff': {0}".format(
                 ", ".join(sorted(stonith_devices_id_method_cycle))
             )
         )
+    return warnings
 
 # Parse crm_mon for status
 def nodes_status(lib, argv, modifiers):
@@ -349,7 +366,10 @@ def xml_status(dummy_lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    (output, retval) = utils.run(["crm_mon", "-1", "-r", "-X"])
+    (output, retval) = utils.run(
+        ["crm_mon", "-1", "-r", "-X"],
+        ignore_stderr=True
+    )
 
     if (retval != 0):
         utils.err("running crm_mon, is pacemaker running?")
