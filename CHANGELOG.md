@@ -32,6 +32,8 @@
   deprecated in Pacemaker 2.x ([rhbz#1542288])
 - Support for the `promoted-max` bundle option replacing the `masters` option
   in Pacemaker 2.x ([rhbz#1542288])
+- Support for OP_NO_RENEGOTIATION option when OpenSSL supports it (even with
+  Python 3.6) ([rhbz#1566430])
 
 ### Fixed
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as
@@ -143,6 +145,7 @@
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
+[rhbz#1566430]: https://bugzilla.redhat.com/show_bug.cgi?id=1566430
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353
 [rhbz#1573344]: https://bugzilla.redhat.com/show_bug.cgi?id=1573344
 [rhbz#1574898]: https://bugzilla.redhat.com/show_bug.cgi?id=1574898

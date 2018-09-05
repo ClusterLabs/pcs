@@ -85,7 +85,15 @@ def str_to_ssl_options(ssl_options_string, reports):
         return ssl_options
     for raw_option in raw_ssl_options.split(","):
         option = raw_option.strip()
-        if option.startswith("OP_") and hasattr(ssl, option):
+        if option == "OP_NO_RENEGOTIATION" and not hasattr(ssl, option):
+            # OP_NO_RENEGOTIATION is for a prevention of DoS attacs.
+            # See https://bugzilla.redhat.com/show_bug.cgi?id=1566430
+            #
+            # OP_NO_RENEGOTIATION is new in python 3.7. `pcs` supports python
+            # 3.6+ but even with python 3.6 it is possible to use this option if
+            # the underlying openssl has version 1.1.0h+.
+            ssl_options |= 1073741824
+        elif option.startswith("OP_") and hasattr(ssl, option):
             ssl_options |= getattr(ssl, option)
         else:
             reports.append(f"Ignoring unknown SSL option '{option}'")

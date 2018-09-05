@@ -73,6 +73,7 @@ default_ssl_options = ",".join([
     "OP_NO_SSLv3",
     "OP_NO_TLSv1",
     "OP_NO_TLSv1_1",
+    "OP_NO_RENEGOTIATION",
 ])
 # Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
 # not exists.
