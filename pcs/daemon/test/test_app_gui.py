@@ -58,7 +58,7 @@ class AppTest(
     def extract_sid(self, response):
         return self.assert_session_in_response(response)
 
-    def fetch(self, path, **kwargs):
+    def fetch(self, path, raise_error=False, **kwargs):
         if "sid" in kwargs:
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
@@ -77,7 +77,7 @@ class AppTest(
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
 
-        return super().fetch(path, **kwargs)
+        return super().fetch(path, raise_error=raise_error, **kwargs)
 
     def create_login_session(self):
         return self.session_storage.login(

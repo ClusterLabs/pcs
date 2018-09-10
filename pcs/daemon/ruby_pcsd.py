@@ -59,9 +59,9 @@ def process_response_logs(rb_log_list):
         )
 
 def log_communication(request_json, stdout, stderr):
-    log.pcsd.debug(f"Request for ruby pcsd wrapper: '{request_json}'")
-    log.pcsd.debug(f"Response stdout from ruby pcsd wrapper: '{stdout}'")
-    log.pcsd.debug(f"Response stderr from ruby pcsd wrapper: '{stderr}'")
+    log.pcsd.debug("Request for ruby pcsd wrapper: '%s'", request_json)
+    log.pcsd.debug("Response stdout from ruby pcsd wrapper: '%s'", stdout)
+    log.pcsd.debug("Response stderr from ruby pcsd wrapper: '%s'", stderr)
 
 class Wrapper:
     # pylint: disable=too-many-instance-attributes

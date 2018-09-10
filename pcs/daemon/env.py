@@ -148,7 +148,7 @@ class EnvLoader:
         if not raw_bind_addresses.strip():
             return {""}
 
-        return set([a.strip() for a in raw_bind_addresses.split(",")])
+        return {a.strip() for a in raw_bind_addresses.split(",")}
 
     def notify_socket(self):
         return self.environ.get(NOTIFY_SOCKET, None)

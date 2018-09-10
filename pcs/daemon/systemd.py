@@ -9,11 +9,11 @@ async def notify(socket_name):
         # abstract namespace socket
         socket_name = '\0' + socket_name[1:]
 
-    log.pcsd.info(f"Notifying systemd we are running (socket '{socket_name}')")
+    log.pcsd.info("Notifying systemd we are running (socket '%s')", socket_name)
     try:
         stream = IOStream(socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM))
         await stream.connect(socket_name)
         await stream.write(b'READY=1')
         stream.close()
     except Exception as e:
-        log.pcsd.error(f"Unable to notify systemd on '{socket_name}': {e}")
+        log.pcsd.error("Unable to notify systemd on '%s': %s", socket_name, e)

@@ -117,10 +117,13 @@ def main():
             ssl=pcsd_ssl,
         ).start()
     except socket.gaierror as e:
-        log.pcsd.error(f"Unable to bind to specific address(es), exiting: {e} ")
+        log.pcsd.error(
+            "Unable to bind to specific address(es), exiting: %s ",
+            e
+        )
         raise SystemExit(1)
     except OSError as e:
-        log.pcsd.error(f"Unable to start pcsd daemon, exiting: {e} ")
+        log.pcsd.error("Unable to start pcsd daemon, exiting: %s ", e)
         raise SystemExit(1)
     except ssl.SSLCertKeyException as e:
         for error in e.args:

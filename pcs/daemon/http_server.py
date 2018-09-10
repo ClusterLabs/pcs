@@ -64,6 +64,7 @@ class HttpsServerManage:
 
         log.pcsd.info(f"Server is listening")
         self.__server_is_running = True
+        return self
 
     def reload_certs(self):
         if not self.server_is_running:
