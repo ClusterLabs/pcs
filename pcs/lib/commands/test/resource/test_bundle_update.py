@@ -586,6 +586,137 @@ class ContainerRkt(
     container_type = "rkt"
 
 
+class ContainerUnknown(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair id="B1-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
+                        <unknown_container_type image="pcs:test" />
+                        <network host-interface="eth0">
+                            <port-mapping id="B1-port-map-80" port="80" />
+                        </network>
+                        <storage>
+                            <storage-mapping
+                                id="B1-storage-map"
+                                source-dir="/tmp/cont1a"
+                                target-dir="/tmp/cont1b"
+                            />
+                        </storage>
+                    </bundle>
+                </resources>
+            """
+        )
+
+    def test_no_container_options_minimal(self):
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair id="B1-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                            <nvpair id="B1-meta_attributes-attr"
+                                name="attr" value="val" />
+                        </meta_attributes>
+                        <unknown_container_type image="pcs:test" />
+                        <network host-interface="eth0">
+                            <port-mapping id="B1-port-map-80" port="80" />
+                        </network>
+                        <storage>
+                            <storage-mapping
+                                id="B1-storage-map"
+                                source-dir="/tmp/cont1a"
+                                target-dir="/tmp/cont1b"
+                            />
+                        </storage>
+                    </bundle>
+                </resources>
+            """
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            meta_attributes={
+                "attr": "val",
+            }
+        )
+
+    def test_no_container_options(self):
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <bundle id="B1">
+                        <meta_attributes id="B1-meta_attributes">
+                            <nvpair id="B1-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                            <nvpair id="B1-meta_attributes-attr"
+                                name="attr" value="val" />
+                        </meta_attributes>
+                        <unknown_container_type image="pcs:test" />
+                        <network host-interface="eth0" host-netmask="24" />
+                        <storage>
+                            <storage-mapping
+                                id="B1-storage-map"
+                                source-dir="/tmp/cont1a"
+                                target-dir="/tmp/cont1b"
+                            />
+                            <storage-mapping
+                                id="B1-storage-map-1"
+                                source-dir="/tmp/cont2a"
+                                target-dir="/tmp/cont2b"
+                            />
+                        </storage>
+                    </bundle>
+                </resources>
+            """
+        )
+        resource.bundle_update(
+            self.env_assist.get_env(),
+            "B1",
+            storage_map_add=[
+                {
+                    "source-dir": "/tmp/cont2a",
+                    "target-dir": "/tmp/cont2b",
+                }
+            ],
+            port_map_remove=[
+                "B1-port-map-80",
+            ],
+            meta_attributes={
+                "attr": "val",
+            },
+            network_options={
+                "host-netmask": "24",
+            },
+        )
+
+    def test_with_container_options(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                container_options={
+                    "promoted-max": "1",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+                    bundle_id="B1",
+                    supported_container_types=sorted(
+                        ["rkt", "docker", "podman"]
+                    ),
+                )
+            ]
+        )
+
+
 class Network(TestCase):
     allowed_options = [
         "control-port",

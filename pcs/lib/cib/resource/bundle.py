@@ -159,17 +159,27 @@ def validate_update(
     """
     report_list = []
 
-    container_el = _get_container_element(bundle_el)
-    if container_el.tag in _generic_container_types:
-        # TODO call the proper function once more container types are
-        # supported by pacemaker
-        report_list.extend(
-            _validate_generic_container_options_update(
-                container_el,
-                container_options,
-                force_options
+    # validate container options only if they are being updated
+    if container_options:
+        container_el = _get_container_element(bundle_el)
+        if (
+            container_el is not None
+            and
+            container_el.tag in _generic_container_types
+        ):
+            report_list.extend(
+                _validate_generic_container_options_update(
+                    container_el,
+                    container_options,
+                    force_options
+                )
             )
-        )
+        else:
+            report_list.append(
+                reports.resource_bundle_unsupported_container_type(
+                    bundle_el.get("id"), _generic_container_types
+                )
+            )
 
     network_el = bundle_el.find("network")
     if network_el is None:
@@ -641,7 +651,6 @@ def _append_storage_map(
     return storage_map_element
 
 def _get_container_element(bundle_el):
-    # TODO: make sure tahth usedrs of this function can handle None correctly
     container_el = None
     for container_type in _generic_container_types:
         container_el = bundle_el.find(container_type)

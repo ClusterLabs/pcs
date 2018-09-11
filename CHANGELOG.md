@@ -66,6 +66,8 @@
   cannot reliably provide such information ([rhbz#1578891])
 - `pcs config` no longer crashes when `crm_mon` prints something to stderr
   ([rhbz#1578955])
+- `pcs resource bundle update` cmd for bundles which are using unsupported
+  container backend ([rhbz#1619620])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
