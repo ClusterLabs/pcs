@@ -11,7 +11,10 @@ from pcs.lib.errors import (
 )
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
+from pcs.test.tools.misc import (
+    ParametrizedTestMetaClass,
+    skip_unless_pacemaker_supports_bundle,
+)
 
 
 TIMEOUT=10
@@ -25,13 +28,14 @@ def simple_bundle_update(env, wait=TIMEOUT):
     return resource.bundle_update(env, "B1", {"image": "new:image"}, wait=wait)
 
 
-fixture_resources_minimal = """
-    <resources>
-        <bundle id="B1">
-            <docker image="pcs:test" />
-        </bundle>
-    </resources>
-"""
+def fixture_resources_minimal(container_type="docker"):
+    return """
+        <resources>
+            <bundle id="B1">
+                <{container_type} image="pcs:test" />
+            </bundle>
+        </resources>
+    """.format(container_type=container_type)
 
 class Basics(TestCase):
     def setUp(self):
@@ -127,7 +131,7 @@ class Basics(TestCase):
         ])
 
 
-class ContainerDocker(TestCase):
+class ContainerParametrized(TestCase):
     allowed_options = [
         "image",
         "masters",
@@ -138,28 +142,38 @@ class ContainerDocker(TestCase):
         "replicas-per-host",
         "run-command",
     ]
+    container_type = None
 
-    fixture_cib_extra_option = """
-        <resources>
-            <bundle id="B1">
-                <docker image="pcs:test" extra="option" />
-            </bundle>
-        </resources>
-    """
-    fixture_cib_masters = """
-        <resources>
-            <bundle id="B1">
-                <docker image="pcs:test" masters="2" />
-            </bundle>
-        </resources>
-    """
-    fixture_cib_promoted_max = """
-        <resources>
-            <bundle id="B1">
-                <docker image="pcs:test" promoted-max="3" />
-            </bundle>
-        </resources>
-    """
+    @property
+    def fixture_cib_extra_option(self):
+        return """
+            <resources>
+                <bundle id="B1">
+                    <{container_type} image="pcs:test" extra="option" />
+                </bundle>
+            </resources>
+        """.format(container_type=self.container_type)
+
+    @property
+    def fixture_cib_masters(self):
+        return """
+            <resources>
+                <bundle id="B1">
+                    <{container_type} image="pcs:test" masters="2" />
+                </bundle>
+            </resources>
+        """.format(container_type=self.container_type)
+
+    @property
+    def fixture_cib_promoted_max(self):
+        return """
+            <resources>
+                <bundle id="B1">
+                    <{container_type} image="pcs:test" promoted-max="3" />
+                </bundle>
+            </resources>
+        """.format(container_type=self.container_type)
+
     fixture_report_deprecated_masters = (
         severities.WARNING,
         report_codes.DEPRECATED_OPTION,
@@ -174,28 +188,28 @@ class ContainerDocker(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def test_success(self):
+    def _test_success(self):
         (self.config
             .runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" promoted-max="3"
+                            <{container_type} image="pcs:test" promoted-max="3"
                                 replicas="6"
                             />
                         </bundle>
                     </resources>
-                """
+                """.format(container_type=self.container_type)
             )
             .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" options="test" replicas="3"
+                            <{container_type} image="pcs:test" options="test" replicas="3"
                             />
                         </bundle>
                     </resources>
-                """
+                """.format(container_type=self.container_type)
             )
         )
         resource.bundle_update(
@@ -208,8 +222,10 @@ class ContainerDocker(TestCase):
             }
         )
 
-    def test_cannot_remove_required_options(self):
-        self.config.runner.cib.load(resources=fixture_resources_minimal)
+    def _test_cannot_remove_required_options(self):
+        self.config.runner.cib.load(
+            resources=fixture_resources_minimal(self.container_type)
+        )
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
@@ -234,8 +250,10 @@ class ContainerDocker(TestCase):
             ]
         )
 
-    def test_unknow_option(self):
-        self.config.runner.cib.load(resources=fixture_resources_minimal)
+    def _test_unknow_option(self):
+        self.config.runner.cib.load(
+            resources=fixture_resources_minimal(self.container_type)
+        )
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
@@ -258,9 +276,11 @@ class ContainerDocker(TestCase):
             ]
         )
 
-    def test_unknow_option_forced(self):
+    def _test_unknow_option_forced(self):
         (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.load(
+                resources=fixture_resources_minimal(self.container_type)
+            )
             .env.push_cib(resources=self.fixture_cib_extra_option)
         )
         resource.bundle_update(
@@ -285,10 +305,12 @@ class ContainerDocker(TestCase):
             ),
         ])
 
-    def test_unknown_option_remove(self):
+    def _test_unknown_option_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_extra_option)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(
+                resources=fixture_resources_minimal(self.container_type)
+            )
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -299,7 +321,7 @@ class ContainerDocker(TestCase):
             force_options=True
         )
 
-    def test_cib_upgrade_on_promoted_max(self):
+    def _test_cib_upgrade_on_promoted_max(self):
         (self.config
             .runner.cib.load(
                 filename="cib-empty-2.8.xml",
@@ -310,19 +332,19 @@ class ContainerDocker(TestCase):
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" />
+                            <{container_type} image="pcs:test" />
                         </bundle>
                     </resources>
-                """
+                """.format(container_type=self.container_type)
             )
             .env.push_cib(
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" promoted-max="1" />
+                            <{container_type} image="pcs:test" promoted-max="1" />
                         </bundle>
                     </resources>
-                """
+                """.format(container_type=self.container_type)
             )
         )
         resource.bundle_update(
@@ -342,9 +364,9 @@ class ContainerDocker(TestCase):
             ),
         ])
 
-    def test_options_error(self):
-        (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+    def _test_options_error(self):
+        self.config.runner.cib.load(
+            resources=fixture_resources_minimal(self.container_type)
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
@@ -411,12 +433,14 @@ class ContainerDocker(TestCase):
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
-    def test_deprecated_options_set(self):
+    def _test_deprecated_options_set(self):
         # Setting both deprecated options and their new variants is tested in
         # self.test_options_errors. This shows deprecated options emit warning
         # even when not forced.
         (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.load(
+                resources=fixture_resources_minimal(self.container_type)
+            )
             .env.push_cib(resources=self.fixture_cib_masters)
         )
         resource.bundle_update(
@@ -428,10 +452,12 @@ class ContainerDocker(TestCase):
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
-    def test_deprecated_options_remove(self):
+    def _test_deprecated_options_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_masters)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(
+                resources=fixture_resources_minimal(self.container_type)
+            )
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -441,10 +467,12 @@ class ContainerDocker(TestCase):
             }
         )
 
-    def test_delete_masters_and_promoted_max(self):
+    def _test_delete_masters_and_promoted_max(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_masters)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(
+                resources=fixture_resources_minimal(self.container_type)
+            )
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -455,7 +483,7 @@ class ContainerDocker(TestCase):
             }
         )
 
-    def test_masters_set_after_promoted_max(self):
+    def _test_masters_set_after_promoted_max(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_promoted_max)
         )
@@ -483,7 +511,7 @@ class ContainerDocker(TestCase):
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
-    def test_masters_set_after_promoted_max_with_remove(self):
+    def _test_masters_set_after_promoted_max_with_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_promoted_max)
             .env.push_cib(resources=self.fixture_cib_masters)
@@ -498,7 +526,7 @@ class ContainerDocker(TestCase):
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
-    def test_promoted_max_set_after_masters(self):
+    def _test_promoted_max_set_after_masters(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_masters)
         )
@@ -525,7 +553,7 @@ class ContainerDocker(TestCase):
             ]
         )
 
-    def test_promoted_max_set_after_masters_with_remove(self):
+    def _test_promoted_max_set_after_masters_with_remove(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_masters)
             .env.push_cib(resources=self.fixture_cib_promoted_max)
@@ -538,6 +566,24 @@ class ContainerDocker(TestCase):
                 "promoted-max": "3",
             }
         )
+
+
+class ContainerDocker(
+    ContainerParametrized, metaclass=ParametrizedTestMetaClass
+):
+    container_type = "docker"
+
+
+class ContainerPodman(
+    ContainerParametrized, metaclass=ParametrizedTestMetaClass
+):
+    container_type = "podman"
+
+
+class ContainerRkt(
+    ContainerParametrized, metaclass=ParametrizedTestMetaClass
+):
+    container_type = "rkt"
 
 
 class Network(TestCase):
@@ -571,7 +617,7 @@ class Network(TestCase):
 
     def test_add_network(self):
         (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.load(resources=fixture_resources_minimal())
             .env.push_cib(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
@@ -585,7 +631,7 @@ class Network(TestCase):
     def test_remove_network(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_interface)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal())
         )
 
         resource.bundle_update(
@@ -766,7 +812,7 @@ class PortMap(TestCase):
 
     def test_add_network(self):
         (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.load(resources=fixture_resources_minimal())
             .env.push_cib(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
@@ -782,7 +828,7 @@ class PortMap(TestCase):
     def test_remove_network(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_port_80)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal())
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -929,7 +975,7 @@ class StorageMap(TestCase):
 
     def test_add_storage(self):
         (self.config
-            .runner.cib.load(resources=fixture_resources_minimal)
+            .runner.cib.load(resources=fixture_resources_minimal())
             .env.push_cib(resources=self.fixture_cib_storage_1)
         )
         resource.bundle_update(
@@ -946,7 +992,7 @@ class StorageMap(TestCase):
     def test_remove_storage(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_storage_1)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=fixture_resources_minimal())
         )
         resource.bundle_update(
             self.env_assist.get_env(),

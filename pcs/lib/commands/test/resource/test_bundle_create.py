@@ -11,7 +11,10 @@ from pcs.lib.errors import (
 )
 from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
-from pcs.test.tools.misc import skip_unless_pacemaker_supports_bundle
+from pcs.test.tools.misc import (
+    ParametrizedTestMetaClass,
+    skip_unless_pacemaker_supports_bundle,
+)
 
 
 TIMEOUT=10
@@ -21,29 +24,31 @@ get_env_tools = partial(
     base_cib_filename="cib-empty.xml"
 )
 
-
-def simple_bundle_create(env, wait=TIMEOUT, disabled=False):
+def simple_bundle_create(
+    env, wait=TIMEOUT, disabled=False, container_type="docker"
+):
     return resource.bundle_create(
-        env, "B1", "docker",
+        env, "B1", container_type,
         container_options={"image": "pcs:test"},
         ensure_disabled=disabled,
         wait=wait,
     )
 
-fixture_resources_bundle_simple = """
-    <resources>
-        <bundle id="B1">
-            <docker image="pcs:test" />
-        </bundle>
-    </resources>
-"""
+def fixture_resources_bundle_simple(container_type="docker"):
+    return """
+        <resources>
+            <bundle id="B1">
+                <{container_type} image="pcs:test" />
+            </bundle>
+        </resources>
+    """.format(container_type=container_type)
 
 class MinimalCreate(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (self.config
             .runner.cib.load()
-            .env.push_cib(resources=fixture_resources_bundle_simple)
+            .env.push_cib(resources=fixture_resources_bundle_simple())
         )
 
     def test_success(self):
@@ -73,7 +78,7 @@ class MinimalCreate(TestCase):
                     {
                         "option_name": "container type",
                         "option_value": "nonsense",
-                        "allowed_values": ("docker", ),
+                        "allowed_values": {"docker", "podman", "rkt"},
                     },
                     None
                 ),
@@ -103,7 +108,7 @@ class MinimalCreate(TestCase):
         ])
 
 
-class CreateDocker(TestCase):
+class CreateParametrized(TestCase):
     allowed_options = [
         "image",
         "masters",
@@ -114,21 +119,28 @@ class CreateDocker(TestCase):
         "replicas-per-host",
         "run-command",
     ]
+    container_type = None
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.cib.load()
 
-    def test_minimal(self):
-        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
-        simple_bundle_create(self.env_assist.get_env(), wait=False)
+    def _test_minimal(self):
+        self.config.env.push_cib(
+            resources=fixture_resources_bundle_simple(self.container_type)
+        )
+        simple_bundle_create(
+            self.env_assist.get_env(),
+            wait=False,
+            container_type=self.container_type,
+        )
 
-    def test_all_options(self):
+    def _test_all_options(self):
         self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
-                        <docker
+                        <{container_type}
                             image="pcs:test"
                             network="extra network settings"
                             options="extra options"
@@ -139,10 +151,10 @@ class CreateDocker(TestCase):
                         />
                     </bundle>
                 </resources>
-            """
+            """.format(container_type=self.container_type)
         )
         resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
+            self.env_assist.get_env(), "B1", self.container_type,
             container_options={
                 "image": "pcs:test",
                 "network": "extra network settings",
@@ -154,7 +166,7 @@ class CreateDocker(TestCase):
             }
         )
 
-    def test_cib_upgrade_promoted_max(self):
+    def _test_cib_upgrade_promoted_max(self):
         (self.config
             .runner.cib.load(
                 name="load_cib_old_version",
@@ -166,15 +178,15 @@ class CreateDocker(TestCase):
                 resources="""
                     <resources>
                         <bundle id="B1">
-                            <docker image="pcs:test" promoted-max="0" />
+                            <{container_type} image="pcs:test" promoted-max="0" />
                         </bundle>
                     </resources>
-                """
+                """.format(container_type=self.container_type)
             )
         )
 
         resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
+            self.env_assist.get_env(), "B1", self.container_type,
             container_options={
                 "image": "pcs:test",
                 "promoted-max": "0",
@@ -191,7 +203,7 @@ class CreateDocker(TestCase):
             ),
         ])
 
-    def test_deprecated_options(self):
+    def _test_deprecated_options(self):
         # Setting both deprecated options and their new variants is tested in
         # self.test_options_errors. This shows deprecated options emit warning
         # even when not forced.
@@ -199,13 +211,13 @@ class CreateDocker(TestCase):
             resources="""
                 <resources>
                     <bundle id="B1">
-                        <docker image="pcs:test" masters="1" />
+                        <{container_type} image="pcs:test" masters="1" />
                     </bundle>
                 </resources>
-            """,
+            """.format(container_type=self.container_type),
         )
         resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
+            self.env_assist.get_env(), "B1", self.container_type,
             {
                 "image": "pcs:test",
                 "masters": "1",
@@ -224,10 +236,10 @@ class CreateDocker(TestCase):
             ),
         ])
 
-    def test_options_errors(self):
+    def _test_options_errors(self):
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env_assist.get_env(), "B1", "docker",
+                self.env_assist.get_env(), "B1", self.container_type,
                 container_options={
                     "replicas-per-host": "0",
                     "replicas": "0",
@@ -310,10 +322,10 @@ class CreateDocker(TestCase):
             ),
         ])
 
-    def test_empty_image(self):
+    def _test_empty_image(self):
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env_assist.get_env(), "B1", "docker",
+                self.env_assist.get_env(), "B1", self.container_type,
                 container_options={
                     "image": "",
                 },
@@ -333,10 +345,10 @@ class CreateDocker(TestCase):
             ]
         )
 
-    def test_unknow_option(self):
+    def _test_unknow_option(self):
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_create(
-                self.env_assist.get_env(), "B1", "docker",
+                self.env_assist.get_env(), "B1", self.container_type,
                 container_options={
                     "image": "pcs:test",
                     "extra": "option",
@@ -357,18 +369,18 @@ class CreateDocker(TestCase):
             ]
         )
 
-    def test_unknow_option_forced(self):
+    def _test_unknow_option_forced(self):
         self.config.env.push_cib(
             resources="""
                 <resources>
                     <bundle id="B1">
-                        <docker image="pcs:test" extra="option" />
+                        <{container_type} image="pcs:test" extra="option" />
                     </bundle>
                 </resources>
-            """
+            """.format(container_type=self.container_type)
         )
         resource.bundle_create(
-            self.env_assist.get_env(), "B1", "docker",
+            self.env_assist.get_env(), "B1", self.container_type,
             container_options={
                 "image": "pcs:test",
                 "extra": "option",
@@ -390,6 +402,18 @@ class CreateDocker(TestCase):
         ])
 
 
+class CreateDocker(CreateParametrized, metaclass=ParametrizedTestMetaClass):
+    container_type = "docker"
+
+
+class CreatePodman(CreateParametrized, metaclass=ParametrizedTestMetaClass):
+    container_type = "podman"
+
+
+class CreateRkt(CreateParametrized, metaclass=ParametrizedTestMetaClass):
+    container_type = "rkt"
+
+
 class CreateWithNetwork(TestCase):
     allowed_options = [
         "control-port",
@@ -404,7 +428,7 @@ class CreateWithNetwork(TestCase):
 
 
     def test_no_options(self):
-        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
+        self.config.env.push_cib(resources=fixture_resources_bundle_simple())
         resource.bundle_create(
             self.env_assist.get_env(), "B1", "docker",
             {"image": "pcs:test", },
@@ -545,7 +569,7 @@ class CreateWithPortMap(TestCase):
         self.config.runner.cib.load()
 
     def test_no_options(self):
-        self.config.env.push_cib(resources=fixture_resources_bundle_simple)
+        self.config.env.push_cib(resources=fixture_resources_bundle_simple())
         resource.bundle_create(
             self.env_assist.get_env(), "B1", "docker",
             {"image": "pcs:test", },
@@ -1248,7 +1272,7 @@ class Wait(TestCase):
             """
         ).strip()
         self.config.env.push_cib(
-            resources=fixture_resources_bundle_simple,
+            resources=fixture_resources_bundle_simple(),
             wait=TIMEOUT,
             exception=LibraryError(
                 reports.wait_for_idle_timed_out(wait_error_message)
@@ -1266,7 +1290,7 @@ class Wait(TestCase):
     def test_wait_ok_run_ok(self):
         (self.config
             .env.push_cib(
-                resources=fixture_resources_bundle_simple,
+                resources=fixture_resources_bundle_simple(),
                 wait=TIMEOUT
             )
             .runner.pcmk.load_state(resources=self.fixture_status_running)
@@ -1282,7 +1306,7 @@ class Wait(TestCase):
     def test_wait_ok_run_fail(self):
         (self.config
             .env.push_cib(
-                resources=fixture_resources_bundle_simple,
+                resources=fixture_resources_bundle_simple(),
                 wait=TIMEOUT
             )
             .runner.pcmk.load_state(resources=self.fixture_status_not_running)

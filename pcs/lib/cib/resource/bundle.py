@@ -22,7 +22,9 @@ from pcs.lib.xml_tools import (
 
 TAG = "bundle"
 
-_docker_options = set((
+_generic_container_types = {"docker", "podman", "rkt"}
+
+_generic_container_options = set((
     "image",
     "masters",
     "network",
@@ -77,7 +79,7 @@ def validate_new(
         report_list.extend(
             # TODO call the proper function once more container_types are
             # supported by pacemaker
-            _validate_container_docker_options_new(
+            _validate_generic_container_options_new(
                 container_options,
                 force_options
             )
@@ -114,10 +116,10 @@ def append_new(
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
     # TODO create the proper element once more container_types are supported
     # by pacemaker
-    docker_element = etree.SubElement(bundle_element, "docker")
+    container_element = etree.SubElement(bundle_element, container_type)
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
-    update_attributes_remove_empty(docker_element, container_options)
+    update_attributes_remove_empty(container_element, container_options)
     if network_options or port_map:
         network_element = etree.SubElement(bundle_element, "network")
         # Do not add options with empty values. When updating, an empty value
@@ -158,11 +160,11 @@ def validate_update(
     report_list = []
 
     container_el = _get_container_element(bundle_el)
-    if container_el.tag == "docker":
+    if container_el.tag in _generic_container_types:
         # TODO call the proper function once more container types are
         # supported by pacemaker
         report_list.extend(
-            _validate_container_docker_options_update(
+            _validate_generic_container_options_update(
                 container_el,
                 container_options,
                 force_options
@@ -307,11 +309,17 @@ def get_inner_resource(bundle_el):
     return None
 
 def _validate_container_type(container_type):
-    return validate.value_in("type", ("docker", ), "container type")({
-        "type": container_type,
-    })
+    return validate.value_in(
+        "type",
+        _generic_container_types,
+        "container type"
+    )(
+        {
+            "type": container_type,
+        }
+    )
 
-def _validate_container_docker_options_new(options, force_options):
+def _validate_generic_container_options_new(options, force_options):
     validators = [
         validate.is_required("image", "container"),
         validate.value_not_empty("image", "image name"),
@@ -335,7 +343,7 @@ def _validate_container_docker_options_new(options, force_options):
         deprecation_reports
         +
         validate.names_in(
-            _docker_options,
+            _generic_container_options,
             options.keys(),
             "container",
             report_codes.FORCE_OPTIONS,
@@ -343,7 +351,7 @@ def _validate_container_docker_options_new(options, force_options):
         )
     )
 
-def _validate_container_docker_options_update(
+def _validate_generic_container_options_update(
     docker_el, options, force_options
 ):
     validators = [
@@ -423,7 +431,7 @@ def _validate_container_docker_options_update(
         +
         validate.names_in(
             # allow to remove options even if they are not allowed
-            _docker_options | _options_to_remove(options),
+            _generic_container_options | _options_to_remove(options),
             options.keys(),
             "container",
             report_codes.FORCE_OPTIONS,
@@ -633,8 +641,13 @@ def _append_storage_map(
     return storage_map_element
 
 def _get_container_element(bundle_el):
-    # TODO get different types of container once supported by pacemaker
-    return bundle_el.find("docker")
+    # TODO: make sure tahth usedrs of this function can handle None correctly
+    container_el = None
+    for container_type in _generic_container_types:
+        container_el = bundle_el.find(container_type)
+        if container_el is not None:
+            return container_el
+    return None
 
 def _remove_map_elements(element_list, id_to_remove_list):
     for el in element_list:

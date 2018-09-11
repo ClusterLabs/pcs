@@ -34,6 +34,8 @@
   in Pacemaker 2.x ([rhbz#1542288])
 - Support for OP_NO_RENEGOTIATION option when OpenSSL supports it (even with
   Python 3.6) ([rhbz#1566430])
+- Support for container types `rkt` and `podman` into bundle commands
+  ([rhbz#1619620])
 
 ### Fixed
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as
@@ -160,6 +162,7 @@
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 [rhbz#1605185]: https://bugzilla.redhat.com/show_bug.cgi?id=1605185
 [rhbz#1615420]: https://bugzilla.redhat.com/show_bug.cgi?id=1615420
+[rhbz#1619620]: https://bugzilla.redhat.com/show_bug.cgi?id=1619620
 
 
 ## [0.9.163] - 2018-02-20

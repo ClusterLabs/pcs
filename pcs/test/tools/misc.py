@@ -16,6 +16,41 @@ runner = CommandRunner(
     os.environ
 )
 
+
+class ParametrizedTestMetaClass(type):
+    """
+    Example:
+        class GeneralTest(TestCase):
+            attr = None
+            def _test_1(self):
+                self.assertIn(self.attr, [1, 2])
+
+            def _test_2(self):
+                self.assertNotIn(self.attr, [0, 3, 4, 5])
+
+        class Test1(GeneralTest, metaclass=ParametrizedTestMetaClass):
+            attr = 1
+
+        class Test2(GeneralTest, metaclass=ParametrizedTestMetaClass):
+            attr = 2
+
+        class Test3(GeneralTest, metaclass=ParametrizedTestMetaClass):
+            # This should fail
+            attr = 3
+    """
+    def __init__(cls, classname, bases, class_dict):
+        for attr_name in dir(cls):
+            attr = getattr(cls, attr_name)
+            if (
+                attr_name.startswith("_test")
+                and
+                hasattr(attr, "__call__")
+            ):
+                setattr(cls, attr_name[1:], attr)
+
+        super().__init__(classname, bases, class_dict)
+
+
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
     return os.path.join(testdir, "resources", name)
