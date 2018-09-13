@@ -188,9 +188,9 @@ module ClusterEntity
         end
         unless not_primitives.include?(mi_id.to_sym)
           if data[:clone]
-            mi =  ClusterEntity::Clone.new
+            mi = ClusterEntity::ClonePcmk1.new
           else
-            mi = ClusterEntity::MasterSlave.new
+            mi = ClusterEntity::MasterSlavePcmk1.new
             mi.masters_unknown = true
           end
           mi.id = mi_id
@@ -363,13 +363,14 @@ module ClusterEntity
       @warning_list = []
       @status = ClusterEntity::ResourceStatus.new
       element_names = {
-        'ClusterEntity::Primitive'.to_sym => 'primitive',
-        'ClusterEntity::Group'.to_sym => 'group',
-        'ClusterEntity::Clone'.to_sym => 'clone',
-        'ClusterEntity::MasterSlave'.to_sym => 'master'
+        'ClusterEntity::Primitive'.to_sym => ['primitive'],
+        'ClusterEntity::Group'.to_sym => ['group'],
+        'ClusterEntity::Clone'.to_sym => ['clone', 'master'],
+        'ClusterEntity::ClonePcmk1'.to_sym => ['clone'],
+        'ClusterEntity::MasterSlavePcmk1'.to_sym => ['master']
       }
       if (resource_cib_element and
-        resource_cib_element.name == element_names[self.class.name.to_sym]
+        element_names[self.class.name.to_sym].include?(resource_cib_element.name)
       )
         @id = resource_cib_element.attributes['id']
         resource_cib_element.elements.each('meta_attributes/nvpair') { |e|
@@ -383,35 +384,6 @@ module ClusterEntity
       return !!(@meta_attr['target-role'] and
         @meta_attr['target-role'].value.downcase == 'stopped'
       )
-    end
-
-    def get_group
-      if parent.instance_of?(ClusterEntity::Group)
-        return parent.id
-      end
-      return nil
-    end
-
-    def get_clone
-      if parent.instance_of?(ClusterEntity::Clone)
-        return parent.id
-      elsif (parent.instance_of?(ClusterEntity::Group) and
-        parent.parent.instance_of?(ClusterEntity::Clone)
-      )
-        return parent.parent.id
-      end
-      return nil
-    end
-
-    def get_master
-      if parent.instance_of?(ClusterEntity::MasterSlave)
-        return parent.id
-      elsif (parent.instance_of?(ClusterEntity::Group) and
-        parent.parent.instance_of?(ClusterEntity::MasterSlave)
-      )
-        return parent.parent.id
-      end
-      return nil
     end
 
     def to_status(version='1')
@@ -783,21 +755,172 @@ module ClusterEntity
   end
 
 
-  class MultiInstance < Resource
+  class Clone < Resource
+    attr_accessor :member, :unique, :managed, :failed, :failure_ignored
+    attr_accessor :masters, :slaves, :masters_unknown
+    attr_accessor :promotable
+
+    def initialize(
+      resource_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil,
+      operations=nil
+    )
+      super(resource_cib_element, nil, parent)
+      @class_type = 'clone'
+      @member = nil
+      @unique = false
+      @managed = false
+      @failed = false
+      @failure_ignored = false
+      @promotable = false
+      @masters_unknown = false
+      @masters = []
+      @slaves = []
+
+      if (resource_cib_element and
+        ['clone', 'master'].include?(resource_cib_element.name)
+      )
+        @promotable = !!((resource_cib_element.name == 'master') or
+          (@meta_attr['promotable'] and
+            is_cib_true(@meta_attr['promotable'].value)
+          )
+        )
+        member = resource_cib_element.elements['group | primitive']
+        if member and member.name == 'group'
+          @member = Group.new(member, rsc_status, self, operations)
+        elsif member and member.name == 'primitive'
+          @member = Primitive.new(member, rsc_status, self, operations)
+        end
+
+        update_status
+
+        if @member and @promotable
+          if @member.instance_of?(Primitive)
+            primitive_list = [@member]
+          else
+            primitive_list = @member.members
+          end
+          @masters, @slaves = get_masters_slaves(primitive_list)
+          if (@masters.empty? and !@masters_unknown and
+            @status != ClusterEntity::ResourceStatus.new(:disabled)
+          )
+            @warning_list << {
+              :message => 'Resource is promotable but has not been promoted '\
+                + 'on any node.',
+              :type => 'no_master'
+            }
+          end
+        end
+
+        if crm_dom
+          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}']"]
+          if status
+            @unique = status.attributes['unique'] == 'true'
+            @managed = status.attributes['managed'] == 'true'
+            @failed = status.attributes['failed'] == 'true'
+            @failure_ignored = status.attributes['failure_ignored'] == 'true'
+          end
+        end
+      end
+    end
+
+    def to_status(version='1')
+      if version == '2'
+        hash = super(version)
+        hash[:promotable] = @promotable
+        hash[:member] = @member.to_status(version)
+        return hash
+      else
+        member = @member ? @member.to_status(version) : []
+        meta_attr = []
+        unless @member.instance_of?(Group)
+          meta_attr = ClusterEntity::get_meta_attr_version1(self)
+        end
+        clone_ms_id = @member.instance_of?(Group) ? @member.id : @id
+        member.each do |m|
+          if @promotable
+            m[:ms] = true
+            m[:ms_id] = clone_ms_id
+          else
+            m[:clone] = true
+            m[:clone_id] = clone_ms_id
+          end
+          m[:meta_attr] = ClusterEntity::merge_meta_attr_version1(
+            m[:meta_attr],
+            meta_attr
+          )
+        end
+        return member
+      end
+    end
+
+    def update_status
+      if @member
+        @member.update_status
+        @status = @member.status
+        if @promotable
+          if @member.instance_of?(Primitive)
+            primitive_list = [@member]
+          else
+            primitive_list = @member.members
+          end
+          @masters, @slaves = get_masters_slaves(primitive_list)
+          if (@masters.empty? and !@masters_unknown and
+            @member.status == ClusterEntity::ResourceStatus.new(:running)
+          )
+            @status = ClusterEntity::ResourceStatus.new(:partially_running)
+          end
+        end
+      end
+      if disabled?
+        @status = ClusterEntity::ResourceStatus.new(:disabled)
+      end
+    end
+
+    def get_map
+      map = super
+      map.update(@member.get_map)
+      return map
+    end
+
+    private
+    def get_masters_slaves(primitive_list)
+      masters = []
+      slaves = []
+      primitive_list.each { |primitive|
+        if primitive.instance_of?(ClusterEntity::Primitive)
+          primitive.crm_status.each { |stat|
+            if stat.role == 'Master'
+              if stat.node
+                masters << stat.node[:name]
+              end
+            else
+              if stat.node
+                slaves << stat.node[:name]
+              end
+            end
+          }
+        end
+      }
+      return [masters, slaves]
+    end
+  end
+
+
+  # base class for clone and master resources in pacemaker 1.x
+  class MultiInstancePcmk1 < Resource
     attr_accessor :member, :unique, :managed, :failed, :failure_ignored
 
     def initialize(resource_cib_element=nil, crm_dom=nil, rsc_status=nil,
                    parent=nil, operations=nil)
       super(resource_cib_element, nil, parent)
       @member = nil
-      @multi_state = false
       @unique = false
       @managed = false
       @failed = false
       @failure_ignored = false
       element_names = {
-        'ClusterEntity::Clone'.to_sym => 'clone',
-        'ClusterEntity::MasterSlave'.to_sym => 'master'
+        'ClusterEntity::ClonePcmk1'.to_sym => 'clone',
+        'ClusterEntity::MasterSlavePcmk1'.to_sym => 'master'
       }
       if (resource_cib_element and
         resource_cib_element.name == element_names[self.class.name.to_sym]
@@ -849,7 +972,7 @@ module ClusterEntity
   end
 
 
-  class Clone < MultiInstance
+  class ClonePcmk1 < MultiInstancePcmk1
 
     def initialize(
       resource_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil,
@@ -883,7 +1006,7 @@ module ClusterEntity
   end
 
 
-  class MasterSlave < MultiInstance
+  class MasterSlavePcmk1 < MultiInstancePcmk1
     attr_accessor :masters, :slaves, :masters_unknown
 
     def initialize(master_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil, operations=nil)

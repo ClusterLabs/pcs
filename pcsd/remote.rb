@@ -119,7 +119,7 @@ def remote(params, request, auth_user)
       :add_acl => method(:add_acl_remote),
       :remove_acl => method(:remove_acl_remote),
       :resource_change_group => method(:resource_change_group),
-      :resource_master => method(:resource_master),
+      :resource_promotable => method(:resource_promotable),
       :resource_clone => method(:resource_clone),
       :resource_unclone => method(:resource_unclone),
       :resource_ungroup => method(:resource_ungroup),
@@ -1405,9 +1405,9 @@ def update_resource (params, request, auth_user)
     if params[:resource_clone] and params[:resource_clone] != ""
       name = resource_group ? resource_group : params[:name]
       run_cmd(auth_user, PCS, "resource", "clone", name)
-    elsif params[:resource_ms] and params[:resource_ms] != ""
+    elsif params[:resource_promotable] and params[:resource_promotable] != ""
       name = resource_group ? resource_group : params[:name]
-      run_cmd(auth_user, PCS, "resource", "master", name)
+      run_cmd(auth_user, PCS, "resource", "promotable", name)
     end
 
     return JSON.generate({})
@@ -1450,8 +1450,8 @@ def update_resource (params, request, auth_user)
   if params[:resource_clone] and params[:_orig_resource_clone] == "false"
     run_cmd(auth_user, PCS, "resource", "clone", params[:resource_id])
   end
-  if params[:resource_ms] and params[:_orig_resource_ms] == "false"
-    run_cmd(auth_user, PCS, "resource", "master", params[:resource_id])
+  if params[:resource_promotable] and params[:_orig_resource_promotable] == "false"
+    run_cmd(auth_user, PCS, "resource", "promotable", params[:resource_id])
   end
 
   if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
@@ -1459,7 +1459,7 @@ def update_resource (params, request, auth_user)
       auth_user, PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,'')
     )
   end
-  if params[:_orig_resource_ms] == "true" and not params[:resource_ms]
+  if params[:_orig_resource_promotable] == "true" and not params[:resource_promotable]
     run_cmd(
       auth_user, PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,'')
     )
@@ -2018,7 +2018,7 @@ def known_hosts_change(params, request, auth_user)
   end
 end
 
-def resource_master(params, request, auth_user)
+def resource_promotable(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
@@ -2027,10 +2027,10 @@ def resource_master(params, request, auth_user)
     return [400, 'resource_id has to be specified.']
   end
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'master', params[:resource_id]
+    auth_user, PCS, 'resource', 'promotable', params[:resource_id]
   )
   if retval != 0
-    return [400, 'Unable to create master/slave resource from ' +
+    return [400, 'Unable to create promotable resource from ' +
       "'#{params[:resource_id]}': #{stderr.join('')}"
     ]
   end

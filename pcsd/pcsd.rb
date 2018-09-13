@@ -1373,17 +1373,33 @@ post '/managec/:cluster/?*' do
     if code == 404
       case request
         # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_change_group'
+        when '/resource_change_group', 'resource_change_group'
           code, out =  pcs_0_9_142_resource_change_group(auth_user, params)
         # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_clone'
+        when '/resource_clone', 'resource_clone'
           code, out = pcs_0_9_142_resource_clone(auth_user, params)
         # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_unclone'
+        when '/resource_unclone', 'resource_unclone'
           code, out = pcs_0_9_142_resource_unclone(auth_user, params)
         # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_master'
-          code, out = pcs_0_9_142_resource_master(auth_user, params)
+        when '/resource_master', 'resource_master'
+          # defaults to true for old pcsds without capabilities defined
+          supports_resource_master = true
+          capabilities_code, capabilities_out = send_cluster_request_with_token(
+            auth_user, params[:cluster], 'capabilities'
+          )
+          if capabilities_code == 200
+            begin
+              capabilities_json = JSON.parse(capabilities_out)
+              supports_resource_master = capabilities_json[:pcsd_capabilities].include?(
+                'pcmk.resource.master'
+              )
+            rescue JSON::ParserError
+            end
+          end
+          if supports_resource_master
+            code, out = pcs_0_9_142_resource_master(auth_user, params)
+          end
         else
           redirection = {
             # constraints removal for pcs-0.9.137 and older

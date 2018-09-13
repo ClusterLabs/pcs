@@ -1619,7 +1619,7 @@ def get_resources(cib_dom, crm_dom=nil, get_operations=false)
     )
   end
   cib_dom.elements.each('/cib/configuration/resources/master') do |e|
-    resource_list << ClusterEntity::MasterSlave.new(
+    resource_list << ClusterEntity::Clone.new(
       e, crm_dom, rsc_status, nil, operations
     )
   end
@@ -1651,7 +1651,7 @@ def get_resource_by_id(id, cib_dom, crm_dom=nil, rsc_status=nil, operations=fals
     when 'clone'
       return ClusterEntity::Clone.new(e, crm_dom, rsc_status, nil, operations)
     when 'master'
-      return ClusterEntity::MasterSlave.new(e, crm_dom, rsc_status, nil, operations)
+      return ClusterEntity::Clone.new(e, crm_dom, rsc_status, nil, operations)
     else
       return nil
   end
@@ -1747,7 +1747,7 @@ def get_group_list_from_tree_of_resources(tree)
       group_list << resource.id
     end
     if (
-      resource.kind_of?(ClusterEntity::MultiInstance) and
+      resource.kind_of?(ClusterEntity::MultiInstancePcmk1) and
       resource.member.instance_of?(ClusterEntity::Group)
     )
       group_list << resource.member.id

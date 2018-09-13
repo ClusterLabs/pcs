@@ -921,11 +921,12 @@
         daemon urls: update_resource (param: resource_id not set)
       </description>
     </capability>
-    <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="1">
       <description>
         Put a newly created resource into a promotable clone.
 
         pcs commands: resource create ... promotable
+        daemon urls: update_resource (param: resource_id not set)
       </description>
     </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
@@ -1085,7 +1086,7 @@
         pcs commands: resource clone
       </description>
     </capability>
-    <capability id="pcmk.resource.promotable" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.promotable" in-pcs="1" in-pcsd="1">
       <description>
         Turn an existing resource to a promotable clone resource and the other
         way around.

@@ -36,6 +36,7 @@
   Python 3.6) ([rhbz#1566430])
 - Support for container types `rkt` and `podman` into bundle commands
   ([rhbz#1619620])
+- Support for promotable clone resources in pcsd and web UI ([rhbz#1542288])
 
 ### Fixed
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as

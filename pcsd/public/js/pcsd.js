@@ -2333,6 +2333,28 @@ function resource_master(resource_id) {
   });
 }
 
+function resource_promotable(resource_id) {
+  if (resource_id == null) {
+    return;
+  }
+  show_loading_screen();
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_promotable',
+    data: {resource_id: resource_id},
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to create promotable resource "
+        + ajax_simple_error(xhr, status, error)
+      );
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
 function resource_clone(resource_id) {
   if (resource_id == null) {
     return;

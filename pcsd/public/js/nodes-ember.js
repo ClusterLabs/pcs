@@ -79,6 +79,12 @@ Pcs = Ember.Application.createWithMixins({
   is_supported_resource_refresh_one_resource: function() {
     return this.get("pcsd_capabilities").indexOf("pcmk.resource.refresh.one-resource") != -1
   }.property("pcsd_capabilities"),
+  is_supported_resource_create_promotable: function() {
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.create.promotable") != -1
+  }.property("pcsd_capabilities"),
+  is_supported_resource_promotable: function() {
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.promotable") != -1
+  }.property("pcsd_capabilities"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {
@@ -1213,12 +1219,13 @@ Pcs.MultiInstanceObj = Pcs.ResourceObj.extend({
 });
 
 Pcs.CloneObj = Pcs.MultiInstanceObj.extend({
-  is_clone: true
+  promotable: false,
+  resource_type: function() { // this property is just for displaying resource type in GUI
+    return this.get("promotable") ? "Promotable Clone" : "Clone"
+  }.property("promotable")
 });
 
 Pcs.MasterSlaveObj = Pcs.MultiInstanceObj.extend({
-  masters: [],
-  slaves: [],
   resource_type: 'Master/Slave'
 });
 

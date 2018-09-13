@@ -1,4 +1,4 @@
-<cib crm_feature_set="3.0.9" validate-with="pacemaker-2.2" epoch="114" num_updates="0" admin_epoch="0" cib-last-written="Sun Jul  5 12:47:19 2015" have-quorum="1" dc-uuid="3">
+<cib crm_feature_set="3.1.0" validate-with="pacemaker-3.1" epoch="114" num_updates="0" admin_epoch="0" cib-last-written="Sun Jul  5 12:47:19 2015" have-quorum="1" dc-uuid="3">
   <configuration>
     <crm_config>
       <cluster_property_set id="cib-bootstrap-options">
@@ -211,6 +211,26 @@
           <nvpair id="group3-master-meta_attributes-c" name="c" value="0"/>
         </meta_attributes>
       </master>
+      <clone id="stateful-promotable">
+        <primitive class="ocf" id="promotable" provider="pacemaker" type="Stateful">
+          <instance_attributes id="promotable-instance_attributes"/>
+          <operations>
+            <op id="promotable-start-interval-0s" interval="0s" name="start" timeout="20"/>
+            <op id="promotable-stop-interval-0s" interval="0s" name="stop" timeout="20"/>
+            <op id="promotable-monitor-interval-10" interval="10" name="monitor" role="Master" timeout="20"/>
+            <op id="promotable-monitor-interval-11" interval="11" name="monitor" role="Slave" timeout="20"/>
+          </operations>
+          <meta_attributes id="promotable-meta_attributes">
+            <nvpair id="promotable-meta_attributes-a" name="a" value="0"/>
+            <nvpair id="promotable-meta_attributes-c" name="c" value="0"/>
+          </meta_attributes>
+        </primitive>
+        <meta_attributes id="stateful-promotable-meta_attributes">
+          <nvpair id="stateful-promotable-meta_attributes-promotable" name="promotable" value="true"/>
+          <nvpair id="stateful-promotable-meta_attributes-a" name="a" value="1"/>
+          <nvpair id="stateful-promotable-meta_attributes-b" name="b" value="1"/>
+        </meta_attributes>
+      </clone>
     </resources>
     <constraints>
       <rsc_location id="location-dummy1-node1-10" node="node1" rsc="dummy1" score="10"/>

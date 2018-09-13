@@ -22,6 +22,46 @@ def assert_equal_NvSet(set1, set2)
   }
 end
 
+def get_group(entity)
+  if entity.parent.instance_of?(ClusterEntity::Group)
+    return entity.parent.id
+  end
+  return nil
+end
+
+def get_clone_pcmk1(entity)
+  if entity.parent.instance_of?(ClusterEntity::ClonePcmk1)
+    return entity.parent.id
+  elsif (entity.parent.instance_of?(ClusterEntity::Group) and
+    entity.parent.parent.instance_of?(ClusterEntity::ClonePcmk1)
+  )
+    return entity.parent.parent.id
+  end
+  return nil
+end
+
+def get_clone(entity)
+  if entity.parent.instance_of?(ClusterEntity::Clone)
+    return entity.parent.id
+  elsif (entity.parent.instance_of?(ClusterEntity::Group) and
+    entity.parent.parent.instance_of?(ClusterEntity::Clone)
+  )
+    return entity.parent.parent.id
+  end
+  return nil
+end
+
+def get_master(entity)
+  if entity.parent.instance_of?(ClusterEntity::MasterSlavePcmk1)
+    return entity.parent.id
+  elsif (entity.parent.instance_of?(ClusterEntity::Group) and
+    entity.parent.parent.instance_of?(ClusterEntity::MasterSlavePcmk1)
+  )
+    return entity.parent.parent.id
+  end
+  return nil
+end
+
 class TestNvSet < Test::Unit::TestCase
   def setup
     @nvSet = ClusterEntity::NvSet.new
@@ -302,9 +342,9 @@ class TestPrimitive < Test::Unit::TestCase
   def test_init
     obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"])
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy1-meta_attributes-testattr',
       'testattr',
@@ -349,9 +389,9 @@ class TestPrimitive < Test::Unit::TestCase
       ClusterEntity::get_rsc_status(@crm_mon)
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy1-meta_attributes-testattr',
       'testattr',
@@ -418,9 +458,9 @@ class TestPrimitive < Test::Unit::TestCase
       ClusterEntity::get_resources_operations(@cib)
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy1-meta_attributes-testattr',
       'testattr',
@@ -527,9 +567,9 @@ class TestPrimitive < Test::Unit::TestCase
       ClusterEntity::get_resources_operations(@cib)
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy1-meta_attributes-testattr',
       'testattr',
@@ -611,9 +651,9 @@ class TestPrimitive < Test::Unit::TestCase
   def test_init_nil
     obj = ClusterEntity::Primitive.new(nil, nil, 'parent', nil)
     assert_equal('parent', obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
     assert(obj.error_list.empty?)
@@ -632,9 +672,9 @@ class TestPrimitive < Test::Unit::TestCase
     xml ='<empty_document/>'
     obj = ClusterEntity::Primitive.new(REXML::Document.new(xml))
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
     assert(obj.error_list.empty?)
@@ -653,9 +693,9 @@ class TestPrimitive < Test::Unit::TestCase
     xml ='<primitive/>'
     obj = ClusterEntity::Primitive.new(REXML::Document.new(xml).elements['primitive'])
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
     assert(obj.error_list.empty?)
@@ -677,9 +717,9 @@ class TestPrimitive < Test::Unit::TestCase
       ClusterEntity::get_rsc_status(@crm_mon)
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
     assert(obj.error_list.empty?)
@@ -697,9 +737,9 @@ class TestPrimitive < Test::Unit::TestCase
   def test_init_stonith
     obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='node1-stonith']"])
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_equal('node1-stonith', obj.id)
     assert(obj.error_list.empty?)
@@ -724,9 +764,9 @@ class TestPrimitive < Test::Unit::TestCase
       @cib.elements["//primitive[@id='node2-stonith']"]
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_equal('node2-stonith', obj.id)
     assert(obj.error_list.empty?)
@@ -778,9 +818,9 @@ class TestPrimitive < Test::Unit::TestCase
       ClusterEntity::get_rsc_status(@crm_mon)
     )
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert_equal('node1-stonith', obj.id)
     assert(obj.error_list.empty?)
@@ -994,9 +1034,9 @@ class TestGroup < Test::Unit::TestCase
     obj = ClusterEntity::Group.new(@cib.elements["//group[@id='group1']"])
     assert_equal('group1', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'group1-meta_attributes-c',
       'c',
@@ -1012,16 +1052,16 @@ class TestGroup < Test::Unit::TestCase
     assert_equal(2, obj.members.length)
     m = obj.members
     assert_instance_of(ClusterEntity::Primitive, m[0])
-    assert_nil(m[0].get_master)
-    assert_nil(m[0].get_clone)
-    assert_equal(obj.id, m[0].get_group)
+    assert_nil(get_master(m[0]))
+    assert_nil(get_clone_pcmk1(m[0]))
+    assert_equal(obj.id, get_group(m[0]))
     assert_equal('dummy3', m[0].id)
     assert_equal(obj, m[0].parent)
     assert(m[0].crm_status.empty?)
     assert_instance_of(ClusterEntity::Primitive, m[1])
-    assert_nil(m[1].get_master)
-    assert_nil(m[1].get_clone)
-    assert_equal(obj.id, m[1].get_group)
+    assert_nil(get_master(m[1]))
+    assert_nil(get_clone_pcmk1(m[1]))
+    assert_equal(obj.id, get_group(m[1]))
     assert_equal('dummy4', m[1].id)
     assert_equal(obj, m[1].parent)
     assert(m[1].crm_status.empty?)
@@ -1034,9 +1074,9 @@ class TestGroup < Test::Unit::TestCase
     )
     assert_equal('group1', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'group1-meta_attributes-c',
       'c',
@@ -1060,12 +1100,12 @@ class TestGroup < Test::Unit::TestCase
     assert_equal(obj, m[1].parent)
     assert_equal(1, m[0].crm_status.length)
     assert_equal(1, m[1].crm_status.length)
-    assert_nil(m[0].get_master)
-    assert_nil(m[0].get_clone)
-    assert_equal(obj.id, m[0].get_group)
-    assert_nil(m[1].get_master)
-    assert_nil(m[1].get_clone)
-    assert_equal(obj.id, m[1].get_group)
+    assert_nil(get_master(m[0]))
+    assert_nil(get_clone_pcmk1(m[0]))
+    assert_equal(obj.id, get_group(m[0]))
+    assert_nil(get_master(m[1]))
+    assert_nil(get_clone_pcmk1(m[1]))
+    assert_equal(obj.id, get_group(m[1]))
   end
 
   def test_init_invalid_element
@@ -1073,9 +1113,9 @@ class TestGroup < Test::Unit::TestCase
     obj = ClusterEntity::Group.new(REXML::Document.new(xml).elements['*'])
     assert_nil(obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -1087,9 +1127,9 @@ class TestGroup < Test::Unit::TestCase
     obj = ClusterEntity::Group.new(REXML::Document.new(xml).elements['*'])
     assert_equal('group', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -1314,7 +1354,7 @@ class TestGroup < Test::Unit::TestCase
   end
 end
 
-class TestClone < Test::Unit::TestCase
+class TestClonePcmk1 < Test::Unit::TestCase
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
     @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
@@ -1322,12 +1362,12 @@ class TestClone < Test::Unit::TestCase
 
   def test_init_invalid_element
     xml = '<primitve id="dummy"/>'
-    obj = ClusterEntity::Clone.new(REXML::Document.new(xml).elements['*'])
+    obj = ClusterEntity::ClonePcmk1.new(REXML::Document.new(xml).elements['*'])
     assert_nil(obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -1340,12 +1380,12 @@ class TestClone < Test::Unit::TestCase
 
   def test_init_empty_element
     xml = '<clone id="dummy-clone"/>'
-    obj = ClusterEntity::Clone.new(REXML::Document.new(xml).elements['*'])
+    obj = ClusterEntity::ClonePcmk1.new(REXML::Document.new(xml).elements['*'])
     assert_equal('dummy-clone', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     assert(obj.meta_attr.empty?)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -1357,16 +1397,16 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_init_primitive_with_crm
-    obj = ClusterEntity::Clone.new(
+    obj = ClusterEntity::ClonePcmk1.new(
       @cib.elements["//clone[@id='dummy-clone']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
     )
     assert_equal('dummy-clone', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy-clone-meta_attributes-ccc',
       'ccc',
@@ -1390,18 +1430,18 @@ class TestClone < Test::Unit::TestCase
     assert_equal(obj, m.parent)
     assert_equal('dummy', m.id)
     assert_equal(3, m.crm_status.length)
-    assert_nil(m.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_nil(m.get_group)
+    assert_nil(get_master(m))
+    assert_equal(obj.id, get_clone_pcmk1(m))
+    assert_nil(get_group(m))
   end
 
   def test_init_primitive
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='dummy-clone']"])
+    obj = ClusterEntity::ClonePcmk1.new(@cib.elements["//clone[@id='dummy-clone']"])
     assert_equal('dummy-clone', obj.id)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'dummy-clone-meta_attributes-ccc',
       'ccc',
@@ -1425,9 +1465,1977 @@ class TestClone < Test::Unit::TestCase
     assert_equal(obj, m.parent)
     assert_equal('dummy', m.id)
     assert(m.crm_status.empty?)
-    assert_nil(m.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_nil(m.get_group)
+    assert_nil(get_master(m))
+    assert_equal(obj.id, get_clone_pcmk1(m))
+    assert_nil(get_group(m))
+  end
+
+  def test_init_group_with_crm
+    obj = ClusterEntity::ClonePcmk1.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'group2-clone-meta_attributes-a',
+      'a',
+      '1'
+    ) << ClusterEntity::NvPair.new(
+      'group2-clone-meta_attributes-d',
+      'd',
+      '1'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert(obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    g = obj.member
+    assert_instance_of(ClusterEntity::Group, g)
+    assert_equal(obj, g.parent)
+    assert_equal('group2', g.id)
+    assert_equal(2, g.members.length)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(g))
+    assert_nil(get_group(g))
+
+    m = g.members[0]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('dummy6', m.id)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(m))
+    assert_equal(g.id, get_group(m))
+
+    m = g.members[1]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('dummy5', m.id)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(m))
+    assert_equal(g.id, get_group(m))
+  end
+
+  def test_init_group
+    obj = ClusterEntity::ClonePcmk1.new(@cib.elements["//clone[@id='group2-clone']"])
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'group2-clone-meta_attributes-a',
+      'a',
+      '1'
+    ) << ClusterEntity::NvPair.new(
+      'group2-clone-meta_attributes-d',
+      'd',
+      '1'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone_pcmk1(obj))
+    assert_nil(get_group(obj))
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    g = obj.member
+    assert_instance_of(ClusterEntity::Group, g)
+    assert_equal(obj, g.parent)
+    assert_equal('group2', g.id)
+    assert_equal(2, g.members.length)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(g))
+    assert_nil(get_group(g))
+
+    m = g.members[0]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('dummy6', m.id)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(g))
+    assert_equal(g.id, get_group(m))
+
+    m = g.members[1]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('dummy5', m.id)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone_pcmk1(m))
+    assert_equal(g.id, get_group(m))
+  end
+
+  def test_to_status_primitive_version1
+    obj = ClusterEntity::ClonePcmk1.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json = '[{
+      "id": "dummy",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": null,
+      "clone": true,
+      "clone_id": "dummy-clone",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "aaa",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-aaa",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "ccc",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-ccc",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "bbb",
+          "value": "111",
+          "id": "dummy-meta_attributes-bbb",
+          "parent": "dummy"
+        }
+      ]
+    },
+    {
+      "id": "dummy",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": null,
+      "clone": true,
+      "clone_id": "dummy-clone",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "aaa",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-aaa",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "ccc",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-ccc",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "bbb",
+          "value": "111",
+          "id": "dummy-meta_attributes-bbb",
+          "parent": "dummy"
+        }
+      ]
+    },
+    {
+      "id": "dummy",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": null,
+      "clone": true,
+      "clone_id": "dummy-clone",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "aaa",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-aaa",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "ccc",
+          "value": "222",
+          "id": "dummy-clone-meta_attributes-ccc",
+          "parent": "dummy-clone"
+        },
+        {
+          "key": "bbb",
+          "value": "111",
+          "id": "dummy-meta_attributes-bbb",
+          "parent": "dummy"
+        }
+      ]
+    }]'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert(hash == obj.to_status)
+  end
+
+  def test_to_status_group_version1
+    obj = ClusterEntity::ClonePcmk1.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json = '[{
+      "id": "dummy6",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "6",
+          "id": "dummy6-meta_attributes-b",
+          "parent": "dummy6"
+        }
+      ]
+    },
+    {
+      "id": "dummy6",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "6",
+          "id": "dummy6-meta_attributes-b",
+          "parent": "dummy6"
+        }
+      ]
+    },
+    {
+      "id": "dummy6",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "6",
+          "id": "dummy6-meta_attributes-b",
+          "parent": "dummy6"
+        }
+      ]
+    },
+    {
+      "id": "dummy5",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "5",
+          "id": "dummy5-meta_attributes-b",
+          "parent": "dummy5"
+        },
+        {
+          "key": "x",
+          "value": "0",
+          "id": "dummy5-meta_attributes-x",
+          "parent": "dummy5"
+        }
+      ]
+    },
+    {
+      "id": "dummy5",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "5",
+          "id": "dummy5-meta_attributes-b",
+          "parent": "dummy5"
+        },
+        {
+          "key": "x",
+          "value": "0",
+          "id": "dummy5-meta_attributes-x",
+          "parent": "dummy5"
+        }
+      ]
+    },
+    {
+      "id": "dummy5",
+      "agentname": "ocf::heartbeat:Dummy",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": "group2-clone/group2",
+      "clone": true,
+      "clone_id": "group2",
+      "ms_id": null,
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": false,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "2",
+          "id": "group2-meta_attributes-a",
+          "parent": "group2"
+        },
+        {
+          "key": "c",
+          "value": "2",
+          "id": "group2-meta_attributes-c",
+          "parent": "group2"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "group2-meta_attributes-d",
+          "parent": "group2"
+        },
+        {
+          "key": "b",
+          "value": "5",
+          "id": "dummy5-meta_attributes-b",
+          "parent": "dummy5"
+        },
+        {
+          "key": "x",
+          "value": "0",
+          "id": "dummy5-meta_attributes-x",
+          "parent": "dummy5"
+        }
+      ]
+    }]'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert(hash == obj.to_status)
+  end
+
+  def test_to_status_primitive_version2
+    obj = ClusterEntity::ClonePcmk1.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='{
+      "id": "dummy-clone",
+      "meta_attr": [
+        {
+          "id": "dummy-clone-meta_attributes-aaa",
+          "name": "aaa",
+          "value": "222"
+        },
+        {
+          "id": "dummy-clone-meta_attributes-ccc",
+          "name": "ccc",
+          "value": "222"
+        }
+      ],
+      "error_list": [],
+      "warning_list": [],
+      "class_type": "clone",
+      "parent_id": null,
+      "disabled": false,
+      "status": "running",
+      "member": {
+        "id": "dummy",
+        "meta_attr": [
+          {
+            "id": "dummy-meta_attributes-aaa",
+            "name": "aaa",
+            "value": "111"
+          },
+          {
+            "id": "dummy-meta_attributes-bbb",
+            "name": "bbb",
+            "value": "111"
+          }
+        ],
+        "utilization": [],
+        "error_list": [],
+        "warning_list": [],
+        "class_type": "primitive",
+        "parent_id": "dummy-clone",
+        "disabled": false,
+        "agentname": "ocf::heartbeat:Dummy",
+        "provider": "heartbeat",
+        "type": "Dummy",
+        "stonith": false,
+        "instance_attr": [],
+        "status": "running",
+        "class": "ocf",
+        "crm_status": [
+          {
+            "id": "dummy",
+            "resource_agent": "ocf::heartbeat:Dummy",
+            "managed": true,
+            "failed": false,
+            "role": "Started",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node3",
+              "id": "3",
+              "cached": false
+            }
+          },
+          {
+            "id": "dummy",
+            "resource_agent": "ocf::heartbeat:Dummy",
+            "managed": true,
+            "failed": false,
+            "role": "Started",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node1",
+              "id": "1",
+              "cached": false
+            }
+          },
+          {
+            "id": "dummy",
+            "resource_agent": "ocf::heartbeat:Dummy",
+            "managed": true,
+            "failed": false,
+            "role": "Started",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node2",
+              "id": "2",
+              "cached": false
+            }
+          }
+        ],
+        "operations": []
+      }
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    # assert_equal_hashes(hash, obj.to_status('2'))
+    assert(hash == obj.to_status('2'))
+  end
+
+  def test_to_status_group_version2
+    obj = ClusterEntity::ClonePcmk1.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json = '{
+      "id": "group2-clone",
+      "meta_attr": [
+        {
+          "id": "group2-clone-meta_attributes-a",
+          "name": "a",
+          "value": "1"
+        },
+        {
+          "id": "group2-clone-meta_attributes-d",
+          "name": "d",
+          "value": "1"
+        }
+      ],
+      "error_list": [],
+      "warning_list": [],
+      "class_type": "clone",
+      "parent_id": null,
+      "disabled": false,
+      "status": "running",
+      "member": {
+        "id": "group2",
+        "meta_attr": [
+          {
+            "id": "group2-meta_attributes-a",
+            "name": "a",
+            "value": "2"
+          },
+          {
+            "id": "group2-meta_attributes-c",
+            "name": "c",
+            "value": "2"
+          },
+          {
+            "id": "group2-meta_attributes-d",
+            "name": "d",
+            "value": "2"
+          }
+        ],
+        "error_list": [],
+        "warning_list": [],
+        "class_type": "group",
+        "parent_id": "group2-clone",
+        "disabled": false,
+        "status": "running",
+        "members": [
+          {
+            "id": "dummy6",
+            "meta_attr": [
+              {
+                "id": "dummy6-meta_attributes-a",
+                "name": "a",
+                "value": "6"
+              },
+              {
+                "id": "dummy6-meta_attributes-b",
+                "name": "b",
+                "value": "6"
+              }
+            ],
+            "utilization": [
+              {
+                "id": "dummy6-utilization-util1",
+                "name": "util1",
+                "value": "8"
+              }
+            ],
+            "error_list": [],
+            "warning_list": [],
+            "class_type": "primitive",
+            "parent_id": "group2",
+            "disabled": false,
+            "agentname": "ocf::heartbeat:Dummy",
+            "provider": "heartbeat",
+            "type": "Dummy",
+            "stonith": false,
+            "instance_attr": [],
+            "status": "running",
+            "class": "ocf",
+            "crm_status": [
+              {
+                "id": "dummy6",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node3",
+                  "id": "3",
+                  "cached": false
+                }
+              },
+              {
+                "id": "dummy6",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node1",
+                  "id": "1",
+                  "cached": false
+                }
+              },
+              {
+                "id": "dummy6",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node2",
+                  "id": "2",
+                  "cached": false
+                }
+              }
+            ],
+            "operations": []
+          },
+          {
+            "id": "dummy5",
+            "meta_attr": [
+              {
+                "id": "dummy5-meta_attributes-a",
+                "name": "a",
+                "value": "5"
+              },
+              {
+                "id": "dummy5-meta_attributes-b",
+                "name": "b",
+                "value": "5"
+              },
+              {
+                "id": "dummy5-meta_attributes-x",
+                "name": "x",
+                "value": "0"
+              }
+            ],
+            "utilization": [],
+            "error_list": [],
+            "warning_list": [],
+            "class_type": "primitive",
+            "parent_id": "group2",
+            "disabled": false,
+            "agentname": "ocf::heartbeat:Dummy",
+            "provider": "heartbeat",
+            "type": "Dummy",
+            "stonith": false,
+            "instance_attr": [],
+            "status": "running",
+            "class": "ocf",
+            "crm_status": [
+              {
+                "id": "dummy5",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node3",
+                  "id": "3",
+                  "cached": false
+                }
+              },
+              {
+                "id": "dummy5",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node1",
+                  "id": "1",
+                  "cached": false
+                }
+              },
+              {
+                "id": "dummy5",
+                "resource_agent": "ocf::heartbeat:Dummy",
+                "managed": true,
+                "failed": false,
+                "role": "Started",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node2",
+                  "id": "2",
+                  "cached": false
+                }
+              }
+            ],
+            "operations": []
+          }
+        ]
+      }
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    # assert_equal_hashes(hash, obj.to_status('2'))
+    assert(hash == obj.to_status('2'))
+  end
+end
+
+class TestMasterSlavePcmk1 < Test::Unit::TestCase
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+  end
+
+  def test_init_invalid_element
+    xml = '<primitve id="dummy"/>'
+    obj = ClusterEntity::MasterSlavePcmk1.new(REXML::Document.new(xml).elements['*'])
+    assert_nil(obj.id)
+    assert_nil(obj.parent)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+  end
+
+  def test_init_empty_element
+    xml = '<master id="dummy-clone"/>'
+    obj = ClusterEntity::MasterSlavePcmk1.new(REXML::Document.new(xml).elements['*'])
+    assert_equal('dummy-clone', obj.id)
+    assert_nil(obj.parent)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+  end
+
+  def test_init_primitive_with_crm
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    assert_equal('ms-master', obj.id)
+    assert_nil(obj.parent)
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'ms-master-meta_attributes-a',
+      'a',
+      '1'
+    ) << ClusterEntity::NvPair.new(
+      'ms-master-meta_attributes-b',
+      'b',
+      '1'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert(obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    assert_equal(1, obj.masters.length)
+    assert_equal('node3', obj.masters[0])
+
+    assert_equal(2, obj.slaves.length)
+    assert(obj.slaves.include?('node1'))
+    assert(obj.slaves.include?('node2'))
+
+    m = obj.member
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal(obj, m.parent)
+    assert_equal('ms', m.id)
+    assert_equal(3, m.crm_status.length)
+  end
+
+  def test_init_primitive
+    obj = ClusterEntity::MasterSlavePcmk1.new(@cib.elements["//master[@id='ms-master']"])
+    assert_equal('ms-master', obj.id)
+    assert_nil(obj.parent)
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'ms-master-meta_attributes-a',
+      'a',
+      '1'
+    ) << ClusterEntity::NvPair.new(
+      'ms-master-meta_attributes-b',
+      'b',
+      '1'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert_equal(1, obj.warning_list.length)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    assert(obj.masters.empty?)
+    assert(obj.slaves.empty?)
+
+    m = obj.member
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal(obj, m.parent)
+    assert_equal('ms', m.id)
+    assert(m.crm_status.empty?)
+  end
+
+  def test_init_group_with_crm
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    assert_equal('group3-master', obj.id)
+    assert_nil(obj.parent)
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'group3-master-meta_attributes-a',
+      'a',
+      '0'
+    ) << ClusterEntity::NvPair.new(
+      'group3-master-meta_attributes-c',
+      'c',
+      '0'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert(obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    assert_equal(2, obj.masters.length)
+    assert_equal('node3', obj.masters[0])
+    assert_equal('node3', obj.masters[1])
+
+    assert_equal(4, obj.slaves.length)
+    assert(['node1', 'node2'].to_set == obj.slaves.to_set)
+
+    g = obj.member
+    assert_instance_of(ClusterEntity::Group, g)
+    assert_equal(obj, g.parent)
+    assert_equal('group3', g.id)
+    assert_equal(2, g.members.length)
+
+    m = g.members[0]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('ms1', m.id)
+    assert_equal(3, m.crm_status.length)
+
+    m = g.members[1]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('ms2', m.id)
+    assert_equal(3, m.crm_status.length)
+  end
+
+  def test_init_group
+    obj = ClusterEntity::MasterSlavePcmk1.new(@cib.elements["//master[@id='group3-master']"])
+    assert_equal('group3-master', obj.id)
+    assert_nil(obj.parent)
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'group3-master-meta_attributes-a',
+      'a',
+      '0'
+    ) << ClusterEntity::NvPair.new(
+      'group3-master-meta_attributes-c',
+      'c',
+      '0'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert_equal(1, obj.warning_list.length)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+
+    assert(obj.masters.empty?)
+    assert(obj.slaves.empty?)
+
+    g = obj.member
+    assert_instance_of(ClusterEntity::Group, g)
+    assert_equal(obj, g.parent)
+    assert_equal('group3', g.id)
+    assert_equal(2, g.members.length)
+
+    m = g.members[0]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('ms1', m.id)
+    assert(m.crm_status.empty?)
+
+    m = g.members[1]
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal('ms2', m.id)
+    assert(m.crm_status.empty?)
+  end
+
+  def test_to_status_primitive_version1
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='[{
+      "id": "ms",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": null,
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "ms-master",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "1",
+          "id": "ms-master-meta_attributes-a",
+          "parent": "ms-master"
+        },
+        {
+          "key": "b",
+          "value": "1",
+          "id": "ms-master-meta_attributes-b",
+          "parent": "ms-master"
+        },
+        {
+          "key": "c",
+          "value": "0",
+          "id": "ms-meta_attributes-c",
+          "parent": "ms"
+        }
+      ]
+    },
+    {
+      "id": "ms",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": null,
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "ms-master",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "1",
+          "id": "ms-master-meta_attributes-a",
+          "parent": "ms-master"
+        },
+        {
+          "key": "b",
+          "value": "1",
+          "id": "ms-master-meta_attributes-b",
+          "parent": "ms-master"
+        },
+        {
+          "key": "c",
+          "value": "0",
+          "id": "ms-meta_attributes-c",
+          "parent": "ms"
+        }
+      ]
+    },
+    {
+      "id": "ms",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": null,
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "ms-master",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "1",
+          "id": "ms-master-meta_attributes-a",
+          "parent": "ms-master"
+        },
+        {
+          "key": "b",
+          "value": "1",
+          "id": "ms-master-meta_attributes-b",
+          "parent": "ms-master"
+        },
+        {
+          "key": "c",
+          "value": "0",
+          "id": "ms-meta_attributes-c",
+          "parent": "ms"
+        }
+      ]
+    }]'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    # assert_equal_status(hash, obj.to_status)
+    assert(hash == obj.to_status)
+  end
+
+  def test_to_status_group_version1
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='[{
+      "id": "ms1",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "1",
+          "id": "ms1-meta_attributes-d",
+          "parent": "ms1"
+        }
+      ]
+    },
+    {
+      "id": "ms1",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "1",
+          "id": "ms1-meta_attributes-d",
+          "parent": "ms1"
+        }
+      ]
+    },
+    {
+      "id": "ms1",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "1",
+          "id": "ms1-meta_attributes-d",
+          "parent": "ms1"
+        }
+      ]
+    },
+    {
+      "id": "ms2",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node3"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "ms2-meta_attributes-d",
+          "parent": "ms2"
+        }
+      ]
+    },
+    {
+      "id": "ms2",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node1"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "ms2-meta_attributes-d",
+          "parent": "ms2"
+        }
+      ]
+    },
+    {
+      "id": "ms2",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": true,
+      "nodes": [
+        "node2"
+      ],
+      "group": "group3-master/group3",
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "group3",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "a",
+          "value": "3",
+          "id": "group3-meta_attributes-a",
+          "parent": "group3"
+        },
+        {
+          "key": "b",
+          "value": "3",
+          "id": "group3-meta_attributes-b",
+          "parent": "group3"
+        },
+        {
+          "key": "c",
+          "value": "3",
+          "id": "group3-meta_attributes-c",
+          "parent": "group3"
+        },
+        {
+          "key": "d",
+          "value": "2",
+          "id": "ms2-meta_attributes-d",
+          "parent": "ms2"
+        }
+      ]
+    }]'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert(hash == obj.to_status)
+  end
+
+  def test_to_status_primitive_version2
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='{
+      "id": "ms-master",
+      "meta_attr": [
+        {
+          "id": "ms-master-meta_attributes-a",
+          "name": "a",
+          "value": "1"
+        },
+        {
+          "id": "ms-master-meta_attributes-b",
+          "name": "b",
+          "value": "1"
+        }
+      ],
+      "error_list": [],
+      "warning_list": [],
+      "class_type": "master",
+      "parent_id": null,
+      "disabled": false,
+      "status": "running",
+      "member": {
+        "id": "ms",
+        "meta_attr": [
+          {
+            "id": "ms-meta_attributes-a",
+            "name": "a",
+            "value": "0"
+          },
+          {
+            "id": "ms-meta_attributes-c",
+            "name": "c",
+            "value": "0"
+          }
+        ],
+        "utilization": [],
+        "error_list": [],
+        "warning_list": [],
+        "class_type": "primitive",
+        "parent_id": "ms-master",
+        "disabled": false,
+        "agentname": "ocf::pacemaker:Stateful",
+        "provider": "pacemaker",
+        "type": "Stateful",
+        "stonith": false,
+        "instance_attr": [],
+        "status": "running",
+        "class": "ocf",
+        "crm_status": [
+          {
+            "id": "ms",
+            "resource_agent": "ocf::pacemaker:Stateful",
+            "managed": true,
+            "failed": false,
+            "role": "Master",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node3",
+              "id": "3",
+              "cached": false
+            }
+          },
+          {
+            "id": "ms",
+            "resource_agent": "ocf::pacemaker:Stateful",
+            "managed": true,
+            "failed": false,
+            "role": "Slave",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node1",
+              "id": "1",
+              "cached": false
+            }
+          },
+          {
+            "id": "ms",
+            "resource_agent": "ocf::pacemaker:Stateful",
+            "managed": true,
+            "failed": false,
+            "role": "Slave",
+            "active": true,
+            "orphaned": false,
+            "failure_ignored": false,
+            "nodes_running_on": 1,
+            "pending": null,
+            "node": {
+              "name": "node2",
+              "id": "2",
+              "cached": false
+            }
+          }
+        ],
+        "operations": []
+      }
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert(hash == obj.to_status('2'))
+  end
+
+  def test_to_status_group_version2
+    obj = ClusterEntity::MasterSlavePcmk1.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json = '{
+      "id": "group3-master",
+      "meta_attr": [
+        {
+          "id": "group3-master-meta_attributes-a",
+          "name": "a",
+          "value": "0"
+        },
+        {
+          "id": "group3-master-meta_attributes-c",
+          "name": "c",
+          "value": "0"
+        }
+      ],
+      "error_list": [],
+      "warning_list": [],
+      "class_type": "master",
+      "parent_id": null,
+      "disabled": false,
+      "status": "running",
+      "member": {
+        "id": "group3",
+        "meta_attr": [
+          {
+            "id": "group3-meta_attributes-a",
+            "name": "a",
+            "value": "3"
+          },
+          {
+            "id": "group3-meta_attributes-b",
+            "name": "b",
+            "value": "3"
+          },
+          {
+            "id": "group3-meta_attributes-c",
+            "name": "c",
+            "value": "3"
+          }
+        ],
+        "error_list": [],
+        "warning_list": [],
+        "class_type": "group",
+        "parent_id": "group3-master",
+        "disabled": false,
+        "status": "running",
+        "members": [
+          {
+            "id": "ms1",
+            "meta_attr": [
+              {
+                "id": "ms1-meta_attributes-a",
+                "name": "a",
+                "value": "1"
+              },
+              {
+                "id": "ms1-meta_attributes-b",
+                "name": "b",
+                "value": "1"
+              },
+              {
+                "id": "ms1-meta_attributes-d",
+                "name": "d",
+                "value": "1"
+              }
+            ],
+            "utilization": [],
+            "error_list": [],
+            "warning_list": [],
+            "class_type": "primitive",
+            "parent_id": "group3",
+            "disabled": false,
+            "agentname": "ocf::pacemaker:Stateful",
+            "provider": "pacemaker",
+            "type": "Stateful",
+            "stonith": false,
+            "instance_attr": [],
+            "status": "running",
+            "class": "ocf",
+            "crm_status": [
+              {
+                "id": "ms1",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Master",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node3",
+                  "id": "3",
+                  "cached": false
+                }
+              },
+              {
+                "id": "ms1",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Slave",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node1",
+                  "id": "1",
+                  "cached": false
+                }
+              },
+              {
+                "id": "ms1",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Slave",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node2",
+                  "id": "2",
+                  "cached": false
+                }
+              }
+            ],
+            "operations": []
+          },
+          {
+            "id": "ms2",
+            "meta_attr": [
+              {
+                "id": "ms2-meta_attributes-a",
+                "name": "a",
+                "value": "2"
+              },
+              {
+                "id": "ms2-meta_attributes-b",
+                "name": "b",
+                "value": "2"
+              },
+              {
+                "id": "ms2-meta_attributes-d",
+                "name": "d",
+                "value": "2"
+              }
+            ],
+            "utilization": [],
+            "error_list": [],
+            "warning_list": [],
+            "class_type": "primitive",
+            "parent_id": "group3",
+            "disabled": false,
+            "agentname": "ocf::pacemaker:Stateful",
+            "provider": "pacemaker",
+            "type": "Stateful",
+            "stonith": false,
+            "instance_attr": [],
+            "status": "running",
+            "class": "ocf",
+            "crm_status": [
+              {
+                "id": "ms2",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Master",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node3",
+                  "id": "3",
+                  "cached": false
+                }
+              },
+              {
+                "id": "ms2",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Slave",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node1",
+                  "id": "1",
+                  "cached": false
+                }
+              },
+              {
+                "id": "ms2",
+                "resource_agent": "ocf::pacemaker:Stateful",
+                "managed": true,
+                "failed": false,
+                "role": "Slave",
+                "active": true,
+                "orphaned": false,
+                "failure_ignored": false,
+                "nodes_running_on": 1,
+                "pending": null,
+                "node": {
+                  "name": "node2",
+                  "id": "2",
+                  "cached": false
+                }
+              }
+            ],
+            "operations": []
+          }
+        ]
+      }
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert(hash == obj.to_status('2'))
+  end
+end
+
+class TestClone < Test::Unit::TestCase
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+  end
+
+  def test_init_invalid_element
+    xml = '<primitve id="dummy"/>'
+    obj = ClusterEntity::Clone.new(REXML::Document.new(xml).elements['*'])
+    assert_nil(obj.id)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
+  end
+
+  def test_init_empty_element
+    xml = '<clone id="dummy-clone"/>'
+    obj = ClusterEntity::Clone.new(REXML::Document.new(xml).elements['*'])
+    assert_equal('dummy-clone', obj.id)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
+  end
+
+  def test_init_primitive_with_crm
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    assert_equal('dummy-clone', obj.id)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy-clone-meta_attributes-ccc',
+      'ccc',
+      '222'
+    ) << ClusterEntity::NvPair.new(
+      'dummy-clone-meta_attributes-aaa',
+      'aaa',
+      '222'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert(obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
+
+    m = obj.member
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal(obj, m.parent)
+    assert_equal('dummy', m.id)
+    assert_equal(3, m.crm_status.length)
+    assert_nil(get_master(m))
+    assert_equal(obj.id, get_clone(m))
+    assert_nil(get_group(m))
+  end
+
+  def test_init_primitive
+    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='dummy-clone']"])
+    assert_equal('dummy-clone', obj.id)
+    assert_nil(obj.parent)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy-clone-meta_attributes-ccc',
+      'ccc',
+      '222'
+    ) << ClusterEntity::NvPair.new(
+      'dummy-clone-meta_attributes-aaa',
+      'aaa',
+      '222'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert_not_nil(obj.member)
+    assert_equal(false, obj.unique)
+    assert_equal(false, obj.managed)
+    assert_equal(false, obj.failed)
+    assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
+
+    m = obj.member
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal(obj, m.parent)
+    assert_equal('dummy', m.id)
+    assert(m.crm_status.empty?)
+    assert_nil(get_master(m))
+    assert_equal(obj.id, get_clone(m))
+    assert_nil(get_group(m))
   end
 
   def test_init_group_with_crm
@@ -1447,9 +3455,9 @@ class TestClone < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
@@ -1457,29 +3465,30 @@ class TestClone < Test::Unit::TestCase
     assert(obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
 
     g = obj.member
     assert_instance_of(ClusterEntity::Group, g)
     assert_equal(obj, g.parent)
     assert_equal('group2', g.id)
     assert_equal(2, g.members.length)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, g.get_clone)
-    assert_nil(g.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(g))
+    assert_nil(get_group(g))
 
     m = g.members[0]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('dummy6', m.id)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_equal(g.id, m.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(m))
+    assert_equal(g.id, get_group(m))
 
     m = g.members[1]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('dummy5', m.id)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_equal(g.id, m.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(m))
+    assert_equal(g.id, get_group(m))
   end
 
   def test_init_group
@@ -1495,9 +3504,9 @@ class TestClone < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_nil(obj.parent)
-    assert_nil(obj.get_master)
-    assert_nil(obj.get_clone)
-    assert_nil(obj.get_group)
+    assert_nil(get_master(obj))
+    assert_nil(get_clone(obj))
+    assert_nil(get_group(obj))
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
@@ -1505,29 +3514,30 @@ class TestClone < Test::Unit::TestCase
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert_equal(false, obj.promotable)
 
     g = obj.member
     assert_instance_of(ClusterEntity::Group, g)
     assert_equal(obj, g.parent)
     assert_equal('group2', g.id)
     assert_equal(2, g.members.length)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, g.get_clone)
-    assert_nil(g.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(g))
+    assert_nil(get_group(g))
 
     m = g.members[0]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('dummy6', m.id)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_equal(g.id, m.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(g))
+    assert_equal(g.id, get_group(m))
 
     m = g.members[1]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('dummy5', m.id)
-    assert_nil(g.get_master)
-    assert_equal(obj.id, m.get_clone)
-    assert_equal(g.id, m.get_group)
+    assert_nil(get_master(g))
+    assert_equal(obj.id, get_clone(m))
+    assert_equal(g.id, get_group(m))
   end
 
   def test_to_status_primitive_version1
@@ -1990,6 +4000,7 @@ class TestClone < Test::Unit::TestCase
       "parent_id": null,
       "disabled": false,
       "status": "running",
+      "promotable": false,
       "member": {
         "id": "dummy",
         "meta_attr": [
@@ -2074,8 +4085,7 @@ class TestClone < Test::Unit::TestCase
       }
     }'
     hash = JSON.parse(json, {:symbolize_names => true})
-    # assert_equal_hashes(hash, obj.to_status('2'))
-    assert(hash == obj.to_status('2'))
+    assert_equal(hash, obj.to_status('2'))
   end
 
   def test_to_status_group_version2
@@ -2104,6 +4114,7 @@ class TestClone < Test::Unit::TestCase
       "parent_id": null,
       "disabled": false,
       "status": "running",
+      "promotable": false,
       "member": {
         "id": "group2",
         "meta_attr": [
@@ -2309,49 +4320,192 @@ class TestClone < Test::Unit::TestCase
       }
     }'
     hash = JSON.parse(json, {:symbolize_names => true})
-    # assert_equal_hashes(hash, obj.to_status('2'))
-    assert(hash == obj.to_status('2'))
+    assert_equal(hash, obj.to_status('2'))
   end
 end
 
-class TestMasterSlave < Test::Unit::TestCase
+
+class TestCloneFromPromotableElement < Test::Unit::TestCase
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
     @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
   end
 
-  def test_init_invalid_element
-    xml = '<primitve id="dummy"/>'
-    obj = ClusterEntity::MasterSlave.new(REXML::Document.new(xml).elements['*'])
-    assert_nil(obj.id)
+  def test_init_primitive
+    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='stateful-promotable']"])
+    assert_equal('stateful-promotable', obj.id)
     assert_nil(obj.parent)
-    assert(obj.meta_attr.empty?)
+    meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'stateful-promotable-meta_attributes-promotable',
+      'promotable',
+      'true'
+    ) << ClusterEntity::NvPair.new(
+      'stateful-promotable-meta_attributes-a',
+      'a',
+      '1'
+    ) << ClusterEntity::NvPair.new(
+      'stateful-promotable-meta_attributes-b',
+      'b',
+      '1'
+    )
+    assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert(obj.error_list.empty?)
-    assert(obj.warning_list.empty?)
-    assert_nil(obj.member)
+    assert_equal(1, obj.warning_list.length)
+    assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert(obj.promotable)
+
+    assert(obj.masters.empty?)
+    assert(obj.slaves.empty?)
+
+    m = obj.member
+    assert_instance_of(ClusterEntity::Primitive, m)
+    assert_equal(obj, m.parent)
+    assert_equal('promotable', m.id)
+    assert(m.crm_status.empty?)
   end
 
-  def test_init_empty_element
-    xml = '<master id="dummy-clone"/>'
-    obj = ClusterEntity::MasterSlave.new(REXML::Document.new(xml).elements['*'])
-    assert_equal('dummy-clone', obj.id)
-    assert_nil(obj.parent)
-    assert(obj.meta_attr.empty?)
-    assert(obj.error_list.empty?)
-    assert(obj.warning_list.empty?)
-    assert_nil(obj.member)
-    assert_equal(false, obj.unique)
-    assert_equal(false, obj.managed)
-    assert_equal(false, obj.failed)
-    assert_equal(false, obj.failure_ignored)
+  def test_to_status_primitive_version1
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='stateful-promotable']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='[{
+      "id": "promotable",
+      "agentname": "ocf::pacemaker:Stateful",
+      "active": false,
+      "nodes": [
+      ],
+      "group": null,
+      "clone": false,
+      "clone_id": null,
+      "ms_id": "stateful-promotable",
+      "failed": false,
+      "orphaned": false,
+      "options": {},
+      "stonith": false,
+      "ms": true,
+      "disabled": false,
+      "operations": [],
+      "instance_attr": {},
+      "meta_attr": [
+        {
+          "key": "promotable",
+          "value": "true",
+          "id": "stateful-promotable-meta_attributes-promotable",
+          "parent": "stateful-promotable"
+        },
+        {
+          "key": "a",
+          "value": "1",
+          "id": "stateful-promotable-meta_attributes-a",
+          "parent": "stateful-promotable"
+        },
+        {
+          "key": "b",
+          "value": "1",
+          "id": "stateful-promotable-meta_attributes-b",
+          "parent": "stateful-promotable"
+        },
+        {
+          "key": "c",
+          "value": "0",
+          "id": "promotable-meta_attributes-c",
+          "parent": "promotable"
+        }
+      ]
+    }]'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert_equal(hash, obj.to_status)
+  end
+
+  def test_to_status_primitive_version2
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='stateful-promotable']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json ='{
+      "id": "stateful-promotable",
+      "meta_attr": [
+        {
+          "id": "stateful-promotable-meta_attributes-promotable",
+          "name": "promotable",
+          "value": "true"
+        },
+        {
+          "id": "stateful-promotable-meta_attributes-a",
+          "name": "a",
+          "value": "1"
+        },
+        {
+          "id": "stateful-promotable-meta_attributes-b",
+          "name": "b",
+          "value": "1"
+        }
+      ],
+      "error_list": [],
+      "warning_list": [
+        {
+          "message": "Resource is promotable but has not been promoted on any node.",
+          "type": "no_master"
+        }
+      ],
+      "class_type": "clone",
+      "parent_id": null,
+      "disabled": false,
+      "status": "blocked",
+      "promotable": true,
+      "member": {
+        "id": "promotable",
+        "meta_attr": [
+          {
+            "id": "promotable-meta_attributes-a",
+            "name": "a",
+            "value": "0"
+          },
+          {
+            "id": "promotable-meta_attributes-c",
+            "name": "c",
+            "value": "0"
+          }
+        ],
+        "utilization": [],
+        "error_list": [],
+        "warning_list": [],
+        "class_type": "primitive",
+        "parent_id": "stateful-promotable",
+        "disabled": false,
+        "agentname": "ocf::pacemaker:Stateful",
+        "provider": "pacemaker",
+        "type": "Stateful",
+        "stonith": false,
+        "instance_attr": [],
+        "status": "blocked",
+        "class": "ocf",
+        "crm_status": [
+        ],
+        "operations": []
+      }
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    assert_equal(hash, obj.to_status('2'))
+  end
+end
+
+
+class TestCloneFromMasterElement < Test::Unit::TestCase
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
   end
 
   def test_init_primitive_with_crm
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='ms-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -2375,6 +4529,7 @@ class TestMasterSlave < Test::Unit::TestCase
     assert(obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert(obj.promotable)
 
     assert_equal(1, obj.masters.length)
     assert_equal('node3', obj.masters[0])
@@ -2391,7 +4546,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_init_primitive
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='ms-master']"])
+    obj = ClusterEntity::Clone.new(@cib.elements["//master[@id='ms-master']"])
     assert_equal('ms-master', obj.id)
     assert_nil(obj.parent)
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
@@ -2411,6 +4566,7 @@ class TestMasterSlave < Test::Unit::TestCase
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert(obj.promotable)
 
     assert(obj.masters.empty?)
     assert(obj.slaves.empty?)
@@ -2423,7 +4579,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_init_group_with_crm
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='group3-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -2447,6 +4603,7 @@ class TestMasterSlave < Test::Unit::TestCase
     assert(obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert(obj.promotable)
 
     assert_equal(2, obj.masters.length)
     assert_equal('node3', obj.masters[0])
@@ -2473,7 +4630,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_init_group
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='group3-master']"])
+    obj = ClusterEntity::Clone.new(@cib.elements["//master[@id='group3-master']"])
     assert_equal('group3-master', obj.id)
     assert_nil(obj.parent)
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
@@ -2493,6 +4650,7 @@ class TestMasterSlave < Test::Unit::TestCase
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
+    assert(obj.promotable)
 
     assert(obj.masters.empty?)
     assert(obj.slaves.empty?)
@@ -2515,7 +4673,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version1
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='ms-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -2646,7 +4804,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_group_version1
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='group3-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -2932,7 +5090,7 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version2
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='ms-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -2953,10 +5111,11 @@ class TestMasterSlave < Test::Unit::TestCase
       ],
       "error_list": [],
       "warning_list": [],
-      "class_type": "master",
+      "class_type": "clone",
       "parent_id": null,
       "disabled": false,
       "status": "running",
+      "promotable": true,
       "member": {
         "id": "ms",
         "meta_attr": [
@@ -3041,11 +5200,11 @@ class TestMasterSlave < Test::Unit::TestCase
       }
     }'
     hash = JSON.parse(json, {:symbolize_names => true})
-    assert(hash == obj.to_status('2'))
+    assert_equal(hash, obj.to_status('2'))
   end
 
   def test_to_status_group_version2
-    obj = ClusterEntity::MasterSlave.new(
+    obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='group3-master']"],
       @crm_mon,
       ClusterEntity::get_rsc_status(@crm_mon)
@@ -3066,10 +5225,11 @@ class TestMasterSlave < Test::Unit::TestCase
       ],
       "error_list": [],
       "warning_list": [],
-      "class_type": "master",
+      "class_type": "clone",
       "parent_id": null,
       "disabled": false,
       "status": "running",
+      "promotable": true,
       "member": {
         "id": "group3",
         "meta_attr": [
@@ -3274,6 +5434,6 @@ class TestMasterSlave < Test::Unit::TestCase
       }
     }'
     hash = JSON.parse(json, {:symbolize_names => true})
-    assert(hash == obj.to_status('2'))
+    assert_equal(hash, obj.to_status('2'))
   end
 end

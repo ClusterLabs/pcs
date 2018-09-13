@@ -247,12 +247,21 @@
                 <input type="button" onclick="resource_clone(curResource());" value="Create clone">
               </td>
             </tr>
-            <tr>
-              <td class="bold" nowrap>Master/Slave:</td>
-              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance.By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
-                <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
-              </td>
-            </tr>
+            {{#if Pcs.is_supported_resource_promotable}}
+              <tr>
+                <td class="bold" nowrap>Promotable Clone:</td>
+                <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.">
+                  <input type="button" onclick="resource_promotable(curResource());" value="Create promotable">
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td class="bold" nowrap>Master/Slave:</td>
+                <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
+                  <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+                </td>
+              </tr>
+            {{/if}}
             <tr>
               <td class="bold" nowrap>Group:</td>
               <td id="cur_res_loc" class="reg">
@@ -281,12 +290,21 @@
               <input type="button" onclick="resource_clone(curResource());" value="Create clone">
             </td>
           </tr>
-          <tr>
-            <td class="bold" nowrap>Master/Slave:</td>
-            <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance.By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
-              <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
-            </td>
-          </tr>
+          {{#if Pcs.is_supported_resource_promotable}}
+            <tr>
+              <td class="bold" nowrap>Promotable Clone:</td>
+              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.">
+                <input type="button" onclick="resource_promotable(curResource());" value="Create promotable">
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td class="bold" nowrap>Master/Slave:</td>
+              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
+                <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+              </td>
+            </tr>
+          {{/if}}
           {{#unless old_pcsd}}
             <tr>
               <td class="bold" nowrap>Group:</td>
@@ -950,17 +968,31 @@ Use the 'Add' button to submit the form.">
                     <input type=checkbox name="resource_clone">
                   </td>
                 </tr>
-                <tr title='Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.'>
-                  <td nowrap>
-                    <div class="bold">
-                      Master/Slave:
-                    </div>
-                  </td>
-                  <td>
-                    <input type="hidden" name="_orig_resource_ms" value="">
-                    <input type=checkbox name="resource_ms" >
-                  </td>
-                </tr>
+                {{#if Pcs.is_supported_resource_create_promotable}}
+                  <tr title='Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.'>
+                    <td nowrap>
+                      <div class="bold">
+                        Promotable Clone:
+                      </div>
+                    </td>
+                    <td>
+                      <input type="hidden" name="_orig_resource_promotable" value="">
+                      <input type=checkbox name="resource_promotable" >
+                    </td>
+                  </tr>
+                {{else}}
+                  <tr title='Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.'>
+                    <td nowrap>
+                      <div class="bold">
+                        Master/Slave:
+                      </div>
+                    </td>
+                    <td>
+                      <input type="hidden" name="_orig_resource_ms" value="">
+                      <input type=checkbox name="resource_ms" >
+                    </td>
+                  </tr>
+                {{/if}}
                 <tr title="Do not start the resource automatically after creating.">
                   <td nowrap>
                     <div class="bold"
