@@ -123,7 +123,7 @@ class CreateParametrized(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load()
+        self.config.runner.cib.load(filename="cib-empty-3.2.xml")
 
     def _test_minimal(self):
         self.config.env.push_cib(
@@ -409,9 +409,59 @@ class CreateDocker(CreateParametrized, metaclass=ParametrizedTestMetaClass):
 class CreatePodman(CreateParametrized, metaclass=ParametrizedTestMetaClass):
     container_type = "podman"
 
+    def test_cib_upgrade(self):
+        (self.config
+            .runner.cib.load(
+                name="load_cib_old_version",
+                filename="cib-empty-3.1.xml",
+                before="runner.cib.load"
+            )
+            .runner.cib.upgrade(before="runner.cib.load")
+            .env.push_cib(
+                resources=fixture_resources_bundle_simple(
+                    container_type=self.container_type
+                )
+            )
+        )
+
+        simple_bundle_create(
+            self.env_assist.get_env(),
+            wait=False,
+            container_type=self.container_type,
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
+        ])
+
 
 class CreateRkt(CreateParametrized, metaclass=ParametrizedTestMetaClass):
     container_type = "rkt"
+
+    def test_cib_upgrade(self):
+        (self.config
+            .runner.cib.load(
+                name="load_cib_old_version",
+                filename="cib-empty-2.9.xml",
+                before="runner.cib.load"
+            )
+            .runner.cib.upgrade(before="runner.cib.load")
+            .env.push_cib(
+                resources=fixture_resources_bundle_simple(
+                    container_type=self.container_type
+                )
+            )
+        )
+
+        simple_bundle_create(
+            self.env_assist.get_env(),
+            wait=False,
+            container_type=self.container_type,
+        )
+
+        self.env_assist.assert_reports([
+            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
+        ])
 
 
 class CreateWithNetwork(TestCase):

@@ -524,9 +524,13 @@ def bundle_create(
     storage_map = storage_map or []
     meta_attributes = meta_attributes or {}
 
-    required_cib_version=Version(2, 8, 0)
+    required_cib_version = Version(2, 8, 0)
+    if container_type == "rkt":
+        required_cib_version = Version(2, 10, 0)
     if "promoted-max" in container_options:
-        required_cib_version=Version(3, 0, 0)
+        required_cib_version = Version(3, 0, 0)
+    if container_type == "podman":
+        required_cib_version = Version(3, 2, 0)
     with resource_environment(
         env,
         wait,

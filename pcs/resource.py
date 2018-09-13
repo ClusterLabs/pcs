@@ -22,7 +22,10 @@ from pcs.cli.resource.parse_args import (
     parse_create as parse_create_args,
 )
 import pcs.lib.cib.acl as lib_acl
-from pcs.lib.cib.resource import guest_node
+from pcs.lib.cib.resource import (
+    bundle,
+    guest_node,
+)
 from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
@@ -2656,16 +2659,16 @@ def print_bundle_container(bundle_el, spaces):
     """
     Commandline options: no options
     """
-    # TODO support other types of container once supported by pacemaker
-    container_list = bundle_el.findall("docker")
-    for container_el in container_list:
-        print(
-            spaces
-            +
-            container_el.tag.capitalize()
-            +
-            get_attrs(container_el, ": ", "")
-        )
+    for container_type in bundle.GENERIC_CONTAINER_TYPES:
+        container_list = bundle_el.findall(container_type)
+        for container_el in container_list:
+            print(
+                spaces
+                +
+                container_el.tag.capitalize()
+                +
+                get_attrs(container_el, ": ", "")
+            )
 
 def print_bundle_network(bundle_el, spaces):
     """
