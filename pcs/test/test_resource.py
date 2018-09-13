@@ -5530,12 +5530,39 @@ class BundleCommon(
             )
         )
 
-    def fixture_bundle(self, name):
+    def fixture_bundle(self, name, container="docker"):
         self.assert_pcs_success(
             (
-                "resource bundle create {0} container docker image=pcs:test "
+                "resource bundle create {0} container {1} image=pcs:test "
                 "network control-port=1234"
-            ).format(name)
+            ).format(name, container)
+        )
+
+
+@skip_unless_pacemaker_supports_bundle
+class BundleShow(BundleCommon):
+    # TODO: add test for podman (requires pcmk features 3.2)
+    empty_cib = rc("cib-empty.xml")
+    def test_docker(self):
+        self.fixture_bundle("B1", "docker")
+        self.assert_pcs_success(
+            "resource show B1",
+            outdent("""\
+             Bundle: B1
+              Docker: image=pcs:test
+              Network: control-port=1234
+            """)
+        )
+
+    def test_rkt(self):
+        self.fixture_bundle("B1", "rkt")
+        self.assert_pcs_success(
+            "resource show B1",
+            outdent("""\
+             Bundle: B1
+              Rkt: image=pcs:test
+              Network: control-port=1234
+            """)
         )
 
 

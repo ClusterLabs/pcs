@@ -22,7 +22,7 @@ from pcs.lib.xml_tools import (
 
 TAG = "bundle"
 
-_generic_container_types = {"docker", "podman", "rkt"}
+GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 
 _generic_container_options = set((
     "image",
@@ -165,7 +165,7 @@ def validate_update(
         if (
             container_el is not None
             and
-            container_el.tag in _generic_container_types
+            container_el.tag in GENERIC_CONTAINER_TYPES
         ):
             report_list.extend(
                 _validate_generic_container_options_update(
@@ -177,7 +177,7 @@ def validate_update(
         else:
             report_list.append(
                 reports.resource_bundle_unsupported_container_type(
-                    bundle_el.get("id"), _generic_container_types
+                    bundle_el.get("id"), GENERIC_CONTAINER_TYPES
                 )
             )
 
@@ -321,7 +321,7 @@ def get_inner_resource(bundle_el):
 def _validate_container_type(container_type):
     return validate.value_in(
         "type",
-        _generic_container_types,
+        GENERIC_CONTAINER_TYPES,
         "container type"
     )(
         {
@@ -652,7 +652,7 @@ def _append_storage_map(
 
 def _get_container_element(bundle_el):
     container_el = None
-    for container_type in _generic_container_types:
+    for container_type in GENERIC_CONTAINER_TYPES:
         container_el = bundle_el.find(container_type)
         if container_el is not None:
             return container_el
