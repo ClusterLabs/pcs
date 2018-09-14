@@ -51,6 +51,7 @@ end
 
 configure do
   PCS = get_pcs_path()
+  PCS_INTERNAL = get_pcs_internal_path()
   $logger = configure_logger(StringIO.new())
   $logger.formatter = proc {|severity, datetime, progname, msg|
     # rushing a raw logging info into the global

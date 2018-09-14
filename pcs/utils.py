@@ -2500,11 +2500,9 @@ def get_lib_env():
         request_timeout=pcs_options.get("--request-timeout"),
     )
 
-def get_cli_env():
+def get_cib_user_groups():
     """
-    Commandline options:
-      * --debug
-      * --request-timeout
+    Commandline options: no options
     """
     user = None
     groups = None
@@ -2516,12 +2514,18 @@ def get_cli_env():
                     user = value
                 else:
                     groups = value.split(" ")
+    return user, groups
 
+def get_cli_env():
+    """
+    Commandline options:
+      * --debug
+      * --request-timeout
+    """
     env = Env()
-    env.user = user
-    env.groups = groups
+    env.user, env.groups = get_cib_user_groups()
     env.known_hosts_getter = read_known_hosts_file
-    env.debug = "--debug" in pcs_options
+    env.report_processor = get_report_processor()
     env.request_timeout = pcs_options.get("--request-timeout")
     return env
 

@@ -3,10 +3,7 @@ import sys
 from collections import namedtuple
 
 from pcs.cli.common import middleware
-from pcs.cli.common.reports import (
-    LibraryReportProcessorToConsole,
-    process_library_reports
-)
+from pcs.cli.common.reports import process_library_reports
 from pcs.lib.commands import (
     acl,
     alert,
@@ -42,7 +39,7 @@ def wrapper(dictionary):
 def cli_env_to_lib_env(cli_env):
     return LibraryEnvironment(
         logging.getLogger("pcs"),
-        LibraryReportProcessorToConsole(cli_env.debug),
+        cli_env.report_processor,
         cli_env.user,
         cli_env.groups,
         cli_env.cib_data,

@@ -103,7 +103,7 @@
         Set up a new cluster.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -112,7 +112,7 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.knet" in-pcs="1" in-pcsd="1">
@@ -120,7 +120,7 @@
         Knet transport is supported including encryption and compression.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu" in-pcs="1" in-pcsd="1">
@@ -128,7 +128,7 @@
         Udp and udpu transports are supported.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="1" in-pcsd="1">
@@ -136,28 +136,31 @@
         Redundant ring protocol (rrp) is not supported.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.enable" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.enable" in-pcs="1" in-pcsd="1">
       <description>
         Enable cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --enable
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.start" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.start" in-pcs="1" in-pcsd="1">
       <description>
         Start cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --start
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for cluster nodes to start during cluster setup if start requested.
 
         pcs commands: cluster setup --start --wait[=timeout]
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">

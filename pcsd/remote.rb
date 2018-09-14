@@ -29,7 +29,8 @@ def remote(params, request, auth_user)
       :cluster_status => method(:cluster_status_remote),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
-      :setup_cluster => method(:setup_cluster),
+      :setup_cluster => method(:setup_cluster), # TODO remove
+      :cluster_setup => method(:cluster_setup),
       :create_cluster => method(:create_cluster),
       :get_quorum_info => method(:get_quorum_info),
       :get_cib => method(:get_cib),
@@ -845,6 +846,16 @@ def remote_remove_nodes(params, request, auth_user)
   end
 end
 
+def cluster_setup(params, request, auth_user)
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied'
+  end
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.setup"
+  )
+end
+
+# TODO remove
 def setup_cluster(params, request, auth_user)
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied'

@@ -214,12 +214,15 @@ install_python_part: install_bundled_libs
 	# https://bugzilla.redhat.com/1353934
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs_snmp_agent
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs_internal
 	rm setup.cfg
 	mkdir -p ${DEST_PREFIX}/sbin/
 	mv ${DEST_PREFIX}/bin/pcs ${DEST_PREFIX}/sbin/pcs
 	mv ${DEST_PREFIX}/bin/pcsd ${DEST_PREFIX}/sbin/pcsd
 	install -D -m644 pcs/bash_completion ${DEST_BASH_COMPLETION}/pcs
 	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
+	# pcs_internal
+	mv ${DEST_PREFIX}/bin/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
 	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
 	install -d ${DEST_SNMP_MIB}

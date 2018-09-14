@@ -35,6 +35,7 @@ setup(
             'pcs = pcs.app:main',
             'pcsd = pcs.run:daemon',
             'pcs_snmp_agent = pcs.run:pcs_snmp_agent',
+            'pcs_internal = pcs.pcs_internal:main',
         ],
     },
     cmdclass={
