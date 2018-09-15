@@ -27,6 +27,7 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
 import pcs.cli.cluster.command as cluster_command
+from pcs.common import report_codes
 from pcs.common.node_communicator import HostNotFound
 from pcs.common.tools import Version
 from pcs.lib import sbd as lib_sbd
@@ -1410,6 +1411,10 @@ def cluster_setup(lib, argv, modifiers):
             parsed_args[TRANSPORT_KEYWORD]
         )
 
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+
     lib.cluster.setup(
         cluster_name,
         nodes,
@@ -1425,8 +1430,7 @@ def cluster_setup(lib, argv, modifiers):
         wait=modifiers.get("--wait"),
         start=modifiers.get("--start"),
         enable=modifiers.get("--enable"),
-        force=modifiers.get("--force"),
-        force_unresolvable=modifiers.get("--force"),
+        force_flags=force_flags,
     )
 
 def node_add(lib, argv, modifiers):

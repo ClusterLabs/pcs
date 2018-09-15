@@ -882,7 +882,7 @@ class Validation(TestCase):
                 {"name": "node3", "addrs": ["addr3"]},
             ],
             transport_type="knet",
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
@@ -1107,7 +1107,7 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 self.command_node_list,
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1139,7 +1139,7 @@ class Validation(TestCase):
                     {"name": "node2", "addrs": ["addr2"]},
                 ],
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1299,7 +1299,7 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 [{"name": name, "addrs": None} for name in nodelist],
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1386,7 +1386,7 @@ class Validation(TestCase):
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
             transport_type="knet",
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(

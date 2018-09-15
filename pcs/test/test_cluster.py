@@ -21,6 +21,7 @@ from pcs.test.tools.pcs_runner import (
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import report_codes
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
@@ -196,8 +197,7 @@ class ClusterSetup(unittest.TestCase):
             wait=False,
             start=False,
             enable=False,
-            force=False,
-            force_unresolvable=False
+            force_flags=[],
         )
         default_kwargs.update(kwargs)
         self.cluster.setup.assert_called_once_with(
@@ -497,8 +497,7 @@ class ClusterSetup(unittest.TestCase):
         self.call_cmd([node_name], {"force": True})
         self.assert_setup_called_with(
             [_node(node_name)],
-            force=True,
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
 
     def test_all_modifiers(self):
@@ -512,8 +511,7 @@ class ClusterSetup(unittest.TestCase):
             enable=True,
             start=True,
             wait="15",
-            force=True,
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
 
 

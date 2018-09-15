@@ -154,8 +154,8 @@ def setup(
     env, cluster_name, nodes,
     transport_type=None, transport_options=None, link_list=None,
     compression_options=None, crypto_options=None, totem_options=None,
-    quorum_options=None, wait=False, start=False, enable=False, force=False,
-    force_unresolvable=False
+    quorum_options=None, wait=False, start=False, enable=False,
+    force_flags=None,
 ):
     """
     Set up cluster on specified nodes.
@@ -184,11 +184,12 @@ def setup(
         If int wait set timeout to int value of seconds.
     start bool -- if True start cluster when it is set up
     enable bool -- if True enable cluster when it is set up
-    force bool -- if True some validations errors are treated as warnings
-    force_unresolvable bool -- if True not resolvable addresses of nodes are
-        treated as warnings
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+    if force_flags is None:
+        force_flags = []
+    force = report_codes.FORCE in force_flags
 
     transport_options = transport_options or {}
     link_list = link_list or []
@@ -230,7 +231,7 @@ def setup(
     # Validate inputs.
     report_processor.report_list(config_validators.create(
         cluster_name, nodes, transport_type,
-        force_unresolvable=force_unresolvable
+        force_unresolvable=force
     ))
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(

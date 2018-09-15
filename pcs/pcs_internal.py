@@ -9,6 +9,7 @@ from pcs.cli.common.reports import (
     build_report_message,
     LibraryReportProcessorToConsole,
 )
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
@@ -48,6 +49,7 @@ def get_cli_env(options):
 class LibraryReportProcessor(LibraryReportProcessorToConsole):
     processed_items = []
     def _send(self, report_item_list, print_errors=True):
+
         self.processed_items.extend(report_item_list)
         return [
             report
@@ -63,7 +65,7 @@ def report_item_to_dict(report_item):
         severity=report_item.severity,
         code=report_item.code,
         info=report_item.info,
-        forceable=report_item.forceable,
+        forceable=None if report_item.forceable is None else report_codes.FORCE,
         report_text=build_report_message(report_item),
     )
 
