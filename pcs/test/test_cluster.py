@@ -525,10 +525,8 @@ class NodeAdd(unittest.TestCase):
             wait=False,
             start=False,
             enable=False,
-            force=False,
-            force_unresolvable=False,
-            skip_offline_nodes=False,
             no_watchdog_validation=False,
+            force_flags=[],
         )
 
     def assert_called_with(self, node_list, **kwargs):
@@ -654,12 +652,13 @@ class NodeAdd(unittest.TestCase):
 
     def test_force(self):
         self.assert_modifiers(
-            dict(force=True), dict(force=True, force_unresolvable=True)
+            dict(force=True), dict(force_flags=[report_codes.FORCE])
         )
 
     def test_skip_offline(self):
         self.assert_modifiers(
-            {"skip-offline": True}, dict(skip_offline_nodes=True)
+            {"skip-offline": True},
+            dict(force_flags=[report_codes.SKIP_OFFLINE_NODES]),
         )
 
     def test_no_watchdog_validation(self):
@@ -681,9 +680,7 @@ class NodeAdd(unittest.TestCase):
                 enable=True,
                 start=True,
                 wait="15",
-                force=True,
-                force_unresolvable=True,
-                skip_offline_nodes=True,
                 no_watchdog_validation=True,
+                force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
             )
         )

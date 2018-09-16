@@ -379,9 +379,8 @@ def setup(
         )
 
 def add_nodes(
-    env, nodes, wait=False, start=False, enable=False, force=False,
-    force_unresolvable=False, skip_offline_nodes=False,
-    no_watchdog_validation=False,
+    env, nodes, wait=False, start=False, enable=False,
+    no_watchdog_validation=False, force_flags=None,
 ):
     # pylint: disable=too-many-locals
     """
@@ -398,15 +397,16 @@ def add_nodes(
         If int wait set timeout to int value of seconds.
     start bool -- if True start cluster when it is set up
     enable bool -- if True enable cluster when it is set up
-    force bool -- if True some validations errors are treated as warnings
-    force_unresolvable bool -- if True not resolvable addresses of nodes are
-        treated as warnings
-    skip_offline_nodes bool -- if True non fatal connection failures to other
-        hosts are treated as warnings
     no_watchdog_validation bool -- if True do not validate specified watchdogs
         on remote hosts
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+
+    if force_flags is None:
+        force_flags = []
+    force = report_codes.FORCE in force_flags
+    skip_offline_nodes = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
@@ -521,7 +521,7 @@ def add_nodes(
         new_nodes_corosync,
         corosync_conf.get_nodes(),
         cib_nodes,
-        force_unresolvable=force_unresolvable
+        force_unresolvable=force
     ))
 
     # Validate inputs - SBD part

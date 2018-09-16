@@ -2118,7 +2118,7 @@ class FailureFilesDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -2509,7 +2509,7 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(self.expected_reports + expected_reports)

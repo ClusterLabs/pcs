@@ -15,6 +15,7 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 SUPPORTED_COMMANDS = {
     "cluster.setup",
+    "cluster.add_nodes",
 }
 
 

@@ -331,7 +331,7 @@
         Add a new node to a cluster.
 
         pcs commands: cluster node add
-        daemon urls: add_node_all
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
     <capability id="node.add.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -340,37 +340,39 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster node add
-        daemon urls: add_node_all
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.enable" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.enable" in-pcs="1" in-pcsd="1">
       <description>
         Enable cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --enable
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.start" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.start" in-pcs="1" in-pcsd="1">
       <description>
         Start cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --start
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.start.wait" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.start.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for the new node start cluster service during adding a node if
         start requested.
 
         pcs commands: cluster node add --start --wait[=timeout]
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.enable-and-start" in-pcs="0" in-pcsd="1">
+    <capability id="node.add.list" in-pcs="0" in-pcsd="1">
       <description>
-        Enable and start cluster services on the new cluster node during adding
-        a node, cannot do "enable" and "start" separately.
+        Add several nodes to a cluster at once.
 
-        daemon urls: add_node_all (param: auto_start)
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
     <capability id="node.remove" in-pcs="1" in-pcsd="1">

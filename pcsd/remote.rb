@@ -55,7 +55,8 @@ def remote(params, request, auth_user)
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
-      # TODO rename, previously there was "node_add" for adding a node to a
+      :cluster_add_nodes => method(:cluster_add_nodes),
+      # TODO remove, previously there was "node_add" for adding a node to a
       # cluster configs locally on one node. Also update capabilities as the
       # url is referenced in there.
       :add_node_all => lambda { |params_, request_, auth_user_|
@@ -762,6 +763,16 @@ def remote_node_available(params, request, auth_user)
   return JSON.generate({:node_available => true})
 end
 
+def cluster_add_nodes(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
+    return 403, 'Permission denied'
+  end
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.add_nodes"
+  )
+end
+
+# TODO: remove
 def remote_add_node(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'

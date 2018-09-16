@@ -1104,16 +1104,21 @@ post '/managec/:cluster/fix_auth_of_cluster' do
   return [200, "Auhentication of nodes in cluster should be fixed."]
 end
 
+post '/managec/:cluster/send-known-hosts' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  return pcs_compatibility_layer_known_hosts_add(
+    auth_user, true, params[:cluster], params[:node_names]
+  )
+end
+
+# This may be useful for adding node to pcs-0.9.x running cluster
 post '/managec/:cluster/add_node_to_cluster' do
   auth_user = getAuthUser()
   clustername = params[:cluster]
   new_node = params["new_nodename"]
-
-  if clustername == $cluster_name
-    if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-      return 403, 'Permission denied'
-    end
-  end
 
   known_hosts = get_known_hosts()
   if not known_hosts.include? new_node

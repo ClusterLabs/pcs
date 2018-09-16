@@ -42,10 +42,13 @@ class GetTargets(TestCase):
         )
 
     def _add_nodes(self, skip_offline=False):
+        force_flags = []
+        if skip_offline:
+            force_flags.append(report_codes.SKIP_OFFLINE_NODES)
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node, "addrs": [node]} for node in self.new_nodes],
-            skip_offline_nodes=skip_offline
+            force_flags=force_flags,
         )
 
     def _add_nodes_with_lib_error(self, skip_offline=False):
@@ -406,25 +409,24 @@ class Inputs(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [{"name": "new1"}],
-                force=True
+                [{"name": "new1", "addrs": ["addr1-1"]}],
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
             [
-                fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
-                    host_name="new1",
-                    address="new1"
-                ),
                 fixture.warn(
                     report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION
                 ),
-                fixture.error(
+                fixture.warn(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["new1"]
+                    # force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr1-1"]
                 ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    address_list=["addr1-1"]
+                )
             ]
         )
 
@@ -454,7 +456,7 @@ class Inputs(TestCase):
                     # node add process.
                     {"name": "new1", "addrs": ["node1"]},
                 ],
-                force_unresolvable=True
+                force_flags=[report_codes.FORCE],
             )
         )
 
@@ -876,7 +878,7 @@ class ClusterStatus(TestCase):
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": "new1"}],
-                skip_offline_nodes=True
+                force_flags=[report_codes.SKIP_OFFLINE_NODES],
             )
         )
 
@@ -1278,7 +1280,7 @@ class ClusterStatus(TestCase):
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": name} for name in new_nodes],
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
 

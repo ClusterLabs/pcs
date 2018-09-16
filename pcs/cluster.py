@@ -1465,15 +1465,20 @@ def node_add(lib, argv, modifiers):
     if DEVICE_KEYWORD in node_dict:
         node_dict[f"{DEVICE_KEYWORD}s"] = node_dict[DEVICE_KEYWORD]
         del node_dict[DEVICE_KEYWORD]
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
     lib.cluster.add_nodes(
         nodes=[node_dict],
         wait=modifiers.get("--wait"),
         start=modifiers.get("--start"),
         enable=modifiers.get("--enable"),
-        force=modifiers.get("--force"),
-        force_unresolvable=modifiers.get("--force"),
-        skip_offline_nodes=modifiers.get("--skip-offline"),
         no_watchdog_validation=modifiers.get("--no-watchdog-validation"),
+        force_flags=force_flags,
     )
 
 def remove_nodes_from_cib(lib, argv, modifiers):
