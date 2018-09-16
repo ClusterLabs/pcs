@@ -1207,7 +1207,6 @@ class AddNodeFull(TestCase):
                     report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node=node,
                     watchdog=_get_watchdog(node),
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 ) for node in self.new_nodes
             ]
         )

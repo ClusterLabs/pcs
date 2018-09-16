@@ -1472,7 +1472,6 @@ class ClusterStatus(TestCase):
                     report_codes.WATCHDOG_NOT_FOUND,
                     node="new2",
                     watchdog="/dev/watchdog2",
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 ),
                 fixture.error(
                     report_codes.SBD_DEVICE_DOES_NOT_EXIST,
@@ -1505,7 +1504,6 @@ class ClusterStatus(TestCase):
                     report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node="new9",
                     watchdog="/dev/watchdog9",
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 ),
             ]
         )

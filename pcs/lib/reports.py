@@ -2716,7 +2716,6 @@ def watchdog_not_found(node, watchdog):
             "node": node,
             "watchdog": watchdog
         },
-        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
     )
 
 
@@ -3485,7 +3484,6 @@ def sbd_watchdog_not_supported(node, watchdog):
             node=node,
             watchdog=watchdog,
         ),
-        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
     )
 
 

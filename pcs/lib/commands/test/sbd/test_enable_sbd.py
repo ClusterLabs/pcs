@@ -347,7 +347,6 @@ class WatchdogValidations(TestCase):
                     report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node=self.node_list[2],
                     watchdog=self.watchdog,
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 )
             ]
             +
@@ -981,7 +980,6 @@ class Validations(TestCase):
                     report_codes.WATCHDOG_NOT_FOUND,
                     node=self.node_list[1],
                     watchdog=watchdog,
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 )
             ]
             +
