@@ -473,12 +473,9 @@ post '/manage/newcluster' do
   # a dirty hack to achieve that. Since the GUI is already authorized (it had
   # to check if the nodes can create a cluster) we will send those GUI tokens
   # to the nodes.
-  known_hosts = get_known_hosts().select { |name, obj|
-    @nodes.include?(name)
-  }
   @nodes.each { |future_node|
     retval = pcs_compatibility_layer_known_hosts_add(
-      auth_user, false, future_node, known_hosts
+      auth_user, false, future_node, @nodes
     )
     if retval == 'not_supported'
       warning_messages << "Unable to do correct authentication of cluster on node '#{future_node}', because it is running an old version of pcs/pcsd."
@@ -1096,12 +1093,8 @@ post '/managec/:cluster/fix_auth_of_cluster' do
     return [400, "cluster name not defined"]
   end
 
-  nodes = get_cluster_nodes(clustername)
-  known_hosts = get_known_hosts().select { |name, obj|
-    nodes.include?(name)
-  }
   retval = pcs_compatibility_layer_known_hosts_add(
-    PCSAuth.getSuperuserAuth(), true, clustername, known_hosts
+    PCSAuth.getSuperuserAuth(), true, clustername, get_cluster_nodes(clustername)
   )
   if retval == 'not_supported'
     return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs host auth' command to authenticate the nodes."]
@@ -1130,10 +1123,9 @@ post '/managec/:cluster/add_node_to_cluster' do
   # Save the new node token on all nodes in a cluster the new node is beeing
   # added to. Send the token to one node and let the cluster nodes synchronize
   # it by themselves.
-  new_node_known_hosts = {new_node => known_hosts[new_node]}
   retval = pcs_compatibility_layer_known_hosts_add(
     # new node doesn't have config with permissions yet
-    PCSAuth.getSuperuserAuth(), true, clustername, new_node_known_hosts
+    PCSAuth.getSuperuserAuth(), true, clustername, [new_node]
   )
   # If the cluster runs an old pcsd which doesn't support adding known hosts,
   # ignore 404 in order to not prevent the node to be added.
@@ -1155,8 +1147,11 @@ post '/managec/:cluster/add_node_to_cluster' do
 end
 
 def pcs_compatibility_layer_known_hosts_add(
-  auth_user, is_cluster_request, target, known_hosts
+  auth_user, is_cluster_request, target, host_list
 )
+  known_hosts = get_known_hosts().select { |name, obj|
+    host_list.include?(name)
+  }
   # try the new endpoint provided by pcs-0.10
   known_hosts_request_data = {}
   known_hosts.each { |host_name, host_obj|
