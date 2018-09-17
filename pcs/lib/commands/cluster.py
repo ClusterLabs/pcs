@@ -1034,16 +1034,20 @@ def _get_validated_wait_timeout(report_processor, wait, start):
     return None
 
 
-def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
+def remove_nodes(env, node_list, force_flags=None):
     """
     Remove nodes from a cluster.
 
     env LibraryEnvironment
     node_list iterable -- names of nodes to remove
-    force_quorum_loss bool -- treat quorum loss as a warning if True
-    skip_offline bool -- treat unreachable nodes as warnings if True
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+
+    if force_flags is None:
+        force_flags = []
+    force_quorum_loss = report_codes.FORCE in force_flags
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()

@@ -1037,11 +1037,14 @@ def node_remove(lib, argv, modifiers):
     )
     if not argv:
         raise CmdLineInputError()
-    lib.cluster.remove_nodes(
-        argv,
-        force_quorum_loss=modifiers.get("--force"),
-        skip_offline=modifiers.get("--skip-offline"),
-    )
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    lib.cluster.remove_nodes(argv, force_flags=force_flags)
 
 def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
     """

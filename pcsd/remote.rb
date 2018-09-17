@@ -56,13 +56,14 @@ def remote(params, request, auth_user)
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
       :cluster_add_nodes => method(:cluster_add_nodes),
+      :cluster_remove_nodes => method(:cluster_remove_nodes),
       # TODO remove, previously there was "node_add" for adding a node to a
       # cluster configs locally on one node. Also update capabilities as the
       # url is referenced in there.
       :add_node_all => lambda { |params_, request_, auth_user_|
         remote_add_node(params_, request_, auth_user_, true)
       },
-      :remove_nodes => method(:remote_remove_nodes),
+      :remove_nodes => method(:remote_remove_nodes), # TODO remove
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -804,6 +805,16 @@ def remote_add_node(params, request, auth_user)
   return [400,output]
 end
 
+def cluster_remove_nodes(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
+    return 403, 'Permission denied'
+  end
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.remove_nodes"
+  )
+end
+
+# TODO remove
 def remote_remove_nodes(params, request, auth_user)
   # TODO update for the new node remove
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
