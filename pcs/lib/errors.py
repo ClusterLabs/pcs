@@ -38,6 +38,15 @@ class ReportItem(object):
     def debug(cls, code, **kwargs):
         return cls(code, ReportItemSeverity.DEBUG, **kwargs)
 
+    @classmethod
+    def from_dict(cls, report_dict):
+        return cls(
+            report_dict["code"],
+            report_dict["severity"],
+            forceable=report_dict["forceable"],
+            info=report_dict["info"]
+        )
+
     def __init__(
         self, code, severity, forceable=None, info=None
     ):
