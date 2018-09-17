@@ -1983,7 +1983,11 @@ def cluster_destroy(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  out, errout, retval = run_cmd(auth_user, PCS, "cluster", "destroy")
+  cmd = [PCS, "cluster", "destroy"]
+  if params[:all] == '1'
+    cmd << '--all'
+  end
+  out, errout, retval = run_cmd(auth_user, *cmd)
   if retval == 0
     return [200, "Successfully destroyed cluster"]
   else

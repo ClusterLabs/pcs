@@ -171,12 +171,13 @@
         daemon urls: cluster_destroy
       </description>
     </capability>
-    <capability id="cluster.destroy.all" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.destroy.all" in-pcs="1" in-pcsd="1">
       <description>
         Destroy cluster on all nodes defined in a cluster which the local host
         belongs to.
 
         pcs commands: cluster destroy --all
+        daemon urls: cluster_destroy (parameter all=1)
       </description>
     </capability>
     <capability id="cluster.report" in-pcs="1" in-pcsd="0">
