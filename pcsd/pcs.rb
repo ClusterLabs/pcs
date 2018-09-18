@@ -704,11 +704,6 @@ def get_nodes_status()
   }
 end
 
-# TODO replace by a function providing number of links defined in corosync.conf
-def need_ring1_address?()
-  return false
-end
-
 def get_resource_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
     auth_user, params[:cluster], 'get_avail_resource_agents'
@@ -1543,7 +1538,6 @@ def get_node_status(auth_user, cib_dom)
           # :rcs_order => []
       },
       :cluster_settings => {},
-      :need_ring1_address => need_ring1_address?,
       :acls => get_acls(auth_user, cib_dom),
       :username => auth_user[:username],
       :fence_levels => get_fence_levels(auth_user, cib_dom),
