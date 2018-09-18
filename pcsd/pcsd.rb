@@ -480,8 +480,8 @@ end
 get '/manage/check_auth_against_nodes' do
   auth_user = getAuthUser()
   node_list = []
-  if params[:nodes] != nil and params[:nodes] != ''
-    node_list = params[:nodes].split(',')
+  if params[:node_list].is_a?(Array)
+    node_list = params[:node_list]
   end
   node_results = {}
   online, offline, notauthorized = is_auth_against_nodes(auth_user, node_list)
@@ -499,29 +499,29 @@ end
 
 get '/manage/get_nodes_sw_versions' do
   auth_user = getAuthUser()
-  if params[:nodes] != nil and params[:nodes] != ''
-    nodes = params[:nodes].split(',')
-    final_response = {}
-    threads = []
-    nodes.each {|node|
-      threads << Thread.new {
-        code, response = send_request_with_token(
-          auth_user, node, 'get_sw_versions'
-        )
-        begin
-          node_response = JSON.parse(response)
-          if node_response and node_response['notoken'] == true
-            $logger.error("ERROR: bad token for #{node}")
-          end
-          final_response[node] = node_response
-        rescue JSON::ParserError
-        end
-      }
-    }
-    threads.each { |t| t.join }
-    return JSON.generate(final_response)
+  final_response = {}
+  threads = []
+  nodes = []
+  if params[:node_list].is_a?(Array)
+    nodes = params[:node_list]
   end
-  return '{}'
+  nodes.each {|node|
+    threads << Thread.new {
+      code, response = send_request_with_token(
+        auth_user, node, 'get_sw_versions'
+      )
+      begin
+        node_response = JSON.parse(response)
+        if node_response and node_response['notoken'] == true
+          $logger.error("ERROR: bad token for #{node}")
+        end
+        final_response[node] = node_response
+      rescue JSON::ParserError
+      end
+    }
+  }
+  threads.each { |t| t.join }
+  return JSON.generate(final_response)
 end
 
 post '/manage/auth_gui_against_nodes' do

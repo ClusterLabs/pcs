@@ -230,13 +230,11 @@ function checkAddingNode(){
     $("#add_node_submit_btn").button("option", "disabled", false);
     return false;
   }
-  var data = {};
-  data["nodes"] = nodeName;
 
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_auth_against_nodes',
-    data: data,
+    data: {"node_list": [nodeName]},
     timeout: pcs_timeout,
     success: function (data) {
       var mydata = jQuery.parseJSON(data);
@@ -696,13 +694,10 @@ function checkExistingNode() {
   $('input[name="node-name"]').each(function(i,e) {
     node = e.value;
   });
-  var data = {};
-  data["nodes"] = node;
-
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_auth_against_nodes',
-    data: data,
+    data: {"node_list": [node]},
     timeout: pcs_timeout,
     success: function (data) {
       update_existing_cluster_dialog(jQuery.parseJSON(data));
@@ -718,24 +713,26 @@ function get_nodes_from_create_new_cluster_dialog() {
   var nodes = []
   $("#create_new_cluster_form tr.new_node").each(function(i, e) {
     var node = $(e).find(".node").val().trim();
-    nodes.push(node);
+    if (node.length > 0) {
+      nodes.push(node);
+    }
   });
   return nodes;
 }
 
 function checkClusterNodes() {
-  var node_list_str = get_nodes_from_create_new_cluster_dialog().join(",");
+  var node_list = get_nodes_from_create_new_cluster_dialog()
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_auth_against_nodes',
-    data: {"nodes": node_list_str},
+    data: {"node_list": node_list},
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
       ajax_wrapper({
         type: 'GET',
         url: '/manage/get_nodes_sw_versions',
-        data: {"nodes": node_list_str},
+        data: {"node_list": node_list},
         timeout: pcs_timeout,
         success: function(data) {
           versions = jQuery.parseJSON(data);
