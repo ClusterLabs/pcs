@@ -210,7 +210,7 @@ utilization [<resource id> [<name>=<value> ...]]
 Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20
 .SS "cluster"
 .TP
-setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>] [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]]
+setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>] [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-no\-keys\-sync\fR]
 Create a cluster from the listed nodes and synchronize cluster configuration files to them.
 .br
 Nodes are specified by their names and optionally their addresses. If no addresses are specified for a node, pcs will configure corosync to communicate with that node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure corosync to communicate with the node using the specified addresses.
@@ -243,7 +243,7 @@ Quorum options are: auto_tie_breaker, last_man_standing, last_man_standing_windo
 
 Transports and their options, link, compression, crypto and totem options are all documented in corosync.conf(5) man page; knet link options are prefixed 'knet_' there, compression options are prefixed 'knet_compression_' and crypto options are prefixed 'crypto_'. Quorum options are documented in votequorum(5) man page.
 
---enable will configure the cluster to start on nodes boot. --start will start the cluster right after creating it. --wait will wait up to 'n' seconds for the cluster to start.
+\fB\-\-enable\fR will configure the cluster to start on nodes boot. \fB\-\-start\fR will start the cluster right after creating it. \fB\-\-wait\fR will wait up to 'n' seconds for the cluster to start. \fB\-\-no\-keys\-sync\fR will skip creating and distributing pcsd SSL certificate and key and corosync and pacemaker authkey files. Use this if you provide your own certificates and keys.
 
 Examples:
 .br

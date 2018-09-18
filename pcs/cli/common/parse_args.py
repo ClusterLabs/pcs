@@ -17,7 +17,7 @@ PCS_LONG_OPTIONS = [
     "master", "name=", "group=", "node=",
     "from=", "to=", "after=", "before=",
     "corosync_conf=",
-    "booth-conf=", "booth-key=", "no-watchdog-validation",
+    "booth-conf=", "booth-key=", "no-watchdog-validation", "no-keys-sync",
     #in pcs status - do not display resorce status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
@@ -327,6 +327,7 @@ class InputModifiers(object):
             "--monitor": "--monitor" in options,
             "--no-default-ops": "--no-default-ops" in options,
             "--nodesc": "--nodesc" in options,
+            "--no-keys-sync": "--no-keys-sync" in options,
             "--no-watchdog-validation": "--no-watchdog-validation" in options,
             "--off": "--off" in options,
             "--pacemaker": "--pacemaker" in options,

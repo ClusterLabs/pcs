@@ -1464,8 +1464,12 @@ def cluster_setup(lib, argv, modifiers):
       * --enable - enable cluster
       * --force - some validation issues and unresolvable addresses are treated
         as warnings
+      * --no-keys-sync - do not create and distribute pcsd ssl cert and key,
+        corosync and pacemaker authkeys
     """
-    modifiers.ensure_only_supported("--wait", "--start", "--enable", "--force")
+    modifiers.ensure_only_supported(
+        "--wait", "--start", "--enable", "--force", "--no-keys-sync"
+    )
     DEFAULT_TRANSPORT_TYPE = KNET_KEYWORD
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -1513,6 +1517,7 @@ def cluster_setup(lib, argv, modifiers):
         wait=modifiers.get("--wait"),
         start=modifiers.get("--start"),
         enable=modifiers.get("--enable"),
+        no_keys_sync=modifiers.get("--no-keys-sync"),
         force_flags=force_flags,
     )
 

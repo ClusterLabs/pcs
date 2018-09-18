@@ -574,7 +574,7 @@ Commands:
                 [<transport options>] [link <link options>]
                 [compression <compression options>] [crypto <crypto options>]
             ] [totem <totem options>] [quorum <quorum options>]
-            [--enable] [--start [--wait[=<n>]]]
+            [--enable] [--start [--wait[=<n>]]] [--no-keys-sync]
         Create a cluster from the listed nodes and synchronize cluster
         configuration files to them.
 
@@ -625,6 +625,9 @@ Commands:
         --enable will configure the cluster to start on nodes boot.
         --start will start the cluster right after creating it.
         --wait will wait up to 'n' seconds for the cluster to start.
+        --no-keys-sync will skip creating and distributing pcsd SSL certificate
+            and key and corosync and pacemaker authkey files. Use this if you
+            provide your own certificates and keys.
 
         Examples:
         Create a cluster with default settings:

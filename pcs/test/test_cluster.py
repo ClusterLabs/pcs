@@ -197,6 +197,7 @@ class ClusterSetup(unittest.TestCase):
             wait=False,
             start=False,
             enable=False,
+            no_keys_sync=False,
             force_flags=[],
         )
         default_kwargs.update(kwargs)
@@ -504,13 +505,20 @@ class ClusterSetup(unittest.TestCase):
         node_name = "node"
         self.call_cmd(
             [node_name],
-            {"force": True, "enable": True, "start": True, "wait": "15"}
+            {
+                "force": True,
+                "enable": True,
+                "start": True,
+                "wait": "15",
+                "no-keys-sync": True,
+            }
         )
         self.assert_setup_called_with(
             [_node(node_name)],
             enable=True,
             start=True,
             wait="15",
+            no_keys_sync=True,
             force_flags=[report_codes.FORCE],
         )
 

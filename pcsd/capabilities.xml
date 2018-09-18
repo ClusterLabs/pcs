@@ -163,6 +163,18 @@
         daemon urls: cluster_setup
       </description>
     </capability>
+    <capability id="cluster.create.no-keys-sync" in-pcs="1" in-pcsd="1">
+      <description>
+        Do not create and distribute these files when creating a cluster:
+         * pcsd ssl cert
+         * pcsd ssl key
+         * pacemaker authkey
+         * corosync authkey
+
+        pcs commands: cluster setup --no-keys-sync
+        daemon urls: cluster_setup
+      </description>
+    </capability>
     <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">
       <description>
         Destroy cluster on the local host.

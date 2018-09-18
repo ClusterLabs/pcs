@@ -186,15 +186,15 @@ def config_succes_minimal_fixture(
             to_add=known_hosts,
             communication_list=communication_list,
         )
+        .http.files.remove_files(
+            node_labels=node_labels,
+            pcsd_settings=True,
+            communication_list=communication_list,
+        )
         .http.files.put_files(
             node_labels=node_labels,
             pcmk_authkey=RANDOM_KEY,
             corosync_authkey=RANDOM_KEY,
-            communication_list=communication_list,
-        )
-        .http.files.remove_files(
-            node_labels=node_labels,
-            pcsd_settings=True,
             communication_list=communication_list,
         )
         .http.host.send_pcsd_cert(
@@ -212,13 +212,13 @@ def config_succes_minimal_fixture(
     )
 
 def reports_success_minimal_fixture(
-    node_list=None, using_known_hosts_addresses=True
+    node_list=None, using_known_hosts_addresses=True, keys_sync=True,
 ):
     node_list = node_list or NODE_LIST
     auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
     pcsd_settings_file = "pcsd settings"
     corosync_conf_file = "corosync.conf"
-    return (
+    report_list = (
         [
             fixture.info(
                 report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
@@ -243,23 +243,6 @@ def reports_success_minimal_fixture(
         +
         [
             fixture.info(
-                report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=auth_file_list,
-                node_list=node_list,
-                description="",
-            )
-        ]
-        +
-        [
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                node=node,
-                file_description=file,
-            ) for node in node_list for file in auth_file_list
-        ]
-        +
-        [
-            fixture.info(
                 report_codes.FILES_REMOVE_FROM_NODE_STARTED,
                 file_list=[pcsd_settings_file],
                 node_list=node_list,
@@ -274,21 +257,41 @@ def reports_success_minimal_fixture(
                 file_description=pcsd_settings_file,
             ) for node in node_list
         ]
-        +
-        [
-            fixture.info(
-                report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
-                node_name_list=node_list,
-            )
-        ]
-        +
-        [
-            fixture.info(
-                report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
-                node=node,
-            ) for node in node_list
-        ]
-        +
+    )
+    if keys_sync:
+        report_list.extend(
+            [
+                fixture.info(
+                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    file_list=auth_file_list,
+                    node_list=node_list,
+                    description="",
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=file,
+                ) for node in node_list for file in auth_file_list
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=node_list,
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in node_list
+            ]
+        )
+    report_list.extend(
         [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
@@ -310,6 +313,7 @@ def reports_success_minimal_fixture(
             fixture.info(report_codes.CLUSTER_SETUP_SUCCESS)
         ]
     )
+    return report_list
 
 
 class CheckLive(TestCase):
@@ -515,6 +519,23 @@ class SetupSuccessMinimal(TestCase):
             ]
         )
 
+    def test_no_keys_sync(self):
+        self.config.calls.remove("http.files.put_files_requests")
+        self.config.calls.remove("http.files.put_files_responses")
+        self.config.calls.remove("http.host.send_pcsd_cert_requests")
+        self.config.calls.remove("http.host.send_pcsd_cert_responses")
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+            transport_type=DEFAULT_TRANSPORT_TYPE,
+            no_keys_sync=True,
+        )
+
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture(keys_sync=False)
+        )
+
 
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
@@ -620,12 +641,12 @@ class Setup2NodeSuccessMinimal(TestCase):
                 self.node_list,
                 to_add_hosts=self.node_list
             )
+            .http.files.remove_files(self.node_list, pcsd_settings=True)
             .http.files.put_files(
                 self.node_list,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
             )
-            .http.files.remove_files(self.node_list, pcsd_settings=True)
             .http.host.send_pcsd_cert(
                 cert=PCSD_SSL_CERT_DUMP,
                 key=PCSD_SSL_KEY_DUMP,
@@ -1800,12 +1821,12 @@ class SetupWithWait(TestCase):
             )
             .http.host.cluster_destroy(NODE_LIST)
             .http.host.update_known_hosts(NODE_LIST, to_add_hosts=NODE_LIST)
+            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
             .http.files.put_files(
                 NODE_LIST,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
             )
-            .http.files.remove_files(NODE_LIST, pcsd_settings=True)
             .http.host.send_pcsd_cert(
                 cert=PCSD_SSL_CERT_DUMP,
                 key=PCSD_SSL_KEY_DUMP,
@@ -2407,7 +2428,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_communication_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=self.communication_list,
             pcsd_settings=True,
@@ -2424,7 +2445,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-12]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2438,7 +2459,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2469,7 +2490,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-12]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2490,7 +2511,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_invalid_response(self):
-        self._remove_calls(6)
+        self._remove_calls(8)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2514,7 +2535,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-12]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2533,7 +2554,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_communication_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2584,7 +2605,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(
@@ -2623,7 +2644,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_invalid_response(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2648,7 +2669,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(
@@ -2669,7 +2690,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.put_files(
             communication_list=self.communication_list,
             pcmk_authkey=RANDOM_KEY,
@@ -2687,7 +2708,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(

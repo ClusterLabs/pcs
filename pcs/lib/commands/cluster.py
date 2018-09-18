@@ -155,7 +155,7 @@ def setup(
     transport_type=None, transport_options=None, link_list=None,
     compression_options=None, crypto_options=None, totem_options=None,
     quorum_options=None, wait=False, start=False, enable=False,
-    force_flags=None,
+    no_keys_sync=False, force_flags=None,
 ):
     """
     Set up cluster on specified nodes.
@@ -184,6 +184,8 @@ def setup(
         If int wait set timeout to int value of seconds.
     start bool -- if True start cluster when it is set up
     enable bool -- if True enable cluster when it is set up
+    no_keys_sync bool -- if True do not crete and distribute files: pcsd ssl
+        cert and key, pacemaker authkey, corosync authkey
     force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
@@ -301,43 +303,45 @@ def setup(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-    # Distribute configuration files except corosync.conf. Sending
-    # corosync.conf serves as a "commit" as its presence on a node marks the
-    # node as a part of a cluster.
-    corosync_authkey = generate_binary_key(random_bytes_count=128)
-    pcmk_authkey = generate_binary_key(random_bytes_count=128)
-    actions = {}
-    actions.update(
-        node_communication_format.corosync_authkey_file(corosync_authkey)
-    )
-    actions.update(
-        node_communication_format.pcmk_authkey_file(pcmk_authkey)
-    )
-    com_cmd = DistributeFilesWithoutForces(env.report_processor, actions)
-    com_cmd.set_targets(target_list)
-    run_and_raise(env.get_node_communicator(), com_cmd)
-    # TODO This should be in the previous call but so far we don't have a call
-    # which allows to save and delete files at the same time.
+    # TODO This should be in the file distribution call but so far we don't
+    # have a call which allows to save and delete files at the same time.
     com_cmd = RemoveFilesWithoutForces(
         env.report_processor, {"pcsd settings": {"type": "pcsd_settings"}},
     )
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-    # Distribute and reload pcsd SSL certificate
-    report_processor.report(
-        reports.pcsd_ssl_cert_and_key_distribution_started(
-            [target.label for target in target_list]
+    if not no_keys_sync:
+        # Distribute configuration files except corosync.conf. Sending
+        # corosync.conf serves as a "commit" as its presence on a node marks the
+        # node as a part of a cluster.
+        corosync_authkey = generate_binary_key(random_bytes_count=128)
+        pcmk_authkey = generate_binary_key(random_bytes_count=128)
+        actions = {}
+        actions.update(
+            node_communication_format.corosync_authkey_file(corosync_authkey)
         )
-    )
-    ssl_key_raw = ssl.generate_key()
-    ssl_key = ssl.dump_key(ssl_key_raw)
-    ssl_cert = ssl.dump_cert(
-        ssl.generate_cert(ssl_key_raw, target_list[0].label)
-    )
-    com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
-    com_cmd.set_targets(target_list)
-    run_and_raise(env.get_node_communicator(), com_cmd)
+        actions.update(
+            node_communication_format.pcmk_authkey_file(pcmk_authkey)
+        )
+        com_cmd = DistributeFilesWithoutForces(env.report_processor, actions)
+        com_cmd.set_targets(target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
+
+        # Distribute and reload pcsd SSL certificate
+        report_processor.report(
+            reports.pcsd_ssl_cert_and_key_distribution_started(
+                [target.label for target in target_list]
+            )
+        )
+        ssl_key_raw = ssl.generate_key()
+        ssl_key = ssl.dump_key(ssl_key_raw)
+        ssl_cert = ssl.dump_cert(
+            ssl.generate_cert(ssl_key_raw, target_list[0].label)
+        )
+        com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
+        com_cmd.set_targets(target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Create and distribute corosync.conf. Once a node saves corosync.conf it
     # is considered to be in a cluster.
