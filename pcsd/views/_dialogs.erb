@@ -20,14 +20,26 @@
 <div id="auth_nodes" style="display:none;">
   <form id="auth_nodes_form">
     Enter password for user 'hacluster' to authenticate nodes.<br>
-    Nodes to authenticate:
     <table class="err_msg_table" style="width: 100%">
-      <tr><td align=center style="color: red" colspan=2"><span id="auth_failed_error_msg" style="display:none;">Authentication on some nodes failed.</span></td></tr>
+      <tr><td align="center" style="color: red"><span id="auth_failed_error_msg" style="display:none;">Authentication on some nodes failed.</span></td></tr>
     </table>
+    <p class="addr_port" style="max-width: 40em">
+      For each node you can specify an address and a port via which pcsd will
+      communicate with the node. If an address is not specified the node&apos;s
+      name will be used. If a port is not specified 2224 will be used.
+    </p>
     <table id="auth_nodes_list">
     </table>
-    <div id="same_pass"><label><input type="checkbox" name="all" onchange="if ($(this).is(':checked')) {$('#auth_nodes_list').find('input:password').each(function(){$(this).hide()}); $('#pass_for_all').show();} else {$('#auth_nodes_list').find('input:password').each(function(){$(this).show()}); $('#pass_for_all').hide();}"> Use same password for all nodes:</label>
+    <div id="same_pass"><label><input type="checkbox" name="all" onchange="if ($(this).is(':checked')) {$('#auth_nodes_form').find('.password').each(function(){$(this).hide()}); $('#pass_for_all').show();} else {$('#auth_nodes_form').find('.password').each(function(){$(this).show()}); $('#pass_for_all').hide();}"> Use same password for all nodes:</label>
       <input type="password" name="pass-all" id="pass_for_all" style="display: none;"></div>
+    <div>
+      <label>
+        <input type="checkbox" name="custom_addr_port"
+          onchange="if ($(this).is(':checked')) { $('#auth_nodes_form').find('.addr_port').show(); } else { $('#auth_nodes_form').find('.addr_port').hide(); };"
+        >
+        Use custom address(es) and port(s)
+      </label>
+    </div>
   </form>
 </div>
 

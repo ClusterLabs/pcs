@@ -536,6 +536,12 @@ post '/manage/auth_gui_against_nodes' do
       dest_list = node_data.fetch('dest_list')
       addr = dest_list.fetch(0).fetch('addr')
       port = dest_list.fetch(0).fetch('port')
+      if addr == ''
+        addr = node_name
+      end
+      if port == ''
+        port = PCSD_DEFAULT_PORT
+      end
       request_data = {
         :username => SUPERUSER,
         :password => node_data.fetch('password'),
@@ -547,7 +553,9 @@ post '/manage/auth_gui_against_nodes' do
       if 200 == code
         token = response.strip
         if not token.empty?
-          new_hosts[node_name] = PcsKnownHost.new(node_name, token, dest_list)
+          new_hosts[node_name] = PcsKnownHost.new(
+            node_name, token, [{'addr' => addr, 'port' => port}]
+          )
           node_auth_error[node_name] = 0
         end
       end

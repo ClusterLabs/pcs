@@ -753,23 +753,34 @@ function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
   var form = dialog.find("#auth_nodes_form");
   var nodes = {};
+  var custom_addr_port = form.find('input:checkbox[name=custom_addr_port]').prop('checked')
   form.find('#auth_nodes_list input').each(function() {
     var input = $(this)
-    if(input.attr('name').endsWith('-pass')) {
-      var nodename = input.attr('name').slice(0, -('-pass'.length))
+    if(input.attr('name').startsWith('pass-')) {
+      var nodename = input.attr('name').slice('pass-'.length)
       if(!nodes[nodename]) {
-        nodes[nodename] = {};
+        nodes[nodename] = {"password": "", "addr": "", "port": ""};
       }
       nodes[nodename]['password'] = input.val();
     }
-    else if(input.attr('name').startsWith('port-')) {
+    else if(custom_addr_port && input.attr('name').startsWith('port-')) {
       var nodename = input.attr('name').slice('port-'.length)
       if(!nodes[nodename]) {
-        nodes[nodename] = {};
+        nodes[nodename] = {"password": "", "addr": "", "port": ""};
       }
       nodes[nodename]['port'] = input.val().trim();
       if(nodes[nodename]['port'].length < 1) {
         nodes[nodename]['port'] = input.prop('placeholder');
+      }
+    }
+    else if(custom_addr_port && input.attr('name').startsWith('addr-')) {
+      var nodename = input.attr('name').slice('addr-'.length)
+      if(!nodes[nodename]) {
+        nodes[nodename] = {"password": "", "addr": "", "port": ""};
+      }
+      nodes[nodename]['addr'] = input.val().trim();
+      if(nodes[nodename]['addr'].length < 1) {
+        nodes[nodename]['addr'] = nodename;
       }
     }
   });
@@ -786,7 +797,7 @@ function auth_nodes(dialog) {
       password: node_data['password'],
       dest_list: [
         {
-          addr: node_name,
+          addr: node_data['addr'],
           port: node_data['port']
         }
       ]
@@ -892,8 +903,10 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
       }
     }
   ];
-  var dialog_obj = $("#auth_nodes").dialog({title: 'Authentification of nodes',
-    modal: true, resizable: false,
+  var dialog_obj = $("#auth_nodes").dialog({
+    title: 'Authentification of nodes',
+    modal: true,
+    resizable: false,
     width: 'auto',
     buttons: buttonsOpts,
     callback_success_: callback_success,
@@ -927,13 +940,19 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
     dialog_obj.find("#pass_for_all").hide();
   }
 
+  dialog_obj.find("input:checkbox[name=custom_addr_port]").prop("checked", false);
   dialog_obj.find('#auth_nodes_list').empty();
+  dialog_obj.find('#auth_nodes_list').append('<tr><td>Node</td><td class="password">Password</td><td class="addr_port">Address</td><td class="addr_port">Port</td></tr>');
   $.each(unauth_nodes, function(i, node) {
-    var html = "<tr><td>" + htmlEncode(node) + "</td><td>";
-    html += ':<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" />';
-    html += '</td><td><input type="password" name="' + htmlEncode(node) + '-pass"></td></tr>';
+    var html = "<tr>";
+    html += "<td>" + htmlEncode(node) + "</td>";
+    html += '<td class="password"><input type="password" name="pass-' + htmlEncode(node) + '"></td>';
+    html += '<td class="addr_port"><input type="text" name="addr-' + htmlEncode(node) + '"></td>';
+    html += '<td class="addr_port">:<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" /></td>';
+    html += "</tr>";
     dialog_obj.find('#auth_nodes_list').append(html);
   });
+  dialog_obj.find(".addr_port").hide();
 
 }
 
