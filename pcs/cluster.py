@@ -196,6 +196,7 @@ def cluster_stop_cmd(dummy_lib, argv, modifiers):
     """
     modifiers.ensure_only_supported(
         "--wait", "--request-timeout", "--pacemaker", "--corosync", "--all",
+        "--force",
     )
     if modifiers.get("--all"):
         if argv:
