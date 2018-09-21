@@ -356,6 +356,80 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 end
 
+### urls related to creating a new cluster - begin
+#
+# Creating a new cluster consists of several steps which are directed from js.
+# Each url provides an action. The actions together orchestrated by js achieve
+# creating a new cluster including various checks, the cluster setup itself and
+# adding the new cluster into the gui.
+
+# use case:
+# - js is already authenticated to all future cluster nodes
+# - js calls this url to send its tokens to a future cluster node
+# - later, js will instruct that node to setup the cluster
+# - the node will distribute the tokens in the cluster
+post '/manage/send-known-hosts-to-node' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  return pcs_compatibility_layer_known_hosts_add(
+    auth_user, false, params[:target_node], params[:node_names]
+  )
+end
+
+# use case:
+# - js instructs a node from the future cluster to setup the cluster
+post '/manage/cluster-setup' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  code, out = send_request_with_token(
+    auth_user,
+    params[:target_node],
+    'cluster_setup',
+    true,
+    {
+      :data_json => params[:setup_data],
+    },
+    true,
+    nil,
+    60
+  )
+  return [code, out]
+end
+
+# use case:
+# - js instructs us to add the just created cluster to our list of clusters
+post '/manage/remember-cluster' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  pushed = false
+  2.times {
+    # Add the new cluster to our config and publish the config.
+    # If this host is a node of the new cluster, another node may send its own
+    # PcsdSettings. To handle it we just need to reload the config, as we are
+    # waiting for the request to finish, so no locking is needed.
+    # If we are in a different cluster we just try twice to update the config,
+    # dealing with any updates in between.
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+    pcs_config.clusters << Cluster.new(params[:cluster_name], params[:nodes])
+    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+    pushed, _ = Cfgsync::save_sync_new_version(
+      sync_config, get_corosync_nodes_names(), $cluster_name, true
+    )
+    break if pushed
+  }
+  if not pushed
+    return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration has been updated. Please add the cluster manually if appropriate."
+  end
+end
+
+# old cluster setup url
+# will be removed / updated once the cluster setup overhaul is done
 post '/manage/newcluster' do
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)
@@ -462,6 +536,8 @@ post '/manage/newcluster' do
   return warning_messages.join("\n\n")
 end
 
+### urls related to creating a new cluster - end
+#
 post '/manage/removecluster' do
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   params.each { |k,v|
@@ -1028,7 +1104,7 @@ post '/managec/:cluster/fix_auth_of_cluster' do
     PCSAuth.getSuperuserAuth(), true, clustername, known_hosts
   )
   if retval == 'not_supported'
-    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
+    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs host auth' command to authenticate the nodes."]
   elsif retval == 'error'
     return [400, "Authentication failed."]
   end
