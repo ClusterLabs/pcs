@@ -322,20 +322,18 @@ def resource_list_options(lib, argv, modifiers):
 
     print(_format_agent_description(
         lib.resource_agent.describe_agent(agent_name),
-        show_advanced=modifiers.get("--full")
+        show_all=modifiers.get("--full")
     ))
 
 
-def _format_agent_description(description, stonith=False, show_advanced=False):
+def _format_agent_description(description, stonith=False, show_all=False):
     """
     Commandline options: no options
     """
-    # We are getting data from XML which may contain unicode strings, hence we
-    # must format them to unicode strings (u"...".format(...))
     output = []
 
     if description.get("name") and description.get("shortdesc"):
-        output.append(u"{0} - {1}".format(
+        output.append("{0} - {1}".format(
             description["name"],
             _format_desc(
                 len(description["name"] + " - "),
@@ -357,11 +355,29 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
             # Do not show advanced options, for exmaple
             # pcmk_(reboot|off|list|monitor|status)_(action|timeout|retries)
             # for stonith agents
-            if not show_advanced and param.get("advanced", False):
+            if not show_all and param.get("advanced", False):
                 continue
+            if not show_all and param.get("deprecated", False):
+                continue
+            param_obsoletes = param.get("obsoletes", None)
+            param_deprecated = param.get("deprecated", False)
+            param_deprecated_by = param.get("deprecated_by", [])
             param_title = " ".join(filter(None, [
                 param.get("name"),
-                "(required)" if param.get("required", False) else None
+                # only show deprecated if not showing deprecated by
+                "(deprecated)"
+                    if show_all and param_deprecated and not param_deprecated_by
+                    else None
+                ,
+                "(deprecated by {0})".format(", ".join(param_deprecated_by))
+                    if show_all and param_deprecated_by
+                    else None
+                ,
+                "(obsoletes {0})".format(param_obsoletes)
+                    if show_all and param_obsoletes
+                    else None
+                ,
+                "(required)" if param.get("required", False) else None,
             ]))
             param_desc = param.get("longdesc", "").replace("\n", " ")
             if not param_desc:
@@ -370,7 +386,7 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
                     param_desc = "No description available"
             if param.get("pcs_deprecated_warning"):
                 param_desc += " WARNING: " + param["pcs_deprecated_warning"]
-            output_params.append(u"  {0}: {1}".format(
+            output_params.append("  {0}: {1}".format(
                 param_title,
                 _format_desc(len(param_title) + 4, param_desc)
             ))
@@ -385,7 +401,7 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
     if description.get("actions"):
         output_actions = []
         for action in description["default_actions"]:
-            parts = [u"  {0}:".format(action.get("name", ""))]
+            parts = ["  {0}:".format(action.get("name", ""))]
             parts.extend([
                 u"{0}={1}".format(name, value)
                 for name, value in sorted(action.items())

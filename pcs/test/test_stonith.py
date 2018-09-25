@@ -100,6 +100,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
 
     def testStonithCreation(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
             stdout_full=(
@@ -124,12 +126,12 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
-            "Error: required stonith options 'ipaddr', 'login' are missing, use --force to override\n"
+            "Error: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
             "stonith create test2 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
 
         self.assert_pcs_fail(
@@ -140,12 +142,12 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test9 fence_apc pcmk_status_action=xxx",
-            "Error: required stonith options 'ipaddr', 'login' are missing, use --force to override\n"
+            "Error: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
-             "stonith create test9 fence_apc pcmk_status_action=xxx --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "stonith create test9 fence_apc pcmk_status_action=xxx --force",
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
@@ -163,18 +165,18 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test3 fence_ilo ipaddr=test",
-            "Error: required stonith option 'login' is missing, use --force to override\n"
+            "Error: required stonith options 'login', 'username' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
-             "stonith create test3 fence_ilo ipaddr=test --force",
-            "Warning: required stonith option 'login' is missing\n"
+            "stonith create test3 fence_ilo ipaddr=test --force",
+            "Warning: required stonith options 'login', 'username' are missing\n"
         )
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
         self.assert_pcs_success(
-            'stonith create apc-fencing fence_apc ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"',
+            'stonith create apc-fencing fence_apc ip=i ipaddr=morph-apc login=apc username=u passwd=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05',
         )
 
         output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
@@ -184,7 +186,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success("stonith show apc-fencing", outdent(
             """\
              Resource: apc-fencing (class=stonith type=fence_apc)
-              Attributes: ipaddr="morph-apc" login="apc" passwd="apc" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" switch="1"
+              Attributes: ip=i ipaddr=morph-apc login=apc passwd=apc pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 switch=1 username=u
               Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
             """
         ))
@@ -224,7 +226,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test-fencing fence_apc 'pcmk_host_list=rhel7-node1 rhel7-node2' op monitor interval=61s --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
 
         self.pcs_runner.corosync_conf_file = rc("corosync.conf")
@@ -317,15 +319,17 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assertEqual(0, returnVal)
 
     def test_stonith_create_action(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_fail(
-            "stonith create test fence_apc ipaddr=i login=l action=a",
+            "stonith create test fence_apc ipaddr=i login=l action=a ip=i username=u",
             "Error: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead,"
                 " use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l action=a --force",
+            "stonith create test fence_apc ipaddr=i login=l action=a ip=i username=u --force",
             "Warning: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead\n"
         )
@@ -335,15 +339,17 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: action=a ipaddr=i login=l
+                  Attributes: action=a ip=i ipaddr=i login=l username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
         )
 
     def test_stonith_create_action_empty(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l action="
+            "stonith create test fence_apc ipaddr=i login=l action= ip=i username=u"
         )
 
         self.assert_pcs_success(
@@ -352,15 +358,17 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: action= ipaddr=i login=l
+                  Attributes: action= ip=i ipaddr=i login=l username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
         )
 
     def test_stonith_update_action(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l"
+            "stonith create test fence_apc ipaddr=i login=l ip=i username=u"
         )
 
         self.assert_pcs_success(
@@ -368,7 +376,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ipaddr=i login=l
+                  Attributes: ip=i ipaddr=i login=l username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -392,7 +400,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ipaddr=i login=l action=a
+                  Attributes: ip=i ipaddr=i login=l username=u action=a
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -407,7 +415,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ipaddr=i login=l
+                  Attributes: ip=i ipaddr=i login=l username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -425,9 +433,11 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def testPcmkHostList(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_success(
             "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
@@ -438,73 +448,38 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
         assert returnVal == 0
 
-    def testPcmkHostAllowsMissingPort(self):
-        # Test that port is not required when pcmk_host_argument or
-        # pcmk_host_list or pcmk_host_map is specified
-        # Port is temporarily an optional parameter. Once we are getting
-        # metadata from pacemaker, this will be reviewed and fixed.
-        output, returnVal = pcs(
-            temp_cib,
-            'stonith create apc-1 fence_apc ipaddr="ip" login="apc"'
-        )
-#        ac(output, """\
-#Error: missing required option(s): 'port' for resource type: stonith:fence_apc (use --force to override)
-#""")
-#        self.assertEquals(returnVal, 1)
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(
-            temp_cib,
-            'stonith create apc-2 fence_apc ipaddr="ip" login="apc" pcmk_host_map="buzz-01:1;buzz-02:2"'
-        )
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(
-            temp_cib,
-            'stonith create apc-3 fence_apc ipaddr="ip" login="apc" pcmk_host_list="buzz-01,buzz-02"'
-        )
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(
-            temp_cib,
-            'stonith create apc-4 fence_apc ipaddr="ip" login="apc" pcmk_host_argument="buzz-01"'
-        )
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
     def testStonithDeleteRemovesLevel(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
 
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-ipmi fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc2 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc1 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc2 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc3 fence_apc --force",
-            "Warning: required stonith options 'ipaddr', 'login' are missing\n"
+            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
         )
         self.assert_pcs_success_all([
             "stonith level add 1 rh7-1 n1-ipmi",
@@ -629,11 +604,13 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
 
     def testNoStonithWarning(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         corosync_conf = rc("corosync_conf")
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
         assert "No stonith devices and stonith-enabled is not false" in o
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ip=i ipaddr=ip login=lgn username=u pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
@@ -645,12 +622,8 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Deleting Resource - test_stonith\n"
         )
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
-        ac(o,"")
-        assert r == 0
-
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "WARNING: no stonith devices and " not in o
+        assert "No stonith devices and stonith-enabled is not false" in o
 
 
 class LevelTestsBase(TestCase, AssertPcsMixin):
@@ -664,8 +637,10 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.config_lines = []
 
     def fixture_stonith_resource(self, name):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2', ipaddr=ip login=lgn"
+            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2' ip=i ipaddr=ip login=lgn username=u"
             .format(name=name)
         )
 
@@ -1107,6 +1082,8 @@ class LevelConfig(LevelTestsBase):
         )
 
     def test_all_posibilities(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.fixture_full_configuration()
         self.assert_pcs_success("stonith level config", self.config)
         self.assert_pcs_success("stonith level", self.config)
@@ -1126,13 +1103,13 @@ class LevelConfig(LevelTestsBase):
             self.full_config.format(
                 devices="""
  Resource: F1 (class=stonith type=fence_apc)
-  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
+  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F1-monitor-interval-60s)
  Resource: F2 (class=stonith type=fence_apc)
-  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
+  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F2-monitor-interval-60s)
  Resource: F3 (class=stonith type=fence_apc)
-  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
+  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F3-monitor-interval-60s)\
 """,
                 levels=("\n" + "\n".join(indent(self.config_lines, 2)))

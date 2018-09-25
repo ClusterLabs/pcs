@@ -205,7 +205,7 @@ Commands:
 
     describe [<standard>:[<provider>:]]<type> [--full]
         Show options for the specified resource. If --full is specified, all
-        options including advanced ones are shown.
+        options including advanced and deprecated ones are shown.
 
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
@@ -849,7 +849,7 @@ Commands:
 
     describe <stonith agent> [--full]
         Show options for specified stonith agent. If --full is specified, all
-        options including advanced ones are shown.
+        options including advanced and deprecated ones are shown.
 
     create <stonith id> <stonith device type> [stonith device options]
            [op <operation action> <operation options> [<operation action>

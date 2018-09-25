@@ -8,6 +8,7 @@ from pcs.test.tools.command_env import get_env_tools
 
 
 class Create(TestCase):
+    # TODO fix validation with respect to deprecated parameters
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.agent_name = "test_simple"
@@ -19,6 +20,12 @@ class Create(TestCase):
                     <instance_attributes id="stonith-test-instance_attributes">
                         <nvpair id="stonith-test-instance_attributes-must-set"
                             name="must-set" value="value"
+                        />
+                        <nvpair id="stonith-test-instance_attributes-must-set-new"
+                            name="must-set-new" value="B"
+                        />
+                        <nvpair id="stonith-test-instance_attributes-must-set-old"
+                            name="must-set-old" value="A"
                         />
                     </instance_attributes>
                     <operations>
@@ -63,7 +70,11 @@ class Create(TestCase):
             self.agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"}
+            instance_attributes={
+                "must-set": "value",
+                "must-set-old": "A",
+                "must-set-new": "B",
+            }
         )
 
     def test_minimal_wait_ok_run_ok(self):
@@ -81,7 +92,11 @@ class Create(TestCase):
             self.agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-old": "A",
+                "must-set-new": "B",
+            },
             wait=self.timeout
         )
         self.env_assist.assert_reports([
@@ -94,6 +109,7 @@ class Create(TestCase):
 
 
 class CreateInGroup(TestCase):
+    # TODO fix validation with respect to deprecated parameters
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.agent_name = "test_simple"
@@ -106,6 +122,12 @@ class CreateInGroup(TestCase):
                     <instance_attributes id="stonith-test-instance_attributes">
                         <nvpair id="stonith-test-instance_attributes-must-set"
                             name="must-set" value="value"
+                        />
+                        <nvpair id="stonith-test-instance_attributes-must-set-new"
+                            name="must-set-new" value="B"
+                        />
+                        <nvpair id="stonith-test-instance_attributes-must-set-old"
+                            name="must-set-old" value="A"
                         />
                     </instance_attributes>
                     <operations>
@@ -152,7 +174,11 @@ class CreateInGroup(TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"}
+            instance_attributes={
+                "must-set": "value",
+                "must-set-old": "A",
+                "must-set-new": "B",
+            }
         )
 
     def test_minimal_wait_ok_run_ok(self):
@@ -171,7 +197,11 @@ class CreateInGroup(TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-old": "A",
+                "must-set-new": "B",
+            },
             wait=self.timeout
         )
         self.env_assist.assert_reports([

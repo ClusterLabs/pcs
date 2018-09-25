@@ -77,7 +77,7 @@ list [filter] [\fB\-\-nodesc\fR]
 Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
 .TP
 describe [<standard>:[<provider>:]]<type> [\fB\-\-full\fR]
-Show options for the specified resource. If \fB\-\-full\fR is specified, all options including advanced ones are shown.
+Show options for the specified resource. If \fB\-\-full\fR is specified, all options including advanced and deprecated ones are shown.
 .TP
 create <resource id> [<standard>:[<provider>:]]<type> [resource options] [\fBop\fR <operation action> <operation options> [<operation action> <operation options>]...] [\fBmeta\fR <meta options>...] [\fBclone\fR [<clone options>] | promotable <promotable options> | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] | \fBbundle\fR <bundle id>] [\fB\-\-disabled\fR] [\fB\-\-no\-default\-ops] [\fB\-\-wait\fR[=n]]
 Create specified resource. If \fBclone\fR is used a clone resource is created. If \fBpromotable\fR is used a promotable clone resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group. If \fBbundle\fR is specified, resource will be created inside of the specified bundle. If \fB\-\-disabled\fR is specified the resource is not started automatically. If \fB\-\-no\-default\-ops\fR is specified, only monitor operations are created for the resource and all other operations use default settings. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started. If 'n' is not specified it defaults to 60 minutes.
@@ -361,7 +361,7 @@ list [filter] [\fB\-\-nodesc\fR]
 Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.
 .TP
 describe <stonith agent> [\fB\-\-full\fR]
-Show options for specified stonith agent. If \fB\-\-full\fR is specified, all options including advanced ones are shown.
+Show options for specified stonith agent. If \fB\-\-full\fR is specified, all options including advanced and deprecated ones are shown.
 .TP
 create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-group\fR <group id> [\fB\-\-before\fR <stonith id> | \fB\-\-after\fR <stonith id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
 Create stonith device with specified type and options. If \fB\-\-group\fR is specified the stonith device is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added stonith device relatively to some stonith device already existing in the group. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.

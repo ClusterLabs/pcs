@@ -17,8 +17,10 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(self.temp_cib)
 
     def fixture_stonith_action(self):
+        # TODO fix validation with respect to deprecated parameters
+        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create Sa fence_apc ipaddr=i login=l action=reboot --force",
+            "stonith create Sa fence_apc ip=i ipaddr=i login=l username=u action=reboot --force",
             "Warning: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead\n"
         )

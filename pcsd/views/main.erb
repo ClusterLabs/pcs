@@ -864,48 +864,69 @@ Use the 'Add' button to submit the form.">
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/parameters-table-element">
-    <td class="reg">
-      <span style="float: left;">
-        {{param.name}}
-      </span>
-      {{#if param.description}}
-        <span style="margin-left: 0.5em" class="infoicon sprites" {{bind-attr title=param.description}}></span>
-      {{/if}}
-    </td>
-    <td>
-      {{input
-          size="30"
-          type="text"
-          name=param.form_name
-          value=param.cur_val
-          placeholder=param.default
-      }}
-      {{#if param.pcs_deprecated_warning}}
-        <br />
-        <span class="status-warning">{{param.pcs_deprecated_warning}}</span>
-      {{/if}}
-    </td>
+    <tr>
+      <td class="reg">
+        <span style="float: left;">
+          {{param.name}}
+        </span>
+        {{#if param.description}}
+          <span style="margin-left: 0.5em" class="infoicon sprites" {{bind-attr title=param.description}}></span>
+        {{/if}}
+      </td>
+      <td>
+        {{input
+            size="30"
+            type="text"
+            name=param.form_name
+            value=param.cur_val
+            placeholder=param.default
+        }}
+      </td>
+    </tr>
+    {{#if param.deprecated}}
+      <tr>
+        <td colspan="2">
+          <span class="status-warning">
+            &apos;{{param.name}}&apos; is deprecated{{#if param.deprecated_by}}, use
+              {{#each new_param in param.deprecated_by}}
+                &apos;{{new_param}}&apos;
+              {{/each}}
+              instead
+            {{/if}}
+          </span>
+        </td>
+      </tr>
+    {{/if}}
+    {{#if param.pcs_deprecated_warning}}
+      <tr>
+        <td colspan="2">
+          <span class="status-warning">{{param.pcs_deprecated_warning}}</span>
+        </td>
+      </tr>
+    {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/parameters-table">
   {{#if parameters}}
     <table style="clear:left; margin-top: 1em;" class="args-table">
       {{#if show_title}}
-        <tr>
-          <td
-              {{action toggleBody}}
-              {{bind-attr id=table_id_full}}
-              colspan="2"
-              nowrap
-          >
-            {{#if show_content}}
-              <span class="downarrow sprites"></span>
-            {{else}}
-              <span class="rightarrow sprites"></span>
-            {{/if}}
-            <span class="bold">{{table_name}}</span>
-          </td>
-        </tr>
+        <thead>
+          <tr>
+            <td
+                {{action toggleBody}}
+                {{bind-attr id=table_id_full}}
+                colspan="2"
+                nowrap
+            >
+              {{#if show_content}}
+                <span class="downarrow sprites"></span>
+              {{else}}
+                <span class="rightarrow sprites"></span>
+              {{/if}}
+              <span class="bold">{{table_name}}</span>
+            </td>
+          </tr>
+        </thead>
       {{/if}}
       <tbody {{bind-attr style=content_style}}>
         {{#each parameter in parameters}}
@@ -1035,6 +1056,16 @@ Use the 'Add' button to submit the form.">
             parameters=agent.advanced_parameters
         }}
         {{#if resource}}
+          {{#if agent.deprecated_parameters}}
+            {{parameters-table
+                table_id="deprecated_args"
+                table_id_suffix=table_id_suffix
+                table_name="Deprecated Arguments"
+                parameters=agent.deprecated_parameters
+            }}
+          {{/if}}
+        {{/if}}
+        {{#if resource}}
           <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
           .parents('form'),true); return false;" value="Apply Changes" style="margin-top: 1em;" />
           <input type="button" onclick="tree_view_onclick(curResource()); return false;"  value="Refresh" />
@@ -1107,6 +1138,16 @@ Use the 'Add' button to submit the form.">
             table_name="Advanced Arguments"
             parameters=agent.advanced_parameters
         }}
+        {{#if resource}}
+          {{#if agent.deprecated_parameters}}
+            {{parameters-table
+                table_id="deprecated_fenceargs"
+                table_id_suffix=table_id_suffix
+                table_name="Deprecated Arguments"
+                parameters=agent.deprecated_parameters
+            }}
+          {{/if}}
+        {{/if}}
         {{#if resource}}
           <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this).parents('form'), true, true); return false;" value="Apply Changes" style="margin-top: 1em;" />
           <input type="button" onclick="tree_view_onclick(curStonith()); return false;" value="Refresh" />

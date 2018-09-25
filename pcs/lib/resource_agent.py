@@ -343,7 +343,7 @@ def _find_valid_agent_by_name(
 
         return AbsentAgentClass(runner, name)
 
-class Agent(object):
+class Agent():
     """
     Base class for providing convinient access to an agent's metadata
     """
@@ -420,22 +420,40 @@ class Agent(object):
         """
         Get list of agent's parameters, each parameter is described by dict:
         {
-            name: name of parameter
+            name: name of the parameter
             longdesc: long description,
             shortdesc: short description,
-            type: data type od parameter,
+            type: data type of the parameter,
             default: default value,
-            required: True if is required parameter, False otherwise
+            required: True if it is a required parameter, False otherwise
+            advanced: True if the parameter is considered for advanced users
+            deprecated: True if it is a deprecated parameter, False otherwise
+            deprecated_by: list of parameters deprecating this one
+            obsoletes: name of a deprecated parameter obsoleted by this one
+            pcs_deprecated_warning: pcs originated warning
         }
         """
         params_element = self._get_metadata().find("parameters")
         if params_element is None:
             return []
+
         param_list = []
+        deprecated_by_dict = {}
         for param_el in params_element.iter("parameter"):
             param = self._get_parameter(param_el)
-            if not param["obsoletes"]:
-                param_list.append(param)
+            param_list.append(param)
+            if param["obsoletes"]:
+                obsoletes = param["obsoletes"]
+                if not obsoletes in deprecated_by_dict:
+                    deprecated_by_dict[obsoletes] = set()
+                deprecated_by_dict[obsoletes].add(param["name"])
+
+        for param in param_list:
+            if param["name"] in deprecated_by_dict:
+                param["deprecated_by"] = sorted(
+                    deprecated_by_dict[param["name"]]
+                )
+
         return param_list
 
 
@@ -458,7 +476,6 @@ class Agent(object):
             "type": value_type,
             "default": default_value,
             "required": is_true(parameter_element.get("required", "0")),
-            "advanced": False,
             "deprecated": is_true(parameter_element.get("deprecated", "0")),
             "obsoletes": parameter_element.get("obsoletes", None),
         })
@@ -624,6 +641,7 @@ class Agent(object):
             "required": False,
             "advanced": False,
             "deprecated": False,
+            "deprecated_by": [],
             "obsoletes": None,
             "pcs_deprecated_warning": "",
         }
@@ -812,7 +830,7 @@ class ResourceAgent(CrmAgent):
         ]
 
 
-class AbsentAgentMixin(object):
+class AbsentAgentMixin():
     def _load_metadata(self):
         return "<resource-agent/>"
 
@@ -912,10 +930,26 @@ class StonithAgent(CrmAgent):
                 filtered.append(new_param)
             else:
                 filtered.append(param)
-            # 'port' parameter is required by a fence agent, but it is filled
-            # automatically by pacemaker based on 'pcmk_host_map' or
-            # 'pcmk_host_list' parameter (defined in fenced metadata).
-            # Pacemaker marks the 'port' parameter as not required for us.
+
+        # 'port' parameter is required by a fence agent, but it is filled
+        # automatically by pacemaker based on 'pcmk_host_map' or
+        # 'pcmk_host_list' parameter (defined in fenced metadata). Pacemaker
+        # marks 'port' parameter as not required for us.
+        # It, however, doesn't mark any parameters deprecating 'port' as not
+        # required se we must do so ourselves.
+        port_related_params = set(["port"])
+        new_deprecated = set(["port"])
+        while new_deprecated:
+            current_deprecated = new_deprecated
+            new_deprecated = set()
+            for param in filtered:
+                if param["obsoletes"] in current_deprecated:
+                    new_deprecated.add(param["name"])
+                    port_related_params.add(param["name"])
+        for param in filtered:
+            if param["name"] in port_related_params:
+                param["required"] = False
+
         return filtered
 
     def _get_fenced_metadata(self):
