@@ -39,6 +39,7 @@
 - Support for promotable clone resources in pcsd and web UI ([rhbz#1542288])
 
 ### Fixed
+- Fixed encoding of the CIB_user_groups cookie in communication between nodes.
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as
   an error ([ghpull#166])
 - `pcs cluster cib-push diff-against=` exits gracefully with an error message if
