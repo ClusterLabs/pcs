@@ -1,0 +1,8 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "semi": [2, "always", {
+      "omitLastInOneLineBlock": true,
+    }],
+  }
+}
