@@ -458,10 +458,11 @@ def _get_auth_cookies(user, group_list):
     if user:
         cookies["CIB_user"] = re.sub(r"[^!-~]", "", user).replace(";", "")
     if group_list:
-        # python3 requires the value to be bytes not str
+        # cookies require string but base64encode returns bytes, so decode it...
         cookies["CIB_user_groups"] = base64.b64encode(
+            # python3 requires the value to be bytes not str
             " ".join(group_list).encode("utf-8")
-        )
+        ).decode("utf-8")
     return cookies
 
 
