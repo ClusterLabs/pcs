@@ -829,6 +829,16 @@ li.menuheader {
   margin-top: 1.5em;
 }
 
+.msg-box .error{
+  color: red;
+}
+.msg-box .warning{
+  color: #ff6600;
+}
+.msg-box .info{
+  color: white;
+}
+
 .status-error {
   color: red;
 }

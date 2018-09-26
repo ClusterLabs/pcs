@@ -1224,31 +1224,6 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
 
 }
 
-function create_cluster_dialog() {
-  var buttonOpts = [{
-    text: "Create Cluster",
-    id: "create_cluster_submit_btn",
-    click: function() {
-      $("#create_new_cluster").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
-      $("#create_cluster_submit_btn").button("option", "disabled", true);
-      checkClusterNodes();
-    }
-  },
-  {
-    text: "Cancel",
-    id: "create_cluster_cancel_btn",
-    click: function() {
-      $(this).dialog("close");
-    }
-  }]
-
-  $("#create_new_cluster").dialog({title: 'Create Cluster',
-    modal: false, resizable: false,
-    width: 'auto',
-    buttons: buttonOpts
-  });
-}
-
 function create_cluster_add_nodes() {
   node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
   var ring1_node_list = $("#create_new_cluster_form tr").has(

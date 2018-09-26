@@ -22,7 +22,7 @@
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_create_cluster" href="#" onclick="create_cluster_dialog();">Create New</a>
+	      <a id="manage_create_cluster" href="#" onclick="clusterSetup.dialog.create();">Create New</a>
 	    </div>
 	  </td>
 	</tr>
@@ -195,31 +195,7 @@
     </table>
   </form>
 </div>
-<div id="create_new_cluster" style="display: none;">
-  <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
-    <br>
-    Enter the names of the nodes you would like to use to create a cluster:
-    <br>
-    <br>
-    <table>
-      <tr><td align=right>Cluster Name:</td><td><input size="50" name="clustername" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 1:</td><td><input class="node" size="50" name="node-1" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 2:</td><td><input class="node" size="50" name="node-2" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 3:</td><td><input class="node" size="50" name="node-3" type="text"></input></td></tr>
-      <tr><td></td><td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
-    </table>
-    <table class="err_msg_table" style="width:100%">
-      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br>Please make sure pcsd is started on all nodes.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="addr0_addr1_mismatch_error_msg" style="display:none;">Ring 1 addresses do not match to Ring 0 addresses</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="cman_udpu_transport_error_msg" style="display:none;">Cannot use UDPU transport on CMAN cluster. Please select UDP transport in Advanced options.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="rhel_version_mismatch_error_msg" style="display:none;">Cannot create a cluster using nodes running different versions of RHEL.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="cman_mismatch_error_msg" style="display:none;">Cannot mix nodes running CMAN and nodes without CMAN in one cluster.</span></td></tr>
-    </table>
-    <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
-    <div id="advanced_cluster_create_options" style="display:none;">
-      <table>
+
 	<% transport_desc = "\
 Enables either udpu (unicast) or udp (multicast) cluster communication (default: udpu)"%>
 	<% encryption_desc = "\
@@ -339,108 +315,38 @@ is 0..255. Note that this is only valid on multicast transport types." %>
 Enables Redundant Ring Protocol (RRP) (default: off)
 
 Specify ring 1 address for each node if you want to use RRP." %>
-        <tr title="<%= h(transport_desc) %>">
-          <td align=right>Transport:</td>
-          <td>
-            <select name="config-transport" onchange="create_cluster_display_rrp(this.value);">
-                <option value="udpu" selected>UDPU (default)</option>
-                <option value="udp">UDP</option>
-            </select>
-          </td>
-        </tr>
-        <tr title="<%= h(encryption_desc) %>"><td align=right>Encryption:</td>
-          <td>
-            <select name="encryption">
-              <option selected="selected">(Default)</option>
-              <option value="1">On</option>
-              <option value="0">Off</option>
-            </select>
-          </td>
-        </tr>
-	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
-	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
-	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=text size=5 name="config-last_man_standing_window"> ms</td></tr>
-	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6:</td><td><input type=checkbox name="config-ipv6"></td></tr>
-        <tr title="<%= h(token_timeout) %>">
-          <td align="right">Token Timeout:</td>
-          <td><input type="text" size="5" name="config-token"> ms</td>
-        </tr>
-        <tr title="<%= h(token_coefficient) %>">
-          <td align="right">Token Timeout Coefficient:</td>
-          <td><input type="text" size="5" name="config-token_coefficient"> ms</td>
-        </tr>
-        <tr title="<%= h(join_timeout) %>">
-          <td align="right">Join Timeout:</td>
-          <td><input type="text" size="5" name="config-join"> ms</td>
-        </tr>
-        <tr title="<%= h(consensus_timeout) %>">
-          <td align="right">Consensus Timeout:</td>
-          <td><input type="text" size="5" name="config-consensus"> ms</td>
-        </tr>
-        <tr title="<%= h(miss_count_const) %>">
-          <td align="right">Missed Messages Count:</td>
-          <td><input type="text" size="5" name="config-miss_count_const"></td>
-        </tr>
-        <tr title="<%= h(fail_recv_const) %>">
-          <td align="right">Failures Count:</td>
-          <td><input type="text" size="5" name="config-fail_recv_const"></td>
-        </tr>
-      </table>
-      <div id="rrp_udp_transport" style="display: none;">
-        <br>
-        Redundant Ring Protocol settings for UDP transport:
-        <table>
-          <tr>
-              <td></td>
-              <td align="center">Ring 0</td>
-              <td align="center">Ring 1</td>
-          </tr>
-          <tr title="<%= h(rrp_addr_0_1_desc) %>">
-              <td align="right">Address:</td>
-              <td><input type="text" name="config-addr0"></td>
-              <td><input type="text" name="config-addr1"></td>
-          </tr>
-          <tr title="<%= h(rrp_broadcast_0_1_desc) %>">
-              <td align="right">Use Broadcast:</td>
-              <td><input type="checkbox" name="config-broadcast0"></td>
-              <td><input type="checkbox" name="config-broadcast1"></td>
-          </tr>
-          <tr title="<%= h(rrp_mcast_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">Multicast Address:</td>
-              <td><input type="text" name="config-mcast0"></td>
-              <td><input type="text" name="config-mcast1"></td>
-          </tr>
-          <tr title="<%= h(rrp_mcastport_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">Multicast Port:</td>
-              <td><input type="text" name="config-mcastport0"></td>
-              <td><input type="text" name="config-mcastport1"></td>
-          </tr>
-          <tr title="<%= h(rrp_ttl_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">TTL:</td>
-              <td><input type="text" name="config-ttl0"></td>
-              <td><input type="text" name="config-ttl1"></td>
-          </tr>
-        </table>
-      </div>
-      <div id="rrp_udpu_transport">
-        <br>
-        Redundant Ring Protocol settings for UDPU transport:
-        <table title="<%= h(rrp_addr1_desc) %>">
-          <tr>
-            <td align=right>Node 1 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-1" type="text"></input></td>
-          </tr>
-          <tr>
-            <td align=right>Node 2 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-2" type="text"></input></td>
-          </tr>
-          <tr>
-            <td align=right>Node 3 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-3" type="text"></input></td>
-          </tr>
-        </table>
-      </div>
-    </div>
+
+<div id="create_new_cluster" style="display: none;">
+  <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
+    <br>
+    Enter the names of the nodes you would like to use to create a cluster:
+    <br>
+    <br>
+
+    <table>
+      <tr>
+        <td align=right>Cluster Name:</td>
+        <td><input size="50" name="clustername" type="text"></input></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 1:</td>
+        <td><input class="node" size="50" name="node-1" type="text"/></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 2:</td>
+        <td><input class="node" size="50" name="node-2" type="text"/></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 3:</td>
+        <td><input class="node" size="50" name="node-3" type="text"/></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td>
+      </tr>
+    </table>
+
+    <table class="msg-box" style="width:100%"><tr><td/></tr></table>
+
   </form>
 </div>
