@@ -11,6 +11,7 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_version,
+    skip_unless_root,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -140,7 +141,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
         assert r == 0
 
 
-
+@skip_unless_root()
 class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
@@ -156,6 +157,7 @@ class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
         )
 
 
+@skip_unless_root()
 class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)

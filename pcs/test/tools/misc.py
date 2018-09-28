@@ -154,6 +154,12 @@ def skip_unless_lsb_network_available():
         "lsb:network resource agent is not available"
     )
 
+def skip_unless_root():
+    return skipUnless(
+        os.getuid() == 0,
+        "Root user required"
+    )
+
 def create_patcher(target_prefix_or_module):
     """
     Return function for patching tests with preconfigured target prefix
