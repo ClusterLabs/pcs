@@ -71,9 +71,9 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                          falls below 10%.
 {0}
             Default operations:
-              start: interval=0s timeout=10
-              stop: interval=0s timeout=10
-              monitor: interval=10 start-delay=0 timeout=10
+              start: interval=0s timeout=10s
+              stop: interval=0s timeout=10s
+              monitor: interval=10s start-delay=0s timeout=10s
             """.format(advanced_params if advanced else "")
         )
 
@@ -542,7 +542,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
 
         self.assert_pcs_success(
             "resource create --no-default-ops state ocf:pacemaker:Stateful",
-            "Warning: changing a monitor operation interval from 10 to 11 to"
+            "Warning: changing a monitor operation interval from 10s to 11 to"
                 " make the operation unique\n"
         )
 
@@ -551,7 +551,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                 Error: operation monitor with interval 10s already specified for state:
-                monitor interval=10 role=Master timeout=20 (state-monitor-interval-10)
+                monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
                 """
             )
         )
@@ -561,7 +561,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                 Error: operation monitor with interval 10s already specified for state:
-                monitor interval=10 role=Master timeout=20 (state-monitor-interval-10)
+                monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
                 """
             )
         )
@@ -573,8 +573,8 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success("resource show state", outdent(
             """\
              Resource: state (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (state-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (state-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (state-monitor-interval-11)
                           monitor interval=15 role=Master (state-monitor-interval-15)
             """
         ))
@@ -2220,12 +2220,12 @@ monitor interval=20 (A-monitor-interval-20)
         # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful",
-            "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
+            "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n"
         )
 
         self.assert_pcs_success(
             "resource create --no-default-ops dummy2 ocf:pacemaker:Stateful",
-            "Warning: changing a monitor operation interval from 10 to 11 to make the operation unique\n"
+            "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n"
         )
 
         # try to unclone a non-cloned resource
@@ -2251,13 +2251,13 @@ monitor interval=20 (A-monitor-interval-20)
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
              Clone: dummy2-master
               Meta Attrs: promotable=true
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2269,11 +2269,11 @@ monitor interval=20 (A-monitor-interval-20)
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2293,11 +2293,11 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2309,11 +2309,11 @@ monitor interval=20 (A-monitor-interval-20)
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2329,11 +2329,11 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2345,11 +2345,11 @@ monitor interval=20 (A-monitor-interval-20)
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2366,14 +2366,14 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
              Clone: gr-master
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
             """
         ))
 
@@ -2384,11 +2384,11 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
              Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
             """
         ))
 
@@ -2407,11 +2407,11 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -2425,11 +2425,11 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10 role=Master timeout=20 (dummy1-monitor-interval-10)
-                            monitor interval=11 role=Slave timeout=20 (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10 role=Master timeout=20 (dummy2-monitor-interval-10)
-                          monitor interval=11 role=Slave timeout=20 (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
             """
         ))
 
@@ -4406,11 +4406,11 @@ Ticket Constraints:
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4422,12 +4422,12 @@ Ticket Constraints:
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4439,13 +4439,13 @@ Ticket Constraints:
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4456,12 +4456,12 @@ Ticket Constraints:
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4475,12 +4475,12 @@ Ticket Constraints:
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4494,12 +4494,12 @@ Ticket Constraints:
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Meta Attrs: target-role=Stopped
-                  Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
+                  Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
                 """
             )
         )
@@ -4896,21 +4896,21 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         status = outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
              Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
              Clone: GRC-clone
               Group: GRC
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
             """
         )
 
@@ -4940,30 +4940,30 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Group: GR
               Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
              Clone: DC-clone
               Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
              Clone: GRC-clone
               Meta Attrs: resource-stickiness=0
               Group: GRC
                Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
                 Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                 Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
             """
         ))
 
@@ -4988,24 +4988,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
              Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
              Clone: GRC-clone
               Group: GRC
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
                 Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
             """
         ))
 
@@ -5029,25 +5029,25 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
              Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
              Clone: GRC-clone
               Meta Attrs: resource-stickiness=0
               Group: GRC
                Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
                 Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                 Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
             """
         ))
 
@@ -5071,26 +5071,26 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Group: GR
               Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
              Clone: DC-clone
               Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
              Clone: GRC-clone
               Group: GRC
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
+                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
             """
         ))
 

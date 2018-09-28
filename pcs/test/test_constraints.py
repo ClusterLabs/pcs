@@ -984,7 +984,7 @@ Ticket Constraints:
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
         )
         ac(o, """\
-Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+Warning: changing a monitor operation interval from 10s to 11 to make the operation unique
 """)
         assert r == 0
 
@@ -1103,7 +1103,7 @@ Ticket Constraints:
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
         )
         ac(output, """\
-Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+Warning: changing a monitor operation interval from 10s to 11 to make the operation unique
 """)
         self.assertEqual(0, returnVal)
 

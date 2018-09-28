@@ -73,22 +73,22 @@ class NodeAddRemote(RemoteTest):
                     </instance_attributes>
                     <operations>
                         <op id="node-name-migrate_from-interval-0s"
-                            interval="0s" name="migrate_from" timeout="60"
+                            interval="0s" name="migrate_from" timeout="60s"
                         />
                         <op id="node-name-migrate_to-interval-0s" interval="0s"
-                            name="migrate_to" timeout="60"
+                            name="migrate_to" timeout="60s"
                         />
                         <op id="node-name-monitor-interval-60s" interval="60s"
-                            name="monitor" timeout="30"
+                            name="monitor" timeout="30s"
                         />
                         <op id="node-name-reload-interval-0s" interval="0s"
-                            name="reload" timeout="60"
+                            name="reload" timeout="60s"
                         />
                         <op id="node-name-start-interval-0s" interval="0s"
-                            name="start" timeout="60"
+                            name="start" timeout="60s"
                         />
                         <op id="node-name-stop-interval-0s" interval="0s"
-                            name="stop" timeout="60"
+                            name="stop" timeout="60s"
                         />
                     </operations>
                 </primitive>
@@ -110,7 +110,7 @@ class NodeAddRemote(RemoteTest):
                     </instance_attributes>
                     <operations>
                         <op id="node-name-monitor-interval-60s" interval="60s"
-                            name="monitor" timeout="30"
+                            name="monitor" timeout="30s"
                         />
                     </operations>
                 </primitive>
@@ -132,7 +132,7 @@ class NodeAddRemote(RemoteTest):
                     </instance_attributes>
                     <operations>
                         <op id="A-monitor-interval-60s" interval="60s"
-                            name="monitor" timeout="30"
+                            name="monitor" timeout="30s"
                         />
                     </operations>
                 </primitive>
@@ -388,7 +388,7 @@ class NodeRemoveRemote(RemoteTest):
                     </instance_attributes>
                     <operations>
                         <op id="NODE-NAME-monitor-interval-60s" interval="60s"
-                            name="monitor" timeout="30"
+                            name="monitor" timeout="30s"
                         />
                     </operations>
                 </primitive>

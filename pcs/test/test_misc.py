@@ -27,6 +27,6 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
             "resource --full",
             outdent("""\
              Resource: dummy (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
             """)
         )

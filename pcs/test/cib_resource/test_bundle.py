@@ -690,7 +690,7 @@ class BundleShow(TestCase, AssertPcsMixin):
               Docker: image=pcs:test
               Network: control-port=1234
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
         ))
 
@@ -725,6 +725,6 @@ class BundleShow(TestCase, AssertPcsMixin):
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
               Meta Attrs: is-managed=false target-role=Stopped
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10 timeout=20 (A-monitor-interval-10)
+               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
         ))

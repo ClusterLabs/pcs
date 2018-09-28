@@ -438,26 +438,26 @@ class SuccessOperations(ResourceTest):
                     type="Stateful"
                 >
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" role="Master" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" role="Master" timeout="20s"
                         />
                         <op id="R-monitor-interval-11" interval="11"
-                            name="monitor" role="Slave" timeout="20"
+                            name="monitor" role="Slave" timeout="20s"
                         />
                         <op id="R-notify-interval-0s" interval="0s"
-                            name="notify" timeout="5"
+                            name="notify" timeout="5s"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
-                            timeout="20"
+                            timeout="20s"
                         />
                         <op id="R-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
+                            timeout="20s"
                         />
                     </operations>
                 </primitive>
             </resources>"""
             ,
-            "Warning: changing a monitor operation interval from 10 to 11 to"
+            "Warning: changing a monitor operation interval from 10s to 11 to"
                 " make the operation unique\n"
         )
 

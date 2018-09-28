@@ -10,12 +10,49 @@ env:
     # systemd is not running in the container
     #   pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance
     # difference in url data encoding
-    #   pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data"
+    #   pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data
+    # newer version of pacemaker required
+    #   pcs.test.cib_resource.test_bundle.BundleShow.test_all
+    #   pcs.test.cib_resource.test_bundle.BundleShow.test_resource
+    #   pcs.test.cib_resource.test_create.SuccessOperations.test_adapt_second_op_interval
+    #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_fail_when_server_already_used
+    #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success
+    #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success_no_default_ops
+    #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
+    #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
+    #   pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
+    #   pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraintAutocorrect
+    #   pcs.test.test_misc.OldCibPushTest.test_warning_old_push
+    #   pcs.test.test_resource.Resource.testAddOperation
+    #   pcs.test.test_resource.Resource.testUncloneMaster
+    #   pcs.test.test_resource.Resource.test_relocate_stickiness
+    #   pcs.test.test_resource.Resource.test_resource_enable_more_resources
+    #   pcs.test.test_resource.ResourceDescribe.test_full
+    #   pcs.test.test_resource.ResourceDescribe.test_success
+    #   pcs.test.test_resource.ResourceDescribe.test_success_guess_name
     - DIST=fedora29
       RUBY_BIN=/usr/bin/ruby
       PYTHON_TEST_ARGS="--all-but
         pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance
-        pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data"
+        pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data
+        pcs.test.cib_resource.test_bundle.BundleShow.test_all
+        pcs.test.cib_resource.test_bundle.BundleShow.test_resource
+        pcs.test.cib_resource.test_create.SuccessOperations.test_adapt_second_op_interval
+        pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_fail_when_server_already_used
+        pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success
+        pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success_no_default_ops
+        pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
+        pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
+        pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
+        pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraintAutocorrect
+        pcs.test.test_misc.OldCibPushTest.test_warning_old_push
+        pcs.test.test_resource.Resource.testAddOperation
+        pcs.test.test_resource.Resource.testUncloneMaster
+        pcs.test.test_resource.Resource.test_relocate_stickiness
+        pcs.test.test_resource.Resource.test_resource_enable_more_resources
+        pcs.test.test_resource.ResourceDescribe.test_full
+        pcs.test.test_resource.ResourceDescribe.test_success
+        pcs.test.test_resource.ResourceDescribe.test_success_guess_name"
 
 services:
   - docker
