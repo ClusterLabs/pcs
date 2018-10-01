@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.166] - 2018-09-30
 
 ### Fixed
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
