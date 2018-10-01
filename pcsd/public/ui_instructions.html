@@ -8,14 +8,16 @@
   <h1>Pcs WebUI instructions</h1>
   <p>
   WebUI is not a part of pcs repository but it has its own
-  <a href="https://github.com/idevat/picus">repository</a>.
+  <a href="https://github.com/idevat/pcs-web-ui">repository</a>.
   </p>
   <p>
-  You can clone <a href="https://github.com/idevat/picus">WebUI repository</a>
+  You can clone <a href="https://github.com/idevat/pcs-web-ui">WebUI repository</a>
   and build web application into pcs by:
   </p>
   <code>
-    ember build --environment=production --output-path=[/path/to/]pcs/pcsd/public/ui/
+    $ npm install
+    $ npm run build
+    $ mv ./build [/path/to/]pcs/pcsd/public/ui
   </code>
   <p>
   For more details see instructions in <a href="https://github.com/idevat/picus/blob/master/README.md">README.md</a>

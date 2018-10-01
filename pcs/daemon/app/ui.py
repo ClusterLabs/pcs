@@ -96,10 +96,8 @@ def get_routes(
     # if SPA index exists.
 
     return [
-        (f"{url_prefix}assets/(.*)", StaticFileMayBe, static_path("assets")),
-        (f"{url_prefix}fonts/(.*)", StaticFileMayBe, static_path("fonts")),
-        (f"{url_prefix}(crossdomain.xml)", StaticFileMayBe, static_path()),
-        (f"{url_prefix}login-status", LoginStatus, sessions),
+        (f"{url_prefix}static/(.*)", StaticFileMayBe, static_path("static")),
+        (f"{url_prefix}manifest.json", StaticFileMayBe, static_path()),
         (f"{url_prefix}login", Login, {**sessions, **pages}),
         (f"{url_prefix}logout", Logout, sessions),
         (f"{url_prefix}.*", SPAHandler, pages),

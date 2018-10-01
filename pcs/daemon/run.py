@@ -61,12 +61,12 @@ def configure_app(
         )
 
         if not disable_gui:
-            ui_root_url = "/ui/"
             routes.extend(
-                [(r"/", RedirectHandler, dict(url=ui_root_url))]
+                # old web ui by default
+                [(r"/", RedirectHandler, dict(url="/manage"))]
                 +
                 ui.get_routes(
-                    url_prefix=ui_root_url,
+                    url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
                         public_dir,
