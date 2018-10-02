@@ -28,9 +28,6 @@ setup(
         'bash_completion',
         'pcs.8',
         'pcs',
-        'test/resources/*.xml',
-        'test/resources/*.conf',
-        'test/resources/qdevice-certs/*'
     ]},
     zip_safe=False,
     entry_points={
