@@ -23,7 +23,7 @@ setup(
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='https://github.com/ClusterLabs/pcs',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*.test.*", "*.test"]),
     package_data={'pcs':[
         'bash_completion',
         'pcs.8',
