@@ -8,7 +8,6 @@ from pcs.test.tools.command_env import get_env_tools
 
 
 class Create(TestCase):
-    # TODO fix validation with respect to deprecated parameters
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.agent_name = "test_simple"
@@ -23,9 +22,6 @@ class Create(TestCase):
                         />
                         <nvpair id="stonith-test-instance_attributes-must-set-new"
                             name="must-set-new" value="B"
-                        />
-                        <nvpair id="stonith-test-instance_attributes-must-set-old"
-                            name="must-set-old" value="A"
                         />
                     </instance_attributes>
                     <operations>
@@ -72,7 +68,6 @@ class Create(TestCase):
             meta_attributes={},
             instance_attributes={
                 "must-set": "value",
-                "must-set-old": "A",
                 "must-set-new": "B",
             }
         )
@@ -94,7 +89,6 @@ class Create(TestCase):
             meta_attributes={},
             instance_attributes={
                 "must-set": "value",
-                "must-set-old": "A",
                 "must-set-new": "B",
             },
             wait=self.timeout
@@ -109,7 +103,6 @@ class Create(TestCase):
 
 
 class CreateInGroup(TestCase):
-    # TODO fix validation with respect to deprecated parameters
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.agent_name = "test_simple"
@@ -125,9 +118,6 @@ class CreateInGroup(TestCase):
                         />
                         <nvpair id="stonith-test-instance_attributes-must-set-new"
                             name="must-set-new" value="B"
-                        />
-                        <nvpair id="stonith-test-instance_attributes-must-set-old"
-                            name="must-set-old" value="A"
                         />
                     </instance_attributes>
                     <operations>
@@ -176,7 +166,6 @@ class CreateInGroup(TestCase):
             meta_attributes={},
             instance_attributes={
                 "must-set": "value",
-                "must-set-old": "A",
                 "must-set-new": "B",
             }
         )
@@ -199,7 +188,6 @@ class CreateInGroup(TestCase):
             meta_attributes={},
             instance_attributes={
                 "must-set": "value",
-                "must-set-old": "A",
                 "must-set-new": "B",
             },
             wait=self.timeout

@@ -66,10 +66,9 @@ def create(
     )
 
     report_processor.process_list(
-        resource_agent.validate_parameters(
+        resource_agent.validate_parameters_create(
             instance_attributes,
-            parameters_type=resource_type,
-            allow_invalid=allow_invalid_instance_attributes,
+            force=allow_invalid_instance_attributes,
         )
     )
 

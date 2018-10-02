@@ -900,8 +900,13 @@ def resource_update(dummy_lib, args, modifiers, deal_with_guest_change=True):
         instance_attributes = dom.createElement("instance_attributes")
         instance_attributes.setAttribute("id", res_id + "-instance_attributes")
         resource.appendChild(instance_attributes)
+        current_params = {}
     else:
         instance_attributes = instance_attributes[0]
+        current_params = {
+            ia.getAttribute("name"): ia.getAttribute("value")
+            for ia in instance_attributes.getElementsByTagName("nvpair")
+        }
 
     params = utils.convert_args_to_tuples(ra_values)
 
@@ -918,10 +923,10 @@ def resource_update(dummy_lib, args, modifiers, deal_with_guest_change=True):
                     resClass, resProvider, resType
                 ).full_name
             )
-        report_list = metadata.validate_parameters(
+        report_list = metadata.validate_parameters_update(
+            current_params,
             dict(params),
-            allow_invalid=modifiers.get("--force"),
-            update=True
+            force=modifiers.get("--force")
         )
         if report_list:
             utils.process_library_reports(report_list)

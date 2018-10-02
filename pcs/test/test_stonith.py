@@ -6,6 +6,7 @@ from pcs import stonith
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
@@ -100,8 +101,6 @@ class StonithTest(TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
 
     def testStonithCreation(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
             stdout_full=(
@@ -126,12 +125,12 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
-            "Error: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing, use --force to override\n"
+            "Error: required stonith options 'ip', 'username' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
             "stonith create test2 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
         self.assert_pcs_fail(
@@ -142,12 +141,12 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test9 fence_apc pcmk_status_action=xxx",
-            "Error: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing, use --force to override\n"
+            "Error: required stonith options 'ip', 'username' are missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
             "stonith create test9 fence_apc pcmk_status_action=xxx --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
@@ -164,19 +163,19 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "stonith create test3 fence_ilo ipaddr=test",
-            "Error: required stonith options 'login', 'username' are missing, use --force to override\n"
+            "stonith create test3 fence_ilo ip=test",
+            "Error: required stonith option 'username' is missing, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "stonith create test3 fence_ilo ipaddr=test --force",
-            "Warning: required stonith options 'login', 'username' are missing\n"
+            "stonith create test3 fence_ilo ip=test --force",
+            "Warning: required stonith option 'username' is missing\n"
         )
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
         self.assert_pcs_success(
-            'stonith create apc-fencing fence_apc ip=i ipaddr=morph-apc login=apc username=u passwd=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05',
+            'stonith create apc-fencing fence_apc ip=morph-apc username=apc password=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05',
         )
 
         output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
@@ -186,7 +185,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success("stonith show apc-fencing", outdent(
             """\
              Resource: apc-fencing (class=stonith type=fence_apc)
-              Attributes: ip=i ipaddr=morph-apc login=apc passwd=apc pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 switch=1 username=u
+              Attributes: ip=morph-apc password=apc pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 switch=1 username=apc
               Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
             """
         ))
@@ -197,14 +196,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "stonith update test3 bad_ipaddr=test",
+            "stonith update test3 bad_ipaddr=test username=login",
             stdout_regexp=(
                 "^Error: invalid stonith option 'bad_ipaddr', allowed options"
                 " are: [^\n]+, use --force to override\n$"
             )
         )
 
-        output, returnVal = pcs(temp_cib, "stonith update test3 login=testA")
+        output, returnVal = pcs(temp_cib, "stonith update test3 username=testA")
         assert returnVal == 0
         assert output == "",[output]
 
@@ -219,14 +218,14 @@ class StonithTest(TestCase, AssertPcsMixin):
  Resource: test2 (class=stonith type=fence_apc)
   Operations: monitor interval=60s (test2-monitor-interval-60s)
  Resource: test3 (class=stonith type=fence_ilo)
-  Attributes: ipaddr=test login=testA
+  Attributes: ip=test username=testA
   Operations: monitor interval=60s (test3-monitor-interval-60s)
 """)
         assert returnVal == 0
 
         self.assert_pcs_success(
             "stonith create test-fencing fence_apc 'pcmk_host_list=rhel7-node1 rhel7-node2' op monitor interval=61s --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
         self.pcs_runner.corosync_conf_file = rc("corosync.conf")
@@ -245,7 +244,7 @@ class StonithTest(TestCase, AssertPcsMixin):
              Resource: test2 (class=stonith type=fence_apc)
               Operations: monitor interval=60s (test2-monitor-interval-60s)
              Resource: test3 (class=stonith type=fence_ilo)
-              Attributes: ipaddr=test login=testA
+              Attributes: ip=test username=testA
               Operations: monitor interval=60s (test3-monitor-interval-60s)
              Resource: test-fencing (class=stonith type=fence_apc)
               Attributes: pcmk_host_list="rhel7-node1 rhel7-node2"
@@ -271,6 +270,46 @@ class StonithTest(TestCase, AssertPcsMixin):
               Options:
             """
         ))
+
+    def test_stonith_create_does_not_require_deprecated(self):
+        # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
+        self.assert_pcs_fail(
+            "stonith create test2 fence_apc",
+            "Error: required stonith options 'ip', 'username' are missing, "
+                "use --force to override\n"
+        )
+
+    def test_stonith_create_deprecated_and_obsoleting(self):
+        # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
+        self.assert_pcs_success(
+            "stonith create S fence_apc ip=i login=l"
+        )
+        self.assert_pcs_success(
+            "stonith show S",
+            outdent(
+            """\
+             Resource: S (class=stonith type=fence_apc)
+              Attributes: ip=i login=l
+              Operations: monitor interval=60s (S-monitor-interval-60s)
+            """
+            )
+        )
+
+    def test_stonith_create_both_deprecated_and_obsoleting(self):
+        # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
+        self.assert_pcs_success(
+            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u"
+        )
+        self.assert_pcs_success(
+            "stonith show S",
+            outdent(
+            """\
+             Resource: S (class=stonith type=fence_apc)
+              Attributes: ip=i1 ipaddr=i2 login=l username=u
+              Operations: monitor interval=60s (S-monitor-interval-60s)
+            """
+            )
+        )
 
     def test_stonith_create_provides_unfencing(self):
         output, returnVal = pcs(
@@ -319,17 +358,15 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assertEqual(0, returnVal)
 
     def test_stonith_create_action(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_fail(
-            "stonith create test fence_apc ipaddr=i login=l action=a ip=i username=u",
+            "stonith create test fence_apc ip=i username=u action=a",
             "Error: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead,"
                 " use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l action=a ip=i username=u --force",
+            "stonith create test fence_apc ip=i username=u action=a --force",
             "Warning: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead\n"
         )
@@ -339,17 +376,15 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: action=a ip=i ipaddr=i login=l username=u
+                  Attributes: action=a ip=i username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
         )
 
     def test_stonith_create_action_empty(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l action= ip=i username=u"
+            "stonith create test fence_apc ip=i username=u action="
         )
 
         self.assert_pcs_success(
@@ -358,17 +393,15 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: action= ip=i ipaddr=i login=l username=u
+                  Attributes: action= ip=i username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
         )
 
     def test_stonith_update_action(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create test fence_apc ipaddr=i login=l ip=i username=u"
+            "stonith create test fence_apc ip=i username=u"
         )
 
         self.assert_pcs_success(
@@ -376,7 +409,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i ipaddr=i login=l username=u
+                  Attributes: ip=i username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -400,7 +433,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i ipaddr=i login=l username=u action=a
+                  Attributes: ip=i username=u action=a
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -415,7 +448,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i ipaddr=i login=l username=u
+                  Attributes: ip=i username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )
@@ -433,11 +466,9 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def testPcmkHostList(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_success(
             "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
@@ -449,37 +480,35 @@ class StonithTest(TestCase, AssertPcsMixin):
         assert returnVal == 0
 
     def testStonithDeleteRemovesLevel(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
 
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-ipmi fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n1-apc2 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc1 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc2 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success(
             "stonith create n2-apc3 fence_apc --force",
-            "Warning: required stonith options 'ip', 'ipaddr', 'login', 'username' are missing\n"
+            "Warning: required stonith options 'ip', 'username' are missing\n"
         )
         self.assert_pcs_success_all([
             "stonith level add 1 rh7-1 n1-ipmi",
@@ -604,13 +633,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
 
     def testNoStonithWarning(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         corosync_conf = rc("corosync_conf")
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
         assert "No stonith devices and stonith-enabled is not false" in o
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ip=i ipaddr=ip login=lgn username=u pcmk_host_argument=node1")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
@@ -637,10 +664,8 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.config_lines = []
 
     def fixture_stonith_resource(self, name):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.assert_pcs_success(
-            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2' ip=i ipaddr=ip login=lgn username=u"
+            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2' ip=i username=u"
             .format(name=name)
         )
 
@@ -1082,8 +1107,6 @@ class LevelConfig(LevelTestsBase):
         )
 
     def test_all_posibilities(self):
-        # TODO fix validation with respect to deprecated parameters
-        # ipaddr, login
         self.fixture_full_configuration()
         self.assert_pcs_success("stonith level config", self.config)
         self.assert_pcs_success("stonith level", self.config)
@@ -1103,13 +1126,13 @@ class LevelConfig(LevelTestsBase):
             self.full_config.format(
                 devices="""
  Resource: F1 (class=stonith type=fence_apc)
-  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
+  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F1-monitor-interval-60s)
  Resource: F2 (class=stonith type=fence_apc)
-  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
+  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F2-monitor-interval-60s)
  Resource: F3 (class=stonith type=fence_apc)
-  Attributes: ip=i ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2" username=u
+  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
   Operations: monitor interval=60s (F3-monitor-interval-60s)\
 """,
                 levels=("\n" + "\n".join(indent(self.config_lines, 2)))
@@ -1485,3 +1508,263 @@ class SbdDeviceSetup(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["a=A"])
         self.assertEqual(cm.exception.message, "No device defined")
+
+
+class StonithUpdate(ResourceTest):
+    def setUp(self):
+        # use our temp file instead of parent's one so parallel tests don't
+        # overwrite it
+        self.temp_cib = temp_cib
+        super().setUp()
+        self.fixture_create_stonith()
+
+    def fixture_create_stonith(self):
+        self.assert_effect(
+            "stonith create S fence_apc ip=i login=l ssh=0 debug=d",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_set_deprecated_param(self):
+        self.assert_effect(
+            "stonith update S debug=D",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="D"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unset_deprecated_param(self):
+        self.assert_effect(
+            "stonith update S debug=",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unset_deprecated_required_param(self):
+        self.assert_pcs_fail(
+            "stonith update S login=",
+            "Error: required stonith option 'username' is missing, use --force "
+                "to override\n"
+        )
+
+    def test_set_obsoleting_param(self):
+        self.assert_effect(
+            "stonith update S ssh=1",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="1"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unset_obsoleting_param(self):
+        self.assert_effect(
+            "stonith update S ssh=",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unset_obsoleting_required_param(self):
+        self.assert_pcs_fail(
+            "stonith update S ip=",
+            "Error: required stonith option 'ip' is missing, use --force "
+                "to override\n"
+        )
+
+    def test_unset_deprecated_required_set_obsoleting(self):
+        self.assert_effect(
+            "stonith update S login= username=u",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                        <nvpair id="S-instance_attributes-username"
+                            name="username" value="u"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_unset_obsoleting_required_set_deprecated(self):
+        self.assert_effect(
+            "stonith update S ip= ipaddr=I",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                        <nvpair id="S-instance_attributes-ipaddr" name="ipaddr"
+                            value="I"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )
+
+    def test_set_both_deprecated_and_obsoleting(self):
+        self.assert_effect(
+            "stonith update S ip=I1 ipaddr=I2",
+            """
+            <resources>
+                <primitive class="stonith" id="S" type="fence_apc">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="I1"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                        <nvpair id="S-instance_attributes-ipaddr" name="ipaddr"
+                            value="I2"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+        )

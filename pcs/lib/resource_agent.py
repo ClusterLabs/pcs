@@ -6,7 +6,7 @@ import re
 from pcs import settings
 from pcs.common import report_codes
 from pcs.common.tools import xml_fromstring
-from pcs.lib import reports
+from pcs.lib import reports, validate
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.pacemaker.values import is_true
 
@@ -347,6 +347,8 @@ class Agent():
     """
     Base class for providing convinient access to an agent's metadata
     """
+    _agent_type_label = "agent"
+
     def __init__(self, runner):
         """
         create an instance which reads metadata by itself on demand
@@ -480,64 +482,177 @@ class Agent():
             "obsoletes": parameter_element.get("obsoletes", None),
         })
 
-    def validate_parameters(
-        self, parameters,
-        parameters_type="resource",
-        allow_invalid=False,
-        update=False
-    ):
-        forceable = report_codes.FORCE_OPTIONS if not allow_invalid else None
-        severity = (
-            ReportItemSeverity.ERROR if not allow_invalid
-            else ReportItemSeverity.WARNING
+    def _get_parameter_obsoleting_chains(self):
+        """
+        get a dict describing parameters obsoleting
+
+        Each key is a parameter which obsoletes parameters but is not itself
+        obsoleted by any other parameter. Values are lists of obsoleted
+        parameters: the first one is obsoleted by the key, the second one is
+        obsoleted by the first one and so on.
+        """
+        # In meta-data, each param can have 'obsoletes' attribute containing a
+        # name of a single param obsoleted by the param in question. That means:
+        # 1) a deprecated param can be obsoleted by more than one param
+        # 2) a param can obsolete none or one param
+        # 3) there may be a loop (A obsoletes B, B obsoletes A)
+        # This info is crucial when dealing with obsoleting and deprecated
+        # params and it is reflected in the following piece of code.
+
+        # first, get simple obsoleting mapping
+        new_old = {
+            param["name"]: param["obsoletes"]
+            for param in self.get_parameters()
+            if param["obsoletes"]
+        }
+
+        chains = {}
+        # for each param which is not obsoleted
+        for new_param in new_old:
+            # start a new chain
+            deprecated_by_new = []
+            current_new = new_param
+            # while current parameter obsoletes anything
+            while current_new in new_old:
+                # get the obsoleted parameter
+                old = new_old[current_new]
+                # if there is a loop, break
+                if old in deprecated_by_new or old == current_new:
+                    break
+                # add the obsoleted parameter to the chain
+                deprecated_by_new.append(old)
+                # check if the obsoleted parameter obsoletes anything
+                current_new = old
+            if deprecated_by_new:
+                chains[new_param] = deprecated_by_new
+        return chains
+
+    def validate_parameters_create(self, parameters, force=False):
+        # This is just a basic validation checking that required parameters are
+        # set and all set parameters are known to an agent. Missing checks are:
+        # 1. values checks - if a param is an integer, then "abc" is not valid
+        # 2. warnings should be emitted when a deprecated param is set
+        # 3. errors should be emitted when a deprecated parameter and a
+        #    parameter obsoleting it are set at the same time
+        # 4. possibly some other checks
+        # All of these have been missing in pcs since ever (ad 1. agents have
+        # never provided enough info for us to do such validations, ad 2. and
+        # 3. there were no deprecated parameters before). The checks should be
+        # implemented in agents themselves, so I'm not adding them now either.
+        report_items = []
+
+        # report unknown parameters
+        report_items.extend(
+            validate.names_in(
+                {param["name"] for param in self.get_parameters()},
+                parameters.keys(),
+                self._agent_type_label,
+                report_codes.FORCE_OPTIONS,
+                force
+            )
         )
 
-        report_list = []
-        bad_opts, missing_req_opts = self.validate_parameters_values(
+        # report missing required parameters
+        missing_parameters = self._find_missing_required_parameters(
             parameters
         )
-
-        if bad_opts:
-            report_list.append(reports.invalid_options(
-                bad_opts,
-                sorted([attr["name"] for attr in self.get_parameters()]),
-                parameters_type,
+        if missing_parameters:
+            forcible, severity = self._validate_report_forcible_severity(force)
+            report_items.append(reports.required_option_is_missing(
+                sorted(missing_parameters),
+                self._agent_type_label,
                 severity=severity,
-                forceable=forceable,
+                forceable=forcible,
             ))
 
-        if not update and missing_req_opts:
-            report_list.append(reports.required_option_is_missing(
-                missing_req_opts,
-                parameters_type,
-                severity=severity,
-                forceable=forceable,
-            ))
+        return report_items
 
-        return report_list
+    def validate_parameters_update(
+        self,
+        current_parameters,
+        new_parameters,
+        force=False
+    ):
+        # This is just a basic validation checking that required parameters are
+        # set and all set parameters are known to an agent. Missing checks are:
+        # 1. values checks - if a param is an integer, then "abc" is not valid
+        # 2. warnings should be emitted when a deprecated param is set
+        # 3. errors should be emitted when a deprecated parameter and a
+        #    parameter obsoleting it are set at the same time
+        # 4. possibly some other checks
+        # All of these have been missing in pcs since ever (ad 1. agents have
+        # never provided enough info for us to do such validations, ad 2. and
+        # 3. there were no deprecated parameters before). The checks should be
+        # implemented in agents themselves, so I'm not adding them now either.
+        report_items = []
 
-    def validate_parameters_values(self, parameters_values):
-        """
-        Return tuple of lists (<invalid attributes>, <missing required attributes>)
-        dict parameters_values key is attribute name and value is attribute value
-        """
-        # TODO Add value and type checking (e.g. if parameter["type"] is
-        # integer, its value cannot be "abc"). This most probably will require
-        # redefining the format of the return value and rewriting the whole
-        # function, which will only be good. For now we just stick to the
-        # original legacy code.
-        agent_params = self.get_parameters()
+        # get resulting set of agent's parameters
+        final_parameters = dict(current_parameters)
+        for name, value in new_parameters.items():
+            if len(value) < 1:
+                if name in final_parameters:
+                    del final_parameters[name]
+            else:
+                final_parameters[name] = value
 
-        required_missing = []
-        for attr in agent_params:
-            if attr["required"] and attr["name"] not in parameters_values:
-                required_missing.append(attr["name"])
-
-        valid_attrs = [attr["name"] for attr in agent_params]
-        return (
-            [attr for attr in parameters_values if attr not in valid_attrs],
-            required_missing
+        # report unknown parameters
+        report_items.extend(
+            validate.names_in(
+                {param["name"] for param in self.get_parameters()},
+                # Do not report unknown parameters already set in the CIB. They
+                # have been reported already when the were added to the CIB.
+                set(new_parameters.keys()) - set(current_parameters.keys()),
+                self._agent_type_label,
+                report_codes.FORCE_OPTIONS,
+                force
+            )
         )
+
+        # report missing or removed required parameters
+        missing_parameters = self._find_missing_required_parameters(
+            final_parameters
+        )
+        if missing_parameters:
+            forcible, severity = self._validate_report_forcible_severity(force)
+            report_items.append(reports.required_option_is_missing(
+                sorted(missing_parameters),
+                self._agent_type_label,
+                severity=severity,
+                forceable=forcible,
+            ))
+
+        return report_items
+
+    def _validate_report_forcible_severity(self, force):
+        forcible = report_codes.FORCE_OPTIONS if not force else None
+        severity = (
+            ReportItemSeverity.ERROR if not force
+            else ReportItemSeverity.WARNING
+        )
+        return forcible, severity
+
+    def _find_missing_required_parameters(self, parameters):
+        missing_parameters = set()
+        obsoleting_chains = self._get_parameter_obsoleting_chains()
+        for param in self.get_parameters():
+            if not param["required"] or param["deprecated_by"]:
+                # non-required params are never required
+                # we require non-deprecated params preferentially
+                continue
+            if param["name"] in parameters:
+                # the param is not missing
+                continue
+            # the param is missing, maybe a deprecated one is set instead?
+            if param["name"] in obsoleting_chains:
+                obsoleted_set_instead = False
+                for obsoleted_name in obsoleting_chains[param["name"]]:
+                    if obsoleted_name in parameters:
+                        obsoleted_set_instead = True
+                        break
+                if obsoleted_set_instead:
+                    continue
+            missing_parameters.add(param["name"])
+        return missing_parameters
 
     def _get_raw_actions(self):
         actions_element = self._get_metadata().find("actions")
@@ -753,6 +868,8 @@ class ResourceAgent(CrmAgent):
     """
     Provides convinient access to a resource agent's metadata
     """
+    _agent_type_label = "resource"
+
     def _prepare_name_parts(self, name):
         return get_resource_agent_name_from_string(name)
 
@@ -834,8 +951,16 @@ class AbsentAgentMixin():
     def _load_metadata(self):
         return "<resource-agent/>"
 
-    def validate_parameters_values(self, parameters_values):
-        return ([], [])
+    def validate_parameters_create(self, parameters, force=False):
+        return []
+
+    def validate_parameters_update(
+        self,
+        current_parameters,
+        new_parameters,
+        force=False
+    ):
+        return []
 
 
 class AbsentResourceAgent(AbsentAgentMixin, ResourceAgent):
@@ -847,6 +972,7 @@ class StonithAgent(CrmAgent):
     Provides convinient access to a stonith agent's metadata
     """
     _fenced_metadata = None
+    _agent_type_label = "stonith"
 
     @classmethod
     def clear_fenced_metadata_cache(cls):
@@ -870,32 +996,43 @@ class StonithAgent(CrmAgent):
             self._get_fenced_metadata().get_parameters()
         )
 
-    def validate_parameters(
-        self, parameters,
-        parameters_type="stonith",
-        allow_invalid=False,
-        update=False
-    ):
-        report_list = super(StonithAgent, self).validate_parameters(
+    def validate_parameters_create(self, parameters, force=False):
+        report_list = super(StonithAgent, self).validate_parameters_create(
             parameters,
-            parameters_type=parameters_type,
-            allow_invalid=allow_invalid,
-            update=update
+            force=force
         )
+        report_list.extend(
+            self._validate_action_is_deprecated(parameters, force=force)
+        )
+        return report_list
+
+    def validate_parameters_update(
+        self,
+        current_parameters,
+        new_parameters,
+        force=False
+    ):
+        report_list = super(StonithAgent, self).validate_parameters_update(
+            current_parameters,
+            new_parameters,
+            force=force
+        )
+        report_list.extend(
+            self._validate_action_is_deprecated(new_parameters, force=force)
+        )
+        return report_list
+
+    def _validate_action_is_deprecated(self, parameters, force=False):
         if parameters.get("action", ""):
-            report_list.append(reports.deprecated_option(
+            forcible, severity = self._validate_report_forcible_severity(force)
+            return [reports.deprecated_option(
                 "action",
                 _STONITH_ACTION_REPLACED_BY,
-                parameters_type,
-                severity=(
-                    ReportItemSeverity.ERROR if not allow_invalid
-                    else ReportItemSeverity.WARNING
-                ),
-                forceable=(
-                    report_codes.FORCE_OPTIONS if not allow_invalid else None
-                )
-            ))
-        return report_list
+                self._agent_type_label,
+                severity=severity,
+                forceable=forcible
+            )]
+        return []
 
     def _filter_parameters(self, parameters):
         """
@@ -944,8 +1081,9 @@ class StonithAgent(CrmAgent):
             new_deprecated = set()
             for param in filtered:
                 if param["obsoletes"] in current_deprecated:
-                    new_deprecated.add(param["name"])
-                    port_related_params.add(param["name"])
+                    if param["name"] not in port_related_params:
+                        new_deprecated.add(param["name"])
+                        port_related_params.add(param["name"])
         for param in filtered:
             if param["name"] in port_related_params:
                 param["required"] = False
