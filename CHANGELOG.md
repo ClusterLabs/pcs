@@ -37,6 +37,8 @@
 - Support for container types `rkt` and `podman` into bundle commands
   ([rhbz#1619620])
 - Support for promotable clone resources in pcsd and web UI ([rhbz#1542288])
+- Obsoleting parameters of resource and fence agents are now supported and
+  preferred over deprecated parameters ([rhbz#1436217])
 
 ### Fixed
 - Fixed encoding of the CIB_user_groups cookie in communication between nodes.
@@ -144,6 +146,7 @@
 [rhbz#1158816]: https://bugzilla.redhat.com/show_bug.cgi?id=1158816
 [rhbz#1183103]: https://bugzilla.redhat.com/show_bug.cgi?id=1183103
 [rhbz#1427273]: https://bugzilla.redhat.com/show_bug.cgi?id=1427273
+[rhbz#1436217]: https://bugzilla.redhat.com/show_bug.cgi?id=1436217
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1476862]: https://bugzilla.redhat.com/show_bug.cgi?id=1476862
 [rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
