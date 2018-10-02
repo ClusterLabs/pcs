@@ -56,3 +56,11 @@ tools = {string: {}};
 tools.string.upperFirst = function(string){
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+/**
+  msg:
+    list of objects {type, msg} where type in error, warning, info
+*/
+tools.formatMsg = function(msg){
+  return tools.string.upperFirst(msg.type)+": "+msg.msg;
+};

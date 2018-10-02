@@ -57,6 +57,7 @@ dev.patch.promise_ajax = function(routeFn){
   promise.ajax = function(options, rejectCode){
     var promise = routeFn(
       options.url,
+      options.data,
       dev.promise.success(options.url, options.data),
       dev.promise.fail(options.url, options.data, rejectCode),
     );
@@ -99,7 +100,7 @@ dev.patch.ajax_wrapper(function(url){
   }
 });
 
-// dev.patch.promise_ajax(function(url, success, fail){
+// dev.patch.promise_ajax(function(url, data, success, fail){
 //   switch(url){
 //     case "/manage/check_auth_against_nodes": return success(JSON.stringify({
 //       dave8: "Online",
@@ -113,41 +114,55 @@ dev.patch.ajax_wrapper(function(url){
 //     // case "/manage/send-known-hosts-to-node": return fail(
 //     //   403, "Permission denied."
 //     // );
-//     case "/manage/cluster-setup": return success(JSON.stringify({
-//       status: "success",
-//       status_msg: "",
-//       report_list: [
-//         {
-//           severity: "WARNING",
-//           code: "SOME_WARNING_CODE",
-//           info: {},
-//           forceable: null,
-//           report_text: "Another warning appeared",
-//         },
-//         {
-//           severity: "ERROR",
-//           code: "SOME_CODE",
-//           info: {},
-//           forceable: null,
-//           report_text: "Error happens",
-//         },
-//         {
-//           severity: "INFO",
-//           code: "SOME_INFO_CODE",
-//           info: {},
-//           forceable: null,
-//           report_text: "Information. In formation. Inf or mation",
-//         },
-//         {
-//           severity: "ERROR",
-//           code: "SOME_OTHER_CODE",
-//           info: {},
-//           forceable: null,
-//           report_text: "Another error happens",
-//         },
-//       ],
-//       data: null,
-//     }));
+//     case "/manage/cluster-setup":
+//       var status = "error";
+//       if (JSON.parse(data.setup_data).force_flags.length > 0) {
+//         status = "success";
+//       }
+//
+//       return success(JSON.stringify({
+//         status: status,
+//         status_msg: "",
+//         report_list: [
+//           {
+//             severity: "WARNING",
+//             code: "SOME_WARNING_CODE",
+//             info: {},
+//             forceable: null,
+//             report_text: "Another warning appeared",
+//           },
+//           {
+//             severity: "ERROR",
+//             code: "SOME_CODE",
+//             info: {},
+//             forceable: "FORCE",
+//             report_text: "Error happens",
+//           },
+//           {
+//             severity: "INFO",
+//             code: "SOME_INFO_CODE",
+//             info: {},
+//             forceable: null,
+//             report_text: "Information. In formation. Inf or mation",
+//           },
+//           {
+//             severity: "ERROR",
+//             code: "SOME_OTHER_CODE",
+//             info: {},
+//             forceable:"FORCE",
+//             report_text: "Another error happens",
+//           },
+//           {
+//             severity: "DEBUG",
+//             code: "DEBUG_CODE",
+//             info: {},
+//             forceable: null,
+//             report_text: "Some debug info",
+//           },
+//         ],
+//         data: null,
+//       }))
+//     ;
 //     // case "/manage/cluster-setup": return fail(403, "Permission denied.");
 //     case "/manage/remember-cluster": return success();
 //     // case "/manage/remember-cluster": return fail(
