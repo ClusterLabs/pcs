@@ -14,6 +14,14 @@
       <content type="string" />
       <shortdesc lang="en">An example of a required attribute</shortdesc>
     </parameter>
+    <parameter name="must-set-old" unique="0" required="1" deprecated="1">
+      <content type="string" />
+      <shortdesc lang="en">An example of a deprecated required attribute</shortdesc>
+    </parameter>
+    <parameter name="must-set-new" unique="0" required="1" obsoletes="must-set-old">
+      <content type="string" />
+      <shortdesc lang="en">An example of an obsoliting required attribute</shortdesc>
+    </parameter>
     <parameter name="may-set" unique="0" required="0">
       <content type="string" />
       <shortdesc lang="en">An example of an optional attribute</shortdesc>

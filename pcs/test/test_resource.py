@@ -1894,6 +1894,16 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
 
     def testBadInstanceVariables(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+                " test=testC test2=test2a test4=test4A op monitor interval=35"
+                " meta test7=test7a test6="
+            ,
+            "Error: invalid resource options: 'test', 'test2', 'test4',"
+                " allowed options are: fake, state, trace_file, trace_ra, "
+                "use --force to override\n"
+        )
+
         self.assert_pcs_success(
             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
                 " test=testC test2=test2a test4=test4A op monitor interval=35"
@@ -1904,15 +1914,15 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_fail(
-            "resource update D0 test=testA test2=testB",
-            "Error: invalid resource options: 'test', 'test2', allowed options"
+            "resource update D0 test=testA test2=testB test3=testD",
+            "Error: invalid resource option 'test3', allowed options"
                 " are: fake, state, trace_file, trace_ra, use --force to"
                 " override\n"
         )
 
         self.assert_pcs_success(
             "resource update D0 test=testB test2=testC test3=testD --force",
-            "Warning: invalid resource options: 'test', 'test2', 'test3',"
+            "Warning: invalid resource option 'test3',"
                 " allowed options are: fake, state, trace_file, trace_ra\n"
         )
 
@@ -1945,9 +1955,8 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success(
-            "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=",
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
+            "resource update --force D0 test=testC test2=test2a op monitor "
+                "interval=35 meta test7=test7a test6="
         )
 
         output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
@@ -1958,7 +1967,10 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2"
+        )
         assert returnVal == 0
         assert output == "", [output]
 

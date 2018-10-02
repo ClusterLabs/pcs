@@ -1243,6 +1243,9 @@ Pcs.ResourceAgentParameter = Ember.Object.extend({
   cur_val: Ember.computed.oneWay("value"),
   required: false,
   advanced: false,
+  deprecated: false,
+  deprecated_by: [],
+  obsoletes: null,
   longdesc: "",
   longdesc_html: function() {
     return nl2br(htmlEncode(this.get("longdesc")));
@@ -1276,7 +1279,7 @@ Pcs.ResourceAgent = Ember.Object.extend({
     var self = this;
     var args = [];
     $.each(self.get("parameters"), function(_, arg) {
-      if (arg.get("required")) {
+      if (arg.get("required") && !arg.get("deprecated")) {
         args.pushObject(arg);
       }
     });
@@ -1286,7 +1289,9 @@ Pcs.ResourceAgent = Ember.Object.extend({
     var self = this;
     var args = [];
     $.each(self.get("parameters"), function(_, arg) {
-      if (!arg.get("required") && !arg.get("advanced")) {
+      if (
+        !arg.get("required") && !arg.get("advanced") && !arg.get("deprecated")
+      ) {
         args.pushObject(arg);
       }
     });
@@ -1296,7 +1301,19 @@ Pcs.ResourceAgent = Ember.Object.extend({
     var self = this;
     var args = [];
     $.each(self.get("parameters"), function(_, arg) {
-      if (!arg.get("required") && arg.get("advanced")) {
+      if (
+        !arg.get("required") && arg.get("advanced") && !arg.get("deprecated")
+      ) {
+        args.pushObject(arg);
+      }
+    });
+    return args;
+  }.property("parameters.@each"),
+  deprecated_parameters: function() {
+    var self = this;
+    var args = [];
+    $.each(self.get("parameters"), function(_, arg) {
+      if (arg.get("deprecated")) {
         args.pushObject(arg);
       }
     });

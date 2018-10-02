@@ -20,6 +20,9 @@ class Create(TestCase):
                         <nvpair id="stonith-test-instance_attributes-must-set"
                             name="must-set" value="value"
                         />
+                        <nvpair id="stonith-test-instance_attributes-must-set-new"
+                            name="must-set-new" value="B"
+                        />
                     </instance_attributes>
                     <operations>
                         <op id="stonith-test-monitor-interval-60s"
@@ -63,7 +66,10 @@ class Create(TestCase):
             self.agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"}
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            }
         )
 
     def test_minimal_wait_ok_run_ok(self):
@@ -81,7 +87,10 @@ class Create(TestCase):
             self.agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
             wait=self.timeout
         )
         self.env_assist.assert_reports([
@@ -106,6 +115,9 @@ class CreateInGroup(TestCase):
                     <instance_attributes id="stonith-test-instance_attributes">
                         <nvpair id="stonith-test-instance_attributes-must-set"
                             name="must-set" value="value"
+                        />
+                        <nvpair id="stonith-test-instance_attributes-must-set-new"
+                            name="must-set-new" value="B"
                         />
                     </instance_attributes>
                     <operations>
@@ -152,7 +164,10 @@ class CreateInGroup(TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"}
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            }
         )
 
     def test_minimal_wait_ok_run_ok(self):
@@ -171,7 +186,10 @@ class CreateInGroup(TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value"},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
             wait=self.timeout
         )
         self.env_assist.assert_reports([

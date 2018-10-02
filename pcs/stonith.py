@@ -145,7 +145,7 @@ def stonith_list_options(lib, argv, modifiers):
     print(resource._format_agent_description(
         lib.stonith_agent.describe_agent(agent_name),
         stonith=True,
-        show_advanced=modifiers.get("--full"),
+        show_all=modifiers.get("--full"),
     ))
 
 def stonith_create(lib, argv, modifiers):

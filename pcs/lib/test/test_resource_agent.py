@@ -9,6 +9,7 @@ from pcs.test.tools.assertions import (
     assert_xml_equal,
     start_tag_error_text,
 )
+from pcs.test.tools import fixture
 from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.xml import XmlManipulation
 
@@ -783,6 +784,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 }
@@ -817,6 +819,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "default": "default_value",
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -829,18 +832,22 @@ class AgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 }
             ]
         )
 
-    def test_remove_obsoletes_keep_deprecated(self, mock_metadata):
+    def test_obsoletes_deprecated(self, mock_metadata):
         xml = """
             <resource-agent>
                 <parameters>
-                    <parameter name="obsoletes" obsoletes="deprecated"/>
                     <parameter name="deprecated" deprecated="1"/>
+                    <parameter name="obsoleted" deprecated="1"/>
+                    <parameter name="obsoleting1" obsoletes="obsoleted"/>
+                    <parameter name="obsoleting2" obsoletes="obsoleted"/>
+                    <parameter name="double-obsoleting" obsoletes="obsoleting2"/>
                 </parameters>
             </resource-agent>
         """
@@ -857,7 +864,60 @@ class AgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": True,
+                    "deprecated_by": [],
                     "obsoletes": None,
+                    "pcs_deprecated_warning": "",
+                },
+                {
+                    "name": "obsoleted",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": False,
+                    "deprecated": True,
+                    "deprecated_by": ["obsoleting1", "obsoleting2"],
+                    "obsoletes": None,
+                    "pcs_deprecated_warning": "",
+                },
+                {
+                    "name": "obsoleting1",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": False,
+                    "deprecated": False,
+                    "deprecated_by": [],
+                    "obsoletes": "obsoleted",
+                    "pcs_deprecated_warning": "",
+                },
+                {
+                    "name": "obsoleting2",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": False,
+                    "deprecated": False,
+                    "deprecated_by": ["double-obsoleting"],
+                    "obsoletes": "obsoleted",
+                    "pcs_deprecated_warning": "",
+                },
+                {
+                    "name": "double-obsoleting",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": False,
+                    "deprecated": False,
+                    "deprecated_by": [],
+                    "obsoletes": "obsoleting2",
                     "pcs_deprecated_warning": "",
                 },
             ]
@@ -1130,6 +1190,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "default": "default_value",
                         "advanced": False,
                         "deprecated": False,
+                        "deprecated_by": [],
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
                     },
@@ -1142,6 +1203,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "default": None,
                         "advanced": False,
                         "deprecated": False,
+                        "deprecated_by": [],
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
                     }
@@ -1158,305 +1220,431 @@ class AgentMetadataGetInfoTest(TestCase):
         )
 
 
-@patch_agent_object("_get_metadata")
-class AgentMetadataValidateParametersValuesTest(TestCase):
+xml_for_validate_test = etree.XML("""
+    <resource-agent>
+        <parameters>
+            <parameter name="opt1_new" required="0"
+                obsoletes="opt1_old"
+            />
+            <parameter name="opt1_old" required="0"
+                deprecated="1"
+            />
+            <parameter name="opt2_new" required="0"
+                obsoletes="opt2_old"
+            />
+            <parameter name="opt2_old" required="0"
+                deprecated="1"
+            />
+            <parameter name="req1_new" required="1"
+                obsoletes="req1_old"
+            />
+            <parameter name="req1_old" required="1"
+                deprecated="1"
+            />
+            <parameter name="req2_new" required="1"
+                obsoletes="req2_old"
+            />
+            <parameter name="req2_old" required="1"
+                deprecated="1"
+            />
+        </parameters>
+    </resource-agent>
+""")
+@patch_agent_object("_get_metadata", lambda self: xml_for_validate_test)
+class AgentMetadataValidateParamsCreate(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
-        self.metadata = etree.XML("""
-            <resource-agent>
-                <parameters>
-                    <parameter name="test_param" required="0">
-                        <longdesc>Long description</longdesc>
-                        <shortdesc>short description</shortdesc>
-                        <content type="string" default="default_value" />
-                    </parameter>
-                    <parameter name="required_param" required="1">
-                        <content type="boolean" />
-                    </parameter>
-                    <parameter name="another_required_param" required="1">
-                        <content type="string" />
-                    </parameter>
-                </parameters>
-            </resource-agent>
-        """)
 
-    def test_all_required(self, mock_metadata):
-        mock_metadata.return_value = self.metadata
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-                "another_required_param": "value1",
-                "required_param": "value2",
-            }),
-            ([], [])
+    def test_all_required(self):
+        # set two required attrs, one deprecated and one obsoleting
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                }
+            ),
+            [
+            ]
         )
 
-    def test_all_required_and_optional(self, mock_metadata):
-        mock_metadata.return_value = self.metadata
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-                "another_required_param": "value1",
-                "required_param": "value2",
-                "test_param": "value3",
-            }),
-            ([], [])
+    def test_all_required_and_optional(self):
+        # set two required attrs, one deprecated and one obsoleting
+        # set two optional attrs, one deprecated and one obsoleting
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "opt1_new": "C",
+                    "opt2_old": "D",
+                }
+            ),
+            [
+            ]
         )
 
-    def test_all_required_and_invalid(self, mock_metadata):
-        mock_metadata.return_value = self.metadata
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-                "another_required_param": "value1",
-                "required_param": "value2",
-                "invalid_param": "value3",
-            }),
-            (["invalid_param"], [])
+    def test_all_required_and_optional_deprecated_and_obsoleting(self):
+        # set both deprecated and obsoleting variant of an attr
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                    "req1_new": "A",
+                    "req1_old": "B",
+                    "req2_new": "C",
+                    "req2_old": "D",
+                    "opt1_new": "E",
+                    "opt1_old": "F",
+                    "opt2_new": "G",
+                    "opt2_old": "H",
+                }
+            ),
+            [
+            ]
         )
 
-    def test_missing_required(self, mock_metadata):
-        mock_metadata.return_value = self.metadata
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-            }),
-            ([], ["required_param", "another_required_param"])
+    def test_all_required_and_invalid(self):
+        # set two required attrs, one deprecated and one obsoleting
+        # set an invalid attr
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "C",
+                    "unknown2": "D",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["unknown1", "unknown2"],
+                    allowed=[
+                        "opt1_new",
+                        "opt1_old",
+                        "opt2_new",
+                        "opt2_old",
+                        "req1_new",
+                        "req1_old",
+                        "req2_new",
+                        "req2_old",
+                    ],
+                    option_type="agent",
+                ),
+            ]
         )
 
-    def test_missing_required_and_invalid(self, mock_metadata):
-        mock_metadata.return_value = self.metadata
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-                "another_required_param": "value1",
-                "invalid_param": "value3",
-            }),
-            (["invalid_param"], ["required_param"])
+    def test_all_required_and_invalid_force(self):
+        # set two required attrs, one deprecated and one obsoleting
+        # set an invalid attr
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "C",
+                    "unknown2": "D",
+                },
+                force=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["unknown1", "unknown2"],
+                    allowed=[
+                        "opt1_new",
+                        "opt1_old",
+                        "opt2_new",
+                        "opt2_old",
+                        "req1_new",
+                        "req1_old",
+                        "req2_new",
+                        "req2_old",
+                    ],
+                    option_type="agent",
+                ),
+            ]
         )
 
-    def test_ignore_obsoletes_use_deprecated(self, mock_metadata):
-        xml = """
-            <resource-agent>
-                <parameters>
-                    <parameter name="obsoletes" obsoletes="deprecated"
-                        required="1"
-                    />
-                    <parameter name="deprecated" deprecated="1" required="1"/>
-                </parameters>
-            </resource-agent>
-        """
-        mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-            }),
-            ([], ["deprecated"])
+    def test_missing_required(self):
+        # only obsoleting attrs are reported
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["req1_new", "req2_new"],
+                    option_type="agent",
+                ),
+            ]
         )
 
-    def test_dont_allow_obsoletes_use_deprecated(self, mock_metadata):
-        xml = """
-            <resource-agent>
-                <parameters>
-                    <parameter name="obsoletes" obsoletes="deprecated"
-                        required="1"
-                    />
-                    <parameter name="deprecated" deprecated="1" required="1"/>
-                </parameters>
-            </resource-agent>
-        """
-        mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(
-            self.agent.validate_parameters_values({
-                "obsoletes": "value",
-            }),
-            (["obsoletes"], ["deprecated"])
+    def test_missing_required_force(self):
+        # only obsoleting attrs are reported
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                },
+                force=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    option_names=["req1_new", "req2_new"],
+                    option_type="agent",
+                ),
+            ]
         )
 
 
-class AgentMetadataValidateParameters(TestCase):
+@patch_agent_object("_get_metadata", lambda self: xml_for_validate_test)
+class AgentMetadataValidateParamsUpdate(TestCase):
     def setUp(self):
-        self.agent = lib_ra.Agent(mock.MagicMock(spec_set=CommandRunner))
-        self.metadata = etree.XML("""
-            <resource-agent>
-                <parameters>
-                    <parameter name="test_param" required="0">
-                        <longdesc>Long description</longdesc>
-                        <shortdesc>short description</shortdesc>
-                        <content type="string" default="default_value" />
-                    </parameter>
-                    <parameter name="required_param" required="1">
-                        <content type="boolean" />
-                    </parameter>
-                    <parameter name="another_required_param" required="1">
-                        <content type="string" />
-                    </parameter>
-                </parameters>
-            </resource-agent>
-        """)
-        patcher = patch_agent_object("_get_metadata")
-        self.addCleanup(patcher.stop)
-        self.get_metadata = patcher.start()
-        self.get_metadata.return_value = self.metadata
-
-    def test_returns_empty_report_when_all_required_there(self):
-        self.assertEqual(
-            [],
-            self.agent.validate_parameters({
-                "another_required_param": "value1",
-                "required_param": "value2",
-            }),
+        self.agent = lib_ra.Agent(
+            mock.MagicMock(spec_set=CommandRunner)
         )
 
-    def test_returns_empty_report_when_all_required_and_optional_there(self):
-        self.assertEqual(
-            [],
-            self.agent.validate_parameters({
-                "another_required_param": "value1",
-                "required_param": "value2",
-                "test_param": "value3",
-            })
-        )
-
-    def test_report_invalid_option(self):
+    def test_set_invalid(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters({
-                "another_required_param": "value1",
-                "required_param": "value2",
-                "invalid_param": "value3",
-            }),
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "c",
+                },
+                {
+
+                    "unknown1": "C",
+                    "unknown2": "D",
+                }
+            ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["invalid_param"],
-                        "option_type": "resource",
-                        "allowed": [
-                            "another_required_param",
-                            "required_param",
-                            "test_param",
-                        ],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-            ],
-        )
-
-    def test_report_missing_option(self):
-        assert_report_item_list_equal(
-            self.agent.validate_parameters({}),
-            [
-                (
-                    severity.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_names": [
-                            "required_param",
-                            "another_required_param",
-                        ],
-                        "option_type": "resource",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-            ],
-        )
-
-    def test_warn_missing_required(self):
-        assert_report_item_list_equal(
-            self.agent.validate_parameters({}, allow_invalid=True),
-            [
-                (
-                    severity.WARNING,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_names": [
-                            "required_param",
-                            "another_required_param",
-                        ],
-                        "option_type": "resource",
-                    },
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["unknown2"],
+                    allowed=[
+                        "opt1_new",
+                        "opt1_old",
+                        "opt2_new",
+                        "opt2_old",
+                        "req1_new",
+                        "req1_old",
+                        "req2_new",
+                        "req2_old",
+                    ],
+                    option_type="agent",
                 ),
             ]
         )
 
-    def test_ignore_obsoletes_use_deprecated(self):
-        xml = """
-            <resource-agent>
-                <parameters>
-                    <parameter name="obsoletes" obsoletes="deprecated"
-                        required="1"
-                    />
-                    <parameter name="deprecated" deprecated="1" required="1"/>
-                </parameters>
-            </resource-agent>
-        """
-        self.get_metadata.return_value = etree.XML(xml)
+    def test_remove_invalid(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters({}),
-            [
-                (
-                    severity.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_names": [
-                            "deprecated",
-                        ],
-                        "option_type": "resource",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-            ]
-        )
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "C",
+                },
+                {
 
-    def test_dont_allow_obsoletes_use_deprecated(self):
-        xml = """
-            <resource-agent>
-                <parameters>
-                    <parameter name="obsoletes" obsoletes="deprecated"
-                        required="1"
-                    />
-                    <parameter name="deprecated" deprecated="1" required="1"/>
-                </parameters>
-            </resource-agent>
-        """
-        self.get_metadata.return_value = etree.XML(xml)
-        assert_report_item_list_equal(
-            self.agent.validate_parameters({"obsoletes": "value"}),
+                    "unknown1": "",
+                    "unknown2": "",
+                }
+            ),
             [
-                (
-                    severity.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    {
-                        "option_names": [
-                            "deprecated",
-                        ],
-                        "option_type": "resource",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["obsoletes"],
-                        "option_type": "resource",
-                        "allowed": [
-                            "deprecated",
-                        ],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["unknown2"],
+                    allowed=[
+                        "opt1_new",
+                        "opt1_old",
+                        "opt2_new",
+                        "opt2_old",
+                        "req1_new",
+                        "req1_old",
+                        "req2_new",
+                        "req2_old",
+                    ],
+                    option_type="agent",
                 ),
             ]
         )
 
-    def test_required_not_specified_on_update(self):
+    def test_remove_required_obsoleting(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters({
-                "test_param": "value",
-            }, update=True),
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "req1_new": "",
+                }
+            ),
             [
-            ],
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["req1_new"],
+                    option_type="agent",
+                ),
+            ]
         )
 
+    def test_remove_required_deprecated(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "req2_old": "",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["req2_new"],
+                    option_type="agent",
+                ),
+            ]
+        )
+
+    def test_remove_required_deprecated_set_obsoleting(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "req2_old": "",
+                    "req2_new": "B",
+                }
+            ),
+            [
+            ]
+        )
+
+    def test_remove_required_obsoleting_set_deprecated(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "req1_old": "A",
+                    "req1_new": "",
+                }
+            ),
+            [
+            ]
+        )
+
+    def test_set_optional(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "opt1_new": "A",
+                }
+            ),
+            [
+            ]
+        )
+
+    def test_remove_optional(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+
+                    "opt1_new": "",
+                }
+            ),
+            [
+            ]
+        )
+
+
+xml_for_loop_test = etree.XML("""
+    <resource-agent>
+        <parameters>
+            <parameter name="opt_loop1" required="1"
+                obsoletes="opt_loop1" deprecated="1"
+            />
+            <parameter name="opt_loop2" required="1"
+                obsoletes="opt_loop2" deprecated="0"
+            />
+            <parameter name="opt1" required="1"
+                obsoletes="opt2" deprecated="1"
+            />
+            <parameter name="opt2" required="1"
+                obsoletes="opt1" deprecated="1"
+            />
+            <parameter name="opt3" required="1"
+                obsoletes="opt4" deprecated="0"
+            />
+            <parameter name="opt4" required="1"
+                obsoletes="opt3" deprecated="0"
+            />
+        </parameters>
+    </resource-agent>
+""")
+@patch_agent_object("_get_metadata", lambda self: xml_for_loop_test)
+class AgentMetadataValidateParamsWithLoop(TestCase):
+    # Meta-data are broken - there are obsoleting loops. The point of the test
+    # is to make sure pcs does not crach or loop forever. Error reports are not
+    # that important, since meta-data are broken.
+    def setUp(self):
+        self.agent = lib_ra.Agent(
+            mock.MagicMock(spec_set=CommandRunner)
+        )
+
+    def test_create(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_create(
+                {
+                }
+            ),
+            [
+            ]
+        )
+
+    def test_update(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters_update(
+                {
+                },
+                {
+                }
+            ),
+            [
+            ]
+        )
 
 class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
     def setUp(self):
@@ -1552,6 +1740,7 @@ class FencedMetadataGetParametersTest(TestCase):
                     "default": "default_value",
                     "advanced": True,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -1564,6 +1753,7 @@ class FencedMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 }
@@ -1777,6 +1967,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -1789,6 +1980,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -1801,6 +1993,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -1813,6 +2006,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": True,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "Specifying 'action' is"
                         " deprecated and not necessary with current Pacemaker"
@@ -1829,6 +2023,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -1841,6 +2036,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "default": None,
                     "advanced": False,
                     "deprecated": False,
+                    "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
                 },
@@ -2166,6 +2362,22 @@ class AbsentResourceAgentTest(TestCase):
         self.assertEqual(agent.get_longdesc(), absent.get_longdesc())
         self.assertEqual(agent.get_parameters(), absent.get_parameters())
         self.assertEqual(agent.get_actions(), absent.get_actions())
-        self.assertEqual(([], []), absent.validate_parameters_values({
-            "whatever": "anything"
-        }))
+        self.assertEqual(
+            [],
+            absent.validate_parameters_create(
+                {
+                    "whatever": "anything",
+                }
+            )
+        )
+        self.assertEqual(
+            [],
+            absent.validate_parameters_update(
+                {
+                    "whatever": "anything",
+                },
+                {
+                    "whatever": "anything",
+                }
+            )
+        )

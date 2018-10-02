@@ -282,7 +282,7 @@ class TestListAgents(TestCase):
 class CompleteAgentList(TestCase):
     def test_skip_agent_name_when_InvalidResourceAgentName_raised(self):
         invalid_agent_name =  "systemd:lvm2-pvscan@252:2"#suppose it is invalid
-        class Agent(object):
+        class Agent():
             def __init__(self, runner, name):
                 if name == invalid_agent_name:
                     raise lib_ra.InvalidResourceAgentName(name)
@@ -400,6 +400,7 @@ class DescribeAgentUtf8(TestCase):
                         "advanced": False,
                         "default": u"/var/run/resource-agents/Dummy-®.state",
                         "deprecated": False,
+                        "deprecated_by": [],
                         "longdesc":
                             u"Location to store the resource state in: ®",
                         "name": u"state-®",
@@ -413,6 +414,7 @@ class DescribeAgentUtf8(TestCase):
                         "advanced": True,
                         "default": 0,
                         "deprecated": False,
+                        "deprecated_by": [],
                         "longdesc": "Set to 1 to turn on resource agent tracing"
                             " (expect large output) The trace output will be "
                             "saved to trace_file, if set, or by default to "
@@ -431,6 +433,7 @@ class DescribeAgentUtf8(TestCase):
                         "advanced": True,
                         "default": "",
                         "deprecated": False,
+                        "deprecated_by": [],
                         "longdesc": "Path to a file to store resource agent "
                             "tracing log",
                         "name": "trace_file",
