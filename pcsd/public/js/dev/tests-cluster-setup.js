@@ -154,6 +154,21 @@ testClusterSetup.clusterSetupUnforcible = function(url, data, success, fail){
   }
 };
 
+testClusterSetup.clusterSetupException = function(url, data, success, fail){
+  switch(url){
+    case "/manage/cluster-setup":
+      return success(JSON.stringify({
+        status: "exception",
+        status_msg: "Some exception happens",
+        report_list: [],
+        data: null,
+      }));
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+
 testClusterSetup.clusterSetupForceFail = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup":
@@ -232,6 +247,7 @@ dev.runScenario(
   // testClusterSetup.clusterSetup403
   // testClusterSetup.clusterSetup500
   // testClusterSetup.clusterSetupUnforcible
+  // testClusterSetup.clusterSetupException
   // testClusterSetup.clusterSetupForceFail
   // testClusterSetup.clusterSetupForceFailForcible
   // testClusterSetup.clusterSetupForce

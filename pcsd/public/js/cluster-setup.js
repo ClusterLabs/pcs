@@ -248,6 +248,10 @@ clusterSetup.submit.onError = function(rejectCode, data){
       }
       break;
 
+    case api.err.CLUSTER_SETUP_EXCEPTION:
+      alert("Server returned an error: "+data.msg);
+      break;
+
     case api.err.REMEMBER_CLUSTER_CALL_FAILED:
       // 403 makes not sense here. It would failed on
       // SEND_KNOWN_HOST_CALL_FAILED or on CLUSTER_SETUP_CALL_FAILED if the

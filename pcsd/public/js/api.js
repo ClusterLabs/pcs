@@ -58,11 +58,12 @@ api.reports.toMsgs = function(reportList){
 // TODO JSON.parse can fail
 api.err = {
   NODES_AUTH_CHECK: "NODES_AUTH_CHECK",
-  CLUSTER_SETUP_FAILED_FORCIBLE: "CLUSTER_SETUP_FAILED_FORCIBLE",
   SEND_KNOWN_HOST_CALL_FAILED: "SEND_KNOWN_HOST_CALL_FAILED",
   SEND_KNOWN_HOSTS_ERROR: "SEND_KNOWN_HOSTS_ERROR",
   CLUSTER_SETUP_CALL_FAILED: "CLUSTER_SETUP_CALL_FAILED",
   CLUSTER_SETUP_FAILED: "CLUSTER_SETUP_FAILED",
+  CLUSTER_SETUP_EXCEPTION: "CLUSTER_SETUP_EXCEPTION",
+  CLUSTER_SETUP_FAILED_FORCIBLE: "CLUSTER_SETUP_FAILED_FORCIBLE",
   REMEMBER_CLUSTER_CALL_FAILED: "REMEMBER_CLUSTER_CALL_FAILED",
   AUTH_NODES_FAILED: "AUTH_NODES_FAILED",
 };
@@ -126,16 +127,21 @@ api.clusterSetup = function(setupData, setupCoordinatingNode, force){
 api.clusterSetup.processErrors = function(
   setupResult, setupData, setupCoordinatingNode
 ){
-  return api.reports.isForcibleError(setupResult)
-    ? promise.reject(api.err.CLUSTER_SETUP_FAILED_FORCIBLE, {
-        msgList: api.reports.toMsgs(setupResult.report_list),
-        setupData: setupData,
-        setupCoordinatingNode: setupCoordinatingNode,
-      })
-    : promise.reject(api.err.CLUSTER_SETUP_FAILED, {
-        msgList: api.reports.toMsgs(setupResult.report_list)
-      })
-  ;
+  if (setupResult.status !== api.reports.statuses.error) {
+    return promise.reject(api.err.CLUSTER_SETUP_EXCEPTION, {
+      msg: setupResult.status_msg
+    });
+  }
+  if (api.reports.isForcibleError(setupResult)) {
+    return promise.reject(api.err.CLUSTER_SETUP_FAILED_FORCIBLE, {
+      msgList: api.reports.toMsgs(setupResult.report_list),
+      setupData: setupData,
+      setupCoordinatingNode: setupCoordinatingNode,
+    });
+  }
+  return promise.reject(api.err.CLUSTER_SETUP_FAILED, {
+    msgList: api.reports.toMsgs(setupResult.report_list)
+  });
 };
 
 api.sendKnownHostsToNode = function(setupCoordinatingNode, nodesNames){
