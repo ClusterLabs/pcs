@@ -13,7 +13,7 @@ api.reports.statuses = {
   error: "error",
 };
 
-api.reports.hasOnlyForibleErrors = function(reportList){
+api.reports.hasOnlyForcibleErrors = function(reportList){
   var foundSomeError = false;
   for(var i in reportList){
     if(!reportList.hasOwnProperty(i)){
@@ -35,7 +35,7 @@ api.reports.isForcibleError = function(pcsResult){
   return (
     pcsResult.status === api.reports.statuses.error
     &&
-    api.reports.hasOnlyForibleErrors(pcsResult.report_list)
+    api.reports.hasOnlyForcibleErrors(pcsResult.report_list)
   );
 };
 
@@ -160,22 +160,22 @@ api.sendKnownHostsToNode.processErrors = function(
 ){
   var codeMsgMap = {
     "error": "Error during sharing authentication with node '"
-      +setupCoordinatingNode+"'"
+      +setupCoordinatingNode+"'."
     ,
     "not_supported": "Sharing authentication with node '"
-      +setupCoordinatingNode+"' not supported"
+      +setupCoordinatingNode+"' not supported."
     ,
   };
   return promise.reject(api.err.SEND_KNOWN_HOSTS_ERROR, {
     message: codeMsgMap[authShareResultCode] !== undefined
       ? codeMsgMap[authShareResultCode]
-      : "Unknown sharing authentication with node '"+setupCoordinatingNode
-        +"' result: '"+authShareResultCode+"'"
+    : "Unknown result of sharing authentication with node '"
+        +setupCoordinatingNode+"' (result: '"+authShareResultCode+"')."
     ,
   });
 };
 
-api.remember = function(clusterName, nodesNames){
+api.rememberCluster = function(clusterName, nodesNames){
   return promise.post(
     "/manage/remember-cluster",
     {

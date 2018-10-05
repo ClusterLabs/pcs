@@ -85,6 +85,22 @@ testClusterSetup.sendKnownHostsFail = function(url, data, success, fail){
   }
 };
 
+testClusterSetup.sendKnownHostsUnsupported = function(url, data, success, fail){
+  switch(url){
+    case "/manage/send-known-hosts-to-node": return success("not_supported");
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+testClusterSetup.sendKnownHostsUnknownFail = function(url, data, success, fail){
+  switch(url){
+    case "/manage/send-known-hosts-to-node": return success("unknown");
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
 testClusterSetup.clusterSetup403 = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup": return fail(
@@ -244,6 +260,8 @@ dev.runScenario(
   // testClusterSetup.sendKnownHosts403
   // testClusterSetup.sendKnownHosts500
   // testClusterSetup.sendKnownHostsFail
+  // testClusterSetup.sendKnownHostsUnsupported
+  // testClusterSetup.sendKnownHostsUnknownFail
   // testClusterSetup.clusterSetup403
   // testClusterSetup.clusterSetup500
   // testClusterSetup.clusterSetupUnforcible

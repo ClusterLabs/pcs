@@ -5,7 +5,7 @@ clusterSetup.validateFormData = function(formData){
   if(formData.clusterName == ""){
     errors.push({
       type: "error",
-      msg: "You may not leave the cluster name field blank",
+      msg: "You may not leave the cluster name field blank.",
     });
   }
   if(formData.nodesNames.length == 0){
@@ -162,7 +162,7 @@ clusterSetup.submit.full = function(formData, setupCoordinatingNode){
           formData,
           setupCoordinatingNode
         )
-      : api.remember(formData.clusterName, formData.nodesNames)
+      : api.rememberCluster(formData.clusterName, formData.nodesNames)
     ;
 
   }).then(
@@ -185,7 +185,7 @@ clusterSetup.submit.force = function(formData, setupCoordinatingNode){
           formData,
           setupCoordinatingNode
         )
-      : api.remember(formData.clusterName, formData.nodesNames)
+      : api.rememberCluster(formData.clusterName, formData.nodesNames)
     ;
   }).then(
     clusterSetup.submit.onSuccess
@@ -215,7 +215,7 @@ clusterSetup.submit.onError = function(rejectCode, data){
       break;
 
     case api.err.AUTH_NODES_FAILED:
-      auth_nodes_dialog(data.failNodes, clusterSetup.submit);
+      auth_nodes_dialog(data.failNodes, clusterSetup.submit.run);
       break;
 
     case api.err.SEND_KNOWN_HOST_CALL_FAILED:
