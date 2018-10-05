@@ -30,6 +30,9 @@ from pcs.test.tools.pcs_runner import (
 
 from pcs import utils
 from pcs import resource
+from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+
+LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 
 RESOURCES_TMP = rc("test_resource")
 if not os.path.exists(RESOURCES_TMP):
@@ -961,7 +964,7 @@ monitor interval=20 (A-monitor-interval-20)
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         self.assert_pcs_success(
             "resource delete ClusterIP2",
@@ -1064,7 +1067,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
         assert r == 0
-        ac(o,'')
+        ac(o,'Warning: Validation for node existence in the cluster will be skipped\n')
 
         o,r = pcs(temp_cib, "resource ungroup AGroup A2")
         assert r == 0
@@ -1683,11 +1686,11 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location D1-clone prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location D1 prefers rh7-1 --force")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         self.assert_pcs_success("resource --full", outdent(
@@ -1755,11 +1758,11 @@ monitor interval=20 (A-monitor-interval-20)
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(temp_cib, "constraint location Master prefers rh7-2")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         self.assert_pcs_success("resource delete Master", outdent(
             """\
@@ -1778,11 +1781,11 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         self.assert_pcs_success("resource delete ClusterIP5", outdent(
             """\
             Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
@@ -1798,11 +1801,11 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
         assert returnVal == 0
-        assert output == ""
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         self.pcs_runner.corosync_conf_file = rc("corosync.conf")
         self.assert_pcs_success("config", outdent(
@@ -2048,7 +2051,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location D0-clone prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint")
@@ -3728,7 +3731,7 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location AG prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs(temp_cib, "resource ungroup AG")

@@ -45,6 +45,8 @@
 - `pcs stonith history` commands for displaying, synchronizing and cleaning up
   fencing history. Pacemaker supporting fencing history is required.
   ([rhbz#1620190])
+- Validation of node existence in a cluster when creating location constraints
+  ([rhbz#1553718])
 
 ### Fixed
 - Fixed encoding of the CIB_user_groups cookie in communication between nodes.
@@ -161,6 +163,7 @@
 [rhbz#1542288]: https://bugzilla.redhat.com/show_bug.cgi?id=1542288
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
+[rhbz#1553718]: https://bugzilla.redhat.com/show_bug.cgi?id=1553718
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 [rhbz#1566430]: https://bugzilla.redhat.com/show_bug.cgi?id=1566430
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353

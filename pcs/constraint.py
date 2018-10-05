@@ -13,12 +13,14 @@ from pcs.cli import (
     constraint_order,
 )
 from pcs.cli.common import parse_args
+from pcs.cli.common.console_report import error, warn
 from pcs.cli.common.errors import CmdLineInputError
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
+from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 
@@ -30,6 +32,10 @@ DEFAULT_ROLE = "Started"
 
 OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 OPTIONS_KIND = order_attrib["kind"]
+
+LOCATION_NODE_VALIDATION_SKIP_MSG = (
+    "Validation for node existence in the cluster will be skipped"
+)
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
@@ -879,6 +885,22 @@ def location_add(lib, argv, modifiers):
             rsc_value = correct_id
         elif not rsc_valid:
             utils.err(rsc_error)
+
+    # Verify that specified node exists in the cluster
+    if not (modifiers.is_specified("-f") or modifiers.get("--force")):
+        lib_env = utils.get_lib_env()
+        existing_nodes = get_existing_nodes_names(
+            corosync_conf=lib_env.get_corosync_conf(),
+            cib=lib_env.get_cib(),
+        )
+        if node not in existing_nodes:
+            raise error(
+                f"Node '{node}' does not seem to be in the cluster"
+                ", use --force to override"
+            )
+    else:
+        warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
+
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
