@@ -12,7 +12,6 @@ from pcs.cli.common.parse_args import(
     is_short_option_expecting_value,
     is_long_option_expecting_value,
     is_option_expecting_value,
-    upgrade_args,
     InputModifiers,
 )
 from pcs.cli.common.errors import CmdLineInputError
@@ -478,29 +477,6 @@ class IsOptionExpectingValue(TestCase):
     def test_returns_false_on_option_including_value(self):
         self.assertFalse(is_option_expecting_value("--name=Name"))
         self.assertFalse(is_option_expecting_value("-fvalue"))
-
-class UpgradeArgs(TestCase):
-    def test_returns_the_same_args_when_no_older_versions_detected(self):
-        args = ["first", "second"]
-        self.assertEqual(args, upgrade_args(args))
-
-    def test_upgrade_2dash_cloneopt(self):
-        self.assertEqual(
-            ["first", "clone", "second"],
-            upgrade_args(["first", "--cloneopt", "second"])
-        )
-
-    def test_upgrade_2dash_clone(self):
-        self.assertEqual(
-            ["first", "clone", "second"],
-            upgrade_args(["first", "--clone", "second"])
-        )
-
-    def test_upgrade_2dash_cloneopt_with_value(self):
-        self.assertEqual(
-            ["first", "clone", "1", "second"],
-            upgrade_args(["first", "--cloneopt=1", "second"])
-        )
 
 
 class InputModifiersTest(TestCase):

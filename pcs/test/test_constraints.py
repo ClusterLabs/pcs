@@ -1349,7 +1349,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create dummy ocf:heartbeat:Dummy --clone")
+        o,r = pcs(temp_cib, "resource create dummy ocf:heartbeat:Dummy clone")
         ac(o,"")
         assert r == 0
 
@@ -1464,7 +1464,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib,
-            "resource create dummy ocf:heartbeat:Dummy --clone"
+            "resource create dummy ocf:heartbeat:Dummy clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)

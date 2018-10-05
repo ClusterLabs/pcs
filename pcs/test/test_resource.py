@@ -1374,7 +1374,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         o, r = pcs(
             temp_cib,
-            "resource create --no-default-ops A0 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops A0 ocf:heartbeat:Dummy clone"
         )
         self.assertEqual(0, r)
         ac(o, "")
@@ -1680,7 +1680,7 @@ monitor interval=20 (A-monitor-interval-20)
     def testCloneRemove(self):
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
         )
         ac(o,"")
         assert r == 0
@@ -2860,7 +2860,7 @@ Error: when specifying --master you must use the promotable clone id
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3421,7 +3421,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create D2 ocf:heartbeat:Dummy --clone")
+        o,r = pcs(temp_cib, "resource create D2 ocf:heartbeat:Dummy clone")
         ac(o,"")
         assert r == 0
 
@@ -3596,7 +3596,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3667,7 +3667,7 @@ Ticket Constraints:
     def testResourceCloneUpdate(self):
         o, r  = pcs(
             temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
         )
         assert r == 0
         ac(o, "")
@@ -4113,7 +4113,7 @@ Ticket Constraints:
         # test the cli part for now.
         output, retVal = pcs(
             temp_cib,
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy clone"
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
@@ -4597,7 +4597,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
     def testGroupMSAndClone(self):
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
         )
         ac(o,"")
         assert r == 0
@@ -4888,7 +4888,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         output, retVal = pcs(
             temp_cib,
-            "resource create DC ocf:pacemaker:Dummy --no-default-ops --clone"
+            "resource create DC ocf:pacemaker:Dummy --no-default-ops clone"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
@@ -5254,7 +5254,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
 
     def test_no_op_allowed_in_clone_update(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:heartbeat:Dummy --clone"
+            "resource create dummy ocf:heartbeat:Dummy clone"
         )
         self.assert_pcs_success("resource show dummy-clone", outdent(
             """\

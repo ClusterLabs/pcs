@@ -19,6 +19,7 @@
     promotable` or `pcs resource create ... clone promotable=true`
   - Instead of `pcs resource master` use `pcs resource promotable` or `pcs
     resource clone ... promotable=true`
+- Deprecated --clone option from `pcs resource create` command
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])

@@ -176,11 +176,7 @@ class Success(ResourceTest):
 
     def test_with_clone(self):
         self.assert_effect(
-            [
-                "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
-                ,
-                "resource create R ocf:heartbeat:Dummy --no-default-ops clone",
-            ],
+            "resource create R ocf:heartbeat:Dummy --no-default-ops clone",
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -198,17 +194,10 @@ class Success(ResourceTest):
 
     def test_with_clone_options(self):
         self.assert_effect(
-            [
-                "resource create R ocf:heartbeat:Dummy --no-default-ops"
-                    " --cloneopt notify=true"
-                ,
+            (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
-                    " notify=true"
-                ,
-                "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
-                    " notify=true"
-                ,
-            ],
+                " notify=true"
+            ),
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -631,100 +620,9 @@ class SuccessGroup(ResourceTest):
 
 
 class SuccessClone(ResourceTest):
-    def test_clone_does_not_overshadow_meta_options(self):
-        self.assert_effect(
-            [
-                "resource create R ocf:heartbeat:Dummy meta a=b --clone c=d",
-                "resource create R ocf:heartbeat:Dummy --clone c=d meta a=b",
-            ],
-            """<resources>
-                <clone id="R-clone">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <meta_attributes id="R-meta_attributes">
-                            <nvpair id="R-meta_attributes-a" name="a"
-                                value="b"
-                            />
-                        </meta_attributes>
-                        <operations>
-                            <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20s"
-                            />
-                            <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20s"
-                            />
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                            <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20s"
-                            />
-                            <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20s"
-                            />
-                            <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-clone-meta_attributes">
-                        <nvpair id="R-clone-meta_attributes-c" name="c"
-                            value="d"
-                        />
-                    </meta_attributes>
-                </clone>
-            </resources>"""
-        )
-
-    def test_clone_does_not_overshadow_operations(self):
-        self.assert_effect(
-            [
-                "resource create R ocf:heartbeat:Dummy op monitor interval=10"
-                    " --clone c=d"
-                ,
-                "resource create R ocf:heartbeat:Dummy --clone c=d"
-                    " op monitor interval=10"
-                ,
-            ],
-            """<resources>
-                <clone id="R-clone">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <operations>
-                            <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20s"
-                            />
-                            <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20s"
-                            />
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor"
-                            />
-                            <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20s"
-                            />
-                            <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20s"
-                            />
-                            <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-clone-meta_attributes">
-                        <nvpair id="R-clone-meta_attributes-c" name="c"
-                            value="d"
-                        />
-                    </meta_attributes>
-                </clone>
-            </resources>"""
-        )
-
     def test_clone_places_disabled_correctly(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --clone --disabled",
+            "resource create R ocf:heartbeat:Dummy clone --disabled",
             """<resources>
                 <clone id="R-clone">
                     <meta_attributes id="R-clone-meta_attributes">
@@ -897,7 +795,7 @@ class Bundle(ResourceTest):
 class FailOrWarn(ResourceTest):
     def test_error_group_clone_combination(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
+            "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
                 " --group G"
             ,
             "Error: you can specify only one of clone, promotable, bundle or "
@@ -906,7 +804,7 @@ class FailOrWarn(ResourceTest):
 
     def test_error_bundle_clone_combination(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
+            "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
                 " bundle bundle_id"
             ,
             "Error: you can specify only one of clone, promotable, bundle or "

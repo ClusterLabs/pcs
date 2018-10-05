@@ -48,8 +48,6 @@ def main(argv=None):
     orig_argv = argv[:]
     utils.pcs_options = {}
 
-    argv = parse_args.upgrade_args(argv)
-
     # we want to support optional arguments for --wait, so if an argument
     # is specified with --wait (ie. --wait=30) then we use them
     waitsecs = None
