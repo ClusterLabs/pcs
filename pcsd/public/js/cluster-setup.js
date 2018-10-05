@@ -257,7 +257,13 @@ clusterSetup.submit.onError = function(rejectCode, data){
       // SEND_KNOWN_HOST_CALL_FAILED or on CLUSTER_SETUP_CALL_FAILED if the
       // user is not "hacluster". So we use standard mechanism here without
       // extra notice that cluster was setup and only remember-cluster failed.
-      clusterSetup.submit.onCallFail(data.XMLHttpRequest);
+      alert(
+        "Cluster was created successfuly!"
+          +"\n\nHowever, adding it to web UI failed. Use 'Add Existing' to add"
+          +" the new cluster to web UI."
+          +"\n\nDetails:\nServer returned an error: "+data.XMLHttpRequest.status
+          +" "+data.XMLHttpRequest.responseText
+      );
       break;
   }
 };

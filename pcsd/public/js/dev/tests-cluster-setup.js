@@ -252,6 +252,14 @@ testClusterSetup.clusterSetupForce = function(url, data, success, fail){
   }
 };
 
+testClusterSetup.rememberFail = function(url, data, success, fail){
+  switch(url){
+    case "/manage/remember-cluster": return fail(500, "Server error");
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
 
 
 dev.runScenario(
@@ -269,6 +277,7 @@ dev.runScenario(
   // testClusterSetup.clusterSetupForceFail
   // testClusterSetup.clusterSetupForceFailForcible
   // testClusterSetup.clusterSetupForce
+  // testClusterSetup.rememberFail
   testClusterSetup.successPath
 );
 
