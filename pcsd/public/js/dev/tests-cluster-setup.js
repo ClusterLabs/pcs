@@ -266,7 +266,6 @@ dev.runScenario(
   // testClusterSetup.checkAuthFails
   // testClusterSetup.checkAuthNodesNotAuth
   // testClusterSetup.sendKnownHosts403
-  // testClusterSetup.sendKnownHosts500
   // testClusterSetup.sendKnownHostsFail
   // testClusterSetup.sendKnownHostsUnsupported
   // testClusterSetup.sendKnownHostsUnknownFail

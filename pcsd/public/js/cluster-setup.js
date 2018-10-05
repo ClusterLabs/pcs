@@ -98,7 +98,9 @@ clusterSetup.dialog.resetMessages = function(msgList){
       continue;
     }
     $("#create_new_cluster table.msg-box td").append(
-      '<div class="'+msgList[i].type+'">'+tools.formatMsg(msgList[i])+"</div>"
+      '<div class="'+msgList[i].type+'">'
+        +tools.string.escape(tools.formatMsg(msgList[i]))
+        +"</div>"
     );
   }
 };
@@ -202,7 +204,7 @@ clusterSetup.submit.onCallFail = function(XMLHttpRequest){
   }else{
     alert(
       "Server returned an error: "+XMLHttpRequest.status
-      +" "+XMLHttpRequest.responseText
+      +" "+tools.string.escape(XMLHttpRequest.responseText)
     );
   }
 };
@@ -235,13 +237,13 @@ clusterSetup.submit.onError = function(rejectCode, data){
       break;
 
     case api.err.CLUSTER_SETUP_FAILED_FORCIBLE:
-      if (confirm(
+      if (confirm(tools.string.escape(
         "Unable to setup cluster \n\n"
         + data.msgList
           .map(function(msg){return tools.formatMsg(msg)})
           .join("\n")
         + "\n\nDo you want to force the operation?"
-      )) {
+      ))) {
         clusterSetup.submit.force(data.setupData, data.setupCoordinatingNode);
       } else {
         clusterSetup.dialog.close();
@@ -249,7 +251,7 @@ clusterSetup.submit.onError = function(rejectCode, data){
       break;
 
     case api.err.CLUSTER_SETUP_EXCEPTION:
-      alert("Server returned an error: "+data.msg);
+      alert("Server returned an error: "+tools.string.escape(data.msg));
       break;
 
     case api.err.REMEMBER_CLUSTER_CALL_FAILED:
@@ -262,7 +264,7 @@ clusterSetup.submit.onError = function(rejectCode, data){
           +"\n\nHowever, adding it to web UI failed. Use 'Add Existing' to add"
           +" the new cluster to web UI."
           +"\n\nDetails:\nServer returned an error: "+data.XMLHttpRequest.status
-          +" "+data.XMLHttpRequest.responseText
+          +" "+tools.string.escape(data.XMLHttpRequest.responseText)
       );
       break;
   }

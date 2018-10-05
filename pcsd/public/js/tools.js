@@ -57,6 +57,8 @@ tools.string.upperFirst = function(string){
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+tools.string.escape = Handlebars.Utils.escapeExpression;
+
 /**
   msg:
     list of objects {type, msg} where type in error, warning, info
