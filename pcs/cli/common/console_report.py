@@ -1668,15 +1668,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.HOST_ALREADY_IN_CLUSTER_CONFIG: lambda info:
         (
-            "{host_name}: Cluster configuration files found. Is the host "
-            "already in a cluster?"
+            "{host_name}: Cluster configuration files found, the host "
+            "seems to be in a cluster already"
         ).format(**info)
     ,
 
     codes.HOST_ALREADY_IN_CLUSTER_SERVICES: lambda info:
         (
-            "{host_name}: Running cluster services: {_services}. Is the host "
-            "already in a cluster?"
+            "{host_name}: Running cluster services: {_services}, the host "
+            "seems to be in a cluster already"
         ).format(
             _services=format_list(info["service_list"]),
             **info

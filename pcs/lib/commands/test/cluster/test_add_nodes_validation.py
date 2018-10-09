@@ -1242,7 +1242,8 @@ class ClusterStatus(TestCase):
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
-                    service_list=["corosync", "pacemaker"]
+                    service_list=["corosync", "pacemaker"],
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
                 ),
                 fixture.error(
                     report_codes.SERVICE_NOT_INSTALLED,
@@ -1252,6 +1253,7 @@ class ClusterStatus(TestCase):
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
                 ),
                 fixture.error(
                     report_codes.INVALID_RESPONSE_FORMAT,

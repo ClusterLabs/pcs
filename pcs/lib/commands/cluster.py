@@ -920,7 +920,10 @@ def _host_check_cluster_setup(
         required_service_list + ["pacemaker_remote"]
     )
     report_severity = (
-        ReportItemSeverity.ERROR if not force else ReportItemSeverity.WARNING
+        ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
+    )
+    report_forceable = (
+        None if force else report_codes.FORCE_ALREADY_IN_CLUSTER
     )
     cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
@@ -948,6 +951,7 @@ def _host_check_cluster_setup(
                         host_name,
                         cannot_be_running_service_list,
                         severity=report_severity,
+                        forceable=report_forceable,
                     )
                 )
             if host_info["cluster_configuration_exists"]:
@@ -956,6 +960,7 @@ def _host_check_cluster_setup(
                     reports.host_already_in_cluster_config(
                         host_name,
                         severity=report_severity,
+                        forceable=report_forceable,
                     )
                 )
         except KeyError:
@@ -968,6 +973,7 @@ def _host_check_cluster_setup(
             )
 
     if cluster_exists_on_nodes and not force:
+        # This is always a forceable error
         report_list.append(reports.cluster_will_be_destroyed())
     return report_list
 
