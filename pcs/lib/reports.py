@@ -3545,3 +3545,25 @@ def resource_bundle_unsupported_container_type(
             supported_container_types=sorted(supported_container_types),
         ),
     )
+
+def fence_history_command_error(reason, command_label):
+    """
+    pacemaker command for working with fence history returned an error
+    string reason -- output of the pacemaker command
+    string command_label -- label of the command - what it should have achieved
+    """
+    return ReportItem.error(
+        report_codes.FENCE_HISTORY_COMMAND_ERROR,
+        info={
+            "reason": reason,
+            "command_label": command_label,
+        }
+    )
+
+def fence_history_not_supported():
+    """
+    pacemaker does not support the fence history feature
+    """
+    return ReportItem.error(
+        report_codes.FENCE_HISTORY_NOT_SUPPORTED
+    )

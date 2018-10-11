@@ -63,6 +63,8 @@ def stonith_cmd(lib, argv, modifiers):
             resource.resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
             resource.resource_disable_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "history":
+            stonith_history_cmd(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -93,6 +95,27 @@ def stonith_level_cmd(lib, argv, modifiers):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
             e, "stonith", "level {0}".format(sub_cmd)
+        )
+
+def stonith_history_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        sub_cmd, argv_next = "show", []
+    else:
+        sub_cmd, argv_next = argv[0], argv[1:]
+
+    try:
+        if sub_cmd == "show":
+            stonith_history_show_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "cleanup":
+            stonith_history_cleanup_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "update":
+            stonith_history_update_cmd(lib, argv_next, modifiers)
+        else:
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "stonith", "history {0}".format(sub_cmd)
         )
 
 def stonith_list_available(lib, argv, modifiers):
@@ -863,3 +886,38 @@ def sbd_message(lib, argv, modifiers):
 
     device, node, message = argv
     lib.sbd.set_message(device, node, message)
+
+
+def stonith_history_show_cmd(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if len(argv) > 1:
+        raise CmdLineInputError()
+
+    node = argv[0] if argv else None
+    print(lib.stonith.history_get_text(node))
+
+
+def stonith_history_cleanup_cmd(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if len(argv) > 1:
+        raise CmdLineInputError()
+
+    node = argv[0] if argv else None
+    print(lib.stonith.history_cleanup(node))
+
+
+def stonith_history_update_cmd(lib, argv, modifiers):
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
+
+    print(lib.stonith.history_update())

@@ -1812,4 +1812,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _container_types=format_list(info["supported_container_types"]),
             **info,
         )
+    ,
+    codes.FENCE_HISTORY_COMMAND_ERROR: lambda info:
+        "Unable to {command_label} fence history: {reason}".format(**info)
+    ,
+    codes.FENCE_HISTORY_NOT_SUPPORTED:
+        "Fence history is not supported, please upgrade pacemaker"
+    ,
 }

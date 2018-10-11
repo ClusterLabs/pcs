@@ -1405,6 +1405,27 @@
         pcs commands: stonith refresh
       </description>
     </capability>
+    <capability id="pcmk.stonith.history.cleanup" in-pcs="1" in-pcsd="0">
+      <description>
+        Cleanup fencing history. Optionally specify a node.
+
+        pcs commands: stonith history cleanup
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.history.show" in-pcs="1" in-pcsd="0">
+      <description>
+        Display fencing history. Optionally specify a node.
+
+        pcs commands: stonith history show
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.history.update" in-pcs="1" in-pcsd="0">
+      <description>
+        Update fencing history.
+
+        pcs commands: stonith history update
+      </description>
+    </capability>
     <capability id="pcmk.stonith.levels" in-pcs="1" in-pcsd="1">
       <description>
         Basic stonith levels configuration:

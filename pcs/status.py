@@ -12,6 +12,7 @@ from pcs.cli.booth.command import status as booth_status_cmd
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import is_fence_history_supported
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
@@ -82,6 +83,10 @@ def full_status(lib, argv, modifiers):
         monitor_command.extend(
             ["--show-detail", "--show-node-attributes", "--failcounts"]
         )
+        # by default, pending and failed actions are displayed
+        # with --full, we display the whole history
+        if is_fence_history_supported():
+            monitor_command.append("--fence-history=3")
 
     stdout, stderr, retval = utils.cmd_runner().run(monitor_command)
 

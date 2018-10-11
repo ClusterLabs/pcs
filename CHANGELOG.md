@@ -39,6 +39,12 @@
 - Support for promotable clone resources in pcsd and web UI ([rhbz#1542288])
 - Obsoleting parameters of resource and fence agents are now supported and
   preferred over deprecated parameters ([rhbz#1436217])
+- `pcs status` now shows failed and pending fencing actions and `pcs status
+  --full` shows the whole fencing history. Pacemaker supporting fencing history
+  is required. ([rhbz#1615891])
+- `pcs stonith history` commands for displaying, synchronizing and cleaning up
+  fencing history. Pacemaker supporting fencing history is required.
+  ([rhbz#1620190])
 
 ### Fixed
 - Fixed encoding of the CIB_user_groups cookie in communication between nodes.
@@ -169,7 +175,9 @@
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 [rhbz#1605185]: https://bugzilla.redhat.com/show_bug.cgi?id=1605185
 [rhbz#1615420]: https://bugzilla.redhat.com/show_bug.cgi?id=1615420
+[rhbz#1615891]: https://bugzilla.redhat.com/show_bug.cgi?id=1615891
 [rhbz#1619620]: https://bugzilla.redhat.com/show_bug.cgi?id=1619620
+[rhbz#1620190]: https://bugzilla.redhat.com/show_bug.cgi?id=1620190
 
 
 ## [0.9.163] - 2018-02-20
