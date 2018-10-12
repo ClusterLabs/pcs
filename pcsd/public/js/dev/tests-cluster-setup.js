@@ -1,18 +1,36 @@
-dev.patch.ajax_wrapper(function(url){
-  switch(url){
-    case "/clusters_overview":
-      if(dev.flags.cluster_overview_run === undefined){
-        dev.flags.cluster_overview_run = true;
-        console.group('Wrapping ajax_wrapper');
-        console.log(url);
-        console.groupEnd();
-        return mock.clusters_overview;
-      }
-    default: return undefined;
-  }
-});
+dev.utils.clusterSetupDialog = {
+  wasRun: false,
+  prefill: function(){
+    if(dev.utils.clusterSetupDialog.wasRun){
+      return;
+    }
+    dev.utils.clusterSetupDialog.wasRun = true;
+    clusterSetup.dialog.create();
+    $('input[name^="clustername"]').val("starbug8");
+    $('#create_new_cluster input[name="node-1"]').val("dave8");
+    $('#create_new_cluster input[name="node-2"]').val("kryten8");
+    $('#create_new_cluster input[name="node-3"]').val("holly8");
+  },
+};
 
-testClusterSetup = {response: {}};
+dev.patch.ajax_wrapper(
+  function(url){
+    switch(url){
+      case "/clusters_overview":
+        if(dev.flags.cluster_overview_run === undefined){
+          dev.flags.cluster_overview_run = true;
+          console.group('Wrapping ajax_wrapper');
+          console.log(url);
+          console.groupEnd();
+          return mock.clusters_overview;
+        }
+      default: return undefined;
+    }
+  },
+  dev.utils.clusterSetupDialog.prefill,
+);
+
+testClusterSetup = {};
 
 testClusterSetup.successPath = function(url, data, success, fail){
   switch(url){
@@ -23,20 +41,9 @@ testClusterSetup.successPath = function(url, data, success, fail){
     }));
     case "/manage/send-known-hosts-to-node": return success("success");
 
-    case "/manage/cluster-setup": return success(JSON.stringify({
-      status: "success",
-      status_msg: "",
-      report_list: [
-        {
-          severity: "INFO",
-          code: "SOME_INFO_CODE",
-          info: {},
-          forceable: null,
-          report_text: "Information. In formation. Inf or mation",
-        },
-      ],
-      data: null,
-    }));
+    case "/manage/cluster-setup": return success(
+      JSON.stringify(dev.fixture.success)
+    );
 
     case "/manage/remember-cluster": return success();
   }
@@ -122,49 +129,9 @@ testClusterSetup.clusterSetup500 = function(url, data, success, fail){
 };
 testClusterSetup.clusterSetupUnforcible = function(url, data, success, fail){
   switch(url){
-    case "/manage/cluster-setup": return success(JSON.stringify({
-      status: "error",
-      status_msg: "",
-      report_list: [
-        {
-          severity: "ERROR",
-          code: "SOME_CODE",
-          info: {},
-          forceable: null,
-          report_text: "Error happens",
-        },
-        // otther reports to check report listings
-        {
-          severity: "WARNING",
-          code: "SOME_WARNING_CODE",
-          info: {},
-          forceable: null,
-          report_text: "Another warning appeared",
-        },
-        {
-          severity: "INFO",
-          code: "SOME_INFO_CODE",
-          info: {},
-          forceable: null,
-          report_text: "Information. In formation. Inf or mation",
-        },
-        {
-          severity: "ERROR",
-          code: "SOME_OTHER_CODE",
-          info: {},
-          forceable: "FORCE",
-          report_text: "Another error happens",
-        },
-        {
-          severity: "DEBUG",
-          code: "DEBUG_CODE",
-          info: {},
-          forceable: null,
-          report_text: "Some debug info",
-        },
-      ],
-      data: null,
-    }));
+    case "/manage/cluster-setup": return success(
+      JSON.stringify(dev.fixture.libErrorUnforcibleLarge)
+    );
     default:
       return testClusterSetup.successPath(url, data, success, fail);
   }
@@ -173,12 +140,7 @@ testClusterSetup.clusterSetupUnforcible = function(url, data, success, fail){
 testClusterSetup.clusterSetupException = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup":
-      return success(JSON.stringify({
-        status: "exception",
-        status_msg: "Some exception happens",
-        report_list: [],
-        data: null,
-      }));
+      return success(JSON.stringify(dev.fixture.libException));
     default:
       return testClusterSetup.successPath(url, data, success, fail);
   }
@@ -188,21 +150,9 @@ testClusterSetup.clusterSetupException = function(url, data, success, fail){
 testClusterSetup.clusterSetupForceFail = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup":
-      return success(JSON.stringify({
-        status: "error",
-        status_msg: "",
-        report_list: [{
-          severity: "ERROR",
-          code: "SOME_CODE",
-          info: {},
-          forceable: JSON.parse(data.setup_data).force_flags.length > 0
-            ? null
-            : "FORCE"
-          ,
-          report_text: "Error happens",
-        }],
-        data: null,
-      }));
+      return success(JSON.stringify(
+        dev.fixture.libError(JSON.parse(data.setup_data).force_flags.length < 1)
+      ));
     default:
       return testClusterSetup.successPath(url, data, success, fail);
   }
@@ -213,18 +163,7 @@ testClusterSetup.clusterSetupForceFailForcible = function(
 ){
   switch(url){
     case "/manage/cluster-setup":
-      return success(JSON.stringify({
-        status: "error",
-        status_msg: "",
-        report_list: [{
-          severity: "ERROR",
-          code: "SOME_CODE",
-          info: {},
-          forceable:"FORCE",
-          report_text: "Error happens",
-        }],
-        data: null,
-      }));
+      return success(JSON.stringify(dev.fixture.libError(true)));
     default:
       return testClusterSetup.successPath(url, data, success, fail);
   }
@@ -234,18 +173,7 @@ testClusterSetup.clusterSetupForce = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup":
       if (JSON.parse(data.setup_data).force_flags.length < 1) {
-        return success(JSON.stringify({
-          status: "error",
-          status_msg: "",
-          report_list: [{
-            severity: "ERROR",
-            code: "SOME_CODE",
-            info: {},
-            forceable:"FORCE",
-            report_text: "Error happens",
-          }],
-          data: null,
-        }));
+        return success(JSON.stringify(dev.fixture.libError(true)));
       }
     default:
       return testClusterSetup.successPath(url, data, success, fail);
@@ -279,18 +207,3 @@ dev.runScenario(
   // testClusterSetup.rememberFail
   testClusterSetup.successPath
 );
-
-dev.utils.clusterSetupDialog = {
-  wasRun: false,
-  prefill: function(){
-    if(dev.utils.clusterSetupDialog.wasRun){
-      return;
-    }
-    dev.utils.clusterSetupDialog.wasRun = true;
-    clusterSetup.dialog.create();
-    $('input[name^="clustername"]').val("starbug8");
-    $('#create_new_cluster input[name="node-1"]').val("dave8");
-    $('#create_new_cluster input[name="node-2"]').val("kryten8");
-    $('#create_new_cluster input[name="node-3"]').val("holly8");
-  },
-};

@@ -1,5 +1,6 @@
 api = {
   reports: {},
+  pcsLib: {},
 };
 
 api.reports.severityMsgTypeMap = {
@@ -49,30 +50,105 @@ api.reports.toMsgs = function(reportList){
     .map(function(report){
       return {
         type: api.reports.severityMsgTypeMap[report.severity],
-        msg: report.report_text,
+        msg: report.report_text + (
+          (report.severity === "ERROR" && report.forceable)
+            ? " (can be forced)"
+            : ""
+        ),
       };
     })
   ;
 };
 
+api.processSingleStatus = function(resultCode, rejectCode, actionDesc){
+  if(resultCode === "success"){
+    return promise.resolve();
+  }
+  var codeMsgMap = {
+    "error": "Error during "+actionDesc+"'.",
+    "not_supported": tools.string.upperFirst(actionDesc)+"' not supported.",
+  };
+  return promise.reject(rejectCode, {
+    message: codeMsgMap[resultCode] !== undefined
+      ? codeMsgMap[resultCode]
+      : "Unknown result of "+actionDesc+" (result: '"+resultCode+"')."
+    ,
+  });
+};
+
+api.pcsLib.forcibleLoop = function(apiCall, errGroup, confirmForce, force){
+  return apiCall(force).then(function(responseString){
+    var response = JSON.parse(responseString);
+
+    if (response.status === api.reports.statuses.success) {
+      return promise.resolve(response.data);
+    }
+
+    if (response.status !== api.reports.statuses.error) {
+      return promise.reject(errGroup.PCS_LIB_EXCEPTION, {
+        msg: response.status_msg
+      });
+    }
+
+    if (!api.reports.isForcibleError(response)) {
+      return promise.reject(errGroup.PCS_LIB_ERROR, {
+        msgList: api.reports.toMsgs(response.report_list)
+      });
+    }
+
+    if (!confirmForce(api.reports.toMsgs(response.report_list))) {
+      return promise.reject(errGroup.CONFIRMATION_DENIED);
+    }
+
+    return api.pcsLib.forcibleLoop(apiCall, errGroup, confirmForce, true);
+  });
+};
+
 // TODO JSON.parse can fail
 api.err = {
-  NODES_AUTH_CHECK: "NODES_AUTH_CHECK",
-  SEND_KNOWN_HOST_CALL_FAILED: "SEND_KNOWN_HOST_CALL_FAILED",
-  SEND_KNOWN_HOSTS_ERROR: "SEND_KNOWN_HOSTS_ERROR",
-  CLUSTER_SETUP_CALL_FAILED: "CLUSTER_SETUP_CALL_FAILED",
-  CLUSTER_SETUP_FAILED: "CLUSTER_SETUP_FAILED",
-  CLUSTER_SETUP_EXCEPTION: "CLUSTER_SETUP_EXCEPTION",
-  CLUSTER_SETUP_FAILED_FORCIBLE: "CLUSTER_SETUP_FAILED_FORCIBLE",
-  REMEMBER_CLUSTER_CALL_FAILED: "REMEMBER_CLUSTER_CALL_FAILED",
-  AUTH_NODES_FAILED: "AUTH_NODES_FAILED",
+  NODES_AUTH_CHECK: {
+    FAILED: "NODES_AUTH_CHECK.FAILED",
+    WITH_ERR_NODES: "NODES_AUTH_CHECK.WITH_ERR_NODES",
+  },
+  SEND_KNOWN_HOSTS: {
+    FAILED: "SEND_KNOWN_HOSTS.FAILED",
+    PCSD_ERROR: "SEND_KNOWN_HOSTS.PCSD_ERROR",
+  },
+  CLUSTER_SETUP: {
+    FAILED: "CLUSTER_SETUP.FAILED",
+    PCS_LIB_EXCEPTION: "CLUSTER_SETUP.PCS_LIB_EXCEPTION",
+    PCS_LIB_ERROR: "CLUSTER_SETUP.PCS_LIB_ERROR",
+    CONFIRMATION_DENIED: "CLUSTER_SETUP.CONFIRMATION_DENIED",
+  },
+  REMEMBER_CLUSTER: {
+    FAILED: "REMEMBER_CLUSTER.FAILED",
+  },
+  SEND_KNOWN_HOST_TO_CLUSTER: {
+    FAILED: "SEND_KNOWN_HOST_TO_CLUSTER.FAILED",
+    PCSD_ERROR: "SEND_KNOWN_HOST_TO_CLUSTER.PCSD_ERROR",
+  },
+  NODE_ADD: {
+    FAILED: "NODE_ADD.FAILED",
+    PCS_LIB_EXCEPTION: "NODE_ADD.PCS_LIB_EXCEPTION",
+    PCS_LIB_ERROR: "NODE_ADD.PCS_LIB_ERROR",
+    CONFIRMATION_DENIED: "NODE_ADD.CONFIRMATION_DENIED",
+  },
+  CLUSTER_START: {
+    FAILED: "CLUSTER_START.FAILED",
+  }
+};
+
+api.tools = {};
+
+api.tools.forceFlags = function(force){
+  return force ? ["FORCE"] : [];
 };
 
 api.checkAuthAgainstNodes = function(nodesNames){
   return promise.get(
     "/manage/check_auth_against_nodes",
     {"node_list": nodesNames},
-    api.err.NODES_AUTH_CHECK,
+    api.err.NODES_AUTH_CHECK.FAILED,
 
   ).then(function(nodesAuthStatusResponse){
     var nodesAuthStatus = JSON.parse(nodesAuthStatusResponse);
@@ -97,51 +173,37 @@ api.checkAuthAgainstNodes = function(nodesNames){
   });
 };
 
-api.clusterSetup = function(setupData, setupCoordinatingNode, force){
-  return promise.post(
-    "/manage/cluster-setup",
-    {
-      target_node: setupCoordinatingNode,
-      setup_data: JSON.stringify({
-        cluster_name: setupData.clusterName,
-        nodes: setupData.nodesNames.map(function(nodeName){
-          return {name: nodeName};
-        }),
-        transport_type: "knet",
-        transport_options: {},
-        link_list: [],
-        compression_options: {},
-        crypto_options: {},
-        totem_options: {},
-        quorum_options: {},
-        force_flags: force ? ["FORCE"] : [],
-      }),
-    },
-    api.err.CLUSTER_SETUP_CALL_FAILED,
+api.clusterSetup = function(submitData, confirmForce){
+  var setupData = submitData.setupData;
+  var setupCoordinatingNode = submitData.setupCoordinatingNode;
 
-  ).then(function(setupResultString){
-    return promise.resolve(JSON.parse(setupResultString));
-  });
-};
+  var data = {
+    cluster_name: setupData.clusterName,
+    nodes: setupData.nodesNames.map(function(nodeName){
+      return {name: nodeName};
+    }),
+    transport_type: "knet",
+    transport_options: {},
+    link_list: [],
+    compression_options: {},
+    crypto_options: {},
+    totem_options: {},
+    quorum_options: {},
+  };
 
-api.clusterSetup.processErrors = function(
-  setupResult, setupData, setupCoordinatingNode
-){
-  if (setupResult.status !== api.reports.statuses.error) {
-    return promise.reject(api.err.CLUSTER_SETUP_EXCEPTION, {
-      msg: setupResult.status_msg
-    });
-  }
-  if (api.reports.isForcibleError(setupResult)) {
-    return promise.reject(api.err.CLUSTER_SETUP_FAILED_FORCIBLE, {
-      msgList: api.reports.toMsgs(setupResult.report_list),
-      setupData: setupData,
-      setupCoordinatingNode: setupCoordinatingNode,
-    });
-  }
-  return promise.reject(api.err.CLUSTER_SETUP_FAILED, {
-    msgList: api.reports.toMsgs(setupResult.report_list)
-  });
+  var apiCall = function(force){
+    data.force_flags = api.tools.forceFlags(force);
+    return promise.post(
+      "/manage/cluster-setup",
+      {
+        target_node: setupCoordinatingNode,
+        setup_data: JSON.stringify(data),
+      },
+      api.err.CLUSTER_SETUP.FAILED,
+    );
+  };
+
+  return api.pcsLib.forcibleLoop(apiCall, api.err.CLUSTER_SETUP, confirmForce);
 };
 
 api.sendKnownHostsToNode = function(setupCoordinatingNode, nodesNames){
@@ -151,27 +213,14 @@ api.sendKnownHostsToNode = function(setupCoordinatingNode, nodesNames){
       target_node: setupCoordinatingNode,
       "node_names[]": nodesNames,
     },
-    api.err.SEND_KNOWN_HOST_CALL_FAILED,
-  );
-};
+    api.err.SEND_KNOWN_HOSTS.FAILED,
 
-api.sendKnownHostsToNode.processErrors = function(
-  authShareResultCode, setupCoordinatingNode
-){
-  var codeMsgMap = {
-    "error": "Error during sharing authentication with node '"
-      +setupCoordinatingNode+"'."
-    ,
-    "not_supported": "Sharing authentication with node '"
-      +setupCoordinatingNode+"' not supported."
-    ,
-  };
-  return promise.reject(api.err.SEND_KNOWN_HOSTS_ERROR, {
-    message: codeMsgMap[authShareResultCode] !== undefined
-      ? codeMsgMap[authShareResultCode]
-    : "Unknown result of sharing authentication with node '"
-        +setupCoordinatingNode+"' (result: '"+authShareResultCode+"')."
-    ,
+  ).then(function(response){
+    return api.processSingleStatus(
+      response,
+      api.err.SEND_KNOWN_HOSTS.PCSD_ERROR,
+      "sharing authentication with node '"+setupCoordinatingNode+"'",
+    );
   });
 };
 
@@ -182,6 +231,67 @@ api.rememberCluster = function(clusterName, nodesNames){
       cluster_name: clusterName,
       "nodes[]": nodesNames,
     },
-    api.err.REMEMBER_CLUSTER_CALL_FAILED,
+    api.err.REMEMBER_CLUSTER.FAILED,
+  );
+};
+
+api.sendKnownHostsToCluster = function(clusterName, nodesNames){
+  return promise.post(
+    get_cluster_remote_url(clusterName)+"send-known-hosts",
+    {
+      "node_names[]": nodesNames,
+    },
+    api.err.SEND_KNOWN_HOST_TO_CLUSTER.FAILED,
+  ).then(function(response){
+    return api.processSingleStatus(
+      response,
+      api.err.SEND_KNOWN_HOST_TO_CLUSTER.PCSD_ERROR,
+      "sharing authentication for nodes '"+nodesNames.join("', '")
+        +"' with cluster '"+clusterName+"'"
+      ,
+    );
+  });
+};
+
+api.clusterNodeAdd = function(submitData, confirmForce){
+  var nodeAddData = submitData.nodeAddData;
+
+  var node = {name: nodeAddData.nodeName};
+  if (nodeAddData.nodeAddresses.length > 0) {
+    node.addrs = nodeAddData.nodeAddresses;
+  }
+  if (nodeAddData.sbd !== undefined) {
+    node.watchdog = nodeAddData.sbd.watchdog;
+    node.devices = nodeAddData.sbd.devices;
+  }
+
+  var data = {
+    nodes: [node],
+    wait: false,
+    start: false, // don't slow it down; start will be considered aftermath
+    enable: true,
+    no_watchdog_validation: nodeAddData.sbd !== undefined
+      ? nodeAddData.sbd.noWatchdogValidation 
+      : false
+    ,
+  };
+
+  var apiCall = function(force){
+    data.force_flags = api.tools.forceFlags(force);
+    return promise.post(
+      get_cluster_remote_url(submitData.clusterName)+"cluster_add_nodes",
+      {data_json: JSON.stringify(data)},
+      api.err.NODE_ADD.FAILED
+    );
+  };
+
+  return api.pcsLib.forcibleLoop(apiCall, api.err.NODE_ADD, confirmForce);
+};
+
+api.clusterStart = function(clusterName, nodeName){
+  return promise.post(
+    get_cluster_remote_url(clusterName)+"cluster_start",
+    {name: nodeName},
+    api.err.CLUSTER_START.FAILED,
   );
 };

@@ -73,7 +73,7 @@ dev.patch.promise_ajax = function(routeFn){
   };
 };
 
-dev.patch.ajax_wrapper = function(routeFn){
+dev.patch.ajax_wrapper = function(routeFn, onDone){
   var originalFn = ajax_wrapper;
   ajax_wrapper = function(options){
     var response = routeFn(options.url);
@@ -83,7 +83,7 @@ dev.patch.ajax_wrapper = function(routeFn){
         if(options.complete){
           options.complete();
         }
-        dev.utils.clusterSetupDialog.prefill();
+        onDone(options.url);
       }, 200);
     }else{
       originalFn(options);
@@ -94,4 +94,55 @@ dev.patch.ajax_wrapper = function(routeFn){
 dev.scenario = {};
 dev.runScenario = function(scenario){
   dev.patch.promise_ajax(scenario);
+};
+
+dev.fixture = {};
+
+dev.fixture.report = function(severity, code, forceable){
+  forceable = forceable || false;
+  return {
+    severity: severity,
+    code: code,
+    info: {},
+    forceable: forceable ? "FORCE" : null,
+    report_text: code.toLowerCase()+" message",
+  };
+};
+
+dev.fixture.libErrorUnforcibleLarge = {
+  status: "error",
+  status_msg: "",
+  report_list: [
+    dev.fixture.report("ERROR", "SOME_CODE"),
+    dev.fixture.report("WARNING", "SOME_WARNING_CODE"),
+    dev.fixture.report("INFO", "SOME_INFO_CODE"),
+    dev.fixture.report("ERROR", "SOME_OTHER_CODE", true),
+    dev.fixture.report("DEBUG", "DEBUG_CODE"),
+  ],
+  data: null,
+};
+
+dev.fixture.libException = {
+  status: "exception",
+  status_msg: "Some exception happens",
+  report_list: [],
+  data: null,
+};
+
+dev.fixture.success = {
+  status: "success",
+  status_msg: "",
+  report_list: [dev.fixture.report("INFO", "SOME_INFO_CODE")],
+  data: null,
+};
+
+dev.fixture.libError = function(forcible){
+  return {
+    status: "error",
+    status_msg: "",
+    report_list: [
+      dev.fixture.report("ERROR", "SOME_CODE", forcible),
+    ],
+    data: null,
+  };
 };

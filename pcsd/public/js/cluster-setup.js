@@ -1,4 +1,4 @@
-clusterSetup = {dialog: {}, submit: {}, api: {}};
+clusterSetup = {dialog: {}, submit: {}};
 
 clusterSetup.validateFormData = function(formData){
   var errors = [];
@@ -19,27 +19,20 @@ clusterSetup.validateFormData = function(formData){
 
 //------------------------------------------------------------------------------
 
-clusterSetup.dialog.getNodesNames = function(){
-  var nodes = [];
-  $("#create_new_cluster_form tr.new_node").each(function(i, element) {
-    var node = $(element).find(".node").val().trim();
-    if (node.length > 0) {
-      nodes.push(node);
-    }
-  });
-  return nodes;
-};
-
 clusterSetup.dialog.getFormData = function(){
   return {
-    clusterName: $('input[name^="clustername"]').val(),
-    nodesNames: clusterSetup.dialog.getNodesNames(),
+    clusterName: $('input[name^="clustername"]').val().trim(),
+    nodesNames: tools.dialog.inputsToArray(
+      "#create_new_cluster_form tr.new_node [name^='node-']"
+    ),
   };
 };
 
 clusterSetup.dialog.create = function(){
   $("#create_new_cluster").dialog({
     title: 'Create Cluster',
+    closeOnEscape: false,
+    dialogClass: "no-close",
     modal: false,
     resizable: false,
     width: 'auto',
@@ -58,13 +51,11 @@ clusterSetup.dialog.create = function(){
   });
 };
 
-clusterSetup.dialog.close = function(){
-  $("#create_new_cluster.ui-dialog-content.ui-widget-content").dialog("close");
-};
+clusterSetup.dialog.close = tools.dialog.close("#create_new_cluster");
 
-clusterSetup.dialog.setSubmitAbility = function(enabled){
-  $("#create_cluster_submit_btn").button("option", "disabled", ! enabled);
-};
+clusterSetup.dialog.setSubmitAbility = tools.dialog.setSubmitAbility(
+  "#create_cluster_submit_btn"
+);
 
 /**
   ok, noAuth, noConnect: array of node names
@@ -84,28 +75,15 @@ clusterSetup.dialog.updateNodesByAuth = function(ok, noAuth, noConnect){
   });
 };
 
-/**
-  msgList:
-    list of objects {type, msg} where type in error, warning, info
-*/
-clusterSetup.dialog.resetMessages = function(msgList){
-  $("#create_new_cluster table.msg-box")
-    .find(".error, .warning, .info")
-    .remove()
-  ;
-  for(var i in msgList){
-    if(!msgList.hasOwnProperty(i)){
-      continue;
-    }
-    $("#create_new_cluster table.msg-box td").append(
-      '<div class="'+msgList[i].type+'">'
-        +tools.string.escape(tools.formatMsg(msgList[i]))
-        +"</div>"
-    );
-  }
-};
+clusterSetup.dialog.resetMessages = tools.dialog.resetMessages(
+  "#create_new_cluster"
+);
 
 //------------------------------------------------------------------------------
+//
+clusterSetup.submit.onCallFail = tools.submit.onCallFail(
+  clusterSetup.dialog.resetMessages
+);
 
 clusterSetup.submit.run = function(){
   var formData = clusterSetup.dialog.getFormData();
@@ -120,17 +98,7 @@ clusterSetup.submit.run = function(){
   clusterSetup.dialog.setSubmitAbility(false);
 
   var setupCoordinatingNode = formData.nodesNames[0];
-  clusterSetup.submit.full(formData, setupCoordinatingNode);
-};
 
-clusterSetup.submit.onSuccess = function(){
-  // Pcs.update makes sense only after success of /manage/remember-cluster -
-  // it doesn't make sense to call it after success setup call.
-  Pcs.update();
-  clusterSetup.dialog.close();
-};
-
-clusterSetup.submit.full = function(formData, setupCoordinatingNode){
   api.checkAuthAgainstNodes(
     formData.nodesNames
 
@@ -143,129 +111,79 @@ clusterSetup.submit.full = function(formData, setupCoordinatingNode){
 
     var failNodes = nodesAuthGroups.noAuth.concat(nodesAuthGroups.noConnect);
     if(failNodes.length > 0){
-      return promise.reject(api.err.AUTH_NODES_FAILED, {failNodes: failNodes});
+      return promise.reject(
+        api.err.NODES_AUTH_CHECK.WITH_ERR_NODES,
+        {failNodes: failNodes},
+      );
     }
 
     return api.sendKnownHostsToNode(setupCoordinatingNode, formData.nodesNames);
 
-  }).then(function(authShareResultCode){
-    if(authShareResultCode !== "success"){
-      return api.sendKnownHostsToNode.processErrors(
-        authShareResultCode,
-        setupCoordinatingNode,
-      );
-    }
-    return api.clusterSetup(formData, setupCoordinatingNode);
-
-  }).then(function(setupResult){
-    return setupResult.status !== api.reports.statuses.success
-      ? api.clusterSetup.processErrors(
-          setupResult,
-          formData,
-          setupCoordinatingNode
-        )
-      : api.rememberCluster(formData.clusterName, formData.nodesNames)
-    ;
-
-  }).then(
-    clusterSetup.submit.onSuccess
-  ).fail(
-    clusterSetup.submit.onError
-  );
-};
-
-clusterSetup.submit.force = function(formData, setupCoordinatingNode){
-  api.clusterSetup(
-    formData,
-    setupCoordinatingNode,
-    true,
-
-  ).then(function(setupResult){
-    return setupResult.status !== api.reports.statuses.success
-      ? api.clusterSetup.processErrors(
-          setupResult,
-          formData,
-          setupCoordinatingNode
-        )
-      : api.rememberCluster(formData.clusterName, formData.nodesNames)
-    ;
-  }).then(
-    clusterSetup.submit.onSuccess
-  ).fail(
-    clusterSetup.submit.onError
-  );
-};
-
-clusterSetup.submit.onCallFail = function(XMLHttpRequest){
-  if(XMLHttpRequest.status === 403){
-    clusterSetup.dialog.resetMessages([
-      {type: "error", msg: "The user 'hacluster' is required for this action."},
-    ]);
-  }else{
-    alert(
-      "Server returned an error: "+XMLHttpRequest.status
-      +" "+XMLHttpRequest.responseText
+  }).then(function(){
+    return api.clusterSetup(
+      { setupData: formData, setupCoordinatingNode: setupCoordinatingNode },
+      function(msgs){
+        return tools.submit.confirmForce("setup cluster", msgs);
+      },
     );
-  }
-};
 
-clusterSetup.submit.onError = function(rejectCode, data){
-  clusterSetup.dialog.setSubmitAbility(true);
-  switch(rejectCode){
-    case api.err.NODES_AUTH_CHECK:
-      alert("ERROR: Unable to contact server");
-      break;
+  }).then(function(){
+    return api.rememberCluster(formData.clusterName, formData.nodesNames);
 
-    case api.err.AUTH_NODES_FAILED:
-      auth_nodes_dialog(data.failNodes, clusterSetup.submit.run);
-      break;
+  }).then(function(){
+    Pcs.update();
+    clusterSetup.dialog.close();
 
-    case api.err.SEND_KNOWN_HOST_CALL_FAILED:
-      clusterSetup.submit.onCallFail(data.XMLHttpRequest);
-      break;
+  }).fail(function(rejectCode, data){
+    clusterSetup.dialog.setSubmitAbility(true);
+    switch(rejectCode){
+      case api.err.NODES_AUTH_CHECK.FAILED:
+        alert("ERROR: Unable to contact server");
+        break;
 
-    case api.err.SEND_KNOWN_HOSTS_ERROR:
-      clusterSetup.dialog.resetMessages([{type: "error", msg: data.message}]);
-      break;
+      case api.err.NODES_AUTH_CHECK.WITH_ERR_NODES:
+        auth_nodes_dialog(data.failNodes, clusterSetup.submit.run);
+        break;
 
-    case api.err.CLUSTER_SETUP_CALL_FAILED:
-      clusterSetup.submit.onCallFail(data.XMLHttpRequest);
-      break;
+      case api.err.SEND_KNOWN_HOSTS.FAILED:
+        clusterSetup.submit.onCallFail(data.XMLHttpRequest);
+        break;
 
-    case api.err.CLUSTER_SETUP_FAILED:
-      clusterSetup.dialog.resetMessages(data.msgList);
-      break;
+      case api.err.SEND_KNOWN_HOSTS.PCSD_ERROR:
+        clusterSetup.dialog.resetMessages([{type: "error", msg: data.message}]);
+        break;
 
-    case api.err.CLUSTER_SETUP_FAILED_FORCIBLE:
-      if (confirm(
-        "Unable to setup cluster \n\n"
-        + data.msgList
-          .map(function(msg){return tools.formatMsg(msg)})
-          .join("\n")
-        + "\n\nDo you want to force the operation?"
-      )) {
-        clusterSetup.submit.force(data.setupData, data.setupCoordinatingNode);
-      } else {
+      case api.err.CLUSTER_SETUP.FAILED:
+        clusterSetup.submit.onCallFail(data.XMLHttpRequest);
+        break;
+
+      case api.err.CLUSTER_SETUP.PCS_LIB_ERROR:
+        clusterSetup.dialog.resetMessages(data.msgList);
+        break;
+
+      case api.err.CLUSTER_SETUP.CONFIRMATION_DENIED:
         clusterSetup.dialog.close();
-      }
-      break;
+        break;
 
-    case api.err.CLUSTER_SETUP_EXCEPTION:
-      alert("Server returned an error: "+data.msg);
-      break;
+      case api.err.CLUSTER_SETUP.PCS_LIB_EXCEPTION:
+        alert("Server returned an error: "+data.msg);
+        break;
 
-    case api.err.REMEMBER_CLUSTER_CALL_FAILED:
-      // 403 makes not sense here. It would failed on
-      // SEND_KNOWN_HOST_CALL_FAILED or on CLUSTER_SETUP_CALL_FAILED if the
-      // user is not "hacluster". So we use standard mechanism here without
-      // extra notice that cluster was setup and only remember-cluster failed.
-      alert(
-        "Cluster was created successfuly!"
-          +"\n\nHowever, adding it to web UI failed. Use 'Add Existing' to add"
-          +" the new cluster to web UI."
-          +"\n\nDetails:\nServer returned an error: "+data.XMLHttpRequest.status
-          +" "+data.XMLHttpRequest.responseText
-      );
-      break;
-  }
+      case api.err.REMEMBER_CLUSTER.FAILED:
+        // 403 makes not sense here. It would failed on
+        // SEND_KNOWN_HOSTS.FAILED or on CLUSTER_SETUP.FAILED if the
+        // user is not "hacluster". So we use standard mechanism here without
+        // extra notice that cluster was setup and only remember-cluster failed.
+        alert(
+          "Cluster was created successfully!"
+            +"\n\nHowever, adding it to web UI failed. Use 'Add Existing' to"
+            +" add the new cluster to web UI."
+            +"\n\nDetails:\nServer returned an error: "
+            +data.XMLHttpRequest.status
+            +" "+data.XMLHttpRequest.responseText
+        );
+        clusterSetup.dialog.close();
+        break;
+    }
+  });
 };

@@ -864,3 +864,6 @@ table.args-table td.reg {
   line-height: 1.2em;
   background: black;
 }
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}

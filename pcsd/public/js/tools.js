@@ -51,7 +51,7 @@ promise.resolve = function(){
   return dfd.resolve.apply(dfd, arguments);
 };
 
-tools = {string: {}};
+tools = {string: {}, dialog: {}, submit: {}};
 
 tools.string.upperFirst = function(string){
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -63,6 +63,74 @@ tools.string.escape = Handlebars.Utils.escapeExpression;
   msg:
     list of objects {type, msg} where type in error, warning, info
 */
+tools.dialog.resetMessages = function(dialogSelector){
+  return function(msgList){
+    msgBoxElement = $(dialogSelector+" table.msg-box");
+    msgBoxElement.find(".error, .warning, .info").remove();
+    for(var i in msgList){
+      if(!msgList.hasOwnProperty(i)){
+        continue;
+      }
+      msgBoxElement.find("td").append(
+        '<div class="'+msgList[i].type+'">'
+          +tools.string.escape(tools.formatMsg(msgList[i]))
+          +"</div>"
+      );
+    }
+  };
+};
+
+tools.dialog.setSubmitAbility = function(buttonSelector){
+  return function(enabled){
+    $(buttonSelector).button("option", "disabled", ! enabled);
+  };
+};
+
+tools.dialog.close = function(dialogSelector){
+  return function(){
+    $(dialogSelector+".ui-dialog-content.ui-widget-content").dialog("close");
+  };
+};
+
+tools.dialog.inputsToArray = function(inputSelector){
+  var values = [];
+  $(inputSelector).each(function(i, element) {
+    var value = $(element).val().trim();
+    if (value.length > 0) {
+      values.push(value);
+    }
+  });
+  return values;
+};
+
+tools.submit.onCallFail = function(resetMessages){
+  return function(XMLHttpRequest){
+    if(XMLHttpRequest.status === 403){
+      resetMessages([
+        {
+          type: "error",
+          msg: "The user 'hacluster' is required for this action.",
+        },
+      ]);
+    }else{
+      alert(
+        "Server returned an error: "+XMLHttpRequest.status
+        +" "+XMLHttpRequest.responseText
+      );
+    }
+  };
+};
+
+tools.submit.confirmForce = function(actionDesc, msgList){
+  return confirm(
+    "Unable to "+actionDesc+" \n\n"
+    + msgList
+      .map(function(msg){return tools.formatMsg(msg)})
+      .join("\n")
+    + "\n\nDo you want to force the operation?"
+  );
+};
+
 tools.formatMsg = function(msg){
   return tools.string.upperFirst(msg.type)+": "+msg.msg;
 };
