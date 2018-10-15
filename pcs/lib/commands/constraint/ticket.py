@@ -22,7 +22,6 @@ create_with_set = partial(
 
 def create(
     env, ticket_key, resource_id, options,
-    autocorrection_allowed=False,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
 ):
@@ -43,8 +42,7 @@ def create(
         options,
         ticket_key,
         constraint.find_valid_resource_id(
-            env.report_processor, cib,
-            autocorrection_allowed, resource_in_clone_alowed, resource_id
+            env.report_processor, cib, resource_in_clone_alowed, resource_id
         ),
     )
 

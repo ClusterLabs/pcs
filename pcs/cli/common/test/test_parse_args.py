@@ -484,7 +484,6 @@ class InputModifiersTest(TestCase):
         self.supported = ["a", "b", "c"]
         self.bool_opts = [
             "--all",
-            "--autocorrect",
             "--autodelete",
             "--config",
             "--corosync",

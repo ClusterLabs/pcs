@@ -26,9 +26,7 @@ def _validate_attrib_names(attrib_names, options):
             reports.invalid_options(invalid_names, attrib_names, None)
         )
 
-def find_valid_resource_id(
-    report_processor, cib, can_repair_to_clone, in_clone_allowed, id
-):
+def find_valid_resource_id(report_processor, cib, in_clone_allowed, id):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
         parent_tags + [resource.primitive.TAG, resource.group.TAG],
@@ -42,11 +40,6 @@ def find_valid_resource_id(
     clone = find_parent(resource_element, parent_tags)
     if clone is None:
         return resource_element.attrib["id"]
-
-    if can_repair_to_clone:
-        #this is workaround for web ui, console should not use it, so we do not
-        #warn about it
-        return clone.attrib["id"]
 
     if in_clone_allowed:
         report_processor.process(

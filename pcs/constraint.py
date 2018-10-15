@@ -213,10 +213,8 @@ def colocation_add(dummy_lib, argv, modifiers):
     Options:
       * -f - CIB file
       * --force - allow constraint on any resource, allow duplicate constraints
-      * --autocorrect - create the constraint for a resource on which it will
-        have some effect
     """
-    modifiers.ensure_only_supported("-f", "--force", "--autocorrect")
+    modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 2:
         raise CmdLineInputError()
 
@@ -248,17 +246,13 @@ def colocation_add(dummy_lib, argv, modifiers):
         resource2 = argv.pop(0)
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, correct_id \
+    resource_valid, resource_error, dummy_correct_id \
         = utils.validate_constraint_resource(cib_dom, resource1)
-    if modifiers.get("--autocorrect") and correct_id:
-        resource1 = correct_id
-    elif not resource_valid:
+    if not resource_valid:
         utils.err(resource_error)
-    resource_valid, resource_error, correct_id \
+    resource_valid, resource_error, dummy_correct_id \
         = utils.validate_constraint_resource(cib_dom, resource2)
-    if modifiers.get("--autocorrect") and correct_id:
-        resource2 = correct_id
-    elif not resource_valid:
+    if not resource_valid:
         utils.err(resource_error)
 
     score,nv_pairs = parse_score_options(argv)
@@ -381,10 +375,8 @@ def order_start(dummy_lib, argv, modifiers):
     Options:
       * -f - CIB file
       * --force - allow constraint for any resource, allow duplicate constraints
-      * --autocorrect - create constraint for a resource for which it will have
-        any effect
     """
-    modifiers.ensure_only_supported("-f", "--autocorrect", "--force")
+    modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
 
@@ -424,8 +416,6 @@ def order_add(argv, modifiers):
     Commandline options:
       * -f - CIB file
       * --force - allow constraint for any resource, allow duplicate constraints
-      * --autocorrect - create constraint for a resource for which it will have
-        any effect
     """
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -434,17 +424,13 @@ def order_add(argv, modifiers):
     resource2 = argv.pop(0)
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, correct_id \
+    resource_valid, resource_error, dummy_correct_id \
         = utils.validate_constraint_resource(cib_dom, resource1)
-    if modifiers.get("--autocorrect") and correct_id:
-        resource1 = correct_id
-    elif not resource_valid:
+    if not resource_valid:
         utils.err(resource_error)
-    resource_valid, resource_error, correct_id \
+    resource_valid, resource_error, dummy_correct_id \
         = utils.validate_constraint_resource(cib_dom, resource2)
-    if modifiers.get("--autocorrect") and correct_id:
-        resource2 = correct_id
-    elif not resource_valid:
+    if not resource_valid:
         utils.err(resource_error)
 
     order_options = []
@@ -777,10 +763,8 @@ def location_prefer(lib, argv, modifiers):
     Options:
       * --force - allow unknown options, allow constraint for any resource type
       * -f - CIB file
-      * --autocorrect - create constraint for a reasource on which it will have
-        any effect
     """
-    modifiers.ensure_only_supported("--force", "-f", "--autocorrect")
+    modifiers.ensure_only_supported("--force", "-f")
     rsc = argv.pop(0)
     prefer_option = argv.pop(0)
 
@@ -821,7 +805,7 @@ def location_prefer(lib, argv, modifiers):
             rsc,
             node,
             score
-        ], modifiers.get_subset("--force", "-f", "--autocorrect"))
+        ], modifiers.get_subset("--force", "-f"))
 
 
 def location_add(lib, argv, modifiers):
@@ -829,10 +813,8 @@ def location_add(lib, argv, modifiers):
     Options:
       * --force - allow unknown options, allow constraint for any resource type
       * -f - CIB file
-      * --autocorrect - create constraint for a reasource on which it will have
-        any effect
     """
-    modifiers.ensure_only_supported("--force", "-f", "--autocorrect")
+    modifiers.ensure_only_supported("--force", "-f")
     if len(argv) < 4:
         raise CmdLineInputError()
 
@@ -878,12 +860,10 @@ def location_add(lib, argv, modifiers):
         dom = utils.get_cib_dom()
 
     if rsc_type == RESOURCE_TYPE_RESOURCE:
-        rsc_valid, rsc_error, correct_id = utils.validate_constraint_resource(
-            dom, rsc_value
+        rsc_valid, rsc_error, dummy_correct_id = (
+            utils.validate_constraint_resource(dom, rsc_value)
         )
-        if modifiers.get("--autocorrect") and correct_id:
-            rsc_value = correct_id
-        elif not rsc_valid:
+        if not rsc_valid:
             utils.err(rsc_error)
 
     # Verify that specified node exists in the cluster
@@ -985,10 +965,8 @@ def location_rule(dummy_lib, argv, modifiers):
       * -f - CIB file
       * --force - allow constraint on any resource type, allow duplicate
         constraints
-      * --autocorrect - create constraint on a resource on which it will have
-        any effect
     """
-    modifiers.ensure_only_supported("-f", "--force", "--autocorrect")
+    modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         usage.constraint(["location", "rule"])
         sys.exit(1)
@@ -1024,12 +1002,10 @@ def location_rule(dummy_lib, argv, modifiers):
         dom = utils.get_cib_dom()
 
     if rsc_type == RESOURCE_TYPE_RESOURCE:
-        rsc_valid, rsc_error, correct_id = utils.validate_constraint_resource(
-            dom, rsc_value
+        rsc_valid, rsc_error, dummy_correct_id = (
+            utils.validate_constraint_resource(dom, rsc_value)
         )
-        if modifiers.get("--autocorrect") and correct_id:
-            rsc_value = correct_id
-        elif not rsc_valid:
+        if not rsc_valid:
             utils.err(rsc_error)
 
     cib, constraints = getCurrentConstraints(dom)

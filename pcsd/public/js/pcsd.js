@@ -1687,7 +1687,9 @@ function add_constraint_prepare_data(parent_id, constraint_type){
 
 function add_constraint(parent_id, c_type, force) {
   var data = add_constraint_prepare_data(parent_id, c_type);
-  data["disable_autocorrect"] = true;
+  if (!Pcs.pcmk_constraint_no_autocorrect) {
+    data["disable_autocorrect"] = true;
+  }
   data["res_id"] = Pcs.resourcesContainer.cur_resource.get('id');
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
   data["c_type"] = c_type;
@@ -1748,9 +1750,11 @@ function add_constraint_set_get_options(parent_id, constraint_type){
 function add_constraint_set(parent_id, c_type, force) {
   var data = {
     resources: [],
-    disable_autocorrect: true,
     options: {},
   };
+  if (!Pcs.pcmk_constraint_no_autocorrect) {
+    data["disable_autocorrect"] = true;
+  }
   $(parent_id + " input[name='resource_ids[]']").each(function(index, element) {
     var resources = element.value.trim();
     if (resources.length > 0) {

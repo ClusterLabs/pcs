@@ -21,7 +21,6 @@ env:
     #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
     #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
     #   pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
-    #   pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraintAutocorrect
     #   pcs.test.test_misc.OldCibPushTest.test_warning_old_push
     #   pcs.test.test_resource.Resource.testAddOperation
     #   pcs.test.test_resource.Resource.testUncloneMaster
@@ -44,7 +43,6 @@ env:
         pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
         pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
         pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
-        pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraintAutocorrect
         pcs.test.test_misc.OldCibPushTest.test_warning_old_push
         pcs.test.test_resource.Resource.testAddOperation
         pcs.test.test_resource.Resource.testUncloneMaster

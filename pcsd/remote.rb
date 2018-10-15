@@ -1739,8 +1739,7 @@ def add_constraint_remote(params, request, auth_user)
   when "loc"
     retval, error = add_location_constraint(
       auth_user,
-      params["res_id"], params["node_id"], params["score"], params["force"],
-      !params['disable_autocorrect']
+      params["res_id"], params["node_id"], params["score"], params["force"]
     )
   when "ord"
     resA = params["res_id"]
@@ -1754,8 +1753,7 @@ def add_constraint_remote(params, request, auth_user)
 
     retval, error = add_order_constraint(
       auth_user,
-      resA, resB, actionA, actionB, params["score"], true, params["force"],
-      !params['disable_autocorrect']
+      resA, resB, actionA, actionB, params["score"], true, params["force"]
     )
   when "col"
     resA = params["res_id"]
@@ -1770,14 +1768,13 @@ def add_constraint_remote(params, request, auth_user)
     end
 
     retval, error = add_colocation_constraint(
-      auth_user,
-      resA, resB, score, params["force"], !params['disable_autocorrect']
+      auth_user, resA, resB, score, params["force"]
     )
   when "ticket"
     retval, error = add_ticket_constraint(
       auth_user,
       params["ticket"], params["res_id"], params["role"], params["loss-policy"],
-      params["force"], !params['disable_autocorrect']
+      params["force"]
     )
   else
     return [400, "Unknown constraint type: #{params['c_type']}"]
@@ -1798,7 +1795,6 @@ def add_constraint_rule_remote(params, request, auth_user)
     retval, error = add_location_constraint_rule(
       auth_user,
       params["res_id"], params["rule"], params["score"], params["force"],
-      !params['disable_autocorrect']
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
@@ -1818,13 +1814,11 @@ def add_constraint_set_remote(params, request, auth_user)
   case params["c_type"]
   when "ord"
     retval, error = add_order_set_constraint(
-      auth_user,
-      params["resources"].values, params["force"], !params['disable_autocorrect']
+      auth_user, params["resources"].values, params["force"]
     )
   when "col"
     retval, error = add_colocation_set_constraint(
-      auth_user,
-      params["resources"].values, params["force"], !params['disable_autocorrect']
+      auth_user, params["resources"].values, params["force"]
     )
   when "ticket"
     unless params["options"]["ticket"]
@@ -1836,7 +1830,6 @@ def add_constraint_set_remote(params, request, auth_user)
       (params["options"]["loss-policy"] or ""),
       params["resources"].values,
       params["force"],
-      !params['disable_autocorrect']
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]

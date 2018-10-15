@@ -75,7 +75,7 @@ def add_meta_attr(auth_user, resource, key, value)
 end
 
 def add_location_constraint(
-  auth_user, resource, node, score, force=false, autocorrect=true
+  auth_user, resource, node, score, force=false
 )
   if node == ""
     return "Bad node"
@@ -89,14 +89,13 @@ def add_location_constraint(
 
   cmd = [PCS, "constraint", "location", resource, "prefers", nodescore]
   cmd << '--force' if force
-  cmd << '--autocorrect' if autocorrect
 
   stdout, stderr, retval = run_cmd(auth_user, *cmd)
   return retval, stderr.join(' ')
 end
 
 def add_location_constraint_rule(
-  auth_user, resource, rule, score, force=false, autocorrect=true
+  auth_user, resource, rule, score, force=false
 )
   cmd = [PCS, "constraint", "location", resource, "rule"]
   if score != ''
@@ -108,14 +107,13 @@ def add_location_constraint_rule(
   end
   cmd.concat(rule.shellsplit())
   cmd << '--force' if force
-  cmd << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *cmd)
   return retval, stderr.join(' ')
 end
 
 def add_order_constraint(
     auth_user, resourceA, resourceB, actionA, actionB, score, symmetrical=true,
-    force=false, autocorrect=true
+    force=false
 )
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   if score != ""
@@ -126,42 +124,34 @@ def add_order_constraint(
     score, sym
   ]
   command << '--force' if force
-  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
-def add_order_set_constraint(
-  auth_user, resource_set_list, force=false, autocorrect=true
-)
+def add_order_set_constraint(auth_user, resource_set_list, force=false)
   command = [PCS, "constraint", "order"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
   command << '--force' if force
-  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
-def add_colocation_set_constraint(
-  auth_user, resource_set_list, force=false, autocorrect=true
-)
+def add_colocation_set_constraint(auth_user, resource_set_list, force=false)
   command = [PCS, "constraint", "colocation"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
   command << '--force' if force
-  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
 def add_ticket_constraint(
-    auth_user, ticket, resource_id, role, loss_policy,
-    force=false, autocorrect=true
+    auth_user, ticket, resource_id, role, loss_policy, force=false
 )
   command = [PCS, "constraint", "ticket", "add", ticket]
   if role
@@ -170,14 +160,12 @@ def add_ticket_constraint(
   command << resource_id
   command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
   command << '--force' if force
-  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
 def add_ticket_set_constraint(
-  auth_user, ticket, loss_policy, resource_set_list, force=false,
-  autocorrect=true
+  auth_user, ticket, loss_policy, resource_set_list, force=false
 )
   command = [PCS, 'constraint', 'ticket']
   resource_set_list.each { |resource_set|
@@ -193,7 +181,7 @@ def add_ticket_set_constraint(
 end
 
 def add_colocation_constraint(
-  auth_user, resourceA, resourceB, score, force=false, autocorrect=true
+  auth_user, resourceA, resourceB, score, force=false
 )
   if score == "" or score == nil
     score = "INFINITY"
@@ -202,7 +190,6 @@ def add_colocation_constraint(
     PCS, "constraint", "colocation", "add", resourceA, resourceB, score
   ]
   command << '--force' if force
-  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end

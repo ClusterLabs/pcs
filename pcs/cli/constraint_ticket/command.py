@@ -10,15 +10,13 @@ def create_with_set(lib, argv, modifiers):
     list argv see usage for "constraint colocation set"
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
-        "autocorrect" allows correct resource to its clone/master parent
 
     Options:
-      * --autocorrect - can repair to clone
       * --force - allow resource inside clone (or master), allow duplicate
         element
       * -f - CIB file
     """
-    modifiers.ensure_only_supported("--autocorrect", "--force", "-f")
+    modifiers.ensure_only_supported("--force", "-f")
     command.create_with_set(
         lib.constraint_ticket.set,
         argv,
@@ -32,15 +30,13 @@ def add(lib, argv, modifiers):
     list argv see usage for "constraint colocation add"
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
-        "autocorrect" allows correct resource to its clone/master parent
 
     Options:
-      * --autocorrect - allow autocorrection
       * --force - allow resource inside clone (or master), allow duplicate
         element
       * -f - CIB file
     """
-    modifiers.ensure_only_supported("--autocorrect", "--force", "-f")
+    modifiers.ensure_only_supported("--force", "-f")
     ticket, resource_id, resource_role, options = parse_args.parse_add(argv)
     if "rsc-role" in options:
         raise CmdLineInputError(
@@ -55,7 +51,6 @@ def add(lib, argv, modifiers):
         ticket,
         resource_id,
         options,
-        autocorrection_allowed=modifiers.get("--autocorrect"),
         resource_in_clone_alowed=modifiers.get("--force"),
         duplication_alowed=modifiers.get("--force"),
     )

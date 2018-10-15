@@ -9,7 +9,7 @@ ARG_TYPE_DELIMITER = "%"
 PCS_SHORT_OPTIONS = "hf:p:u:"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
-    "force", "skip-offline", "autocorrect", "interactive", "autodelete",
+    "force", "skip-offline", "interactive", "autodelete",
     "all", "full", "groups", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
     "pacemaker", "corosync",
@@ -310,7 +310,6 @@ class InputModifiers(object):
         self._options.update({
             # boolean values
             "--all": "--all" in options,
-            "--autocorrect": "--autocorrect" in options,
             "--autodelete": "--autodelete" in options,
             "--config": "--config" in options,
             "--corosync": "--corosync" in options,

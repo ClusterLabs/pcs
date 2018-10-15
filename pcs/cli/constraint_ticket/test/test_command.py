@@ -4,12 +4,10 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.constraint_ticket import command
 
-def _modifiers(force=True, autocorrect=True):
+def _modifiers(force=True):
     options = {}
     if force:
         options["--force"] = ""
-    if autocorrect:
-        options["--autocorrect"] = ""
     return InputModifiers(options)
 
 class AddTest(TestCase):
@@ -27,7 +25,6 @@ class AddTest(TestCase):
         mock_parse_add.assert_called_once_with(["argv"])
         lib.constraint_ticket.add.assert_called_once_with(
             "ticket", "resource_id", {"loss-policy": "fence"},
-            autocorrection_allowed=True,
             resource_in_clone_alowed=True,
             duplication_alowed=True,
         )
@@ -58,7 +55,6 @@ class AddTest(TestCase):
         lib.constraint_ticket.add.assert_called_once_with(
             "ticket", "resource_id",
             {"loss-policy": "fence", "rsc-role": "resource_role"},
-            autocorrection_allowed=True,
             resource_in_clone_alowed=True,
             duplication_alowed=True,
         )
@@ -68,19 +64,19 @@ class RemoveTest(TestCase):
         self.assertRaises(CmdLineInputError, lambda: command.remove(
             mock.MagicMock(),
             ["TICKET"],
-            _modifiers(False, False),
+            _modifiers(False),
         ))
         self.assertRaises(CmdLineInputError, lambda: command.remove(
             mock.MagicMock(),
             ["TICKET", "RESOURCE", "SOMETHING_ELSE"],
-            _modifiers(False, False),
+            _modifiers(False),
         ))
 
     def test_call_library_remove_with_correct_attrs(self):
         lib = mock.MagicMock(
             constraint_ticket=mock.MagicMock(remove=mock.Mock())
         )
-        command.remove(lib, ["TICKET", "RESOURCE"], _modifiers(False, False))
+        command.remove(lib, ["TICKET", "RESOURCE"], _modifiers(False))
         lib.constraint_ticket.remove.assert_called_once_with(
             "TICKET", "RESOURCE",
         )

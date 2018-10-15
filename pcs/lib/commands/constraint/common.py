@@ -11,7 +11,6 @@ from pcs.lib.cib.tools import get_constraints
 
 def create_with_set(
     tag_name, prepare_options, env, resource_set_list, constraint_options,
-    can_repair_to_clone=False,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
     duplicate_check=None,
@@ -35,7 +34,7 @@ def create_with_set(
 
     find_valid_resource_id = partial(
         constraint.find_valid_resource_id,
-        env.report_processor, cib, can_repair_to_clone, resource_in_clone_alowed
+        env.report_processor, cib, resource_in_clone_alowed
     )
 
     constraint_section = get_constraints(cib)

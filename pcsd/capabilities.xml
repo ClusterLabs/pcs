@@ -704,6 +704,11 @@
 
 
 
+    <capability id="pcmk.constraint.no-autocorrect" in-pcs="1" in-pcsd="1">
+      <description>
+        Internal option --autocorrect is not available anymore.
+      </description>
+    </capability>
     <capability id="pcmk.constraint.location.simple" in-pcs="1" in-pcsd="1">
       <description>
         Create and delete a location constraint for one resource.

@@ -31,7 +31,6 @@ class FindValidResourceId(TestCase):
             constraint.find_valid_resource_id,
             self.report_processor,
             self.cib,
-            can_repair_to_clone=False,
             in_clone_allowed=False,
         )
 
@@ -106,48 +105,6 @@ class FindValidResourceId(TestCase):
         assert_raise_library_error(
             lambda: self.find(id="resourceA"),
             self.fixture_error_multiinstance("bundle", "bundle_id"),
-        )
-
-    def test_return_clone_id_when_repair_allowed(
-         self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("clone", "clone_id")
-
-        self.assertEqual(
-            "clone_id",
-            self.find(can_repair_to_clone=True, id="resourceA")
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
-
-    def test_return_master_id_when_repair_allowed(
-         self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("master", "master_id")
-
-        self.assertEqual(
-            "master_id",
-            self.find(can_repair_to_clone=True, id="resourceA")
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
-
-    def test_return_bundle_id_when_repair_allowed(
-         self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
-
-        self.assertEqual(
-            "bundle_id",
-            self.find(can_repair_to_clone=True, id="resourceA")
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_return_resource_id_when_in_clone_allowed(

@@ -8,10 +8,8 @@ def create_with_set(create_with_set_library_call, argv, modifiers):
         see usage for  "constraint (colocation|resource|ticket) set"
     dict like object modifiers can contain
         "force" allows resource in clone/master and constraint duplicity
-        "autocorrect" allows correct resource to its clone/master parent
 
     Commandline options:
-      * --autocorrect - can repair to clone
       * --force - allow resource inside clone (or master), allow duplicate
         element
       * -f - CIB file
@@ -19,7 +17,6 @@ def create_with_set(create_with_set_library_call, argv, modifiers):
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
     create_with_set_library_call(
         resource_set_list, constraint_options,
-        can_repair_to_clone=modifiers.get("--autocorrect"),
         resource_in_clone_alowed=modifiers.get("--force"),
         duplication_alowed=modifiers.get("--force"),
     )
