@@ -4,9 +4,9 @@ import time
 def cert_date_format(timestamp):
     return str.encode(time.strftime("%Y%m%d%H%M%SZ", time.gmtime(timestamp)))
 
-def generate_key():
+def generate_key(length=3072):
     key = crypto.PKey()
-    key.generate_key(crypto.TYPE_RSA, 2048)
+    key.generate_key(crypto.TYPE_RSA, length)
     return key
 
 def generate_cert(key, server_name):

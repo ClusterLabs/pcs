@@ -81,6 +81,8 @@
   ([rhbz#1578955])
 - `pcs resource bundle update` cmd for bundles which are using unsupported
   container backend ([rhbz#1619620])
+- Do not crash if unable to load SSL certificate or key, log errors and exit
+  gracefully instead ([rhbz#1638852])
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):
@@ -140,6 +142,8 @@
   only using option `-f` in `pcs cluster verify`
 - Master resources are now called promotable clone resources to match changes
   in pacemaker-2.0 ([rhbz#1542288])
+- Key size of default pcsd self-generated certificates increased from 2048b to
+  3072b ([rhbz#1638852])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -182,6 +186,7 @@
 [rhbz#1615891]: https://bugzilla.redhat.com/show_bug.cgi?id=1615891
 [rhbz#1619620]: https://bugzilla.redhat.com/show_bug.cgi?id=1619620
 [rhbz#1620190]: https://bugzilla.redhat.com/show_bug.cgi?id=1620190
+[rhbz#1638852]: https://bugzilla.redhat.com/show_bug.cgi?id=1638852
 
 
 ## [0.9.163] - 2018-02-20

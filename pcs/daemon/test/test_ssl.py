@@ -55,8 +55,20 @@ class Pair(TestCase):
             in
             [
                 list(DAMAGED_SSL_FILES_ERRORS_1),
-                list( DAMAGED_SSL_FILES_ERRORS_2)
+                list(DAMAGED_SSL_FILES_ERRORS_2),
             ]
+        )
+
+    def test_error_if_short_key(self):
+        # The key length must be big enough for the key to get generated (avoid
+        # OpenSSL.crypto.Error: [('rsa routines', 'rsa_builtin_keygen', 'key
+        # size too small')]) and small enough for SSL to complain about it.
+        # Currently, 512 works fine.
+        self.pair.regenerate(SERVER_NAME, 512)
+        errors = self.pair.check()
+        self.assertEqual(len(errors), 1)
+        self.assertTrue(
+            errors[0].startswith("Unable to load SSL certificate and/or key:")
         )
 
     def test_error_if_cert_does_not_match_key(self):
@@ -67,9 +79,11 @@ class Pair(TestCase):
         with open(KEY, "wb") as key_file:
             key_file.write(key_content)
 
-        self.assertEqual(self.pair.check(), [
-            "SSL certificate does not match the key",
-        ])
+        errors = self.pair.check()
+        self.assertEqual(len(errors), 1)
+        self.assertTrue(
+            errors[0].startswith("SSL certificate does not match the key:")
+        )
 
 class PcsdSSLTest(TestCase):
     def setUp(self):
