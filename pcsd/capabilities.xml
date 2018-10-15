@@ -381,7 +381,7 @@
         Remove a node from a cluster.
 
         pcs commands: cluster node remove
-        daemon urls: remove_nodes
+        daemon urls: cluster_remove_nodes
       </description>
     </capability>
     <capability id="node.remove.list" in-pcs="1" in-pcsd="1">
@@ -389,7 +389,7 @@
         Remove several nodes from a cluster at once.
 
         pcs commands: cluster node remove
-        daemon urls: remove_nodes
+        daemon urls: cluster_remove_nodes
       </description>
     </capability>
     <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="0">
