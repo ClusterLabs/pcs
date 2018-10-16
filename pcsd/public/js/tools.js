@@ -86,9 +86,10 @@ tools.dialog.setSubmitAbility = function(buttonSelector){
   };
 };
 
-tools.dialog.close = function(dialogSelector){
+tools.dialog.close = function(dialogSelector, closeType){
+  closeType = closeType || "close";
   return function(){
-    $(dialogSelector+".ui-dialog-content.ui-widget-content").dialog("close");
+    $(dialogSelector+".ui-dialog-content.ui-widget-content").dialog(closeType);
   };
 };
 

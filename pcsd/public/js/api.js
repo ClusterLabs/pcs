@@ -135,6 +135,9 @@ api.err = {
   },
   CLUSTER_START: {
     FAILED: "CLUSTER_START.FAILED",
+  },
+  CLUSTER_DESTROY: {
+    FAILED: "CLUSTER_DESTROY.FAILED",
   }
 };
 
@@ -293,5 +296,13 @@ api.clusterStart = function(clusterName, nodeName){
     get_cluster_remote_url(clusterName)+"cluster_start",
     {name: nodeName},
     api.err.CLUSTER_START.FAILED,
+  );
+};
+
+api.clusterDestroy = function(clusterName){
+  return promise.post(
+    get_cluster_remote_url(clusterName)+"cluster_destroy",
+    { all: 1 },
+    api.err.CLUSTER_DESTROY.FAILED,
   );
 };
