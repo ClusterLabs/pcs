@@ -1058,19 +1058,16 @@ Commands:
         See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
         a description of the properties.
 
-    set [--force | --node <nodename>] <property>=[<value>]
-            [<property>=[<value>] ...]
+    set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
         recognized by pcs the property will not be created unless the
-        --force is used.  If --node is used a node attribute is set on
-        the specified node.
+        --force is used.
         See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
         a description of the properties.
 
-    unset [--node <nodename>] <property>
-        Remove property from configuration (or remove attribute from
-        specified node if --node is used).
+    unset <property> ...
+        Remove property from configuration.
         See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
         a description of the properties.
 

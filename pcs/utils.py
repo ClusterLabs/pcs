@@ -1723,6 +1723,7 @@ def set_node_attribute(prop, value, node):
                 "attribute: '%s' doesn't exist for node: '%s'" % (prop, node),
                 False
             )
+            # This return code is used by pcsd
             sys.exit(2)
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
     else:

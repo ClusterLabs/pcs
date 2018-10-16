@@ -20,6 +20,9 @@
   - Instead of `pcs resource master` use `pcs resource promotable` or `pcs
     resource clone ... promotable=true`
 - Deprecated --clone option from `pcs resource create` command
+- Ability to manage node attributes with `pcs property set|unset|show` commands
+  (using `--node` option). The same functionality is still available using
+  `pcs node attribute` command.
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])

@@ -55,7 +55,7 @@ end
 
 def add_node_attr(auth_user, node, key, value)
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s
+    auth_user, PCS, "node", "attribute", node, key.to_s + '=' + value.to_s
   )
   return retval
 end

@@ -2,7 +2,6 @@ import sys
 import json
 
 from pcs import (
-    node,
     usage,
     utils,
 )
@@ -37,16 +36,14 @@ def property_cmd(lib, argv, modifiers):
 def set_property(dummy_lib, argv, modifiers):
     """
     Options:
-      * --node - node name, if set node attributes for this node will be set
       * --force - allow unknown options
       * -f - CIB file
     """
-    modifiers.ensure_only_supported("--node", "--force", "-f")
+    modifiers.ensure_only_supported("--force", "-f")
     if not argv:
         raise CmdLineInputError()
 
     prop_def_dict = utils.get_cluster_properties_definition()
-    nodes_attr = modifiers.get("--node")
     failed = False
     forced = modifiers.get("--force")
     properties = {}
@@ -58,7 +55,7 @@ def set_property(dummy_lib, argv, modifiers):
         elif not args[0]:
             utils.err("empty property name: '{0}'".format(arg), False)
             failed = True
-        elif nodes_attr or forced or args[1].strip() == "":
+        elif forced or args[1].strip() == "":
             properties[args[0]] = args[1]
         else:
             try:
@@ -84,35 +81,26 @@ def set_property(dummy_lib, argv, modifiers):
     if failed:
         sys.exit(1)
 
-    if nodes_attr:
-        for prop, value in properties.items():
-            utils.set_node_attribute(prop, value, nodes_attr)
-    else:
-        cib_dom = utils.get_cib_dom()
-        for prop, value in properties.items():
-            utils.set_cib_property(prop, value, cib_dom)
-        utils.replace_cib_configuration(cib_dom)
+    cib_dom = utils.get_cib_dom()
+    for prop, value in properties.items():
+        utils.set_cib_property(prop, value, cib_dom)
+    utils.replace_cib_configuration(cib_dom)
 
 
 def unset_property(lib, argv, modifiers):
     """
     Options:
-      * --node - node name, if set node attributes for this node will be set
       * --force - no error when removing not existing properties
       * -f - CIB file
     """
-    modifiers.ensure_only_supported("--node", "--force", "-f")
+    modifiers.ensure_only_supported("--force", "-f")
     if len(argv) < 1:
         raise CmdLineInputError()
 
-    if modifiers.is_specified("--node"):
-        for arg in argv:
-            utils.set_node_attribute(arg, "", modifiers.get("--node"))
-    else:
-        cib_dom = utils.get_cib_dom()
-        for arg in argv:
-            utils.set_cib_property(arg, "", cib_dom)
-        utils.replace_cib_configuration(cib_dom)
+    cib_dom = utils.get_cib_dom()
+    for arg in argv:
+        utils.set_cib_property(arg, "", cib_dom)
+    utils.replace_cib_configuration(cib_dom)
 
 def list_property(lib, argv, modifiers):
     """
@@ -151,13 +139,6 @@ def list_property(lib, argv, modifiers):
     print("Cluster Properties:")
     for prop,val in sorted(properties.items()):
         print(" {0}: {1}".format(prop, val))
-
-    node_attributes = utils.get_node_attributes(
-        filter_attr=(None if print_all else argv[0])
-    )
-    if node_attributes:
-        print("Node Attributes:")
-        node.attribute_print(node_attributes)
 
 def get_default_properties():
     """
