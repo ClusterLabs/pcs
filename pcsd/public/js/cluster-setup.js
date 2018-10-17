@@ -28,6 +28,13 @@ clusterSetup.dialog.getFormData = function(){
   };
 };
 
+clusterSetup.dialog.reset = function(){
+  $('input[name^="clustername"]').val("");
+  tools.dialog.resetInputs(
+    "#create_new_cluster_form tr.new_node [name^='node-']"
+  );
+};
+
 clusterSetup.dialog.create = function(){
   $("#create_new_cluster").dialog({
     title: 'Create Cluster',
@@ -132,6 +139,7 @@ clusterSetup.submit.run = function(){
 
   }).then(function(){
     Pcs.update();
+    clusterSetup.dialog.reset();
     clusterSetup.dialog.close();
 
   }).fail(function(rejectCode, data){

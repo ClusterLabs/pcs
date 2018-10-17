@@ -56,6 +56,17 @@ nodeAdd.dialog.submitOnEnter = function(e){
 
 nodeAdd.dialog.close = tools.dialog.close("#add_node");
 
+nodeAdd.dialog.reset = function(){
+  $("#add_node [name='new_nodename']").val("");
+  tools.dialog.resetInputs("#add_node [name='links[]']");
+  $("#add_node [name='auto_start']").prop('checked', true);
+  if (nodeAdd.dialog.withSbdFeatures()) {
+    $("#add_node [name='watchdog']").val("");
+    tools.dialog.resetInputs("#add_node [name='devices[]']");
+    $("#add_node [name='no-watchdog-validation']").prop('checked', false);
+  }
+};
+
 nodeAdd.dialog.toggleLinks = function(){
   $("#add_node .node-links").toggle();
 };
@@ -131,6 +142,7 @@ nodeAdd.submit.run = function(){
 
   }).then(function(){
     Pcs.update();
+    nodeAdd.dialog.reset();
     nodeAdd.dialog.close();
 
   }).fail(function(rejectCode, data){

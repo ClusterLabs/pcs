@@ -103,6 +103,12 @@ tools.dialog.inputsToArray = function(inputSelector){
   return values;
 };
 
+tools.dialog.resetInputs = function(selector){
+  $(selector).each(function(i, element) {
+    $(element).val("");
+  });
+};
+
 tools.submit.onCallFail = function(resetMessages){
   return function(XMLHttpRequest){
     if(XMLHttpRequest.status === 403){
