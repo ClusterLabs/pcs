@@ -361,14 +361,20 @@ function load_resource_form(agent_name, stonith) {
   }, stonith);
 }
 
-function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, ok_text, title, remove_id) {
-  var remove_id_list = new Array();
-  if (remove_id) {
+function verify_remove(
+  remove_func, forceable, checklist_id, dialog_id, label, ok_text, title,
+  remove_id, extraDialogOptions
+) {
+  var remove_id_list;
+
+  if (Array.isArray(remove_id)) {
+    remove_id_list = remove_id;
+  }else if (remove_id) {
     remove_id_list = [remove_id];
-  }
-  else {
+  } else {
     remove_id_list = get_checked_ids_from_nodelist(checklist_id);
   }
+
   if (remove_id_list.length < 1) {
     alert("You must select at least one " + label + " to remove.");
     return;
@@ -410,12 +416,12 @@ function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, o
   });
   name_list += "</ul>";
   $("#" + dialog_id + " .name_list").html(name_list);
-  $("#" + dialog_id).dialog({
-    title: title,
-    modal: true,
-    resizable: false,
-    buttons: buttonOpts
-  });
+  dialogOptions = extraDialogOptions || {};
+  dialogOptions.title = title;
+  dialogOptions.modal = true;
+  dialogOptions.resizable = false,
+  dialogOptions.buttons = buttonOpts;
+  $("#" + dialog_id).dialog(dialogOptions);
 }
 
 function verify_remove_clusters(cluster_id) {
@@ -425,6 +431,10 @@ function verify_remove_clusters(cluster_id) {
   );
 }
 
+/**
+  FIXME This function is deprecated. Maybe it will be usefull for adding pcs-0.9
+  support. Maybe not.
+*/
 function verify_remove_nodes(node_id) {
   verify_remove(
     remove_nodes, false, "node_list", "dialog_verify_remove_nodes",
@@ -1361,6 +1371,10 @@ function remove_cluster(ids) {
   });
 }
 
+/**
+  FIXME This function is deprecated. Maybe it will be usefull for adding pcs-0.9
+  support. Maybe not.
+*/
 function remove_nodes(ids, force) {
   var data = {};
   for (var i=0; i<ids.length; i++) {

@@ -30,15 +30,13 @@ promise.get = function(url, data, rejectCode){
   );
 };
 
-promise.post = function(url, data, rejectCode){
-  return promise.ajax(
-    {
-      type: 'POST',
-      url: url,
-      data: data,
-    },
-    rejectCode,
-  );
+promise.post = function(url, data, rejectCode, options){
+  options = options || {};
+  options.type = 'POST';
+  options.url = url;
+  options.data = data;
+
+  return promise.ajax(options, rejectCode);
 };
 
 promise.reject = function(){
@@ -80,7 +78,7 @@ tools.dialog.resetMessages = function(dialogSelector){
   };
 };
 
-tools.dialog.setSubmitAbility = function(buttonSelector){
+tools.dialog.setActionAbility = function(buttonSelector){
   return function(enabled){
     $(buttonSelector).button("option", "disabled", ! enabled);
   };

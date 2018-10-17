@@ -60,7 +60,7 @@ clusterSetup.dialog.create = function(){
 
 clusterSetup.dialog.close = tools.dialog.close("#create_new_cluster");
 
-clusterSetup.dialog.setSubmitAbility = tools.dialog.setSubmitAbility(
+clusterSetup.dialog.setSubmitAbility = tools.dialog.setActionAbility(
   "#create_cluster_submit_btn"
 );
 
@@ -129,9 +129,12 @@ clusterSetup.submit.run = function(){
   }).then(function(){
     return api.clusterSetup(
       { setupData: formData, setupCoordinatingNode: setupCoordinatingNode },
-      function(msgs){
-        return tools.submit.confirmForce("setup cluster", msgs);
-      },
+      {
+        confirm: function(msgs){
+          return tools.submit.confirmForce("setup cluster", msgs);
+        },
+      }
+
     );
 
   }).then(function(){

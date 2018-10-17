@@ -71,7 +71,7 @@ nodeAdd.dialog.toggleLinks = function(){
   $("#add_node .node-links").toggle();
 };
 
-nodeAdd.dialog.setSubmitAbility = tools.dialog.setSubmitAbility(
+nodeAdd.dialog.setSubmitAbility = tools.dialog.setActionAbility(
   "#add_node_submit_btn"
 );
 
@@ -130,8 +130,10 @@ nodeAdd.submit.run = function(){
   }).then(function(){
     return api.clusterNodeAdd(
       { nodeAddData: formData, clusterName: clusterName },
-      function(msgs){
-        return tools.submit.confirmForce("add node to cluster", msgs);
+      {
+        confirm: function(msgs){
+          return tools.submit.confirmForce("add node to cluster", msgs);
+        },
       },
     );
 

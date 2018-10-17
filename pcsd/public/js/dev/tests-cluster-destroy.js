@@ -45,6 +45,6 @@ testClusterDestroy.destroyFail400 = function(url, data, success, fail){
 
 dev.runScenario(
   // testClusterDestroy.destroyFail403
-  testClusterDestroy.destroyFail400
-  // testClusterDestroy.successPath
+  // testClusterDestroy.destroyFail400
+  testClusterDestroy.successPath
 );

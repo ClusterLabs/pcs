@@ -40,7 +40,7 @@ api.reports.isForcibleError = function(pcsResult){
   );
 };
 
-api.reports.toMsgs = function(reportList){
+api.reports.toMsgs = function(reportList, msgBuilder){
   return reportList
     .filter(function(report){
       return Object.keys(api.reports.severityMsgTypeMap)
@@ -48,9 +48,16 @@ api.reports.toMsgs = function(reportList){
       ;
     })
     .map(function(report){
+      var msg = report.report_text;
+      if (msgBuilder) {
+        var buildedMsg = msgBuilder(report);
+        if (buildedMsg !== undefined) {
+          msg = buildedMsg;
+        }
+      }
       return {
         type: api.reports.severityMsgTypeMap[report.severity],
-        msg: report.report_text + (
+        msg: msg + (
           (report.severity === "ERROR" && report.forceable)
             ? " (can be forced)"
             : ""
@@ -76,7 +83,7 @@ api.processSingleStatus = function(resultCode, rejectCode, actionDesc){
   });
 };
 
-api.pcsLib.forcibleLoop = function(apiCall, errGroup, confirmForce, force){
+api.pcsLib.forcibleLoop = function(apiCall, errGroup, processOptions, force){
   return apiCall(force).then(function(responseString){
     var response = JSON.parse(responseString);
 
@@ -90,17 +97,19 @@ api.pcsLib.forcibleLoop = function(apiCall, errGroup, confirmForce, force){
       });
     }
 
+    var msgs = api.reports.toMsgs(
+      response.report_list, processOptions.buildMsg
+    );
+
     if (!api.reports.isForcibleError(response)) {
-      return promise.reject(errGroup.PCS_LIB_ERROR, {
-        msgList: api.reports.toMsgs(response.report_list)
-      });
+      return promise.reject(errGroup.PCS_LIB_ERROR, { msgList: msgs });
     }
 
-    if (!confirmForce(api.reports.toMsgs(response.report_list))) {
+    if (!processOptions.confirm(msgs)) {
       return promise.reject(errGroup.CONFIRMATION_DENIED);
     }
 
-    return api.pcsLib.forcibleLoop(apiCall, errGroup, confirmForce, true);
+    return api.pcsLib.forcibleLoop(apiCall, errGroup, processOptions, true);
   });
 };
 
@@ -132,6 +141,12 @@ api.err = {
     PCS_LIB_EXCEPTION: "NODE_ADD.PCS_LIB_EXCEPTION",
     PCS_LIB_ERROR: "NODE_ADD.PCS_LIB_ERROR",
     CONFIRMATION_DENIED: "NODE_ADD.CONFIRMATION_DENIED",
+  },
+  NODES_REMOVE: {
+    FAILED: "NODES_REMOVE.FAILED",
+    PCS_LIB_EXCEPTION: "NODES_REMOVE.PCS_LIB_EXCEPTION",
+    PCS_LIB_ERROR: "NODES_REMOVE.PCS_LIB_ERROR",
+    CONFIRMATION_DENIED: "NODES_REMOVE.CONFIRMATION_DENIED",
   },
   CLUSTER_START: {
     FAILED: "CLUSTER_START.FAILED",
@@ -176,7 +191,7 @@ api.checkAuthAgainstNodes = function(nodesNames){
   });
 };
 
-api.clusterSetup = function(submitData, confirmForce){
+api.clusterSetup = function(submitData, processOptions){
   var setupData = submitData.setupData;
   var setupCoordinatingNode = submitData.setupCoordinatingNode;
 
@@ -206,7 +221,11 @@ api.clusterSetup = function(submitData, confirmForce){
     );
   };
 
-  return api.pcsLib.forcibleLoop(apiCall, api.err.CLUSTER_SETUP, confirmForce);
+  return api.pcsLib.forcibleLoop(
+    apiCall,
+    api.err.CLUSTER_SETUP,
+    processOptions
+  );
 };
 
 api.sendKnownHostsToNode = function(setupCoordinatingNode, nodesNames){
@@ -256,7 +275,7 @@ api.sendKnownHostsToCluster = function(clusterName, nodesNames){
   });
 };
 
-api.clusterNodeAdd = function(submitData, confirmForce){
+api.clusterNodeAdd = function(submitData, processOptions){
   var nodeAddData = submitData.nodeAddData;
 
   var node = {name: nodeAddData.nodeName};
@@ -288,7 +307,23 @@ api.clusterNodeAdd = function(submitData, confirmForce){
     );
   };
 
-  return api.pcsLib.forcibleLoop(apiCall, api.err.NODE_ADD, confirmForce);
+  return api.pcsLib.forcibleLoop(apiCall, api.err.NODE_ADD, processOptions);
+};
+
+api.clusterNodeRemove = function(submitData, processOptions){
+  var data = { node_list: submitData.nodeNameList };
+  var apiCall = function(force){
+    data.force_flags = api.tools.forceFlags(force);
+    return promise.post(
+      get_cluster_remote_url(submitData.clusterName)+"cluster_remove_nodes",
+      {data_json: JSON.stringify(data)},
+      api.err.NODES_REMOVE.FAILED,
+      {
+        timeout: 60000,
+      }
+    );
+  };
+  return api.pcsLib.forcibleLoop(apiCall, api.err.NODES_REMOVE, processOptions);
 };
 
 api.clusterStart = function(clusterName, nodeName){
