@@ -2,6 +2,8 @@
 Description=PCS GUI and remote configuration interface
 Documentation=man:pcsd(8)
 Documentation=man:pcs(8)
+Requires=network-online.target
+After=network-online.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/pcsd

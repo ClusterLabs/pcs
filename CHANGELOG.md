@@ -147,6 +147,7 @@
   in pacemaker-2.0 ([rhbz#1542288])
 - Key size of default pcsd self-generated certificates increased from 2048b to
   3072b ([rhbz#1638852])
+- pcsd.service now depends on network-online.target ([rhbz#1640477])
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure
@@ -190,6 +191,7 @@
 [rhbz#1619620]: https://bugzilla.redhat.com/show_bug.cgi?id=1619620
 [rhbz#1620190]: https://bugzilla.redhat.com/show_bug.cgi?id=1620190
 [rhbz#1638852]: https://bugzilla.redhat.com/show_bug.cgi?id=1638852
+[rhbz#1640477]: https://bugzilla.redhat.com/show_bug.cgi?id=1640477
 
 
 ## [0.9.163] - 2018-02-20
