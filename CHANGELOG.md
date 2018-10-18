@@ -36,7 +36,7 @@
   deprecated in Pacemaker 2.x ([rhbz#1542288])
 - Support for the `promoted-max` bundle option replacing the `masters` option
   in Pacemaker 2.x ([rhbz#1542288])
-- Support for OP_NO_RENEGOTIATION option when OpenSSL supports it (even with
+- Support for OP\_NO\_RENEGOTIATION option when OpenSSL supports it (even with
   Python 3.6) ([rhbz#1566430])
 - Support for container types `rkt` and `podman` into bundle commands
   ([rhbz#1619620])
@@ -53,7 +53,7 @@
   ([rhbz#1553718])
 
 ### Fixed
-- Fixed encoding of the CIB_user_groups cookie in communication between nodes.
+- Fixed encoding of the CIB\_user\_groups cookie in communication between nodes.
 - `pcs cluster cib-push diff-against=` does not consider an empty diff as
   an error ([ghpull#166])
 - `pcs cluster cib-push diff-against=` exits gracefully with an error message if
