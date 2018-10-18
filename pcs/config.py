@@ -262,7 +262,7 @@ def config_restore(dummy_lib, argv, modifiers):
         else:
             new_stdin = infile_obj.read()
         err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-            new_argv, True, new_stdin
+            new_argv, new_stdin
         )
         if err_msgs:
             for msg in err_msgs:

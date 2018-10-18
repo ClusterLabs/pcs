@@ -900,7 +900,7 @@ def auth_hosts(host_dict):
         return
     err('Unable to communicate with pcsd')
 
-def call_local_pcsd(argv, interactive_auth=False, std_in=None):
+def call_local_pcsd(argv, std_in=None):
     """
     Commandline options:
       * --request-timeout - timeout of call to local pcsd
@@ -918,36 +918,14 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
         "localhost", "run_pcs", data_send, False, False
     )
 
-    # authenticate against local pcsd and run again
-    if interactive_auth and 3 == code: # not authenticated
-        print('Please authenticate yourself to the local pcsd')
-        username = get_terminal_input('Username: ')
-        password = get_terminal_password()
-        port = get_terminal_input(
-            'Port (default: {0}): '.format(settings.pcsd_default_port)
-            # default port is not completely correct, because default port from
-            # pcsd will be used
-        )
-        if not port:
-            port = settings.pcsd_default_port
-        auth_hosts(
-            {
-                "localhost": {
-                    "username": username,
-                    "password": password,
-                    "dest_list": [{"addr": "localhost", "port": port, }]
-                }
-            }
-        )
-        print()
-        code, output = sendHTTPRequest(
-            "localhost", "run_pcs", data_send, False, False
-        )
-
     if 3 == code: # not authenticated
-        # don't advise to run 'pcs cluster auth' as that is not used to auth
-        # to localhost
-        return [['Unable to authenticate to the local pcsd'], 1, '', '']
+        return [
+            [
+                "Unable to authenticate against the local pcsd. Run the same "
+                "command as root or authenticate yourself to the local pcsd "
+                "using command 'pcs client local-auth'"
+            ], 1, '', ''
+        ]
     if 0 != code: # http error connecting to localhost
         return [[output], 1, '', '']
 

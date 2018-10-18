@@ -51,6 +51,9 @@
   ([rhbz#1620190])
 - Validation of node existence in a cluster when creating location constraints
   ([rhbz#1553718])
+- Command `pcs client local-auth` for authentication of pcs client against local
+  pcsd. This is required when a non-root user wants to execute a command which
+  requires root permissions (e.g. `pcs cluster start`). ([rhbz#1554302])
 
 ### Fixed
 - Fixed encoding of the CIB\_user\_groups cookie in communication between nodes.
@@ -173,6 +176,7 @@
 [rhbz#1549535]: https://bugzilla.redhat.com/show_bug.cgi?id=1549535
 [rhbz#1550243]: https://bugzilla.redhat.com/show_bug.cgi?id=1550243
 [rhbz#1553718]: https://bugzilla.redhat.com/show_bug.cgi?id=1553718
+[rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1557366]: https://bugzilla.redhat.com/show_bug.cgi?id=1557366
 [rhbz#1566430]: https://bugzilla.redhat.com/show_bug.cgi?id=1566430
 [rhbz#1568353]: https://bugzilla.redhat.com/show_bug.cgi?id=1568353

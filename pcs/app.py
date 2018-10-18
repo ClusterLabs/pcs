@@ -5,7 +5,9 @@ import logging
 
 from pcs import (
     acl,
+    alert,
     booth,
+    client,
     cluster,
     config,
     constraint,
@@ -21,7 +23,6 @@ from pcs import (
     stonith,
     usage,
     utils,
-    alert,
 )
 
 from pcs.cli.common import (
@@ -162,6 +163,7 @@ def main(argv=None):
         "alert": alert.alert_cmd,
         "booth": booth.booth_cmd,
         "host": host.host_cmd,
+        "client": client.client_cmd,
     }
     if command not in cmd_map:
         usage.main()
@@ -218,7 +220,7 @@ def main(argv=None):
 
             # call the local pcsd
             err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-                orig_argv, True
+                orig_argv
             )
             if err_msgs:
                 for msg in err_msgs:
