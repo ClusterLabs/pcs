@@ -155,13 +155,13 @@ class PCSConfig
     return false
   end
 
-  def is_node_in_use(nodename)
+  def get_nodes_cluster(nodename)
     @clusters.each {|c|
       c.nodes.each {|n|
-        return true if n == nodename
+        return c.name if n == nodename
       }
     }
-    return false
+    return nil
   end
 
   def get_nodes(clustername)

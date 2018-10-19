@@ -120,7 +120,7 @@ tools.submit.onCallFail = function(resetMessages){
     }else{
       alert(
         "Server returned an error: "+XMLHttpRequest.status
-        +" "+XMLHttpRequest.responseText
+        +"\n"+XMLHttpRequest.responseText
       );
     }
   };

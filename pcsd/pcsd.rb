@@ -23,6 +23,14 @@ use Rack::CommonLogger
 
 set :app_file, __FILE__
 
+def __msg_cluster_name_already_used(cluster_name)
+  return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
+end
+
+def __msg_node_name_already_used(node_name, cluster_name)
+  return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
+end
+
 def getAuthUser()
   return {
     :username => $tornado_username,
@@ -322,9 +330,8 @@ post '/manage/existingcluster' do
  configured.  You must create a cluster using this node before adding it to pcsd."
     end
 
-    if pcs_config.is_cluster_name_in_use(status["cluster_name"])
-      return 400, "The cluster name, '#{status['cluster_name']}' has
-already been added to pcsd.  You may not add two clusters with the same name into pcsd."
+    if pcs_config.is_cluster_name_in_use(status['cluster_name'])
+      return 400, __msg_cluster_name_already_used(status['cluster_name'])
     end
 
     # auth begin
@@ -376,6 +383,41 @@ post '/manage/send-known-hosts-to-node' do
   return pcs_compatibility_layer_known_hosts_add(
     auth_user, false, params[:target_node], params[:node_names]
   )
+end
+
+# use case:
+# - js asks us if specified cluster name and/or node names are available
+get '/manage/can-add-cluster-or-nodes' do
+  # This is currently used form cluster setup and node add, both of which
+  # require hacluster user anyway. If needed to be used anywhere else, consider
+  # if hacluster should be required.
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  errors = []
+
+  if params.include?(:cluster)
+    if pcs_config.is_cluster_name_in_use(params[:cluster])
+      errors << __msg_cluster_name_already_used(params[:cluster])
+    end
+  end
+
+  if params.include?(:node_names)
+    params[:node_names].each { |node_name|
+      cluster_name = pcs_config.get_nodes_cluster(node_name)
+      if cluster_name
+        errors << __msg_node_name_already_used(node_name, cluster_name)
+      end
+    }
+  end
+
+  if errors
+    return 400, errors.join("\n")
+  end
+  return 200
 end
 
 # use case:
@@ -464,7 +506,7 @@ post '/manage/newcluster' do
   end
 
   @nodes.each {|n|
-    if pcs_config.is_node_in_use(n)
+    if pcs_config.get_nodes_cluster(n)
       return 400, "The node, '#{n}' is already configured in pcsd.  You may not add a node to two different clusters in pcsd."
     end
   }

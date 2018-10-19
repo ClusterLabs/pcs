@@ -506,9 +506,9 @@ class TestConfig < Test::Unit::TestCase
     assert(cfg.is_cluster_name_in_use('cluster67'))
     assert(! cfg.is_cluster_name_in_use('nonexistent'))
 
-    assert(cfg.is_node_in_use('rh71-node1'))
-    assert(cfg.is_node_in_use('rh67-node3'))
-    assert(! cfg.is_node_in_use('rh71-node3'))
+    assert_equal(cfg.get_nodes_cluster('rh71-node1'), 'cluster71')
+    assert_equal(cfg.get_nodes_cluster('rh67-node3'), 'cluster67')
+    assert_equal(cfg.get_nodes_cluster('rh71-node3'), nil)
 
     assert_equal(
       ["rh71-node1", "rh71-node2"],
