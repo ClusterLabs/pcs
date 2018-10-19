@@ -100,10 +100,6 @@ def resource_cmd(lib, argv, modifiers):
             resource_agents(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             resource_update(lib, argv_next, modifiers)
-        elif sub_cmd == "add_operation":
-            utils.err("add_operation has been deprecated, please use 'op add'")
-        elif sub_cmd == "remove_operation":
-            utils.err("remove_operation has been deprecated, please use 'op remove'")
         elif sub_cmd == "meta":
             resource_meta(lib, argv_next, modifiers)
         elif sub_cmd == "delete":

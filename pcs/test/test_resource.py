@@ -305,14 +305,6 @@ class Resource(TestCase, AssertPcsMixin):
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
 
-        o,r = pcs(temp_cib, "resource add_operation")
-        assert r == 1
-        assert o == "Error: add_operation has been deprecated, please use 'op add'\n",[o]
-
-        o,r = pcs(temp_cib, "resource remove_operation")
-        assert r == 1
-        assert o == "Error: remove_operation has been deprecated, please use 'op remove'\n"
-
         line = 'resource op add'
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
