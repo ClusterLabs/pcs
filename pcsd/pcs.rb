@@ -850,14 +850,18 @@ def get_acls(auth_user, cib_dom=nil)
   return acls
 end
 
-def enable_cluster(auth_user)
-  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "enable")
+def enable_cluster(auth_user, all)
+  cmd = [PCS, "cluster", "enable"]
+  cmd << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, *cmd)
   return false if retval != 0
   return true
 end
 
-def disable_cluster(auth_user)
-  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "disable")
+def disable_cluster(auth_user, all)
+  cmd = [PCS, "cluster", "disable"]
+  cmd << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, *cmd)
   return false if retval != 0
   return true
 end

@@ -236,9 +236,10 @@ def cluster_start(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
+    cmd = [PCS, 'cluster', 'start']
+    cmd << '--all' if params[:all] == '1'
     $logger.info "Starting Daemons"
-    output, stderr, retval = run_cmd(auth_user, PCS, 'cluster', 'start')
-    $logger.debug output
+    output, stderr, retval = run_cmd(auth_user, *cmd)
     if retval != 0
       return [400, (output + stderr).join]
     else
@@ -268,6 +269,7 @@ def cluster_stop(params, request, auth_user)
       end
     end
     options << "--force" if params["force"]
+    options << '--all' if params[:all] == '1'
     $logger.info "Stopping Daemons"
     stdout, stderr, retval = run_cmd(
       auth_user, PCS, "cluster", "stop", *options
@@ -390,7 +392,7 @@ def cluster_enable(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
-    success = enable_cluster(auth_user)
+    success = enable_cluster(auth_user, params[:all])
     if not success
       return JSON.generate({"error" => "true"})
     end
@@ -407,7 +409,7 @@ def cluster_disable(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
-    success = disable_cluster(auth_user)
+    success = disable_cluster(auth_user, params[:all])
     if not success
       return JSON.generate({"error" => "true"})
     end

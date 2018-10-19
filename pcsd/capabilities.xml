@@ -429,12 +429,14 @@
           cluster_disable
       </description>
     </capability>
-    <capability id="node.start-stop-enable-disable.all" in-pcs="1" in-pcsd="0">
+    <capability id="node.start-stop-enable-disable.all" in-pcs="1" in-pcsd="1">
       <description>
         Allow starting, stopping, enabling and disabling cluster services on all
         nodes in the cluster.
 
         pcs commands: cluster (start | stop | enable | disable) --all
+        daemon urls: cluster_start, cluster_stop, cluster_enable,
+          cluster_disable (param: all == 1)
       </description>
     </capability>
     <capability id="node.start-stop-enable-disable.list" in-pcs="1" in-pcsd="0">
