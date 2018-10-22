@@ -25,6 +25,7 @@ clusterSetup.dialog.getFormData = function(){
     nodesNames: tools.dialog.inputsToArray(
       "#create_new_cluster_form tr.new_node [name^='node-']"
     ),
+    autoStart: $("#create_new_cluster_form [name='auto_start']").is(":checked"),
   };
 };
 
@@ -138,11 +139,15 @@ clusterSetup.submit.run = function(){
           return tools.submit.confirmForce("setup cluster", msgs);
         },
       }
-
     );
 
   }).then(function(){
     return api.rememberCluster(formData.clusterName, formData.nodesNames);
+
+  }).then(function(){
+    if (formData.autoStart) {
+      return api.clusterStart(formData.clusterName, { all: true });
+    }
 
   }).then(function(){
     Pcs.update();
@@ -186,6 +191,17 @@ clusterSetup.submit.run = function(){
 
       case api.err.CLUSTER_SETUP.PCS_LIB_EXCEPTION:
         alert("Server returned an error: "+data.msg);
+        break;
+
+      case api.err.CLUSTER_START.FAILED:
+        alert(
+          "Cluster was created successfully!"
+          +"\n\nHowever, a start of the cluster failed. Use 'Start' in the node"
+          +" detail page to start each node individually."
+          +"\n\nDetails:\nServer returned an error: "+data.XMLHttpRequest.status
+          +" "+data.XMLHttpRequest.responseText
+        );
+        clusterSetup.dialog.close();
         break;
 
       case api.err.REMEMBER_CLUSTER.FAILED:

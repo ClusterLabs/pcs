@@ -6,13 +6,15 @@ dev.utils.clusterSetupDialog = {
     }
     dev.utils.clusterSetupDialog.wasRun = true;
     clusterSetup.dialog.create();
-    $('input[name^="clustername"]').val("starbug8");
+    $('input[name^="clustername"]').val(testClusterSetup.clusterName);
     $('#create_new_cluster input[name="node-1"]').val("dave8");
     $('#create_new_cluster input[name="node-2"]').val("kryten8");
     $('#create_new_cluster input[name="node-3"]').val("holly8");
     setTimeout(function(){ clusterSetup.submit.run() }, 500);
   },
 };
+
+testClusterSetup = { clusterName: "starbug8" };
 
 dev.patch.ajax_wrapper(
   function(url){
@@ -31,7 +33,6 @@ dev.patch.ajax_wrapper(
   dev.utils.clusterSetupDialog.prefill,
 );
 
-testClusterSetup = {};
 
 testClusterSetup.successPath = function(url, data, success, fail){
   switch(url){
@@ -46,6 +47,10 @@ testClusterSetup.successPath = function(url, data, success, fail){
     case "/manage/cluster-setup": return success(
       JSON.stringify(dev.fixture.success)
     );
+
+
+    case "/managec/"+testClusterSetup.clusterName+"/cluster_start":
+      return success();
 
     case "/manage/remember-cluster": return success();
   }
@@ -224,6 +229,17 @@ testClusterSetup.rememberFail = function(url, data, success, fail){
   }
 };
 
+testClusterSetup.startClusterFail = function(url, data, success, fail){
+  switch(url){
+    case "/managec/"+testClusterSetup.clusterName+"/cluster_start": return fail(
+      400, "Server error"
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+
 
 
 dev.runScenario(
@@ -244,5 +260,6 @@ dev.runScenario(
   // testClusterSetup.clusterSetupForceFailForcible
   // testClusterSetup.clusterSetupForce
   // testClusterSetup.rememberFail
+  // testClusterSetup.startClusterFail
   testClusterSetup.successPath
 );

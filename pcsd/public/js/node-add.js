@@ -142,7 +142,7 @@ nodeAdd.submit.run = function(){
 
   }).then(function(){
     if (formData.autoStart) {
-      return api.clusterStart(clusterName, formData.nodeName);
+      return api.clusterStart(clusterName, { nodeName: formData.nodeName });
     }
 
   }).then(function(){

@@ -342,10 +342,18 @@ api.clusterNodeRemove = function(submitData, processOptions){
   return api.pcsLib.forcibleLoop(apiCall, api.err.NODES_REMOVE, processOptions);
 };
 
-api.clusterStart = function(clusterName, nodeName){
+api.clusterStart = function(clusterName, settings){
+  var data = {};
+  if (settings.nodeName) {
+    data["name"] = settings.nodeName;
+  }
+
+  if (settings.all) {
+    data["all"] = "1";
+  }
   return promise.post(
     get_cluster_remote_url(clusterName)+"cluster_start",
-    {name: nodeName},
+    data,
     api.err.CLUSTER_START.FAILED,
   );
 };
