@@ -24,6 +24,7 @@ dev.patch.ajax_wrapper(
         $(input).val(devices[i]);
       }
     );
+    setTimeout(function(){ nodeAdd.submit.run() }, 500);
   },
 );
 
@@ -31,6 +32,7 @@ testNodeAdd = {};
 
 testNodeAdd.successPath = function(url, data, success, fail){
   switch(url){
+    case "/manage/can-add-cluster-or-nodes": return success();
     case "/manage/check_auth_against_nodes": return success(JSON.stringify({
       dave8: "Online",
     }));
@@ -54,6 +56,38 @@ testNodeAdd.successPath = function(url, data, success, fail){
       })
     );
     case "/managec/"+Pcs.cluster_name+"/cluster_start": return success();
+  }
+};
+
+testNodeAdd.canAddClusterOrNodes403 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      403, "Permission denied."
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+testNodeAdd.canAddClusterOrNodes500 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      500, "Somethig is wrong",
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+testNodeAdd.canAddClusterOrNodes400 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      400,
+      "The node 'node_name' is already a part of the 'cluster_name' cluster."
+      +" You may not add a node to two different clusters."
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
@@ -200,6 +234,9 @@ testNodeAdd.nodeStartClusterFail = function(url, data, success, fail){
 
 
 dev.runScenario(
+  // testNodeAdd.canAddClusterOrNodes403
+  // testNodeAdd.canAddClusterOrNodes500
+  // testNodeAdd.canAddClusterOrNodes400
   // testNodeAdd.checkAuthFails
   // testNodeAdd.checkAuthNodesNotAuth
   // testNodeAdd.sendKnownHostsFail

@@ -414,10 +414,10 @@ get '/manage/can-add-cluster-or-nodes' do
     }
   end
 
-  if errors
+  unless errors.empty?
     return 400, errors.join("\n")
   end
-  return 200
+  return 200, ""
 end
 
 # use case:

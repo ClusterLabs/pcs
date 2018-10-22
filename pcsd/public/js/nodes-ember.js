@@ -86,7 +86,7 @@ Pcs = Ember.Application.createWithMixins({
     return this.get("pcsd_capabilities").indexOf("pcmk.resource.promotable") != -1;
   }.property("pcsd_capabilities"),
   pcmk_constraints_no_autocorrect: function() {
-    return this.get("pcsd_capabilities").indexOf("pcmk.constraint.no-autocorrect") != -1
+    return this.get("pcsd_capabilities").indexOf("pcmk.constraint.no-autocorrect") != -1;
   }.property("pcsd_capabilities"),
   is_sbd_running: false,
   is_sbd_enabled: false,

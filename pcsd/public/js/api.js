@@ -153,6 +153,9 @@ api.err = {
   },
   CLUSTER_DESTROY: {
     FAILED: "CLUSTER_DESTROY.FAILED",
+  },
+  CAN_ADD_CLUSTER_OR_NODES: {
+    FAILED: "CAN_ADD_CLUSTER_OR_NODES.FAILED",
   }
 };
 
@@ -160,6 +163,19 @@ api.tools = {};
 
 api.tools.forceFlags = function(force){
   return force ? ["FORCE"] : [];
+};
+
+api.canAddClusterOrNodes = function(nodesNames, clusterName){
+  var data = { node_names: nodesNames };
+  if (clusterName) {
+    data["cluster"] = clusterName;
+  }
+  return promise.get(
+    "/manage/can-add-cluster-or-nodes",
+    data,
+    api.err.CAN_ADD_CLUSTER_OR_NODES.FAILED,
+  );
+
 };
 
 api.checkAuthAgainstNodes = function(nodesNames){

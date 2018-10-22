@@ -115,10 +115,13 @@ nodeAdd.submit.run = function(){
   nodeAdd.dialog.resetMessages([]);
   nodeAdd.dialog.setSubmitAbility(false);
 
-  api.checkAuthAgainstNodes(
-    [formData.nodeName]
+  api.canAddClusterOrNodes(
+    [formData.nodeName],
 
-  ).then(function(nodesAuthGroups){
+  ).then(function(){
+    return api.checkAuthAgainstNodes([formData.nodeName]);
+
+  }).then(function(nodesAuthGroups){
     if (!nodesAuthGroups.ok.includes(formData.nodeName)) {
       return promise.reject(
         api.err.NODES_AUTH_CHECK.WITH_ERR_NODES,
@@ -150,6 +153,10 @@ nodeAdd.submit.run = function(){
   }).fail(function(rejectCode, data){
     nodeAdd.dialog.setSubmitAbility(true);
     switch(rejectCode){
+      case api.err.CAN_ADD_CLUSTER_OR_NODES.FAILED:
+        nodeAdd.submit.onCallFail(data.XMLHttpRequest, [400]);
+        break;
+
       case api.err.NODES_AUTH_CHECK.FAILED:
         alert("ERROR: Unable to contact server");
         break;

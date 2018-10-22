@@ -106,10 +106,14 @@ clusterSetup.submit.run = function(){
 
   var setupCoordinatingNode = formData.nodesNames[0];
 
-  api.checkAuthAgainstNodes(
-    formData.nodesNames
+  api.canAddClusterOrNodes(
+    formData.nodesNames,
+    formData.clusterName,
 
-  ).then(function(nodesAuthGroups){
+  ).then(function(){
+    return api.checkAuthAgainstNodes(formData.nodesNames);
+
+  }).then(function(nodesAuthGroups){
     clusterSetup.dialog.updateNodesByAuth(
       nodesAuthGroups.ok,
       nodesAuthGroups.noAuth,
@@ -148,6 +152,10 @@ clusterSetup.submit.run = function(){
   }).fail(function(rejectCode, data){
     clusterSetup.dialog.setSubmitAbility(true);
     switch(rejectCode){
+      case api.err.CAN_ADD_CLUSTER_OR_NODES.FAILED:
+        clusterSetup.submit.onCallFail(data.XMLHttpRequest, [400]);
+        break;
+
       case api.err.NODES_AUTH_CHECK.FAILED:
         alert("ERROR: Unable to contact server");
         break;

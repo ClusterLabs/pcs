@@ -10,6 +10,7 @@ dev.utils.clusterSetupDialog = {
     $('#create_new_cluster input[name="node-1"]').val("dave8");
     $('#create_new_cluster input[name="node-2"]').val("kryten8");
     $('#create_new_cluster input[name="node-3"]').val("holly8");
+    setTimeout(function(){ clusterSetup.submit.run() }, 500);
   },
 };
 
@@ -34,6 +35,7 @@ testClusterSetup = {};
 
 testClusterSetup.successPath = function(url, data, success, fail){
   switch(url){
+    case "/manage/can-add-cluster-or-nodes": return success();
     case "/manage/check_auth_against_nodes": return success(JSON.stringify({
       dave8: "Online",
       kryten8: "Online",
@@ -46,6 +48,40 @@ testClusterSetup.successPath = function(url, data, success, fail){
     );
 
     case "/manage/remember-cluster": return success();
+  }
+};
+
+testClusterSetup.canAddClusterOrNodes403 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      403, "Permission denied."
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+testClusterSetup.canAddClusterOrNodes500 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      500, "Somethig is wrong",
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
+testClusterSetup.canAddClusterOrNodes400 = function(url, data, success, fail){
+  switch(url){
+    case "/manage/can-add-cluster-or-nodes": return fail(
+      400,
+      "The cluster name 'cluster_name' has already been added."
+      +" You may not add two clusters with the same name."
+      +"\nThe node 'node_name' is already a part of the 'cluster_name' cluster."
+      +" You may not add a node to two different clusters."
+    );
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
@@ -191,6 +227,9 @@ testClusterSetup.rememberFail = function(url, data, success, fail){
 
 
 dev.runScenario(
+  // testClusterSetup.canAddClusterOrNodes403
+  // testClusterSetup.canAddClusterOrNodes500
+  // testClusterSetup.canAddClusterOrNodes400
   // testClusterSetup.checkAuthFails
   // testClusterSetup.checkAuthNodesNotAuth
   // testClusterSetup.sendKnownHosts403

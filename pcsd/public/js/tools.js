@@ -109,7 +109,8 @@ tools.dialog.resetInputs = function(selector){
 };
 
 tools.submit.onCallFail = function(resetMessages){
-  return function(XMLHttpRequest){
+  return function(XMLHttpRequest, dialogCodes){
+    dialogCodes = dialogCodes || [];
     if(XMLHttpRequest.status === 403){
       resetMessages([
         {
@@ -117,6 +118,12 @@ tools.submit.onCallFail = function(resetMessages){
           msg: "The user 'hacluster' is required for this action.",
         },
       ]);
+    }else if(dialogCodes.includes(XMLHttpRequest.status)){
+      resetMessages(
+        XMLHttpRequest.responseText.split("\n").map(function(line){
+          return { type: "error", msg: line };
+        })
+      );
     }else{
       alert(
         "Server returned an error: "+XMLHttpRequest.status
