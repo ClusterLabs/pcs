@@ -23,6 +23,9 @@
 - Ability to manage node attributes with `pcs property set|unset|show` commands
   (using `--node` option). The same functionality is still available using
   `pcs node attribute` command.
+- Undocumented version of the `pcs constraint colocation add` command, its
+  syntax was `pcs constraint colocation add <source resource id> <target
+  resource id> [score] [options]`
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
@@ -89,6 +92,7 @@
   container backend ([rhbz#1619620])
 - Do not crash if unable to load SSL certificate or key, log errors and exit
   gracefully instead ([rhbz#1638852])
+- Fixed several issues in parsing `pcs constraint colocation add` command.
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):

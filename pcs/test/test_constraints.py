@@ -374,13 +374,13 @@ Ticket Constraints:
             ["</resources>"]
         ))
 
-        o, r = pcs(temp_cib, "constraint colocation add D1 D3-clone")
+        o, r = pcs(temp_cib, "constraint colocation add D1 with D3-clone")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
+        o, r = pcs(temp_cib, "constraint colocation add D1 with D2 100")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add D1 D2 -100 --force")
+        o, r = pcs(temp_cib, "constraint colocation add D1 with D2 -100 --force")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint colocation add Master with D5 100")
@@ -402,8 +402,105 @@ Ticket Constraints:
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint")
+        ac(o, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+              D1 with D3-clone (score:INFINITY)
+              D1 with D2 (score:100)
+              D1 with D2 (score:-100)
+              Master with D5 (score:100)
+              M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)
+              M3-master with M4-master (score:INFINITY)
+              M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)
+              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)
+              M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)
+            Ticket Constraints:
+            """
+        ))
         assert r == 0
-        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\nTicket Constraints:\n')
+
+    def test_colocation_syntax_errors(self):
+        def assert_usage(command):
+            output, returnVal = pcs(temp_cib, command)
+            self.assertTrue(output.startswith(
+                "\nUsage: pcs constraint [constraints]...\n    colocation add"
+            ), output)
+            self.assertEqual(returnVal, 1)
+
+        assert_usage("constraint colocation add D1")
+        assert_usage("constraint colocation add master D1")
+        assert_usage("constraint colocation add D1 with")
+        assert_usage("constraint colocation add master D1 with")
+
+        assert_usage("constraint colocation add D1 D2")
+        assert_usage("constraint colocation add master D1 D2")
+        assert_usage("constraint colocation add D1 master D2")
+        assert_usage("constraint colocation add master D1 master D2")
+
+        assert_usage("constraint colocation add D1 D2 D3")
+
+        output, returnVal = pcs(temp_cib, "constraint")
+        self.assertEqual(output, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+        ))
+        self.assertEqual(returnVal, 0)
+
+    def test_colocation_errors(self):
+        self.fixture_resources()
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D20"
+        )
+        self.assertEqual(output, "Error: Resource 'D20' does not exist\n")
+        self.assertEqual(returnVal, 1)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D10 with D20"
+        )
+        self.assertEqual(output, "Error: Resource 'D10' does not exist\n")
+        self.assertEqual(returnVal, 1)
+
+        output, returnVal = pcs(temp_cib, "constraint")
+        self.assertEqual(output, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+        ))
+        self.assertEqual(returnVal, 0)
+
+    def test_colocation_with_score_and_options(self):
+        self.fixture_resources()
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D2 -100 id=abcd node-attribute=y"
+        )
+        self.assertEqual(output, "")
+        self.assertEqual(returnVal, 0)
+
+        output, returnVal = pcs(temp_cib, "constraint")
+        self.assertEqual(output, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+              D1 with D2 (score:-100) (node-attribute:y)
+            Ticket Constraints:
+            """
+        ))
+        self.assertEqual(returnVal, 0)
 
     # see also BundleColocation
     def testColocationSets(self):

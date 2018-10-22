@@ -132,7 +132,7 @@ def constraint_cmd(lib, argv, modifiers):
                 )
         elif sub_cmd in ["remove", "delete"]:
             constraint_rm(lib, argv, modifiers)
-        elif (sub_cmd == "show" or sub_cmd == "list"):
+        elif (sub_cmd in ("show", "list")):
             # all these commands accept -f and --full therefore there is no
             # need to change something here
             location_show(lib, argv, modifiers)
@@ -205,9 +205,12 @@ def parse_score_options(argv):
         arg_array.append(args)
     return (score, arg_array)
 
-# There are two acceptable syntaxes
-# Deprecated - colocation add <src> <tgt> [score] [options]
-# Supported - colocation add [role] <src> with [role] <tgt> [score] [options]
+# Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
+# possible commands:
+#        <src> with        <tgt> [score] [options]
+#        <src> with <role> <tgt> [score] [options]
+# <role> <src> with        <tgt> [score] [options]
+# <role> <src> with <role> <tgt> [score] [options]
 def colocation_add(dummy_lib, argv, modifiers):
     """
     Options:
@@ -215,35 +218,35 @@ def colocation_add(dummy_lib, argv, modifiers):
       * --force - allow constraint on any resource, allow duplicate constraints
     """
     modifiers.ensure_only_supported("-f", "--force")
-    if len(argv) < 2:
+    if len(argv) < 3:
         raise CmdLineInputError()
 
     role1 = ""
     role2 = ""
-    if len(argv) > 2:
-        if not utils.is_score_or_opt(argv[2]):
-            if argv[2] == "with":
-                role1 = argv.pop(0).lower().capitalize()
-                resource1 = argv.pop(0)
-            else:
-                resource1 = argv.pop(0)
 
-            argv.pop(0) # Pop 'with'
-
-            if len(argv) == 1:
-                resource2 = argv.pop(0)
-            else:
-                if utils.is_score_or_opt(argv[1]):
-                    resource2 = argv.pop(0)
-                else:
-                    role2 = argv.pop(0).lower().capitalize()
-                    resource2 = argv.pop(0)
-        else:
-            resource1 = argv.pop(0)
-            resource2 = argv.pop(0)
-    else:
+    if argv[2] == "with":
+        role1 = argv.pop(0).lower().capitalize()
         resource1 = argv.pop(0)
+    elif argv[1] == "with":
+        resource1 = argv.pop(0)
+    else:
+        raise CmdLineInputError()
+
+    argv.pop(0) # Pop 'with'
+
+    if not argv:
+        raise CmdLineInputError()
+    elif len(argv) == 1:
         resource2 = argv.pop(0)
+    else:
+        if utils.is_score_or_opt(argv[1]):
+            resource2 = argv.pop(0)
+        else:
+            role2 = argv.pop(0).lower().capitalize()
+            resource2 = argv.pop(0)
+
+    score, nv_pairs = parse_score_options(argv)
+
 
     cib_dom = utils.get_cib_dom()
     resource_valid, resource_error, dummy_correct_id \
@@ -255,7 +258,6 @@ def colocation_add(dummy_lib, argv, modifiers):
     if not resource_valid:
         utils.err(resource_error)
 
-    score,nv_pairs = parse_score_options(argv)
     id_in_nvpairs = None
     for name, value in nv_pairs:
         if name == "id":
@@ -279,7 +281,7 @@ def colocation_add(dummy_lib, argv, modifiers):
 
     (dom,constraintsElement) = getCurrentConstraints(cib_dom)
 
-# If one role is specified, the other should default to "started"
+    # If one role is specified, the other should default to "started"
     if role1 != "" and role2 == "":
         role2 = DEFAULT_ROLE
     if role2 != "" and role1 == "":
