@@ -882,7 +882,7 @@ class Validation(TestCase):
                 {"name": "node3", "addrs": ["addr3"]},
             ],
             transport_type="knet",
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
@@ -1107,7 +1107,7 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 self.command_node_list,
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1139,7 +1139,7 @@ class Validation(TestCase):
                     {"name": "node2", "addrs": ["addr2"]},
                 ],
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1229,7 +1229,8 @@ class Validation(TestCase):
                 ),
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
-                    host_name="node3"
+                    host_name="node3",
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
                     report_codes.SERVICE_NOT_INSTALLED,
@@ -1239,12 +1240,14 @@ class Validation(TestCase):
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node5",
-                    service_list=["corosync", "pacemaker"]
+                    service_list=["corosync", "pacemaker"],
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node6",
-                    service_list=["pacemaker_remote"]
+                    service_list=["pacemaker_remote"],
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
                     report_codes.SERVICE_VERSION_MISMATCH,
@@ -1299,7 +1302,7 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 [{"name": name, "addrs": None} for name in nodelist],
                 transport_type="knet",
-                force=True
+                force_flags=[report_codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
@@ -1386,7 +1389,7 @@ class Validation(TestCase):
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
             transport_type="knet",
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -1498,7 +1501,8 @@ class Validation(TestCase):
                 ),
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
-                    host_name="node3"
+                    host_name="node3",
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
                 ),
                 fixture.error(
                     report_codes.CLUSTER_WILL_BE_DESTROYED,

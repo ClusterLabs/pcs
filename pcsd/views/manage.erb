@@ -14,15 +14,19 @@
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">
-		Add Existing
-	      </a>
+	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">Add Existing</a>
 	    </div>
 	  </td>
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_create_cluster" href="#" onclick="create_cluster_dialog();">Create New</a>
+	      <a id="manage_destroy_cluster" href="#" onclick="clusterDestroy.dialog.create();">Destroy</a>
+	    </div>
+	  </td>
+	  <td>
+	    <a href="#" class="plus sprites"></a>
+	    <div class="link">
+	      <a id="manage_create_cluster" href="#" onclick="clusterSetup.dialog.create();">Create New</a>
 	    </div>
 	  </td>
 	</tr>
@@ -195,252 +199,42 @@
     </table>
   </form>
 </div>
+
 <div id="create_new_cluster" style="display: none;">
-  <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
+  <form id="create_new_cluster_form" method="post">
     <br>
     Enter the names of the nodes you would like to use to create a cluster:
     <br>
     <br>
+
     <table>
-      <tr><td align=right>Cluster Name:</td><td><input size="50" name="clustername" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 1:</td><td><input class="node" size="50" name="node-1" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 2:</td><td><input class="node" size="50" name="node-2" type="text"></input></td></tr>
-      <tr class="new_node"><td align=right>Node 3:</td><td><input class="node" size="50" name="node-3" type="text"></input></td></tr>
-      <tr><td></td><td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
+      <tr>
+        <td align=right>Cluster Name:</td>
+        <td><input size="50" name="clustername" type="text"></input></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 1:</td>
+        <td><input class="node" size="50" name="node-1" type="text"/></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 2:</td>
+        <td><input class="node" size="50" name="node-2" type="text"/></td>
+      </tr>
+      <tr class="new_node">
+        <td align=right>Node 3:</td>
+        <td><input class="node" size="50" name="node-3" type="text"/></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td>
+      </tr>
+      <tr>
+        <td>Start the Cluster:</td>
+        <td><input type="checkbox" name="auto_start" value="1" checked></td>
+      </tr>
     </table>
-    <table class="err_msg_table" style="width:100%">
-      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br>Please make sure pcsd is started on all nodes.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="addr0_addr1_mismatch_error_msg" style="display:none;">Ring 1 addresses do not match to Ring 0 addresses</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="cman_udpu_transport_error_msg" style="display:none;">Cannot use UDPU transport on CMAN cluster. Please select UDP transport in Advanced options.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="rhel_version_mismatch_error_msg" style="display:none;">Cannot create a cluster using nodes running different versions of RHEL.</span></td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="cman_mismatch_error_msg" style="display:none;">Cannot mix nodes running CMAN and nodes without CMAN in one cluster.</span></td></tr>
-    </table>
-    <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
-    <div id="advanced_cluster_create_options" style="display:none;">
-      <table>
-	<% transport_desc = "\
-Enables either udpu (unicast) or udp (multicast) cluster communication (default: udpu)"%>
-	<% encryption_desc = "\
-Create cluster with encrypted corosync communication. This option may not work \
-with pcs version lower than 0.9.159." %>
-	<% wait_for_all_desc = "\
-Enables Wait For All (WFA) feature (default: off).
 
-The general behaviour of votequorum is to switch a cluster \
-from inquorate to quorate as soon as possible. For example,\
-in an 8 node cluster, where every node has 1 vote, \
-expected_votes is set to 8 and quorum is (50% + 1) 5. As soon \
-as 5 (or more) nodes are visible to each other, the partition \
-of 5 (or more) becomes quorate and can start operating.
+    <table class="msg-box" style="width:100%"><tr><td/></tr></table>
 
-When WFA is enabled, the cluster will be quorate for the first time \
-only after all nodes have been visible at least once at the same time. 
-
-This feature has the advantage of avoiding some startup race \
-conditions, with the cost that all nodes need to be up at the \
-same time at least once before the cluster can operate. 
-
-A common startup race condition based on the above example is that as \
-soon as 5 nodes become quorate, with the other 3 still offline, the \
-remaining 3 nodes will be fenced.
-
-It is very useful when combined with Last Man Standing.
-
-This option has no effect on CMAN cluster." %>
-	<% auto_tie_desc = "\
-Enables Auto Tie Breaker (ATB) feature (default: off).
-
-The general behaviour of votequorum allows a simultaneous node failure \
-up to 50% - 1 node, assuming each node has 1 vote.
-
-When ATB is enabled, the cluster can suffer up to 50% of the nodes \
-failing at the same time, in a deterministic fashion. The cluster \
-partition, or the set of nodes that are still in contact with the \
-node that has the lowest nodeid will remain quorate. The other nodes \
-will be inquorate.
-
-This option has no effect on CMAN cluster." %>
-	<% last_man_desc = "\
-Enables Last Man Standing (LMS) feature (default: off).
-
-The general behaviour of votequorum is to set expected_votes and \
-quorum at startup (unless modified by the user at runtime, see below) \
-and use those values during the whole lifetime of the cluster.
-
-Using for example an 8 node cluster where each node has 1 vote, \
-expected_votes is set to 8 and quorum to 5. This condition allows a \
-total failure of 3 nodes. If a 4th node fails, the cluster becomes \
-inquorate and it will stop providing services.
-
-Enabling LMS allows the cluster to dynamically recalculate \
-expected_votes and quorum under specific circumstances. It is essential \
-to enable WFA when using LMS in High Availability clusters.
-
-Using the above 8 node cluster example, with LMS enabled the cluster \
-can retain quorum and continue operating by losing, in a cascade \
-fashion, up to 6 nodes with only 2 remaining active.
-
-This option has no effect on CMAN cluster." %>
-	<% last_man_window_desc = "\
-Tunes Last Man Standing Window (default: 10000 ms)
-
-The window of time between when a node (or group of nodes die) and quorum \
-is recalculated if the 'Last Man Standing' option is enabled.
-
-This option has no effect on CMAN cluster." %>
-	<% use_ipv6_desc = "\
-Enables IPv6 for cluster communication (default: off)
-
-This option has no effect on CMAN cluster." %>
-        <% token_timeout = "\
-Sets time in milliseconds until a token loss is declared after not receiving \
-a token (default: 1000 ms)" %>
-        <% token_coefficient = "\
-Sets time in milliseconds used for clusters with at least 3 nodes \
-as a coefficient for real token timeout calculation \
-(token + (number_of_nodes - 2) * token_coefficient) (default: 650 ms)
-
-This option has no effect on CMAN cluster." %>
-        <% join_timeout = "\
-Sets time in milliseconds to wait for join messages (default: 50 ms)" %>
-        <% consensus_timeout = "\
-Sets time in milliseconds to wait for consensus to be achieved before starting \
-a new round of membership configuration (default: 1200 ms)" %>
-        <% miss_count_const = "\
-Sets the maximum number of times on receipt of a token a message is checked \
-for retransmission before a retransmission occurs (default: 5)" %>
-        <% fail_recv_const = "\
-Specifies how many rotations of the token without receiving any messages when \
-messages should be received may occur before a new configuration is formed \
-(default: 2500)" %>
-        <% rrp_addr_0_1_desc = "\
-Enables Redundant Ring Protocol (RRP) (default: off)
-
-Specify ring 0 and ring 1 network address if you want to use RRP." %>
-        <% rrp_broadcast_0_1_desc = "\
-Enables broadcast communication in the ring (default: off)" %>
-        <% rrp_mcast_0_1_desc = "\
-Optionally specify ring multicast address \
-(default: 239.255.1.1 for ring 0 and 239.255.2.1 for ring 1)" %>
-        <% rrp_mcastport_0_1_desc = "\
-Optionally specify ring multicast UDP port (default: 5405)
-
-Please note the cluster uses two UDP ports, 'Multicast Port' for multicast \
-receives and 'Multicast Port' - 1 for multicast sends." %>
-        <% rrp_ttl_0_1_desc = "\
-Optionally specify ring TTL (default: 1)
-
-If you run your cluster on a routed network then the default of 1 will be too \
-small. This option provides a way to increase this up to 255. The valid range \
-is 0..255. Note that this is only valid on multicast transport types." %>
-        <% rrp_addr1_desc = "\
-Enables Redundant Ring Protocol (RRP) (default: off)
-
-Specify ring 1 address for each node if you want to use RRP." %>
-        <tr title="<%= h(transport_desc) %>">
-          <td align=right>Transport:</td>
-          <td>
-            <select name="config-transport" onchange="create_cluster_display_rrp(this.value);">
-                <option value="udpu" selected>UDPU (default)</option>
-                <option value="udp">UDP</option>
-            </select>
-          </td>
-        </tr>
-        <tr title="<%= h(encryption_desc) %>"><td align=right>Encryption:</td>
-          <td>
-            <select name="encryption">
-              <option selected="selected">(Default)</option>
-              <option value="1">On</option>
-              <option value="0">Off</option>
-            </select>
-          </td>
-        </tr>
-	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
-	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
-	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=text size=5 name="config-last_man_standing_window"> ms</td></tr>
-	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6:</td><td><input type=checkbox name="config-ipv6"></td></tr>
-        <tr title="<%= h(token_timeout) %>">
-          <td align="right">Token Timeout:</td>
-          <td><input type="text" size="5" name="config-token"> ms</td>
-        </tr>
-        <tr title="<%= h(token_coefficient) %>">
-          <td align="right">Token Timeout Coefficient:</td>
-          <td><input type="text" size="5" name="config-token_coefficient"> ms</td>
-        </tr>
-        <tr title="<%= h(join_timeout) %>">
-          <td align="right">Join Timeout:</td>
-          <td><input type="text" size="5" name="config-join"> ms</td>
-        </tr>
-        <tr title="<%= h(consensus_timeout) %>">
-          <td align="right">Consensus Timeout:</td>
-          <td><input type="text" size="5" name="config-consensus"> ms</td>
-        </tr>
-        <tr title="<%= h(miss_count_const) %>">
-          <td align="right">Missed Messages Count:</td>
-          <td><input type="text" size="5" name="config-miss_count_const"></td>
-        </tr>
-        <tr title="<%= h(fail_recv_const) %>">
-          <td align="right">Failures Count:</td>
-          <td><input type="text" size="5" name="config-fail_recv_const"></td>
-        </tr>
-      </table>
-      <div id="rrp_udp_transport" style="display: none;">
-        <br>
-        Redundant Ring Protocol settings for UDP transport:
-        <table>
-          <tr>
-              <td></td>
-              <td align="center">Ring 0</td>
-              <td align="center">Ring 1</td>
-          </tr>
-          <tr title="<%= h(rrp_addr_0_1_desc) %>">
-              <td align="right">Address:</td>
-              <td><input type="text" name="config-addr0"></td>
-              <td><input type="text" name="config-addr1"></td>
-          </tr>
-          <tr title="<%= h(rrp_broadcast_0_1_desc) %>">
-              <td align="right">Use Broadcast:</td>
-              <td><input type="checkbox" name="config-broadcast0"></td>
-              <td><input type="checkbox" name="config-broadcast1"></td>
-          </tr>
-          <tr title="<%= h(rrp_mcast_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">Multicast Address:</td>
-              <td><input type="text" name="config-mcast0"></td>
-              <td><input type="text" name="config-mcast1"></td>
-          </tr>
-          <tr title="<%= h(rrp_mcastport_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">Multicast Port:</td>
-              <td><input type="text" name="config-mcastport0"></td>
-              <td><input type="text" name="config-mcastport1"></td>
-          </tr>
-          <tr title="<%= h(rrp_ttl_0_1_desc) %>" class="transport_udp_only">
-              <td align="right">TTL:</td>
-              <td><input type="text" name="config-ttl0"></td>
-              <td><input type="text" name="config-ttl1"></td>
-          </tr>
-        </table>
-      </div>
-      <div id="rrp_udpu_transport">
-        <br>
-        Redundant Ring Protocol settings for UDPU transport:
-        <table title="<%= h(rrp_addr1_desc) %>">
-          <tr>
-            <td align=right>Node 1 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-1" type="text"></input></td>
-          </tr>
-          <tr>
-            <td align=right>Node 2 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-2" type="text"></input></td>
-          </tr>
-          <tr>
-            <td align=right>Node 3 (Ring 1):</td>
-            <td><input size="50" name="ring1-node-3" type="text"></input></td>
-          </tr>
-        </table>
-      </div>
-    </div>
   </form>
 </div>

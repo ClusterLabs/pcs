@@ -1,4 +1,5 @@
 PCS_EXEC = '/usr/sbin/pcs'
+PCS_INTERNAL_EXEC = '/usr/lib/pcs/pcs_internal'
 PCSD_EXEC_LOCATION = '/usr/lib/pcsd/'
 PCSD_VAR_LOCATION = '/var/lib/pcsd/'
 PCSD_DEFAULT_PORT = 2224

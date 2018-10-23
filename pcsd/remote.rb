@@ -29,8 +29,7 @@ def remote(params, request, auth_user)
       :cluster_status => method(:cluster_status_remote),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
-      :setup_cluster => method(:setup_cluster),
-      :create_cluster => method(:create_cluster),
+      :cluster_setup => method(:cluster_setup),
       :get_quorum_info => method(:get_quorum_info),
       :get_cib => method(:get_cib),
       :get_corosync_conf => method(:get_corosync_conf_remote),
@@ -54,13 +53,8 @@ def remote(params, request, auth_user)
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
-      # TODO rename, previously there was "node_add" for adding a node to a
-      # cluster configs locally on one node. Also update capabilities as the
-      # url is referenced in there.
-      :add_node_all => lambda { |params_, request_, auth_user_|
-        remote_add_node(params_, request_, auth_user_, true)
-      },
-      :remove_nodes => method(:remote_remove_nodes),
+      :cluster_add_nodes => method(:cluster_add_nodes),
+      :cluster_remove_nodes => method(:cluster_remove_nodes),
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -233,9 +227,10 @@ def cluster_start(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
+    cmd = [PCS, 'cluster', 'start']
+    cmd << '--all' if params[:all] == '1'
     $logger.info "Starting Daemons"
-    output, stderr, retval = run_cmd(auth_user, PCS, 'cluster', 'start')
-    $logger.debug output
+    output, stderr, retval = run_cmd(auth_user, *cmd)
     if retval != 0
       return [400, (output + stderr).join]
     else
@@ -265,6 +260,7 @@ def cluster_stop(params, request, auth_user)
       end
     end
     options << "--force" if params["force"]
+    options << '--all' if params[:all] == '1'
     $logger.info "Stopping Daemons"
     stdout, stderr, retval = run_cmd(
       auth_user, PCS, "cluster", "stop", *options
@@ -387,7 +383,7 @@ def cluster_enable(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
-    success = enable_cluster(auth_user)
+    success = enable_cluster(auth_user, params[:all])
     if not success
       return JSON.generate({"error" => "true"})
     end
@@ -404,7 +400,7 @@ def cluster_disable(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
-    success = disable_cluster(auth_user)
+    success = disable_cluster(auth_user, params[:all])
     if not success
       return JSON.generate({"error" => "true"})
     end
@@ -761,164 +757,31 @@ def remote_node_available(params, request, auth_user)
   return JSON.generate({:node_available => true})
 end
 
-def remote_add_node(params, request, auth_user)
+def cluster_add_nodes(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  return [400, "not implemented"] # TODO
-  auto_start = false
-  if params[:auto_start] and params[:auto_start] == "1"
-    auto_start = true
-  end
-
-  if params[:new_nodename] != nil
-    node = params[:new_nodename]
-    if params[:new_ring1addr] != nil
-      node += ',' + params[:new_ring1addr]
-    end
-    device_list = []
-    if params[:devices].kind_of?(Array)
-      device_list = params[:devices]
-    end
-    retval, output = add_node(
-      auth_user, node, auto_start, params[:watchdog], device_list
-    )
-  end
-
-  if retval == 0
-    return [200, JSON.generate([retval, get_corosync_conf()])]
-  end
-
-  return [400,output]
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.add_nodes"
+  )
 end
 
-def remote_remove_nodes(params, request, auth_user)
-  # TODO update for the new node remove
+def cluster_remove_nodes(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  count = 0
-  out = ""
-  node_list = []
-  options = []
-  while params["nodename-" + count.to_s]
-    node_list << params["nodename-" + count.to_s]
-    count = count + 1
-  end
-  options << "--force" if params["force"]
-
-  cur_node = get_current_node_name()
-  if i = node_list.index(cur_node)
-    node_list.push(node_list.delete_at(i))
-  end
-
-  # stop the nodes at once in order to:
-  # - prevent resources from moving pointlessly
-  # - get possible quorum loss warning
-  stop_params = node_list + options
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "cluster", "stop", *stop_params
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.remove_nodes"
   )
-  if retval != 0 and not params['force']
-    # If forced, keep going even if unable to stop all nodes (they may be dead).
-    # Add info this error is forceable if pcs did not do it (e.g. when unable
-    # to connect to some nodes).
-    message = stderr.join
-    if not message.include?(', use --force to override')
-      message += ', use --force to override'
-    end
-    return [400, message]
-  end
-
-  node_list.each {|node|
-    retval, output = remove_node(auth_user, node, true)
-    out = out + output.join("\n")
-  }
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
-    return [200,"No More Nodes"]
-  end
-  if retval != 0
-    return [400, out]
-  else
-    return [200, out]
-  end
 end
 
-def setup_cluster(params, request, auth_user)
+def cluster_setup(params, request, auth_user)
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied'
   end
-  $logger.info("Setting up cluster: " + params.inspect)
-  nodes_rrp = params[:nodes].split(';')
-  options = []
-  myoptions = JSON.parse(params[:options])
-  transport_udp = false
-  options_udp = []
-  myoptions.each { |o,v|
-    if ["wait_for_all", "last_man_standing", "auto_tie_breaker"].include?(o)
-      options << "--" + o + "=1"
-    end
-
-    options << "--" + o + "=" + v if [
-        "token", "token_coefficient", "join", "consensus", "miss_count_const",
-        "fail_recv_const", "last_man_standing_window",
-      ].include?(o)
-
-    if o == "transport" and v == "udp"
-      options << "--transport=udp"
-      transport_udp = true
-    end
-    if o == "transport" and v == "udpu"
-      options << "--transport=udpu"
-      transport_udp = false
-    end
-
-    if ["addr0", "addr1", "mcast0", "mcast1", "mcastport0", "mcastport1", "ttl0", "ttl1"].include?(o)
-      options_udp << "--" + o + "=" + v
-    end
-
-    if ["broadcast0", "broadcast1"].include?(o)
-      options_udp << "--" + o
-    end
-
-    if o == "ipv6"
-      options << "--ipv6"
-    end
-  }
-  if transport_udp
-    nodes = []
-    nodes_rrp.each { |node| nodes << node.split(',')[0] }
-  else
-    nodes = nodes_rrp
-  end
-  nodes_options = nodes + options
-  nodes_options += options_udp if transport_udp
-  if ['0', '1'].include?(params[:encryption])
-      nodes_options << "--encryption=#{params[:encryption]}"
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "cluster", "setup", "--enable", "--start", "--async",
-    "--name",  params[:clustername], *nodes_options
+  return pcs_internal_proxy(
+    auth_user, params.fetch(:data_json, ""), "cluster.setup"
   )
-  if retval != 0
-    return [
-      400,
-      (stdout + [''] + stderr).collect { |line| line.rstrip() }.join("\n")
-    ]
-  end
-  return 200
-end
-
-def create_cluster(params, request, auth_user)
-  if not allowed_for_superuser(auth_user)
-    return 403, 'Permission denied'
-  end
-  if set_corosync_conf(params, request, auth_user)
-    cluster_start(params, request, auth_user)
-  else
-    return "Failed"
-  end
 end
 
 def remote_pacemaker_node_status(params, request, auth_user)
@@ -1950,7 +1813,11 @@ def cluster_destroy(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  out, errout, retval = run_cmd(auth_user, PCS, "cluster", "destroy")
+  cmd = [PCS, "cluster", "destroy"]
+  if params[:all] == '1'
+    cmd << '--all'
+  end
+  out, errout, retval = run_cmd(auth_user, *cmd)
   if retval == 0
     return [200, "Successfully destroyed cluster"]
   else

@@ -37,7 +37,7 @@ function menu_show(item,show) {
 // and load the default item on the specified page if item is set
 function select_menu(menu, item, initial) {
   if (menu == "NODES") {
-    Pcs.set('cur_page',"nodes")
+    Pcs.set('cur_page',"nodes");
     if (item)
       Pcs.nodesController.load_node($('[nodeID='+item+']'));
     menu_show("node", true);
@@ -162,45 +162,6 @@ function create_group() {
   });
 }
 
-function add_node_dialog() {
-  var buttonOpts = [
-    {
-      text: "Add Node",
-      id: "add_node_submit_btn",
-      click: function() {
-        $("#add_node_submit_btn").button("option", "disabled", true);
-        checkAddingNode();
-      }
-    },
-    {
-      text: "Cancel",
-      click: function() {
-        $(this).dialog("close");
-      }
-    }
-  ];
-
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
-
-  // If you hit enter it triggers the first button: Add Node
-  $('#add_node').keypress(function(e) {
-    if (e.keyCode == $.ui.keyCode.ENTER && !$("#add_node_submit_btn").button("option", "disabled")) {
-        $("#add_node_submit_btn").trigger("click");
-      return false;
-    }
-  });
-
-  $('#add_node').dialog({
-    title: 'Add Node',
-    modal:true,
-    resizable: false,
-    width: 'auto',
-    buttons: buttonOpts
-  });
-}
-
 function add_sbd_device_textbox() {
   var max_count = 3;
   var device_inputs = $("#add_node_selector .add_node_sbd_device");
@@ -216,62 +177,12 @@ function add_sbd_device_textbox() {
           </a> \
         </td> \
       </tr>'
-    )
+    );
   }
 }
 
 function sbd_device_remove_textbox(obj) {
   $(obj).parents(".add_node_sbd_device").remove();
-}
-
-function checkAddingNode(){
-  var nodeName = $("#add_node").children("form").find("[name='new_nodename']").val().trim();
-  if (nodeName == "") {
-    $("#add_node_submit_btn").button("option", "disabled", false);
-    return false;
-  }
-
-  ajax_wrapper({
-    type: 'GET',
-    url: '/manage/check_auth_against_nodes',
-    data: {"node_list": [nodeName]},
-    timeout: pcs_timeout,
-    success: function (data) {
-      var mydata = jQuery.parseJSON(data);
-      if (mydata[nodeName] == "Unable to authenticate") {
-        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
-        $("#add_node_submit_btn").button("option", "disabled", false);
-      } else if (mydata[nodeName] == "Offline") {
-        alert("Unable to contact node '" + nodeName + "'");
-        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
-        $("#add_node_submit_btn").button("option", "disabled", false);
-      } else {
-        create_node($("#add_node").children("form"));
-      }
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      alert("ERROR: Unable to contact server");
-      $("#add_node_submit_btn").button("option", "disabled", false);
-    }
-  });
-}
-
-function create_node(form) {
-  var dataString = $(form).serialize();
-  ajax_wrapper({
-    type: "POST",
-    url: get_cluster_remote_url() + "add_node_to_cluster",
-    data: dataString,
-    success: function(returnValue) {
-      $("#add_node_submit_btn").button("option", "disabled", false);
-      $('#add_node').dialog('close');
-      Pcs.update();
-    },
-    error: function(error) {
-      alert(error.responseText);
-      $("#add_node_submit_btn").button("option", "disabled", false);
-    }
-  });
 }
 
 function create_resource_error_processing(error_message, form, update, stonith) {
@@ -284,7 +195,7 @@ function create_resource_error_processing(error_message, form, update, stonith) 
   else {
     message = message.replace(', use --force to override', '');
     if (confirm(message + "\n\nDo you want to force the operation?")) {
-      create_resource(form, update, stonith, true)
+      create_resource(form, update, stonith, true);
     }
   }
 }
@@ -361,14 +272,20 @@ function load_resource_form(agent_name, stonith) {
   }, stonith);
 }
 
-function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, ok_text, title, remove_id) {
-  var remove_id_list = new Array();
-  if (remove_id) {
+function verify_remove(
+  remove_func, forceable, checklist_id, dialog_id, label, ok_text, title,
+  remove_id, extraDialogOptions
+) {
+  var remove_id_list;
+
+  if (Array.isArray(remove_id)) {
+    remove_id_list = remove_id;
+  }else if (remove_id) {
     remove_id_list = [remove_id];
-  }
-  else {
+  } else {
     remove_id_list = get_checked_ids_from_nodelist(checklist_id);
   }
+
   if (remove_id_list.length < 1) {
     alert("You must select at least one " + label + " to remove.");
     return;
@@ -384,7 +301,7 @@ function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, o
         }
         $("#verify_remove_submit_btn").button("option", "disabled", true);
         if (forceable) {
-          force = $("#" + dialog_id + " :checked").length > 0
+          force = $("#" + dialog_id + " :checked").length > 0;
           remove_func(remove_id_list, force);
         }
         else {
@@ -410,12 +327,12 @@ function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, o
   });
   name_list += "</ul>";
   $("#" + dialog_id + " .name_list").html(name_list);
-  $("#" + dialog_id).dialog({
-    title: title,
-    modal: true,
-    resizable: false,
-    buttons: buttonOpts
-  });
+  dialogOptions = extraDialogOptions || {};
+  dialogOptions.title = title;
+  dialogOptions.modal = true;
+  dialogOptions.resizable = false,
+  dialogOptions.buttons = buttonOpts;
+  $("#" + dialog_id).dialog(dialogOptions);
 }
 
 function verify_remove_clusters(cluster_id) {
@@ -425,6 +342,12 @@ function verify_remove_clusters(cluster_id) {
   );
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old node remove dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function verify_remove_nodes(node_id) {
   verify_remove(
     remove_nodes, false, "node_list", "dialog_verify_remove_nodes",
@@ -454,7 +377,7 @@ function verify_remove_acl_roles(role_id) {
 }
 
 function get_checked_ids_from_nodelist(nodelist_id) {
-  var ids = new Array()
+  var ids = new Array();
   $("#" + nodelist_id + " .node_list_check :checked").each(function (index, element) {
     if($(element).parent().parent().attr("nodeID")) {
       ids.push($(element).parent().parent().attr("nodeID"));
@@ -498,7 +421,7 @@ function setStatus(item, status, message) {
   }
 
   if (typeof message !== 'undefined')
-    item.html(message)
+    item.html(message);
 }
 
 // Set the node in the node list blue or red depending on
@@ -623,9 +546,9 @@ function resource_stonith_cleanup_refresh(
   if (resource == null) {
     return;
   }
-  data = {"resource": resource}
+  data = {"resource": resource};
   if (full_refresh) {
-    data["full"] = 1
+    data["full"] = 1;
   }
   fade_in_out(action_button_id);
   ajax_wrapper({
@@ -649,7 +572,7 @@ function cleanup_resource() {
     "#resource_cleanup_link",
     "resource_cleanup",
     "cleanup"
-  )
+  );
 }
 
 function cleanup_stonith() {
@@ -658,7 +581,7 @@ function cleanup_stonith() {
     "#stonith_cleanup_link",
     "resource_cleanup",
     "cleanup"
-  )
+  );
 }
 
 function refresh_resource(refresh_supported) {
@@ -672,7 +595,7 @@ function refresh_resource(refresh_supported) {
      * (yet);
      * moreover the full refresh flag only works for refresh not for cleanup */
     refresh_supported ? true : false
-  )
+  );
 }
 
 function refresh_stonith(refresh_supported) {
@@ -686,7 +609,7 @@ function refresh_stonith(refresh_supported) {
      * (yet);
      * moreover the full refresh flag only works for refresh not for cleanup */
     refresh_supported ? true : false
-  )
+  );
 }
 
 function checkExistingNode() {
@@ -709,8 +632,14 @@ function checkExistingNode() {
   });
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function get_nodes_from_create_new_cluster_dialog() {
-  var nodes = []
+  var nodes = [];
   $("#create_new_cluster_form tr.new_node").each(function(i, e) {
     var node = $(e).find(".node").val().trim();
     if (node.length > 0) {
@@ -720,8 +649,14 @@ function get_nodes_from_create_new_cluster_dialog() {
   return nodes;
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function checkClusterNodes() {
-  var node_list = get_nodes_from_create_new_cluster_dialog()
+  var node_list = get_nodes_from_create_new_cluster_dialog();
   ajax_wrapper({
     type: 'GET',
     url: '/manage/check_auth_against_nodes',
@@ -753,18 +688,18 @@ function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
   var form = dialog.find("#auth_nodes_form");
   var nodes = {};
-  var custom_addr_port = form.find('input:checkbox[name=custom_addr_port]').prop('checked')
+  var custom_addr_port = form.find('input:checkbox[name=custom_addr_port]').prop('checked');
   form.find('#auth_nodes_list input').each(function() {
-    var input = $(this)
+    var input = $(this);
     if(input.attr('name').startsWith('pass-')) {
-      var nodename = input.attr('name').slice('pass-'.length)
+      var nodename = input.attr('name').slice('pass-'.length);
       if(!nodes[nodename]) {
         nodes[nodename] = {"password": "", "addr": "", "port": ""};
       }
       nodes[nodename]['password'] = input.val();
     }
     else if(custom_addr_port && input.attr('name').startsWith('port-')) {
-      var nodename = input.attr('name').slice('port-'.length)
+      var nodename = input.attr('name').slice('port-'.length);
       if(!nodes[nodename]) {
         nodes[nodename] = {"password": "", "addr": "", "port": ""};
       }
@@ -774,7 +709,7 @@ function auth_nodes(dialog) {
       }
     }
     else if(custom_addr_port && input.attr('name').startsWith('addr-')) {
-      var nodename = input.attr('name').slice('addr-'.length)
+      var nodename = input.attr('name').slice('addr-'.length);
       if(!nodes[nodename]) {
         nodes[nodename] = {"password": "", "addr": "", "port": ""};
       }
@@ -791,7 +726,7 @@ function auth_nodes(dialog) {
     });
   }
 
-  var nodes_for_request = {}
+  var nodes_for_request = {};
   $.each(nodes, function(node_name, node_data) {
     nodes_for_request[node_name] = {
       password: node_data['password'],
@@ -801,7 +736,7 @@ function auth_nodes(dialog) {
           port: node_data['port']
         }
       ]
-    }
+    };
   });
 
   ajax_wrapper({
@@ -1019,7 +954,7 @@ function update_existing_cluster_dialog(data) {
       if(data[node] == "Offline") {
         alert("Unable to contact node '" + node + "'");
       }
-      auth_nodes_dialog([node], function() {$("#add_existing_submit_btn").trigger("click");});
+      auth_nodes_dialog([node], function() {$("#add_existing_submit_btn").trigger("click")});
       $("#add_existing_submit_btn").button("option", "disabled", false);
       return;
     }
@@ -1033,6 +968,12 @@ function update_existing_cluster_dialog(data) {
   $("#add_existing_submit_btn").button("option", "disabled", false);
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function update_create_cluster_dialog(nodes_auth_status, version_info) {
   var node_names = [];
   for (var name in nodes_auth_status) {
@@ -1051,8 +992,8 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
   var noncman_nodes = [];
   var rhel_versions = [];
   var versions_check_ok = 1;
-  var cluster_name = $('input[name^="clustername"]').val()
-  var transport = $("#create_new_cluster select[name='config-transport']").val()
+  var cluster_name = $('input[name^="clustername"]').val();
+  var transport = $("#create_new_cluster select[name='config-transport']").val();
 
     $('#create_new_cluster input[name^="node-"]').each(function() {
       if ($(this).val() == "") {
@@ -1095,7 +1036,7 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
     });
     if (ring1_nodes.length > 0) {
       if (ring0_nodes.length != ring1_nodes.length) {
-        addr1_match = 0
+        addr1_match = 0;
       }
       else {
         for (var i = 0; i < ring0_nodes.length; i++) {
@@ -1122,7 +1063,7 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
       }
       if(versions["rhel"]) {
         if($.inArray(versions["rhel"].join("."), rhel_versions) == -1) {
-          rhel_versions.push(versions["rhel"].join("."))
+          rhel_versions.push(versions["rhel"].join("."));
         }
       }
     });
@@ -1224,59 +1165,12 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
 
 }
 
-function create_cluster_dialog() {
-  var buttonOpts = [{
-    text: "Create Cluster",
-    id: "create_cluster_submit_btn",
-    click: function() {
-      $("#create_new_cluster").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
-      $("#create_cluster_submit_btn").button("option", "disabled", true);
-      checkClusterNodes();
-    }
-  },
-  {
-    text: "Cancel",
-    id: "create_cluster_cancel_btn",
-    click: function() {
-      $(this).dialog("close");
-    }
-  }]
-
-  $("#create_new_cluster").dialog({title: 'Create Cluster',
-    modal: false, resizable: false,
-    width: 'auto',
-    buttons: buttonOpts
-  });
-}
-
-function create_cluster_add_nodes() {
-  node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
-  var ring1_node_list = $("#create_new_cluster_form tr").has(
-    "input[name^='ring1-node-']"
-  );
-  cur_num_nodes = node_list.length;
-
-  first_node = node_list.eq(0);
-  new_node = first_node.clone();
-  $("input[name=node-1]",new_node).attr("name", "node-"+(cur_num_nodes+1));
-  $("input[name=port-1]",new_node).attr("name", "port-"+(cur_num_nodes+1));
-  $("input",new_node).val("");
-  $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
-  new_node.insertAfter(node_list.last());
-
-  var ring1_first_node = ring1_node_list.eq(0);
-  var ring1_new_node = ring1_first_node.clone();
-  $("input", ring1_new_node).attr("name", "ring1-node-" + (cur_num_nodes + 1));
-  $("input", ring1_new_node).val("");
-  $("td", ring1_new_node).first().text(
-    "Node " + (cur_num_nodes+1) + " (Ring 1):"
-  );
-  ring1_new_node.insertAfter(ring1_node_list.last());
-
-  if (node_list.length == 7)
-    $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
-}
-
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function create_cluster_display_rrp(transport) {
   if(transport == 'udp') {
     $('#rrp_udp_transport').show();
@@ -1386,6 +1280,12 @@ function remove_cluster(ids) {
   });
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old node remove dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function remove_nodes(ids, force) {
   var data = {};
   for (var i=0; i<ids.length; i++) {
@@ -1487,7 +1387,7 @@ function remove_resource(ids, force) {
       }
       alert(message);
       $("#dialog_verify_remove_resources.ui-dialog-content").each(
-        function(key, item) { $(item).dialog("destroy"); }
+        function(key, item) { $(item).dialog("destroy") }
       );
       $("#dialog_verify_remove_resources input[name=force]").attr("checked", false);
       Pcs.update();
@@ -1769,7 +1669,7 @@ function add_constraint_set(parent_id, c_type, force) {
   if (data['resources'].length < 1) {
     return;
   }
-  fade_in_out($(parent_id))
+  fade_in_out($(parent_id));
 
   ajax_wrapper({
     type: "POST",
@@ -1862,7 +1762,7 @@ function remove_constraint_rule(id) {
 }
 
 function add_acl_role(form) {
-  var data = {}
+  var data = {};
   data["name"] = $(form).find("input[name='name']").val().trim();
   data["description"] = $(form).find("input[name='description']").val().trim();
   ajax_wrapper({
@@ -1895,7 +1795,7 @@ function remove_acl_roles(ids) {
     timeout: pcs_timeout*3,
     success: function(data,textStatus) {
       $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(
-        function(key, item) { $(item).dialog("destroy"); }
+        function(key, item) { $(item).dialog("destroy") }
       );
       Pcs.update();
     },
@@ -1905,7 +1805,7 @@ function remove_acl_roles(ids) {
         + ajax_simple_error(xhr, status, error)
       );
       $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(
-        function(key, item) { $(item).dialog("destroy"); }
+        function(key, item) { $(item).dialog("destroy") }
       );
     }
   });
@@ -1921,13 +1821,13 @@ function add_acl_item(parent_id, item_type) {
       data["type"] = $(parent_id + " select[name='role_type']").val();
       data["xpath_id"] = $(parent_id + " select[name='role_xpath_id']").val();
       data["query_id"] = $(parent_id + " input[name='role_query_id']").val().trim();
-      item_label = "permission"
+      item_label = "permission";
       break;
     case "user":
     case "group":
       data["item"] = item_type;
       data["usergroup"] = $(parent_id + " input[name='role_assign_user']").val().trim();
-      item_label = item_type
+      item_label = item_type;
       break;
   }
   fade_in_out($(parent_id));
@@ -1957,15 +1857,15 @@ function remove_acl_item(id,item) {
     case "perm":
       data["item"] = "permission";
       data["acl_perm_id"] = id.attr("acl_perm_id");
-      item_label = "permission"
+      item_label = "permission";
       break;
     case "group":
     case "user":
       data["item"] = "usergroup";
       data["item_type"] = item;
-      data["usergroup_id"] = id.attr("usergroup_id")
-      data["role_id"] = id.attr("role_id")
-      item_label = "user / group"
+      data["usergroup_id"] = id.attr("usergroup_id");
+      data["role_id"] = id.attr("role_id");
+      item_label = "user / group";
       break;
   }
 
@@ -2056,7 +1956,7 @@ function checkBoxToggle(cb,nodes) {
   if (nodes) {
     cbs = $('#node_list table').find(".node_list_check input[type=checkbox]");
   } else {
-    cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]")
+    cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]");
   }
   if ($(cb).prop('checked'))
     cbs.prop('checked',true).change();
@@ -2270,7 +2170,7 @@ function get_resource_agent_metadata(agent, on_success, stonith) {
         + ajax_simple_error(xhr, status, error)
       );
     }
-  })
+  });
 }
 
 function update_instance_attributes(resource_id) {
@@ -2491,7 +2391,7 @@ function resource_change_group(resource_id, form) {
 }
 
 function ajax_simple_error(xhr, status, error) {
-  var message = "(" + $.trim(error) + ")"
+  var message = "(" + $.trim(error) + ")";
   if (
     $.trim(xhr.responseText).length > 0
     &&
@@ -2532,7 +2432,7 @@ function ajax_wrapper(options) {
     else {
       error_original(xhr, status, error);
     }
-  }
+  };
   // Do not run complete function if login dialog is open.
   // Once user is logged in again, the original complete function will be run
   // in repeated ajax call run by login dialog on success.
@@ -2543,7 +2443,7 @@ function ajax_wrapper(options) {
     else {
       complete_original(xhr, status);
     }
-  }
+  };
 
   // run ajax request or put it into a queue
   if (login_dialog_opened) {
@@ -2563,7 +2463,7 @@ function login_dialog(on_success) {
       id: ok_button_id,
       click: function() {
         var me = $(this);
-        var my_dialog = $(this).dialog()
+        var my_dialog = $(this).dialog();
         my_dialog.find("#login_form_denied").hide();
         $(ok_button_selector).button("option", "disabled", true);
         $.ajax({
@@ -2651,7 +2551,7 @@ function permissions_load_all() {
     if (call_count < 1) {
       hide_loading_screen();
     }
-  }
+  };
 
   $.each(cluster_list, function(index, cluster) {
     permissions_load_cluster(cluster, callback);
@@ -2963,7 +2863,7 @@ Ember.Handlebars.helper('selector-helper', function (content, value, place_holde
   $.each(content, function(_, opt){
     line = '<option value="' + opt["value"] + '"';
     if (value == opt["value"]) {
-      line += ' selected="selected"'
+      line += ' selected="selected"';
     }
     line += ">" + Handlebars.Utils.escapeExpression(opt["name"]) + "</option>";
     out += line + "\n";
@@ -2976,9 +2876,9 @@ Ember.Handlebars.helper('bool-to-icon', function(value, options) {
   if (typeof(value) == 'undefined' || value == null) {
     out += "questionmarkdark";
   } else if (value) {
-    out += "checkdark"
+    out += "checkdark";
   } else {
-    out += "Xdark"
+    out += "Xdark";
   }
   return new Handlebars.SafeString(out + '">&nbsp;</span>');
 });
@@ -3068,7 +2968,7 @@ function enable_sbd_dialog(node_list) {
           '/>' +
         '</td>' +
       '</tr>'
-    )
+    );
   });
 }
 

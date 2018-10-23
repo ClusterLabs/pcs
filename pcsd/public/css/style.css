@@ -829,6 +829,16 @@ li.menuheader {
   margin-top: 1.5em;
 }
 
+.msg-box .error{
+  color: red;
+}
+.msg-box .warning{
+  color: #ff6600;
+}
+.msg-box .info{
+  color: green;
+}
+
 .status-error {
   color: red;
 }
@@ -853,4 +863,7 @@ table.args-table td.reg {
   height: 1.5em;
   line-height: 1.2em;
   background: black;
+}
+.no-close .ui-dialog-titlebar-close {
+  display: none;
 }

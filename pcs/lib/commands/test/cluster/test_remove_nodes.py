@@ -256,7 +256,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -269,7 +269,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -282,7 +282,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -295,7 +295,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -308,7 +308,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -321,7 +321,7 @@ class SuccessMinimal(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -752,7 +752,7 @@ class QuorumCheck(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -928,7 +928,7 @@ class FailureQuorumLoss(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -1024,7 +1024,7 @@ class FailureQuorumLoss(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -1064,7 +1064,7 @@ class FailureQuorumLoss(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -1918,7 +1918,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                skip_offline=True
+                force_flags=[report_codes.SKIP_OFFLINE_NODES],
             ),
             [
             ]
@@ -1974,7 +1974,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True
+                force_flags=[report_codes.FORCE],
             ),
             [
             ]
@@ -2036,8 +2036,7 @@ class OfflineNodes(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
-            skip_offline=True
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -2100,7 +2099,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True
+                force_flags=[report_codes.FORCE],
             ),
             [
             ]
@@ -2168,8 +2167,9 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True,
-                skip_offline=True
+                force_flags=[
+                    report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES
+                ],
             ),
             [
             ]
@@ -2252,8 +2252,7 @@ class OfflineNodes(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
-            skip_offline=True
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -2328,7 +2327,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                skip_offline=True
+                force_flags=[report_codes.SKIP_OFFLINE_NODES],
             ),
             [
             ]
@@ -2364,7 +2363,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True
+                force_flags=[report_codes.FORCE],
             ),
             [
             ]
@@ -2410,8 +2409,7 @@ class OfflineNodes(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
-            skip_offline=True
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -2446,7 +2444,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True
+                force_flags=[report_codes.FORCE],
             ),
             [
             ]
@@ -2491,8 +2489,7 @@ class OfflineNodes(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
-            skip_offline=True
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
         self.env_assist.assert_reports(
             self.expected_reports
@@ -2527,7 +2524,7 @@ class OfflineNodes(TestCase):
             lambda: cluster.remove_nodes(
                 self.env_assist.get_env(),
                 self.nodes_to_remove,
-                force_quorum_loss=True
+                force_flags=[report_codes.FORCE],
             ),
             [
             ]
@@ -2573,8 +2570,7 @@ class OfflineNodes(TestCase):
         cluster.remove_nodes(
             self.env_assist.get_env(),
             self.nodes_to_remove,
-            force_quorum_loss=True,
-            skip_offline=True
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
         self.env_assist.assert_reports(
             self.expected_reports

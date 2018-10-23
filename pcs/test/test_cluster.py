@@ -21,6 +21,7 @@ from pcs.test.tools.pcs_runner import (
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import report_codes
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
@@ -196,8 +197,7 @@ class ClusterSetup(unittest.TestCase):
             wait=False,
             start=False,
             enable=False,
-            force=False,
-            force_unresolvable=False
+            force_flags=[],
         )
         default_kwargs.update(kwargs)
         self.cluster.setup.assert_called_once_with(
@@ -497,8 +497,7 @@ class ClusterSetup(unittest.TestCase):
         self.call_cmd([node_name], {"force": True})
         self.assert_setup_called_with(
             [_node(node_name)],
-            force=True,
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
 
     def test_all_modifiers(self):
@@ -512,8 +511,7 @@ class ClusterSetup(unittest.TestCase):
             enable=True,
             start=True,
             wait="15",
-            force=True,
-            force_unresolvable=True
+            force_flags=[report_codes.FORCE],
         )
 
 
@@ -527,10 +525,8 @@ class NodeAdd(unittest.TestCase):
             wait=False,
             start=False,
             enable=False,
-            force=False,
-            force_unresolvable=False,
-            skip_offline_nodes=False,
             no_watchdog_validation=False,
+            force_flags=[],
         )
 
     def assert_called_with(self, node_list, **kwargs):
@@ -656,12 +652,13 @@ class NodeAdd(unittest.TestCase):
 
     def test_force(self):
         self.assert_modifiers(
-            dict(force=True), dict(force=True, force_unresolvable=True)
+            dict(force=True), dict(force_flags=[report_codes.FORCE])
         )
 
     def test_skip_offline(self):
         self.assert_modifiers(
-            {"skip-offline": True}, dict(skip_offline_nodes=True)
+            {"skip-offline": True},
+            dict(force_flags=[report_codes.SKIP_OFFLINE_NODES]),
         )
 
     def test_no_watchdog_validation(self):
@@ -683,9 +680,7 @@ class NodeAdd(unittest.TestCase):
                 enable=True,
                 start=True,
                 wait="15",
-                force=True,
-                force_unresolvable=True,
-                skip_offline_nodes=True,
                 no_watchdog_validation=True,
+                force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
             )
         )

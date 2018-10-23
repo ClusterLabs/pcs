@@ -334,20 +334,6 @@ def send_nodes_request_with_token(auth_user, nodes, request, post=false, data={}
   code = 0
   $logger.info("SNRWT: " + request)
 
-  # If we're removing nodes, we don't send this to one of the nodes we're
-  # removing, unless we're removing all nodes
-  if request == "/remove_nodes"
-    new_nodes = nodes.dup
-    data.each {|k,v|
-      if new_nodes.include? v
-        new_nodes.delete v
-      end
-    }
-    if new_nodes.length > 0
-      nodes = new_nodes
-    end
-  end
-
   for node in nodes
     $logger.info "SNRWT Node: #{node} Request: #{request}"
     code, out = send_request_with_token(
@@ -539,59 +525,6 @@ def is_proxy_set(env_var_hash)
     end
   }
   return false
-end
-
-def add_node(
-  auth_user, new_nodename, auto_start=true, watchdog=nil, device_list=nil
-)
-  # TODO update for the new node add
-  # TODO separate --start and --enable, fix capability node.add.enable-and-start
-  command = [PCS, "cluster", "node", "add", new_nodename]
-  if watchdog and not watchdog.strip.empty?
-    command << "--watchdog=#{watchdog.strip}"
-  end
-  if device_list
-    device_list.each { |device|
-      if device and not device.strip.empty?
-        command << "--device=#{device.strip}"
-      end
-    }
-  end
-  if auto_start
-    command << '--start'
-    command << '--enable'
-  end
-  out, stderror, retval = run_cmd(auth_user, *command)
-  $logger.info("Adding #{new_nodename} to pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes_names()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update_cluster($cluster_name, corosync_nodes)
-  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  # on version conflict just go on, config will be corrected eventually
-  # by displaying the cluster in the web UI
-  Cfgsync::save_sync_new_version(
-    sync_config, corosync_nodes, $cluster_name, true
-  )
-  return retval, out.join("\n") + stderror.join("\n")
-end
-
-def remove_node(auth_user, new_nodename)
-  # TODO update for the new node remove
-  # we check for a quorum loss warning in remote_remove_nodes
-  out, stderror, retval = run_cmd(
-    auth_user, PCS, "cluster", "node", "remove", new_nodename, "--force"
-  )
-  $logger.info("Removing #{new_nodename} from pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes_names()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update_cluster($cluster_name, corosync_nodes)
-  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  # on version conflict just go on, config will be corrected eventually
-  # by displaying the cluster in the web UI
-  Cfgsync::save_sync_new_version(
-    sync_config, corosync_nodes, $cluster_name, true
-  )
-  return retval, out + stderror
 end
 
 def get_current_node_name()
@@ -850,14 +783,18 @@ def get_acls(auth_user, cib_dom=nil)
   return acls
 end
 
-def enable_cluster(auth_user)
-  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "enable")
+def enable_cluster(auth_user, all)
+  cmd = [PCS, "cluster", "enable"]
+  cmd << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, *cmd)
   return false if retval != 0
   return true
 end
 
-def disable_cluster(auth_user)
-  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "disable")
+def disable_cluster(auth_user, all)
+  cmd = [PCS, "cluster", "disable"]
+  cmd << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, *cmd)
   return false if retval != 0
   return true
 end
@@ -1958,4 +1895,64 @@ def get_service_info(service_name)
     :running => is_service_running?(service_name),
     :version => nil,
   }
+end
+
+def get_pcs_internal_output_format(status, status_msg=nil)
+  return {
+    :status => status,
+    :status_msg => status_msg,
+    :report_list => [],
+    :data => nil,
+  }
+end
+
+def pcs_internal_proxy(auth_user, data, cmd)
+  begin
+    input_data = JSON.parse(data)
+    return JSON.generate(run_pcs_internal(auth_user, cmd, input_data))
+  rescue JSON::ParserError => e
+    $logger.error("Invalid input data format: #{e}")
+    return JSON.generate(get_pcs_internal_output_format(
+      'input_error', "Invalid input data format: #{e}"
+    ))
+  end
+end
+
+def run_pcs_internal(auth_user, cmd, data, request_timeout=nil)
+  input_data = {
+    :cmd => cmd,
+    :cmd_data => data,
+    :options => {
+      :request_timeout => request_timeout,
+    },
+  }
+  stdout, stderr, return_val = run_cmd_options(
+    auth_user,
+    {'stdin' => JSON.generate(input_data)},
+    PCS_INTERNAL
+  )
+  if return_val != 0
+    return get_pcs_internal_output_format(
+      'exception', "Command failed: #{stderr.join("\n")}"
+    )
+  end
+  begin
+    parsed_output = JSON.parse(stdout.join("\n"))
+    if (
+      parsed_output.include?('report_list') \
+      and \
+      parsed_output['report_list'].kind_of?(Array) \
+    )
+      # Remove all debug messages as they may containt sensitive info.
+      parsed_output['report_list'].delete_if { |report_item|
+        report_item["severity"] == "DEBUG"
+      }
+    end
+    return parsed_output
+  rescue JSON::ParserError => e
+    $logger.error("Invalid output data format of command '#{cmd}': #{e}")
+    return get_pcs_internal_output_format(
+      'exception', "Invalid data format #{e}"
+    )
+  end
 end

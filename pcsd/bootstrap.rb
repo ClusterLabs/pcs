@@ -31,6 +31,15 @@ def get_pcs_path()
   end
 end
 
+def get_pcs_internal_path()
+  pcsd_path = get_pcsd_path().to_s
+  if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
+    return PCS_INTERNAL_EXEC
+  else
+    return pcsd_path + '/../pcs/pcs_internal'
+  end
+end
+
 PCS_VERSION = '0.10.0'
 # unique instance signature, allows detection of dameon restarts
 COROSYNC = COROSYNC_BINARIES + "corosync"

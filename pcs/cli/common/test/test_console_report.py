@@ -2662,8 +2662,8 @@ class HostAlreadyInClusterConfig(NameBuildTest):
     code = codes.HOST_ALREADY_IN_CLUSTER_CONFIG
     def test_success(self):
         self.assert_message_from_info(
-            "host: Cluster configuration files found. Is the host already in "
-                "a cluster?"
+            "host: Cluster configuration files found, the host seems to be in "
+                "a cluster already"
             ,
             {
                 "host_name": "host",
@@ -2677,7 +2677,7 @@ class HostAlreadyInClusterServices(NameBuildTest):
         self.assert_message_from_info(
             (
                 "node1: Running cluster services: 'service1', 'service2', "
-                "'service3'. Is the host already in a cluster?"
+                "'service3', the host seems to be in a cluster already"
             ),
             {
                 "service_list": ["service1", "service3", "service2"],
@@ -2687,8 +2687,8 @@ class HostAlreadyInClusterServices(NameBuildTest):
 
     def test_single_service(self):
         self.assert_message_from_info(
-            "node1: Running cluster services: 'service'. Is the host already "
-                "in a cluster?"
+            "node1: Running cluster services: 'service', the host seems to be "
+                "in a cluster already"
             ,
             {
                 "service_list": ["service"],

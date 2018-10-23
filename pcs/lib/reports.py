@@ -2716,7 +2716,6 @@ def watchdog_not_found(node, watchdog):
             "node": node,
             "watchdog": watchdog
         },
-        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
     )
 
 
@@ -3221,6 +3220,12 @@ def service_not_installed(
 def host_already_in_cluster_config(
     host_name, severity=ReportItemSeverity.ERROR, forceable=None
 ):
+    """
+    A host, which is being added to a cluster, already has cluster configs
+    string host_name -- a name of the host which is in a cluster already
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
+    """
     return ReportItem(
         report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
         severity,
@@ -3233,6 +3238,13 @@ def host_already_in_cluster_config(
 def host_already_in_cluster_services(
     host_name, service_list, severity=ReportItemSeverity.ERROR, forceable=None
 ):
+    """
+    A host, which is being added to a cluster, already runs cluster daemons
+    string host_name -- a name of the host which is in a cluster already
+    iterable service_list -- list of cluster daemons running on the host
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
+    """
     return ReportItem(
         report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
         severity,
@@ -3316,6 +3328,9 @@ def pcsd_ssl_cert_and_key_set_success(node):
     )
 
 def cluster_will_be_destroyed():
+    """
+    If the user continues with force, cluster will be destroyed on some hosts
+    """
     return ReportItem.error(
         report_codes.CLUSTER_WILL_BE_DESTROYED,
         forceable=report_codes.FORCE_ALREADY_IN_CLUSTER,
@@ -3485,7 +3500,6 @@ def sbd_watchdog_not_supported(node, watchdog):
             node=node,
             watchdog=watchdog,
         ),
-        forceable=report_codes.SKIP_WATCHDOG_VALIDATION,
     )
 
 

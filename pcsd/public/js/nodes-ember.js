@@ -77,16 +77,16 @@ Pcs = Ember.Application.createWithMixins({
     );
   }.property("available_features", "pcsd_capabilities"),
   is_supported_resource_refresh_one_resource: function() {
-    return this.get("pcsd_capabilities").indexOf("pcmk.resource.refresh.one-resource") != -1
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.refresh.one-resource") != -1;
   }.property("pcsd_capabilities"),
   is_supported_resource_create_promotable: function() {
-    return this.get("pcsd_capabilities").indexOf("pcmk.resource.create.promotable") != -1
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.create.promotable") != -1;
   }.property("pcsd_capabilities"),
   is_supported_resource_promotable: function() {
-    return this.get("pcsd_capabilities").indexOf("pcmk.resource.promotable") != -1
+    return this.get("pcsd_capabilities").indexOf("pcmk.resource.promotable") != -1;
   }.property("pcsd_capabilities"),
   pcmk_constraints_no_autocorrect: function() {
-    return this.get("pcsd_capabilities").indexOf("pcmk.constraint.no-autocorrect") != -1
+    return this.get("pcsd_capabilities").indexOf("pcmk.constraint.no-autocorrect") != -1;
   }.property("pcsd_capabilities"),
   is_sbd_running: false,
   is_sbd_enabled: false,
@@ -278,7 +278,7 @@ Pcs = Ember.Application.createWithMixins({
             location.reload();
           }
         } catch(e) {
-          console.log("Error: Unable to parse json for cluster_status")
+          console.log("Error: Unable to parse json for cluster_status");
         }
       },
       complete: function() {
@@ -450,10 +450,10 @@ Pcs.ValueSelectorComponent = Ember.Component.extend({
       content = this.get('content'),
       prompt = this.get('show_prompt');
 
-    if (!content || !content.get('length')) { return; }
-    if (prompt && selectedIndex === 0) { this.set('value', ""); return; }
+    if (!content || !content.get('length')) { return }
+    if (prompt && selectedIndex === 0) { this.set('value', ""); return }
 
-    if (prompt) { selectedIndex -= 1; }
+    if (prompt) { selectedIndex -= 1 }
     this.set('value', content.objectAt(selectedIndex)['value']);
   },
   init: function() {
@@ -1224,7 +1224,7 @@ Pcs.MultiInstanceObj = Pcs.ResourceObj.extend({
 Pcs.CloneObj = Pcs.MultiInstanceObj.extend({
   promotable: false,
   resource_type: function() { // this property is just for displaying resource type in GUI
-    return this.get("promotable") ? "Promotable Clone" : "Clone"
+    return this.get("promotable") ? "Promotable Clone" : "Clone";
   }.property("promotable")
 });
 
@@ -1567,7 +1567,7 @@ Pcs.Clusternode = Ember.Object.extend({
   cur_node: false,
   checked: false,
   resources_running: [],
-  url: function() { return "window.location='/nodes/" + this.get("name")+"'"
+  url: function() { return "window.location='/nodes/" + this.get("name")+"'";
   }.property(),
   trclass: function(){
     if (this.cur_node == true)
@@ -1575,21 +1575,21 @@ Pcs.Clusternode = Ember.Object.extend({
   }.property("cur_node"),
   onmouseover: function(){
     if (this.cur_node == true)
-      return ""
+      return "";
     else
-      return "hover_over(this);"
+      return "hover_over(this);";
   }.property("cur_node"),
   onmouseout: function(){
     if (this.cur_node == true)
-      return ""
+      return "";
     else
-      return "hover_out(this);"
+      return "hover_out(this);";
   }.property("cur_node"),
   showArrow: function(){
     if (this.cur_node != true)
-      return "display:none;"
+      return "display:none;";
     else
-      return ""
+      return "";
   }.property("cur_node"),
   node_name_style: function() {
     if (this.up && !this.get('pacemaker_maintenance')) {
@@ -1715,10 +1715,10 @@ Pcs.Aclrole = Ember.Object.extend({
     return this.cur_role ? "node_selected" : "";
   }.property("cur_role"),
   onmouseover: function() {
-    return this.cur_role ? "" : "hover_over(this);"
+    return this.cur_role ? "" : "hover_over(this);";
   }.property("cur_role"),
   onmouseout: function() {
-    return this.cur_role ? "" : "hover_out(this);"
+    return this.cur_role ? "" : "hover_out(this);";
   }.property("cur_role"),
   showArrow: function(){
     return this.cur_role ? "" : "display:none";
@@ -1727,8 +1727,8 @@ Pcs.Aclrole = Ember.Object.extend({
 
 Pcs.Cluster = Ember.Object.extend({
   name: null,
-  url_link: function(){return get_cluster_remote_url(this.name) + "main";}.property("name"),
-  input_name: function(){return "clusterid-" + this.name;}.property("name"),
+  url_link: function(){return get_cluster_remote_url(this.name) + "main"}.property("name"),
+  input_name: function(){return "clusterid-" + this.name}.property("name"),
   div_id: function(){return "cluster_info_" + this.name}.property("name"),
   status: "unknown",
   status_unknown: function() {
@@ -1749,11 +1749,11 @@ Pcs.Cluster = Ember.Object.extend({
   }.property("status"),
   quorum_show: function() {
     if (this.get('status') == "unknown") {
-      return "<span style='color:orange'>(quorate unknown)</span>"
+      return "<span style='color:orange'>(quorate unknown)</span>";
     } else if (!this.get('quorate')) {
-      return "<span style='color: red'>(doesn't have quorum)</span>"
+      return "<span style='color: red'>(doesn't have quorum)</span>";
     } else {
-      return ""
+      return "";
     }
   }.property("status", "quorate"),
   nodes: [],
@@ -1764,6 +1764,7 @@ Pcs.Cluster = Ember.Object.extend({
   fence_failed: 0,
   error_list: [],
   warning_list: [],
+  pcsd_capabilities: [],
   need_reauth: false,
   quorate: false,
 
@@ -1784,7 +1785,11 @@ Pcs.Cluster = Ember.Object.extend({
   status_sort: function(a,b) {
     if (a.get("status_val") == b.get("status_val"))
       return ((a.status == b.status) ? a.get('name').localeCompare(b.get('name')) : ((a.status > b.status) ? 1 : -1));
-    return status_comparator(a.status, b.status)
+    return status_comparator(a.status, b.status);
+  },
+
+  isCapable: function(capabilityCode){
+    return this.get("pcsd_capabilities").indexOf(capabilityCode) != -1;
   },
 
   add_resources: function(data) {
@@ -1933,6 +1938,7 @@ Pcs.clusterController = Ember.Object.create({
         cluster = Pcs.Cluster.create({
           name: value["cluster_name"],
           status: value["status"],
+          pcsd_capabilities: value["pcsd_capabilities"] || [],
           quorate: value["quorate"],
           error_list: value["error_list"],
           warning_list: value["warning_list"]
@@ -2298,7 +2304,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       if (data["constraints"] && data["constraints"]["rsc_location"]) {
         $.each(data["constraints"]["rsc_location"], function(key, constraint) {
           if (constraint["node"] == node.name)
-            lc_on_nodes[node.name].push(constraint)
+            lc_on_nodes[node.name].push(constraint);
         });
       }
     });
@@ -2353,9 +2359,9 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       }
 
       if (node_obj["status"] == 'unknown') {
-        pcsd_daemon = false
+        pcsd_daemon = false;
       } else {
-        pcsd_daemon = true
+        pcsd_daemon = true;
       }
 
       if (node_obj["notauthorized"] == "true" || node_obj["notoken"] == true) {
@@ -2496,7 +2502,7 @@ Pcs.set('updater', Pcs.Updater.create({
 }));
 
 function constraint_extend(){
-  var new_object = {}
+  var new_object = {};
   for(var i in arguments){
     var extension = arguments[i];
     Object.keys(extension).forEach(function(key){
@@ -2507,11 +2513,11 @@ function constraint_extend(){
 }
 
 function constraint_set_create_resource_keyed_map(constraint){
-  groups = {}
+  groups = {};
   constraint.sets.forEach(function(resource_set){
     resource_set.resources.forEach(function(resource_id){
-      groups[resource_id] = constraint
-    })
+      groups[resource_id] = constraint;
+    });
   });
   return groups;
 }
@@ -2530,7 +2536,7 @@ function constraint_order_create_resource_keyed_map(constraint){
 }
 
 function constraint_colocation_create_resource_keyed_map(constraint){
-  var together = {}
+  var together = {};
   if(constraint.score == "INFINITY" || constraint.score >= 0){
     together.together = "Together";
   }
@@ -2576,7 +2582,7 @@ function constraint_ticket_distribute_to_resource(constraint){
     distribution methods. If attribute undefined, constraint is not distributed
 */
 function constraint_resort_part(constraint_list, group_distributors){
-  var constraint_groups = {with_sets: {}, plain: {}}
+  var constraint_groups = {with_sets: {}, plain: {}};
 
   if( ! constraint_list){
     return constraint_groups;

@@ -1207,7 +1207,6 @@ class AddNodeFull(TestCase):
                     report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node=node,
                     watchdog=_get_watchdog(node),
-                    force_code=report_codes.SKIP_WATCHDOG_VALIDATION,
                 ) for node in self.new_nodes
             ]
         )
@@ -2118,7 +2117,7 @@ class FailureFilesDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(
@@ -2509,7 +2508,7 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force=True
+            force_flags=[report_codes.FORCE],
         )
 
         self.env_assist.assert_reports(self.expected_reports + expected_reports)

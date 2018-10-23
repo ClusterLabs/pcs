@@ -23,6 +23,14 @@ use Rack::CommonLogger
 
 set :app_file, __FILE__
 
+def __msg_cluster_name_already_used(cluster_name)
+  return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
+end
+
+def __msg_node_name_already_used(node_name, cluster_name)
+  return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
+end
+
 def getAuthUser()
   return {
     :username => $tornado_username,
@@ -51,6 +59,7 @@ end
 
 configure do
   PCS = get_pcs_path()
+  PCS_INTERNAL = get_pcs_internal_path()
   $logger = configure_logger(StringIO.new())
   $logger.formatter = proc {|severity, datetime, progname, msg|
     # rushing a raw logging info into the global
@@ -321,9 +330,8 @@ post '/manage/existingcluster' do
  configured.  You must create a cluster using this node before adding it to pcsd."
     end
 
-    if pcs_config.is_cluster_name_in_use(status["cluster_name"])
-      return 400, "The cluster name, '#{status['cluster_name']}' has
-already been added to pcsd.  You may not add two clusters with the same name into pcsd."
+    if pcs_config.is_cluster_name_in_use(status['cluster_name'])
+      return 400, __msg_cluster_name_already_used(status['cluster_name'])
     end
 
     # auth begin
@@ -355,111 +363,114 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 end
 
-post '/manage/newcluster' do
+### urls related to creating a new cluster - begin
+#
+# Creating a new cluster consists of several steps which are directed from js.
+# Each url provides an action. The actions together orchestrated by js achieve
+# creating a new cluster including various checks, the cluster setup itself and
+# adding the new cluster into the gui.
+
+# use case:
+# - js is already authenticated to all future cluster nodes
+# - js calls this url to send its tokens to a future cluster node
+# - later, js will instruct that node to setup the cluster
+# - the node will distribute the tokens in the cluster
+post '/manage/send-known-hosts-to-node' do
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)
-    return 400, 'Permission denied.'
+    return 403, 'Permission denied.'
   end
+  return pcs_compatibility_layer_known_hosts_add(
+    auth_user, false, params[:target_node], params[:node_names]
+  )
+end
 
-  warning_messages = []
+# use case:
+# - js asks us if specified cluster name and/or node names are available
+get '/manage/can-add-cluster-or-nodes' do
+  # This is currently used form cluster setup and node add, both of which
+  # require hacluster user anyway. If needed to be used anywhere else, consider
+  # if hacluster should be required.
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
 
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  @manage = true
-  @cluster_name = params[:clustername]
-  @nodes = []
-  nodes_with_indexes = []
-  @nodes_rrp = []
-  options = {}
-  params.each {|k,v|
-    if k.start_with?("node-") and v != ""
-      @nodes << v
-      nodes_with_indexes << [k[5..-1].to_i, v]
-      if params.has_key?("ring1-" + k) and params["ring1-" + k] != ""
-        @nodes_rrp << v + "," + params["ring1-" + k]
-      else
-        @nodes_rrp << v
-      end
+  errors = []
+
+  if params.include?(:cluster)
+    if pcs_config.is_cluster_name_in_use(params[:cluster])
+      errors << __msg_cluster_name_already_used(params[:cluster])
     end
-    if k.start_with?("config-") and v != ""
-      options[k.sub("config-","")] = v
-    end
-  }
-  if pcs_config.is_cluster_name_in_use(@cluster_name)
-    return 400, "The cluster name, '#{@cluster_name}' has already been added to pcsd.  You may not add two clusters with the same name into pcsd."
   end
 
-  @nodes.each {|n|
-    if pcs_config.is_node_in_use(n)
-      return 400, "The node, '#{n}' is already configured in pcsd.  You may not add a node to two different clusters in pcsd."
-    end
-  }
+  if params.include?(:node_names)
+    params[:node_names].each { |node_name|
+      cluster_name = pcs_config.get_nodes_cluster(node_name)
+      if cluster_name
+        errors << __msg_node_name_already_used(node_name, cluster_name)
+      end
+    }
+  end
 
-  # First we need to authenticate future cluster nodes to each other. We use
-  # a dirty hack to achieve that. Since the GUI is already authorized (it had
-  # to check if the nodes can create a cluster) we will send those GUI tokens
-  # to the nodes.
-  known_hosts = get_known_hosts().select { |name, obj|
-    @nodes.include?(name)
-  }
-  @nodes.each { |future_node|
-    retval = pcs_compatibility_layer_known_hosts_add(
-      auth_user, false, future_node, known_hosts
-    )
-    if retval == 'not_supported'
-      warning_messages << "Unable to do correct authentication of cluster on node '#{future_node}', because it is running an old version of pcs/pcsd."
-      break
-    elsif retval == 'error'
-      return 400, "Unable to authenticate all nodes on node '#{future_node}'."
-    end
-  }
+  unless errors.empty?
+    return 400, errors.join("\n")
+  end
+  return 200, ""
+end
 
-  # the first node from the form is the source of config files
-  node_to_send_to = nodes_with_indexes.sort[0][1]
-  $logger.info(
-    "Sending setup cluster request for: #{@cluster_name} to: #{node_to_send_to}"
-  )
-  code,out = send_request_with_token(
+# use case:
+# - js instructs a node from the future cluster to setup the cluster
+post '/manage/cluster-setup' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  code, out = send_request_with_token(
     auth_user,
-    node_to_send_to,
-    'setup_cluster',
+    params[:target_node],
+    'cluster_setup',
     true,
     {
-      :clustername => @cluster_name,
-      :nodes => @nodes_rrp.join(';'),
-      :options => options.to_json,
-      :encryption => params[:encryption],
+      :data_json => params[:setup_data],
     },
     true,
     nil,
     60
   )
-
-  if code == 200
-    pushed = false
-    2.times {
-      # Add the new cluster to config and publish the config.
-      # If this host is a node of the cluster, some other node may send its
-      # own PcsdSettings.  To handle it we just need to reload the config, as
-      # we are waiting for the request to finish, so no locking is needed.
-      # If we are in a different cluster we just try twice to update the
-      # config, dealing with any updates in between.
-      pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-      pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-      sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-      pushed, _ = Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes_names(), $cluster_name, true
-      )
-      break if pushed
-    }
-    if not pushed
-      return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
-    end
-  else
-    return 400, "Unable to create new cluster. If cluster already exists on one or more of the nodes run 'pcs cluster destroy' on all nodes to remove current cluster configuration.\n\n#{node_to_send_to}: #{out}"
-  end
-
-  return warning_messages.join("\n\n")
+  return [code, out]
 end
+
+# use case:
+# - js instructs us to add the just created cluster to our list of clusters
+post '/manage/remember-cluster' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  pushed = false
+  2.times {
+    # Add the new cluster to our config and publish the config.
+    # If this host is a node of the new cluster, another node may send its own
+    # PcsdSettings. To handle it we just need to reload the config, as we are
+    # waiting for the request to finish, so no locking is needed.
+    # If we are in a different cluster we just try twice to update the config,
+    # dealing with any updates in between.
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+    pcs_config.clusters << Cluster.new(params[:cluster_name], params[:nodes])
+    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+    pushed, _ = Cfgsync::save_sync_new_version(
+      sync_config, get_corosync_nodes_names(), $cluster_name, true
+    )
+    break if pushed
+  }
+  if not pushed
+    return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration has been updated. Please add the cluster manually if appropriate."
+  end
+end
+
+### urls related to creating a new cluster - end
 
 post '/manage/removecluster' do
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
@@ -497,6 +508,10 @@ get '/manage/check_auth_against_nodes' do
   return JSON.generate(node_results)
 end
 
+# TODO Remove - dead code
+# This function was called from the old cluster setup dialog used in pcs-0.9 for
+# CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+# overhaul is done.
 get '/manage/get_nodes_sw_versions' do
   auth_user = getAuthUser()
   final_response = {}
@@ -1019,31 +1034,32 @@ post '/managec/:cluster/fix_auth_of_cluster' do
     return [400, "cluster name not defined"]
   end
 
-  nodes = get_cluster_nodes(clustername)
-  known_hosts = get_known_hosts().select { |name, obj|
-    nodes.include?(name)
-  }
   retval = pcs_compatibility_layer_known_hosts_add(
-    PCSAuth.getSuperuserAuth(), true, clustername, known_hosts
+    PCSAuth.getSuperuserAuth(), true, clustername, get_cluster_nodes(clustername)
   )
   if retval == 'not_supported'
-    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
+    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs host auth' command to authenticate the nodes."]
   elsif retval == 'error'
     return [400, "Authentication failed."]
   end
   return [200, "Auhentication of nodes in cluster should be fixed."]
 end
 
+post '/managec/:cluster/send-known-hosts' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  return pcs_compatibility_layer_known_hosts_add(
+    auth_user, true, params[:cluster], params[:node_names]
+  )
+end
+
+# This may be useful for adding node to pcs-0.9.x running cluster
 post '/managec/:cluster/add_node_to_cluster' do
   auth_user = getAuthUser()
   clustername = params[:cluster]
   new_node = params["new_nodename"]
-
-  if clustername == $cluster_name
-    if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-      return 403, 'Permission denied'
-    end
-  end
 
   known_hosts = get_known_hosts()
   if not known_hosts.include? new_node
@@ -1053,10 +1069,9 @@ post '/managec/:cluster/add_node_to_cluster' do
   # Save the new node token on all nodes in a cluster the new node is beeing
   # added to. Send the token to one node and let the cluster nodes synchronize
   # it by themselves.
-  new_node_known_hosts = {new_node => known_hosts[new_node]}
   retval = pcs_compatibility_layer_known_hosts_add(
     # new node doesn't have config with permissions yet
-    PCSAuth.getSuperuserAuth(), true, clustername, new_node_known_hosts
+    PCSAuth.getSuperuserAuth(), true, clustername, [new_node]
   )
   # If the cluster runs an old pcsd which doesn't support adding known hosts,
   # ignore 404 in order to not prevent the node to be added.
@@ -1078,8 +1093,11 @@ post '/managec/:cluster/add_node_to_cluster' do
 end
 
 def pcs_compatibility_layer_known_hosts_add(
-  auth_user, is_cluster_request, target, known_hosts
+  auth_user, is_cluster_request, target, host_list
 )
+  known_hosts = get_known_hosts().select { |name, obj|
+    host_list.include?(name)
+  }
   # try the new endpoint provided by pcs-0.10
   known_hosts_request_data = {}
   known_hosts.each { |host_name, host_obj|

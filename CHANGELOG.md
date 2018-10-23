@@ -129,6 +129,8 @@
   - It is now possible to remove more than one node at once.
   - Removing a cluster node no longer leaves the node in the CIB and therefore
     cluster status even if the removal is run on the node which is being removed
+- Web UI has been updated following changes in authentication and support for
+  Corosync 3.x ([rhbz#1158816], [rhbz#1183103], [rhbz#1549535])
 - Node names are fully supported now and are no longer coupled with node
   addresses. It is possible to set up a cluster where Corosync communicates
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])

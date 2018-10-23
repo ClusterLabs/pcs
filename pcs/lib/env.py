@@ -21,7 +21,6 @@ from pcs.lib.corosync.live import (
 from pcs.lib.external import (
     is_service_running,
     CommandRunner,
-    NodeCommunicator,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.node_communication import (
@@ -374,17 +373,6 @@ class LibraryEnvironment(object):
             for host_name in host_name_list
             if host_name in known_hosts
         ]
-
-    # deprecated, use communicator_factory or get_node_communicator()
-    def node_communicator(self):
-        return NodeCommunicator(
-            self.logger,
-            self.report_processor,
-            self.__get_auth_tokens(),
-            self.user_login,
-            self.user_groups,
-            self._request_timeout
-        )
 
     def __get_known_hosts(self):
         if self._known_hosts is None:

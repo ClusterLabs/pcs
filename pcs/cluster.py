@@ -27,25 +27,37 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
 import pcs.cli.cluster.command as cluster_command
-from pcs.common.node_communicator import HostNotFound
+from pcs.common import report_codes
+from pcs.common.node_communicator import (
+    HostNotFound,
+    Request,
+    RequestData,
+)
+from pcs.common.reports import SimpleReportProcessor
 from pcs.common.tools import Version
-from pcs.lib import sbd as lib_sbd
+from pcs.lib import (
+    sbd as lib_sbd,
+    reports,
+)
 from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
-from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.communication.tools import (
+    run_and_raise,
+    run as run_com_cmd,
+    RunRemotelyBase,
+)
 from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
 from pcs.cli.common.console_report import error, warn
-from pcs.lib.errors import LibraryError
-from pcs.lib.external import (
-    disable_service,
-    NodeCommandUnsuccessfulException,
-    NodeCommunicationException,
-    node_communicator_exception_to_report_item,
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItem,
+    ReportItemSeverity,
 )
+from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.env_tools import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -903,46 +915,115 @@ def get_cib(dummy_lib, argv, modifiers):
         except IOError as e:
             utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
 
+
+class RemoteAddNodes(RunRemotelyBase):
+    def __init__(self, report_processor, target, data):
+        super().__init__(report_processor)
+        self._target = target
+        self._data = data
+        self._success = False
+
+    def get_initial_request_list(self):
+        return [
+            Request(
+                self._target,
+                RequestData(
+                    "remote/cluster_add_nodes",
+                    [("data_json", json.dumps(self._data))],
+                )
+            )
+        ]
+
+    def _process_response(self, response):
+        node_label = response.request.target.label
+        report = self._get_response_report(response)
+        if report is not None:
+            self._report(report)
+            return
+
+        try:
+            output = json.loads(response.data)
+            status = output["status"]
+            for report_dict in output["report_list"]:
+                self._report(ReportItem.from_dict(report_dict))
+            if status == "success":
+                self._success = True
+            elif status != "error":
+                print("Error: {}".format(output["status_msg"]))
+
+        except (KeyError, json.JSONDecodeError):
+            self._report(
+                reports.invalid_response_format(
+                    node_label, severity=ReportItemSeverity.WARNING
+                )
+            )
+
+    def on_complete(self):
+        return self._success
+
+
 def node_add_outside_cluster(lib, argv, modifiers):
     """
-    Options: TODO after overhaul of this command
+    Options:
+      * --wait - wait until new node will start up, effective only when --start
+        is specified
+      * --start - start new node
+      * --enable - enable new node
+      * --force - treat validation issues and not resolvable addresses as
+        warnings instead of errors
+      * --skip-offline - skip unreachable nodes
+      * --no-watchdog-validation - do not validatate watchdogs
+      * --request-timeout - HTTP request timeout
     """
-    #pylint: disable=unreachable
-    modifiers.ensure_only_supported()
-    raise CmdLineInputError("not implemented") # TODO
-    if len(argv) != 2:
+    modifiers.ensure_only_supported(
+        "--wait", "--start", "--enable", "--force", "--skip-offline",
+        "--no-watchdog-validation", "--request-timeout",
+    )
+    if len(argv) < 2:
         raise CmdLineInputError(
-            "Usage: pcs cluster node add-outside <node[,node-altaddr]> <cluster node>"
+            "Usage: pcs cluster node add-outside <cluster node> <node name> "
+            "[addr=<node address>]... [watchdog=<watchdog path>] "
+            "[device=<SBD device path>]... [--start [--wait[=<n>]]] [--enable] "
+            "[--no-watchdog-validation]"
         )
 
-    if len(modifiers["watchdog"]) > 1:
-        raise CmdLineInputError("Multiple watchdogs defined")
+    cluster_node, *argv = argv
+    node_dict = _parse_add_node(argv)
 
-    node_ring0, node_ring1 = utils.parse_multiring_node(argv[0])
-    cluster_node = argv[1]
-    data = [
-        ("new_nodename", node_ring0),
-    ]
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+    cmd_data = dict(
+        nodes=[node_dict],
+        wait=modifiers.get("--wait"),
+        start=modifiers.get("--start"),
+        enable=modifiers.get("--enable"),
+        no_watchdog_validation=modifiers.get("--no-watchdog-validation"),
+        force_flags=force_flags,
+    )
 
-    if node_ring1:
-        data.append(("new_ring1addr", node_ring1))
-    if modifiers["watchdog"]:
-        data.append(("watchdog", modifiers["watchdog"][0]))
-    if modifiers["device"]:
-        # way to send data in array
-        data += [("devices[]", device) for device in modifiers["device"]]
+    lib_env = utils.get_lib_env()
+    report_processor = SimpleReportProcessor(lib_env.report_processor)
+    target_factory = lib_env.get_node_target_factory()
+    report_list, target_list = target_factory.get_target_list_with_reports(
+        [cluster_node], skip_non_existing=False, allow_skip=False,
+    )
+    report_processor.report_list(report_list)
+    if report_processor.has_errors:
+        raise LibraryError()
 
-    communicator = utils.get_lib_env().node_communicator()
-    try:
-        communicator.call_host(
-            cluster_node,
-            "remote/add_node_all",
-            communicator.format_data_dict(data),
-        )
-    except NodeCommandUnsuccessfulException as e:
-        print(e.reason)
-    except NodeCommunicationException as e:
-        process_library_reports([node_communicator_exception_to_report_item(e)])
+    com_cmd = RemoteAddNodes(
+        report_processor,
+        target_list[0],
+        cmd_data,
+    )
+    was_successfull = run_com_cmd(lib_env.get_node_communicator(), com_cmd)
+
+    if not was_successfull:
+        raise LibraryError()
+    return
 
 def node_remove(lib, argv, modifiers):
     """
@@ -956,11 +1037,14 @@ def node_remove(lib, argv, modifiers):
     )
     if not argv:
         raise CmdLineInputError()
-    lib.cluster.remove_nodes(
-        argv,
-        force_quorum_loss=modifiers.get("--force"),
-        skip_offline=modifiers.get("--skip-offline"),
-    )
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    lib.cluster.remove_nodes(argv, force_flags=force_flags)
 
 def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
     """
@@ -1410,6 +1494,10 @@ def cluster_setup(lib, argv, modifiers):
             parsed_args[TRANSPORT_KEYWORD]
         )
 
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+
     lib.cluster.setup(
         cluster_name,
         nodes,
@@ -1425,9 +1513,23 @@ def cluster_setup(lib, argv, modifiers):
         wait=modifiers.get("--wait"),
         start=modifiers.get("--start"),
         enable=modifiers.get("--enable"),
-        force=modifiers.get("--force"),
-        force_unresolvable=modifiers.get("--force"),
+        force_flags=force_flags,
     )
+
+def _parse_add_node(argv):
+    DEVICE_KEYWORD = "device"
+    WATCHDOG_KEYWORD = "watchdog"
+    hostname, *argv = argv
+    node_dict = _parse_node_options(
+        hostname,
+        argv,
+        additional_options={DEVICE_KEYWORD, WATCHDOG_KEYWORD},
+        additional_repeatable_options={DEVICE_KEYWORD}
+    )
+    if DEVICE_KEYWORD in node_dict:
+        node_dict[f"{DEVICE_KEYWORD}s"] = node_dict[DEVICE_KEYWORD]
+        del node_dict[DEVICE_KEYWORD]
+    return node_dict
 
 def node_add(lib, argv, modifiers):
     """
@@ -1449,27 +1551,21 @@ def node_add(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
 
-    DEVICE_KEYWORD = "device"
-    WATCHDOG_KEYWORD = "watchdog"
-    hostname, *argv = argv
-    node_dict = _parse_node_options(
-        hostname,
-        argv,
-        additional_options={DEVICE_KEYWORD, WATCHDOG_KEYWORD},
-        additional_repeatable_options={DEVICE_KEYWORD}
-    )
-    if DEVICE_KEYWORD in node_dict:
-        node_dict[f"{DEVICE_KEYWORD}s"] = node_dict[DEVICE_KEYWORD]
-        del node_dict[DEVICE_KEYWORD]
+    node_dict = _parse_add_node(argv)
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
     lib.cluster.add_nodes(
         nodes=[node_dict],
         wait=modifiers.get("--wait"),
         start=modifiers.get("--start"),
         enable=modifiers.get("--enable"),
-        force=modifiers.get("--force"),
-        force_unresolvable=modifiers.get("--force"),
-        skip_offline_nodes=modifiers.get("--skip-offline"),
         no_watchdog_validation=modifiers.get("--no-watchdog-validation"),
+        force_flags=force_flags,
     )
 
 def remove_nodes_from_cib(lib, argv, modifiers):

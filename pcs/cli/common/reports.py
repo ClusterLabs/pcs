@@ -119,8 +119,6 @@ class LibraryReportProcessorToConsole(SimpleReportProcessorInterface):
 def _prepare_force_text(report_item):
     force_text_map = {
         codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
-        codes.SKIP_WATCHDOG_VALIDATION:
-            ", use --no-watchdog-validation to skip watchdog validations",
     }
     if report_item.forceable:
         return force_text_map.get(

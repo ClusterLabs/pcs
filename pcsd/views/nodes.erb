@@ -9,8 +9,10 @@
 	  <input type="checkbox" onchange="checkBoxToggle($(this), true);">
 	</div>
 	<div id="no_coro_support">
-	  <div class="x sprites"></div><div class="link" onclick="verify_remove_nodes(); return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
-	  <div class="plus sprites"></div><div class="link" onclick="add_node_dialog(); return false;">&nbsp;Add</div>
+    <div class="x sprites"></div>
+    <div class="link" onclick="nodesRemove.dialog.create(); return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <div class="plus sprites"></div>
+    <div class="link" onclick="nodeAdd.dialog.create(); return false;">&nbsp;Add</div>
 	</div>
       </td>
       <td class="borderbottom">&nbsp;</td>
@@ -323,44 +325,70 @@
 </table>
 <%= erb :_dialogs %>
 <div id="add_node" style="display: none;">
-  <form method=POST action="/add_node_all">
+  <form>
     <table id="add_node_selector">
       <tr>
         <td>Node Name:</td>
         <td><input type=text name=new_nodename></td>
       </tr>
-      {{#if Pcs.need_ring1_address}}
+      
       <tr>
-        <td>Ring1 address:</td>
-        <td><input type=text name=new_ring1addr></td>
+        <td>Node Addresses:</td>
+        <td class="link-expander">
+          <a href="#" onclick="nodeAdd.dialog.toggleLinks();return false;">(+)</a>
+        </td>
       </tr>
-      {{/if}}
+      
+      <tbody class="node-links" style="display:none">
+        <tr>
+          <td
+            rowspan="8"
+            style="max-width: 8em; vertical-align: top; padding-top: 0.5em; padding-right: 0.2em"
+          >
+              Please specify the count of links that is compatible with this
+              cluster
+          </td>
+          <td><input type=text name="links[]"></td>
+        </tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+        <tr><td><input type=text name="links[]"></td></tr>
+      </tbody>
+      
       <tr>
-        <td>Auto Start/Enable:</td>
+        <td>Start the Node:</td>
         <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
-      {{#if Pcs.is_sbd_enabled}}
-      <tr>
-        <td>SBD watchdog:</td>
-        <td>
-          <input type="text" name="watchdog" placeholder="/dev/watchdog" />
-        </td>
-      </tr>
-      <tr class="add_node_sbd_device">
-        <td>
-          SBD device(s):
-        </td>
-        <td>
-          <input type="text" name="devices[]" />
-          <a href="#" onclick="add_sbd_device_textbox(); return false;">(+)</a>
-        </td>
-      </tr>
-      {{/if}}
-      {{#if Pcs.is_cman_with_udpu_transport}}
-      <tr>
-        <td colspan="2" style="color: orange">This is a CMAN cluster with UDPU transport,<br>cluster restart is required to apply node addition.</td>
-      </tr>
-      {{/if}}
+      
+      <tbody class="sbd-features" style="display:none">
+        <tr>
+          <td>SBD watchdog:</td>
+          <td>
+            <input type="text" name="watchdog" placeholder="/dev/watchdog" />
+          </td>
+        </tr>
+        <tr class="add_node_sbd_device">
+          <td>
+            SBD device(s):
+          </td>
+          <td>
+            <input type="text" name="devices[]" />
+            <a href="#" onclick="add_sbd_device_textbox(); return false;">(+)</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Do not validate watchdog:</td>
+          <td>
+            <input type="checkbox" name="no-watchdog-validation" value="1" >
+          </td>
+        </tr>
+      </tbody>
+      
     </table>
+    <table class="msg-box" style="width:100%"><tr><td/></tr></table>
   </form>
 </div>

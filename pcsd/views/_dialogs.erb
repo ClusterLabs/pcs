@@ -48,12 +48,16 @@
   <span class="name_list"></span>
 </div>
 
+<div id="dialog_verify_destroy_cluster" style="display: none;">
+  <p style="font-size:12px;">Are you sure you want to destroy the following cluster?</p>
+  <span class="name_list"></span>
+  <p style="font-size:14px; color: red;">The cluster will be stopped and all its configuration files will be deleted. This action cannot be undone.</p>
+</div>
+
 <div id="dialog_verify_remove_nodes" style="display:none;">
   <p style="font-size:12px;">Are you sure you want to remove the following node(s)?</p>
   <span class="name_list"></span>
-  {{#if Pcs.is_cman_with_udpu_transport}}
-    <p style="color: orange">This is a CMAN cluster with UDPU transport, cluster restart is required to apply node removal.</p>
-  {{/if}}
+  <table class="msg-box" style="width:100%"><tr><td/></tr></table>
 </div>
 
 <div id="dialog_verify_remove_resources" style="display: none;">

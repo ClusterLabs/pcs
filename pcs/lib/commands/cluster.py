@@ -154,8 +154,8 @@ def setup(
     env, cluster_name, nodes,
     transport_type=None, transport_options=None, link_list=None,
     compression_options=None, crypto_options=None, totem_options=None,
-    quorum_options=None, wait=False, start=False, enable=False, force=False,
-    force_unresolvable=False
+    quorum_options=None, wait=False, start=False, enable=False,
+    force_flags=None,
 ):
     """
     Set up cluster on specified nodes.
@@ -184,11 +184,12 @@ def setup(
         If int wait set timeout to int value of seconds.
     start bool -- if True start cluster when it is set up
     enable bool -- if True enable cluster when it is set up
-    force bool -- if True some validations errors are treated as warnings
-    force_unresolvable bool -- if True not resolvable addresses of nodes are
-        treated as warnings
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+    if force_flags is None:
+        force_flags = []
+    force = report_codes.FORCE in force_flags
 
     transport_options = transport_options or {}
     link_list = link_list or []
@@ -230,7 +231,7 @@ def setup(
     # Validate inputs.
     report_processor.report_list(config_validators.create(
         cluster_name, nodes, transport_type,
-        force_unresolvable=force_unresolvable
+        force_unresolvable=force
     ))
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         max_link_number = max(
@@ -378,9 +379,8 @@ def setup(
         )
 
 def add_nodes(
-    env, nodes, wait=False, start=False, enable=False, force=False,
-    force_unresolvable=False, skip_offline_nodes=False,
-    no_watchdog_validation=False,
+    env, nodes, wait=False, start=False, enable=False,
+    no_watchdog_validation=False, force_flags=None,
 ):
     # pylint: disable=too-many-locals
     """
@@ -397,15 +397,16 @@ def add_nodes(
         If int wait set timeout to int value of seconds.
     start bool -- if True start cluster when it is set up
     enable bool -- if True enable cluster when it is set up
-    force bool -- if True some validations errors are treated as warnings
-    force_unresolvable bool -- if True not resolvable addresses of nodes are
-        treated as warnings
-    skip_offline_nodes bool -- if True non fatal connection failures to other
-        hosts are treated as warnings
     no_watchdog_validation bool -- if True do not validate specified watchdogs
         on remote hosts
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+
+    if force_flags is None:
+        force_flags = []
+    force = report_codes.FORCE in force_flags
+    skip_offline_nodes = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
@@ -520,7 +521,7 @@ def add_nodes(
         new_nodes_corosync,
         corosync_conf.get_nodes(),
         cib_nodes,
-        force_unresolvable=force_unresolvable
+        force_unresolvable=force
     ))
 
     # Validate inputs - SBD part
@@ -919,7 +920,10 @@ def _host_check_cluster_setup(
         required_service_list + ["pacemaker_remote"]
     )
     report_severity = (
-        ReportItemSeverity.ERROR if not force else ReportItemSeverity.WARNING
+        ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
+    )
+    report_forceable = (
+        None if force else report_codes.FORCE_ALREADY_IN_CLUSTER
     )
     cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
@@ -947,6 +951,7 @@ def _host_check_cluster_setup(
                         host_name,
                         cannot_be_running_service_list,
                         severity=report_severity,
+                        forceable=report_forceable,
                     )
                 )
             if host_info["cluster_configuration_exists"]:
@@ -955,6 +960,7 @@ def _host_check_cluster_setup(
                     reports.host_already_in_cluster_config(
                         host_name,
                         severity=report_severity,
+                        forceable=report_forceable,
                     )
                 )
         except KeyError:
@@ -967,6 +973,7 @@ def _host_check_cluster_setup(
             )
 
     if cluster_exists_on_nodes and not force:
+        # This is always a forceable error
         report_list.append(reports.cluster_will_be_destroyed())
     return report_list
 
@@ -1033,16 +1040,20 @@ def _get_validated_wait_timeout(report_processor, wait, start):
     return None
 
 
-def remove_nodes(env, node_list, force_quorum_loss=False, skip_offline=False):
+def remove_nodes(env, node_list, force_flags=None):
     """
     Remove nodes from a cluster.
 
     env LibraryEnvironment
     node_list iterable -- names of nodes to remove
-    force_quorum_loss bool -- treat quorum loss as a warning if True
-    skip_offline bool -- treat unreachable nodes as warnings if True
+    force_flags list -- list of flags codes
     """
     _ensure_live_env(env) # raises if env is not live
+
+    if force_flags is None:
+        force_flags = []
+    force_quorum_loss = report_codes.FORCE in force_flags
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()

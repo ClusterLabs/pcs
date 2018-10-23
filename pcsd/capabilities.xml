@@ -103,7 +103,7 @@
         Set up a new cluster.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -112,7 +112,7 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.knet" in-pcs="1" in-pcsd="1">
@@ -120,7 +120,7 @@
         Knet transport is supported including encryption and compression.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu" in-pcs="1" in-pcsd="1">
@@ -128,7 +128,7 @@
         Udp and udpu transports are supported.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="1" in-pcsd="1">
@@ -136,28 +136,31 @@
         Redundant ring protocol (rrp) is not supported.
 
         pcs commands: cluster setup
-        daemon urls: setup_cluster
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.enable" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.enable" in-pcs="1" in-pcsd="1">
       <description>
         Enable cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --enable
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.start" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.start" in-pcs="1" in-pcsd="1">
       <description>
         Start cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --start
+        daemon urls: cluster_setup
       </description>
     </capability>
-    <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for cluster nodes to start during cluster setup if start requested.
 
         pcs commands: cluster setup --start --wait[=timeout]
+        daemon urls: cluster_setup
       </description>
     </capability>
     <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">
@@ -168,12 +171,13 @@
         daemon urls: cluster_destroy
       </description>
     </capability>
-    <capability id="cluster.destroy.all" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.destroy.all" in-pcs="1" in-pcsd="1">
       <description>
         Destroy cluster on all nodes defined in a cluster which the local host
         belongs to.
 
         pcs commands: cluster destroy --all
+        daemon urls: cluster_destroy (parameter all=1)
       </description>
     </capability>
     <capability id="cluster.report" in-pcs="1" in-pcsd="0">
@@ -328,7 +332,7 @@
         Add a new node to a cluster.
 
         pcs commands: cluster node add
-        daemon urls: add_node_all
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
     <capability id="node.add.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -337,37 +341,39 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster node add
-        daemon urls: add_node_all
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.enable" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.enable" in-pcs="1" in-pcsd="1">
       <description>
         Enable cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --enable
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.start" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.start" in-pcs="1" in-pcsd="1">
       <description>
         Start cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --start
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.start.wait" in-pcs="1" in-pcsd="0">
+    <capability id="node.add.start.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for the new node start cluster service during adding a node if
         start requested.
 
         pcs commands: cluster node add --start --wait[=timeout]
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
-    <capability id="node.add.enable-and-start" in-pcs="0" in-pcsd="1">
+    <capability id="node.add.list" in-pcs="0" in-pcsd="1">
       <description>
-        Enable and start cluster services on the new cluster node during adding
-        a node, cannot do "enable" and "start" separately.
+        Add several nodes to a cluster at once.
 
-        daemon urls: add_node_all (param: auto_start)
+        daemon urls: cluster_add_nodes
       </description>
     </capability>
     <capability id="node.remove" in-pcs="1" in-pcsd="1">
@@ -375,7 +381,7 @@
         Remove a node from a cluster.
 
         pcs commands: cluster node remove
-        daemon urls: remove_nodes
+        daemon urls: cluster_remove_nodes
       </description>
     </capability>
     <capability id="node.remove.list" in-pcs="1" in-pcsd="1">
@@ -383,7 +389,7 @@
         Remove several nodes from a cluster at once.
 
         pcs commands: cluster node remove
-        daemon urls: remove_nodes
+        daemon urls: cluster_remove_nodes
       </description>
     </capability>
     <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="0">
@@ -423,12 +429,14 @@
           cluster_disable
       </description>
     </capability>
-    <capability id="node.start-stop-enable-disable.all" in-pcs="1" in-pcsd="0">
+    <capability id="node.start-stop-enable-disable.all" in-pcs="1" in-pcsd="1">
       <description>
         Allow starting, stopping, enabling and disabling cluster services on all
         nodes in the cluster.
 
         pcs commands: cluster (start | stop | enable | disable) --all
+        daemon urls: cluster_start, cluster_stop, cluster_enable,
+          cluster_disable (param: all == 1)
       </description>
     </capability>
     <capability id="node.start-stop-enable-disable.list" in-pcs="1" in-pcsd="0">
