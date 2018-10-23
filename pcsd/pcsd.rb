@@ -470,113 +470,8 @@ post '/manage/remember-cluster' do
   end
 end
 
-# old cluster setup url
-# will be removed / updated once the cluster setup overhaul is done
-post '/manage/newcluster' do
-  auth_user = getAuthUser()
-  if not allowed_for_superuser(auth_user)
-    return 400, 'Permission denied.'
-  end
-
-  warning_messages = []
-
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  @manage = true
-  @cluster_name = params[:clustername]
-  @nodes = []
-  nodes_with_indexes = []
-  @nodes_rrp = []
-  options = {}
-  params.each {|k,v|
-    if k.start_with?("node-") and v != ""
-      @nodes << v
-      nodes_with_indexes << [k[5..-1].to_i, v]
-      if params.has_key?("ring1-" + k) and params["ring1-" + k] != ""
-        @nodes_rrp << v + "," + params["ring1-" + k]
-      else
-        @nodes_rrp << v
-      end
-    end
-    if k.start_with?("config-") and v != ""
-      options[k.sub("config-","")] = v
-    end
-  }
-  if pcs_config.is_cluster_name_in_use(@cluster_name)
-    return 400, "The cluster name, '#{@cluster_name}' has already been added to pcsd.  You may not add two clusters with the same name into pcsd."
-  end
-
-  @nodes.each {|n|
-    if pcs_config.get_nodes_cluster(n)
-      return 400, "The node, '#{n}' is already configured in pcsd.  You may not add a node to two different clusters in pcsd."
-    end
-  }
-
-  # First we need to authenticate future cluster nodes to each other. We use
-  # a dirty hack to achieve that. Since the GUI is already authorized (it had
-  # to check if the nodes can create a cluster) we will send those GUI tokens
-  # to the nodes.
-  @nodes.each { |future_node|
-    retval = pcs_compatibility_layer_known_hosts_add(
-      auth_user, false, future_node, @nodes
-    )
-    if retval == 'not_supported'
-      warning_messages << "Unable to do correct authentication of cluster on node '#{future_node}', because it is running an old version of pcs/pcsd."
-      break
-    elsif retval == 'error'
-      return 400, "Unable to authenticate all nodes on node '#{future_node}'."
-    end
-  }
-
-  # the first node from the form is the source of config files
-  node_to_send_to = nodes_with_indexes.sort[0][1]
-  $logger.info(
-    "Sending setup cluster request for: #{@cluster_name} to: #{node_to_send_to}"
-  )
-  code,out = send_request_with_token(
-    auth_user,
-    node_to_send_to,
-    'setup_cluster',
-    true,
-    {
-      :clustername => @cluster_name,
-      :nodes => @nodes_rrp.join(';'),
-      :options => options.to_json,
-      :encryption => params[:encryption],
-    },
-    true,
-    nil,
-    60
-  )
-
-  if code == 200
-    pushed = false
-    2.times {
-      # Add the new cluster to config and publish the config.
-      # If this host is a node of the cluster, some other node may send its
-      # own PcsdSettings.  To handle it we just need to reload the config, as
-      # we are waiting for the request to finish, so no locking is needed.
-      # If we are in a different cluster we just try twice to update the
-      # config, dealing with any updates in between.
-      pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-      pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-      sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-      pushed, _ = Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes_names(), $cluster_name, true
-      )
-      break if pushed
-    }
-    if not pushed
-      return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
-    end
-  else
-    return 400, "Unable to create new cluster. If cluster already exists on one or more of the nodes run 'pcs cluster destroy' on all nodes to remove current cluster configuration.\n\n#{node_to_send_to}: #{out}"
-  end
-
-  return warning_messages.join("\n\n")
-end
-
 ### urls related to creating a new cluster - end
-#
+
 post '/manage/removecluster' do
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   params.each { |k,v|
@@ -613,6 +508,10 @@ get '/manage/check_auth_against_nodes' do
   return JSON.generate(node_results)
 end
 
+# TODO Remove - dead code
+# This function was called from the old cluster setup dialog used in pcs-0.9 for
+# CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+# overhaul is done.
 get '/manage/get_nodes_sw_versions' do
   auth_user = getAuthUser()
   final_response = {}

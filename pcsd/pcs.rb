@@ -334,20 +334,6 @@ def send_nodes_request_with_token(auth_user, nodes, request, post=false, data={}
   code = 0
   $logger.info("SNRWT: " + request)
 
-  # If we're removing nodes, we don't send this to one of the nodes we're
-  # removing, unless we're removing all nodes
-  if request == "/remove_nodes"
-    new_nodes = nodes.dup
-    data.each {|k,v|
-      if new_nodes.include? v
-        new_nodes.delete v
-      end
-    }
-    if new_nodes.length > 0
-      nodes = new_nodes
-    end
-  end
-
   for node in nodes
     $logger.info "SNRWT Node: #{node} Request: #{request}"
     code, out = send_request_with_token(
@@ -539,59 +525,6 @@ def is_proxy_set(env_var_hash)
     end
   }
   return false
-end
-
-def add_node(
-  auth_user, new_nodename, auto_start=true, watchdog=nil, device_list=nil
-)
-  # TODO update for the new node add
-  # TODO separate --start and --enable, fix capability node.add.enable-and-start
-  command = [PCS, "cluster", "node", "add", new_nodename]
-  if watchdog and not watchdog.strip.empty?
-    command << "--watchdog=#{watchdog.strip}"
-  end
-  if device_list
-    device_list.each { |device|
-      if device and not device.strip.empty?
-        command << "--device=#{device.strip}"
-      end
-    }
-  end
-  if auto_start
-    command << '--start'
-    command << '--enable'
-  end
-  out, stderror, retval = run_cmd(auth_user, *command)
-  $logger.info("Adding #{new_nodename} to pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes_names()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update_cluster($cluster_name, corosync_nodes)
-  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  # on version conflict just go on, config will be corrected eventually
-  # by displaying the cluster in the web UI
-  Cfgsync::save_sync_new_version(
-    sync_config, corosync_nodes, $cluster_name, true
-  )
-  return retval, out.join("\n") + stderror.join("\n")
-end
-
-def remove_node(auth_user, new_nodename)
-  # TODO update for the new node remove
-  # we check for a quorum loss warning in remote_remove_nodes
-  out, stderror, retval = run_cmd(
-    auth_user, PCS, "cluster", "node", "remove", new_nodename, "--force"
-  )
-  $logger.info("Removing #{new_nodename} from pcs_settings.conf")
-  corosync_nodes = get_corosync_nodes_names()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update_cluster($cluster_name, corosync_nodes)
-  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  # on version conflict just go on, config will be corrected eventually
-  # by displaying the cluster in the web UI
-  Cfgsync::save_sync_new_version(
-    sync_config, corosync_nodes, $cluster_name, true
-  )
-  return retval, out + stderror
 end
 
 def get_current_node_name()

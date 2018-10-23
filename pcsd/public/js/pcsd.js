@@ -162,45 +162,6 @@ function create_group() {
   });
 }
 
-function add_node_dialog() {
-  var buttonOpts = [
-    {
-      text: "Add Node",
-      id: "add_node_submit_btn",
-      click: function() {
-        $("#add_node_submit_btn").button("option", "disabled", true);
-        checkAddingNode();
-      }
-    },
-    {
-      text: "Cancel",
-      click: function() {
-        $(this).dialog("close");
-      }
-    }
-  ];
-
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
-
-  // If you hit enter it triggers the first button: Add Node
-  $('#add_node').keypress(function(e) {
-    if (e.keyCode == $.ui.keyCode.ENTER && !$("#add_node_submit_btn").button("option", "disabled")) {
-        $("#add_node_submit_btn").trigger("click");
-      return false;
-    }
-  });
-
-  $('#add_node').dialog({
-    title: 'Add Node',
-    modal:true,
-    resizable: false,
-    width: 'auto',
-    buttons: buttonOpts
-  });
-}
-
 function add_sbd_device_textbox() {
   var max_count = 3;
   var device_inputs = $("#add_node_selector .add_node_sbd_device");
@@ -222,56 +183,6 @@ function add_sbd_device_textbox() {
 
 function sbd_device_remove_textbox(obj) {
   $(obj).parents(".add_node_sbd_device").remove();
-}
-
-function checkAddingNode(){
-  var nodeName = $("#add_node").children("form").find("[name='new_nodename']").val().trim();
-  if (nodeName == "") {
-    $("#add_node_submit_btn").button("option", "disabled", false);
-    return false;
-  }
-
-  ajax_wrapper({
-    type: 'GET',
-    url: '/manage/check_auth_against_nodes',
-    data: {"node_list": [nodeName]},
-    timeout: pcs_timeout,
-    success: function (data) {
-      var mydata = jQuery.parseJSON(data);
-      if (mydata[nodeName] == "Unable to authenticate") {
-        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click")});
-        $("#add_node_submit_btn").button("option", "disabled", false);
-      } else if (mydata[nodeName] == "Offline") {
-        alert("Unable to contact node '" + nodeName + "'");
-        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click")});
-        $("#add_node_submit_btn").button("option", "disabled", false);
-      } else {
-        create_node($("#add_node").children("form"));
-      }
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      alert("ERROR: Unable to contact server");
-      $("#add_node_submit_btn").button("option", "disabled", false);
-    }
-  });
-}
-
-function create_node(form) {
-  var dataString = $(form).serialize();
-  ajax_wrapper({
-    type: "POST",
-    url: get_cluster_remote_url() + "add_node_to_cluster",
-    data: dataString,
-    success: function(returnValue) {
-      $("#add_node_submit_btn").button("option", "disabled", false);
-      $('#add_node').dialog('close');
-      Pcs.update();
-    },
-    error: function(error) {
-      alert(error.responseText);
-      $("#add_node_submit_btn").button("option", "disabled", false);
-    }
-  });
 }
 
 function create_resource_error_processing(error_message, form, update, stonith) {
@@ -431,9 +342,11 @@ function verify_remove_clusters(cluster_id) {
   );
 }
 
-/**
-  FIXME This function is deprecated. Maybe it will be usefull for adding pcs-0.9
-  support. Maybe not.
+/*
+ * TODO Remove - dead code
+ * This function was handling the old node remove dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
 */
 function verify_remove_nodes(node_id) {
   verify_remove(
@@ -719,6 +632,12 @@ function checkExistingNode() {
   });
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function get_nodes_from_create_new_cluster_dialog() {
   var nodes = [];
   $("#create_new_cluster_form tr.new_node").each(function(i, e) {
@@ -730,6 +649,12 @@ function get_nodes_from_create_new_cluster_dialog() {
   return nodes;
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function checkClusterNodes() {
   var node_list = get_nodes_from_create_new_cluster_dialog();
   ajax_wrapper({
@@ -1043,6 +968,12 @@ function update_existing_cluster_dialog(data) {
   $("#add_existing_submit_btn").button("option", "disabled", false);
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function update_create_cluster_dialog(nodes_auth_status, version_info) {
   var node_names = [];
   for (var name in nodes_auth_status) {
@@ -1234,34 +1165,12 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
 
 }
 
-function create_cluster_add_nodes() {
-  node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
-  var ring1_node_list = $("#create_new_cluster_form tr").has(
-    "input[name^='ring1-node-']"
-  );
-  cur_num_nodes = node_list.length;
-
-  first_node = node_list.eq(0);
-  new_node = first_node.clone();
-  $("input[name=node-1]",new_node).attr("name", "node-"+(cur_num_nodes+1));
-  $("input[name=port-1]",new_node).attr("name", "port-"+(cur_num_nodes+1));
-  $("input",new_node).val("");
-  $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
-  new_node.insertAfter(node_list.last());
-
-  var ring1_first_node = ring1_node_list.eq(0);
-  var ring1_new_node = ring1_first_node.clone();
-  $("input", ring1_new_node).attr("name", "ring1-node-" + (cur_num_nodes + 1));
-  $("input", ring1_new_node).val("");
-  $("td", ring1_new_node).first().text(
-    "Node " + (cur_num_nodes+1) + " (Ring 1):"
-  );
-  ring1_new_node.insertAfter(ring1_node_list.last());
-
-  if (node_list.length == 7)
-    $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
-}
-
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function create_cluster_display_rrp(transport) {
   if(transport == 'udp') {
     $('#rrp_udp_transport').show();
@@ -1371,9 +1280,11 @@ function remove_cluster(ids) {
   });
 }
 
-/**
-  FIXME This function is deprecated. Maybe it will be usefull for adding pcs-0.9
-  support. Maybe not.
+/*
+ * TODO Remove - dead code
+ * This function was handling the old node remove dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
 */
 function remove_nodes(ids, force) {
   var data = {};
