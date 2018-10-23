@@ -1764,6 +1764,7 @@ Pcs.Cluster = Ember.Object.extend({
   fence_failed: 0,
   error_list: [],
   warning_list: [],
+  pcsd_capabilities: [],
   need_reauth: false,
   quorate: false,
 
@@ -1785,6 +1786,10 @@ Pcs.Cluster = Ember.Object.extend({
     if (a.get("status_val") == b.get("status_val"))
       return ((a.status == b.status) ? a.get('name').localeCompare(b.get('name')) : ((a.status > b.status) ? 1 : -1));
     return status_comparator(a.status, b.status);
+  },
+
+  isCapable: function(capabilityCode){
+    return this.get("pcsd_capabilities").indexOf(capabilityCode) != -1;
   },
 
   add_resources: function(data) {
@@ -1933,6 +1938,7 @@ Pcs.clusterController = Ember.Object.create({
         cluster = Pcs.Cluster.create({
           name: value["cluster_name"],
           status: value["status"],
+          pcsd_capabilities: value["pcsd_capabilities"] || [],
           quorate: value["quorate"],
           error_list: value["error_list"],
           warning_list: value["warning_list"]

@@ -17,6 +17,22 @@ clusterDestroy.dialog.create = function(){
 
   var clusterName = clusterNameList[0];
 
+  var destroyAllSupportingClusters = Pcs.clusterController
+    .get("cluster_list")
+    .get("content")
+    .filter(function(cluster){return cluster.isCapable("cluster.destroy.all")})
+    .map(function(cluster){return cluster.get("name")})
+  ;
+
+  if (!destroyAllSupportingClusters.includes(clusterName)) {
+    alert(
+      "Cluster '"+clusterName+"' does not support a whole cluster destroy."
+      +"\nYou can remove all nodes to destroy this cluster."
+    );
+    return;
+  }
+
+
   verify_remove(
     function(){ clusterDestroy.submit.run(clusterName) },
     false, // forceable
