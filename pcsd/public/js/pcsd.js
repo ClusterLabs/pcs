@@ -1171,6 +1171,34 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
  * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
  * overhaul is done.
 */
+function create_cluster_add_nodes() {
+  node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
+  var ring1_node_list = $("#create_new_cluster_form tr").has(
+    "input[name^='ring1-node-']"
+  );
+  cur_num_nodes = node_list.length;
+
+  first_node = node_list.eq(0);
+  new_node = first_node.clone();
+  $("input[name=node-1]",new_node).attr("name", "node-"+(cur_num_nodes+1));
+  $("input[name=port-1]",new_node).attr("name", "port-"+(cur_num_nodes+1));
+  $("input",new_node).val("");
+  $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
+  new_node.insertAfter(node_list.last());
+
+  var ring1_first_node = ring1_node_list.eq(0);
+  var ring1_new_node = ring1_first_node.clone();
+  $("input", ring1_new_node).attr("name", "ring1-node-" + (cur_num_nodes + 1));
+  $("input", ring1_new_node).val("");
+  $("td", ring1_new_node).first().text(
+    "Node " + (cur_num_nodes+1) + " (Ring 1):"
+  );
+  ring1_new_node.insertAfter(ring1_node_list.last());
+
+  if (node_list.length == 7)
+    $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
+}
+
 function create_cluster_display_rrp(transport) {
   if(transport == 'udp') {
     $('#rrp_udp_transport').show();
