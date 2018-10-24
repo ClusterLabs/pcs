@@ -58,6 +58,14 @@ dev.promise.fail = function(url, requestData, rejectCode){
   };
 };
 
+dev.promise.wait = function(timeout){
+  return function(){
+    var dfd = $.Deferred();
+    setTimeout(dfd.resolve, timeout);
+    return dfd.promise();
+  };
+};
+
 dev.patch.promise_ajax = function(routeFn){
   promise.ajax = function(options, rejectCode){
     var promise = routeFn(

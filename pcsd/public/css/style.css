@@ -867,3 +867,90 @@ table.args-table td.reg {
 .no-close .ui-dialog-titlebar-close {
   display: none;
 }
+
+[data-snippet] {
+  display: none;
+}
+
+.action-link {
+  color: #2B85DB;
+  cursor: pointer;
+}
+
+#csetup input[type="text"][name="node[]"],
+#csetup input[type="text"][name="clustername"]
+{
+  width: 45ch;
+}
+#csetup form td:first-child {
+  text-align: right;
+}
+#csetup .cluster-settings fieldset{
+  margin-top: 5pt;
+  margin-bottom: 5pt;
+}
+
+#csetup .cluster-settings input[name="transport"]:hover + label {
+  cursor: pointer;
+  background: #4c4c4c;
+}
+#csetup .cluster-settings input[name="transport"]:checked + label
+{
+  color: #f79727;
+}
+#csetup td {
+  white-space: nowrap;
+}
+#csetup-transport-netmaps .type-netmap{
+  border-collapse: collapse;
+}
+#csetup-transport-netmaps .type-netmap > tbody > tr > td{
+  border: 1px inset #d0d0d0;
+  padding: 1em;
+}
+#csetup-transport-netmaps .type-netmap tr:first-child td:first-child {
+  vertical-align: top;
+}
+#csetup-transport-netmaps .type-netmap ul {
+  padding: 0;
+  margin: 0;
+}
+#csetup-transport-netmaps .type-netmap li {
+  cursor: pointer;
+  list-style-type: none;
+}
+#csetup-transport-netmaps .type-netmap li .delete{
+  margin-right: 5px;
+}
+#csetup-transport-netmaps .type-netmap .current {
+  color: #f79727;
+}
+#csetup-transport-netmaps .type-netmap .current:after {
+  content: " ⯈";
+}
+#csetup-transport-netmaps .type-netmap li .label:hover {
+  background: #4c4c4c;
+}
+#csetup  table.key-value td:first-child {
+  text-align: right;
+}
+#csetup-totem input[type="text"],
+#csetup-quorum input[type="text"],
+#csetup-transport input[name="netmtu"],
+#csetup-transport input[name="knet_pmtud_interval"],
+#csetup-transport input[name="threshold"],
+#csetup-transport input[name="link_priority"],
+#csetup-transport input[name="mcastport"],
+#csetup-transport input[name="ping_interval"],
+#csetup-transport input[name="ping_precision"],
+#csetup-transport input[name="ping_timeout"],
+#csetup-transport input[name="pong_count"]
+{
+  width: 6ch;
+  text-align: right;
+}
+#csetup-transport-options.udp .knet-only,
+#csetup-transport-options.knet .without-knet
+{
+  display: none;
+}

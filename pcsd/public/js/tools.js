@@ -49,13 +49,25 @@ promise.resolve = function(){
   return dfd.resolve.apply(dfd, arguments);
 };
 
-tools = {string: {}, dialog: {}, submit: {}};
+promise.with = function(fn){
+  var dfd = $.Deferred();
+  fn(dfd);
+  return dfd;
+};
+
+tools = {string: {}, dialog: {}, submit: {}, snippet: {}};
 
 tools.string.upperFirst = function(string){
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
 tools.string.escape = Handlebars.Utils.escapeExpression;
+
+tools.prefixedSelector = function(prefix){
+  return function(selector){
+    return $(prefix+" "+selector);
+  };
+};
 
 /**
   msg:
@@ -108,6 +120,19 @@ tools.dialog.resetInputs = function(selector){
   });
 };
 
+tools.snippet.take = function(name){
+  var snippet = $("[data-snippet='"+name+"']").eq(0)
+    .clone()
+    .removeAttr("data-snippet")
+  ;
+
+  $("[data-name]", snippet).each(function(){
+    $(this).attr("name", $(this).attr("data-name")).removeAttr("data-name");
+  });
+
+  return snippet;
+};
+
 tools.submit.onCallFail = function(resetMessages){
   return function(XMLHttpRequest, dialogCodes){
     dialogCodes = dialogCodes || [];
@@ -145,4 +170,20 @@ tools.submit.confirmForce = function(actionDesc, msgList){
 
 tools.formatMsg = function(msg){
   return tools.string.upperFirst(msg.type)+": "+msg.msg;
+};
+
+// Vertical buttonset. Borrowed from https://gist.github.com/edersohe/760885
+$.fn.buttonsetv = function() {
+  $(':radio, :checkbox', this).wrap('<div style="margin: 1px"/>');
+  $(this).buttonset();
+  $('label:first', this).removeClass('ui-corner-left').addClass('ui-corner-top');
+  $('label:last', this).removeClass('ui-corner-right').addClass('ui-corner-bottom');
+  mw = 0; // max witdh
+  $('label', this).each(function(index){
+     w = $(this).width();
+     if (w > mw) mw = w; 
+  });
+  $('label', this).each(function(index){
+    $(this).width(mw);
+  });
 };

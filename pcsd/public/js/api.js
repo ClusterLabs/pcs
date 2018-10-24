@@ -209,28 +209,75 @@ api.checkAuthAgainstNodes = function(nodesNames){
 
 api.clusterSetup = function(submitData, processOptions){
   var setupData = submitData.setupData;
-  var setupCoordinatingNode = submitData.setupCoordinatingNode;
-
   var data = {
     cluster_name: setupData.clusterName,
-    nodes: setupData.nodesNames.map(function(nodeName){
-      return {name: nodeName};
+    nodes: setupData.nodeList.map(function(node){
+      return {
+        name: node.name,
+        addrs: node.addrs,
+      };
     }),
-    transport_type: "knet",
+    transport_type: setupData.transportType,
     transport_options: {},
-    link_list: [],
-    compression_options: {},
-    crypto_options: {},
-    totem_options: {},
-    quorum_options: {},
+    link_list: setupData.linkList.map(function(link){
+      return {
+        linknumber: link.linknumber,
+        ip_version: link.ip_version,
+        link_priority: link.link_priority,
+        mcastport: link.mcastport,
+        ping_interval: link.ping_interval,
+        ping_precision: link.ping_precision,
+        ping_timeout: link.ping_timeout,
+        pong_count: link.pong_count,
+        transport: link.transport,
+      };
+    }),
+    compression_options: {
+      model: setupData.compression.model,
+      threshold: setupData.compression.threshold,
+      level: setupData.compression.level,
+    },
+    crypto_options: {
+      model: setupData.crypto.model,
+      hash: setupData.crypto.hash,
+      cipher: setupData.crypto.cipher,
+    },
+    totem_options: {
+      consensus: setupData.totem.consensus,
+      downcheck: setupData.totem.downcheck,
+      fail_recv_const: setupData.totem.fail_recv_const,
+      heartbeat_failures_allowed: setupData.totem.heartbeat_failures_allowed,
+      hold: setupData.totem.hold,
+      join: setupData.totem.join,
+      max_messages: setupData.totem.max_messages,
+      max_network_delay: setupData.totem.max_network_delay,
+      merge: setupData.totem.merge,
+      miss_count_const: setupData.totem.miss_count_const,
+      send_join: setupData.totem.send_join,
+      seqno_unchanged_const: setupData.totem.seqno_unchanged_const,
+      token: setupData.totem.token,
+      token_coefficient: setupData.totem.token_coefficient,
+      token_retransmit: setupData.totem.token_retransmit,
+      token_retransmits_before_loss_const:
+        setupData.totem.token_retransmits_before_loss_const
+      ,
+      window_size: setupData.totem.window_size,
+    },
+    quorum_options: {
+      auto_tie_breaker: setupData.quorum.auto_tie_breaker,
+      last_man_standing: setupData.quorum.last_man_standing,
+      last_man_standing_window: setupData.quorum.last_man_standing_window,
+      wait_for_all: setupData.quorum.wait_for_all,
+    },
   };
+
 
   var apiCall = function(force){
     data.force_flags = api.tools.forceFlags(force);
     return promise.post(
       "/manage/cluster-setup",
       {
-        target_node: setupCoordinatingNode,
+        target_node: submitData.setupCoordinatingNode,
         setup_data: JSON.stringify(data),
       },
       api.err.CLUSTER_SETUP.FAILED,
