@@ -39,21 +39,6 @@ def _dict_to_modifiers(options):
         }
     )
 
-class ClusterTest(unittest.TestCase, AssertPcsMixin):
-    def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
-
-    def testNodeStandby(self):
-        # only basic test, standby subcommands were moved to 'pcs node'
-        output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "cluster unstandby rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
 
 class UidGidTest(unittest.TestCase):
     def setUp(self):

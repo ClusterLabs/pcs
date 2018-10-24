@@ -26,6 +26,8 @@
 - Undocumented version of the `pcs constraint colocation add` command, its
   syntax was `pcs constraint colocation add <source resource id> <target
   resource id> [score] [options]`
+- Deprecated commnads `pcs cluster standby | unstandby`, use
+  `pcs node standby | unstandby` instead
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])

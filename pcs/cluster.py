@@ -10,7 +10,6 @@ import time
 import xml.dom.minidom
 
 from pcs import (
-    node,
     pcsd,
     quorum,
     resource,
@@ -89,10 +88,6 @@ def cluster_cmd(lib, argv, modifiers):
             cluster_stop_cmd(lib, argv, modifiers)
         elif (sub_cmd == "kill"):
             kill_cluster(lib, argv, modifiers)
-        elif (sub_cmd == "standby"):
-            node.node_standby_cmd(lib, argv, modifiers, enable=True)
-        elif (sub_cmd == "unstandby"):
-            node.node_standby_cmd(lib, argv, modifiers, enable=False)
         elif (sub_cmd == "enable"):
             cluster_enable_cmd(lib, argv, modifiers)
         elif (sub_cmd == "disable"):
