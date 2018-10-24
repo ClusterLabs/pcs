@@ -11,7 +11,6 @@ import xml.dom.minidom
 
 from pcs import (
     pcsd,
-    quorum,
     resource,
     settings,
     status,
@@ -134,11 +133,6 @@ def cluster_cmd(lib, argv, modifiers):
             cluster_verify(lib, argv, modifiers)
         elif (sub_cmd == "report"):
             cluster_report(lib, argv, modifiers)
-        elif (sub_cmd == "quorum"):
-            if argv and argv[0] == "unblock":
-                quorum.quorum_unblock_cmd(lib, argv[1:], modifiers)
-            else:
-                raise CmdLineInputError()
         elif (sub_cmd == "remove_nodes_from_cib"):
             remove_nodes_from_cib(lib, argv, modifiers)
         else:

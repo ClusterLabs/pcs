@@ -28,6 +28,8 @@
   resource id> [score] [options]`
 - Deprecated commnads `pcs cluster standby | unstandby`, use
   `pcs node standby | unstandby` instead
+- Deprecated command `pcs cluster quorum unblock` which was replaced by
+  `pcs quorum unblock`
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
