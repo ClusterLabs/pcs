@@ -1165,12 +1165,6 @@ function update_create_cluster_dialog(nodes_auth_status, version_info) {
 
 }
 
-/*
- * TODO Remove - dead code
- * This function was handling the old cluster setup dialog used in pcs-0.9 for
- * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
- * overhaul is done.
-*/
 function create_cluster_add_nodes() {
   node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
   var ring1_node_list = $("#create_new_cluster_form tr").has(
@@ -1199,6 +1193,12 @@ function create_cluster_add_nodes() {
     $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
 }
 
+/*
+ * TODO Remove - dead code
+ * This function was handling the old cluster setup dialog used in pcs-0.9 for
+ * CMAN and Corosync 2 clusters. We keep it here for now until the dialog
+ * overhaul is done.
+*/
 function create_cluster_display_rrp(transport) {
   if(transport == 'udp') {
     $('#rrp_udp_transport').show();
