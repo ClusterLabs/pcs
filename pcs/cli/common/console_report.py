@@ -1712,8 +1712,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "{node}: Success".format(**info)
     ,
     codes.CLUSTER_WILL_BE_DESTROYED:
-        "Some nodes are already in a cluster, enforcing this will destroy "
-        "existing cluster on those nodes"
+        "Some nodes are already in a cluster. Enforcing this will destroy "
+        "existing cluster on those nodes. You should remove the nodes from "
+        "their clusters instead to keep the clusters working properly"
     ,
     codes.CLUSTER_SETUP_SUCCESS:
         "Cluster has been successfully set up."
