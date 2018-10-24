@@ -10,7 +10,7 @@ PCS_SHORT_OPTIONS = "hf:p:u:"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
     "force", "skip-offline", "interactive", "autodelete",
-    "all", "full", "groups", "local", "wait", "config",
+    "all", "full", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
@@ -319,7 +319,6 @@ class InputModifiers(object):
             "--enable": "--enable" in options,
             "--force": "--force" in options,
             "--full": "--full" in options,
-            "--groups": "--groups" in options,
             "--hide-inactive": "--hide-inactive" in options,
             "--interactive": "--interactive" in options,
             "--local": "--local" in options,

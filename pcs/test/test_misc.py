@@ -24,7 +24,7 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
                 "crm_feature_set at least 3.0.9, current is 3.0.8.\n"
         )
         self.assert_pcs_success(
-            "resource --full",
+            "resource config",
             outdent("""\
              Resource: dummy (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)

@@ -73,8 +73,11 @@ client
  Manage pcsd client configuration.
 .SS "resource"
 .TP
-[show [<resource id>] | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
-Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
+[status [\fB\-\-hide\-inactive\fR]]
+Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources.
+.TP
+config [<resource id>]...
+Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
@@ -151,6 +154,9 @@ meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .br
 Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
+.TP
+group list
+Show all currently configured resource groups and their resources.
 .TP
 group add <group id> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] [\fB\-\-wait\fR[=n]]
 Add the specified resource to the group, creating the group if it does not exist. If the resource is present in another group it is moved to the new group. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group. By adding resources to a group they are already in and specifying \fB\-\-after\fR or \fB\-\-before\fR you can move the resources in the group. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
@@ -357,8 +363,11 @@ report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D H:M:S"]] <de
 Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
 .SS "stonith"
 .TP
-[show [stonith id]] [\fB\-\-full\fR]
-Show all currently configured stonith devices or if a stonith id is specified show the options for the configured stonith device.  If \fB\-\-full\fR is specified all configured stonith options will be displayed.
+[status [\fB\-\-hide\-inactive\fR]]
+Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices.
+.TP
+config [<stonith id>]...
+Show options of all currently configured stonith devices or if stonith ids are specified show the options for the specified stonith device ids.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.
@@ -751,8 +760,8 @@ Stop booth arbitrator service.
 [status] [\fB\-\-full\fR | \fB\-\-hide\-inactive\fR]
 View all information about the cluster and resources (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
 .TP
-resources [<resource id> | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
-Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
+resources [\fB\-\-hide\-inactive\fR]
+Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources.
 .TP
 groups
 View currently configured groups and their resources.

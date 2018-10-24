@@ -57,6 +57,8 @@
 - Command `pcs client local-auth` for authentication of pcs client against local
   pcsd. This is required when a non-root user wants to execute a command which
   requires root permissions (e.g. `pcs cluster start`). ([rhbz#1554302])
+- Command `pcs resource group list` which has the same functionality as removed
+  command `pcs resource show --groups`
 
 ### Fixed
 - Fixed encoding of the CIB\_user\_groups cookie in communication between nodes.
@@ -157,6 +159,11 @@
 - Key size of default pcsd self-generated certificates increased from 2048b to
   3072b ([rhbz#1638852])
 - pcsd.service now depends on network-online.target ([rhbz#1640477])
+- Split command `pcs resource [show]` into two new commands:
+    - `pcs resource [status]` - same as `pcs resource [show]`
+    - `pcs resource config` - same as `pcs resource [show] --full` or resource
+      id specified instead of --full
+  Respective changes have been made to `pcs stonith [show]` command.
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure

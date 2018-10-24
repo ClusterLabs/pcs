@@ -149,7 +149,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
-        output, returnVal = pcs(temp_cib, "stonith show test9")
+        output, returnVal = pcs(temp_cib, "stonith config test9")
         ac(output, """\
  Resource: test9 (class=stonith type=fence_apc)
   Attributes: pcmk_status_action=xxx
@@ -178,11 +178,11 @@ class StonithTest(TestCase, AssertPcsMixin):
             'stonith create apc-fencing fence_apc ip=morph-apc username=apc password=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05',
         )
 
-        output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
+        output, returnVal = pcs(temp_cib, 'resource config apc-fencing')
         assert returnVal == 1
         assert output == 'Error: unable to find resource \'apc-fencing\'\n',[output]
 
-        self.assert_pcs_success("stonith show apc-fencing", outdent(
+        self.assert_pcs_success("stonith config apc-fencing", outdent(
             """\
              Resource: apc-fencing (class=stonith type=fence_apc)
               Attributes: ip=morph-apc password=apc pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 switch=1 username=apc
@@ -207,11 +207,11 @@ class StonithTest(TestCase, AssertPcsMixin):
         assert returnVal == 0
         assert output == "",[output]
 
-        output, returnVal = pcs(temp_cib, "stonith show test2")
+        output, returnVal = pcs(temp_cib, "stonith config test2")
         assert returnVal == 0
         assert output == " Resource: test2 (class=stonith type=fence_apc)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n",[output]
 
-        output, returnVal = pcs(temp_cib, "stonith show --full")
+        output, returnVal = pcs(temp_cib, "stonith config")
         ac(output, """\
  Resource: test1 (class=stonith type=fence_noexist)
   Operations: monitor interval=60s (test1-monitor-interval-60s)
@@ -285,7 +285,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create S fence_apc ip=i login=l"
         )
         self.assert_pcs_success(
-            "stonith show S",
+            "stonith config S",
             outdent(
             """\
              Resource: S (class=stonith type=fence_apc)
@@ -301,7 +301,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u"
         )
         self.assert_pcs_success(
-            "stonith show S",
+            "stonith config S",
             outdent(
             """\
              Resource: S (class=stonith type=fence_apc)
@@ -340,7 +340,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "stonith show --full")
+        output, returnVal = pcs(temp_cib, "stonith config")
         ac(output, """\
  Resource: f1 (class=stonith type=fence_scsi)
   Meta Attrs: provides=unfencing
@@ -372,7 +372,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith show --full",
+            "stonith config",
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -388,7 +388,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith show --full",
+            "stonith config",
             # TODO fix code and test - there should be no action in the attribs
             outdent(
                 """\
@@ -405,7 +405,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith show --full",
+            "stonith config",
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -429,7 +429,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith show --full",
+            "stonith config",
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -444,7 +444,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith show --full",
+            "stonith config",
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -471,7 +471,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Warning: required stonith options 'ip', 'username' are missing\n"
         )
 
-        output, returnVal = pcs(temp_cib, "stonith show F1")
+        output, returnVal = pcs(temp_cib, "stonith config F1")
         ac(output, """\
  Resource: F1 (class=stonith type=fence_apc)
   Attributes: pcmk_host_list="nodea nodeb"

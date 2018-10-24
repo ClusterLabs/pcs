@@ -21,7 +21,7 @@ import pcs.lib.resource_agent as lib_ra
 
 def stonith_cmd(lib, argv, modifiers):
     if len(argv) < 1:
-        sub_cmd, argv_next = "show", []
+        sub_cmd, argv_next = "status", []
     else:
         sub_cmd, argv_next = argv[0], argv[1:]
 
@@ -38,13 +38,12 @@ def stonith_cmd(lib, argv, modifiers):
             resource.resource_update(lib, argv_next, modifiers)
         elif sub_cmd == "delete":
             resource.resource_remove_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "show":
-            resource.resource_show(lib, argv_next, modifiers, stonith=True)
-            levels = stonith_level_config_to_str(
-                lib.fencing_topology.get_config()
-            )
-            if levels:
-                print("\n".join(indent(levels, 1)))
+        elif sub_cmd == "status":
+            resource.resource_status(lib, argv_next, modifiers, stonith=True)
+            print_stonith_levels(lib)
+        elif sub_cmd == "config":
+            resource.resource_config(lib, argv_next, modifiers, stonith=True)
+            print_stonith_levels(lib)
         elif sub_cmd == "level":
             stonith_level_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "fence":
@@ -117,6 +116,13 @@ def stonith_history_cmd(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(
             e, "stonith", "history {0}".format(sub_cmd)
         )
+
+def print_stonith_levels(lib):
+    levels = stonith_level_config_to_str(
+        lib.fencing_topology.get_config()
+    )
+    if levels:
+        print("\n".join(indent(levels, 1)))
 
 def stonith_list_available(lib, argv, modifiers):
     """

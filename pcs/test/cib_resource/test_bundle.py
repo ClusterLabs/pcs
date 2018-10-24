@@ -586,7 +586,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource bundle create B1 container docker image=pcs:test"
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -601,7 +601,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                     options='a b c'
             """
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
@@ -616,7 +616,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                 network host-interface=eth0 host-netmask=24 control-port=12345
             """
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -633,7 +633,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                 port-map range=3000-3300
             """
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -653,7 +653,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                     target-dir=/tmp/docker2b
             """
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -668,7 +668,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             resource bundle create B1 container docker image=pcs:test
             --disabled
         """)
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -684,7 +684,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test
@@ -712,7 +712,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
         )
-        self.assert_pcs_success("resource show B1", outdent(
+        self.assert_pcs_success("resource config B1", outdent(
             """\
              Bundle: B1
               Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4

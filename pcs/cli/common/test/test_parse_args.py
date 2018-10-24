@@ -493,7 +493,6 @@ class InputModifiersTest(TestCase):
             "--enable",
             "--force",
             "--full",
-            "--groups",
             "--hide-inactive",
             "--interactive",
             "--local",

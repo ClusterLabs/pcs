@@ -73,7 +73,7 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
 
 def resource_cmd(lib, argv, modifiers):
     if len(argv) < 1:
-        sub_cmd, argv_next = "show", []
+        sub_cmd, argv_next = "status", []
     else:
         sub_cmd, argv_next = argv[0], argv[1:]
 
@@ -104,8 +104,10 @@ def resource_cmd(lib, argv, modifiers):
             resource_meta(lib, argv_next, modifiers)
         elif sub_cmd == "delete":
             resource_remove_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "show":
-            resource_show(lib, argv_next, modifiers)
+        elif sub_cmd == "status":
+            resource_status(lib, argv_next, modifiers)
+        elif sub_cmd == "config":
+            resource_config(lib, argv_next, modifiers)
         elif sub_cmd == "group":
             resource_group(lib, argv_next, modifiers)
         elif sub_cmd == "ungroup":
@@ -2107,98 +2109,95 @@ def resource_group_list(lib, argv, modifiers):
             line_parts.append(resource.getAttribute("id"))
         print(" ".join(line_parts))
 
-def resource_show(lib, argv, modifiers, stonith=False):
+
+def resource_status(lib, argv, modifiers, stonith=False):
     """
     Options:
       * -f - CIB file
-      * --full - print all configured options
-      * --groups - print resource groups
       * --hide-inactive - print only active resources
     """
-    modifiers.ensure_only_supported(
-        "-f", "--full", "--groups", "--hide-inactive"
+    modifiers.ensure_only_supported("-f", "--hide-inactive")
+    if argv:
+        raise CmdLineInputError()
+
+    monitor_command = ["crm_mon", "--one-shot"]
+    if not modifiers.get("--hide-inactive"):
+        monitor_command.append('--inactive')
+    output, retval = utils.run(monitor_command)
+    if retval != 0:
+        utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
+    preg = re.compile(r'.*(stonith:.*)')
+    resources_header = False
+    in_resources = False
+    has_resources = False
+    no_resources_line = (
+        "NO stonith devices configured" if stonith
+        else "NO resources configured"
     )
-    mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
-    specified_modifiers = [
-        opt for opt in mutually_exclusive_opts if modifiers.is_specified(opt)
-    ]
-    if (len(specified_modifiers) > 1) or (argv and specified_modifiers):
-        utils.err(
-            "you can specify only one of resource id, {0}".format(
-                ", ".join(mutually_exclusive_opts)
-            )
-        )
-
-    if modifiers.get("--groups"):
-        resource_group_list(lib, argv, modifiers.get_subset("-f"))
-        return
-
-    if modifiers.get("--full"):
-        root = utils.get_cib_etree()
-        resources = root.find(".//resources")
-        for child in resources:
-            if stonith and "class" in child.attrib and child.attrib["class"] == "stonith":
-                print_node(child,1)
-            elif not stonith and \
-                    ((not "class" in child.attrib) or (child.attrib["class"] != "stonith")):
-                print_node(child,1)
-        return
-
-    if len(argv) == 0:
-        monitor_command = ["crm_mon", "--one-shot"]
-        if not modifiers.get("--hide-inactive"):
-            monitor_command.append('--inactive')
-        output, retval = utils.run(monitor_command)
-        if retval != 0:
-            utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
-        preg = re.compile(r'.*(stonith:.*)')
-        resources_header = False
-        in_resources = False
-        has_resources = False
-        no_resources_line = (
-            "NO stonith devices configured" if stonith
-            else "NO resources configured"
-        )
-        for line in output.split('\n'):
-            if line == "No active resources":
+    for line in output.split('\n'):
+        if line == "No active resources":
+            print(line)
+            return
+        if line == "No resources":
+            print(no_resources_line)
+            return
+        if line in ("Full list of resources:", "Active resources:"):
+            resources_header = True
+            continue
+        if line == "":
+            if resources_header:
+                resources_header = False
+                in_resources = True
+            elif in_resources:
+                if not has_resources:
+                    print(no_resources_line)
+                return
+            continue
+        if in_resources:
+            if not preg.match(line) and not stonith:
+                has_resources = True
                 print(line)
-                return
-            if line == "No resources":
-                print(no_resources_line)
-                return
-            if line in ("Full list of resources:", "Active resources:"):
-                resources_header = True
-                continue
-            if line == "":
-                if resources_header:
-                    resources_header = False
-                    in_resources = True
-                elif in_resources:
-                    if not has_resources:
-                        print(no_resources_line)
-                    return
-                continue
-            if in_resources:
-                if not preg.match(line) and not stonith:
-                    has_resources = True
-                    print(line)
-                elif preg.match(line) and stonith:
-                    has_resources = True
-                    print(line)
-        return
+            elif preg.match(line) and stonith:
+                has_resources = True
+                print(line)
+
+
+def _print_resource_stonith(resource_el, only_stonith):
+    is_stonith = (
+        "class" in resource_el.attrib
+        and
+        resource_el.attrib["class"] == "stonith"
+    )
+    if (only_stonith and is_stonith) or (not only_stonith and not is_stonith):
+        print_node(resource_el, 1)
+        return True
+    return False
+
+
+def resource_config(lib, argv, modifiers, stonith=False):
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
 
     root = utils.get_cib_etree()
     resources = root.find(".//resources")
-    resource_found = False
-    for arg in argv:
-        for child in resources.findall(str(".//*")):
-            if "id" in child.attrib and child.attrib["id"] == arg and ((stonith and utils.is_stonith_resource(arg)) or (not stonith and not utils.is_stonith_resource(arg))):
-                print_node(child,1)
-                resource_found = True
-                break
-        if not resource_found:
-            utils.err("unable to find resource '"+arg+"'")
+    if not argv:
+        for resource in resources:
+            _print_resource_stonith(resource, only_stonith=stonith)
+        return
+
+    for resource_id in argv:
         resource_found = False
+        for resource in resources.findall(str(".//*")):
+            if "id" in resource.attrib and resource.attrib["id"] == resource_id:
+                if _print_resource_stonith(resource, only_stonith=stonith):
+                    resource_found = True
+                    break
+        if not resource_found:
+            utils.err(f"unable to find resource '{resource_id}'")
+
 
 def resource_disable_cmd(lib, argv, modifiers):
     """

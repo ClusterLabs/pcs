@@ -131,22 +131,22 @@ def config_show_cib(lib):
       * -f - CIB file
     """
     print("Resources:")
-    # update of pcs_options will change output of resource.resource_show([])
+    # update of pcs_options will change output of constraint show
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_input_modifiers()
-    resource.resource_show(
+    resource.resource_config(
         lib,
         [],
-        modifiers.get_subset("-f", "--full", "--groups", "--hide-inactive")
+        modifiers.get_subset("-f")
     )
 
     print()
     print("Stonith Devices:")
-    resource.resource_show(
+    resource.resource_config(
         lib,
         [],
-        modifiers.get_subset("-f", "--full", "--groups", "--hide-inactive"),
+        modifiers.get_subset("-f"),
         stonith=True,
     )
     print("Fencing Levels:")

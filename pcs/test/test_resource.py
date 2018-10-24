@@ -225,7 +225,7 @@ class Resource(TestCase, AssertPcsMixin):
         ac(output, '')
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource show dummy0")
+        output, returnVal = pcs(temp_large_cib, "resource config dummy0")
         assert returnVal == 0
         ac(output, outdent(
             """\
@@ -252,11 +252,11 @@ class Resource(TestCase, AssertPcsMixin):
             "Deleting Resource - ClusterIP\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
+        output, returnVal = pcs(temp_cib, "resource config ClusterIP")
         assert returnVal == 1
         assert output == "Error: unable to find resource 'ClusterIP'\n"
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource status")
         assert returnVal == 0
         assert output == 'NO resources configured\n'
 
@@ -270,7 +270,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -354,7 +354,7 @@ Error: moni=tor does not appear to be a valid operation action
 """)
         assert returnVal == 1
 
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -367,7 +367,7 @@ Error: moni=tor does not appear to be a valid operation action
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest")
+        o, r = pcs(temp_cib, "resource config OPTest")
         ac(o," Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-25s)\n")
         assert r == 0
 
@@ -395,7 +395,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest2")
+        o, r = pcs(temp_cib, "resource config OPTest2")
         ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=2 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n")
         assert r == 0
 
@@ -403,7 +403,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest3")
+        o, r = pcs(temp_cib, "resource config OPTest3")
         ac(o," Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor-interval-60s)\n")
         assert r == 0
 
@@ -415,7 +415,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest4")
+        o, r = pcs(temp_cib, "resource config OPTest4")
         ac(o," Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor-interval-60s)\n")
         assert r == 0
 
@@ -427,7 +427,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest5")
+        o, r = pcs(temp_cib, "resource config OPTest5")
         ac(o," Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor-interval-60s)\n")
         assert r == 0
 
@@ -439,7 +439,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o,"")
         assert r == 0
 
-        self.assert_pcs_success("resource show OPTest6", outdent(
+        self.assert_pcs_success("resource config OPTest6", outdent(
             """\
              Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (OPTest6-monitor-interval-10s)
@@ -466,7 +466,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ac(o,"")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource show OPTest7")
+        o, r = pcs(temp_cib, "resource config OPTest7")
         ac(o," Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)\n              monitor interval=61s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-61s)\n")
         assert r == 0
 
@@ -500,7 +500,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert r == 0
 
         self.assert_pcs_success(
-            "resource show OCFTest1",
+            "resource config OCFTest1",
             outdent(
                 """\
                  Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
@@ -515,7 +515,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource config OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
@@ -523,7 +523,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource config OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
@@ -531,7 +531,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource config OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
@@ -565,7 +565,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource op add state monitor interval=15 role=Master --force"
         )
 
-        self.assert_pcs_success("resource show state", outdent(
+        self.assert_pcs_success("resource config state", outdent(
             """\
              Resource: state (class=ocf provider=pacemaker type=Stateful)
               Operations: monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
@@ -611,7 +611,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert returnVal == 1
         assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
 
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -623,7 +623,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             'resource op remove ClusterIP monitor interval=31s'
         )
 
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -656,7 +656,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -670,7 +670,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -681,7 +681,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success(
             "resource update ClusterIP op monitor interval=32s"
         )
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -700,18 +700,18 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success(
             "resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s"
         )
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         self.assert_pcs_success(
             "resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s"
         )
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         self.assert_pcs_success("resource update ClusterIP op")
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         self.assert_pcs_success("resource update ClusterIP op monitor")
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         # test invalid id
         self.assert_pcs_fail_regardless_of_force(
@@ -719,7 +719,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "Error: invalid operation id 'ab#cd', '#' is not a valid character"
                 " for a operation id\n"
         )
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         # test existing id
         self.assert_pcs_fail_regardless_of_force(
@@ -727,7 +727,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "Error: id 'ClusterIP' is already in use, please specify another"
                 " one\n"
         )
-        self.assert_pcs_success("resource show ClusterIP", show_clusterip)
+        self.assert_pcs_success("resource config ClusterIP", show_clusterip)
 
         # test id change
         # there is a bug:
@@ -738,7 +738,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         # This needs to be fixed. However it's not my task currently.
         # Moreover it is documented behavior.
         self.assert_pcs_success("resource update ClusterIP op monitor id=abcd")
-        self.assert_pcs_success("resource show ClusterIP", outdent(
+        self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
               Attributes: cidr_netmask=32 ip=192.168.0.99
@@ -754,7 +754,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success(
             "resource create A ocf:heartbeat:Dummy op monitor interval=10 op monitor interval=20"
         )
-        self.assert_pcs_success("resource show A", outdent(
+        self.assert_pcs_success("resource config A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
               Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
@@ -784,7 +784,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show A", outdent(
+        self.assert_pcs_success("resource config A", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
               Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
@@ -808,7 +808,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_success("resource op remove B-monitor-interval-10s")
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, outdent(
             """\
              Resource: B (class=ocf provider=heartbeat type=Dummy)
@@ -823,7 +823,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=60s (B-monitor-interval-60s)
@@ -837,7 +837,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=30 (B-monitor-interval-30)
@@ -851,7 +851,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=30 (B-monitor-interval-30)
@@ -866,7 +866,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=30 (B-monitor-interval-30)
@@ -881,7 +881,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=33 (B-monitor-interval-33)
@@ -896,7 +896,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=33 (B-monitor-interval-33)
@@ -912,7 +912,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show B")
+        output, returnVal = pcs(temp_cib, "resource config B")
         ac(output, """\
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=33 (B-monitor-interval-33)
@@ -929,7 +929,7 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource create --no-default-ops A3 ocf:heartbeat:Dummy --group AGroup")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"""\
  Resource Group: AGroup
@@ -948,7 +948,7 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"NO resources configured\n")
 
@@ -999,7 +999,7 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource group add AGroup A1 A2 A3 A4 A5")
         assert r == 0
 
-        self.assert_pcs_success("resource show AGroup", outdent(
+        self.assert_pcs_success("resource config AGroup", outdent(
             """\
              Group: AGroup
               Resource: A1 (class=ocf provider=heartbeat type=Dummy)
@@ -1023,7 +1023,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         assert o == ""
 
-        o,r = pcs(temp_cib, "resource show --full")
+        o,r = pcs(temp_cib, "resource config")
         assert r == 0
         ac(o, outdent(
             """\
@@ -1082,11 +1082,11 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o, 'Removing Constraint - location-AGroup-rh7-1-INFINITY\n')
 
-        o,r = pcs(temp_cib, "resource show AGroup")
+        o,r = pcs(temp_cib, "resource config AGroup")
         assert r == 1
         ac(o,"Error: unable to find resource 'AGroup'\n")
 
-        self.assert_pcs_success("resource show A1 A2 A3 A4 A5", outdent(
+        self.assert_pcs_success("resource config A1 A2 A3 A4 A5", outdent(
             """\
              Resource: A1 (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (A1-monitor-interval-10s)
@@ -1148,7 +1148,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 1
         ac(o,'Error: Unable to find resource: B1\n')
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"""\
  A1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1179,7 +1179,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o,'')
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"""\
  Resource Group: MyGroup
@@ -1211,7 +1211,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A7\t(ocf::heartbeat:Dummy):\tStopped
@@ -1233,7 +1233,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1251,7 +1251,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1269,7 +1269,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1312,7 +1312,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A8\t(ocf::heartbeat:Dummy):\tStopped
@@ -1336,7 +1336,7 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, r)
         ac(o, "")
 
-        o, r = pcs(temp_cib, "resource show")
+        o, r = pcs(temp_cib, "resource status")
         ac(o, """\
  Resource Group: MyGroup
      A1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1502,7 +1502,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource status")
         ac(output, """\
  Resource Group: gr1
      d1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1515,7 +1515,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource status")
         ac(output, """\
  Resource Group: gr1
      d1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1542,7 +1542,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource status")
         ac(output, """\
  Resource Group: gr1
      d1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1554,7 +1554,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show")
+        output, returnVal = pcs(temp_cib, "resource status")
         ac(output, """\
  Resource Group: gr1
      d1\t(ocf::heartbeat:Dummy):\tStopped
@@ -1582,7 +1582,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr2")
 
-        output, returnVal = pcs(temp_cib, "resource show --full")
+        output, returnVal = pcs(temp_cib, "resource config")
         ac(output, outdent("""\
              Group: gr1
               Resource: d1 (class=ocf provider=heartbeat type=Dummy)
@@ -1600,7 +1600,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show --full")
+        output, returnVal = pcs(temp_cib, "resource config")
         ac(output, outdent("""\
              Group: gr1
               Resource: d1 (class=ocf provider=heartbeat type=Dummy)
@@ -1685,7 +1685,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
@@ -1701,7 +1701,7 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
-        o,r = pcs(temp_cib, "resource --full")
+        o,r = pcs(temp_cib, "resource config")
         assert r == 0
         ac(o,"")
 
@@ -1921,7 +1921,7 @@ monitor interval=20 (A-monitor-interval-20)
                 " allowed options are: fake, state, trace_file, trace_ra\n"
         )
 
-        self.assert_pcs_success("resource show D0", outdent(
+        self.assert_pcs_success("resource config D0", outdent(
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
               Attributes: test=testB test2=testC test4=test4A test3=testD
@@ -1969,7 +1969,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource show --full")
+        output, returnVal = pcs(temp_cib, "resource config")
         ac(output, """\
  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
   Attributes: test=testC test2=test2a
@@ -2008,7 +2008,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "Group", master_id="GroupMaster")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: GroupMaster
               Meta Attrs: promotable=true
@@ -2088,7 +2088,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -2103,7 +2103,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -2122,7 +2122,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-clone
               Group: gr
@@ -2137,7 +2137,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -2152,7 +2152,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-clone
               Group: gr
@@ -2167,7 +2167,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -2182,7 +2182,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-clone
               Group: gr
@@ -2199,7 +2199,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-clone
               Group: gr
@@ -2214,7 +2214,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
@@ -2254,7 +2254,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "dummy2")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
@@ -2272,7 +2272,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
@@ -2294,7 +2294,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-master
               Meta Attrs: promotable=true
@@ -2312,7 +2312,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
@@ -2330,7 +2330,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-master
               Meta Attrs: promotable=true
@@ -2348,7 +2348,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
@@ -2370,7 +2370,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
@@ -2388,7 +2388,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
@@ -2408,7 +2408,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "gr")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-master
               Meta Attrs: promotable=true
@@ -2426,7 +2426,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: gr-master
               Meta Attrs: promotable=true
@@ -2494,7 +2494,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource --full")
+        o,r = pcs(temp_cib, "resource config")
         ac(o,"""\
  Group: AG
   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
@@ -2510,7 +2510,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource --full")
+        o,r = pcs(temp_cib, "resource config")
         ac(o,"""\
  Clone: D0-clone
   Meta Attrs: promotable=true
@@ -2575,7 +2575,7 @@ monitor interval=20 (A-monitor-interval-20)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "D2")
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D0-clone
               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
@@ -2614,7 +2614,7 @@ monitor interval=20 (A-monitor-interval-20)
             "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
         )
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D3-clone
               Meta Attrs: promotable=true
@@ -2646,7 +2646,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: D2 (class=lsb type=network)
@@ -2669,7 +2669,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: D2 (class=lsb type=network)
@@ -3449,7 +3449,7 @@ Ticket Constraints:
         assert r == 0
         assert o == ""
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o," Clone Set: DGroup-clone [DGroup]\n")
 
@@ -3473,7 +3473,7 @@ Ticket Constraints:
         assert r == 0
         assert o == ""
 
-        o,r = pcs(temp_cib, "resource show --full")
+        o,r = pcs(temp_cib, "resource config")
         assert r == 0
         ac(o,"""\
  Clone: DGroup-clone
@@ -3510,7 +3510,7 @@ Ticket Constraints:
         assert r == 0
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"""\
  Resource Group: DGroup
@@ -3538,7 +3538,7 @@ Ticket Constraints:
             """
         ))
 
-        o,r = pcs(temp_cib, "resource show")
+        o,r = pcs(temp_cib, "resource status")
         assert r == 0
         ac(o,"NO resources configured\n")
 
@@ -3571,7 +3571,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
@@ -3593,7 +3593,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
@@ -3622,7 +3622,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
@@ -3645,7 +3645,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
@@ -3664,7 +3664,7 @@ Ticket Constraints:
         assert r == 0
         ac(o, "")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
@@ -3676,7 +3676,7 @@ Ticket Constraints:
         ac(o, "")
         self.assertEqual(0, r)
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D1-clone
               Meta Attrs: foo=bar
@@ -3687,7 +3687,7 @@ Ticket Constraints:
 
         self.assert_pcs_success("resource update D1-clone bar=baz")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D1-clone
               Meta Attrs: bar=baz foo=bar
@@ -3700,7 +3700,7 @@ Ticket Constraints:
         assert r == 0
         ac(o, "")
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: D1-clone
               Meta Attrs: bar=baz
@@ -3730,7 +3730,7 @@ Ticket Constraints:
         ac(o,"Removing Constraint - location-AG-rh7-1-INFINITY\n")
         assert r == 0
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: A (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
@@ -3822,7 +3822,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: AGMaster
               Meta Attrs: promotable=true
@@ -3850,7 +3850,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: DG-clone
               Group: DG
@@ -3892,7 +3892,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: DG-clone
               Group: DG
@@ -3907,7 +3907,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Clone: DG-clone
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
@@ -3936,7 +3936,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        self.assert_pcs_success("resource show D1", outdent(
+        self.assert_pcs_success("resource config D1", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: target-role=Stopped
@@ -3948,7 +3948,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        self.assert_pcs_success("resource show D1", outdent(
+        self.assert_pcs_success("resource config D1", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -3974,7 +3974,7 @@ Ticket Constraints:
         output, retVal = pcs(temp_cib, "resource clone group0")
         ac(output, "")
         assert retVal == 0
-        self.assert_pcs_success("resource show group0-clone", outdent(
+        self.assert_pcs_success("resource config group0-clone", outdent(
             """\
              Clone: group0-clone
               Group: group0
@@ -4119,7 +4119,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4136,7 +4136,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4157,7 +4157,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4178,7 +4178,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4191,7 +4191,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped
@@ -4204,7 +4204,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4219,7 +4219,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Meta Attrs: target-role=Stopped
@@ -4232,7 +4232,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -4259,7 +4259,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4278,7 +4278,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4301,7 +4301,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4324,7 +4324,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4339,7 +4339,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true target-role=Stopped
@@ -4353,7 +4353,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4370,7 +4370,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true target-role=Stopped
@@ -4384,7 +4384,7 @@ Ticket Constraints:
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        self.assert_pcs_success("resource show dummy-master", outdent(
+        self.assert_pcs_success("resource config dummy-master", outdent(
             """\
              Clone: dummy-master
               Meta Attrs: promotable=true
@@ -4409,7 +4409,7 @@ Ticket Constraints:
             "resource create --no-default-ops dummy3 ocf:pacemaker:Dummy"
         )
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4424,7 +4424,7 @@ Ticket Constraints:
 
         self.assert_pcs_success("resource disable dummy1 dummy2")
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4441,7 +4441,7 @@ Ticket Constraints:
 
         self.assert_pcs_success("resource disable dummy2 dummy3")
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4459,7 +4459,7 @@ Ticket Constraints:
 
         self.assert_pcs_success("resource enable dummy1 dummy2")
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4478,7 +4478,7 @@ Ticket Constraints:
             "Error: bundle/clone/group/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4497,7 +4497,7 @@ Ticket Constraints:
             "Error: bundle/clone/group/resource 'dummyX' does not exist\n"
         )
         self.assert_pcs_success(
-            "resource show --full",
+            "resource config",
             outdent(
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
@@ -4537,7 +4537,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 """)
         assert returnVal == 1
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: B (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (B-monitor-interval-10s)
@@ -4554,7 +4554,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"")
         assert r == 0
 
-        self.assert_pcs_success("resource show --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: B (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=30s (B-monitor-interval-30s)
@@ -4677,7 +4677,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
                 " (deduced from 'Filesystem')\n"
         )
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: myip (class=ocf provider=heartbeat type=IPaddr2)
               Operations: monitor interval=10s timeout=20s (myip-monitor-interval-10s)
@@ -4719,7 +4719,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
 
-        self.assert_pcs_success("resource show dummies-clone", outdent(
+        self.assert_pcs_success("resource config dummies-clone", outdent(
             """\
              Clone: dummies-clone
               Group: dummies
@@ -4735,7 +4735,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         output, retVal = pcs(temp_cib, "resource unclone dummies-clone")
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource show")
+        output, retVal = pcs(temp_cib, "resource status")
         ac(output, outdent(
             """\
              Resource Group: dummies
@@ -4750,7 +4750,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
 
-        self.assert_pcs_success("resource show dummies-clone", outdent(
+        self.assert_pcs_success("resource config dummies-clone", outdent(
             """\
              Clone: dummies-clone
               Group: dummies
@@ -4772,7 +4772,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             Deleting Resource (and group and clone) - dummy3
             """
         ))
-        output, retVal = pcs(temp_cib, "resource show")
+        output, retVal = pcs(temp_cib, "resource status")
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
@@ -4800,7 +4800,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "dummies")
 
-        self.assert_pcs_success("resource show dummies-master", outdent(
+        self.assert_pcs_success("resource config dummies-master", outdent(
             """\
              Clone: dummies-master
               Meta Attrs: promotable=true
@@ -4817,7 +4817,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         output, retVal = pcs(temp_cib, "resource unclone dummies-master")
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource show")
+        output, retVal = pcs(temp_cib, "resource status")
         ac(output, outdent(
             """\
              Resource Group: dummies
@@ -4833,7 +4833,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         # CIB without pcs.
         wrap_element_by_master(temp_cib, "dummies")
 
-        self.assert_pcs_success("resource show dummies-master", outdent(
+        self.assert_pcs_success("resource config dummies-master", outdent(
             """\
              Clone: dummies-master
               Meta Attrs: promotable=true
@@ -4856,7 +4856,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             Deleting Resource (and group and M/S) - dummy3
             """
         ))
-        output, retVal = pcs(temp_cib, "resource show")
+        output, retVal = pcs(temp_cib, "resource status")
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
@@ -4928,7 +4928,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             "D1", "DG1", "DG2", "GR", "DC", "DC-clone", "DGC1", "DGC2", "GRC",
             "GRC-clone"
         ])
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         cib_in = utils.parseString(cib_original)
@@ -4937,13 +4937,13 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
 
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0
@@ -4977,7 +4977,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["D1", "DG1", "DC", "DGC1"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         cib_in = utils.parseString(cib_original)
@@ -4986,12 +4986,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Meta Attrs: resource-stickiness=0
@@ -5019,7 +5019,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["GRC-clone", "GRC", "DGC1", "DGC2"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         cib_in = utils.parseString(cib_original)
@@ -5028,12 +5028,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -5061,7 +5061,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["GR", "DG1", "DG2", "DC-clone", "DC"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         cib_in = utils.parseString(cib_original)
@@ -5070,12 +5070,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource --full")
+        output, retVal = pcs(temp_cib, "resource config")
         ac(output, status)
         self.assertEqual(0, retVal)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
-        self.assert_pcs_success("resource --full", outdent(
+        self.assert_pcs_success("resource config", outdent(
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -5248,7 +5248,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create dummy ocf:heartbeat:Dummy clone"
         )
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -5268,7 +5268,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             "resource update dummy-clone foo=bar op stop timeout=300",
             "Error: op settings must be changed on base resource, not the clone\n"
         )
-        self.assert_pcs_success("resource show dummy-clone", outdent(
+        self.assert_pcs_success("resource config dummy-clone", outdent(
             """\
              Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
@@ -5297,7 +5297,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
         )
-        self.assert_pcs_success("resource show dummy-master", show)
+        self.assert_pcs_success("resource config dummy-master", show)
         self.assert_pcs_fail(
             "resource update dummy-master op stop timeout=300",
             "Error: op settings must be changed on base resource, not the clone\n"
@@ -5306,7 +5306,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             "resource update dummy-master foo=bar op stop timeout=300",
             "Error: op settings must be changed on base resource, not the clone\n"
         )
-        self.assert_pcs_success("resource show dummy-master", show)
+        self.assert_pcs_success("resource config dummy-master", show)
 
 
 class TransforMasterToClone(ResourceTest):
@@ -5553,7 +5553,7 @@ class BundleShow(BundleCommon):
     def test_docker(self):
         self.fixture_bundle("B1", "docker")
         self.assert_pcs_success(
-            "resource show B1",
+            "resource config B1",
             outdent("""\
              Bundle: B1
               Docker: image=pcs:test
@@ -5564,7 +5564,7 @@ class BundleShow(BundleCommon):
     def test_rkt(self):
         self.fixture_bundle("B1", "rkt")
         self.assert_pcs_success(
-            "resource show B1",
+            "resource config B1",
             outdent("""\
              Bundle: B1
               Rkt: image=pcs:test

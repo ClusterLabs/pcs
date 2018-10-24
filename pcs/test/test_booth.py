@@ -286,14 +286,14 @@ class CreateTest(AssertPcsMixin, TestCase):
         self.pcs_runner.cib_file = TEMP_CIB
 
     def test_sucessfully_create_booth_resource_group(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success("resource show", [
+        self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
         ])
-        self.assert_pcs_success("resource show booth-booth-ip", [
+        self.assert_pcs_success("resource config booth-booth-ip", [
              " Resource: booth-booth-ip (class=ocf provider=heartbeat type=IPaddr2)",
              "  Attributes: ip=192.168.122.120",
              "  Operations: monitor interval=10s timeout=20s (booth-booth-ip-monitor-interval-10s)",
@@ -320,19 +320,19 @@ class RemoveTest(AssertPcsMixin, TestCase):
         self.pcs_runner.cib_file = TEMP_CIB
 
     def test_failed_when_no_booth_configuration_created(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_fail("booth remove", [
             "Error: booth instance 'booth' not found in cib"
         ])
 
     def test_failed_when_multiple_booth_configuration_created(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
             "resource create some-id ocf:pacemaker:booth-site"
             " config=/etc/booth/booth.conf"
         )
-        self.assert_pcs_success("resource show", [
+        self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
@@ -344,9 +344,9 @@ class RemoveTest(AssertPcsMixin, TestCase):
         ])
 
     def test_remove_added_booth_configuration(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success("resource show", [
+        self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
@@ -355,13 +355,13 @@ class RemoveTest(AssertPcsMixin, TestCase):
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
         ])
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
 
     def test_remove_when_group_disabled(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success("resource disable booth-booth-group")
-        self.assert_pcs_success("resource show", [
+        self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped (disabled)",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped (disabled)",
@@ -370,16 +370,16 @@ class RemoveTest(AssertPcsMixin, TestCase):
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
         ])
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
 
     def test_remove_multiple_booth_configuration(self):
-        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
             "resource create some-id ocf:pacemaker:booth-site"
             " config=/etc/booth/booth.conf"
         )
-        self.assert_pcs_success("resource show", [
+        self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",

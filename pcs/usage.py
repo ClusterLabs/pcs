@@ -194,12 +194,13 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    [show [<resource id>] | --full | --groups | --hide-inactive]
-        Show all currently configured resources or if a resource is specified
-        show the options for the configured resource.  If --full is specified,
-        all configured resource options will be displayed.  If --groups is
-        specified, only show groups (and their resources).  If --hide-inactive
+    [status [--hide-inactive]]
+        Show status of all currently configured resources. If --hide-inactive
         is specified, only show active resources.
+
+    config [<resource id>]...
+        Show options of all currently configured resources or if resource ids
+        are specified show the options for the specified resource ids.
 
     list [filter] [--nodesc]
         Show list of all available resource agents (if filter is provided then
@@ -383,6 +384,9 @@ Commands:
         if the changes have been processed or 1 otherwise. If 'n' is not
         specified it defaults to 60 minutes.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
+
+    group list
+        Show all currently configured resource groups and their resources.
 
     group add <group id> <resource id> [resource id] ... [resource id]
               [--before <resource id> | --after <resource id>] [--wait[=n]]
@@ -843,10 +847,13 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    [show [stonith id]] [--full]
-        Show all currently configured stonith devices or if a stonith id is
-        specified show the options for the configured stonith device.  If
-        --full is specified all configured stonith options will be displayed.
+    [status [--hide-inactive]]
+        Show status of all currently configured stonith devices. If
+        --hide-inactive is specified, only show active stonith devices.
+
+    config [<stonith id>]...
+        Show options of all currently configured stonith devices or if stonith
+        ids are specified show the options for the specified stonith device ids.
 
     list [filter] [--nodesc]
         Show list of all available stonith agents (if filter is provided then
@@ -1323,11 +1330,8 @@ Commands:
         View all information about the cluster and resources (--full provides
         more details, --hide-inactive hides inactive resources).
 
-    resources [<resource id> | --full | --groups | --hide-inactive]
-        Show all currently configured resources or if a resource is specified
-        show the options for the configured resource.  If --full is specified,
-        all configured resource options will be displayed.  If --groups is
-        specified, only show groups (and their resources).  If --hide-inactive
+    resources [--hide-inactive]
+        Show status of all currently configured resources. If --hide-inactive
         is specified, only show active resources.
 
     groups
