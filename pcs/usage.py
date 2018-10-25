@@ -1338,9 +1338,6 @@ Commands:
         Show status of all currently configured resources. If --hide-inactive
         is specified, only show active resources.
 
-    groups
-        View currently configured groups and their resources.
-
     cluster
         View current cluster status.
 

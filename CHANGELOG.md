@@ -30,6 +30,9 @@
   `pcs node standby | unstandby` instead
 - Deprecated command `pcs cluster quorum unblock` which was replaced by
   `pcs quorum unblock`
+- Subcommand `pcs status groups` as it was not showing a cluster status but
+  cluster configuration. The same funcionality is still available using command
+  `pcs resource group list`
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])

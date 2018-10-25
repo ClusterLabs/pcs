@@ -33,8 +33,6 @@ def status_cmd(lib, argv, modifiers):
             corosync_status(lib, argv_next, modifiers)
         elif sub_cmd == "cluster":
             cluster_status(lib, argv_next, modifiers)
-        elif sub_cmd == "groups":
-            resource.resource_group_list(lib, argv_next, modifiers)
         elif sub_cmd == "nodes":
             nodes_status(lib, argv_next, modifiers)
         elif sub_cmd == "pcsd":
