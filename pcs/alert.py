@@ -1,70 +1,39 @@
-import sys
 import json
 from functools import partial
 
-from pcs import (
-    usage,
-    utils,
-)
+from pcs import usage
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options, group_by_keywords
 from pcs.cli.common.console_report import indent
-from pcs.lib.errors import LibraryError
+from pcs.cli.common.routing import create_router
 
 parse_cmd_sections = partial(group_by_keywords, implicit_first_group_key="main")
 
-def alert_cmd(*args):
-    argv = args[1]
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
-    try:
-        if sub_cmd == "help":
-            usage.alert(argv)
-        elif sub_cmd == "create":
-            alert_add(*args)
-        elif sub_cmd == "update":
-            alert_update(*args)
-        elif sub_cmd == "remove":
-            alert_remove(*args)
-        elif sub_cmd == "config" or sub_cmd == "show":
-            print_alert_config(*args)
-        elif sub_cmd == "recipient":
-            recipient_cmd(*args)
-        elif sub_cmd == "get_all_alerts":
-            print_alerts_in_json(*args)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "alert", sub_cmd)
-
-
-def recipient_cmd(*args):
-    argv = args[1]
-
-    if not argv:
-        usage.alert(["recipient"])
-        sys.exit(1)
-
-    sub_cmd = argv.pop(0)
-    try:
-        if sub_cmd == "help":
-            usage.alert(["recipient"])
-        elif sub_cmd == "add":
-            recipient_add(*args)
-        elif sub_cmd == "update":
-            recipient_update(*args)
-        elif sub_cmd == "remove":
-            recipient_remove(*args)
-        else:
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "alert", "recipient {0}".format(sub_cmd)
-        )
+def alert_cmd(lib, argv, modifiers):
+    create_router(
+        {
+            "help": lambda _lib, _argv, _modifiers: usage.alert(_argv),
+            "create": alert_add,
+            "update": alert_update,
+            "remove": alert_remove,
+            "config": print_alert_config,
+            "show": print_alert_config,
+            "recipient": create_router(
+                {
+                    "help": lambda _lib, _argv, _modifiers: usage.alert(
+                        ["recipient"]
+                    ),
+                    "add": recipient_add,
+                    "update": recipient_update,
+                    "remove": recipient_remove,
+                },
+                "alert recipient",
+            ),
+            "get_all_alerts": print_alerts_in_json,
+        },
+        "alert",
+        default_cmd="config",
+    )(lib, argv, modifiers)
 
 
 def ensure_only_allowed_options(parameter_dict, allowed_list):
