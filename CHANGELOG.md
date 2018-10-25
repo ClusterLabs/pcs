@@ -168,6 +168,11 @@
     - `pcs resource config` - same as `pcs resource [show] --full` or resource
       id specified instead of --full
   Respective changes have been made to `pcs stonith [show]` command.
+- Previously, `pcs cluster sync` synchronized only corosync configuration
+  across all nodes configured in the cluster. This command will be changed in
+  the future to sync all cluster configuration. New subcommand `pcs cluster
+  sync corosync` has been introduced to sync only corosync configuration. For
+  now, both commands have the same functionality.
 
 ### Security
 - CVE-2018-1086: Debug parameter removal bypass, allowing information disclosure

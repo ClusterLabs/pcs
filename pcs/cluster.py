@@ -24,6 +24,7 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
+from pcs.cli.common.routing import create_router
 import pcs.cli.cluster.command as cluster_command
 from pcs.common import report_codes
 from pcs.common.node_communicator import (
@@ -72,7 +73,13 @@ def cluster_cmd(lib, argv, modifiers):
         elif (sub_cmd == "setup"):
             cluster_setup(lib, argv, modifiers)
         elif (sub_cmd == "sync"):
-            sync_nodes(lib, argv, modifiers)
+            create_router(
+                dict(
+                    corosync=sync_nodes,
+                ),
+                "cluster sync",
+                default_cmd="corosync",
+            )(lib, argv, modifiers)
         elif (sub_cmd == "status"):
             status.cluster_status(lib, argv, modifiers)
         elif (sub_cmd == "pcsd-status"):

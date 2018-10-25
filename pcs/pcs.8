@@ -287,6 +287,9 @@ pcsd\-status [<node>]...
 Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
 .TP
 sync
+Sync cluster configuration (files which are supported by all subcommands of this command) to all cluster nodes.
+.TP
+sync corosync
 Sync corosync configuration to all nodes found from current corosync.conf file.
 .TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]

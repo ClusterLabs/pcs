@@ -687,6 +687,10 @@ Commands:
         configured in the local cluster if no nodes are specified.
 
     sync
+        Sync cluster configuration (files which are supported by all
+        subcommands of this command) to all cluster nodes.
+
+    sync corosync
         Sync corosync configuration to all nodes found from current
         corosync.conf file.
 
