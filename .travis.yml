@@ -11,13 +11,15 @@ env:
     #   pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance
     # difference in url data encoding
     #   pcs.common.test.test_node_communicator.RequestDataUrlEncodeTest.test_with_data
-    # newer version of pacemaker required
+    # newer version of pacemaker required to have the expected format of timeouts in metadata
     #   pcs.test.cib_resource.test_bundle.BundleShow.test_all
     #   pcs.test.cib_resource.test_bundle.BundleShow.test_resource
     #   pcs.test.cib_resource.test_create.SuccessOperations.test_adapt_second_op_interval
     #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_fail_when_server_already_used
     #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success
     #   pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success_no_default_ops
+    #   pcs.test.test_cluster_pcmk_remote.NodeDeleteRemote.test_success_remove_by_host
+    #   pcs.test.test_cluster_pcmk_remote.NodeDeleteRemote.test_success_remove_by_node_name
     #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
     #   pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
     #   pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
@@ -40,6 +42,8 @@ env:
         pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_fail_when_server_already_used
         pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success
         pcs.test.test_cluster_pcmk_remote.NodeAddRemote.test_success_no_default_ops
+        pcs.test.test_cluster_pcmk_remote.NodeDeleteRemote.test_success_remove_by_host
+        pcs.test.test_cluster_pcmk_remote.NodeDeleteRemote.test_success_remove_by_node_name
         pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_host
         pcs.test.test_cluster_pcmk_remote.NodeRemoveRemote.test_success_remove_by_node_name
         pcs.test.test_constraints.ConstraintTest.testMasterSlaveConstraint
