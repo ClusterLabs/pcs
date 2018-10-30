@@ -3,7 +3,11 @@ import shutil
 from unittest import skipUnless, TestCase, skip
 
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import (
+    get_test_resource as rc,
+    outdent,
+    ParametrizedTestMetaClass,
+)
 from pcs.test.tools.pcs_runner import PcsRunner
 
 
@@ -245,13 +249,22 @@ class AddTicketTest(BoothTest):
             "Warning: {0}\n".format(msg),
         )
 
+class DeleteRemoveTicketTest(BoothTest):
+    command = None
 
-class RemoveTicketTest(BoothTest):
     def setUp(self):
         super().setUp()
         self.pcs_runner.cib_file = None
 
-    def test_success_remove_ticket(self):
+    def _test_usage(self):
+        self.assert_pcs_fail(
+            f"booth ticket {self.command}",
+            stdout_start=outdent(f"""
+                Usage: pcs booth <command>
+                    ticket {self.command} <""")
+        )
+
+    def _test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
             "authfile = {0}".format(BOOTH_KEY_FILE),
@@ -260,7 +273,7 @@ class RemoveTicketTest(BoothTest):
             "arbitrator = 3.3.3.3",
             'ticket = "TicketA"',
         ))
-        self.assert_pcs_success("booth ticket remove TicketA")
+        self.assert_pcs_success(f"booth ticket {self.command} TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
             "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
@@ -268,11 +281,23 @@ class RemoveTicketTest(BoothTest):
             "arbitrator = 3.3.3.3",
         ))
 
-    def test_fail_when_ticket_does_not_exist(self):
+    def _test_fail_when_ticket_does_not_exist(self):
         self.assert_pcs_fail(
-            "booth ticket remove TicketA",
+            f"booth ticket {self.command} TicketA",
             "Error: booth ticket name 'TicketA' does not exist\n"
         )
+
+class DeleteTicketTest(
+    DeleteRemoveTicketTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+class RemoveTicketTest(
+    DeleteRemoveTicketTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
 
 @need_booth_resource_agent
 class CreateTest(AssertPcsMixin, TestCase):
@@ -308,8 +333,9 @@ class CreateTest(AssertPcsMixin, TestCase):
                 " resource"
         ])
 
-@need_booth_resource_agent
-class RemoveTest(AssertPcsMixin, TestCase):
+class DeleteRemoveTest(AssertPcsMixin, TestCase):
+    command = None
+
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(None)
@@ -319,13 +345,22 @@ class RemoveTest(AssertPcsMixin, TestCase):
         )
         self.pcs_runner.cib_file = TEMP_CIB
 
-    def test_failed_when_no_booth_configuration_created(self):
+    def _test_usage(self):
+        self.assert_pcs_fail(
+            f"booth {self.command} a b",
+            stdout_start=outdent(f"""
+                Usage: pcs booth <command>
+                    {self.command}
+                """)
+        )
+
+    def _test_failed_when_no_booth_configuration_created(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_fail("booth remove", [
+        self.assert_pcs_fail(f"booth {self.command}", [
             "Error: booth instance 'booth' not found in cib"
         ])
 
-    def test_failed_when_multiple_booth_configuration_created(self):
+    def _test_failed_when_multiple_booth_configuration_created(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
@@ -338,12 +373,12 @@ class RemoveTest(AssertPcsMixin, TestCase):
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
              " some-id	(ocf::pacemaker:booth-site):	Stopped",
         ])
-        self.assert_pcs_fail("booth remove", [
+        self.assert_pcs_fail(f"booth {self.command}", [
             "Error: found more than one booth instance 'booth' in cib, use"
             " --force to override"
         ])
 
-    def test_remove_added_booth_configuration(self):
+    def _test_remove_added_booth_configuration(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success("resource status", [
@@ -351,13 +386,13 @@ class RemoveTest(AssertPcsMixin, TestCase):
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
         ])
-        self.assert_pcs_success("booth remove", [
+        self.assert_pcs_success(f"booth {self.command}", [
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
         ])
         self.assert_pcs_success("resource status", "NO resources configured\n")
 
-    def test_remove_when_group_disabled(self):
+    def _test_remove_when_group_disabled(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success("resource disable booth-booth-group")
@@ -366,13 +401,13 @@ class RemoveTest(AssertPcsMixin, TestCase):
              "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped (disabled)",
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped (disabled)",
         ])
-        self.assert_pcs_success("booth remove", [
+        self.assert_pcs_success(f"booth {self.command}", [
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
         ])
         self.assert_pcs_success("resource status", "NO resources configured\n")
 
-    def test_remove_multiple_booth_configuration(self):
+    def _test_remove_multiple_booth_configuration(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
@@ -385,12 +420,26 @@ class RemoveTest(AssertPcsMixin, TestCase):
              "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
              " some-id	(ocf::pacemaker:booth-site):	Stopped",
         ])
-        self.assert_pcs_success("booth remove --force", [
+        self.assert_pcs_success(f"booth {self.command} --force", [
             "Warning: found more than one booth instance 'booth' in cib",
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
             "Deleting Resource - some-id",
         ])
+
+@need_booth_resource_agent
+class DeleteTest(
+    DeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+@need_booth_resource_agent
+class RemoveTest(
+    DeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
 
 @skip("Untesteable without -f")
 class TicketGrantTest(BoothTest):

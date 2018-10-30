@@ -36,7 +36,7 @@ def stonith_cmd(lib, argv, modifiers):
             stonith_create(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             resource.resource_update(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             resource.resource_remove_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "status":
             resource.resource_status(lib, argv_next, modifiers, stonith=True)

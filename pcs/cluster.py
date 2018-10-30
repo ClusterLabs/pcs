@@ -113,6 +113,11 @@ def cluster_cmd(lib, argv, modifiers):
                 "add-outside": node_add_outside_cluster,
                 "add-remote": cluster_command.node_add_remote,
                 "clear": cluster_command.node_clear,
+                "delete": node_remove,
+                "delete-guest": cluster_command.node_remove_guest,
+                "delete-remote": cluster_command.create_node_remove_remote(
+                    resource.resource_remove
+                ),
                 "remove": node_remove,
                 "remove-guest": cluster_command.node_remove_guest,
                 "remove-remote": cluster_command.create_node_remove_remote(
@@ -1019,7 +1024,6 @@ def node_add_outside_cluster(lib, argv, modifiers):
 
     if not was_successfull:
         raise LibraryError()
-    return
 
 def node_remove(lib, argv, modifiers):
     """
@@ -1070,13 +1074,13 @@ def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
     uid=""
     gid=""
 
-    if (command == "add" or command == "rm") and len(argv) > 0:
+    if command in {"add", "delete", "remove", "rm"} and len(argv) > 0:
         for arg in argv:
             if arg.find('=') == -1:
                 utils.err("uidgid options must be of the form uid=<uid> gid=<gid>")
 
             (k,v) = arg.split('=',1)
-            if k != "uid" and k != "gid":
+            if k not in {"uid", "gid"}:
                 utils.err("%s is not a valid key, you must use uid or gid" %k)
 
             if k == "uid":
@@ -1088,7 +1092,7 @@ def cluster_uidgid(dummy_lib, argv, modifiers, silent_list=False):
 
         if command == "add":
             utils.write_uid_gid_file(uid,gid)
-        elif command == "rm":
+        elif command in {"delete", "remove", "rm"}:
             retval = utils.remove_uid_gid_file(uid,gid)
             if retval == False:
                 utils.err("no uidgid files with uid=%s and gid=%s found" % (uid,gid))

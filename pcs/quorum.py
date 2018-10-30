@@ -47,7 +47,7 @@ def quorum_device_cmd(lib, argv, modifiers):
             quorum_device_add_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "heuristics":
             quorum_device_heuristics_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "remove":
+        elif sub_cmd in {"delete", "remove"}:
             quorum_device_remove_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "status":
             quorum_device_status_cmd(lib, argv_next, modifiers)
@@ -67,7 +67,7 @@ def quorum_device_heuristics_cmd(lib, argv, modifiers):
 
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
-        if sub_cmd == "remove":
+        if sub_cmd in {"delete", "remove"}:
             quorum_device_heuristics_remove_cmd(lib, argv_next, modifiers)
         else:
             sub_cmd = ""

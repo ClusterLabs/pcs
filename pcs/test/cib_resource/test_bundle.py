@@ -302,6 +302,66 @@ class BundleUpdateUpgradeCib(BundleCreateCommon):
 class BundleUpdate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
+    success_command = """
+        resource bundle update B
+        container promoted-max= replicas=6 replicas-per-host=2
+        network control-port= host-interface=eth1
+            ip-range-start=192.168.100.200
+        port-map {remove_command} B-port-map-2000 B-port-map-2002
+        port-map add internal-port=1003 port=2003
+        storage-map {remove_command} B-storage-map B-storage-map-2
+        storage-map add source-dir=/tmp/docker4a target-dir=/tmp/docker4b
+        meta priority=10 is-managed= target-role=Stopped
+    """
+
+    success_xml = """
+        <resources>
+            <bundle id="B">
+                <docker
+                    image="pcs:test"
+                    replicas="6"
+                    replicas-per-host="2"
+                />
+                <network
+                    host-interface="eth1"
+                    host-netmask="24"
+                    ip-range-start="192.168.100.200"
+                >
+                    <port-mapping
+                        id="B-port-map-2001"
+                        internal-port="1001"
+                        port="2001"
+                    />
+                    <port-mapping
+                        id="B-port-map-2003"
+                        internal-port="1003"
+                        port="2003"
+                    />
+                </network>
+                <storage>
+                    <storage-mapping
+                        id="B-storage-map-1"
+                        source-dir="/tmp/docker2a"
+                        target-dir="/tmp/docker2b"
+                    />
+                    <storage-mapping
+                        id="B-storage-map"
+                        source-dir="/tmp/docker4a"
+                        target-dir="/tmp/docker4b"
+                    />
+                </storage>
+                <meta_attributes id="B-meta_attributes">
+                    <nvpair id="B-meta_attributes-priority"
+                        name="priority" value="10" />
+                    <nvpair id="B-meta_attributes-resource-stickiness"
+                        name="resource-stickiness" value="100" />
+                    <nvpair id="B-meta_attributes-target-role"
+                        name="target-role" value="Stopped" />
+                </meta_attributes>
+            </bundle>
+        </resources>
+    """
+
     def fixture_bundle(self, name):
         self.assert_pcs_success(
             "resource bundle create {0} container docker image=pcs:test".format(
@@ -343,7 +403,15 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B storage-map remove",
             "Error: When using 'storage-map' you must specify either 'add' and "
-                "options or 'remove' and id(s)\n"
+                "options or either of 'delete' or 'remove' and id(s)\n"
+        )
+
+    def test_fail_when_missing_args_4(self):
+        self.fixture_bundle("B")
+        self.assert_pcs_fail_regardless_of_force(
+            "resource bundle update B storage-map delete",
+            "Error: When using 'storage-map' you must specify either 'add' and "
+                "options or either of 'delete' or 'remove' and id(s)\n"
         )
 
     def test_bad_id(self):
@@ -353,67 +421,18 @@ class BundleUpdate(BundleCreateCommon):
             "Error: bundle 'B1' does not exist\n"
         )
 
-    def test_success(self):
+    def test_success_delete(self):
         self.fixture_bundle_complex("B")
         self.assert_effect(
-            """
-                resource bundle update B
-                container promoted-max= replicas=6 replicas-per-host=2
-                network control-port= host-interface=eth1
-                    ip-range-start=192.168.100.200
-                port-map remove B-port-map-2000 B-port-map-2002
-                port-map add internal-port=1003 port=2003
-                storage-map remove B-storage-map B-storage-map-2
-                storage-map add source-dir=/tmp/docker4a target-dir=/tmp/docker4b
-                meta priority=10 is-managed= target-role=Stopped
-            """,
-            """
-                <resources>
-                    <bundle id="B">
-                        <docker
-                            image="pcs:test"
-                            replicas="6"
-                            replicas-per-host="2"
-                        />
-                        <network
-                            host-interface="eth1"
-                            host-netmask="24"
-                            ip-range-start="192.168.100.200"
-                        >
-                            <port-mapping
-                                id="B-port-map-2001"
-                                internal-port="1001"
-                                port="2001"
-                            />
-                            <port-mapping
-                                id="B-port-map-2003"
-                                internal-port="1003"
-                                port="2003"
-                            />
-                        </network>
-                        <storage>
-                            <storage-mapping
-                                id="B-storage-map-1"
-                                source-dir="/tmp/docker2a"
-                                target-dir="/tmp/docker2b"
-                            />
-                            <storage-mapping
-                                id="B-storage-map"
-                                source-dir="/tmp/docker4a"
-                                target-dir="/tmp/docker4b"
-                            />
-                        </storage>
-                        <meta_attributes id="B-meta_attributes">
-                            <nvpair id="B-meta_attributes-priority"
-                                name="priority" value="10" />
-                            <nvpair id="B-meta_attributes-resource-stickiness"
-                                name="resource-stickiness" value="100" />
-                            <nvpair id="B-meta_attributes-target-role"
-                                name="target-role" value="Stopped" />
-                        </meta_attributes>
-                    </bundle>
-                </resources>
-            """
+            self.success_command.format(remove_command="delete"),
+            self.success_xml
+        )
+
+    def test_success_remove(self):
+        self.fixture_bundle_complex("B")
+        self.assert_effect(
+            self.success_command.format(remove_command="remove"),
+            self.success_xml
         )
 
     def test_deprecated_masters_set(self):

@@ -5,6 +5,7 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_version,
     outdent,
+    ParametrizedTestMetaClass,
 )
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.pcs_runner import PcsRunner
@@ -187,14 +188,22 @@ Alerts:
         )
 
 
-@skip_unless_alerts_supported
-class RemoveAlertTest(PcsAlertTest):
-    def test_not_existing_alert(self):
+class DeleteRemoveAlertTest(PcsAlertTest):
+    command = None
+
+    def _test_usage(self):
         self.assert_pcs_fail(
-            "alert remove alert1", "Error: alert 'alert1' does not exist\n"
+            f"alert {self.command}",
+            stdout_start=f"\nUsage: pcs alert <command>\n    {self.command} <"
         )
 
-    def test_one(self):
+    def _test_not_existing_alert(self):
+        self.assert_pcs_fail(
+            f"alert {self.command} alert1",
+            "Error: alert 'alert1' does not exist\n"
+        )
+
+    def _test_one(self):
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -211,7 +220,7 @@ class RemoveAlertTest(PcsAlertTest):
                 """
             )
         )
-        self.assert_pcs_success("alert remove alert1")
+        self.assert_pcs_success(f"alert {self.command} alert1")
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -220,7 +229,7 @@ class RemoveAlertTest(PcsAlertTest):
             )
         )
 
-    def test_multiple(self):
+    def _test_multiple(self):
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -241,7 +250,7 @@ class RemoveAlertTest(PcsAlertTest):
                 """
             )
         )
-        self.assert_pcs_success("alert remove alert1 alert3")
+        self.assert_pcs_success(f"alert {self.command} alert1 alert3")
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -249,6 +258,22 @@ class RemoveAlertTest(PcsAlertTest):
                 """
             )
         )
+
+
+@skip_unless_alerts_supported
+class DeleteAlertTest(
+    DeleteRemoveAlertTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+
+@skip_unless_alerts_supported
+class RemoveAlertTest(
+    DeleteRemoveAlertTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
 
 
 @skip_unless_alerts_supported
@@ -475,9 +500,18 @@ Alerts:
         )
 
 
-@skip_unless_alerts_supported
-class RemoveRecipientTest(PcsAlertTest):
-    def test_one(self):
+class DeleteRemoveRecipientTest(PcsAlertTest):
+    command = None
+
+    def _test_usage(self):
+        self.assert_pcs_fail(
+            f"alert recipient {self.command}",
+            stdout_start=outdent(f"""
+                Usage: pcs alert <command>
+                    recipient {self.command} <""")
+        )
+
+    def _test_one(self):
         self.assert_pcs_success("alert create path=test")
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value id=rec"
@@ -491,7 +525,7 @@ class RemoveRecipientTest(PcsAlertTest):
                 """
             )
         )
-        self.assert_pcs_success("alert recipient remove rec")
+        self.assert_pcs_success(f"alert recipient {self.command} rec")
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -500,7 +534,7 @@ class RemoveRecipientTest(PcsAlertTest):
             )
         )
 
-    def test_multiple(self):
+    def _test_multiple(self):
         self.assert_pcs_success("alert create path=test id=alert1")
         self.assert_pcs_success("alert create path=test id=alert2")
         self.assert_pcs_success(
@@ -529,7 +563,9 @@ class RemoveRecipientTest(PcsAlertTest):
                 """
             )
         )
-        self.assert_pcs_success("alert recipient remove rec1 rec2 rec4")
+        self.assert_pcs_success(
+            f"alert recipient {self.command} rec1 rec2 rec4"
+        )
         self.assert_pcs_success(
             "alert config", outdent("""\
                 Alerts:
@@ -541,13 +577,13 @@ class RemoveRecipientTest(PcsAlertTest):
             )
         )
 
-    def test_no_recipient(self):
+    def _test_no_recipient(self):
         self.assert_pcs_success("alert create path=test id=alert1")
         self.assert_pcs_success(
             "alert recipient add alert1 value=rec_value1 id=rec1"
         )
         self.assert_pcs_fail(
-            "alert recipient remove rec1 rec2 rec3", outdent("""\
+            f"alert recipient {self.command} rec1 rec2 rec3", outdent("""\
                 Error: recipient 'rec2' does not exist
                 Error: recipient 'rec3' does not exist
                 """
@@ -562,3 +598,17 @@ class RemoveRecipientTest(PcsAlertTest):
                 """
             )
         )
+
+
+class DeleteRecipientTest(
+    DeleteRemoveRecipientTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+
+class RemoveRecipientTest(
+    DeleteRemoveRecipientTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"

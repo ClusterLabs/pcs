@@ -1,7 +1,8 @@
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.misc import (
-    outdent,
     get_test_resource as rc,
+    outdent,
+    ParametrizedTestMetaClass,
 )
 
 def fixture_nolive_add_report(node_name):
@@ -363,13 +364,8 @@ class NodeAddGuest(RemoteTest):
             output=fixture_nolive_add_report("node-name")
         )
 
-class NodeRemoveRemote(RemoteTest):
-    def test_fail_when_node_does_not_exists(self):
-        self.assert_pcs_fail(
-            "cluster node remove-remote not-existent",
-            "Error: remote node 'not-existent' does not appear to exist in"
-                " configuration\n"
-        )
+class NodeDeleteRemoveRemote(RemoteTest):
+    command = None
 
     def fixture_remote_node(self):
         self.pcs_runner.corosync_conf_opt = None
@@ -436,10 +432,23 @@ class NodeRemoveRemote(RemoteTest):
         """)
         temp_cib.close()
 
-    def test_success_remove_by_host(self):
+    def _test_usage(self):
+        self.assert_pcs_fail(
+            f"cluster node {self.command}",
+            stdout_start=f"\nUsage: pcs cluster node {self.command}..."
+        )
+
+    def _test_fail_when_node_does_not_exists(self):
+        self.assert_pcs_fail(
+            f"cluster node {self.command} not-existent",
+            "Error: remote node 'not-existent' does not appear to exist in"
+                " configuration\n"
+        )
+
+    def _test_success_remove_by_host(self):
         self.fixture_remote_node()
         self.assert_effect(
-            "cluster node remove-remote NODE-HOST",
+            f"cluster node {self.command} NODE-HOST",
             "<resources/>",
             fixture_nolive_remove_report(["NODE-NAME"]) + outdent(
                 """\
@@ -448,10 +457,10 @@ class NodeRemoveRemote(RemoteTest):
             )
         )
 
-    def test_success_remove_by_node_name(self):
+    def _test_success_remove_by_node_name(self):
         self.fixture_remote_node()
         self.assert_effect(
-            "cluster node remove-remote NODE-NAME",
+            f"cluster node {self.command} NODE-NAME",
             "<resources/>",
             fixture_nolive_remove_report(["NODE-NAME"]) + outdent(
                 """\
@@ -460,18 +469,18 @@ class NodeRemoveRemote(RemoteTest):
             )
         )
 
-    def test_refuse_on_duplicit(self):
+    def _test_refuse_on_duplicit(self):
         self.fixture_multiple_remote_nodes()
         self.assert_pcs_fail(
-            "cluster node remove-remote HOST-A",
+            f"cluster node {self.command} HOST-A",
             "Error: multiple resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME', use --force to override\n"
         )
 
-    def test_success_remove_multiple_nodes(self):
+    def _test_success_remove_multiple_nodes(self):
         self.fixture_multiple_remote_nodes()
         self.assert_effect(
-            "cluster node remove-remote HOST-A --force",
+            f"cluster node {self.command} HOST-A --force",
             "<resources/>",
 
             "Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'\n"
@@ -486,7 +495,24 @@ class NodeRemoveRemote(RemoteTest):
             )
         )
 
-class NodeRemoveGuest(RemoteTest):
+
+class NodeDeleteRemote(
+    NodeDeleteRemoveRemote,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete-remote"
+
+
+class NodeRemoveRemote(
+    NodeDeleteRemoveRemote,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove-remote"
+
+
+class NodeDeleteRemoveGuest(RemoteTest):
+    command = None
+
     def fixture_guest_node(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
@@ -517,9 +543,15 @@ class NodeRemoveGuest(RemoteTest):
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
-    def test_fail_when_node_does_not_exists(self):
+    def _test_usage(self):
         self.assert_pcs_fail(
-            "cluster node remove-guest not-existent --force",
+            f"cluster node {self.command}",
+            stdout_start=f"\nUsage: pcs cluster node {self.command}..."
+        )
+
+    def _test_fail_when_node_does_not_exists(self):
+        self.assert_pcs_fail(
+            f"cluster node {self.command} not-existent --force",
             "Error: guest node 'not-existent' does not appear to exist in"
                 " configuration\n"
         )
@@ -527,7 +559,7 @@ class NodeRemoveGuest(RemoteTest):
     def assert_remove_by_identifier(self, identifier):
         self.fixture_guest_node()
         self.assert_effect(
-            "cluster node remove-guest {0}".format(identifier),
+            f"cluster node {self.command} {identifier}",
             """<resources>
                 <primitive class="ocf" id="NODE-ID" provider="heartbeat"
                     type="Dummy"
@@ -542,11 +574,25 @@ class NodeRemoveGuest(RemoteTest):
             fixture_nolive_remove_report(["NODE-NAME"])
         )
 
-    def test_success_remove_by_node_name(self):
+    def _test_success_remove_by_node_name(self):
         self.assert_remove_by_identifier("NODE-NAME")
 
-    def test_success_remove_by_resource_id(self):
+    def _test_success_remove_by_resource_id(self):
         self.assert_remove_by_identifier("NODE-ID")
 
-    def test_success_remove_by_resource_host(self):
+    def _test_success_remove_by_resource_host(self):
         self.assert_remove_by_identifier("NODE-HOST")
+
+
+class NodeDeleteGuest(
+    NodeDeleteRemoveGuest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete-guest"
+
+
+class NodeRemoveGuest(
+    NodeDeleteRemoveGuest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove-guest"

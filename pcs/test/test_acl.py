@@ -428,7 +428,7 @@ Group: group1
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "acl group delete group1")
+        o,r = pcs(temp_cib, "acl group remove group1")
         ac(o,"")
         assert r == 0
 
@@ -456,7 +456,7 @@ User: user2
 """)
         assert r == 0
 
-        o,r = pcs(temp_cib, "acl user delete user2")
+        o,r = pcs(temp_cib, "acl user remove user2")
         ac(o,"")
         assert r == 0
 
@@ -589,15 +589,15 @@ User: user2
         assert r == 0
         ac(o,"")
 
-        o,r = pcs(temp_cib, "acl role delete role3")
+        o,r = pcs(temp_cib, "acl role remove role3")
         assert r == 0
         ac(o,"")
 
-        o,r = pcs(temp_cib, "acl role delete role0")
+        o,r = pcs(temp_cib, "acl role remove role0")
         assert r == 0
         ac(o,"")
 
-        o,r = pcs(temp_cib, "acl role delete role0d")
+        o,r = pcs(temp_cib, "acl role remove role0d")
         assert r == 0
         ac(o,"")
 
@@ -642,6 +642,10 @@ User: user2
         ac(o,"Error: ACL permission 'role4-deny' does not exist\n")
         assert r == 1
 
+        o,r = pcs(temp_cib, "acl permission remove role4-deny")
+        ac(o,"Error: ACL permission 'role4-deny' does not exist\n")
+        assert r == 1
+
         o,r = pcs(temp_cib, "acl show")
         assert r == 0
         ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\nRole: role4\n")
@@ -658,23 +662,23 @@ User: user2
         ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\nRole: role4\n")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl permission delete role1-read")
+        o, r = pcs(temp_cib, "acl permission remove role1-read")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission delete role1-write")
+        o, r = pcs(temp_cib, "acl permission remove role1-write")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission delete role1-deny")
+        o, r = pcs(temp_cib, "acl permission remove role1-deny")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission delete role2-read")
+        o, r = pcs(temp_cib, "acl permission remove role2-read")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission delete role2-write")
+        o, r = pcs(temp_cib, "acl permission remove role2-write")
         ac(o, "")
         self.assertEqual(0, r)
 

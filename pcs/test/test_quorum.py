@@ -5,6 +5,7 @@ from unittest import TestCase
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
+    ParametrizedTestMetaClass,
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
@@ -312,47 +313,70 @@ Warning: invalid heuristics option 'e', allowed options are: interval, mode, syn
         )
 
 
-class DeviceRemoveTest(TestBase):
-    def test_no_device(self):
+class DeviceDeleteRemoveTest(TestBase):
+    command = None
+
+    def _test_no_device(self):
         self.assert_pcs_fail(
-            "quorum device remove",
+            f"quorum device {self.command}",
             "Error: no quorum device is defined in this cluster\n"
         )
 
-    def test_success(self):
+    def _test_success(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
-            "quorum device remove"
+            f"quorum device {self.command}"
         )
         self.assert_pcs_success(
             "quorum config",
             "Options:\n"
         )
 
-    def test_bad_options(self):
+    def _test_bad_options(self):
         self.assert_pcs_fail(
-            "quorum device remove net",
-            stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
-        )
+            f"quorum device {self.command} net",
+            stdout_start=dedent(f"""
+                Usage: pcs quorum <command>
+                    device {self.command}
+                """
+        ))
 
 
-class DeviceHeuristicsRemove(TestBase):
-    def test_no_device(self):
+class DeviceDeleteTest(
+    DeviceDeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+
+class DeviceRemoveTest(
+    DeviceDeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
+
+
+class DeviceHeuristicsDeleteRemove(TestBase):
+    command = None
+
+    def _test_no_device(self):
         self.assert_pcs_fail(
-            "quorum device heuristics remove",
+            f"quorum device heuristics {self.command}",
             "Error: no quorum device is defined in this cluster\n"
         )
 
-    def test_bad_options(self):
+    def _test_bad_options(self):
         self.assert_pcs_fail(
-            "quorum device heuristics remove option",
-            stdout_start="\nUsage: pcs quorum <command>\n    device heuristics "
-                "remove\n"
-        )
+            f"quorum device heuristics {self.command} option",
+            stdout_start=dedent(f"""
+                Usage: pcs quorum <command>
+                    device heuristics {self.command}
+                """
+        ))
 
-    def test_success(self):
+    def _test_success(self):
         self.fixture_conf_qdevice_heuristics()
-        self.assert_pcs_success("quorum device heuristics remove")
+        self.assert_pcs_success(f"quorum device heuristics {self.command}")
         self.assert_pcs_success(
             "quorum config",
             dedent("""\
@@ -363,6 +387,20 @@ class DeviceHeuristicsRemove(TestBase):
                 """
             )
         )
+
+
+class DeviceHeuristicsDelete(
+    DeviceHeuristicsDeleteRemove,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+
+class DeviceHeuristicsRemove(
+    DeviceHeuristicsDeleteRemove,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
 
 
 class DeviceUpdateTest(TestBase):

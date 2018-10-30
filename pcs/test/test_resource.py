@@ -234,36 +234,53 @@ class Resource(TestCase, AssertPcsMixin):
             """
         ))
 
-    def testDeleteResources(self):
-        # Verify deleting resources works
-        # Additional tests are in class BundleDeleteTest
+    def _test_delete_remove_resources(self, command):
+        assert command in {"delete", "remove"}
+
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-            " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
 
-        line = 'resource delete'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output.startswith("\nUsage: pcs resource")
-
         self.assert_pcs_success(
-            "resource delete ClusterIP",
+            f"resource {command} ClusterIP",
             "Deleting Resource - ClusterIP\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource config ClusterIP")
-        assert returnVal == 1
-        assert output == "Error: unable to find resource 'ClusterIP'\n"
+        self.assert_pcs_fail(
+            "resource config ClusterIP",
+            "Error: unable to find resource 'ClusterIP'\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "resource status")
-        assert returnVal == 0
-        assert output == 'NO resources configured\n'
+        self.assert_pcs_success(
+            "resource status",
+            "NO resources configured\n"
+        )
 
         self.assert_pcs_fail(
-            "resource delete ClusterIP",
+            f"resource {command} ClusterIP",
             "Error: Resource 'ClusterIP' does not exist.\n"
         )
+
+    def testDeleteResources(self):
+        # Verify deleting resources works
+        # Additional tests are in class BundleDeleteTest
+        self.assert_pcs_fail(
+            "resource delete",
+            stdout_start="\nUsage: pcs resource delete..."
+        )
+
+        self._test_delete_remove_resources("delete")
+
+    def testRemoveResources(self):
+        # Verify deleting resources works
+        # Additional tests are in class BundleDeleteTest
+        self.assert_pcs_fail(
+            "resource remove",
+            stdout_start="\nUsage: pcs resource remove..."
+        )
+
+        self._test_delete_remove_resources("remove")
 
     def testResourceShow(self):
         self.assert_pcs_success(
@@ -574,42 +591,40 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             """
         ))
 
-    def testRemoveOperation(self):
-        # see also BundleMiscCommands
+    def _test_delete_remove_operation(self, command):
+        assert command in {"delete", "remove"}
+
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
 
-        line = 'resource op add ClusterIP monitor interval=31s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP monitor interval=31s --force'
+        )
 
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP monitor interval=32s --force'
+        )
 
-        line = 'resource op remove ClusterIP-monitor-interval-32s-xxxxx'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == "Error: unable to find operation id: ClusterIP-monitor-interval-32s-xxxxx\n"
+        self.assert_pcs_fail(
+            f'resource op {command} ClusterIP-monitor-interval-32s-xxxxx',
+            "Error: unable to find operation id: "
+                "ClusterIP-monitor-interval-32s-xxxxx\n"
+        )
 
-        line = 'resource op remove ClusterIP-monitor-interval-32s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            f'resource op {command} ClusterIP-monitor-interval-32s'
+        )
 
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            f'resource op {command} ClusterIP monitor interval=30s'
+        )
 
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
+        self.assert_pcs_fail(
+            f'resource op {command} ClusterIP monitor interval=30s',
+            "Error: Unable to find operation matching: monitor interval=30s\n"
+        )
 
         self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
@@ -620,7 +635,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         ))
 
         self.assert_pcs_success(
-            'resource op remove ClusterIP monitor interval=31s'
+            f'resource op {command} ClusterIP monitor interval=31s'
         )
 
         self.assert_pcs_success("resource config ClusterIP", outdent(
@@ -630,31 +645,25 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             """
         ))
 
-        line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP monitor interval=31s'
+        )
 
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP monitor interval=32s --force'
+        )
 
-        line = 'resource op add ClusterIP stop timeout=34s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP stop timeout=34s'
+        )
 
-        line = 'resource op add ClusterIP start timeout=33s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op add ClusterIP start timeout=33s'
+        )
 
-        line = 'resource op remove ClusterIP monitor'
-        output, returnVal = pcs(temp_cib, line)
-        ac(output,"")
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            f'resource op {command} ClusterIP monitor'
+        )
 
         self.assert_pcs_success("resource config ClusterIP", outdent(
             """\
@@ -664,6 +673,24 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
                           start interval=0s timeout=33s (ClusterIP-start-interval-0s)
             """
         ))
+
+    def testDeleteOperation(self):
+        # see also BundleMiscCommands
+        self.assert_pcs_fail(
+            "resource op delete",
+            stdout_start="\nUsage: pcs resource op delete..."
+        )
+
+        self._test_delete_remove_operation("delete")
+
+    def testRemoveOperation(self):
+        # see also BundleMiscCommands
+        self.assert_pcs_fail(
+            "resource op remove",
+            stdout_start="\nUsage: pcs resource op remove..."
+        )
+
+        self._test_delete_remove_operation("remove")
 
     def testUpdateOperation(self):
         self.assert_pcs_success(
@@ -952,7 +979,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o,"NO resources configured\n")
 
-    def testGroupRemoveTest(self):
+    def testGroupUngroup(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")
         assert returnVal == 0
@@ -5627,6 +5654,14 @@ class BundleGroup(BundleCommon):
         self.assert_pcs_fail(
             "resource group add group R",
             "Error: cannot group bundle resources\n"
+        )
+
+    def test_group_delete_primitive(self):
+        self.fixture_bundle("B")
+        self.fixture_primitive("R", "B")
+        self.assert_pcs_fail(
+            "resource group delete B R",
+            "Error: Group 'B' does not exist\n"
         )
 
     def test_group_remove_primitive(self):

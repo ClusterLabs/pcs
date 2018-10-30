@@ -19,6 +19,7 @@ from pcs.test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_version,
     outdent,
+    ParametrizedTestMetaClass,
 )
 from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
@@ -192,7 +193,7 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "constraint remove location-D4-rule")
+        o,r = pcs(temp_cib, "constraint delete location-D4-rule")
         ac(o,"")
         assert r == 0
 
@@ -330,13 +331,40 @@ Ticket Constraints:
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node2")
         assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
-        output, returnVal = pcs(temp_cib, "constraint")
-        assert returnVal == 0
-        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY)\n    Disabled on: node2 (score:-INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
-
         output, returnVal = pcs(temp_cib, "constraint location add location-D5-node1-INFINITY ")
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs constraint"), output
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        assert returnVal == 0
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: D5
+                Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
+                Disabled on: node2 (score:-INFINITY) (id:location-D5-node2--INFINITY)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+        ))
+
+        output, returnVal = pcs(temp_cib, "constraint location delete location-D5-node1-INFINITY")
+        assert returnVal == 0 and output == "", output
+
+        output, returnVal = pcs(temp_cib, "constraint location remove location-D5-node2--INFINITY")
+        assert returnVal == 0 and output == "", output
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        assert returnVal == 0
+        ac(output, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+        ))
 
     def testConstraintRemoval(self):
         self.fixture_resources()
@@ -347,6 +375,9 @@ Ticket Constraints:
         assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint remove blahblah")
+        assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
+
+        output, returnVal = pcs(temp_cib, "constraint delete blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
@@ -414,6 +445,30 @@ Ticket Constraints:
               M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)
               M3-master with M4-master (score:INFINITY)
               M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)
+              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)
+              M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)
+            Ticket Constraints:
+            """
+        ))
+        assert r == 0
+
+        o, r = pcs(temp_cib, "constraint colocation delete M1-master M2-master")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation remove M5-master M6-master")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint")
+        ac(o, outdent(
+            """\
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+              D1 with D3-clone (score:INFINITY)
+              D1 with D2 (score:100)
+              D1 with D2 (score:-100)
+              Master with D5 (score:100)
+              M3-master with M4-master (score:INFINITY)
               M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)
               M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)
             Ticket Constraints:
@@ -555,7 +610,7 @@ Colocation Constraints:
 """)
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation_set_D5_D6")
+        o, r = pcs(temp_cib, "constraint delete pcs_rsc_colocation_set_D5_D6")
         ac(o,"")
         assert r == 0
 
@@ -738,11 +793,15 @@ Colocation Constraints:
         ac(o,"Error: No matching resources found in ordering list\n")
         assert r == 1
 
+        o,r = pcs(temp_cib, "constraint order delete T1")
+        ac(o,"Error: No matching resources found in ordering list\n")
+        assert r == 1
+
         o,r = pcs(temp_cib, "constraint order")
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "constraint order remove T2")
+        o,r = pcs(temp_cib, "constraint order delete T2")
         ac(o,"")
         assert r == 0
 
@@ -750,7 +809,7 @@ Colocation Constraints:
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "constraint order remove T0")
+        o,r = pcs(temp_cib, "constraint order delete T0")
         ac(o,"")
         assert r == 0
 
@@ -983,7 +1042,7 @@ Colocation Constraints:
 Ticket Constraints:
 """)
 
-        o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule")
+        o, r = pcs(temp_cib, "constraint rule delete location-D1-rh7-1-INFINITY-rule")
         assert r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n", o
 
         o, r = pcs(temp_cib, "constraint --full")
@@ -2295,8 +2354,18 @@ class TicketAdd(ConstraintBaseTest):
             "  Master A loss-policy=fence ticket=T",
         ])
 
-class TicketRemoveTest(ConstraintBaseTest):
-    def test_remove_multiple_tickets(self):
+class TicketDeleteRemoveTest(ConstraintBaseTest):
+    command = None
+
+    def _test_usage(self):
+        self.assert_pcs_fail(
+            f"constraint ticket {self.command}",
+            stdout_start=outdent(f"""
+                Usage: pcs constraint [constraints]...
+                    ticket {self.command} <""")
+        )
+
+    def _test_remove_multiple_tickets(self):
         #fixture
         self.assert_pcs_success('constraint ticket add T A')
         self.assert_pcs_success(
@@ -2322,7 +2391,7 @@ class TicketRemoveTest(ConstraintBaseTest):
         ])
 
         #test
-        self.assert_pcs_success("constraint ticket remove T A")
+        self.assert_pcs_success(f"constraint ticket {self.command} T A")
 
         self.assert_pcs_success("constraint ticket show", stdout_full=[
             "Ticket Constraints:",
@@ -2330,14 +2399,25 @@ class TicketRemoveTest(ConstraintBaseTest):
             "    set B setoptions ticket=T",
         ])
 
-    def test_fail_when_no_matching_ticket_constraint_here(self):
+    def _test_fail_when_no_matching_ticket_constraint_here(self):
         self.assert_pcs_success("constraint ticket show", stdout_full=[
             "Ticket Constraints:",
         ])
-        self.assert_pcs_fail("constraint ticket remove T A", [
+        self.assert_pcs_fail(f"constraint ticket {self.command} T A", [
             "Error: no matching ticket constraint found"
         ])
 
+class TicketDeleteTest(
+    TicketDeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "delete"
+
+class TicketRemoveTest(
+    TicketDeleteRemoveTest,
+    metaclass=ParametrizedTestMetaClass
+):
+    command = "remove"
 
 class TicketShow(ConstraintBaseTest):
     def test_show_set(self):

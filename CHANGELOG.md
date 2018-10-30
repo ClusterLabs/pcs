@@ -9,8 +9,6 @@
   versions has been removed.
 - `pcs resource failcount reset` command has been removed as `pcs resource
   cleanup` is doing exactly the same job. ([rhbz#1427273])
-- `pcs cluster node delete`, a deprecated alias to `pcs cluster node remove`,
-  has been removed
 - Deprecated commands `pcs cluster remote-node add | remove` have been removed
   as they were replaced with `pcs cluster node add-guest | remove-guest`
 - Ability to create master resources has been removed as they are deprecated in
@@ -102,6 +100,8 @@
 - Do not crash if unable to load SSL certificate or key, log errors and exit
   gracefully instead ([rhbz#1638852])
 - Fixed several issues in parsing `pcs constraint colocation add` command.
+- All `remove` subcommands now have `delete` aliases and vice versa. Previously,
+  only some of them did and it was mostly undocumented.
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):

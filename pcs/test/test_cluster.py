@@ -75,17 +75,41 @@ class UidGidTest(unittest.TestCase):
         ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
         assert r == 1
 
-        o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid2")
+        o,r = _pcs("cluster uidgid delete uid=testuid2 gid=testgid2")
         assert r == 1
         ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
 
-        o,r = _pcs("cluster uidgid rm uid=testuid gid=testgid2")
+        o,r = _pcs("cluster uidgid remove uid=testuid gid=testgid2")
         assert r == 1
         ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
 
         o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
         assert r == 1
         ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
+
+        o,r = _pcs("cluster uidgid")
+        assert r == 0
+        ac(o, "UID/GID: uid=testuid gid=testgid\n")
+
+        o,r = _pcs("cluster uidgid delete uid=testuid gid=testgid")
+        ac(o, "")
+        assert r == 0
+
+        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        assert r == 0
+        ac(o, "")
+
+        o,r = _pcs("cluster uidgid")
+        assert r == 0
+        ac(o, "UID/GID: uid=testuid gid=testgid\n")
+
+        o,r = _pcs("cluster uidgid remove uid=testuid gid=testgid")
+        ac(o, "")
+        assert r == 0
+
+        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        assert r == 0
+        ac(o, "")
 
         o,r = _pcs("cluster uidgid")
         assert r == 0

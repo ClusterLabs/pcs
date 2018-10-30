@@ -281,7 +281,7 @@
       <description>
         Show and change corosync qdevice configuration.
 
-        pcs commands: quorum device (add | remove | update | status),
+        pcs commands: quorum device ( add | delete | remove | update | status ),
           quorum config
       </description>
     </capability>
@@ -298,14 +298,15 @@
         Show and change corosync qdevice heuristics configuration.
 
         pcs commands: quorum config, quorum device add ... heuristics,
-          quorum device update ... heuristics, quorum device heuristics remove
+          quorum device update ... heuristics,
+          quorum device heuristics ( delete | remove )
       </description>
     </capability>
     <capability id="corosync.quorum.device.model.net" in-pcs="1" in-pcsd="0">
       <description>
         Show and change corosync qdevice model "net" configuration.
 
-        pcs commands: quorum device (add | remove | update | status),
+        pcs commands: quorum device ( add | delete | remove | update | status ),
           quorum config
       </description>
     </capability>
@@ -392,7 +393,7 @@
       <description>
         Remove a node from a cluster.
 
-        pcs commands: cluster node remove
+        pcs commands: cluster node ( delete | remove )
         daemon urls: cluster_remove_nodes
       </description>
     </capability>
@@ -400,7 +401,7 @@
       <description>
         Remove several nodes from a cluster at once.
 
-        pcs commands: cluster node remove
+        pcs commands: cluster node ( delete | remove )
         daemon urls: cluster_remove_nodes
       </description>
     </capability>
@@ -416,7 +417,7 @@
         Add (based on an existing cluster resource) and remove a guest node to
         a cluster. When adding, it is possible to wait for the node to start.
 
-        pcs commands: cluster node ( add-guest | remove-guest )
+        pcs commands: cluster node ( add-guest | delete-guest | remove-guest )
       </description>
     </capability>
     <capability id="node.remote" in-pcs="1" in-pcsd="0">
@@ -425,7 +426,7 @@
         to specify operations and instance and meta attributes for the newly
         created pcmk_remote resource and wait for the new remote node to start.
 
-        pcs commands: cluster node ( add-remote | remove-remote )
+        pcs commands: cluster node ( add-remote | delete-remote | remove-remote )
       </description>
     </capability>
 
@@ -619,7 +620,7 @@
         Create (with or without role ids) and delete ACL groups one at a time.
         Show ACL groups.
 
-        pcs commands: acl group ( create | delete ), acl show
+        pcs commands: acl group ( create | delete | remove ), acl show
       </description>
     </capability>
     <capability id="pcmk.acl.role" in-pcs="1" in-pcsd="1">
@@ -627,8 +628,8 @@
         Create, delete, assign, unassign and show ACL roles, add and delete
         roles' permissions, all one at a time.
 
-        pcs commands: acl role ( create | delete | assign | unassign ),
-          acl permission ( add | delete )
+        pcs commands: acl role ( create | delete | remove | assign | unassign ),
+          acl permission ( add | delete | remove )
         daemon urls: add_acl_role, remove_acl_role
       </description>
     </capability>
@@ -658,7 +659,7 @@
         Create (with or without role ids) and delete ACL users one at a time.
         Show ACL groups.
 
-        pcs commands: acl user ( create | delete ), acl show
+        pcs commands: acl user ( create | delete | remove ), acl show
       </description>
     </capability>
 
@@ -709,7 +710,7 @@
       <description>
         List, view (in a human-readable format) and restore CIB checkpoints.
 
-        pcs commands: config checkpoint ( | view | restore )
+        pcs commands: config checkpoint [ view | restore ]
       </description>
     </capability>
     <capability id="pcmk.cib.set" in-pcs="1" in-pcsd="0">
@@ -734,7 +735,8 @@
         Create and delete a location constraint for one resource.
 
         pcs commands: constraint location ( prefers | avoids ),
-          constraint location remove, constraint remove
+          constraint location ( delete | remove ),
+          constraint ( delete | remove )
         daemon urls: add_constraint_remote (param: c_type=loc),
           remove_constraint_remote
       </description>
@@ -776,15 +778,16 @@
         Add (including options role, rule-id, score-attribute) and remove rules
         to an existing rule location constraint.
 
-        pcs commands: constraint rule ( add | remove )
+        pcs commands: constraint rule ( add | delete | remove )
       </description>
     </capability>
     <capability id="pcmk.constraint.colocation.simple" in-pcs="1" in-pcsd="1">
       <description>
         Create and delete a colocation constraint for a pair of resources.
 
-        pcs commands: constraint colocation add, constraint colocation remove,
-          constraint remove
+        pcs commands: constraint colocation add,
+          constraint colocation ( delete | remove ),
+          constraint ( delete | remove )
         daemon urls: add_constraint_remote (param: c_type=col),
           remove_constraint_remote
       </description>
@@ -800,7 +803,7 @@
       <description>
         Create and delete a colocation constraint for sets of resources.
 
-        pcs commands: constraint colocation set, constraint remove
+        pcs commands: constraint colocation set, constraint ( delete | remove )
         daemon urls: add_constraint_set_remote (param: c_type=col),
           remove_constraint_remote
       </description>
@@ -817,8 +820,8 @@
         Create and delete an order constraint for a pair of resources, including
         specifying resources' action.
 
-        pcs commands: constraint order add, constraint order remove,
-          constraint remove
+        pcs commands: constraint order add, constraint order ( delete | remove ),
+          constraint ( delete | remove )
         daemon urls: add_constraint_remote (param: c_type=ord),
           remove_constraint_remote
       </description>
@@ -851,8 +854,8 @@
         Create and delete a ticket constraint for one resource, including
         specifying a resource role and loss policy.
 
-        pcs commands: constraint ticket add, constraint ticket remove,
-          constraint remove
+        pcs commands: constraint ticket add,
+          constraint ticket ( delete | remove ), constraint ( delete | remove )
         daemon urls: add_constraint_remote (param: c_type=ticket),
           remove_constraint_remote
       </description>
@@ -869,7 +872,7 @@
         Create and delete a ticket constraint for sets of resources, including
         specifying loss policy.
 
-        pcs commands: constraint ticket set, constraint remove
+        pcs commands: constraint ticket set, constraint ( delete | remove )
         daemon urls: add_constraint_set_remote (param: c_type=ticket),
           remove_constraint_remote
       </description>
@@ -890,7 +893,7 @@
         Show and set pacemaker cluster properties, can set multiple properties
         at once.
 
-        pcs commands: prop ( | set | unset )
+        pcs commands: prop [ set | unset ]
         daemon urls: update_cluster_settings
       </description>
     </capability>
@@ -983,7 +986,7 @@
       <description>
         Delete a resource.
 
-        pcs commands: resource delete
+        pcs commands: resource ( delete | remove )
         daemon urls: remove_resource
       </description>
     </capability>
@@ -1055,7 +1058,7 @@
         be deleted based on its id or definition (resource and action and
         options).
 
-        pcs commands: resource op ( add | remove )
+        pcs commands: resource op ( add | delete | remove )
       </description>
     </capability>
 
@@ -1069,7 +1072,8 @@
         * Ungroup - get all resources out of a group and delete the (now empty)
           group
 
-        pcs commands: resource group ( add | remove ), resource ungroup
+        pcs commands: resource group ( add | delete | remove ),
+          resource ungroup
         daemon urls: add_group, resource_ungroup, resource_change_group,
           update_resource
       </description>
@@ -1078,14 +1082,14 @@
       <description>
         Add or remove several resource from a group at once.
 
-        pcs commands: resource group ( add | remove )
+        pcs commands: resource group ( add | delete | remove )
       </description>
     </capability>
     <capability id="pcmk.resource.group.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect.
 
-        pcs commands: resource group ( add | remove ) --wait,
+        pcs commands: resource group ( add | delete | remove ) --wait,
           resource ungroup --wait
       </description>
     </capability>
@@ -1380,7 +1384,7 @@
       <description>
         Delete a stonith resource.
 
-        pcs commands: stonith delete
+        pcs commands: stonith ( delete | remove )
         daemon urls: currently missing, remove_resource is used instead which
           works for now
       </description>
@@ -1457,7 +1461,7 @@
         * add a new stonith level with specified level, node and stonith device
         * remove a stonith level with specified level, node and stonith device
 
-        pcs commands: stonith level ( | add | remove )
+        pcs commands: stonith level [ add | delete | remove ]
         daemon urls: add_fence_level_remote
       </description>
     </capability>
@@ -1465,7 +1469,7 @@
       <description>
         Add or remove a list of stonith to a fencing level.
 
-        pcs commands: stonith level ( add | remove )
+        pcs commands: stonith level ( add | delete | remove )
       </description>
     </capability>
     <capability id="pcmk.stonith.levels.node-attr" in-pcs="1" in-pcsd="0">

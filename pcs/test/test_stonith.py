@@ -16,6 +16,7 @@ from pcs.test.tools.misc import (
     is_minimum_pacemaker_version,
     skip_unless_pacemaker_version,
     outdent,
+    ParametrizedTestMetaClass,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -191,7 +192,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         ))
 
         self.assert_pcs_success(
-            "stonith delete apc-fencing",
+            "stonith remove apc-fencing",
             "Deleting Resource - apc-fencing\n"
         )
 
@@ -558,7 +559,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
 
         self.assert_pcs_success(
-            "stonith delete n2-apc1",
+            "stonith remove n2-apc1",
             "Deleting Resource - n2-apc1\n"
         )
 
@@ -598,7 +599,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 """)
 
         self.assert_pcs_success(
-            "resource delete n1-apc1",
+            "resource remove n1-apc1",
             "Deleting Resource - n1-apc1\n"
         )
 
@@ -1205,15 +1206,24 @@ class LevelClear(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
-class LevelRemove(LevelTestsBase):
+class LevelDeleteRemove(LevelTestsBase):
+    command = None
+
     def setUp(self):
-        super(LevelRemove, self).setUp()
+        super().setUp()
         self.fixture_full_configuration()
 
-    def test_nonexisting_level_node_device(self):
+    def _test_usage(self):
         self.assert_pcs_fail(
-            "stonith level remove 1 rh7-1 F3",
+            f"stonith level {self.command}",
+            stdout_start=outdent(f"""
+                Usage: pcs stonith level {self.command}...
+                    level {self.command} <""")
+        )
+
+    def _test_nonexisting_level_node_device(self):
+        self.assert_pcs_fail(
+            f"stonith level {self.command} 1 rh7-1 F3",
             outdent(
                 """\
                 Error: Fencing level for 'rh7-1' at level '1' with device(s) 'F3' does not exist
@@ -1223,28 +1233,28 @@ class LevelRemove(LevelTestsBase):
         )
         self.assert_pcs_success("stonith level config", self.config)
 
-    def test_nonexisting_level_pattern_device(self):
+    def _test_nonexisting_level_pattern_device(self):
         self.assert_pcs_fail(
-            "stonith level remove 1 regexp%rh7-\d F3",
+            f"stonith level {self.command} 1 regexp%rh7-\d F3",
             "Error: Fencing level for 'rh7-\d' at level '1' with device(s) 'F3' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
         self.assert_pcs_fail(
-            "stonith level remove 3 regexp%rh7-\d F1,F2",
+            f"stonith level {self.command} 3 regexp%rh7-\d F1,F2",
             "Error: Fencing level for 'rh7-\d' at level '3' with device(s) 'F1,F2' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
-    def test_nonexisting_level(self):
+    def _test_nonexisting_level(self):
         self.assert_pcs_fail(
-            "stonith level remove 9",
+            f"stonith level {self.command} 9",
             "Error: Fencing level at level '9' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
-    def test_remove_level(self):
-        self.assert_pcs_success("stonith level remove 1")
+    def _test_remove_level(self):
+        self.assert_pcs_success(f"stonith level {self.command} 1")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(
@@ -1256,74 +1266,92 @@ class LevelRemove(LevelTestsBase):
             ) + "\n"
         )
 
-    def test_remove_level_node(self):
-        self.assert_pcs_success("stonith level remove 1 rh7-2")
+    def _test_remove_level_node(self):
+        self.assert_pcs_success(f"stonith level {self.command} 1 rh7-2")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
         )
 
-    def test_remove_level_pattern(self):
-        self.assert_pcs_success("stonith level remove 3 regexp%rh7-\d")
+    def _test_remove_level_pattern(self):
+        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\d")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
     @skip_unless_fencing_level_attribute_supported
-    def test_remove_level_attrib(self):
+    def _test_remove_level_attrib(self):
         self.assert_pcs_success(
-            "stonith level remove 6 attrib%fencewith=levels2"
+            f"stonith level {self.command} 6 attrib%fencewith=levels2"
         )
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:11]) + "\n"
         )
 
-    def test_remove_level_device(self):
-        self.assert_pcs_success("stonith level remove 1 F2")
+    def _test_remove_level_device(self):
+        self.assert_pcs_success(f"stonith level {self.command} 1 F2")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
         )
 
-    def test_remove_level_devices(self):
-        self.assert_pcs_success("stonith level remove 3 F2 F1")
+    def _test_remove_level_devices(self):
+        self.assert_pcs_success(f"stonith level {self.command} 3 F2 F1")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
-    def test_remove_level_devices_old_syntax(self):
-        self.assert_pcs_success("stonith level remove 3 F2,F1")
+    def _test_remove_level_devices_old_syntax(self):
+        self.assert_pcs_success(f"stonith level {self.command} 3 F2,F1")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
-    def test_remove_level_node_device(self):
-        self.assert_pcs_success("stonith level remove 1 rh7-2 F2")
+    def _test_remove_level_node_device(self):
+        self.assert_pcs_success(f"stonith level {self.command} 1 rh7-2 F2")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
         )
 
-    def test_remove_level_pattern_device(self):
-        self.assert_pcs_success("stonith level remove 3 regexp%rh7-\d F2 F1")
+    def _test_remove_level_pattern_device(self):
+        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\d F2 F1")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
         )
 
     @skip_unless_fencing_level_attribute_supported
-    def test_remove_level_attrib_device(self):
+    def _test_remove_level_attrib_device(self):
         self.assert_pcs_success(
-            "stonith level remove 6 attrib%fencewith=levels2 F3 F1"
+            f"stonith level {self.command} 6 attrib%fencewith=levels2 F3 F1"
         )
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:11]) + "\n"
         )
+
+
+@skip_unless_fencing_level_supported
+class LevelDelete(
+    LevelDeleteRemove,
+    metaclass=ParametrizedTestMetaClass
+
+):
+    command = "delete"
+
+
+@skip_unless_fencing_level_supported
+class LevelRemove(
+    LevelDeleteRemove,
+    metaclass=ParametrizedTestMetaClass
+
+):
+    command = "remove"
 
 
 @skip_unless_fencing_level_supported

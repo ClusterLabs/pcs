@@ -97,6 +97,7 @@ def constraint_cmd(lib, argv, modifiers):
                 command_map = {
                     "set": ticket_command.create_with_set,
                     "add": ticket_command.add,
+                    "delete": ticket_command.remove,
                     "remove": ticket_command.remove,
                     "show": ticket_command.show,
                 }

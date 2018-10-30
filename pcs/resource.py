@@ -102,7 +102,7 @@ def resource_cmd(lib, argv, modifiers):
             resource_update(lib, argv_next, modifiers)
         elif sub_cmd == "meta":
             resource_meta(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             resource_remove_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "status":
             resource_status(lib, argv_next, modifiers)

@@ -111,9 +111,9 @@ def _split_bundle_map_update_op_and_options(
         raise _bundle_map_update_not_valid(map_name)
     op, options = map_arg_list[0], map_arg_list[1:]
     if op == "add":
-        result_parts[op].append(prepare_options(options))
-    elif op == "remove":
-        result_parts[op].extend(options)
+        result_parts["add"].append(prepare_options(options))
+    elif op in {"delete", "remove"}:
+        result_parts["remove"].extend(options)
     else:
         raise _bundle_map_update_not_valid(map_name)
 
@@ -124,7 +124,7 @@ def _bundle_map_update_not_valid(map_name):
     return CmdLineInputError(
         (
             "When using '{map}' you must specify either 'add' and options or "
-            "'remove' and id(s)"
+            "either of 'delete' or 'remove' and id(s)"
         ).format(map=map_name)
     )
 

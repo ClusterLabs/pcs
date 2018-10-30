@@ -99,7 +99,7 @@ def acl_role(lib, argv, modifiers):
     try:
         if sub_cmd == "create":
             role_create(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             role_delete(lib, argv_next, modifiers)
         elif sub_cmd == "assign":
             role_assign(lib, argv_next, modifiers)
@@ -120,7 +120,7 @@ def acl_user(lib, argv, modifiers):
     try:
         if sub_cmd == "create":
             user_create(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             user_delete(lib, argv_next, modifiers)
         else:
             usage.show("acl", ["user"])
@@ -160,7 +160,7 @@ def acl_group(lib, argv, modifiers):
     try:
         if sub_cmd == "create":
             group_create(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             group_delete(lib, argv_next, modifiers)
         else:
             usage.show("acl", ["group"])
@@ -202,7 +202,7 @@ def acl_permission(lib, argv, modifiers):
     try:
         if sub_cmd == "add":
             permission_add(lib, argv_next, modifiers)
-        elif sub_cmd == "delete":
+        elif sub_cmd in {"delete", "remove"}:
             run_permission_delete(lib, argv_next, modifiers)
         else:
             usage.show("acl", ["permission"])

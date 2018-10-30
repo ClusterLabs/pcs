@@ -241,6 +241,10 @@ Commands:
         Deletes the resource, group, bundle or clone (and all resources within
         the group/bundle/clone).
 
+    remove <resource id|group id|bundle id|clone id>
+        Deletes the resource, group, bundle or clone (and all resources within
+        the group/bundle/clone).
+
     enable <resource id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -363,6 +367,13 @@ Commands:
     op add <resource id> <operation action> [operation properties]
         Add operation for specified resource.
 
+    op delete <resource id> <operation action> [<operation properties>...]
+        Remove specified operation (note: you must specify the exact operation
+        properties to properly remove an existing operation).
+
+    op delete <operation id>
+        Remove the specified operation id.
+
     op remove <resource id> <operation action> [<operation properties>...]
         Remove specified operation (note: you must specify the exact operation
         properties to properly remove an existing operation).
@@ -400,6 +411,14 @@ Commands:
         operation to finish (including moving resources if appropriate) and
         then return 0 on success or 1 on error. If 'n' is not specified it
         defaults to 60 minutes.
+
+    group delete <group id> <resource id> [resource id] ... [resource id]
+          [--wait[=n]]
+        Remove the specified resource(s) from the group, removing the group if
+        no resources remain in it. If --wait is specified, pcs will wait up to
+        'n' seconds for the operation to finish (including moving resources if
+        appropriate) and then return 0 on success or 1 on error. If 'n' is not
+        specified it defaults to 60 minutes.
 
     group remove <group id> <resource id> [resource id] ... [resource id]
           [--wait[=n]]
@@ -448,8 +467,8 @@ Commands:
 
     bundle update <bundle id> [container <container options>]
             [network <network options>]
-            [port-map (add <port options>) | (remove <id>...)]...
-            [storage-map (add <storage options>) | (remove <id>...)]...
+            [port-map (add <port options>) | (delete | remove <id>...)]...
+            [storage-map (add <storage options>) | (delete | remove <id>...)]...
             [meta <meta options>]
             [--wait[=n]]
         Add, remove or change options to specified bundle. If you wish to update
@@ -766,6 +785,9 @@ Commands:
                  a watchdog with no-way-out-feature enabled is present. Use
                  --no-watchdog-validation to skip watchdog validation.
 
+    node delete <node name> [<node name>]...
+        Shutdown specified nodes and remove them from the cluster.
+
     node remove <node name> [<node name>]...
         Shutdown specified nodes and remove them from the cluster.
 
@@ -779,6 +801,11 @@ Commands:
         belong to an underlying connection resource (ocf:pacemaker:remote).
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
+    node delete-remote <node identifier>
+        Shutdown specified remote node and remove it from the cluster.
+        The node-identifier can be the name of the node or the address of the
+        node.
+
     node remove-remote <node identifier>
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
@@ -790,6 +817,11 @@ Commands:
         start the cluster on boot.
         Options are remote-addr, remote-port and remote-connect-timeout.
         If --wait is specified, wait up to 'n' seconds for the node to start.
+
+    node delete-guest <node identifier>
+        Shutdown specified guest node and remove it from the cluster.
+        The node-identifier can be the name of the node or the address of the
+        node or id of the resource that is used as the guest node.
 
     node remove-guest <node identifier>
         Shutdown specified guest node and remove it from the cluster.
@@ -807,6 +839,14 @@ Commands:
 
     uidgid add [uid=<uid>] [gid=<gid>]
         Add the specified uid and/or gid to the list of users/groups
+        allowed to connect to corosync.
+
+    uidgid delete [uid=<uid>] [gid=<gid>]
+        Remove the specified uid and/or gid from the list of users/groups
+        allowed to connect to corosync.
+
+    uidgid remove [uid=<uid>] [gid=<gid>]
+        Remove the specified uid and/or gid from the list of users/groups
         allowed to connect to corosync.
 
     uidgid rm [uid=<uid>] [gid=<gid>]
@@ -894,6 +934,9 @@ Commands:
     delete <stonith id>
         Remove stonith id from configuration.
 
+    remove <stonith id>
+        Remove stonith id from configuration.
+
     enable <stonith id>... [--wait[=n]]
         Allow the cluster to use the stonith devices. If --wait is specified,
         pcs will wait up to 'n' seconds for the stonith devices to start and
@@ -936,6 +979,13 @@ Commands:
         attempted in numerical order (starting with 1). If a level succeeds
         (meaning all devices are successfully fenced in that level) then no
         other levels are tried, and the target is considered fenced.
+        Target may be a node name <node_name> or %<node_name> or
+        node%<node_name>, a node name regular expression regexp%<node_pattern>
+        or a node attribute value attrib%<name>=<value>.
+
+    level delete <level> [target] [stonith id]...
+        Removes the fence level for the level, target and/or devices specified.
+        If no target or devices are specified then the fence level is removed.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
@@ -1155,6 +1205,9 @@ Commands:
         <resource_id> or %<resource_id> or resource%<resource_id>, or a
         resource name regular expression regexp%<resource_pattern>.
 
+    location delete <id>
+        Remove a location constraint with the appropriate id.
+
     location remove <id>
         Remove a location constraint with the appropriate id.
 
@@ -1177,6 +1230,9 @@ Commands:
         action=start/promote/demote/stop. Available constraint_options are
         id=<constraint-id>, kind=Optional/Mandatory/Serialize and
         symmetrical=true/false.
+
+    order delete <resource1> [resourceN]...
+        Remove resource from any ordering constraint
 
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
@@ -1204,6 +1260,9 @@ Commands:
         role=Stopped/Started/Master/Slave. Available constraint_options are id
         and either of: score, score-attribute, score-attribute-mangle.
 
+    colocation delete <source resource id> <target resource id>
+        Remove colocation constraints with specified resources.
+
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
 
@@ -1225,8 +1284,14 @@ Commands:
         constraint option is ticket=<ticket>. Optional constraint options are
         id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
+    ticket delete <ticket> <resource id>
+        Remove all ticket constraints with <ticket> from <resource id>.
+
     ticket remove <ticket> <resource id>
         Remove all ticket constraints with <ticket> from <resource id>.
+
+    delete <constraint id>...
+        Remove constraint(s) or constraint rules with the specified id(s).
 
     remove <constraint id>...
         Remove constraint(s) or constraint rules with the specified id(s).
@@ -1250,6 +1315,10 @@ Commands:
         weekdays, yeardays, months, weeks, years, weekyears, moon.
         If score is omitted it defaults to INFINITY. If id is omitted one is
         generated from the constraint id.
+
+    rule delete <rule id>
+        Remove a rule if a rule id is specified, if rule is last rule in its
+        constraint, the constraint will be removed.
 
     rule remove <rule id>
         Remove a rule if a rule id is specified, if rule is last rule in its
@@ -1286,6 +1355,10 @@ Commands:
         Delete the role specified and remove it from any users/groups it was
         assigned to.
 
+    role remove <role id>
+        Delete the role specified and remove it from any users/groups it was
+        assigned to.
+
     role assign <role id> [to] [user|group] <username/group>
         Assign a role to a user or group already created with 'pcs acl
         user/group create'. If there is user and group with the same id and it
@@ -1305,10 +1378,18 @@ Commands:
         Remove the user specified (and roles assigned will be unassigned for
         the specified user).
 
+    user remove <username>
+        Remove the user specified (and roles assigned will be unassigned for
+        the specified user).
+
     group create <group> [<role id>]...
         Create an ACL for the group specified and assign roles to the group.
 
     group delete <group>
+        Remove the group specified (and roles assigned will be unassigned for
+        the specified group).
+
+    group remove <group>
         Remove the group specified (and roles assigned will be unassigned for
         the specified group).
 
@@ -1317,6 +1398,10 @@ Commands:
         Add the listed permissions to the role specified.
 
     permission delete <permission id>
+        Remove the permission id specified (permission id's are listed in
+        parenthesis after permissions in 'pcs acl' output).
+
+    permission remove <permission id>
         Remove the permission id specified (permission id's are listed in
         parenthesis after permissions in 'pcs acl' output).
 """
@@ -1625,8 +1710,14 @@ Commands:
         Example: pcs quorum device add model net algorithm=lms \\
             host=qnetd.internal.example.com
 
+    device heuristics delete
+        Remove all heuristics settings of the configured quorum device.
+
     device heuristics remove
         Remove all heuristics settings of the configured quorum device.
+
+    device delete
+        Remove a quorum device from the cluster.
 
     device remove
         Remove a quorum device from the cluster.
@@ -1696,6 +1787,9 @@ Commands:
         Add new ticket to the current configuration. Ticket options are
         specified in booth manpage.
 
+    ticket delete <ticket>
+        Remove the specified ticket from the current configuration.
+
     ticket remove <ticket>
         Remove the specified ticket from the current configuration.
 
@@ -1706,6 +1800,9 @@ Commands:
     create ip <address>
         Make the cluster run booth service on the specified ip address as
         a cluster resource.  Typically this is used to run booth site.
+
+    delete
+        Remove booth resources created by the "pcs booth create" command.
 
     remove
         Remove booth resources created by the "pcs booth create" command.
@@ -1771,6 +1868,9 @@ Commands:
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
         Update an existing alert handler with specified id.
 
+    delete <alert-id> ...
+        Remove alert handlers with specified ids.
+
     remove <alert-id> ...
         Remove alert handlers with specified ids.
 
@@ -1783,6 +1883,9 @@ Commands:
             [description=<description>] [options [<option>=<value>]...]
             [meta [<meta-option>=<value>]...]
         Update an existing recipient identified by its id.
+
+    recipient delete <recipient-id> ...
+        Remove specified recipients.
 
     recipient remove <recipient-id> ...
         Remove specified recipients.
