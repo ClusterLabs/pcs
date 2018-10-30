@@ -27,11 +27,11 @@ def alert_cmd(lib, argv, modifiers):
                     "update": recipient_update,
                     "remove": recipient_remove,
                 },
-                "alert recipient",
+                ["alert", "recipient"],
             ),
             "get_all_alerts": print_alerts_in_json,
         },
-        "alert",
+        ["alert"],
         default_cmd="config",
     )(lib, argv, modifiers)
 

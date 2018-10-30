@@ -77,7 +77,7 @@ def cluster_cmd(lib, argv, modifiers):
                 dict(
                     corosync=sync_nodes,
                 ),
-                "cluster sync",
+                ["cluster", "sync"],
                 default_cmd="corosync",
             )(lib, argv, modifiers)
         elif (sub_cmd == "status"):
