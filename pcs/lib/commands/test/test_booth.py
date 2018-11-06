@@ -24,6 +24,8 @@ from pcs.lib.external import (
     StopServiceError
 )
 
+# pylint: disable=no-self-use, unused-argument, protected-access
+
 def _booth_env_fixture(name):
     booth_env = mock.MagicMock()
     booth_env.name = name
@@ -349,7 +351,7 @@ class ConfigSyncTest(TestCase):
             )
         )
 
-        commands.config_sync(self.env_assist.get_env(),skip_offline_nodes=True)
+        commands.config_sync(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             [
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
@@ -1267,7 +1269,7 @@ class FindResourceElementsForOperationTest(TestCase):
     @patch_commands("resource.get_remover", mock.MagicMock())
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[1, 2]))
     def test_warn_when_multiple_booth_resources_removed(self):
-        report_processor=MockLibraryReportProcessor()
+        report_processor = MockLibraryReportProcessor()
         commands._find_resource_elements_for_operation(
             mock.MagicMock(report_processor=report_processor),
             "somename",

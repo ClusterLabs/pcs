@@ -30,7 +30,8 @@ class QdeviceTestCase(TestCase):
 
 
 class QdeviceBadModelTest(QdeviceTestCase):
-    def base_test(self, func):
+    @staticmethod
+    def base_test(func):
         assert_raise_library_error(
             func,
             (
@@ -561,7 +562,9 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", False)
-        mock_status_cluster.assert_called_once_with("mock_runner", "name", False)
+        mock_status_cluster.assert_called_once_with(
+            "mock_runner", "name", False
+        )
 
     def test_error_generic_status(
         self, mock_status_generic, mock_status_cluster

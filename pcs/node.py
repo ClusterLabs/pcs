@@ -13,6 +13,7 @@ from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 
+# pylint: disable=len-as-condition, unused-argument
 
 def node_cmd(lib, argv, modifiers):
     if len(argv) < 1:
@@ -183,9 +184,9 @@ def print_node_utilization(filter_node=None, filter_name=None):
         node = node_el.getAttribute("uname")
         if filter_node is not None and node != filter_node:
             continue
-        u = utils.get_utilization_str(node_el, filter_name)
-        if u:
-            utilization[node] = u
+        util_str = utils.get_utilization_str(node_el, filter_name)
+        if util_str:
+            utilization[node] = util_str
     print("Node Utilization:")
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))

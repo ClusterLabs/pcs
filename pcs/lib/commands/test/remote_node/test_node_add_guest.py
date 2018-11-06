@@ -354,7 +354,7 @@ class AddGuest(TestCase):
         ])
 
     def test_changed_options(self):
-        meta_attributes="""
+        meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
                     name="remote-addr" value="node-addr"
@@ -558,19 +558,16 @@ class NotLive(TestCase):
         )
         self.config.env.set_cib_data(str(cib_xml_man))
 
-    def fixture_reports(self, node_name=NODE_NAME):
-        return fixture_reports_not_live_cib(node_name)
-
     def test_addr_specified(self):
         (self.config
             .local.load_cib()
             .local.push_cib()
         )
         node_add_guest(self.env_assist.get_env())
-        self.env_assist.assert_reports(self.fixture_reports())
+        self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_addr_not_specified(self):
-        meta_attributes="""
+        meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
                     name="remote-addr" value="node-addr"
@@ -599,11 +596,11 @@ class NotLive(TestCase):
                 ),
             ]
             +
-            self.fixture_reports()
+            fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_not_specified(self):
-        meta_attributes="""
+        meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
                     name="remote-addr" value="node-name"
@@ -633,11 +630,11 @@ class NotLive(TestCase):
                 ),
             ]
             +
-            self.fixture_reports()
+            fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_specified(self):
-        meta_attributes="""
+        meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
                     name="remote-addr" value="aa"
@@ -654,7 +651,7 @@ class NotLive(TestCase):
             .local.push_cib(meta_attributes=meta_attributes)
         )
         node_add_guest(self.env_assist.get_env(), options={"remote-addr": "aa"})
-        self.env_assist.assert_reports(self.fixture_reports())
+        self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_validate_values(self):
         (self.config

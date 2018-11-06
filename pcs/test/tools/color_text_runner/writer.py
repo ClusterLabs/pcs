@@ -10,7 +10,8 @@ from pcs.test.tools.color_text_runner.format import (
 )
 
 
-class Writer(object):
+class Writer:
+    # pylint: disable=invalid-name
     def __init__(
         self, stream, descriptions, traceback_highlight=False, fast_info=False,
     ):

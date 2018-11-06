@@ -110,10 +110,10 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
     node_value_dict -- dictionary, keys: node names, values: some velue
     default_value -- some default value
      """
-    return dict([
-        (target.label, node_value_dict.get(target.label, default_value))
+    return {
+        target.label: node_value_dict.get(target.label, default_value)
         for target in target_list
-    ])
+    }
 
 
 def enable_sbd(
@@ -121,6 +121,7 @@ def enable_sbd(
     default_device_list=None, node_device_dict=None, allow_unknown_opts=False,
     ignore_offline_nodes=False, no_watchdog_validation=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Enable SBD on all nodes in cluster.
 
@@ -152,7 +153,7 @@ def enable_sbd(
         node_device_dict = {}
     if not default_watchdog:
         default_watchdog = settings.sbd_watchdog_default
-    sbd_options = dict([(opt.upper(), val) for opt, val in sbd_options.items()])
+    sbd_options = {opt.upper(): val for opt, val in sbd_options.items()}
 
     full_watchdog_dict = _get_full_target_dict(
         target_list, watchdog_dict, default_watchdog
@@ -326,6 +327,7 @@ def get_cluster_sbd_config(lib_env):
 
 
 def get_local_sbd_config(lib_env):
+    # pylint: disable=unused-argument
     """
     Returns local SBD config as dictionary.
 

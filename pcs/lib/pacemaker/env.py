@@ -3,7 +3,7 @@ from pcs.lib.env_file import RealFile
 from pcs import settings
 
 
-class PacemakerEnv(object):
+class PacemakerEnv:
     def __init__(self):
         """
         callable get_cib should return cib as lxml tree

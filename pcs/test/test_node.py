@@ -17,6 +17,8 @@ from pcs.test.tools.pcs_runner import (
 
 from pcs import utils
 
+# pylint: disable=invalid-name, line-too-long
+
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
 
@@ -474,7 +476,8 @@ class NodeAttributeTest(TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
-    def fixture_attrs(self, nodes, attrs=None):
+    @staticmethod
+    def fixture_attrs(nodes, attrs=None):
         attrs = dict() if attrs is None else attrs
         xml_lines = ['<nodes>']
         for node_id, node_name in enumerate(nodes, 1):

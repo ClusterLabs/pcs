@@ -64,7 +64,7 @@ def set_keyfile_access(file_path):
     except EnvironmentError as e:
         raise report_keyfile_io_error(file_path, "chmod", e)
 
-class BoothEnv(object):
+class BoothEnv:
     def __init__(self, report_processor, env_data):
         self.__report_processor = report_processor
         self.__name = (

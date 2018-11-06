@@ -76,7 +76,7 @@ class StonithWatchdogTimeoutAction(
         )
         if report is None:
             self._on_success()
-            return
+            return []
         self._report(report)
         return self._get_next_list()
 
@@ -256,8 +256,8 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                     report_list.append(reports.sbd_device_is_not_block_device(
                         device["path"], node_label
                     ))
-                # TODO maybe we can check whenever device is initialized by sbd (by
-                # running 'sbd -d <dev> dump;')
+                # TODO maybe we can check whenever device is initialized by sbd
+                # (by running 'sbd -d <dev> dump;')
         except (ValueError, KeyError, TypeError):
             report_list.append(reports.invalid_response_format(node_label))
         if report_list:

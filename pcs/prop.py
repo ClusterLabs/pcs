@@ -10,7 +10,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
 def property_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         argv = ["list"]
 
     try:
@@ -21,7 +21,7 @@ def property_cmd(lib, argv, modifiers):
             set_property(lib, argv, modifiers)
         elif sub_cmd == "unset":
             unset_property(lib, argv, modifiers)
-        elif sub_cmd == "list" or sub_cmd == "show":
+        elif sub_cmd in ("list", "show"):
             list_property(lib, argv, modifiers)
         elif sub_cmd == "get_cluster_properties_definition":
             print_cluster_properties_definition(lib, argv, modifiers)
@@ -33,12 +33,13 @@ def property_cmd(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(e, "property", sub_cmd)
 
 
-def set_property(dummy_lib, argv, modifiers):
+def set_property(lib, argv, modifiers):
     """
     Options:
       * --force - allow unknown options
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("--force", "-f")
     if not argv:
         raise CmdLineInputError()
@@ -93,8 +94,9 @@ def unset_property(lib, argv, modifiers):
       * --force - no error when removing not existing properties
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("--force", "-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     cib_dom = utils.get_cib_dom()
@@ -109,6 +111,7 @@ def list_property(lib, argv, modifiers):
       * --all - list all properties
       * --defaults - list only default values of properties
     """
+    del lib
     modifiers.ensure_only_supported("--defaults", "--all", "-f")
     if len(argv) > 1:
         raise CmdLineInputError()
@@ -137,7 +140,7 @@ def list_property(lib, argv, modifiers):
             properties = configured_properties
 
     print("Cluster Properties:")
-    for prop,val in sorted(properties.items()):
+    for prop, val in sorted(properties.items()):
         print(" {0}: {1}".format(prop, val))
 
 def get_default_properties():
@@ -151,10 +154,11 @@ def get_default_properties():
     return parameters
 
 
-def print_cluster_properties_definition(dummy_lib, argv, modifiers):
+def print_cluster_properties_definition(lib, argv, modifiers):
     """
     Options: no options
     """
+    del lib
     modifiers.ensure_only_supported()
     if not argv:
         raise CmdLineInputError()

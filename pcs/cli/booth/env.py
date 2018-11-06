@@ -53,14 +53,14 @@ def middleware_config(name, config_path, key_path):
         env.booth = create_booth_env()
         try:
             result_of_next = next_in_line(env, *args, **kwargs)
-        except LibraryEnvError as e:
+        except LibraryEnvError as err:
             missing_file = env_file.MissingFileCandidateInfo
 
-            env_file.evaluate_for_missing_files(e, [
+            env_file.evaluate_for_missing_files(err, [
                 missing_file(BOOTH_CONFIG, "Booth config file", config_path),
                 missing_file(BOOTH_KEY, "Booth key file", key_path),
             ])
-            raise e
+            raise err
         flush(env.booth["modified_env"])
         return result_of_next
 

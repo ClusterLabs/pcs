@@ -1,6 +1,6 @@
-from lxml import etree
 import os.path
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -19,6 +19,8 @@ import pcs.lib.pacemaker.live as lib
 from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
 
+# pylint: disable=no-self-use
+
 def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
     runner = mock.MagicMock(spec_set=CommandRunner)
     runner.run.return_value = (stdout, stderr, returncode)
@@ -27,7 +29,8 @@ def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
 
 
 class LibraryPacemakerTest(TestCase):
-    def path(self, name):
+    @staticmethod
+    def path(name):
         return os.path.join(settings.pacemaker_binaries, name)
 
     def crm_mon_cmd(self):
@@ -141,7 +144,9 @@ class GetCibXmlTest(LibraryPacemakerTest):
         expected_stdout = "some info"
         # yes, the numbers do not match, tested and verified with
         # pacemaker-2.0.0-1.fc29.1.x86_64
-        expected_stderr = "Call cib_query failed (-6): No such device or address"
+        expected_stderr = (
+            "Call cib_query failed (-6): No such device or address"
+        )
         expected_retval = 105
         scope = "test_scope"
         mock_runner = get_runner(
@@ -278,6 +283,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
         )
 
 class UpgradeCibTest(TestCase):
+    # pylint: disable=protected-access
     def test_success(self):
         mock_runner = get_runner("", "", 0)
         lib._upgrade_cib(mock_runner)
@@ -510,7 +516,7 @@ class RemoveNode(LibraryPacemakerTest):
         expected_stderr = "expected stderr"
         mock_runner = get_runner("", expected_stderr, 1)
         assert_raise_library_error(
-            lambda: lib.remove_node(mock_runner, "NODE_NAME") ,
+            lambda: lib.remove_node(mock_runner, "NODE_NAME"),
             (
                 Severity.ERROR,
                 report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,

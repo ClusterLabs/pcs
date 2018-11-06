@@ -5,13 +5,15 @@ from pcs.test.tools.misc import get_test_resource as rc
 from pcs import utils
 
 __pcs_location = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ),
     "pcs_for_tests"
 )
 _temp_cib = rc("temp-cib.xml")
 
 
-class PcsRunner(object):
+class PcsRunner:
     def __init__(
         self, cib_file=_temp_cib, corosync_conf_file=None,
         corosync_conf_opt=None

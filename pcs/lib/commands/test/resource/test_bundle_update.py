@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from functools import partial
 from textwrap import dedent
 from unittest import TestCase
@@ -17,7 +18,7 @@ from pcs.test.tools.misc import (
 )
 
 
-TIMEOUT=10
+TIMEOUT = 10
 
 get_env_tools = partial(
     get_env_tools,

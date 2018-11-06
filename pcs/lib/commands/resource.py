@@ -167,7 +167,7 @@ def _check_special_cases(
 
 def create(
     env, resource_id, resource_agent_name,
-    operations, meta_attributes, instance_attributes,
+    operation_list, meta_attributes, instance_attributes,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -176,13 +176,14 @@ def create(
     wait=False,
     allow_not_suitable_command=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create resource in a cib.
 
     LibraryEnvironment env provides all for communication with externals
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
-    list of dict operations contains attributes for each entered operation
+    list of dict operation_list contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
     dict instance_attributes contains attributes for
         primitive/instance_attributes
@@ -229,7 +230,7 @@ def create(
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
-            operations, meta_attributes, instance_attributes,
+            operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -239,7 +240,7 @@ def create(
 
 def create_as_clone(
     env, resource_id, resource_agent_name,
-    operations, meta_attributes, instance_attributes, clone_meta_options,
+    operation_list, meta_attributes, instance_attributes, clone_meta_options,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -248,13 +249,14 @@ def create_as_clone(
     wait=False,
     allow_not_suitable_command=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create resource in a clone
 
     LibraryEnvironment env provides all for communication with externals
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
-    list of dict operations contains attributes for each entered operation
+    list of dict operation_list contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
     dict instance_attributes contains attributes for
         primitive/instance_attributes
@@ -304,7 +306,7 @@ def create_as_clone(
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
-            operations, meta_attributes, instance_attributes,
+            operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -319,7 +321,7 @@ def create_as_clone(
 
 def create_in_group(
     env, resource_id, resource_agent_name, group_id,
-    operations, meta_attributes, instance_attributes,
+    operation_list, meta_attributes, instance_attributes,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -330,6 +332,7 @@ def create_in_group(
     wait=False,
     allow_not_suitable_command=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create resource in a cib and put it into defined group
 
@@ -337,7 +340,7 @@ def create_in_group(
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
     string group_id is identificator for group to put primitive resource inside
-    list of dict operations contains attributes for each entered operation
+    list of dict operation_list contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
     bool allow_absent_agent is a flag for allowing agent that is not installed
         in a system
@@ -385,7 +388,7 @@ def create_in_group(
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
-            operations, meta_attributes, instance_attributes,
+            operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -402,7 +405,7 @@ def create_in_group(
 
 def create_into_bundle(
     env, resource_id, resource_agent_name,
-    operations, meta_attributes, instance_attributes,
+    operation_list, meta_attributes, instance_attributes,
     bundle_id,
     allow_absent_agent=False,
     allow_invalid_operation=False,
@@ -413,13 +416,14 @@ def create_into_bundle(
     allow_not_suitable_command=False,
     allow_not_accessible_resource=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create a new resource in a cib and put it into an existing bundle
 
     LibraryEnvironment env provides all for communication with externals
     string resource_id is identifier of resource
     string resource_agent_name contains name for the identification of agent
-    list of dict operations contains attributes for each entered operation
+    list of dict operation_list contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
     dict instance_attributes contains attributes for
         primitive/instance_attributes
@@ -470,7 +474,7 @@ def create_into_bundle(
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
-            operations, meta_attributes, instance_attributes,
+            operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -503,6 +507,7 @@ def bundle_create(
     ensure_disabled=False,
     wait=False,
 ):
+    # pylint: disable=too-many-arguments
     """
     Create a new bundle containing no resources
 
@@ -579,6 +584,7 @@ def bundle_update(
     force_options=False,
     wait=False,
 ):
+    # pylint: disable=too-many-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 
@@ -602,9 +608,9 @@ def bundle_update(
     storage_map_remove = storage_map_remove or []
     meta_attributes = meta_attributes or {}
 
-    required_cib_version=Version(2, 8, 0)
+    required_cib_version = Version(2, 8, 0)
     if "promoted-max" in container_options:
-        required_cib_version=Version(3, 0, 0)
+        required_cib_version = Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
@@ -788,6 +794,7 @@ def manage(env, resource_ids, with_monitor=False):
 def get_failcounts(
     env, resource=None, node=None, operation=None, interval=None
 ):
+    # pylint: disable=redefined-outer-name
     """
     List resources failcounts, optionally filtered by a resource, node or op
 

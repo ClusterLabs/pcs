@@ -1,11 +1,8 @@
-import sys
-
 from pcs import usage
 from pcs import utils
 from pcs.cli.booth import command
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.routing import create_router
-from pcs.lib.errors import LibraryError
 from pcs.resource import resource_remove, resource_restart
 
 

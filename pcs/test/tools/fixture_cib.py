@@ -1,12 +1,13 @@
 import logging
-from lxml import etree
 import os
 from unittest import mock
+from lxml import etree
 
 from pcs.lib.external import CommandRunner
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.xml import etree_to_str
 
+# pylint: disable=line-too-long
 
 def wrap_element_by_master(cib_file, resource_id, master_id=None):
     cib_tree = etree.parse(cib_file, etree.XMLParser(huge_tree=True)).getroot()
@@ -128,14 +129,14 @@ def _find_in(cib_tree, element_xpath):
     return element
 
 def remove(element_xpath):
-    def remove(cib_tree):
+    def _remove(cib_tree):
         xpath_list = (
             [element_xpath] if isinstance(element_xpath, str) else element_xpath
         )
         for xpath in xpath_list:
             element_to_remove = _find_in(cib_tree, xpath)
             element_to_remove.getparent().remove(element_to_remove)
-    return remove
+    return _remove
 
 def put_or_replace(parent_xpath, new_content):
     #This tranformation makes sense in "configuration" section only. In this
@@ -266,5 +267,5 @@ def _cannot_multireplace(tag, parent_xpath, cib_tree):
         (
             "Cannot replace '{element}' in '{parent}' because '{parent}'"
             " contains more than one '{element}' in given cib:\n{cib}"
-        ).format( element=tag, parent=parent_xpath, cib=etree_to_str(cib_tree))
+        ).format(element=tag, parent=parent_xpath, cib=etree_to_str(cib_tree))
     )

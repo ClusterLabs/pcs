@@ -10,6 +10,7 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
+# pylint: disable=line-too-long
 
 EMPTY_CIB = rc("cib-empty.xml")
 TEMP_CIB = rc("temp-cib.xml")
@@ -46,6 +47,7 @@ def ensure_booth_config_not_exists():
         os.remove(BOOTH_KEY_FILE)
 
 class BoothMixin(AssertPcsMixin):
+    # pylint: disable=invalid-name, arguments-differ
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)

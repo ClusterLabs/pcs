@@ -10,7 +10,7 @@ def show_calls(name_list, call_list):
     ])
 
 
-class Queue(object):
+class Queue:
     def __init__(self, call_list_builder=None):
         if not call_list_builder:
             call_list_builder = CallListBuilder()
@@ -76,7 +76,7 @@ class Queue(object):
             .format(type_of_call, real_call_info)
         )
 
-class CallListBuilder(object):
+class CallListBuilder:
     def __init__(self):
         self.__call_list = []
         self.__name_list = []
@@ -196,7 +196,8 @@ class CallListBuilder(object):
             )
         )
 
-    def __type_of_call_is_not_specified(self, call):
+    @staticmethod
+    def __type_of_call_is_not_specified(call):
         return AssertionError(
             "Class {0}.{1} must have the attribute 'type' with no-falsy value."
             .format(call.__module__, call.__class__.__name__)

@@ -3,7 +3,7 @@ from pcs.test.tools.assertions import prepare_diff
 
 CALL_TYPE_PUSH_COROSYNC_CONF = "CALL_TYPE_PUSH_COROSYNC_CONF"
 
-class Call(object):
+class Call:
     type = CALL_TYPE_PUSH_COROSYNC_CONF
 
     def __init__(self, corosync_conf_text, skip_offline_targets):
@@ -19,6 +19,7 @@ def get_push_corosync_conf(call_queue):
     def push_corosync_conf(
         lib_env, corosync_conf_facade, skip_offline_nodes=False
     ):
+        # pylint: disable=unused-argument
         i, expected_call = call_queue.take(CALL_TYPE_PUSH_COROSYNC_CONF)
 
         if not isinstance(corosync_conf_facade, ConfigFacade):

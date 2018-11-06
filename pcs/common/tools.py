@@ -1,6 +1,6 @@
+import threading
 from collections import namedtuple
 from lxml import etree
-import threading
 
 def run_parallel(worker, data_list):
     thread_list = []

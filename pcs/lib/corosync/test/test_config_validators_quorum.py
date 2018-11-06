@@ -7,6 +7,7 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 class BaseQuorumOptions():
+    # pylint: disable=no-member
     def test_no_options(self):
         has_qdevice = False
         assert_report_item_list_equal(
@@ -202,6 +203,7 @@ class CreateQuorumOptions(BaseQuorumOptions, TestCase):
 
 
 class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
+    # pylint: disable=no-self-use
     def setUp(self):
         self.validator = (
             lambda options, has_qdevice:
@@ -1014,8 +1016,8 @@ class UpdateQuorumDevice(TestCase):
                 {
                     "port": "12345",
                 },
-                { },
-                { },
+                {},
+                {},
                 self.node_ids
             ),
             [
@@ -1030,10 +1032,8 @@ class UpdateQuorumDevice(TestCase):
                     "host": "",
                     "algorithm": "",
                 },
-                {
-                },
-                {
-                },
+                {},
+                {},
                 self.node_ids
             ),
             [
@@ -1060,8 +1060,8 @@ class UpdateQuorumDevice(TestCase):
                     "host": "",
                     "algorithm": "",
                 },
-                { },
-                { },
+                {},
+                {},
                 self.node_ids,
                 force_options=True
             ),

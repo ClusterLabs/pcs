@@ -16,6 +16,7 @@ def add_level(
     reporter, topology_el, resources_el, level, target_type, target_value,
     devices, cluster_status_nodes, force_device=False, force_node=False
 ):
+    # pylint: disable=too-many-arguments
     """
     Validate and add a new fencing level. Raise LibraryError if not valid.
 
@@ -172,6 +173,8 @@ def verify(reporter, topology_el, resources_el, cluster_status_nodes):
             allow_force=False
         )
 
+# TODO: fix
+# pylint: disable=inconsistent-return-statements
 def _validate_level(reporter, level):
     try:
         candidate = int(level)

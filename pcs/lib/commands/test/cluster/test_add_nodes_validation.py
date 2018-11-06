@@ -1,5 +1,6 @@
-from functools import partial
+# pylint: disable=too-many-lines
 import json
+from functools import partial
 from unittest import TestCase
 
 from pcs import settings
@@ -1128,7 +1129,8 @@ class ClusterStatus(TestCase):
             ]
         )
 
-    def fixture_get_host_info_communication(self):
+    @staticmethod
+    def fixture_get_host_info_communication():
         return [
             dict(
                 label="new1",
@@ -1329,14 +1331,16 @@ class ClusterStatus(TestCase):
             ]
         )
 
-    def fixture_sbd_check_input(self, suffix, has_wd=True):
+    @staticmethod
+    def fixture_sbd_check_input(suffix, has_wd=True):
         return [
             ("watchdog", f"/dev/watchdog{suffix}" if has_wd else ""),
             ("device_list", json.dumps([f"/dev/sda{suffix}"])),
         ]
 
+    @staticmethod
     def fixture_sbd_check_output(
-        self, suffix, sbd_installed=True, wd_exists=True, wd_is_supported=True,
+        suffix, sbd_installed=True, wd_exists=True, wd_is_supported=True,
         device_exists=True, device_block=True, has_wd=True,
     ):
         result = {

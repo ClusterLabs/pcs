@@ -27,9 +27,10 @@ class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
     def assert_cib_not_pushed(self):
         self.assertEqual(0, self.mock_env.push_cib.call_count)
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 class CibAclSection(TestCase):
     def test_push_cib_on_success(self):
+        # pylint: disable=no-self-use
         env = mock.MagicMock()
         env.get_cib = mock.Mock(return_value="cib")
         with cmd_acl.cib_acl_section(env):
@@ -46,7 +47,7 @@ class CibAclSection(TestCase):
         env.get_cib.assert_called_once_with(cmd_acl.REQUIRED_CIB_VERSION)
         env.push_cib.assert_not_called()
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.validate_permissions")
 @mock.patch("pcs.lib.cib.acl.create_role")
 @mock.patch("pcs.lib.cib.acl.add_permissions_to_role")
@@ -73,7 +74,7 @@ class CreateRoleTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.remove_role")
 class RemoveRoleTest(AclCommandsTest):
     def test_success(self, mock_remove):
@@ -83,7 +84,7 @@ class RemoveRoleTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.find_target_or_group")
 @mock.patch("pcs.lib.cib.acl.assign_role")
 class AssignRoleNotSpecific(AclCommandsTest, ExtendedAssertionsMixin):
@@ -96,7 +97,7 @@ class AssignRoleNotSpecific(AclCommandsTest, ExtendedAssertionsMixin):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.find_target")
 @mock.patch("pcs.lib.cib.acl.assign_role")
 class AssignRoleToTargetTest(AclCommandsTest):
@@ -107,7 +108,7 @@ class AssignRoleToTargetTest(AclCommandsTest):
         mock_assign.assert_called_once_with(self.cib, "role_id", "target_el")
         self.assert_same_cib_pushed()
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.find_group")
 @mock.patch("pcs.lib.cib.acl.assign_role")
 class AssignRoleToGroupTest(AclCommandsTest):
@@ -118,7 +119,7 @@ class AssignRoleToGroupTest(AclCommandsTest):
         mock_assign.assert_called_once_with(self.cib, "role_id", "group_el")
         self.assert_same_cib_pushed()
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.unassign_role")
 @mock.patch("pcs.lib.cib.acl.find_target_or_group")
 class UnassignRoleNotSpecificTest(AclCommandsTest):
@@ -133,7 +134,7 @@ class UnassignRoleNotSpecificTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.unassign_role")
 @mock.patch("pcs.lib.cib.acl.find_target")
 class UnassignRoleFromTargetTest(AclCommandsTest):
@@ -148,7 +149,7 @@ class UnassignRoleFromTargetTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.unassign_role")
 @mock.patch("pcs.lib.cib.acl.find_group")
 class UnassignRoleFromGroupTest(AclCommandsTest):
@@ -163,7 +164,7 @@ class UnassignRoleFromGroupTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.create_target")
 @mock.patch("pcs.lib.cib.acl.assign_all_roles")
 class CreateTargetTest(AclCommandsTest):
@@ -178,7 +179,7 @@ class CreateTargetTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.create_group")
 @mock.patch("pcs.lib.cib.acl.assign_all_roles")
 class CreateGroupTest(AclCommandsTest):
@@ -193,7 +194,7 @@ class CreateGroupTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.remove_target")
 class RemoveTargetTest(AclCommandsTest):
     def test_success(self, mock_remove):
@@ -203,7 +204,7 @@ class RemoveTargetTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.remove_group")
 class RemoveGroupTest(AclCommandsTest):
     def test_success(self, mock_remove):
@@ -213,7 +214,7 @@ class RemoveGroupTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.validate_permissions")
 @mock.patch("pcs.lib.cib.acl.provide_role")
 @mock.patch("pcs.lib.cib.acl.add_permissions_to_role")
@@ -228,7 +229,7 @@ class AddPermissionTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.remove_permission")
 class RemovePermission(AclCommandsTest):
     def test_success(self, mock_remove):
@@ -241,7 +242,7 @@ class RemovePermission(AclCommandsTest):
 @mock.patch("pcs.lib.cib.acl.get_target_list")
 @mock.patch("pcs.lib.cib.acl.get_group_list")
 @mock.patch("pcs.lib.cib.acl.get_role_list")
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x:x))
+@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 class GetConfigTest(AclCommandsTest):
     def test_success(self, mock_role, mock_group, mock_target):
         mock_role.return_value = "role"

@@ -1,5 +1,5 @@
-from OpenSSL import crypto
 import time
+from OpenSSL import crypto
 
 def cert_date_format(timestamp):
     return str.encode(time.strftime("%Y%m%d%H%M%SZ", time.gmtime(timestamp)))

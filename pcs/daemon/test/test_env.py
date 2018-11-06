@@ -185,7 +185,10 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         pcsd_dir = partial(join_path, settings.pcsd_exec_location)
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_DISABLE_GUI: "true"},
-            specific_env_values={env.PCSD_DISABLE_GUI: True, "has_errors": True},
+            specific_env_values={
+                env.PCSD_DISABLE_GUI: True,
+                "has_errors": True,
+            },
             errors=[
                 f"Ruby gem location '{pcsd_dir(settings.pcsd_gem_path)}'"
                     " does not exist"

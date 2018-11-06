@@ -13,6 +13,7 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.lib.commands import fencing_topology as lib
 
+# pylint: disable=no-self-use
 
 create_lib_env = partial(
     LibraryEnvironment,

@@ -13,7 +13,7 @@ from pcs import settings
 if settings.pcs_bundled_pacakges_dir not in sys.path:
     sys.path.insert(0, settings.pcs_bundled_pacakges_dir)
 
-# pylint: disable=unused-import
+# pylint: disable=unused-import, wrong-import-position
 from pcs.daemon.run import main as daemon
 try:
     # It is possible the package `pcs.snmp` is not installed. `pcsd` does not

@@ -38,9 +38,11 @@ class AppTest(AsyncHTTPTestCase):
         return Application(self.get_routes())
 
     def get_routes(self):
+        # pylint: disable=no-self-use
         return []
 
     def fetch(self, path, raise_error=False, **kwargs):
+        # pylint: disable=arguments-differ
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
         return super().fetch(path, raise_error=raise_error, **kwargs)
@@ -71,7 +73,10 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.body, self.wrapper.body)
 
 class UserAuthInfo:
-    def __init__(self, valid=False, groups=GROUPS):
+    # pylint: disable=too-few-public-methods
+    def __init__(self, valid=False, groups=None):
+        if groups is None:
+            groups = GROUPS
         self.valid = valid
         self.groups = groups
 

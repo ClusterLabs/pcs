@@ -4,6 +4,7 @@ from pcs.common.tools import xml_fromstring
 
 class XmlFromstring(TestCase):
     def test_large_xml(self):
+        # pylint: disable=no-self-use
         #it raises on a huge xml without the flag huge_tree=True
         #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
         xml_fromstring(large_xml)

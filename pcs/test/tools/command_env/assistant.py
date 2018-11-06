@@ -139,7 +139,7 @@ def patch_env(call_queue, config, init_env):
 
     return unpatch
 
-class EnvAssistant(object):
+class EnvAssistant:
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self, config=None, test_case=None,
@@ -204,6 +204,7 @@ class EnvAssistant(object):
             # occurs, any changes to corosync.conf are done just in memory and
             # nothing gets reported. So an explicit check is necessary.
             corosync_conf_orig = self.__original_mocked_corosync_conf
+            # pylint: disable=protected-access
             corosync_conf_env = self._env._corosync_conf_data
             if (
                 corosync_conf_orig
@@ -223,7 +224,7 @@ class EnvAssistant(object):
     def get_env(self):
         self.__call_queue = CallQueue(self.__config.calls)
         #pylint: disable=attribute-defined-outside-init
-        self._env =  LibraryEnvironment(
+        self._env = LibraryEnvironment(
             mock.MagicMock(logging.Logger),
             MockLibraryReportProcessor(),
             cib_data=self.__config.env.cib_data,

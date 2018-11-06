@@ -6,7 +6,7 @@ from pcs.lib import reports
 from pcs.lib.errors import ReportItemSeverity, LibraryError, LibraryEnvError
 
 
-class GhostFile(object):
+class GhostFile:
     is_live = False
     def __init__(self, file_role, content=None, is_binary=False):
         self.__file_role = file_role
@@ -30,9 +30,11 @@ class GhostFile(object):
         return self.__content is not None
 
     def remove(self, silence_no_existence):
+        # pylint: disable=no-self-use, unused-argument
         raise AssertionError("Remove GhostFile is not supported.")
 
     def write(self, content, file_operation=None):
+        # pylint: disable=unused-argument
         """
         callable file_operation is there only for RealFile compatible interface
             it has no efect
@@ -42,6 +44,7 @@ class GhostFile(object):
     def assert_no_conflict_with_existing(
         self, report_processor, can_overwrite_existing=False
     ):
+        # pylint: disable=unused-argument
         self.__no_existing_file_expected = True
         self.__can_overwrite_existing_file = can_overwrite_existing
 
@@ -54,12 +57,12 @@ class GhostFile(object):
         }
 
 
-class RealFile(object):
+class RealFile:
     is_live = True
     def __init__(self, file_role, file_path, is_binary=False):
         self.__file_role = file_role
         self.__file_path = file_path
-        self.__is_binary=is_binary
+        self.__is_binary = is_binary
 
     def assert_no_conflict_with_existing(
         self, report_processor, can_overwrite_existing=False

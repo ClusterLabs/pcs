@@ -47,8 +47,8 @@ def create(parent, resource_set):
         "pcs_rsc_set_{0}".format("_".join(resource_set["ids"]))
     )
 
-    for id in resource_set["ids"]:
-        etree.SubElement(element, "resource_ref").attrib["id"] = id
+    for _id in resource_set["ids"]:
+        etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
     return element
 

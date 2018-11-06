@@ -7,11 +7,12 @@ from pcs.test.tools.command_env.config_runner import RunnerConfig
 from pcs.test.tools.command_env.config_http import HttpConfig
 from pcs.test.tools.command_env.config_fs import FsConfig
 
-class Spy(object):
+class Spy:
     def __init__(self, known_hosts):
         self.known_hosts = known_hosts
 
-class Config(object):
+class Config:
+    # pylint: disable=invalid-name
     def __init__(self):
         self.__calls = CallListBuilder()
         self.runner = self.__wrap_helper(

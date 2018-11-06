@@ -77,7 +77,8 @@ class Wrapper:
         self.__https_proxy = https_proxy
         self.__no_proxy = no_proxy
 
-    def get_sinatra_request(self, request: HTTPServerRequest):
+    @staticmethod
+    def get_sinatra_request(request: HTTPServerRequest):
         host, port = split_host_and_port(request.host)
         return {"env": {
             "PATH_INFO": request.path,

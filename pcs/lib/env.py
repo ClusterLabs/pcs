@@ -45,8 +45,8 @@ from pcs.lib.xml_tools import etree_to_str
 
 MIN_FEATURE_SET_VERSION_FOR_DIFF = Version(3, 0, 9)
 
-class LibraryEnvironment(object):
-    # pylint: disable=too-many-instance-attributes
+class LibraryEnvironment:
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     def __init__(
         self,
@@ -61,6 +61,7 @@ class LibraryEnvironment(object):
         known_hosts_getter=None,
         request_timeout=None,
     ):
+        # pylint: disable=too-many-arguments, unused-argument
         self._logger = logger
         self._report_processor = report_processor
         self._user_login = user_login
@@ -72,7 +73,7 @@ class LibraryEnvironment(object):
         )
         #pacemaker is currently not mocked and it provides only an access to
         #the authkey
-        self._pacemaker =  PacemakerEnv()
+        self._pacemaker = PacemakerEnv()
         self._request_timeout = request_timeout
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move

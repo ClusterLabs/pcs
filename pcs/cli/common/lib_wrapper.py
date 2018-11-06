@@ -105,6 +105,7 @@ def get_module(env, middleware_factory, name):
 
 
 def load_module(env, middleware_factory, name):
+    # pylint: disable=too-many-return-statements, too-many-branches
     if name == "acl":
         return bind_all(
             env,
@@ -409,6 +410,7 @@ def load_module(env, middleware_factory, name):
     raise Exception("No library part '{0}'".format(name))
 
 class Library():
+    # pylint: disable=too-few-public-methods
     def __init__(self, env, middleware_factory):
         self.env = env
         self.middleware_factory = middleware_factory

@@ -107,6 +107,11 @@ class GetHostInfo(
 class RunActionBase(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
+    _request_url = None
+    _response_key = None
+    _force_code = None
+    _code_message_map = None
+
     def __init__(
         self, report_processor, action_definition,
         skip_offline_targets=False, allow_fails=False,
@@ -127,6 +132,17 @@ class RunActionBase(
         raise NotImplementedError()
 
     def _is_success(self, action_response):
+        raise NotImplementedError()
+
+    def _failure_report(
+        self, target_label, action, reason, severity, forceable
+    ):
+        raise NotImplementedError()
+
+    def _success_report(self, target_label, action):
+        raise NotImplementedError()
+
+    def _start_report(self, action_list, target_label_list):
         raise NotImplementedError()
 
     def _get_request_data(self):
@@ -185,40 +201,67 @@ class RunActionBase(
 
 
 class ServiceAction(RunActionBase):
+    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         self._request_url = "remote/manage_services"
         self._response_key = "actions"
         self._force_code = report_codes.SKIP_ACTION_ON_NODES_ERRORS
-        self._start_report = reports.service_commands_on_nodes_started
-        self._success_report = reports.service_command_on_node_success
-        self._failure_report = reports.service_command_on_node_error
         self._code_message_map = {"fail": "Operation failed."}
+
+    def _failure_report(
+        self, target_label, action, reason, severity, forceable
+    ):
+        return reports.service_command_on_node_error(
+            target_label, action, reason, severity, forceable
+        )
+
+    def _success_report(self, target_label, action):
+        return reports.service_command_on_node_success(target_label, action)
+
+    def _start_report(self, action_list, target_label_list):
+        return reports.service_commands_on_nodes_started(
+            action_list, target_label_list
+        )
 
     def _is_success(self, action_response):
         return action_response.code == "success"
 
 
 class FileActionBase(RunActionBase):
-    #pylint: disable=abstract-method
+    #pylint: disable=abstract-method, too-many-ancestors
     def _init_properties(self):
         self._response_key = "files"
         self._force_code = report_codes.SKIP_FILE_DISTRIBUTION_ERRORS
 
 
 class DistributeFiles(FileActionBase):
+    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super(DistributeFiles, self)._init_properties()
         self._request_url = "remote/put_file"
-        self._start_report = reports.files_distribution_started
-        self._success_report = reports.file_distribution_success
-        self._failure_report = reports.file_distribution_error
         self._code_message_map = {"conflict": "File already exists"}
+
+    def _failure_report(
+        self, target_label, action, reason, severity, forceable
+    ):
+        return reports.file_distribution_error(
+            target_label, action, reason, severity, forceable
+        )
+
+    def _success_report(self, target_label, action):
+        return reports.file_distribution_success(target_label, action)
+
+    def _start_report(self, action_list, target_label_list):
+        return reports.files_distribution_started(
+            action_list, target_label_list
+        )
 
     def _is_success(self, action_response):
         return action_response.code in ["written", "rewritten", "same_content"]
 
 
 class DistributeFilesWithoutForces(DistributeFiles):
+    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         # We don't want to allow any kind of force or skip, therefore all force
@@ -229,19 +272,33 @@ class DistributeFilesWithoutForces(DistributeFiles):
 
 
 class RemoveFiles(FileActionBase):
+    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super(RemoveFiles, self)._init_properties()
         self._request_url = "remote/remove_file"
-        self._start_report = reports.files_remove_from_nodes_started
-        self._success_report = reports.file_remove_from_node_success
-        self._failure_report = reports.file_remove_from_node_error
         self._code_message_map = {}
+
+    def _failure_report(
+        self, target_label, action, reason, severity, forceable
+    ):
+        return reports.file_remove_from_node_error(
+            target_label, action, reason, severity, forceable
+        )
+
+    def _success_report(self, target_label, action):
+        return reports.file_remove_from_node_success(target_label, action)
+
+    def _start_report(self, action_list, target_label_list):
+        return reports.files_remove_from_nodes_started(
+            action_list, target_label_list
+        )
 
     def _is_success(self, action_response):
         return action_response.code in ["deleted", "not_found"]
 
 
 class RemoveFilesWithoutForces(RemoveFiles):
+    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         # We don't want to allow any kind of force or skip, therefore all force
@@ -327,6 +384,7 @@ class UpdateKnownHosts(
     ):
         super().__init__(report_processor)
         self._json_data = dict(
+            # pylint: disable=consider-using-dict-comprehension
             known_hosts_add=dict(
                 [host.to_known_host_dict() for host in known_hosts_to_add]
             ),

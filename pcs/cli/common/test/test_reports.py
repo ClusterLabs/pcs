@@ -10,7 +10,7 @@ class BuildMessageFromReportTest(TestCase):
     def test_returns_default_message_when_code_not_in_map(self):
         info = {"first": "FIRST"}
         self.assertEqual(
-            "Unknown report: SOME info: {0}force text".format(str(info)) ,
+            "Unknown report: SOME info: {0}force text".format(str(info)),
             build_message_from_report(
                 {},
                 ReportItem("SOME", info),

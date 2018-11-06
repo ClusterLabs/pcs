@@ -9,6 +9,7 @@ from pcs.lib.resource_agent import StonithAgent
 
 
 def __can_load_xvm_fence_agent():
+    # pylint: disable=bare-except
     try:
         runner = CommandRunner(logging.getLogger("test"), ReportProcessor())
         StonithAgent(runner, "fence_xvm").validate_metadata()

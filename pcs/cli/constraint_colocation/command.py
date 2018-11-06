@@ -1,3 +1,4 @@
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_colocation import console_report
 
@@ -34,6 +35,8 @@ def show(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--full")
+    if argv:
+        raise CmdLineInputError
     print("\n".join(command.show(
          "Colocation Constraints:",
         lib.constraint_colocation.show,

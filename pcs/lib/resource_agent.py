@@ -1,7 +1,7 @@
-from collections import namedtuple
-from lxml import etree
 import os
 import re
+from collections import namedtuple
+from lxml import etree
 
 from pcs import settings
 from pcs.common import report_codes
@@ -10,6 +10,8 @@ from pcs.lib import reports, validate
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.pacemaker.values import is_true
 
+# TODO: fix
+# pylint: disable=no-self-use
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
@@ -322,6 +324,7 @@ def _find_valid_agent_by_name(
     report_processor, runner, name, PresentAgentClass, AbsentAgentClass,
     absent_agent_supported=True
 ):
+    # pylint: disable=invalid-name
     try:
         return PresentAgentClass(runner, name).validate_metadata()
     except (InvalidResourceAgentName, InvalidStonithAgentName) as e:
@@ -589,11 +592,11 @@ class Agent():
         # get resulting set of agent's parameters
         final_parameters = dict(current_parameters)
         for name, value in new_parameters.items():
-            if len(value) < 1:
+            if value:
+                final_parameters[name] = value
+            else:
                 if name in final_parameters:
                     del final_parameters[name]
-            else:
-                final_parameters[name] = value
 
         # report unknown parameters
         report_items.extend(
@@ -683,6 +686,7 @@ class Agent():
         return action_list
 
     def _is_cib_default_action(self, action):
+        # pylint: disable=unused-argument
         return False
 
     def get_cib_default_actions(self, necessary_only=False):
@@ -952,9 +956,11 @@ class AbsentAgentMixin():
         return "<resource-agent/>"
 
     def validate_parameters_create(self, parameters, force=False):
+        # pylint: disable=unused-argument
         return []
 
     def validate_parameters_update(
+        # pylint: disable=unused-argument
         self,
         current_parameters,
         new_parameters,
@@ -1091,6 +1097,7 @@ class StonithAgent(CrmAgent):
         return filtered
 
     def _get_fenced_metadata(self):
+        # pylint: disable=protected-access
         if not self.__class__._fenced_metadata:
             self.__class__._fenced_metadata = FencedMetadata(self._runner)
         return self.__class__._fenced_metadata

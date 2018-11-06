@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib import sections
@@ -23,7 +23,8 @@ class Get(TestCase):
             """
         )
 
-    def assert_element_content(self, section_element, expected_xml):
+    @staticmethod
+    def assert_element_content(section_element, expected_xml):
         assert_xml_equal(etree_to_str(section_element), expected_xml)
 
     def test_get_existing_mandatory(self):

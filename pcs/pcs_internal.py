@@ -72,6 +72,7 @@ def report_item_to_dict(report_item):
     )
 
 def main():
+    # pylint: disable=broad-except
     argv = sys.argv[1:]
     if argv:
         _exit("input_error", status_msg="No arguments allowed")

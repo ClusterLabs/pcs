@@ -11,21 +11,21 @@ GROUPS = ["group1", "group2"]
 
 
 class AssertMixin:
-    def assert_vanila_session(self, session):
-        self.assertIsNone(session.username)
-        self.assertFalse(session.is_authenticated)
-        self.assertIsNone(session.ajax_id)
-        self.assertEqual(session.groups, [])
+    def assert_vanila_session(self, _session):
+        self.assertIsNone(_session.username)
+        self.assertFalse(_session.is_authenticated)
+        self.assertIsNone(_session.ajax_id)
+        self.assertEqual(_session.groups, [])
 
-    def assert_authenticated_session(self, session, username, groups):
-        self.assertEqual(session.username, username)
-        self.assertEqual(session.groups, groups)
-        self.assertTrue(session.is_authenticated)
-        self.assertTrue(session.ajax_id is not None)
+    def assert_authenticated_session(self, _session, username, groups):
+        self.assertEqual(_session.username, username)
+        self.assertEqual(_session.groups, groups)
+        self.assertTrue(_session.is_authenticated)
+        self.assertTrue(_session.ajax_id is not None)
 
-    def assert_login_failed_session(self, session, username):
-        self.assertEqual(session.username, username)
-        self.assertFalse(session.is_authenticated)
+    def assert_login_failed_session(self, _session, username):
+        self.assertEqual(_session.username, username)
+        self.assertFalse(_session.is_authenticated)
 
 PatchSessionMixin = create_setup_patch_mixin(session)
 

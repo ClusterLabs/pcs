@@ -18,9 +18,11 @@ from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
+# pylint: disable=too-many-branches, too-many-nested-blocks, too-many-locals, superfluous-parens, too-many-statements
+
 def status_cmd(lib, argv, modifiers):
     try:
-        if len(argv) < 1:
+        if not argv:
             full_status(lib, argv, modifiers)
             sys.exit(0)
 
@@ -42,7 +44,7 @@ def status_cmd(lib, argv, modifiers):
         elif sub_cmd == "quorum":
             quorum_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "resources":
-            resource.resource_show(lib, argv_next, modifiers)
+            resource.resource_status(lib, argv_next, modifiers)
         elif sub_cmd == "xml":
             xml_status(lib, argv_next, modifiers)
         else:
@@ -158,10 +160,10 @@ def status_stonith_check(modifiers):
                     break
             if not stonith_enabled:
                 break
-        for resource in conf.getElementsByTagName("primitive"):
-            if resource.getAttribute("class") == "stonith":
-                stonith_devices.append(resource)
-                for attribs in resource.getElementsByTagName(
+        for resource_el in conf.getElementsByTagName("primitive"):
+            if resource_el.getAttribute("class") == "stonith":
+                stonith_devices.append(resource_el)
+                for attribs in resource_el.getElementsByTagName(
                     "instance_attributes"
                 ):
                     for nvpair in attribs.getElementsByTagName("nvpair"):
@@ -171,7 +173,7 @@ def status_stonith_check(modifiers):
                             nvpair.getAttribute("value")
                         ):
                             stonith_devices_id_action.append(
-                                resource.getAttribute("id")
+                                resource_el.getAttribute("id")
                             )
                         if (
                             nvpair.getAttribute("name") == "method"
@@ -179,7 +181,7 @@ def status_stonith_check(modifiers):
                             nvpair.getAttribute("value") == "cycle"
                         ):
                             stonith_devices_id_method_cycle.append(
-                                resource.getAttribute("id")
+                                resource_el.getAttribute("id")
                             )
 
     if not modifiers.is_specified("-f"):
@@ -226,6 +228,7 @@ def nodes_status(lib, argv, modifiers):
 
     NOTE: modifiers check is in subcommand
     """
+    del lib
     if len(argv) == 1 and (argv[0] == "config"):
         modifiers.ensure_only_supported("-f", "--corosync_conf")
         if utils.hasCorosyncConf():
@@ -342,16 +345,17 @@ def cluster_status(lib, argv, modifiers):
             first_empty_line = True
             continue
         else:
-            print("",line)
+            print("", line)
 
     if not modifiers.is_specified("-f") and utils.hasCorosyncConf():
         print()
         print_pcsd_daemon_status(lib, modifiers)
 
-def corosync_status(dummy_lib, argv, modifiers):
+def corosync_status(lib, argv, modifiers):
     """
     Options: no options
     """
+    del lib
     modifiers.ensure_only_supported()
     if argv:
         raise CmdLineInputError()
@@ -361,11 +365,12 @@ def corosync_status(dummy_lib, argv, modifiers):
     else:
         print(output.rstrip())
 
-def xml_status(dummy_lib, argv, modifiers):
+def xml_status(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
@@ -407,7 +412,7 @@ def print_pcsd_daemon_status(lib, modifiers):
         if err_msgs:
             for msg in err_msgs:
                 print(msg)
-        if 0 == exitcode:
+        if exitcode == 0:
             print(std_out)
         else:
             print("Unable to get PCSD status")
@@ -419,13 +424,14 @@ def check_nodes(node_list, prefix=""):
     Commandline options:
       * --request-timeout - HTTP timeout for node authorization check
     """
-    STATUS_ONLINE = 0
+    online_code = 0
     status_desc_map = {
-        STATUS_ONLINE: 'Online',
+        online_code: 'Online',
         3: 'Unable to authenticate'
     }
     status_list = []
     def report(node, returncode, output):
+        del output
         print("{0}{1}: {2}".format(
             prefix,
             node,
@@ -437,7 +443,7 @@ def check_nodes(node_list, prefix=""):
         utils.create_task_list(report, utils.checkAuthorization, node_list)
     )
 
-    return any([status != STATUS_ONLINE for status in status_list])
+    return any([status != online_code for status in status_list])
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
@@ -446,11 +452,12 @@ def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
     Options:
       * --request-timeout - HTTP timeout for node authorization check
     """
+    del lib
     modifiers.ensure_only_supported("--request-timeout")
     bad_nodes = False
-    if len(argv) == 0:
+    if not argv:
         nodes = utils.get_corosync_conf_facade().get_nodes_names()
-        if len(nodes) == 0:
+        if not nodes:
             utils.err("no nodes found in corosync.conf")
         bad_nodes = check_nodes(nodes, "  ")
     else:

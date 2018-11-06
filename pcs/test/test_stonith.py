@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import os
 import shutil
 from unittest import mock, TestCase
@@ -22,6 +23,8 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
+
+# pylint: disable=invalid-name, line-too-long, bad-whitespace, anomalous-backslash-in-string
 
 STONITH_TMP = rc("test_stonith")
 if not os.path.exists(STONITH_TMP):

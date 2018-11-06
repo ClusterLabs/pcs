@@ -82,8 +82,8 @@ class LibraryReportProcessorToConsole(SimpleReportProcessorInterface):
             if item.severity == ReportItemSeverity.ERROR
         ])
 
-    def report_list(self, report_item_list):
-        return self._send(report_item_list)
+    def report_list(self, report_list):
+        return self._send(report_list)
 
     def process(self, report_item):
         self.append(report_item)

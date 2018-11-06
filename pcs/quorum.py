@@ -9,7 +9,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
 def quorum_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         sub_cmd, argv_next = "config", []
     else:
         sub_cmd, argv_next = argv[0], argv[1:]
@@ -38,7 +38,7 @@ def quorum_cmd(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
 
 def quorum_device_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -62,7 +62,7 @@ def quorum_device_cmd(lib, argv, modifiers):
         )
 
 def quorum_device_heuristics_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -185,7 +185,7 @@ def _parse_quorum_device_groups(arg_list):
     for keyword in keyword_list:
         if keyword not in groups:
             continue
-        if len(groups[keyword]) == 0:
+        if not groups[keyword]:
             raise CmdLineInputError(
                 "No {0} options specified".format(keyword)
             )
@@ -314,7 +314,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
         about this action
     """
     modifiers.ensure_only_supported("--force")
-    if len(argv) > 0:
+    if argv:
         raise CmdLineInputError()
 
     output, retval = utils.run(

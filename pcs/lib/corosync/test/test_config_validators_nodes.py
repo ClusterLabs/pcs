@@ -7,10 +7,11 @@ from pcs.lib.corosync.node import (
     CorosyncNode as CNode,
     CorosyncNodeAddress as CAddr
 )
-#from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.custom_mock import patch_getaddrinfo
+
+# pylint: disable=no-self-use
 
 class AddNodes(TestCase):
     fixture_coronodes_1_link = [

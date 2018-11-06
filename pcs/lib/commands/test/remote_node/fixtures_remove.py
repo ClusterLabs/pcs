@@ -5,6 +5,7 @@ OFFLINE_ERROR_MSG = "Could not resolve host"
 
 class EnvConfigMixin():
     def __init__(self, call_collection, wrap_helper, config):
+        # pylint: disable=unused-argument
         self.__calls = call_collection
         self.config = config
 
@@ -98,7 +99,7 @@ REPORTS = (fixture.ReportStore()
         service_command_description="pacemaker_remote stop",
     )
     .info(
-        "authkey_remove_started" ,
+        "authkey_remove_started",
         report_codes.FILES_REMOVE_FROM_NODES_STARTED,
         file_list=["pacemaker authkey"],
     )

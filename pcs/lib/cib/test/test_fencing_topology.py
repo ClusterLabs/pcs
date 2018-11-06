@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports
@@ -24,9 +24,13 @@ from pcs.lib.cib import fencing_topology as lib
 
 patch_lib = create_patcher("pcs.lib.cib.fencing_topology")
 
+# pylint: disable=too-few-public-methods, anomalous-backslash-in-string
+# pylint: disable=protected-access, no-self-use
 
-class CibMixin(object):
-    def get_cib(self):
+
+class CibMixin:
+    @staticmethod
+    def get_cib():
         return etree.fromstring("""
             <fencing-topology>
                 <fencing-level
@@ -66,7 +70,7 @@ class CibMixin(object):
         """)
 
 
-class StatusNodesMixin(object):
+class StatusNodesMixin:
     def get_status(self):
         return ClusterState("""
             <crm_mon version="1.1.15">
@@ -576,9 +580,9 @@ class ValidateLevel(TestCase):
         lib._validate_level(reporter, -1)
         lib._validate_level(reporter, "-1")
         lib._validate_level(reporter, "1abc")
-        reports = []
+        report_list = []
         for value in ["", 0, "0", -1, "-1", "1abc"]:
-            reports.append((
+            report_list.append((
                 severity.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
                 {
@@ -588,7 +592,7 @@ class ValidateLevel(TestCase):
                 },
                 None
             ))
-        assert_report_item_list_equal(reporter.report_item_list, reports)
+        assert_report_item_list_equal(reporter.report_item_list, report_list)
 
 
 @patch_lib("_validate_target_valuewise")

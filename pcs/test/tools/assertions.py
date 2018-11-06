@@ -1,11 +1,13 @@
 import difflib
 import doctest
+import re
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
-import re
 from pcs.lib.errors import ReportItemSeverity
 
 from pcs.lib.errors import LibraryError
+
+# pylint: disable=invalid-name, no-self-use
 
 # cover python2 vs. python3 differences
 _re_object_type = type(re.compile(""))
@@ -18,7 +20,7 @@ def prepare_diff(first, second):
         difflib.Differ().compare(first.splitlines(1), second.splitlines(1))
     )
 
-def ac(a,b):
+def ac(a, b):
     """
     Compare the actual output 'a' and an expected output 'b', print diff b a
     """
@@ -41,7 +43,7 @@ def console_report(*lines):
     #after lines append last new line
     return "\n".join(lines + ("",))
 
-class AssertPcsMixin(object):
+class AssertPcsMixin:
     """Run pcs command and assert its result"""
 
     def assert_pcs_success_all(self, command_list):
@@ -108,7 +110,7 @@ class AssertPcsMixin(object):
             for stdout in (stdout_full, stdout_start, stdout_regexp)
             if stdout is not None
         ]
-        if len(specified_stdout) < 1:
+        if not specified_stdout:
             raise Exception(msg + ", none specified")
         elif len(specified_stdout) > 1:
             raise Exception(msg + ", both specified")
@@ -196,7 +198,7 @@ class AssertPcsMixin(object):
         return sorted(used_flags)
 
 
-class ExtendedAssertionsMixin(object):
+class ExtendedAssertionsMixin:
     def assert_raises(
         self, expected_exception, callable_obj, property_dict=None
     ):

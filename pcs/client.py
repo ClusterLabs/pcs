@@ -4,7 +4,7 @@ from pcs.lib.errors import LibraryError
 
 
 def client_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         utils.exit_on_cmdline_input_errror(None, "client", "")
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -20,6 +20,7 @@ def client_cmd(lib, argv, modifiers):
 
 
 def local_auth_cmd(lib, argv, modifiers):
+    # pylint: disable=unused-argument
     """
     Options:
       * -u - username

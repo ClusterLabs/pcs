@@ -1,5 +1,5 @@
-from lxml import etree
 import os.path
+from lxml import etree
 
 from pcs import settings
 from pcs.common.tools import (
@@ -363,7 +363,7 @@ def is_fence_history_supported():
             ".//ns:element[@name='fence_history']",
             namespaces=namespaces_map
         )
-        if len(history_elements):
+        if history_elements:
             return True
     except (EnvironmentError, etree.XMLSyntaxError):
         # if we cannot tell for sure fence_history is supported, we will

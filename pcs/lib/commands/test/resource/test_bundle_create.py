@@ -17,7 +17,7 @@ from pcs.test.tools.misc import (
 )
 
 
-TIMEOUT=10
+TIMEOUT = 10
 
 get_env_tools = partial(
     get_env_tools,

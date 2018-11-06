@@ -19,6 +19,9 @@ from pcs.common.fencing_topology import (
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
+# pylint: disable=too-many-branches, too-many-statements, len-as-condition
+# pylint: disable=protected-access, unused-argument
+
 def stonith_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         sub_cmd, argv_next = "status", []
@@ -429,6 +432,7 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
         level_not_found = False
         for report_item in e.args:
             if (
+                # pylint: disable=no-member
                 report_item.code
                 ==
                 report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST

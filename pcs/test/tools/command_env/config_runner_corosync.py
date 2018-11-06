@@ -4,7 +4,7 @@ from pcs import settings
 from pcs.test.tools.misc import outdent
 from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
 
-class CorosyncShortcuts(object):
+class CorosyncShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 

@@ -1,7 +1,7 @@
 from pcs.test.tools.command_env.mock_fs import Call as FsCall
 
 
-class FsConfig(object):
+class FsConfig:
     """
     Any new call must be manually added to the patch_env function in the
     pcs.test.tools.command_env.assistant module otherwise it will be ignored!

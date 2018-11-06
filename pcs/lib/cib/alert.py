@@ -1,5 +1,5 @@
-from lxml import etree
 from functools import partial
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports

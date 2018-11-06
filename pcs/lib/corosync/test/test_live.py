@@ -12,6 +12,7 @@ from pcs.lib.external import CommandRunner
 
 from pcs.lib.corosync import live as lib
 
+# pylint: disable=no-self-use
 
 class GetLocalCorosyncConfTest(TestCase):
     def test_success(self):
@@ -157,6 +158,7 @@ class SetExpectedVotesTest(TestCase):
 
 
 class QuorumStatusParse(TestCase):
+    # pylint: disable=protected-access
     def test_quorate_no_qdevice(self):
         status = lib.QuorumStatus.from_string(dedent("""\
             Quorum information

@@ -1,7 +1,10 @@
 from unittest import mock, TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.constraint.parse_args import prepare_set_args, prepare_resource_sets
+from pcs.cli.constraint.parse_args import (
+    prepare_set_args,
+    prepare_resource_sets,
+)
 
 
 @mock.patch("pcs.cli.common.parse_args.prepare_options")
@@ -28,6 +31,7 @@ class PrepareResourceSetsTest(TestCase):
 @mock.patch("pcs.cli.common.parse_args.prepare_options")
 @mock.patch("pcs.cli.constraint.parse_args.prepare_resource_sets")
 class PrepareSetArgvTest(TestCase):
+    # pylint: disable=no-self-use, unused-argument
     def test_return_tuple_of_given_resource_set_list_and_options(
         self, res_sets, options
     ):

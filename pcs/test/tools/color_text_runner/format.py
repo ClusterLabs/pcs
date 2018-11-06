@@ -1,6 +1,7 @@
 import re
 from functools import partial
 
+# pylint: disable=protected-access
 
 palete = {
     "black": '\033[30m',
@@ -28,7 +29,7 @@ separator2 = '-' * 70
 
 #apply is builtin but is deprecated since 2.3 => no problem to redefine it here
 def apply(key_list, text):
-    return("".join([palete[key] for key in key_list]) + text + palete["end"])
+    return "".join([palete[key] for key in key_list]) + text + palete["end"]
 
 lightgrey = partial(apply, ["lightgrey"])
 bold = partial(apply, ["bold"])
@@ -92,21 +93,20 @@ def get_description(test, descriptions):
     doc_first_line = test.shortDescription()
     if descriptions and doc_first_line:
         return '\n'.join((str(test), doc_first_line))
-    else:
-        module_parts = test.__class__.__module__.split(".")
-        module = module_parts[-1]
-        package = ".".join(module_parts[:-1])+"." if module_parts else ""
+    module_parts = test.__class__.__module__.split(".")
+    module = module_parts[-1]
+    package = ".".join(module_parts[:-1])+"." if module_parts else ""
 
-        return (
-            test._testMethodName
-            +" "
-            +lightgrey("(")
-            +lightgrey(package)
-            +bold(module)
-            +"."
-            +test.__class__.__name__
-            +lightgrey(")")
-        )
+    return (
+        test._testMethodName
+        +" "
+        +lightgrey("(")
+        +lightgrey(package)
+        +bold(module)
+        +"."
+        +test.__class__.__name__
+        +lightgrey(")")
+    )
 
 def format_error_list(flavour, errors, descriptions, traceback_highlight):
     line_list = []
@@ -122,7 +122,7 @@ def format_error_list(flavour, errors, descriptions, traceback_highlight):
 def format_traceback(err):
     formated_err = []
     path_regex = re.compile(
-        '^  File "(?P<path>[^"]+)", line (?P<line>\d+), in (?P<name>.*)$'
+        r'^  File "(?P<path>[^"]+)", line (?P<line>\d+), in (?P<name>.*)$'
     )
     was_prev_path = False
     for line in err.splitlines():

@@ -1,6 +1,6 @@
-from lxml import etree
 import shutil
 from unittest import TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
@@ -11,6 +11,7 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
+# pylint: disable=line-too-long, too-many-public-methods
 
 class BundleCreateCommon(
     TestCase,
@@ -22,6 +23,7 @@ class BundleCreateCommon(
     )
 ):
     temp_cib = rc("temp-cib.xml")
+    empty_cib = None
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)

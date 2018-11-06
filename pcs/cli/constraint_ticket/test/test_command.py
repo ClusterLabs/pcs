@@ -11,6 +11,7 @@ def _modifiers(force=True):
     return InputModifiers(options)
 
 class AddTest(TestCase):
+    # pylint: disable=no-self-use
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_call_library_with_correct_attrs(self, mock_parse_add):
         mock_parse_add.return_value = (
@@ -73,6 +74,7 @@ class RemoveTest(TestCase):
         ))
 
     def test_call_library_remove_with_correct_attrs(self):
+        # pylint: disable=no-self-use
         lib = mock.MagicMock(
             constraint_ticket=mock.MagicMock(remove=mock.Mock())
         )

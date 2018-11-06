@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.lib.cib.resource import common
 from pcs.test.tools.assertions import assert_xml_equal
@@ -204,7 +204,8 @@ class FindResourcesToEnable(TestCase):
 
 
 class Enable(TestCase):
-    def assert_enabled(self, pre, post):
+    @staticmethod
+    def assert_enabled(pre, post):
         resource = etree.fromstring(pre)
         common.enable(resource)
         assert_xml_equal(post, etree_to_str(resource))
@@ -262,7 +263,8 @@ class Enable(TestCase):
 
 
 class Disable(TestCase):
-    def assert_disabled(self, pre, post):
+    @staticmethod
+    def assert_disabled(pre, post):
         resource = etree.fromstring(pre)
         common.disable(resource)
         assert_xml_equal(post, etree_to_str(resource))
@@ -447,7 +449,8 @@ class FindResourcesToUnmanage(TestCase):
 
 
 class Manage(TestCase):
-    def assert_managed(self, pre, post):
+    @staticmethod
+    def assert_managed(pre, post):
         resource = etree.fromstring(pre)
         common.manage(resource)
         assert_xml_equal(post, etree_to_str(resource))
@@ -505,7 +508,8 @@ class Manage(TestCase):
 
 
 class Unmanage(TestCase):
-    def assert_unmanaged(self, pre, post):
+    @staticmethod
+    def assert_unmanaged(pre, post):
         resource = etree.fromstring(pre)
         common.unmanage(resource)
         assert_xml_equal(post, etree_to_str(resource))

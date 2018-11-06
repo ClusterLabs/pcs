@@ -12,6 +12,8 @@ from pcs.common.node_communicator import(
 )
 from pcs.test.tools.custom_mock import MockCurlSimple
 
+# pylint: disable=too-many-arguments, protected-access
+
 CALL_TYPE_HTTP_ADD_REQUESTS = "CALL_TYPE_HTTP_ADD_REQUESTS"
 CALL_TYPE_HTTP_START_LOOP = "CALL_TYPE_HTTP_START_LOOP"
 
@@ -228,7 +230,7 @@ def place_responses(calls, name, response_list):
 
 
 def place_communication(calls, name, communication_list, **kwargs):
-    if len(communication_list) < 1:
+    if not communication_list:
         # If code runs a communication command with no targets specified, the
         # whole communicator and CURL machinery gets started. It doesn't
         # actually send any HTTP requests but it adds an empty list of requests
@@ -253,7 +255,7 @@ def place_communication(calls, name, communication_list, **kwargs):
         place_requests(calls, "{0}_requests_{1}".format(name, i), req_list)
 
 
-class AddRequestCall(object):
+class AddRequestCall:
     type = CALL_TYPE_HTTP_ADD_REQUESTS
 
     def __init__(self, request_list):
@@ -269,7 +271,7 @@ class AddRequestCall(object):
     def __repr__(self):
         return str("<HttpAddRequest '{0}'>").format(self.request_list)
 
-class StartLoopCall(object):
+class StartLoopCall:
     type = CALL_TYPE_HTTP_START_LOOP
 
     def format(self):
@@ -313,7 +315,7 @@ def _compare_request_data(expected, real):
         return False
 
 
-class NodeCommunicator(object):
+class NodeCommunicator:
     def __init__(self, call_queue=None):
         self.__call_queue = call_queue
 

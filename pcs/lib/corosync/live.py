@@ -82,6 +82,7 @@ class QuorumStatus():
 
     @classmethod
     def from_string(cls, quorum_status):
+        # pylint: disable=too-many-branches
         """
         Create an instance based on corosync quorum status plaintext data
 
@@ -125,7 +126,7 @@ class QuorumStatus():
                     if parts[0] == "Quorate":
                         parsed["quorate"] = parts[1].lower() == "yes"
                     elif parts[0] == "Quorum":
-                        match = re.match("(\d+).*", parts[1])
+                        match = re.match(r"(\d+).*", parts[1])
                         if match:
                             parsed["quorum"] = int(match.group(1))
                         else:

@@ -1,6 +1,6 @@
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.constraint import ticket
@@ -65,7 +65,9 @@ class PrepareOptionsPlainTest(TestCase):
                 {
                     "option_names": ["unknown"],
                     "option_type": None,
-                    "allowed": ["id", "loss-policy", "rsc", "rsc-role", "ticket"],
+                    "allowed": [
+                        "id", "loss-policy", "rsc", "rsc-role", "ticket",
+                    ],
                     "allowed_patterns": [],
                 }
             ),
@@ -113,9 +115,10 @@ class PrepareOptionsPlainTest(TestCase):
 
 
     def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
+        # pylint: disable=unused-argument
         assert_raise_library_error(
             lambda: self.prepare(
-                { "loss-policy": "unknown", "ticket": "T", "id": "id"},
+                {"loss-policy": "unknown", "ticket": "T", "id": "id"},
                 "ticket_key",
                 "resourceA",
             ),
@@ -233,7 +236,8 @@ class PrepareOptionsWithSetTest(TestCase):
             )
         )
 
-class Element(object):
+class Element:
+    # pylint: disable=too-few-public-methods
     def __init__(self, attrib):
         self.attrib = attrib
 
@@ -284,7 +288,9 @@ class AreDuplicatePlain(TestCase):
         })
         self.assertFalse(ticket.are_duplicate_plain(self.first, self.second))
 
-@mock.patch("pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets")
+@mock.patch(
+    "pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets"
+)
 class AreDuplicateWithResourceSet(TestCase):
     def test_returns_true_for_duplicate_elements(
         self, mock_have_duplicate_resource_sets

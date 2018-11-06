@@ -94,6 +94,7 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
                 )
             )
             return self._get_next_list()
+        return []
 
     def on_complete(self):
         return self._has_failure, self._quorum_status

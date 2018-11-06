@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra

@@ -7,7 +7,8 @@ class Destroy(TestCase):
         pcs.lib.commands.test.cluster.test_setup.SetupSuccessAddresses
         pcs.lib.commands.test.cluster.test_setup.Setup2NodeSuccessMinimal
         pcs.lib.commands.test.cluster.test_setup.SetupWithWait
-        pcs.lib.commands.test.cluster.test_setup.Failures.test_cluster_destroy_failure
+        pcs.lib.commands.test.cluster.test_setup.Failures
+            .test_cluster_destroy_failure
     """
 
 class DestroyWarnOnFailure(TestCase):

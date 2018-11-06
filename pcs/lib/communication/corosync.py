@@ -115,7 +115,7 @@ class ReloadCorosyncConf(
             if output["code"] == "reloaded":
                 self.__was_successful = True
                 self._report(reports.corosync_config_reloaded(node))
-                return
+                return []
 
             if output["code"] == "not_running":
                 self._report(reports.corosync_config_reload_not_possible(node))

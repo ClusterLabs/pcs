@@ -11,17 +11,18 @@ class LibraryEnvError(LibraryError):
 
     @property
     def unprocessed(self):
+        # pylint: disable=not-an-iterable
         return [report for report in self.args if report not in self.processed]
 
 
 
-class ReportItemSeverity(object):
+class ReportItemSeverity:
     ERROR = 'ERROR'
     WARNING = 'WARNING'
     INFO = 'INFO'
     DEBUG = 'DEBUG'
 
-class ReportItem(object):
+class ReportItem:
     @classmethod
     def error(cls, code, **kwargs):
         return cls(code, ReportItemSeverity.ERROR, **kwargs)
@@ -32,6 +33,8 @@ class ReportItem(object):
 
     @classmethod
     def info(cls, code, **kwargs):
+        # pylint: disable=method-hidden
+        # this is classmethod so it is ok
         return cls(code, ReportItemSeverity.INFO, **kwargs)
 
     @classmethod
@@ -63,7 +66,7 @@ class ReportItem(object):
             forceable=self.forceable,
         )
 
-class ReportListAnalyzer(object):
+class ReportListAnalyzer:
     def __init__(self, report_list):
         self.__error_list = None
         self.__report_list = report_list

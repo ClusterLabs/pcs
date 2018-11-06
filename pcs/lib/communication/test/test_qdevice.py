@@ -1,7 +1,5 @@
 from unittest import TestCase
 
-from pcs.lib.communication import qdevice
-
 class Stop(TestCase):
     """
     tested in:

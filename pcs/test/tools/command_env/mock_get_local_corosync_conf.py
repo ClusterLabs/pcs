@@ -1,6 +1,6 @@
 CALL_TYPE_GET_LOCAL_COROSYNC_CONF = "CALL_TYPE_GET_LOCAL_COROSYNC_CONF"
 
-class Call(object):
+class Call:
     type = CALL_TYPE_GET_LOCAL_COROSYNC_CONF
 
     def __init__(self, content):

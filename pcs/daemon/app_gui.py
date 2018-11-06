@@ -74,6 +74,7 @@ class SinatraGuiProtected(SinatraGui):
             self.can_use_sinatra = False
 
 class SinatraAjaxProtected(SinatraGui, AjaxMixin):
+    # pylint: disable=too-many-ancestors
     """
     SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
     It allows to use this urls only for ajax calls.
@@ -92,6 +93,7 @@ class SinatraAjaxProtected(SinatraGui, AjaxMixin):
             raise self.unauthorized()
 
 class Login(SinatraGui, AjaxMixin):
+    # pylint: disable=too-many-ancestors
     """
     Login handles urls that cares about loging process.
     It displays a login form (taken from Sinatra), process data sent by the

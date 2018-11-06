@@ -34,13 +34,15 @@ class SetSbdConfig(TestCase):
 class GetSbdConfig(TestCase):
     """
     tested in:
-        pcs.lib.commands.test.sbd.test_get_cluster_sbd_config.GetClusterSbdConfig
+        pcs.lib.commands.test.sbd.test_get_cluster_sbd_config
+            .GetClusterSbdConfig
     """
 
 class GetSbdStatus(TestCase):
     """
     tested in:
-        pcs.lib.commands.test.sbd.test_get_cluster_sbd_status.GetClusterSbdStatus
+        pcs.lib.commands.test.sbd.test_get_cluster_sbd_status
+            .GetClusterSbdStatus
     """
 
 class CheckSbd(TestCase):

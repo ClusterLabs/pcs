@@ -16,6 +16,8 @@ from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
 )
 
+# pylint: disable=line-too-long
+
 def _mutual_exclusive(param_names, **kwargs):
     entered = {
         key: value for key, value in kwargs.items()
@@ -31,7 +33,7 @@ def _mutual_exclusive(param_names, **kwargs):
         )
 
 
-class HttpConfig(object):
+class HttpConfig:
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
@@ -87,7 +89,7 @@ class HttpConfig(object):
         _mutual_exclusive(["files", "param_list"], files=files, **kwargs)
 
         if results:
-            kwargs["output"]=json.dumps({"files": results})
+            kwargs["output"] = json.dumps({"files": results})
 
         if files:
             kwargs["param_list"] = [("data_json", json.dumps(files))]
@@ -126,7 +128,7 @@ class HttpConfig(object):
         _mutual_exclusive(["files", "param_list"], files=files, **kwargs)
 
         if results:
-            kwargs["output"]=json.dumps({"files": results})
+            kwargs["output"] = json.dumps({"files": results})
 
         if files:
             kwargs["param_list"] = [("data_json", json.dumps(files))]
@@ -179,7 +181,7 @@ class HttpConfig(object):
         )
 
         if results:
-            kwargs["output"]=json.dumps({"actions": results})
+            kwargs["output"] = json.dumps({"actions": results})
 
         if action_map:
             kwargs["param_list"] = [("data_json", json.dumps(action_map))]

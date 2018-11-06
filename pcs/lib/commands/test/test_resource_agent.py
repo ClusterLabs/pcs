@@ -1,9 +1,12 @@
 # coding=utf-8
 import logging
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
-from pcs.test.tools.assertions import assert_raise_library_error, start_tag_error_text
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    start_tag_error_text,
+)
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
@@ -280,8 +283,9 @@ class TestListAgents(TestCase):
 
 
 class CompleteAgentList(TestCase):
-    def test_skip_agent_name_when_InvalidResourceAgentName_raised(self):
-        invalid_agent_name =  "systemd:lvm2-pvscan@252:2"#suppose it is invalid
+    def test_skip_agent_name_when_invalid_resource_agent_ame_raised(self):
+        # pylint: disable=too-few-public-methods, unused-argument, protected-access
+        invalid_agent_name = "systemd:lvm2-pvscan@252:2"#suppose it is invalid
         class Agent():
             def __init__(self, runner, name):
                 if name == invalid_agent_name:

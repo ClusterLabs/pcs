@@ -1,6 +1,6 @@
-from lxml import etree
 import os.path
 from textwrap import dedent
+from lxml import etree
 
 from pcs import settings
 from pcs.cli.common.console_report import error

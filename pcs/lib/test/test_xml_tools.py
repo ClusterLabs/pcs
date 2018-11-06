@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.lib import xml_tools as lib
 from pcs.test.tools.assertions import assert_xml_equal
@@ -173,7 +173,7 @@ class RemoveWhenPointless(TestCase):
             </root>
             """
         )
-        xpath=".//{0}".format(tag)
+        xpath = ".//{0}".format(tag)
         lib.remove_when_pointless(tree.find(xpath), **kwargs)
         self.assertEqual(len(tree.xpath(xpath)), count)
 

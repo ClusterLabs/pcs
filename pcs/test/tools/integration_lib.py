@@ -7,7 +7,7 @@ from pcs.test.tools.command_env.mock_runner import Runner as NewRunner
 
 
 
-class Runner(object):
+class Runner:
     def __init__(self):
         self.set_runs([])
 

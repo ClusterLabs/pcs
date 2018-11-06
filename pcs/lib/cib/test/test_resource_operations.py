@@ -1,6 +1,6 @@
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import operations
@@ -10,6 +10,7 @@ from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
 
+# pylint: disable=no-self-use
 
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
@@ -198,10 +199,13 @@ class Normalize(TestCase):
             "timeout": "10",
         }
 
-        self.assertEqual(operation, dict([
-            (key, operations.normalize(key, value))
-            for key, value in operation.items()
-        ]))
+        self.assertEqual(
+            operation,
+            {
+                key: operations.normalize(key, value)
+                for key, value in operation.items()
+            }
+        )
 
     def test_return_operation_with_normalized_values(self):
         self.assertEqual(
@@ -213,14 +217,14 @@ class Normalize(TestCase):
                 "record-pending": "true",
                 "enabled": "1",
             },
-            dict([(key, operations.normalize(key, value)) for key, value in {
+            {key: operations.normalize(key, value) for key, value in {
                 "name": "monitor",
                 "role": "master",
                 "timeout": "10",
                 "on-fail": "Ignore",
                 "record-pending": "True",
                 "enabled": "1",
-            }.items()])
+            }.items()}
         )
 
 class ValidateOperation(TestCase):
@@ -341,7 +345,7 @@ class GetRemainingDefaults(TestCase):
         self.assertEqual(
             operations.get_remaining_defaults(
                 report_processor=None,
-                operation_list =[{"name": "monitor"}],
+                operation_list=[{"name": "monitor"}],
                 default_operation_list=[{"name": "monitor"}, {"name": "start"}]
             ),
             [{"name": "start"}]

@@ -1,5 +1,5 @@
-from lxml import etree
 from functools import partial
+from lxml import etree
 
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.xml_tools import(
@@ -161,9 +161,9 @@ def has_meta_attribute(resource_el, name):
     etree.Element resource_el is researched element
     string name specifies attribute
     """
-    return 0 < len(resource_el.xpath(
+    return len(resource_el.xpath(
         './meta_attributes/nvpair[@name="{0}"]'.format(name)
-    ))
+    )) > 0
 
 arrange_first_meta_attributes = partial(
     arrange_first_nvset,

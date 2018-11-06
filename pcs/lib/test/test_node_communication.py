@@ -335,6 +335,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_HTTP_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertFalse(lib.is_proxy_set({
             "HTTP_PROXY": "test.proxy",
         }))
@@ -345,6 +346,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_HTTPS_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertTrue(lib.is_proxy_set({
             "HTTPS_PROXY": "test.proxy",
         }))
@@ -355,6 +357,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_ALL_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertTrue(lib.is_proxy_set({
             "ALL_PROXY": "test.proxy",
         }))

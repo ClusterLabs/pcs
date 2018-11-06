@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import json
 
 from functools import partial
@@ -105,6 +106,7 @@ def node_fixture(node, node_id, addr_sufix=""):
 
 class LocalConfig():
     def __init__(self, call_collection, wrap_helper, config):
+        # pylint: disable=unused-argument
         self.__calls = call_collection
         self.config = config
         self.expected_reports = []
@@ -1379,7 +1381,9 @@ class FailureCorosyncReload(TestCase):
                     )],
                     [dict(
                         label=self.nodes_to_stay[1],
-                        output=json.dumps(dict(code="failed", message=self.err_msg)),
+                        output=json.dumps(
+                            dict(code="failed", message=self.err_msg)
+                        ),
                     )],
                     [dict(
                         label=self.nodes_to_stay[2],
@@ -1449,7 +1453,9 @@ class FailureCorosyncReload(TestCase):
             communication_list=[
                 [dict(
                     label=self.nodes_to_stay[0],
-                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                    output=json.dumps(
+                        dict(code="failed", message=self.err_msg)
+                    ),
                 )],
                 [dict(
                     label=self.nodes_to_stay[1],

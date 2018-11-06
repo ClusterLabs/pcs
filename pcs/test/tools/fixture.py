@@ -9,6 +9,7 @@ def state_node(
     standby_onfail=False, maintenance=False, pending=False, unclean=False,
     shutdown=False, expected_up=True, is_dc=False, resources_running=0
 ):
+    # pylint: disable=invalid-name, too-many-arguments, redefined-builtin, unused-argument
     return locals()
 
 def complete_state_resources(resource_status):
@@ -52,9 +53,9 @@ def _default_element_attributes(element, default_attributes):
         if name not in element.attrib:
             element.attrib[name] = value
 
-def report_variation(report, **info):
+def report_variation(report, **_info):
     updated_info = report[2].copy()
-    updated_info.update(info)
+    updated_info.update(_info)
     return report[0], report[1], updated_info, report[3]
 
 def debug(code, **kwargs):
@@ -69,12 +70,12 @@ def error(code, force_code=None, **kwargs):
 def info(code, **kwargs):
     return severities.INFO, code, kwargs, None
 
-class ReportStore(object):
+class ReportStore:
     def __init__(self, names=None, reports=None):
         if not names:
             names = []
 
-        duplicate_names = set([n for n in names if names.count(n) > 1])
+        duplicate_names = {n for n in names if names.count(n) > 1}
         if duplicate_names:
             raise AssertionError(
                 "Duplicate names are not allowed in ReportStore. "
@@ -92,18 +93,18 @@ class ReportStore(object):
     def reports(self):
         return list(self.__reports)
 
-    def adapt(self, name, **info):
+    def adapt(self, name, **_info):
         index = self.__names.index(name)
         return ReportStore(self.__names, [
-            report if i != index else report_variation(report, **info)
+            report if i != index else report_variation(report, **_info)
             for i, report in enumerate(self.__reports)
         ])
 
-    def adapt_multi(self, name_list, **info):
+    def adapt_multi(self, name_list, **_info):
         names, reports = zip(*[
             (
                 name,
-                report_variation(self[name], **info) if name in name_list
+                report_variation(self[name], **_info) if name in name_list
                     else self[name]
             ) for name in self.__names
         ])
@@ -122,8 +123,8 @@ class ReportStore(object):
         report = self[name]
         return self.__append(as_name, warn(report[1], **report[2]))
 
-    def copy(self, name, as_name, **info):
-        return self.__append(as_name, report_variation(self[name], **info))
+    def copy(self, name, as_name, **_info):
+        return self.__append(as_name, report_variation(self[name], **_info))
 
     def remove(self, *name_list):
         names, reports = zip(*[
@@ -136,8 +137,8 @@ class ReportStore(object):
         names, reports = zip(*[(name, self[name]) for name in name_list])
         return ReportStore(list(names), list(reports))
 
-    def only(self, name, **info):
-        return ReportStore([name], [report_variation(self[name], **info)])
+    def only(self, name, **_info):
+        return ReportStore([name], [report_variation(self[name], **_info)])
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):
@@ -151,6 +152,7 @@ class ReportStore(object):
 
     def __add__(self, other):
         return ReportStore(
+            # pylint: disable=protected-access
             self.__names + other.__names,
             self.__reports + other.__reports,
         )

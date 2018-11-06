@@ -26,12 +26,12 @@ def _validate_attrib_names(attrib_names, options):
             reports.invalid_options(invalid_names, attrib_names, None)
         )
 
-def find_valid_resource_id(report_processor, cib, in_clone_allowed, id):
+def find_valid_resource_id(report_processor, cib, in_clone_allowed, _id):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
         parent_tags + [resource.primitive.TAG, resource.group.TAG],
         cib,
-        id,
+        _id,
     )
 
     if resource_element.tag in parent_tags:
@@ -62,12 +62,12 @@ def find_valid_resource_id(report_processor, cib, in_clone_allowed, id):
         forceable=report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
     ))
 
-def prepare_options(attrib_names, options, create_id, validate_id):
+def prepare_options(attrib_names, options, create_id_fn, validate_id):
     _validate_attrib_names(attrib_names+("id",), options)
     options = options.copy()
 
     if "id" not in options:
-        options["id"] = create_id()
+        options["id"] = create_id_fn()
     else:
         validate_id(options["id"])
     return options
@@ -85,11 +85,11 @@ def export_plain(element):
     return {"options": export_attributes(element)}
 
 def create_id(cib, type_prefix, resource_set_list):
-    id = "pcs_" +type_prefix +"".join([
+    _id = "pcs_" +type_prefix +"".join([
         "_set_"+"_".join(id_set)
         for id_set in resource_set.extract_id_set_list(resource_set_list)
     ])
-    return find_unique_id(cib, id)
+    return find_unique_id(cib, _id)
 
 def have_duplicate_resource_sets(element, other_element):
     get_id_set_list = lambda element: [

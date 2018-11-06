@@ -3,10 +3,10 @@ import os
 import re
 from unittest import mock, skipUnless
 
-# from pcs import utils
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
+# pylint: disable=invalid-name
 
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -210,7 +210,7 @@ def create_setup_patch_mixin(module_specification_or_patcher):
     else:
         patch_module = create_patcher(module_specification_or_patcher)
 
-    class SetupPatchMixin(object):
+    class SetupPatchMixin:
         def setup_patch(self, target_suffix, *args, **kwargs):
             patcher = patch_module(target_suffix, *args, **kwargs)
             self.addCleanup(patcher.stop)

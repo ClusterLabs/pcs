@@ -275,7 +275,7 @@ def is_proxy_set(env_dict):
     return False
 
 
-class CommandRunner(object):
+class CommandRunner:
     def __init__(self, logger, reporter, env_vars=None):
         self._logger = logger
         self._reporter = reporter
@@ -325,6 +325,8 @@ class CommandRunner(object):
         )
 
         try:
+            # pylint: disable=subprocess-popen-preexec-fn
+            # this is OK as pcs is only single-threaded application
             process = subprocess.Popen(
                 args,
                 # Some commands react differently if they get anything via stdin

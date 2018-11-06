@@ -10,6 +10,7 @@ from pcs.test.tools.assertions import(
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
+# pylint: disable=no-self-use
 
 patch_env_file = create_patcher(env_file)
 
@@ -47,15 +48,16 @@ class GhostFileExists(TestCase):
     def test_return_true_if_file_exists(self):
         self.assertTrue(env_file.GhostFile("some_role", "any content").exists)
 
-    def test_return_False_if_file_exists(self):
+    def test_return_false_if_file_exists(self):
         self.assertFalse(env_file.GhostFile("some_role").exists)
 
-    def test_return_True_after_write(self):
+    def test_return_true_after_write(self):
         ghost_file = env_file.GhostFile("some_role")
         ghost_file.write("any content")
         self.assertTrue(ghost_file.exists)
 
 class RealFileExists(TestCase):
+    # pylint: disable=unused-argument
     @patch_env_file("os.path.exists", return_value=True)
     def test_return_true_if_file_exists(self, exists):
         self.assertTrue(env_file.RealFile("some role", FILE_PATH).exists)
@@ -75,11 +77,12 @@ class RealFileAssertNoConflictWithExistingTest(TestCase):
 
     def test_success_when_config_not_exists(self, mock_exists):
         mock_exists.return_value = False
-        report_processor=MockLibraryReportProcessor()
+        report_processor = MockLibraryReportProcessor()
         self.check(report_processor)
         assert_report_item_list_equal(report_processor.report_item_list, [])
 
     def test_raises_when_config_exists_and_overwrite_not_allowed(self, mock_ex):
+        # pylint: disable=unused-argument
         assert_raise_library_error(
             lambda: self.check(MockLibraryReportProcessor()),
             (
@@ -93,7 +96,8 @@ class RealFileAssertNoConflictWithExistingTest(TestCase):
         )
 
     def test_warn_when_config_exists_and_overwrite_allowed(self, mock_exists):
-        report_processor=MockLibraryReportProcessor()
+        # pylint: disable=unused-argument
+        report_processor = MockLibraryReportProcessor()
         self.check(report_processor, can_overwrite_existing=True)
         assert_report_item_list_equal(report_processor.report_item_list, [(
             severities.WARNING,
@@ -192,6 +196,7 @@ class RealFileRemoveTest(TestCase):
     )
     @patch_env_file("os.path.exists", return_value=True)
     def test_raise_library_error_when_remove_failed(self, _, dummy):
+        # pylint: disable=unused-argument
         assert_raise_library_error(
             lambda: env_file.RealFile("some role", FILE_PATH).remove(),
             (

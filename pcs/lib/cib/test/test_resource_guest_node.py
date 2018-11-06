@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.node import PacemakerNode
@@ -11,11 +11,14 @@ from pcs.test.tools.assertions import(
 )
 from pcs.test.tools.misc import create_setup_patch_mixin
 
+# pylint: disable=no-self-use
+
 
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
 
 class ValidateHostConflicts(TestCase):
-    def validate(self, node_name, options):
+    @staticmethod
+    def validate(node_name, options):
         tree = etree.fromstring("""
             <cib>
                 <configuration>
@@ -111,7 +114,8 @@ class ValidateHostConflicts(TestCase):
         })
 
 class ValidateOptions(TestCase):
-    def validate(self, options, name="some_name"):
+    @staticmethod
+    def validate(options, name="some_name"):
         return guest_node.validate_set_as_guest(
             etree.fromstring('<cib/>'),
             ["EXISTING-HOST-NAME"],
@@ -373,7 +377,7 @@ class FindNodeResources(TestCase):
         if not found:
             self.assertEqual([], resources)
         else:
-            self.assertTrue(len(resources) > 0)
+            self.assertTrue(resources)
             self.assertEqual("RESOURCE_ID", resources[0].attrib["id"])
 
     def test_return_resources_by_resource_id(self):

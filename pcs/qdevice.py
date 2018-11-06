@@ -8,7 +8,8 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
 def qdevice_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    # pylint: disable=too-many-branches
+    if not argv:
         usage.qdevice()
         sys.exit(1)
 
@@ -46,7 +47,7 @@ def qdevice_cmd(lib, argv, modifiers):
 
 # this is internal use only, called from pcsd
 def qdevice_net_client_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         utils.err("invalid command")
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -70,7 +71,7 @@ def qdevice_status_cmd(lib, argv, modifiers):
       * --full - get more detailed output
     """
     modifiers.ensure_only_supported("--full")
-    if len(argv) < 1 or len(argv) > 2:
+    if not argv or len(argv) > 2:
         raise CmdLineInputError()
     model = argv[0]
     cluster = None if len(argv) < 2 else argv[1]

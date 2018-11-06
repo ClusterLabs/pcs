@@ -5,6 +5,7 @@ from pcs.test.tools.assertions import ac
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import pcs
 
+# pylint: disable=invalid-name, no-self-use, bad-whitespace, line-too-long
 
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")

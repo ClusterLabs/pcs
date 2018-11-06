@@ -30,10 +30,10 @@ class CommandRunnerTest(TestCase):
     def assert_popen_called_with(self, mock_popen, args, kwargs):
         self.assertEqual(mock_popen.call_count, 1)
         real_args, real_kwargs = mock_popen.call_args
-        filtered_kwargs = dict([
-            (name, value) for name, value in real_kwargs.items()
-            if name in kwargs
-        ])
+        filtered_kwargs = {
+            name: value
+            for name, value in real_kwargs.items() if name in kwargs
+        }
         self.assertEqual(real_args, (args,))
         self.assertEqual(filtered_kwargs, kwargs)
 
@@ -135,6 +135,7 @@ class CommandRunnerTest(TestCase):
             env_extend={"b": "B", "c": "{C}"}
         )
         #check that env_exted did not affect initial env of runner
+        # pylint: disable=protected-access
         self.assertEqual(runner._env_vars, global_env)
 
         self.assertEqual(real_stdout, expected_stdout)
@@ -959,6 +960,7 @@ class GetNonSystemdServicesTest(TestCase):
 
 @mock.patch("pcs.lib.external.is_systemctl")
 class EnsureIsSystemctlTest(TestCase):
+    # pylint: disable=no-self-use
     def test_systemd(self, mock_is_systemctl):
         mock_is_systemctl.return_value = True
         lib.ensure_is_systemd()
@@ -1002,6 +1004,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_HTTP_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertFalse(lib.is_proxy_set({
             "HTTP_PROXY": "test.proxy",
         }))
@@ -1012,6 +1015,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_HTTPS_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertTrue(lib.is_proxy_set({
             "HTTPS_PROXY": "test.proxy",
         }))
@@ -1022,6 +1026,7 @@ class IsProxySetTest(TestCase):
         }))
 
     def test_ALL_PROXY(self):
+        # pylint: disable=invalid-name
         self.assertTrue(lib.is_proxy_set({
             "ALL_PROXY": "test.proxy",
         }))

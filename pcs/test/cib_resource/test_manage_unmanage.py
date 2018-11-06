@@ -1,6 +1,6 @@
-from lxml import etree
 import shutil
 from unittest import TestCase
+from lxml import etree
 
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import get_test_resource as rc

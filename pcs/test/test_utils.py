@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from io import StringIO
 import sys
 from time import sleep
@@ -10,6 +11,8 @@ from pcs.test.tools.misc import get_test_resource as rc
 
 from pcs import utils
 
+# pylint: disable=too-many-public-methods, too-many-statements, line-too-long, invalid-name
+
 cib_with_nodes = rc("cib-empty-withnodes.xml")
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
@@ -17,11 +20,12 @@ temp_cib = rc("temp-cib.xml")
 TestCase.maxDiff = None
 
 class UtilsTest(TestCase):
-
-    def get_cib_empty(self):
+    @staticmethod
+    def get_cib_empty():
         return xml.dom.minidom.parse(empty_cib)
 
-    def get_cib_with_nodes_minidom(self):
+    @staticmethod
+    def get_cib_with_nodes_minidom():
         return xml.dom.minidom.parse(cib_with_nodes)
 
     def get_cib_resources(self):
@@ -1834,7 +1838,8 @@ class UtilsTest(TestCase):
 
 
 class RunParallelTest(TestCase):
-    def fixture_create_worker(self, log, name, sleepSeconds=0):
+    @staticmethod
+    def fixture_create_worker(log, name, sleepSeconds=0):
         def worker():
             sleep(sleepSeconds)
             log.append(name)
@@ -1879,6 +1884,7 @@ class TouchCibFile(TestCase):
     )
     @mock.patch("pcs.utils.err")
     def test_exception_is_transformed_correctly(self, err):
+        # pylint: disable=no-self-use
         filename = "/fake/filename"
         utils.touch_cib_file(filename)
         err.assert_called_once_with(

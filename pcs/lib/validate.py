@@ -162,7 +162,7 @@ def is_required_some_of(option_name_list, option_type=""):
             set(option_dict.keys()),
             set(option_name_list)
         )
-        if len(found_names) < 1:
+        if not found_names:
             return [reports.required_option_of_alternatives_is_missing(
                 sorted(option_name_list),
                 option_type,
@@ -194,12 +194,12 @@ def mutually_exclusive(mutually_exclusive_names, option_type="option"):
 
 def names_in(
     allowed_name_list, name_list, option_type="option",
-    code_to_allow_extra_names=None, allow_extra_names=False,
+    code_to_allow_extra_names=None, extra_names_allowed=False,
     allowed_option_patterns=None
 ):
     """
-    Return a list with report INVALID_OPTIONS when in name_list is a name that is
-    not in allowed_name_list.
+    Return a list with report INVALID_OPTIONS when in name_list is a name that
+    is not in allowed_name_list.
 
     list allowed_name_list contains names which are valid
     list name_list contains names for validation
@@ -207,7 +207,7 @@ def names_in(
     string code_to_allow_extra_names is code for forcing invalid names. If it is
         empty report INVALID_OPTIONS is non-forceable error. If it is not empty
         report INVALID_OPTIONS is forceable error or warning.
-    bool allow_extra_names is flag that complements code_to_allow_extra_names
+    bool extra_names_allowed is flag that complements code_to_allow_extra_names
         and determines wheter is report INVALID_OPTIONS forceable error or
         warning.
     mixed allowed_option_patterns -- option patterns to be added to a report
@@ -218,7 +218,7 @@ def names_in(
 
     create_report = reports.get_problem_creator(
         code_to_allow_extra_names,
-        allow_extra_names
+        extra_names_allowed
     )
     return [create_report(
         reports.invalid_options,
@@ -234,6 +234,8 @@ def value_cond(
     option_name, predicate, value_type_or_enum, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Return a validation  function that takes option_dict and returns report list
     (with INVALID_OPTION_VALUE when option_name is not in allowed_values).
@@ -311,6 +313,8 @@ def value_in(
     option_name, allowed_values, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Special case of value_cond function.returned function checks whenever value
     is included allowed_values. If not list of ReportItem will be returned.
@@ -338,6 +342,8 @@ def value_integer_in_range(
     option_name, at_least, at_most, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not an
     integer such that at_least <= value <= at_most
@@ -362,6 +368,8 @@ def value_ip_address(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an IP address
@@ -384,6 +392,8 @@ def value_nonnegative_integer(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an integer greater than -1
@@ -406,6 +416,8 @@ def value_not_empty(
     option_name, value_type_or_enum, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is empty
 
@@ -427,6 +439,8 @@ def value_port_number(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
     or UDP port number
@@ -449,6 +463,8 @@ def value_port_range(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
     or UDP port range
@@ -475,6 +491,8 @@ def value_positive_integer(
     option_name, option_name_for_report=None,
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # TODO: fix
+    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an integer greater than zero
@@ -619,7 +637,7 @@ def allow_extra_names(code_to_allow, allow):
     """
     return {
         "code_to_allow_extra_names": code_to_allow,
-        "allow_extra_names": allow,
+        "extra_names_allowed": allow,
     }
 
 def _if_option_exists(option_name):

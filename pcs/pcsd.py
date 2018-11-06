@@ -8,6 +8,8 @@ from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
+# pylint: disable=len-as-condition, unused-argument, line-too-long
+
 def pcsd_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         usage.pcsd()

@@ -3,7 +3,8 @@ from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 
-class ConfigFacade(object):
+class ConfigFacade:
+    # pylint: disable=too-many-public-methods
     """
     Provides high level access to a corosync config file
     """
@@ -64,6 +65,7 @@ class ConfigFacade(object):
             )
 
         self = cls(root)
+        # pylint: disable=protected-access
         self.__update_two_node()
 
         return self
@@ -128,8 +130,8 @@ class ConfigFacade(object):
         """
         result = []
         for nodelist in self.config.get_sections("nodelist"):
-            for node in nodelist.get_sections("node"):
-                names = node.get_attributes("name")
+            for node_section in nodelist.get_sections("node"):
+                names = node_section.get_attributes("name")
                 if names:
                     # get the value ([1]) of the last ([-1]) name attribute
                     result.append(names[-1][1])
@@ -138,10 +140,11 @@ class ConfigFacade(object):
     def _get_used_nodeid_list(self):
         used_ids = []
         for nodelist in self.config.get_sections("nodelist"):
-            for node in nodelist.get_sections("node"):
-                used_ids.extend(
-                    [int(attr[1]) for attr in node.get_attributes("nodeid")]
-                )
+            for node_section in nodelist.get_sections("node"):
+                used_ids.extend([
+                    int(attr[1])
+                    for attr in node_section.get_attributes("nodeid")
+                ])
         return used_ids
 
     @staticmethod
@@ -418,6 +421,7 @@ class ConfigFacade(object):
     def add_quorum_device(
         self, model, model_options, generic_options, heuristics_options
     ):
+        # pylint: disable=too-many-locals
         """
         Add quorum device configuration
 
@@ -430,10 +434,10 @@ class ConfigFacade(object):
             raise LibraryError(reports.qdevice_already_defined())
 
         # configuration cleanup
-        remove_need_stopped_cluster = dict([
-            (name, "")
+        remove_need_stopped_cluster = {
+            name: ""
             for name in constants.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
-        ])
+        }
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:
@@ -455,8 +459,8 @@ class ConfigFacade(object):
         self.__set_section_options(quorum_section_list, attrs_to_remove)
         # remove nodes' votes
         for nodelist in self.config.get_sections("nodelist"):
-            for node in nodelist.get_sections("node"):
-                node.del_attributes_by_name("quorum_votes")
+            for node_section in nodelist.get_sections("node"):
+                node_section.del_attributes_by_name("quorum_votes")
 
         # add new configuration
         quorum = quorum_section_list[-1]
@@ -580,7 +584,8 @@ class ConfigFacade(object):
             else:
                 self.__set_section_options(device_sections, {"votes": ""})
 
-    def __set_section_options(self, section_list, options):
+    @staticmethod
+    def __set_section_options(section_list, options):
         for section in section_list[:-1]:
             for name in options:
                 section.del_attributes_by_name(name)
@@ -590,7 +595,8 @@ class ConfigFacade(object):
             else:
                 section_list[-1].set_attribute(name, value)
 
-    def __ensure_section(self, parent_section, section_name):
+    @staticmethod
+    def __ensure_section(parent_section, section_name):
         section_list = parent_section.get_sections(section_name)
         if not section_list:
             new_section = config_parser.Section(section_name)

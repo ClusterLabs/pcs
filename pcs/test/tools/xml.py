@@ -15,7 +15,7 @@ def etree_to_str(tree):
     #so there is bytes to str conversion
     return etree.tostring(tree).decode()
 
-class XmlManipulation(object):
+class XmlManipulation:
     @classmethod
     def from_file(cls, file_name):
         return cls(etree.parse(file_name).getroot())
@@ -27,7 +27,8 @@ class XmlManipulation(object):
     def __init__(self, tree):
         self.tree = tree
 
-    def __append_to_child(self, element, xml_string):
+    @staticmethod
+    def __append_to_child(element, xml_string):
         element.append(etree.fromstring(xml_string))
 
     def append_to_first_tag_name(self, tag_name, *xml_string_list):

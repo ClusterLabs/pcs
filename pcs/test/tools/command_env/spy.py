@@ -35,7 +35,7 @@ def print_long_text(name, potentially_long_text):
         print_line("'''")
 
 
-class NodeCommunicator(object):
+class NodeCommunicator:
     def __init__(self, original_node_communicator):
         print_initialize(self)
         self.__communicator = original_node_communicator
@@ -54,7 +54,7 @@ class NodeCommunicator(object):
             yield response
 
 
-class Runner(object):
+class Runner:
     def __init__(self, original_runner):
         print_initialize(self)
         self.__runner = original_runner

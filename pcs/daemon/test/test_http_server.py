@@ -2,9 +2,9 @@ import logging
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
+from tornado.httpserver import HTTPServer
 from pcs.daemon import http_server
 from pcs.test.tools.misc import create_setup_patch_mixin
-from tornado.httpserver import HTTPServer
 from pcs.daemon.ssl import PcsdSSL
 
 PORT = 1234
@@ -38,6 +38,7 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
         self.assertFalse(self.https_server_manage.server_is_running)
 
     def HTTPServer(self, app, ssl_options):
+        # pylint: disable=invalid-name
         self.assertEqual(self.app, app)
         self.assertEqual(self.pcsd_ssl.create_context.return_value, ssl_options)
         self.server_list.append(MagicMock(spec_set=HTTPServer))

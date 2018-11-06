@@ -1,3 +1,5 @@
+# pylint: disable=no-self-use
+
 from unittest import mock, TestCase
 
 from pcs.cli.booth import command

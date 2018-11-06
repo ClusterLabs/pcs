@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import base64
 import json
 import os.path
@@ -17,6 +18,8 @@ from pcs.common import (
     report_codes,
 )
 from pcs.lib.commands import cluster
+
+# pylint: disable=line-too-long
 
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"
@@ -103,6 +106,7 @@ def node_fixture(node, node_id, addr_sufix=""):
 
 class LocalConfig():
     def __init__(self, call_collection, wrap_helper, config):
+        # pylint: disable=unused-argument
         self.__calls = call_collection
         self.config = config
         self.expected_reports = []
@@ -632,6 +636,7 @@ class CheckLive(TestCase):
 
 
 class AddNodesSuccessMinimal(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes = ()
@@ -2440,7 +2445,9 @@ class FailureBoothConfigsDistribution(TestCase):
         ]
 
 
-    def _add_nodes_with_lib_error(self, reports=[]):
+    def _add_nodes_with_lib_error(self, reports=None):
+        if reports is None:
+            reports = []
         self.env_assist.assert_raise_library_error(
             # pylint: disable=unnecessary-lambda
             lambda: self._add_nodes(),
@@ -2876,7 +2883,9 @@ class FailureDisableSbd(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=[]):
+    def _add_nodes_with_lib_error(self, reports=None):
+        if reports is None:
+            reports = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -2983,7 +2992,9 @@ class FailureEnableSbd(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=[]):
+    def _add_nodes_with_lib_error(self, reports=None):
+        if reports is None:
+            reports = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -3178,7 +3189,9 @@ class FailureQdevice(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=[]):
+    def _add_nodes_with_lib_error(self, reports=None):
+        if reports is None:
+            reports = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -3579,7 +3592,9 @@ class FailureKnownHostsUpdate(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=[]):
+    def _add_nodes_with_lib_error(self, reports=None):
+        if reports is None:
+            reports = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),

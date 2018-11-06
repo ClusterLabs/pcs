@@ -12,16 +12,16 @@ from pcs.test.tools.misc import (
 )
 
 
-TIMEOUT=10
+TIMEOUT = 10
 
 def create(
-    env, wait=False, disabled=False, meta_attributes=None, operations=None,
+    env, wait=False, disabled=False, meta_attributes=None, operation_list=None,
     allow_invalid_operation=False
 ):
     return resource.create(
         env,
         "A", "ocf:heartbeat:Dummy",
-        operations=operations if operations else [],
+        operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
@@ -33,7 +33,7 @@ def create_group(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
     return resource.create_in_group(
         env,
         "A", "ocf:heartbeat:Dummy", "G",
-        operations=[],
+        operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
@@ -46,7 +46,7 @@ def create_clone(
     return resource.create_as_clone(
         env,
         "A", "ocf:heartbeat:Dummy",
-        operations=[],
+        operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         clone_meta_options=clone_options if clone_options else {},
@@ -61,7 +61,7 @@ def create_bundle(
     return resource.create_into_bundle(
         env,
         "A", "ocf:heartbeat:Dummy",
-        operations=[],
+        operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         bundle_id="B",
@@ -334,7 +334,7 @@ class Create(TestCase):
 
         create(
             self.env_assist.get_env(),
-            operations=[
+            operation_list=[
                 {"name": "monitor", "timeout": "10s", "interval": "10"}
             ]
         )
@@ -342,7 +342,9 @@ class Create(TestCase):
     def test_sanitize_operation_id_from_agent(self):
         self.config.runner.pcmk.load_agent(
             instead="runner.pcmk.load_agent",
-            agent_filename="resource_agent_ocf_heartbeat_dummy_insane_action.xml"
+            agent_filename=(
+                "resource_agent_ocf_heartbeat_dummy_insane_action.xml"
+            ),
         )
         self.config.env.push_cib(
             resources=self.fixture_sanitized_operation
@@ -355,7 +357,7 @@ class Create(TestCase):
         )
         create(
             self.env_assist.get_env(),
-            operations=[
+            operation_list=[
                 {"name": "moni*tor", "timeout": "20", "interval": "20"}
             ],
             allow_invalid_operation=True

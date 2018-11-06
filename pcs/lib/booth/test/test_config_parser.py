@@ -51,6 +51,7 @@ class OrganizeLinesTest(TestCase):
         )
 
     def test_use_ticket_key_as_ticket_detail(self):
+        # pylint: disable=invalid-name
         self.maxDiff = None
         self.assertEqual(
             [
@@ -142,6 +143,7 @@ class ParseRawLinesTest(TestCase):
        )
 
 class ParseTest(TestCase):
+    # pylint: disable=no-self-use
     def test_raises_when_invalid_lines_appear(self):
         invalid_line_list = [
             "first invalid line",

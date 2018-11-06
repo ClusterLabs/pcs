@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.node import PacemakerNode
@@ -194,8 +194,9 @@ class GetNodeNameFromResource(TestCase):
 
 
 class Validate(TestCase):
+    @staticmethod
     def validate(
-        self, instance_attributes=None, node_name="NODE-NAME", host="node-host"
+        instance_attributes=None, node_name="NODE-NAME", host="node-host"
     ):
         existing_nodes_names = ["R"]
         existing_nodes_addrs = ["RING0", "RING1"]

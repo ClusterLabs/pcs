@@ -8,7 +8,7 @@ from pcs import settings
 from pcs.common.host import PcsKnownHost, Destination
 
 
-class EnvConfig(object):
+class EnvConfig:
     def __init__(self, call_collection):
         self.__calls = call_collection
         self.__cib_data = None

@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.lib.cib.resource import clone
 from pcs.test.tools.assertions import assert_xml_equal

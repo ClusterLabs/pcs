@@ -50,7 +50,7 @@ def update_attribute_remove_empty(element, name, value):
     string name -- attribute name
     mixed value -- attribute value
     """
-    if len(value) < 1:
+    if not value:
         if name in element.attrib:
             del element.attrib[name]
         return
@@ -76,7 +76,7 @@ def etree_element_attibutes_to_dict(etree_el, required_key_list):
     required_key_list -- list of strings, attributes names which should be
         extracted
     """
-    return dict([(key, etree_el.get(key)) for key in required_key_list])
+    return {key: etree_el.get(key) for key in required_key_list}
 
 def etree_to_str(tree):
     """

@@ -7,6 +7,7 @@ from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.pacemaker.values as lib
 
+# pylint: disable=no-self-use
 
 class BooleanTest(TestCase):
     def test_true_is_true(self):

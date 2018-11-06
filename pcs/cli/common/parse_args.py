@@ -303,7 +303,7 @@ def filter_out_options(arg_list):
     return args_without_options
 
 
-class InputModifiers(object):
+class InputModifiers():
     def __init__(self, options):
         self._defined_options = set(options.keys())
         self._options = dict(options)

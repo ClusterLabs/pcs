@@ -1,3 +1,4 @@
+# pylint: disable=import-error
 from pyagentx import Updater
 
 
@@ -69,6 +70,7 @@ def _find_oid_in_sub_tree(sub_tree, section_name):
     return None
 
 
+# pylint: disable=inconsistent-return-statements
 def _str_oid_to_oid(sub_tree, str_oid):
     sections = str_oid.split(".")
     oid_list = []
@@ -77,7 +79,7 @@ def _str_oid_to_oid(sub_tree, str_oid):
         if sub_tree is None:
             raise AssertionError(
                 "oid section '{0}' ({1}) not found in section '{2}'".format(
-                    section, str_oid, oid_list[-1] if len(oid_list) else "."
+                    section, str_oid, oid_list[-1] if oid_list else "."
                 )
             )
         oid_list.append(str(sub_tree.oid))

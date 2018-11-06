@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import base64
 import logging
 import re
@@ -23,6 +24,8 @@ from pcs.lib.corosync.config_facade import ConfigFacade
 
 from pcs.lib.commands import quorum as lib
 
+
+# pylint: disable=protected-access
 
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class GetQuorumConfigTest(TestCase):
@@ -376,6 +379,7 @@ class SetQuorumOptionsTest(TestCase):
     def test_bad_options(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
+        # pylint: disable=unused-argument
         original_conf = open(rc("corosync.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -406,6 +410,7 @@ class SetQuorumOptionsTest(TestCase):
     def test_bad_config(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
+        # pylint: disable=unused-argument
         original_conf = "invalid {\nconfig: this is"
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -476,6 +481,7 @@ class StatusDeviceTextTest(TestCase):
 
 
 class AddDeviceNetTest(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -650,7 +656,7 @@ class AddDeviceNetTest(TestCase):
             "net",
             {"host": self.qnetd_host, "algorithm": "ffsplit"},
             {},
-            { "mode": mode}
+            {"mode": mode}
         )
 
         mock_write_tmpfile.assert_called_once_with(
@@ -1837,11 +1843,13 @@ class RemoveDeviceHeuristics(TestCase):
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class RemoveDeviceNetTest(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["rh7-1", "rh7-2", "rh7-3"])
 
-    def conf_2nodes(self, quorum_line):
+    @staticmethod
+    def conf_2nodes(quorum_line):
         cluster_nodes = ["rh7-1", "rh7-2"]
         original_conf = open(rc("corosync-qdevice.conf")).read()
         expected_conf = original_conf.replace(
@@ -1870,7 +1878,8 @@ class RemoveDeviceNetTest(TestCase):
         )
         return cluster_nodes, original_conf, expected_conf
 
-    def conf_3nodes(self):
+    @staticmethod
+    def conf_3nodes():
         cluster_nodes = ["rh7-1", "rh7-2", "rh7-3"]
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         expected_conf = original_conf.replace(
@@ -1944,7 +1953,8 @@ class RemoveDeviceNetTest(TestCase):
         if sbd_installed:
             self.fixture_config_runner_sbd_enabled(sbd_enabled)
 
-    def fixture_reports_success(self, cluster_nodes, atb_enabled=False):
+    @staticmethod
+    def fixture_reports_success(cluster_nodes, atb_enabled=False):
         reports = []
         if atb_enabled:
             reports.append(
@@ -2623,7 +2633,9 @@ class UpdateDeviceTest(TestCase):
         self.assertEqual(1, mock_get_corosync.call_count)
         self.assertEqual(0, mock_push_corosync.call_count)
 
-    def test_invalid_options_forced(self, mock_get_corosync, mock_push_corosync):
+    def test_invalid_options_forced(
+        self, mock_get_corosync, mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)

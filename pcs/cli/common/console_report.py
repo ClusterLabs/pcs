@@ -1,3 +1,8 @@
+# pylint: disable=too-many-lines, no-name-in-module
+# no-name-in-module diabled because of issue in Travis CI:a
+#   pcs/cli/common/console_report.py:3:0: E0611: No name 'Iterable' in module
+#   'collections' (no-name-in-module)
+
 from collections import defaultdict, Iterable
 from functools import partial
 import sys
@@ -284,7 +289,7 @@ def build_node_description(node_types):
 
 def joined_list(item_list, optional_transformations=None):
     if not optional_transformations:
-        optional_transformations={}
+        optional_transformations = {}
 
     return ", ".join(sorted([
         "'{0}'".format(optional_transformations.get(item, item))
@@ -1154,7 +1159,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         partial(service_operation_started, "Disabling")
      ,
     codes.SERVICE_DISABLE_ERROR: partial(service_operation_error, "disable"),
-    codes.SERVICE_DISABLE_SUCCESS: partial(service_operation_success, "disabled"),
+    codes.SERVICE_DISABLE_SUCCESS: partial(
+        service_operation_success, "disabled"
+    ),
 
     codes.SERVICE_KILL_ERROR: lambda info:
         "Unable to kill {service_list}: {reason}"

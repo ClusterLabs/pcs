@@ -1,6 +1,6 @@
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -15,6 +15,8 @@ from pcs.common.tools import Version
 from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
+
+# pylint: disable=no-self-use, line-too-long
 
 class CibToolsTest(TestCase):
     def setUp(self):
@@ -36,12 +38,13 @@ class IdProviderTest(CibToolsTest):
         super(IdProviderTest, self).setUp()
         self.provider = lib.IdProvider(self.cib.tree)
 
-    def fixture_report(self, id):
+    @staticmethod
+    def fixture_report(_id):
         return (
             severities.ERROR,
             report_codes.ID_ALREADY_EXISTS,
             {
-                "id": id,
+                "id": _id,
             },
             None
         )
@@ -107,15 +110,15 @@ class IdProviderBook(IdProviderTest):
 
 class IdProviderAllocate(IdProviderTest):
     def test_nonexisting_id(self):
-        self.assertEqual("myId",  self.provider.allocate_id("myId"))
+        self.assertEqual("myId", self.provider.allocate_id("myId"))
 
     def test_existing_id(self):
         self.fixture_add_primitive_with_id("myId")
-        self.assertEqual("myId-1",  self.provider.allocate_id("myId"))
+        self.assertEqual("myId-1", self.provider.allocate_id("myId"))
 
     def test_allocate_books(self):
-        self.assertEqual("myId",  self.provider.allocate_id("myId"))
-        self.assertEqual("myId-1",  self.provider.allocate_id("myId"))
+        self.assertEqual("myId", self.provider.allocate_id("myId"))
+        self.assertEqual("myId-1", self.provider.allocate_id("myId"))
 
     def test_booked_ids(self):
         self.fixture_add_primitive_with_id("myId")
@@ -123,7 +126,7 @@ class IdProviderAllocate(IdProviderTest):
             self.provider.book_ids("myId-1"),
             []
         )
-        self.assertEqual("myId-2",  self.provider.allocate_id("myId"))
+        self.assertEqual("myId-2", self.provider.allocate_id("myId"))
 
 
 class DoesIdExistTest(CibToolsTest):
@@ -372,9 +375,9 @@ class GetFencingTopology(CibToolsTest):
         )
 
     def test_success_if_missing(self):
-        ft = lib.get_fencing_topology(self.cib.tree)
-        self.assertEqual("fencing-topology", ft.tag)
-        self.assertEqual("configuration", ft.getparent().tag)
+        ft_el = lib.get_fencing_topology(self.cib.tree)
+        self.assertEqual("fencing-topology", ft_el.tag)
+        self.assertEqual("configuration", ft_el.getparent().tag)
 
 
 @mock.patch('pcs.lib.cib.tools.does_id_exist')
@@ -460,7 +463,7 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
         )
 
 
-class getCibCrmFeatureSet(TestCase):
+class GetCibCrmFeatureSet(TestCase):
     def test_success(self):
         self.assertEqual(
             Version(3, 0, 9),

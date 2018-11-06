@@ -65,12 +65,12 @@ def _parse_bundle_groups(arg_list):
             continue
         if keyword in repeatable_keyword_list:
             for repeated_section in groups[keyword]:
-                if len(repeated_section) == 0:
+                if not repeated_section:
                     raise CmdLineInputError(
                         "No {0} options specified".format(keyword)
                     )
         else:
-            if len(groups[keyword]) == 0:
+            if not groups[keyword]:
                 raise CmdLineInputError(
                     "No {0} options specified".format(keyword)
                 )

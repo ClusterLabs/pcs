@@ -9,6 +9,7 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
+# pylint: disable=no-self-use
 
 class ValidateTicketExistsTest(TestCase):
     def test_raises_on_duplicate_ticket(self):
@@ -340,8 +341,12 @@ class SetAuthfileTest(TestCase):
             config_structure.set_authfile(
                 [
                     config_structure.ConfigItem("site", "1.1.1.1"),
-                    config_structure.ConfigItem("authfile", "/old/path/to/auth1.file"),
-                    config_structure.ConfigItem("authfile", "/old/path/to/auth2.file"),
+                    config_structure.ConfigItem(
+                        "authfile", "/old/path/to/auth1.file"
+                    ),
+                    config_structure.ConfigItem(
+                        "authfile", "/old/path/to/auth2.file"
+                    ),
                 ],
                 "/path/to/auth.file"
             )

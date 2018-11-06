@@ -11,6 +11,9 @@ try:
 except ImportError:
     can_concurrency = False
 
+
+# pylint: disable=redefined-outer-name, unused-argument, invalid-name
+
 if "BUNDLED_LIB_LOCATION" in os.environ:
     sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 

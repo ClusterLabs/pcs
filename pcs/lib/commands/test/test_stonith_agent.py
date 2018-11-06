@@ -1,6 +1,6 @@
 import logging
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -37,6 +37,7 @@ class TestListAgents(TestCase):
 
 
     def tearDown(self):
+        # pylint: disable=protected-access
         lib_ra.StonithAgent._fenced_metadata = None
 
 
@@ -170,6 +171,7 @@ class TestDescribeAgent(TestCase):
 
 
     def tearDown(self):
+        # pylint: disable=protected-access
         lib_ra.StonithAgent._fenced_metadata = None
 
 

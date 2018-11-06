@@ -1,10 +1,11 @@
-from lxml import etree
+# pylint: disable=too-many-lines
 import os
 import re
-from random import shuffle
 import shutil
+from random import shuffle
 from textwrap import dedent
 from unittest import mock, skip, TestCase
+from lxml import etree
 
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
@@ -31,6 +32,8 @@ from pcs.test.tools.pcs_runner import (
 from pcs import utils
 from pcs import resource
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+
+# pylint: disable=invalid-name, no-self-use, bad-whitespace, line-too-long, too-many-public-methods, redefined-outer-name, too-many-statements, anomalous-backslash-in-string
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 

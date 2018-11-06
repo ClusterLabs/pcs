@@ -5,7 +5,7 @@ from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
 )
 
-class BoothShortcuts(object):
+class BoothShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
@@ -71,6 +71,7 @@ class BoothShortcuts(object):
         rewrite_existing=False, node_labels=None, communication_list=None,
         name="http.booth.save_files"
     ):
+        # pylint: disable=too-many-arguments
         param_list = [("data_json", json.dumps(files_data))]
         if rewrite_existing:
             param_list.append(("rewrite_existing", "1"))

@@ -77,16 +77,22 @@ class CreateTest(TestCase):
 @patch_commands("get_constraints", mock.Mock)
 class RemoveTest(TestCase):
     @patch_commands("ticket.remove_plain", mock.Mock(return_value=1))
-    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=0))
+    @patch_commands(
+        "ticket.remove_with_resource_set", mock.Mock(return_value=0)
+    )
     def test_successfully_remove_plain(self):
         self.assertTrue(ticket_command.remove(mock.MagicMock(), "T", "R"))
 
     @patch_commands("ticket.remove_plain", mock.Mock(return_value=0))
-    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=1))
+    @patch_commands(
+        "ticket.remove_with_resource_set", mock.Mock(return_value=1)
+    )
     def test_successfully_remove_with_resource_set(self):
         self.assertTrue(ticket_command.remove(mock.MagicMock(), "T", "R"))
 
     @patch_commands("ticket.remove_plain", mock.Mock(return_value=0))
-    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=0))
+    @patch_commands(
+        "ticket.remove_with_resource_set", mock.Mock(return_value=0)
+    )
     def test_raises_library_error_when_no_matching_constraint_found(self):
         self.assertFalse(ticket_command.remove(mock.MagicMock(), "T", "R"))

@@ -45,9 +45,10 @@ import pcs.cli.constraint_ticket.command as ticket_command
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 
+# pylint: disable=too-many-branches, unused-argument, too-many-locals, too-many-statements, broad-except
 
 def config_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         config_show(lib, argv, modifiers)
         return
 
@@ -98,6 +99,8 @@ def config_show(lib, argv, modifiers):
       * --corosync_conf - corosync.conf file
     """
     modifiers.ensure_only_supported("-f", "--corosync_conf")
+    if argv:
+        raise CmdLineInputError()
     print("Cluster Name: %s" % utils.getClusterName())
     status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
     print()
@@ -311,14 +314,14 @@ def config_restore_remote(infile_name, infile_obj):
             if retval != 0:
                 err_msgs.append(output)
                 continue
-            status = json.loads(output)
+            _status = json.loads(output)
             if (
-                status["corosync"]
+                _status["corosync"]
                 or
-                status["pacemaker"]
+                _status["pacemaker"]
                 or
                 # not supported by older pcsd, do not fail if not present
-                status.get("pacemaker_remote", False)
+                _status.get("pacemaker_remote", False)
             ):
                 err_msgs.append(
                     "Cluster is currently running on node %s. You need to stop "
@@ -613,7 +616,7 @@ def config_checkpoint_list(dummy_lib, argv, modifiers):
     except OSError as e:
         utils.err("unable to list checkpoints: %s" % e)
     cib_list = []
-    cib_name_re = re.compile("^cib-(\d+)\.raw$")
+    cib_name_re = re.compile(r"^cib-(\d+)\.raw$")
     for filename in file_list:
         match = cib_name_re.match(filename)
         if not match:
@@ -669,6 +672,7 @@ def config_checkpoint_restore(dummy_lib, argv, modifiers):
     utils.replace_cib_configuration(snapshot_dom)
 
 def config_import_cman(dummy_lib, argv, modifiers):
+    # pylint: disable=no-member
     """
     Options:
       * --force - skip checks, overwrite files
@@ -679,7 +683,10 @@ def config_import_cman(dummy_lib, argv, modifiers):
         "--force", "interactive", "--request-timeout",
     )
     if no_clufter:
-        utils.err("Unable to perform a CMAN cluster conversion due to missing python-clufter package")
+        utils.err(
+            "Unable to perform a CMAN cluster conversion due to missing "
+            "python-clufter package"
+        )
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
@@ -724,10 +731,10 @@ def config_import_cman(dummy_lib, argv, modifiers):
         if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
             utils.err("dist does not match output-format")
     elif output_format == "corosync.conf":
-        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
+        dist = _get_linux_dist()
     else:
         # for output-format=pcs-command[-verbose]
-        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
+        dist = _get_linux_dist()
 
     clufter_args = {
         "input": str(cluster_conf),
@@ -858,6 +865,10 @@ def config_import_cman(dummy_lib, argv, modifiers):
         config_restore_remote(None, tar_data)
     tar_data.close()
 
+def _get_linux_dist():
+    # pylint: disable=deprecated-method
+    return ",".join(platform.linux_distribution(full_distribution_name=0))
+
 def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
     """
     Options:
@@ -898,7 +909,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
         sys.exit(1)
     # complete optional options
     if dist is None:
-        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
+        dist = _get_linux_dist()
 
     # prepare convertor options
     clufter_args = {
@@ -945,6 +956,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
 
     # save commands if not printed to stdout by clufter
     if output_file:
+        # pylint: disable=no-member
         ok, message = utils.write_file(
             output_file,
             clufter_args_obj.output["passout"].decode()

@@ -9,6 +9,7 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
+# pylint: disable=line-too-long
 
 coro_conf = rc("corosync.conf")
 coro_qdevice_conf = rc("corosync-3nodes-qdevice.conf")
@@ -25,10 +26,12 @@ class TestBase(TestCase, AssertPcsMixin):
         # Live behavior is tested in pcs.lib.commands.test.test_quorum.
         self.pcs_runner = PcsRunner(cib_file=None, corosync_conf_opt=temp_conf)
 
-    def fixture_conf_qdevice(self):
+    @staticmethod
+    def fixture_conf_qdevice():
         shutil.copy(coro_qdevice_conf, temp_conf)
 
-    def fixture_conf_qdevice_heuristics(self):
+    @staticmethod
+    def fixture_conf_qdevice_heuristics():
         shutil.copy(coro_qdevice_heuristics_conf, temp_conf)
 
 

@@ -533,9 +533,6 @@ class NotLive(TestCase):
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
         self.config.env.set_cib_data(open(rc("cib-empty.xml")).read())
 
-    def fixture_reports(self, node_name=NODE_NAME):
-        return fixture_reports_not_live_cib(node_name)
-
     def test_addr_specified(self):
         (self.config
             .runner.cib.load()
@@ -543,7 +540,7 @@ class NotLive(TestCase):
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
-        self.env_assist.assert_reports(self.fixture_reports())
+        self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_addr_not_specified(self):
         (self.config
@@ -565,7 +562,7 @@ class NotLive(TestCase):
                 ),
             ]
             +
-            self.fixture_reports()
+            fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_not_specified(self):
@@ -589,7 +586,7 @@ class NotLive(TestCase):
                 ),
             ]
             +
-            self.fixture_reports()
+            fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_specified(self):
@@ -604,7 +601,7 @@ class NotLive(TestCase):
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr="addr")
-        self.env_assist.assert_reports(self.fixture_reports())
+        self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_wait(self):
         self.env_assist.assert_raise_library_error(

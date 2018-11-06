@@ -12,6 +12,6 @@ __target_type_map = {
 
 target_type_map_cli_to_lib = __target_type_map
 
-target_type_map_lib_to_cli = dict([
-    (value, key) for key, value in __target_type_map.items()
-])
+target_type_map_lib_to_cli = {
+    value: key for key, value in __target_type_map.items()
+}

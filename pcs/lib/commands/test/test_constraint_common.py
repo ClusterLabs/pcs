@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.commands.constraint import common as constraint
@@ -14,8 +14,8 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 def fixture_cib_and_constraints():
     cib = etree.Element("cib")
     resources_section = etree.SubElement(cib, "resources")
-    for id in ("A", "B", "E", "F"):
-        etree.SubElement(resources_section, "primitive").attrib["id"] = id
+    for _id in ("A", "B", "E", "F"):
+        etree.SubElement(resources_section, "primitive").attrib["id"] = _id
     constraint_section = etree.SubElement(
         etree.SubElement(cib, "configuration"),
         "constraints"

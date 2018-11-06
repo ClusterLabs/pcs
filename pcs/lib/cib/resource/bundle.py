@@ -100,6 +100,7 @@ def append_new(
     parent_element, id_provider, bundle_id, container_type, container_options,
     network_options, port_map, storage_map, meta_attributes
 ):
+    # pylint: disable=too-many-arguments
     """
     Create new bundle and add it to the CIB
 
@@ -144,6 +145,7 @@ def validate_update(
     port_map_add, port_map_remove, storage_map_add, storage_map_remove,
     force_options=False
 ):
+    # pylint: disable=too-many-arguments
     """
     Validate modifying an existing bundle, return list of report items
 
@@ -222,6 +224,7 @@ def update(
     port_map_add, port_map_remove, storage_map_add, storage_map_remove,
     meta_attributes
 ):
+    # pylint: disable=too-many-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 
@@ -599,10 +602,10 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
 
 def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
     report_list = []
-    for id in id_list:
+    for _id in id_list:
         try:
             find_element_by_tag_and_id(
-                map_type, bundle_el, id, id_types=[map_label]
+                map_type, bundle_el, _id, id_types=[map_label]
             )
         except LibraryError as e:
             report_list.extend(e.args)
@@ -664,7 +667,7 @@ def _remove_map_elements(element_list, id_to_remove_list):
             el.getparent().remove(el)
 
 def _options_to_remove(options):
-    return set([
+    return {
         name for name, value in options.items()
         if validate.is_empty_string(value)
-    ])
+    }

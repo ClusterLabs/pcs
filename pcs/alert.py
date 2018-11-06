@@ -98,7 +98,7 @@ def alert_remove(lib, argv, modifiers):
       * -f - CIB file (in lib wrapper)
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     lib.alert.remove_alert(argv)
@@ -138,7 +138,7 @@ def recipient_update(lib, argv, modifiers):
       * --force - allows not unique recipient values
     """
     modifiers.ensure_only_supported("-f", "--force")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     recipient_id = argv[0]
@@ -163,7 +163,7 @@ def recipient_remove(lib, argv, modifiers):
       * -f - CIB file (in lib wrapper)
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     lib.alert.remove_recipient(argv)
@@ -199,7 +199,7 @@ def _alert_to_str(alert):
 
     recipients = []
     for recipient in alert.get("recipient_list", []):
-        recipients.extend( _recipient_to_str(recipient))
+        recipients.extend(_recipient_to_str(recipient))
 
     if recipients:
         content.append("Recipients:")

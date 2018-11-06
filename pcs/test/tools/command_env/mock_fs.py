@@ -28,7 +28,7 @@ def _ensure_consistent_args(func_name, call_args, call_kwargs):
         set(_FUNC_ARGS[func_name][:len(call_args)])
         .intersection(call_kwargs.keys())
     )
-    if(param_intersection):
+    if param_intersection:
         raise TypeError(
             "{0}() got multiple values for keyword argument(s) '{1}'".format(
                 func_name,
@@ -43,7 +43,7 @@ def _get_all_args_as_kwargs(func_name, call_args, call_kwargs):
         kwargs[_FUNC_ARGS[func_name][i]] = arg
     return kwargs
 
-class Call(object):
+class Call:
     type = CALL_TYPE_FS
 
     def __init__(

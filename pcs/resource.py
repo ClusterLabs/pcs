@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import sys
 import xml.dom.minidom
 from xml.dom.minidom import parseString
@@ -43,6 +44,7 @@ from pcs.lib.pacemaker.values import (
 )
 import pcs.lib.resource_agent as lib_ra
 
+# pylint: disable=len-as-condition, too-many-branches, too-many-statements, too-many-locals, line-too-long, singleton-comparison, bad-whitespace, redefined-outer-name, invalid-name, unused-argument, too-many-boolean-expressions, inconsistent-return-statements, superfluous-parens, too-many-nested-blocks, no-else-return
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
@@ -161,6 +163,7 @@ def resource_cmd(lib, argv, modifiers):
         elif sub_cmd == "relocate":
             resource_relocate(lib, argv_next, modifiers)
         elif sub_cmd == "utilization":
+            # pylint: disable=pointless-string-statement
             """
             Options:
               * -f - CIB file
@@ -1257,14 +1260,14 @@ def resource_operation_remove(res_id, argv):
     original_argv = " ".join(argv)
 
     op_name = argv.pop(0)
-    resource_found = False
+    resource_el = None
 
     for resource in dom.getElementsByTagName("primitive"):
         if resource.getAttribute("id") == res_id:
-            resource_found = True
+            resource_el = resource
             break
 
-    if not resource_found:
+    if not resource_el:
         utils.err("Unable to find resource: %s" % res_id)
 
     remove_all = False
@@ -1274,7 +1277,7 @@ def resource_operation_remove(res_id, argv):
     op_properties = utils.convert_args_to_tuples(argv)
     op_properties.append(('name', op_name))
     found_match = False
-    for op in resource.getElementsByTagName("op"):
+    for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
         for attrName in op.attributes.keys():
             if attrName == "id":
@@ -2429,6 +2432,7 @@ def resource_unmanage_cmd(lib, argv, modifiers):
 
 # moved to pcs.lib.pacemaker.state
 def is_managed(resource_id):
+    # pylint: disable=too-many-return-statements
     """
     Commandline options:
       * -f - CIB file
@@ -2546,7 +2550,7 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
         ))
         return "\n".join(result_lines)
 
-    resource_list = sorted(set([fail["resource"] for fail in failures_data]))
+    resource_list = sorted({fail["resource"] for fail in failures_data})
     for current_resource in resource_list:
         result_lines.append(__headline_resource_failures(
             False, current_resource, node, operation, interval
@@ -2555,7 +2559,7 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
             fail for fail in failures_data
             if fail["resource"] == current_resource
         ]
-        node_list = sorted(set([fail["node"] for fail in resource_failures]))
+        node_list = sorted({fail["node"] for fail in resource_failures})
         for current_node in node_list:
             node_failures = [
                 fail for fail in resource_failures
@@ -2563,16 +2567,16 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
             ]
             if full:
                 result_lines.append(f"  {current_node}:")
-                operation_list = sorted(set(
-                    [fail["operation"] for fail in node_failures]
-                ))
+                operation_list = sorted({
+                    fail["operation"] for fail in node_failures
+                })
                 for current_operation in operation_list:
                     operation_failures = [
                         fail for fail in node_failures
                         if fail["operation"] == current_operation
                     ]
                     interval_list = sorted(
-                        set([fail["interval"] for fail in operation_failures]),
+                        {fail["interval"] for fail in operation_failures},
                         # pacemaker's definition of infinity
                         key=lambda x: 1000000 if x == "INFINITY" else x
                     )

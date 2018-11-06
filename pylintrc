@@ -1,109 +1,29 @@
+# Required version of pylint: 2.1.1
+# Project should not containt any issues reported by required version of pylint
+# and using this
+# Use this command to run linter on the whole project:
+# $ ./run_pylint.sh
+
 [MESSAGES CONTROL]
-#useful links:
-#http://pylint-messages.wikidot.com/all-codes
-#https://pylint.readthedocs.io/en/latest/reference_guide/features.html
-#
-#can be used for example with
-#find ./ -name '*.py' -exec pylint --reports=n \{\} --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}' \;
-#or
-#pylint --reports=n ./**/*.py --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}'
-#(which gives duplicate-code problems)
-#
-#project adapted to pylint 1.5.4, astroid 1.4.4
-#
-# (C) convention, for programming standard violation
-# (R) refactor, for bad code smell
-# (W) warning, for python specific problems
-# (E) error, for much probably bugs in the code
-# (F) fatal, if an error occurred which prevented pylint from doing further processing.
-
-#C0103: [invalid-name] Invalid %s name "%s"
-#C0111: [missing-docstring] Missing %s docstring
-#C0121: [singleton-comparison] Comparison to None should be 'expr is None'
-#C0122: [misplaced-comparison-constant] Comparison should be code == 3
-#C0200: [consider-using-enumerate] Consider using enumerate instead of iterating with range and len
-#C0325: [superfluous-parens] Unnecessary parens after %r keyword
-#C0326: [bad-whitespace] %s space %s %s %s\n%s
-#C0330: [bad-continuation] Wrong continued indentation - https://github.com/PyCQA/pylint/issues/289
-#C0410: [multiple-imports] Multiple imports on one line
-#C0411: [wrong-import-order] %s comes before %s Used when PEP8 import order is not respected (standard imports first, then third-party libraries, then local imports)
-#C0412: [ungrouped-imports] Imports from package subprocess are not grouped - is emitted when imports from the same package or module are not placed together, but scattered around in the code
-#C0413: [wrong-import-position] Import "from errors import error_codes" should be placed at the top of the module
-#E0202: [method-hidden] An attribute affected in %s line %s hide this method
-#E0611: [no-name-in-module] No name %r in module %r
-#E1101: [no-member] %s %r has no %r member
-#E1102: [not-callable] %s is not callable
-#E1103: [maybe-no-member] %s %r has no %r member (but some types could not be inferred)
-#E1136: [unsubscriptable-object] Value 'self.allowed_child_ids' is unsubscriptable
-#F0401: [import-error] Unable to import %s
-#R0102: [simplifiable-if-statement] The if statement can be reduced by assigning bool of test
-#R0201: [no-self-use] Method could be a function
-#R0204: [redefined-variable-type] Redefinition of key_modulus type from unicode to str
-#R0903: [too-few-public-methods] Too few public methods (%s/%s)
-#R0911: [too-many-return-statements] Too many return statements (%s/%s)
-#R0912: [too-many-branches] Too many branches (%s/%s)
-#R0913: [too-many-arguments] Too many arguments (%s/%s)
-#W0102: [dangerous-default-value] Dangerous default value %s as argument
-#W0141: [bad-builtin] Used builtin function %r
-#W0142: [star-args] Used * or ** magic
-#W0150: [lost-exception] %s statement in finally block may swallow exception
-#W0212: [protected-access] Access to a protected member %s of a client class
-#W0232: [no-init] Class has no __init__ method
-#W0401: [wildcard-import] Wildcard import %s
-#W0403: [relative-import] Relative import %r, should be %r
-#W0511: [fixme] Used when a warning note as FIXME or XXX is detected.
-#W0603: [global-statement] Using the global statement
-#W0612: [locally-disabled] Unused variable %r
-#W0613: [unused-argument] Unused argument %r
-#W0614: [unused-wildcard-import] Unused import %s from wildcard import
-#W0621: [redefined-outer-name] Redefining name %r from outer scope (line %s)
-#W0622: [redefined-builtin] Redefining built-in %r
-#W0631: [undefined-loop-variable] Using possibly undefined loop variable %r
-#W0632: [unbalanced-tuple-unpacking] Possible unbalanced tuple unpacking with sequence%s: …
-#W0702: [bare-except] No exception type(s) specified
-#W0703: [broad-except] Catching too general exception %s
-#W0710: [nonstandard-exception] Exception doesn't inherit from standard "Exception" class
-#W1401: [anomalous-backslash-in-string] Anomalous backslash in string: \'%s\'. String constant might be missing an r prefix.
-# for checking new daemon files
-# disable=missing-docstring, fixme, bad-continuation
-disable=no-name-in-module, import-error, nonstandard-exception, unused-argument, redefined-outer-name, bare-except,  anomalous-backslash-in-string, no-member, star-args, undefined-loop-variable, maybe-no-member, broad-except, too-few-public-methods, not-callable, protected-access, method-hidden, too-many-arguments, global-statement, unbalanced-tuple-unpacking, fixme, lost-exception, dangerous-default-value, too-many-return-statements, no-self-use, no-init, redefined-builtin, wildcard-import, relative-import, unused-wildcard-import, bad-builtin, locally-disabled, missing-docstring, invalid-name, bad-whitespace, bad-continuation, superfluous-parens, singleton-comparison, misplaced-comparison-constant, simplifiable-if-statement, multiple-imports, redefined-variable-type, wrong-import-position, ungrouped-imports, wrong-import-order, consider-using-enumerate, unsubscriptable-object, too-many-lines, too-many-ancestors, len-as-condition, invalid-slice-index
-
-[BASIC]
-good-names=e
+disable=missing-docstring, fixme, bad-continuation
+# Everything in module context is constatnt, but our naming convetion allows
+# constatnt to have same names as variables
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$
 
 [DESIGN]
-# Maximum number of locals for function / method body
-max-locals=48
-# Maximum number of statements in function / method body
-max-statements=160
-# Maximum number of branch for function / method body
-max-branches=64
-# Maximum number of public methods for a class (see R0904).
-max-public-methods=115
-# Maximum number of boolean expressions in a if statement (default 5)
-# currently in pcs/utils.py and in pcs/resource.py
-max-bool-expr=6
+max-module-lines=1500
+max-args=8
+max-parents=10
+min-public-methods=0
 
-[LOGGING]
-# Ignore imports when computing similarities.
-# unfortunately don't work with from abc import (...similar lines...
-ignore-imports=yes
-# Minimum lines number of a similarity.
-min-similarity-lines=9
-
+[BASIC]
+good-names=e, i, op, ip, el, maxDiff, cm, ok
 
 [VARIABLES]
 # A regular expression matching the name of dummy variables (i.e. expectedly
 # not used).
 dummy-variables-rgx=_$|dummy
 
-
 [FORMAT]
 # Maximum number of characters on a single line.
-max-line-length=637
-
-[ELIF]
-
-# Maximum number of nested blocks for function / method body
-# currently in pcs/utils.py, pcs/resource.py, pcs/cluster.py, pcs/constraint.py
-max-nested-blocks=6
+max-line-length=80

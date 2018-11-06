@@ -13,6 +13,8 @@ from pcs.daemon.test.fixtures_app import(
     UserAuthMixin
 )
 
+# pylint: disable=too-many-ancestors
+
 SID = "abc"
 
 def headers_with_sid(cookie_sid):
@@ -71,10 +73,11 @@ class MixinTest(
 
     @property
     def session_dict(self):
+        # pylint: disable=protected-access
         return self.storage._Storage__sessions
 
     def sid_from_body(self, response):
-        self.assertIn("Set-Cookie" , response.headers)
+        self.assertIn("Set-Cookie", response.headers)
         cookie = parse_cookie(response.headers["Set-Cookie"])
         self.assertIn(app_session.PCSD_SESSION, cookie)
         return cookie[app_session.PCSD_SESSION]
@@ -103,7 +106,7 @@ class MixinTest(
         if self.response_sid_expectation == RESPONSE_WITH_SID:
             self.assertEqual(self.sid_from_body(response), self.sid)
         elif self.response_sid_expectation == RESPONSE_WITHOUT_SID:
-            self.assertNotIn("Set-Cookie" , response.headers)
+            self.assertNotIn("Set-Cookie", response.headers)
         self.extra_checks(response)
 
 class SidNotInRequestCookiesByDefault(MixinTest):

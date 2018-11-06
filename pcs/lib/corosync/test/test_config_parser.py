@@ -4,6 +4,7 @@ from pcs.test.tools.assertions import ac
 
 from pcs.lib.corosync import config_parser
 
+# pylint: disable=no-self-use
 
 class SectionTest(TestCase):
 
@@ -893,7 +894,7 @@ section1 {
 
 
     def test_comment(self):
-        string= """\
+        string = """\
 # junk1
 name1: value1
   #junk2
@@ -911,7 +912,7 @@ name4 # junk5: value4
 """
         ac(str(config_parser.parse_string(string)), parsed)
 
-        string= """\
+        string = """\
 # junk1
 section1 { # junk2
 }

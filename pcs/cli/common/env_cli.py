@@ -1,5 +1,5 @@
-class Env(object):
-    #pylint: disable=too-many-instance-attributes
+class Env():
+    #pylint: disable=too-many-instance-attributes, too-few-public-methods
     def __init__(self):
         self.cib_data = None
         self.user = None

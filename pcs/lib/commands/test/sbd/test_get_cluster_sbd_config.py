@@ -46,17 +46,17 @@ class GetClusterSbdConfig(TestCase):
                     ),
                     dict(
                         label="node-3",
-                        output= "OPTION=   value",
+                        output="OPTION=   value",
                         response_code=200,
                     ),
                     dict(
                         label="node-4",
-                        output= "# just comment",
+                        output="# just comment",
                         response_code=200,
                     ),
                     dict(
                         label="node-5",
-                        output= "invalid value",
+                        output="invalid value",
                         response_code=200,
                     ),
                 ],

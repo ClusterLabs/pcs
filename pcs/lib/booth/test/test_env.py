@@ -6,6 +6,8 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import create_patcher
 
+# pylint: disable=no-self-use
+
 patch_env = create_patcher("pcs.lib.booth.env")
 
 class GetConfigFileNameTest(TestCase):
@@ -39,6 +41,7 @@ class BoothEnvTest(TestCase):
     @patch_env("set_keyfile_access")
     @patch_env("RealFile")
     def test_create_config(self, mock_real_file, mock_set_keyfile_access):
+        # pylint: disable=unused-argument
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
             write=mock.MagicMock(),
@@ -51,9 +54,10 @@ class BoothEnvTest(TestCase):
             env_data={"name": "booth"}
         ).create_config("a", can_overwrite_existing=True)
 
-        self.assertEqual(mock_file.assert_no_conflict_with_existing.mock_calls,[
-            mock.call('report processor', True),
-        ])
+        self.assertEqual(
+            mock_file.assert_no_conflict_with_existing.mock_calls,
+            [mock.call('report processor', True)]
+        )
         self.assertEqual(mock_file.write.mock_calls, [mock.call('a')])
 
     @patch_env("RealFile")
@@ -117,6 +121,7 @@ class SetKeyfileAccessTest(TestCase):
     def test_do_everything_to_set_desired_file_access(
         self, settings, getpwnam, getgrnam, chown, chmod
     ):
+        # pylint: disable=unused-argument
         file_path = "/tmp/some_booth_file"
         env.set_keyfile_access(file_path)
 
@@ -185,6 +190,7 @@ class SetKeyfileAccessTest(TestCase):
     @patch_env("pwd.getpwnam", mock.MagicMock())
     @patch_env("settings.pacemaker_gname", "some-group")
     def test_raises_when_cannot_chmod(self):
+        # pylint: disable=unused-argument
         assert_raise_library_error(
             lambda: env.set_keyfile_access("/booth"),
             (

@@ -10,7 +10,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
 def host_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         utils.exit_on_cmdline_input_errror(None, "host", "")
     else:
         sub_cmd, argv_next = argv[0], argv[1:]
@@ -31,6 +31,7 @@ def host_cmd(lib, argv, modifiers):
 
 
 def _parse_host_options(host, options):
+    # pylint: disable=invalid-name
     ADDR_OPT_KEYWORD = "addr"
     supported_options = set([ADDR_OPT_KEYWORD])
     parsed_options = parse_args.prepare_options(options)
@@ -55,6 +56,7 @@ def _parse_addr(addr):
 
 
 def auth_cmd(lib, argv, modifiers):
+    # pylint: disable=unused-argument
     """
     Options:
       * -u - username
@@ -78,12 +80,13 @@ def auth_cmd(lib, argv, modifiers):
 
 
 def deauth_cmd(lib, argv, modifiers):
+    # pylint: disable=unused-argument
     """
     Options:
       * --request-timeout - timeout for HTTP requests
     """
     modifiers.ensure_only_supported("--request-timeout")
-    if len(argv) < 1:
+    if not argv:
         # Object of type 'dict_keys' is not JSON serializable, make it a list
         remove_hosts = list(utils.read_known_hosts_file().keys())
     else:

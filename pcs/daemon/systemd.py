@@ -15,5 +15,6 @@ async def notify(socket_name):
         await stream.connect(socket_name)
         await stream.write(b'READY=1')
         stream.close()
+        # pylint: disable=broad-except
     except Exception as e:
         log.pcsd.error("Unable to notify systemd on '%s': %s", socket_name, e)

@@ -2,11 +2,13 @@ from pcs.test.tools.command_env.config_runner_cib import CibShortcuts
 from pcs.test.tools.command_env.config_runner_pcmk import PcmkShortcuts
 from pcs.test.tools.command_env.config_runner_corosync import CorosyncShortcuts
 from pcs.test.tools.command_env.config_runner_sbd import SbdShortcuts
-from pcs.test.tools.command_env.config_runner_systemctl import SystemctlShortcuts
+from pcs.test.tools.command_env.config_runner_systemctl import (
+    SystemctlShortcuts,
+)
 from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
 
 
-class RunnerConfig(object):
+class RunnerConfig:
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
@@ -21,6 +23,7 @@ class RunnerConfig(object):
         name="", stdout="", stderr="", returncode=0, check_stdin=None,
         before=None, instead=None
     ):
+        # pylint: disable=too-many-arguments
         """
         Place new call to a config.
 

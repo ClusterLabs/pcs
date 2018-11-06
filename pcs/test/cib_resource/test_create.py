@@ -12,6 +12,7 @@ from pcs.test.tools.misc import (
 from pcs.test.tools.pcs_runner import PcsRunner
 from pcs.test.cib_resource.common import ResourceTest
 
+# pylint: disable=invalid-name, no-self-use, unused-argument, line-too-long, too-many-public-methods
 
 class Success(ResourceTest):
     def test_base_create(self):

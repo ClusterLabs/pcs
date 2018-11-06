@@ -117,6 +117,7 @@ class ProcessNoExistingFileExpectation(TestCase, SetupPatchMixin):
 class ReportMissing(TestCase):
     @patch_env_file("console_report.error")
     def test_report_to_console(self, error):
+        # pylint: disable=no-self-use
         env_file.report_missing("role", "path")
         error.assert_called_once_with("role 'path' does not exist")
 

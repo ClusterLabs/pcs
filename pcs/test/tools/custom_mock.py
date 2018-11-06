@@ -10,6 +10,7 @@ from pcs.test.tools.assertions import  assert_report_item_list_equal
 
 def get_getaddrinfo_mock(resolvable_addr_list):
     def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        # pylint: disable=redefined-builtin, unused-argument
         if host not in resolvable_addr_list:
             raise socket.gaierror(1, "")
     return socket_getaddrinfo
@@ -38,9 +39,9 @@ class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
     def report_item_list(self):
         return self.items
 
-    def report_list(self, report_item_list):
-        self.direct_sent_items.extend(report_item_list)
-        return self._send(report_item_list)
+    def report_list(self, report_list):
+        self.direct_sent_items.extend(report_list)
+        return self._send(report_list)
 
     def send(self):
         errors = self._send(self.items, print_errors=False)
@@ -63,7 +64,7 @@ class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
 
 
 
-class MockCurl(object):
+class MockCurl:
     def __init__(
             self, info=None, output=b"", debug_output_list=None, exception=None,
             error=None, request=None
@@ -92,9 +93,9 @@ class MockCurl(object):
 
     def setopt(self, opt, val):
         if isinstance(val, list):
-           # in tests we use set operations (e.g. assertLessEqual) which
-           # require hashable values
-           val = tuple(val)
+            # in tests we use set operations (e.g. assertLessEqual) which
+            # require hashable values
+            val = tuple(val)
         if val is None:
             self.unsetopt(opt)
         else:
@@ -125,7 +126,7 @@ class MockCurl(object):
                 self._opts[pycurl.DEBUGFUNCTION](msg_type, msg)
 
 
-class MockCurlSimple(object):
+class MockCurlSimple:
     def __init__(self, info=None, output=b"", debug_output=b"", request=None):
         self.output_buffer = io.BytesIO()
         self.output_buffer.write(
@@ -146,7 +147,7 @@ class MockCurlSimple(object):
             AssertionError("info '#{0}' not defined".format(opt))
 
 
-class MockCurlMulti(object):
+class MockCurlMulti:
     def __init__(self, number_of_performed_list):
         self._number_of_performed_list = number_of_performed_list
         self._opts = {}
@@ -181,12 +182,15 @@ class MockCurlMulti(object):
             )
 
     def select(self, timeout=1):
+        # pylint: disable=no-self-use, unused-argument
         return 0
 
     def perform(self):
+        # pylint: disable=no-self-use
         return (0, 0)
 
     def timeout(self):
+        # pylint: disable=no-self-use
         return 0
 
     def info_read(self):
@@ -205,6 +209,7 @@ class MockCurlMulti(object):
                 else:
                     ok_list.append(handle)
             except pycurl.error as e:
+                # pylint: disable=unbalanced-tuple-unpacking
                 errno, msg = e.args
                 err_list.append((handle, errno, msg))
             self._proccessed_list.append(handle)

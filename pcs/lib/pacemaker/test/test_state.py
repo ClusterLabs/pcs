@@ -18,6 +18,8 @@ from pcs.lib.pacemaker.state import (
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
+# pylint: disable=no-self-use, protected-access
+
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):
         attrs = _Attrs('test', {'node-name': 'node1'}, {'name': 'node-name'})
@@ -206,6 +208,7 @@ class GetPrimitiveRolesWithNodes(TestCase):
 
 
 class GetPrimitivesForStateCheck(TestCase):
+    # pylint: disable=too-many-public-methods
     status_xml = etree.fromstring("""
         <resources>
             <resource id="R01" failed="false" />

@@ -37,6 +37,11 @@ RUN dnf install -y --disablerepo updates-testing \
         fence-agents-ilo2 \
         fence-agents-ipmilan \
         fence-virt \
-        booth-site
+        booth-site \
+        # find
+        findutils
+
+# Specifiec pylint version is required
+RUN pip3 install pylint==2.1.1
 
 COPY . $src_path

@@ -1,8 +1,8 @@
-from contextlib import contextmanager
-from functools import partial
 import logging
-from lxml import etree
+from contextlib import contextmanager
 from unittest import mock, TestCase
+from functools import partial
+from lxml import etree
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
@@ -14,6 +14,7 @@ from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 
 from pcs.lib.commands import node as lib
 
+# pylint: disable=protected-access
 
 mocked_cib = etree.fromstring("<cib />")
 
@@ -159,6 +160,7 @@ class SetInstaceAttrsBase(TestCase):
         self.launch = {"pre": False, "post": False}
         @contextmanager
         def cib_runner_nodes_contextmanager(env, wait):
+            # pylint: disable=unused-argument
             self.launch["pre"] = True
             yield ("cib", "mock_runner", self.cluster_nodes)
             self.launch["post"] = True
@@ -233,6 +235,7 @@ class SetInstaceAttrsList(SetInstaceAttrsBase):
         ])
 
     def test_bad_node(self, mock_attrs):
+        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_node_list(
                 create_env(), "attrs", ["node-1", "node-9"], False
@@ -258,10 +261,10 @@ class CibRunnerNodes(TestCase):
     @patch_command("ClusterState")
     @patch_command("get_cluster_status_xml")
     def test_wire_together_all_expected_dependecies(
-        self, get_cluster_status_xml, ClusterState, ensure_wait_satisfiable,
+        self, get_cluster_status_xml, cluster_state, ensure_wait_satisfiable,
         push_cib
     ):
-        ClusterState.return_value = mock.MagicMock(
+        cluster_state.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
         get_cluster_status_xml.return_value = "mock get_cluster_status_xml"
@@ -273,7 +276,7 @@ class CibRunnerNodes(TestCase):
             self.assertEqual(nodes, "nodes")
             ensure_wait_satisfiable.assert_called_once_with(wait)
             get_cluster_status_xml.assert_called_once_with("mocked cmd_runner")
-            ClusterState.assert_called_once_with("mock get_cluster_status_xml")
+            cluster_state.assert_called_once_with("mock get_cluster_status_xml")
 
         push_cib.assert_called_once_with(wait=wait)
 

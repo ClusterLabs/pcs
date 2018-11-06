@@ -14,8 +14,8 @@ from pcs.daemon.test import fixtures_app
 
 USER = "user"
 PASSWORD = "password"
-GROUPS=["hacluster"]
-LOGIN_BODY ={"username": USER, "password": PASSWORD}
+GROUPS = ["hacluster"]
+LOGIN_BODY = {"username": USER, "password": PASSWORD}
 PUBLIC_DIR = rc("web_public")
 CSS_DIR = os.path.join(PUBLIC_DIR, "css")
 
@@ -26,6 +26,7 @@ if not os.path.exists(CSS_DIR):
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class UserAuthInfo:
+    # pylint: disable=too-few-public-methods
     valid = False
     groups = []
 
@@ -62,7 +63,7 @@ class AppTest(
         if "sid" in kwargs:
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
-            kwargs["headers"]["Cookie"] =  (
+            kwargs["headers"]["Cookie"] = (
                 f"{app_session.PCSD_SESSION}={kwargs['sid']}"
             )
             del kwargs["sid"]
@@ -107,6 +108,7 @@ class AppTest(
         self.assertEqual(response.body.decode(), expected_body)
 
 class Login(AppTest):
+    # pylint: disable=too-many-ancestors
     def setUp(self):
         self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()
@@ -124,7 +126,7 @@ class Login(AppTest):
         self.assert_wrappers_response(self.get("/login"))
 
     def test_login_attempt_failed(self):
-        self.user_auth_info.valid=False
+        self.user_auth_info.valid = False
         response = self.post('/login', LOGIN_BODY)
         self.assert_is_redirect(response, "/login", 303)
         self.assert_is_redirect(
@@ -133,12 +135,12 @@ class Login(AppTest):
         )
 
     def test_login_attempt_failed_ajax(self):
-        self.user_auth_info.valid=False
+        self.user_auth_info.valid = False
         self.assert_unauth_ajax(self.post('/login', LOGIN_BODY, is_ajax=True))
 
     def test_login_attempt_succeeded(self):
         self.assert_is_redirect(self.get('/'), "/login")
-        self.user_auth_info.valid=True
+        self.user_auth_info.valid = True
         response = self.post('/login', LOGIN_BODY)
         self.assert_is_redirect(response, "/manage", status_code=303)
         #it is logged now
@@ -147,7 +149,7 @@ class Login(AppTest):
         )
 
     def test_login_attempt_succeeded_ajax(self):
-        self.user_auth_info.valid=True
+        self.user_auth_info.valid = True
         response = self.post('/login', LOGIN_BODY, is_ajax=True)
         self.assert_success_response(
             response,
@@ -155,6 +157,7 @@ class Login(AppTest):
         )
 
 class SinatraGuiProtected(AppTest):
+    # pylint: disable=too-many-ancestors
     def test_no_logged_redirects_to_login(self):
         self.assert_is_redirect(self.get('/'), "/login")
 
@@ -164,6 +167,7 @@ class SinatraGuiProtected(AppTest):
         )
 
 class SinatraAjaxProtected(AppTest):
+    # pylint: disable=too-many-ancestors
     def test_deal_without_authentication(self):
         self.assert_unauth_ajax(self.get("/some-ajax", is_ajax=True))
 
@@ -180,6 +184,7 @@ class SinatraAjaxProtected(AppTest):
         self.assert_session_in_response(response, session1.sid)
 
 class LoginStatus(AppTest):
+    # pylint: disable=too-many-ancestors
     def test_not_authenticated(self):
         self.assert_unauth_ajax(self.get("/login-status"))
         self.assert_unauth_ajax(self.get("/login-status", is_ajax=True))
@@ -191,6 +196,7 @@ class LoginStatus(AppTest):
         self.assert_session_in_response(response, session1.sid)
 
 class Logout(AppTest):
+    # pylint: disable=too-many-ancestors
     def test_no_ajax(self):
         session1 = self.create_login_session()
         response = self.get("/logout", sid=session1.sid)
@@ -208,6 +214,7 @@ class Logout(AppTest):
         )
 
 class Static(AppTest):
+    # pylint: disable=too-many-ancestors
     def setUp(self):
         self.style_path = os.path.join(CSS_DIR, "style.css")
         self.css = "body{color:black};"

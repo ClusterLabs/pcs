@@ -79,6 +79,8 @@ def show(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--full")
+    if argv:
+        raise CmdLineInputError()
     print("\n".join(command.show(
         "Ticket Constraints:",
         lib.constraint_ticket.show,

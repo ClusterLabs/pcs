@@ -89,7 +89,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 {
                     "option_names": ["unknown"],
                     "option_type": None,
-                    "allowed": [ "id", "kind", "symmetrical"],
+                    "allowed": ["id", "kind", "symmetrical"],
                     "allowed_patterns": [],
                 }
             ),

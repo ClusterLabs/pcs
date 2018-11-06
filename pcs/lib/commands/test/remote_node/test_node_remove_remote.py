@@ -23,7 +23,7 @@ REMOTE_DEST_LIST = [Destination("remote-addr", 2224)]
 NODE_1 = "node-1"
 NODE_2 = "node-2"
 
-def node_remove_remote(env, node_identifier=REMOTE_HOST, *args, **kwargs):
+def node_remove_remote(env, *args, node_identifier=REMOTE_HOST, **kwargs):
     node_remove_remote_orig(env, node_identifier, *args, **kwargs)
 
 FIXTURE_RESOURCES = """

@@ -3,7 +3,7 @@ from pcs.test.tools.xml import etree_to_str
 
 CALL_TYPE_PUSH_CIB = "CALL_TYPE_PUSH_CIB"
 
-class Call(object):
+class Call:
     type = CALL_TYPE_PUSH_CIB
 
     def __init__(self, cib_xml, custom_cib=False, wait=False, exception=None):

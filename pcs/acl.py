@@ -10,6 +10,8 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
 
+# pylint: disable=too-many-branches, len-as-condition
+
 def acl_cmd(lib, argv, modifiers):
     if len(argv) < 1:
         sub_cmd, argv_next = "show", []
@@ -58,7 +60,11 @@ def show_acl_config(lib, argv, modifiers):
     # enabled/disabled should be part of the structure returned
     # by lib.acl.get_config
     modifiers.ensure_only_supported("-f")
-    properties = utils.get_set_properties(defaults=prop.get_default_properties())
+    if argv:
+        raise CmdLineInputError()
+    properties = utils.get_set_properties(
+        defaults=prop.get_default_properties()
+    )
     acl_enabled = properties.get("enable-acl", "").lower()
     if is_true(acl_enabled):
         print("ACLs are enabled")
@@ -79,6 +85,8 @@ def acl_enable(lib, argv, modifiers):
     """
     # TODO move to lib once lib supports cluster properties
     modifiers.ensure_only_supported("-f")
+    if argv:
+        raise CmdLineInputError()
     prop.set_property(lib, ["enable-acl=true"], modifiers.get_subset("-f"))
 
 def acl_disable(lib, argv, modifiers):
@@ -88,6 +96,8 @@ def acl_disable(lib, argv, modifiers):
     """
     # TODO move to lib once lib supports cluster properties
     modifiers.ensure_only_supported("-f")
+    if argv:
+        raise CmdLineInputError()
     prop.set_property(lib, ["enable-acl=false"], modifiers.get_subset("-f"))
 
 

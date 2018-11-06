@@ -100,6 +100,7 @@ class PcsdSSL:
         self.__ck_pair = CertKeyPair(cert_location, key_location)
 
     def create_context(self) -> ssl.SSLContext:
+        # pylint: disable=no-member
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.set_ciphers(self.__ssl_ciphers)
         ssl_context.options = self.__ssl_options

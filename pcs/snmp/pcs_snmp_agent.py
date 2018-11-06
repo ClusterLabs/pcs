@@ -3,6 +3,7 @@ import sys
 import logging
 import logging.handlers
 
+# pylint: disable=import-error
 import pyagentx
 
 import pcs.utils
@@ -79,6 +80,7 @@ def main():
     try:
         agent = PcsAgent()
         agent.start()
+    # pylint: disable=broad-except
     except Exception as e:
         print("Unhandled exception: {0}".format(str(e)))
         agent.stop()

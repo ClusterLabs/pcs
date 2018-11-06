@@ -1,7 +1,8 @@
-from lxml import etree
+# pylint: disable=too-many-lines
 import os
 import shutil
 import unittest
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     ac,
@@ -24,6 +25,8 @@ from pcs.test.tools.misc import (
 from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+
+# pylint: disable=line-too-long, too-many-public-methods, invalid-name, no-self-use, bad-whitespace, redefined-outer-name, too-many-statements
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 

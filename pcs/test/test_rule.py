@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import shutil
 from unittest import TestCase
 import xml.dom.minidom
@@ -6,6 +7,8 @@ from pcs import rule
 from pcs.test.tools.assertions import ac
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import pcs
+
+# pylint: disable=invalid-name, line-too-long
 
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
@@ -1293,7 +1296,7 @@ class TokenPreprocessorTest(TestCase):
             self.preprocessor.run([
                 "date-spec",
                 "hours=1", "monthdays=2", "weekdays=3", "yeardays=4",
-                "months=5","weeks=6", "years=7", "weekyears=8", "moon=9"
+                "months=5", "weeks=6", "years=7", "weekyears=8", "moon=9"
             ])
         )
         self.assertEqual(
@@ -1341,7 +1344,7 @@ class TokenPreprocessorTest(TestCase):
             self.preprocessor.run([
                 "duration",
                 "hours=1", "monthdays=2", "weekdays=3", "yeardays=4",
-                "months=5","weeks=6", "years=7", "weekyears=8", "moon=9"
+                "months=5", "weeks=6", "years=7", "weekyears=8", "moon=9"
             ])
         )
         self.assertEqual(
@@ -1635,7 +1638,8 @@ class ExportAsExpressionTest(TestCase):
             "(#uname eq string \"node3 4\" and foo gt version 1.2) or (date in_range 2014-07-26 to duration months=1 and date-spec hours=12-23 weekdays=1-5)"
         )
 
-    def assertXmlExport(self, rule_xml, export, export_normalized):
+    @staticmethod
+    def assertXmlExport(rule_xml, export, export_normalized):
         ac(
             export + "\n",
             rule.ExportAsExpression().get_string(
@@ -1921,7 +1925,8 @@ Location Constraints:
         )
         self.assertEqual(1, returnVal)
 
-    def assertExpressionXml(self, rule_expression, rule_xml):
+    @staticmethod
+    def assertExpressionXml(rule_expression, rule_xml):
         cib_dom = xml.dom.minidom.parse(empty_cib)
         constraints = cib_dom.getElementsByTagName("constraints")[0]
         constraint_el = constraints.appendChild(

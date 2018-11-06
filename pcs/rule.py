@@ -3,6 +3,7 @@ import xml.dom.minidom
 
 from pcs import utils
 
+# pylint: disable=no-else-return, no-self-use, not-callable, unsubscriptable-object, anomalous-backslash-in-string
 
 # main functions
 
@@ -34,6 +35,7 @@ def parse_argv(argv, extra_options=None):
     return options, argv
 
 def dom_rule_add(dom_element, options, rule_argv):
+    # pylint: disable=too-many-branches
     """
     Commandline options: no options
     """
@@ -101,7 +103,7 @@ def dom_rule_add(dom_element, options, rule_argv):
     return dom_element
 
 
-class ExportDetailed(object):
+class ExportDetailed:
 
     def __init__(self):
         self.show_detail = False
@@ -194,7 +196,7 @@ class ExportDetailed(object):
             target.append(indent + part)
         return target
 
-class ExportAsExpression(object):
+class ExportAsExpression:
 
     def __init__(self):
         self.normalize = False
@@ -276,7 +278,7 @@ class ExportAsExpression(object):
 
 # generic parser
 
-class SymbolBase(object):
+class SymbolBase:
 
     END = "{end}"
     LITERAL = "{literal}"
@@ -431,7 +433,7 @@ class SymbolTernary(SymbolOperator):
         return self
 
 
-class SymbolTable(object):
+class SymbolTable:
 
     def __init__(self):
         self.table = dict()
@@ -462,7 +464,7 @@ class SymbolTable(object):
         return self.get_symbol(symbol_id)
 
 
-class Parser(object):
+class Parser:
 
     def __init__(self):
         self.current_symbol = None
@@ -515,7 +517,7 @@ class Parser(object):
                 self.symbol_table.has_symbol(token)
                 and
                 (
-                    len(symbolized_program) < 1
+                    not symbolized_program
                     or
                     not isinstance(symbolized_program[-1], SymbolType)
                 )
@@ -578,12 +580,14 @@ class UnexpectedEndOfInput(ParserException):
 
 
 class SyntaxError(ParserException):
+    # TODO: fix
+    # pylint: disable=redefined-builtin
     pass
 
 
 # rule parser specific code
 
-class DateCommonValue(object):
+class DateCommonValue:
 
     allowed_items = [
         "hours", "monthdays", "weekdays", "yeardays", "months", "weeks",
@@ -828,7 +832,7 @@ class RuleParser(Parser):
 
 # cib builder
 
-class CibBuilder(object):
+class CibBuilder:
 
     def build(self, dom_element, syntactic_tree, rule_id=None):
         dom_rule = self.add_element(
@@ -892,7 +896,11 @@ class CibBuilder(object):
             if isinstance(child, SymbolType):
                 dom_expression.setAttribute(
                     "type",
-                    "number" if child.symbol_id == "integer" else child.symbol_id
+                    (
+                        "number"
+                        if child.symbol_id == "integer"
+                        else child.symbol_id
+                    )
                 )
                 child = child.children[0]
             dom_expression.setAttribute("value", child.value)
@@ -967,7 +975,7 @@ class InvalidSyntacticTree(CibBuilderException):
 
 # token preprocessing
 
-class TokenPreprocessor(object):
+class TokenPreprocessor:
 
     def run(self, token_list):
         return self.convert_legacy_date(

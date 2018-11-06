@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib import alert
@@ -13,6 +13,7 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 
 class UpdateOptionalAttributeTest(TestCase):
+    # pylint: disable=protected-access
     def test_add(self):
         element = etree.Element("element")
         alert._update_optional_attribute(element, "attr", "value1")
@@ -113,6 +114,7 @@ class CreateAlertTest(TestCase):
         )
 
     def test_no_alerts(self):
+        # pylint: disable=no-self-use
         tree = etree.XML(
             """
             <cib>

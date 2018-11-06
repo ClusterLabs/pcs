@@ -167,6 +167,7 @@ def create(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
 ):
+    # pylint: disable=too-many-arguments
     """
     Prepare all parts of remote resource and append it into the cib.
 
@@ -200,6 +201,7 @@ def create(
         )
     except LibraryError as e:
         for report in e.args:
+            # pylint: disable=no-member
             if report.code == report_codes.INVALID_OPTIONS:
                 report.info["allowed"] = [
                     value for value in report.info["allowed"]

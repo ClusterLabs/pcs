@@ -63,9 +63,9 @@ def corosync_conf_existing(local_file_path):
 
         if local_file_path:
             try:
-                f = open(local_file_path, "w")
-                f.write(env.corosync_conf_data)
-                f.close()
+                file = open(local_file_path, "w")
+                file.write(env.corosync_conf_data)
+                file.close()
             except EnvironmentError as e:
                 raise error("Unable to write {0}: {1}".format(
                     local_file_path,

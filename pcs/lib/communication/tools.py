@@ -42,7 +42,7 @@ def run_and_raise(communicator, cmd):
     return to_return
 
 
-class CommunicationCommandInterface(object):
+class CommunicationCommandInterface:
     """
     Interface for all communication commands.
     """
@@ -92,6 +92,7 @@ class RunRemotelyBase(CommunicationCommandInterface):
         self._error_list = []
 
     def _get_response_report(self, response):
+        # pylint: disable=no-self-use
         """
         Convert specified response to report item. Returns None if the response
         has no failures.
@@ -143,7 +144,7 @@ class RunRemotelyBase(CommunicationCommandInterface):
         return self._error_list
 
 
-class StrategyBase(object):
+class StrategyBase:
     """
     Abstract base class of the communication strategies. Always use at most one
     strategy mixin in the communication commands classes.
@@ -165,9 +166,9 @@ class StrategyBase(object):
 
 class OneByOneStrategyMixin(StrategyBase):
     """
-    Communication strategy in which requests are executed one by one. So only one
-    request from _prepare_initial_requests is chosen as initial request list.
-    Other requests are then available by calling method _get_next_list.
+    Communication strategy in which requests are executed one by one. So only
+    one request from _prepare_initial_requests is chosen as initial request
+    list. Other requests are then available by calling method _get_next_list.
     """
     #pylint: disable=abstract-method
     __iter = None
@@ -202,7 +203,7 @@ class AllAtOnceStrategyMixin(StrategyBase):
         return self._prepare_initial_requests()
 
 
-class MarkSuccessfulMixin(object):
+class MarkSuccessfulMixin:
     __successful = False
 
     def _on_success(self):
@@ -211,10 +212,9 @@ class MarkSuccessfulMixin(object):
     def on_complete(self):
         if not self.__successful:
             self._report(reports.unable_to_perform_operation_on_any_node())
-        return None
 
 
-class AllSameDataMixin(object):
+class AllSameDataMixin:
     """
     Communication command mixin which adds common methods for commands where
     requests to all targets have the same data.
@@ -268,7 +268,7 @@ class AllSameDataMixin(object):
 
 
 
-class SimpleResponseProcessingMixin(object):
+class SimpleResponseProcessingMixin:
     """
     Communication command mixin which adds common response processing. When
     request fails error/warning will be reported. Otherwise _get_success_report
@@ -290,7 +290,7 @@ class SimpleResponseProcessingMixin(object):
         self._report(report)
 
 
-class SimpleResponseProcessingNoResponseOnSuccessMixin(object):
+class SimpleResponseProcessingNoResponseOnSuccessMixin:
     """
     Communication command mixin which adds common response processing. When
     request fails error/warning will be reported.
@@ -301,7 +301,7 @@ class SimpleResponseProcessingNoResponseOnSuccessMixin(object):
             self._report(report)
 
 
-class SkipOfflineMixin(object):
+class SkipOfflineMixin:
     """
     Communication command mixin which simplifies handling of forcing skip
     offline nodes. This mixin provides method _set_skip_offline which should be
@@ -333,7 +333,7 @@ class SkipOfflineMixin(object):
         )
 
 
-class NotSupportedHandlerMixin(object):
+class NotSupportedHandlerMixin:
     def _get_response_report(self, response):
         report = super()._get_response_report(response)
         if response.was_connected and response.response_code == 404:

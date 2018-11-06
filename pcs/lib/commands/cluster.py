@@ -157,6 +157,7 @@ def setup(
     quorum_options=None, wait=False, start=False, enable=False,
     no_keys_sync=False, force_flags=None,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals, too-many-statements
     """
     Set up cluster on specified nodes.
     Validation of the inputs is done here. Possible existing clusters are
@@ -386,7 +387,7 @@ def add_nodes(
     env, nodes, wait=False, start=False, enable=False,
     no_watchdog_validation=False, force_flags=None,
 ):
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     """
     Add specified nodes to the local cluster
     Raise LibraryError on any error.
@@ -493,11 +494,11 @@ def add_nodes(
     report_processor.report_list(
         validate_names_in(
             corosync_node_options | sbd_node_options,
-            set([
+            {
                 option
                 for node_options in [node.keys() for node in new_nodes]
                 for option in node_options
-            ]),
+            },
             option_type="node"
         )
     )
@@ -574,7 +575,7 @@ def add_nodes(
             target for target in cluster_nodes_target_list
             if target not in online_cluster_target_list
         ]
-        if len(online_cluster_target_list) == 0:
+        if not online_cluster_target_list:
             report_processor.report(
                 reports.unable_to_perform_operation_on_any_node()
             )
@@ -777,8 +778,8 @@ def add_nodes(
     )
 
     try:
-        with open(settings.pcsd_cert_location, "r") as f:
-            ssl_cert = f.read()
+        with open(settings.pcsd_cert_location, "r") as file:
+            ssl_cert = file.read()
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
@@ -789,8 +790,8 @@ def add_nodes(
             )
         )
     try:
-        with open(settings.pcsd_key_location, "r") as f:
-            ssl_key = f.read()
+        with open(settings.pcsd_key_location, "r") as file:
+            ssl_key = file.read()
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
@@ -910,6 +911,7 @@ def _wait_for_pacemaker_to_start(
 def _host_check_cluster_setup(
     host_info_dict, force, check_services_versions=True
 ):
+    # pylint: disable=too-many-locals
     report_list = []
     # We only care about services which matter for creating a cluster. It does
     # not make sense to check e.g. booth when a) it will never be used b) it
@@ -1022,6 +1024,7 @@ def _get_addrs_defaulter(
 def _get_watchdog_defaulter(
     report_processor: SimpleReportProcessor, targets_dict
 ):
+    # pylint: disable=unused-argument
     def defaulter(node):
         report_processor.report(reports.using_default_watchdog(
             settings.sbd_watchdog_default,
@@ -1045,6 +1048,7 @@ def _get_validated_wait_timeout(report_processor, wait, start):
 
 
 def remove_nodes(env, node_list, force_flags=None):
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Remove nodes from a cluster.
 
@@ -1086,10 +1090,10 @@ def remove_nodes(env, node_list, force_flags=None):
             skip_non_existing=skip_offline,
         )
     )
-    known_nodes = set([target.label for target in cluster_nodes_target_list])
-    unknown_nodes = set([
+    known_nodes = {target.label for target in cluster_nodes_target_list}
+    unknown_nodes = {
         name for name in cluster_nodes_names if name not in known_nodes
-    ])
+    }
     report_processor.report_list(target_report_list)
 
     com_cmd = GetOnlineTargets(

@@ -12,7 +12,7 @@ from pcs.lib.xml_tools import get_root, get_sub_element
 
 VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
 
-class IdProvider(object):
+class IdProvider:
     """
     Book ids for future use in the CIB and generate new ids accordingly
     """
@@ -39,14 +39,14 @@ class IdProvider(object):
         """
         reported_ids = set()
         report_list = []
-        for id in id_list:
-            if id in reported_ids:
+        for _id in id_list:
+            if _id in reported_ids:
                 continue
-            if id in self._booked_ids or does_id_exist(self._cib, id):
-                report_list.append(reports.id_already_exists(id))
-                reported_ids.add(id)
+            if _id in self._booked_ids or does_id_exist(self._cib, _id):
+                report_list.append(reports.id_already_exists(_id))
+                reported_ids.add(_id)
                 continue
-            self._booked_ids.add(id)
+            self._booked_ids.add(_id)
         return report_list
 
 
@@ -92,12 +92,12 @@ def does_id_exist(tree, check_id):
     """.format(check_id))
     return len(existing) > 0
 
-def validate_id_does_not_exist(tree, id):
+def validate_id_does_not_exist(tree, _id):
     """
     tree cib etree node
     """
-    if does_id_exist(tree, id):
-        raise LibraryError(reports.id_already_exists(id))
+    if does_id_exist(tree, _id):
+        raise LibraryError(reports.id_already_exists(_id))
 
 def find_unique_id(tree, check_id, reserved_ids=None):
     """
@@ -188,9 +188,9 @@ def create_subelement_id(context_element, suffix, id_provider=None):
         return id_provider.allocate_id(proposed_id)
     return find_unique_id(context_element, proposed_id)
 
-def check_new_id_applicable(tree, description, id):
-    validate_id(id, description)
-    validate_id_does_not_exist(tree, id)
+def check_new_id_applicable(tree, description, _id):
+    validate_id(_id, description)
+    validate_id_does_not_exist(tree, _id)
 
 def get_configuration(tree):
     """

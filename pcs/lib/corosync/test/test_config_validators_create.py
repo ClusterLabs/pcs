@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common import report_codes
@@ -6,8 +7,10 @@ from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.custom_mock import patch_getaddrinfo
 
+# pylint: disable=no-self-use
 
 class Create(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.known_addrs = patch_getaddrinfo(
             self,
@@ -1008,8 +1011,8 @@ class CreateLinkListKnet(TestCase):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [
-                    { "ip_version": "ipv4"},
-                    { "ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
+                    {"ip_version": "ipv4"},
                 ],
                 1
             ),

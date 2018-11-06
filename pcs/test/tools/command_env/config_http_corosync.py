@@ -5,7 +5,7 @@ from pcs.test.tools.command_env.mock_node_communicator import (
     place_multinode_call
 )
 
-class CorosyncShortcuts(object):
+class CorosyncShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 

@@ -16,6 +16,7 @@ FAIL_HTTP_KWARGS = dict(
 class EnvConfigMixin():
     PCMK_AUTHKEY_PATH = "/etc/pacemaker/authkey"
     def __init__(self, call_collection, wrap_helper, config):
+        # pylint: disable=unused-argument
         self.__calls = call_collection
         self.config = config
 
@@ -137,7 +138,7 @@ class EnvConfigMixin():
 
 REPORTS = (fixture.ReportStore()
     .info(
-        "authkey_distribution_started" ,
+        "authkey_distribution_started",
         report_codes.FILES_DISTRIBUTION_STARTED,
         file_list=["pacemaker authkey"],
     )

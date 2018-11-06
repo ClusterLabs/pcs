@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import re
 from textwrap import dedent
 from unittest import TestCase
@@ -14,6 +15,7 @@ from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.corosync.config_facade as lib
 
+# pylint: disable=no-self-use
 
 class FromStringTest(TestCase):
     def test_success(self):

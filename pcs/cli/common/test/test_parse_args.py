@@ -76,7 +76,7 @@ class SplitListTest(TestCase):
     def test_behave_like_string_split_when_the_separator_edges(self):
         self.assertEqual(
             [[], ['a', 'b'], ['c', 'd'], []],
-            split_list(['|','a', 'b', '|', 'c', 'd', "|"], '|')
+            split_list(['|', 'a', 'b', '|', 'c', 'd', "|"], '|')
         )
 
 class SplitByKeywords(TestCase):
@@ -438,7 +438,9 @@ class IsLongOptionExpectingValue(TestCase):
         self.assertFalse(is_long_option_expecting_value("--clone"))
 
     def test_returns_false_on_unknown_long_option(self):
-        self.assertFalse(is_long_option_expecting_value("--not-specified-long-opt"))
+        self.assertFalse(
+            is_long_option_expecting_value("--not-specified-long-opt")
+        )
 
     def test_returns_false_on_dash_dash(self):
         self.assertFalse(is_long_option_expecting_value("--"))
@@ -480,6 +482,7 @@ class IsOptionExpectingValue(TestCase):
 
 
 class InputModifiersTest(TestCase):
+    # pylint: disable=too-many-public-methods, no-self-use
     def setUp(self):
         self.supported = ["a", "b", "c"]
         self.bool_opts = [

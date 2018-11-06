@@ -1,10 +1,10 @@
 import re
+from collections import namedtuple
 
 import pcs.lib.reports as common_reports
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
 from pcs.common import report_codes
-from collections import namedtuple
 
 GLOBAL_KEYS = (
     "transport",
@@ -99,17 +99,17 @@ def validate_ticket_unique(booth_configuration, ticket_name):
         raise LibraryError(reports.booth_ticket_duplicate(ticket_name))
 
 def validate_ticket_options(report_processor, options, allow_unknown_options):
-    reports = []
+    report_list = []
     for key in sorted(options):
         if key in GLOBAL_KEYS:
-            reports.append(common_reports.invalid_options(
+            report_list.append(common_reports.invalid_options(
                 [key],
                 TICKET_KEYS,
                 "booth ticket",
             ))
 
         elif key not in TICKET_KEYS:
-            reports.append(
+            report_list.append(
                 common_reports.invalid_options(
                     [key],
                     TICKET_KEYS,
@@ -126,13 +126,13 @@ def validate_ticket_options(report_processor, options, allow_unknown_options):
             )
 
         if not options[key].strip():
-            reports.append(common_reports.invalid_option_value(
+            report_list.append(common_reports.invalid_option_value(
                 key,
                 options[key],
                 "no-empty",
             ))
 
-    report_processor.process_list(reports)
+    report_processor.process_list(report_list)
 
 def ticket_exists(booth_configuration, ticket_name):
     return any(

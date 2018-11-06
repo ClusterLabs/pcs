@@ -31,6 +31,7 @@ class _LinkAddrType(
 
 
 def create(cluster_name, node_list, transport, force_unresolvable=False):
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
 
@@ -80,7 +81,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
         addr_count = len(node.get("addrs") or [])
-        if transport in (constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP):
+        if transport in constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP:
             if transport in constants.TRANSPORTS_KNET:
                 min_addr_count = constants.LINKS_KNET_MIN
                 max_addr_count = constants.LINKS_KNET_MAX
@@ -127,19 +128,19 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
 
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
-    if len(node_list) < 1:
+    if not node_list:
         report_items.append(reports.corosync_nodes_missing())
-    non_unique_names = set([
+    non_unique_names = {
         name for name, count in all_names_count.items() if count > 1
-    ])
+    }
     if non_unique_names:
         all_names_usable = False
         report_items.append(
             reports.node_names_duplication(non_unique_names)
         )
-    non_unique_addrs = set([
+    non_unique_addrs = {
         addr for addr, count in all_addrs_count.items() if count > 1
-    ])
+    }
     if non_unique_addrs:
         report_items.append(
             reports.node_addresses_duplication(non_unique_addrs)
@@ -198,6 +199,7 @@ def add_nodes(
     node_list, coro_existing_nodes, pcmk_existing_nodes,
     force_unresolvable=False
 ):
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Validate adding nodes to a config with a nonempty nodelist
 
@@ -317,7 +319,7 @@ def add_nodes(
 
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
-    if len(node_list) < 1:
+    if not node_list:
         report_items.append(reports.corosync_nodes_missing())
     # Check nodes' names and address are unique
     already_existing_names = existing_names.intersection(new_names_count.keys())
@@ -330,16 +332,16 @@ def add_nodes(
         report_items.append(
             reports.node_addresses_already_exist(already_existing_addrs)
         )
-    non_unique_names = set([
+    non_unique_names = {
         name for name, count in new_names_count.items() if count > 1
-    ])
+    }
     if non_unique_names:
         report_items.append(
             reports.node_names_duplication(non_unique_names)
         )
-    non_unique_addrs = set([
+    non_unique_addrs = {
         addr for addr, count in new_addrs_count.items() if count > 1
-    ])
+    }
     if non_unique_addrs:
         report_items.append(
             reports.node_addresses_duplication(non_unique_addrs)
@@ -376,7 +378,7 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
     for node in set(nodes_names_to_remove) - set(existing_node_names):
         report_items.append(reports.node_not_found(node))
 
-    if len(set(existing_node_names) - set(nodes_names_to_remove)) == 0:
+    if not set(existing_node_names) - set(nodes_names_to_remove):
         report_items.append(reports.cannot_remove_all_cluster_nodes())
 
     qdevice_model, qdevice_model_options, _, _ = quorum_device_settings
@@ -529,7 +531,8 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
     dict crypto_options -- crypto options
     """
     # No need to support force:
-    # * values are either an enum or numbers with no range set - nothing to force
+    # * values are either an enum or numbers with no range set - nothing to
+    #   force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
@@ -580,7 +583,8 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
     dict crypto_options -- crypto options
     """
     # No need to support force:
-    # * values are either an enum or numbers with no range set - nothing to force
+    # * values are either an enum or numbers with no range set - nothing to
+    #   force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
@@ -808,7 +812,7 @@ def _validate_quorum_options(options, has_qdevice, allow_empty_values):
     report_items = (
         validate.run_collection_of_option_validators(options, validators)
         +
-        validate.names_in( constants.QUORUM_OPTIONS, options.keys(), "quorum")
+        validate.names_in(constants.QUORUM_OPTIONS, options.keys(), "quorum")
     )
     if has_qdevice:
         qdevice_incompatible_options = [
@@ -1254,7 +1258,7 @@ def _validate_heuristics_noexec_option_names(
         options_nonexec.keys(),
         "heuristics",
         report_codes.FORCE_OPTIONS,
-        allow_extra_names=force_options,
+        extra_names_allowed=force_options,
         allowed_option_patterns=["exec_NAME"]
     )
 
@@ -1311,6 +1315,7 @@ def _get_qdevice_model_net_options_validators(
 def _validate_qdevice_net_algorithm(
     code_to_allow_extra_values=None, allow_extra_values=False
 ):
+    # pylint: disable=protected-access
     @validate._if_option_exists("algorithm")
     def validate_func(option_dict):
         allowed_algorithms = (

@@ -53,7 +53,8 @@ def place_resource(
         ))
 
     if not adjacent_resource_id:
-        return group_element.append(primitive_element)
+        group_element.append(primitive_element)
+        return
 
     adjacent_resource = find_element_by_tag_and_id(
         "primitive",
@@ -62,7 +63,8 @@ def place_resource(
     )
 
     if put_after_adjacent and adjacent_resource.getnext() is None:
-        return group_element.append(primitive_element)
+        group_element.append(primitive_element)
+        return
 
     index = group_element.index(
         adjacent_resource.getnext() if put_after_adjacent

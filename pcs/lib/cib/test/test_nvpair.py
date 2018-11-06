@@ -1,10 +1,12 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.xml import etree_to_str
+
+# pylint: disable=no-self-use, protected-access
 
 class AppendNewNvpair(TestCase):
     def test_append_new_nvpair_to_given_element(self):
@@ -168,8 +170,12 @@ class AppendNewNvsetTest(TestCase):
             """
                 <context id="a">
                     <instance_attributes id="a-instance_attributes">
-                        <nvpair id="a-instance_attributes-a" name="a" value="b"/>
-                        <nvpair id="a-instance_attributes-c" name="c" value="d"/>
+                        <nvpair
+                            id="a-instance_attributes-a" name="a" value="b"
+                        />
+                        <nvpair
+                            id="a-instance_attributes-c" name="c" value="d"
+                        />
                     </instance_attributes>
                 </context>
             """,
@@ -193,8 +199,12 @@ class AppendNewNvsetTest(TestCase):
             """
                 <context id="a">
                     <instance_attributes id="a-instance_attributes-1">
-                        <nvpair id="a-instance_attributes-1-a-1" name="a" value="b"/>
-                        <nvpair id="a-instance_attributes-1-c" name="c" value="d"/>
+                        <nvpair
+                            id="a-instance_attributes-1-a-1" name="a" value="b"
+                        />
+                        <nvpair
+                            id="a-instance_attributes-1-c" name="c" value="d"
+                        />
                     </instance_attributes>
                 </context>
             """,

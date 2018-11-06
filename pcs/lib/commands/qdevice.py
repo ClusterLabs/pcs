@@ -163,6 +163,7 @@ def client_net_import_certificate(lib_env, certificate):
     )
 
 def client_net_destroy(lib_env):
+    # pylint: disable=unused-argument
     """
     delete qdevice client config files on local host
     """

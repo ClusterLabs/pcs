@@ -36,6 +36,7 @@ logging.basicConfig()
 usefile = False
 filename = ""
 def main(argv=None):
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements, global-statement
     if completion.has_applicable_environment(os.environ):
         print(completion.make_suggestions(
             os.environ,
@@ -55,8 +56,8 @@ def main(argv=None):
     new_argv = []
     for arg in argv:
         if arg.startswith("--wait="):
-            tempsecs = arg.replace("--wait=","")
-            if len(tempsecs) > 0:
+            tempsecs = arg.replace("--wait=", "")
+            if tempsecs:
                 waitsecs = tempsecs
                 arg = "--wait"
         new_argv.append(arg)
@@ -80,28 +81,28 @@ def main(argv=None):
             full = True
             break
 
-    for o, a in pcs_options:
-        if not o in utils.pcs_options:
-            utils.pcs_options[o] = a
+    for opt, val in pcs_options:
+        if not opt in utils.pcs_options:
+            utils.pcs_options[opt] = val
         else:
             # If any options are a list then they've been entered twice which
             # isn't valid
-            utils.err("%s can only be used once" % o)
+            utils.err("%s can only be used once" % opt)
 
-        if o == "-h" or o == "--help":
-            if len(argv) == 0:
+        if opt in ("-h", "--help"):
+            if  not argv:
                 usage.main()
                 sys.exit()
             else:
-                argv = [argv[0], "help" ] + argv[1:]
-        elif o == "-f":
+                argv = [argv[0], "help"] + argv[1:]
+        elif opt == "-f":
             usefile = True
-            filename = a
+            filename = val
             utils.usefile = usefile
             utils.filename = filename
-        elif o == "--corosync_conf":
-            settings.corosync_conf_file = a
-        elif o == "--version":
+        elif opt == "--corosync_conf":
+            settings.corosync_conf_file = val
+        elif opt == "--version":
             print(settings.pcs_version)
             if full:
                 print(" ".join(
@@ -111,17 +112,17 @@ def main(argv=None):
                     ])
                 ))
             sys.exit()
-        elif o == "--fullhelp":
+        elif opt == "--fullhelp":
             usage.full_usage()
             sys.exit()
-        elif o == "--wait":
-            utils.pcs_options[o] = waitsecs
-        elif o == "--request-timeout":
+        elif opt == "--wait":
+            utils.pcs_options[opt] = waitsecs
+        elif opt == "--request-timeout":
             request_timeout_valid = False
             try:
-                timeout = int(a)
+                timeout = int(val)
                 if timeout > 0:
-                    utils.pcs_options[o] = timeout
+                    utils.pcs_options[opt] = timeout
                     request_timeout_valid = True
             except ValueError:
                 pass
@@ -130,10 +131,10 @@ def main(argv=None):
                     (
                         "'{0}' is not a valid --request-timeout value, use "
                         "a positive integer"
-                    ).format(a)
+                    ).format(val)
                 )
 
-    if len(argv) == 0:
+    if not argv:
         usage.main()
         sys.exit(1)
 
@@ -144,7 +145,7 @@ def main(argv=None):
     logger.handlers = []
 
     command = argv.pop(0)
-    if (command == "-h" or command == "help"):
+    if command in ("-h", "help"):
         usage.main()
         return
     cmd_map = {

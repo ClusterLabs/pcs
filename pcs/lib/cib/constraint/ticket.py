@@ -41,12 +41,12 @@ def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         tuple(ATTRIB.keys()),
         options,
-        create_id=partial(
+        create_id_fn=partial(
             constraint.create_id, cib, TAG_NAME, resource_set_list
         ),
         validate_id=partial(tools.check_new_id_applicable, cib, DESCRIPTION),
     )
-    report  = _validate_options_common(options)
+    report = _validate_options_common(options)
     if "ticket" not in options or not options["ticket"].strip():
         report.append(reports.required_option_is_missing(['ticket']))
     if report:
@@ -75,7 +75,7 @@ def prepare_options_plain(cib, options, ticket, resource_id):
                 ))
             options["rsc-role"] = resource_role
         else:
-            del(options["rsc-role"])
+            del options["rsc-role"]
 
     if report:
         raise LibraryError(*report)
@@ -118,6 +118,8 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     for ref_element in ref_element_list:
         set_element = ref_element.getparent()
         set_element.remove(ref_element)
+        # set_element is lxml element, therefore we have to use len() here
+        # pylint: disable=len-as-condition
         if not len(set_element):
             ticket_element = set_element.getparent()
             ticket_element.remove(set_element)

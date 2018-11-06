@@ -4,12 +4,12 @@ from pcs.lib.errors import LibraryError
 
 def create_router(cmd_map, usage_sub_cmd, default_cmd=None):
     def _router(lib, argv, modifiers):
-        if len(argv) < 1:
+        if argv:
+            sub_cmd, *argv_next = argv
+        else:
             if default_cmd is None:
                 raise CmdLineInputError()
             sub_cmd, argv_next = default_cmd, []
-        else:
-            sub_cmd, *argv_next = argv
 
         try:
             if sub_cmd not in cmd_map:

@@ -1,12 +1,14 @@
-from lxml import etree
 import re
 from unittest import TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_report_item_list_equal
+
+# pylint: disable=no-self-use
 
 class ValuesToPairs(TestCase):
     def test_create_from_plain_values(self):
@@ -211,7 +213,7 @@ class ValueCondTest(TestCase):
             ]
         )
 
-    def test_support_OptionValuePair(self):
+    def test_support_option_value_pair(self):
         assert_report_item_list_equal(
             validate.value_cond("a", self.predicate, "test")(
                 {"a": validate.ValuePair(original="b", normalized="c")}
@@ -499,7 +501,7 @@ class ValueIn(TestCase):
             ]
         )
 
-    def test_support_OptionValuePair(self):
+    def test_support_option_value_pair(self):
         assert_report_item_list_equal(
             validate.value_in("a", ["b"])(
                 {"a": validate.ValuePair(original="C", normalized="c")}
@@ -938,7 +940,7 @@ class NamesIn(TestCase):
                 ["a", "b", "c"],
                 ["x", "y"],
                  #does now work without code_to_allow_extra_names
-                allow_extra_names=True,
+                extra_names_allowed=True,
             ),
             [
                 (
@@ -985,7 +987,7 @@ class NamesIn(TestCase):
                 ["x", "y"],
                 option_type="some option",
                 code_to_allow_extra_names="FORCE_CODE",
-                allow_extra_names=True,
+                extra_names_allowed=True,
             ),
             [
                 (

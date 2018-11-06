@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import datetime
 import json
 import math
@@ -60,6 +61,8 @@ from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.env_tools import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
+
+# pylint: disable=too-many-branches, too-many-statements, superfluous-parens, len-as-condition, unused-argument, redefined-outer-name, line-too-long, too-many-locals, bad-whitespace, singleton-comparison, invalid-name, bare-except
 
 def cluster_cmd(lib, argv, modifiers):
     if len(argv) == 0:

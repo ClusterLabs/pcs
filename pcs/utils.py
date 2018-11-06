@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import os
 import sys
 import subprocess
@@ -16,6 +17,7 @@ import base64
 import threading
 import logging
 from functools import lru_cache
+from urllib.parse import urlencode
 
 from pcs import settings, usage
 
@@ -67,8 +69,7 @@ from pcs.lib.pacemaker.values import(
     validate_id,
 )
 
-from urllib.parse import urlencode
-
+# pylint: disable=invalid-name, bad-whitespace, line-too-long, redefined-outer-name, too-many-boolean-expressions, too-many-locals, too-many-branches, too-many-statements, singleton-comparison, too-many-return-statements, misplaced-comparison-constant, superfluous-parens, too-many-nested-blocks, bare-except, redefined-builtin
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -196,7 +197,7 @@ def write_uid_gid_file(uid,gid):
     orig_filename = get_uid_gid_file_name(uid,gid)
     filename = orig_filename
     counter = 0
-    if len(find_uid_gid_files(uid,gid)) != 0:
+    if find_uid_gid_files(uid,gid):
         err("uidgid file with uid=%s and gid=%s already exists" % (uid,gid))
 
     while os.path.exists(os.path.join(settings.corosync_uidgid_dir, filename)):
@@ -457,6 +458,7 @@ def sendHTTPRequest(
 
     def __debug_callback(data_type, debug_data):
         prefixes = {
+            # pylint: disable=no-member
             pycurl.DEBUG_TEXT: b"* ",
             pycurl.DEBUG_HEADER_IN: b"< ",
             pycurl.DEBUG_HEADER_OUT: b"> ",
@@ -474,8 +476,7 @@ def sendHTTPRequest(
     cookies = __get_cookie_list(token)
     if not timeout:
         timeout = settings.default_request_timeout
-    if "--request-timeout" in pcs_options:
-        timeout = pcs_options["--request-timeout"]
+    timeout = pcs_options.get("--request-timeout", timeout)
 
     handler = pycurl.Curl()
     handler.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
@@ -543,6 +544,7 @@ def sendHTTPRequest(
                 "Warning: Proxy is set in environment variables, try "
                 "disabling it"
             )
+        # pylint: disable=unbalanced-tuple-unpacking
         dummy_errno, reason = e.args
         if "--debug" in pcs_options:
             print("Response Reason: {0}".format(reason))
@@ -569,7 +571,7 @@ def __get_cookie_list(token):
                 # Let's be safe about characters in env variables and do base64.
                 # We cannot do it for CIB_user however to be backward compatible
                 # so we at least remove disallowed characters.
-                if "CIB_user" == name:
+                if name == "CIB_user":
                     value = re.sub(r"[^!-~]", "", value).replace(";", "")
                 else:
                     # python3 requires the value to be bytes not str
@@ -744,6 +746,7 @@ def run(
         else:
             stdin_pipe = subprocess.DEVNULL
 
+        # pylint: disable=subprocess-popen-preexec-fn
         p = subprocess.Popen(
             args,
             stdin=stdin_pipe,
@@ -1715,7 +1718,7 @@ def set_cib_property(prop, value, cib_dom=None):
         crm_config = parseString(crm_config).documentElement
     else:
         document = cib_dom.getElementsByTagName("crm_config")
-        if len(document) == 0:
+        if not document:
             err("unable to get crm_config, is pacemaker running?")
         crm_config = document[0]
 
@@ -1748,7 +1751,9 @@ def getTerminalSize(fd=1):
     Commandline options: no options
     """
     try:
-        import fcntl, termios, struct
+        import fcntl
+        import termios
+        import struct
         hw = struct.unpack(
             str('hh'),
             fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234')
@@ -1867,7 +1872,7 @@ def is_score_or_opt(var):
     """
     if is_score(var):
         return True
-    elif var.find('=') != -1:
+    if var.find('=') != -1:
         return True
     return False
 
@@ -2033,11 +2038,10 @@ def write_file(path, data, permissions=0o644, binary=False):
     if os.path.exists(path):
         if "--force" not in pcs_options:
             return False, "'%s' already exists, use --force to overwrite" % path
-        else:
-            try:
-                os.remove(path)
-            except EnvironmentError as e:
-                return False, "unable to remove '%s': %s" % (path, e)
+        try:
+            os.remove(path)
+        except EnvironmentError as e:
+            return False, "unable to remove '%s': %s" % (path, e)
     mode = "wb" if binary else "w"
     try:
         with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, permissions), mode) as outfile:
@@ -2050,6 +2054,7 @@ def tar_add_file_data(
     tarball, data, name, mode=None, uid=None, gid=None, uname=None, gname=None,
     mtime=None
 ):
+    # pylint: disable=too-many-arguments
     """
     Commandline options: no options
     """
@@ -2160,10 +2165,10 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
             locations[long_id]["start_on_node"] = res_op["on_node"]
         if operation == "promote":
             locations[long_id]["promote_on_node"] = res_op["on_node"]
-    locations_clean = dict([
-        (key, val) for key, val in locations.items()
+    locations_clean = {
+        key: val for key, val in locations.items()
         if "start_on_node" in val or "promote_on_node" in val
-    ])
+    }
     return locations_clean
 
 def get_remote_quorumtool_output(node):
@@ -2190,7 +2195,7 @@ def dom_prepare_child_element(dom_element, tag_name, id):
         if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name:
             child_elements.append(child)
 
-    if len(child_elements) == 0:
+    if not child_elements:
         child_element = dom.createElement(tag_name)
         child_element.setAttribute("id", find_unique_id(dom, id))
         dom_element.appendChild(child_element)
@@ -2324,7 +2329,7 @@ def is_valid_cluster_property(prop_def_dict, property, value):
     )
 
 
-def is_valid_cib_value(type, value, enum_options=[]):
+def is_valid_cib_value(type, value, enum_options=()):
     """
     Commandline options: no options
     """
@@ -2586,15 +2591,8 @@ def get_user_and_pass():
       * -u - username
       * -p - password
     """
-    if "-u" in pcs_options:
-        username = pcs_options["-u"]
-    else:
-        username = get_terminal_input('Username: ')
-
-    if "-p" in pcs_options:
-        password = pcs_options["-p"]
-    else:
-        password = get_terminal_password()
+    username = pcs_options.get("-u", get_terminal_input('Username: '))
+    password = pcs_options.get("-p", get_terminal_password())
     return username, password
 
 

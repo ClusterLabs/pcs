@@ -9,7 +9,7 @@ from pcs.test.tools.misc import get_test_resource as rc
 CIB_FILENAME = "cib-empty.xml"
 
 
-class CibShortcuts(object):
+class CibShortcuts:
     def __init__(self, calls):
         """
         CallCollection calls -- provides access to call list

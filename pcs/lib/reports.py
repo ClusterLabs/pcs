@@ -1,7 +1,11 @@
+# pylint: disable=too-many-lines
 from functools import partial
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, ReportItemSeverity
+
+# TODO fix
+# pylint: disable=invalid-name, redefined-builtin
 
 def forceable_error(force_code, report_creator, *args, **kwargs):
     """
@@ -2420,7 +2424,7 @@ def files_distribution_skipped(reason_type, file_list, node_list):
 
     string reason_type -- why was the action skipped (unreachable, not_live_cib)
     iterable of strings file_list -- contains description of files
-    iterable of strings node_list -- where the files should have been distributed
+    iterable of strings node_list -- where the files should have been sent to
     """
     return ReportItem.info(
         report_codes.FILES_DISTRIBUTION_SKIPPED,

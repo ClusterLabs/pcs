@@ -1,8 +1,8 @@
 import os
 import shutil
 import unittest
-from functools import partial
 from unittest import mock
+from functools import partial
 
 from pcs.test.tools.assertions import (
     ac,
@@ -22,6 +22,8 @@ from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import report_codes
+
+# pylint: disable=invalid-name, too-many-statements, bad-whitespace, line-too-long, too-many-public-methods
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
@@ -131,6 +133,7 @@ class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
 
     @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def testClusterUpgrade(self):
+        # pylint: disable=no-self-use
         with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1

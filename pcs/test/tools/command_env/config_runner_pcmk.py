@@ -7,6 +7,7 @@ from pcs.test.tools.fixture import complete_state_resources
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import etree_to_str
 
+# pylint: disable=invalid-name, redefined-builtin, unused-argument, too-many-arguments, too-many-locals, too-many-boolean-expressions
 
 DEFAULT_WAIT_TIMEOUT = 10
 WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
@@ -427,7 +428,8 @@ class PcmkShortcuts():
         )
 
     def remove_node(
-        self, node_name, stderr="", returncode=0, name="runner.pcmk.remove_node",
+        self, node_name,
+        stderr="", returncode=0, name="runner.pcmk.remove_node",
     ):
         self.__calls.place(
             name,

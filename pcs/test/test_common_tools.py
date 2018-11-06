@@ -15,15 +15,16 @@ class RunParallelTestCase(TestCase):
         self.assertEqual(sorted(out_list), [i for i in range(5)])
 
     def test_parallelism(self):
-        x = 5
-        data_list = [[[i + 1], {}] for i in range(x)]
+        timeout = 5
+        data_list = [[[i + 1], {}] for i in range(timeout)]
         start_time = time.time()
-        # this should last for least x seconds, but less than sum of all times
+        # this should last for least timeout seconds, but less than sum of all
+        # times
         tools.run_parallel(time.sleep, data_list)
         finish_time = time.time()
         elapsed_time = finish_time - start_time
-        self.assertTrue(elapsed_time > x)
-        self.assertTrue(elapsed_time < sum([i + 1 for i in range(x)]))
+        self.assertTrue(elapsed_time > timeout)
+        self.assertTrue(elapsed_time < sum([i + 1 for i in range(timeout)]))
 
 
 class JoinMultilinesTest(TestCase):

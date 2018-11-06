@@ -16,8 +16,8 @@ class BoothConfTest(TestCase, SetupPatchMixin):
         )
 
     def test_sucessfully_care_about_local_file(self):
-        def next_in_line(env):
-            env.booth["modified_env"] = {
+        def next_in_line(_env):
+            _env.booth["modified_env"] = {
                 "config_file": {
                     "content": "file content",
                     "no_existing_file_expected": False,
@@ -105,9 +105,9 @@ class BoothConfTest(TestCase, SetupPatchMixin):
         def run_middleware():
             try:
                 booth_conf_middleware(next_in_line, mock_env)
-            except Exception as e:
-                raised_exception.append(e)
-                raise e
+            except Exception as exc:
+                raised_exception.append(exc)
+                raise exc
         self.assertRaises(LibraryEnvError, run_middleware)
         self.assertEqual(1, len(raised_exception[0].unprocessed))
         self.assertEqual("OTHER ERROR", raised_exception[0].unprocessed[0].code)

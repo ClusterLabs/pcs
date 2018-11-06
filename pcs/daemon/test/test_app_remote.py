@@ -46,6 +46,7 @@ class SetCerts(AppTest):
 class Auth(
     AppTest, create_setup_patch_mixin(app_remote), fixtures_app.UserAuthMixin
 ):
+    # pylint: disable=too-many-ancestors
     def setUp(self):
         self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()

@@ -204,6 +204,7 @@ class ParseCreateSimple(TestCase):
 
 
 class ParseBundleCreateOptions(TestCase):
+    # pylint: disable=too-many-public-methods
     def assert_produce(self, arg_list, result):
         self.assertEqual(
             result,
@@ -451,6 +452,7 @@ class ParseBundleCreateOptions(TestCase):
 
 
 class ParseBundleUpdateOptions(TestCase):
+    # pylint: disable=too-many-public-methods
     def assert_produce(self, arg_list, result):
         self.assertEqual(
             result,

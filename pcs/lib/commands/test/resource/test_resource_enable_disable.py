@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common import report_codes
@@ -15,7 +16,7 @@ from pcs.test.tools.misc import (
 )
 
 
-TIMEOUT=10
+TIMEOUT = 10
 
 fixture_primitive_cib_enabled = """
     <resources>
@@ -527,12 +528,12 @@ fixture_bundle_status_unmanaged = """
     </resources>
 """
 
-def fixture_report_unmanaged(resource):
+def fixture_report_unmanaged(resource_id):
     return (
         severities.WARNING,
         report_codes.RESOURCE_IS_UNMANAGED,
         {
-            "resource_id": resource,
+            "resource_id": resource_id,
         },
         None
     )

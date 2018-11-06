@@ -1,5 +1,6 @@
-from copy import deepcopy
+# pylint: disable=too-many-lines
 import json
+from copy import deepcopy
 
 from unittest import mock, TestCase
 
@@ -99,7 +100,7 @@ def options_fixture(options):
     options = options or {}
     return "".join([
         OPTION_TEMPLATE.format(option=o, value=v)
-        for o,v in sorted(options.items())
+        for o, v in sorted(options.items())
     ])
 
 def corosync_conf_fixture(
@@ -107,6 +108,7 @@ def corosync_conf_fixture(
     links_numbers=None, quorum_options=None, totem_options=None,
     transport_options=None, compression_options=None, crypto_options=None,
 ):
+    # pylint: disable=too-many-arguments
     interface_list = ""
     if link_list:
         link_list = [dict(link) for link in link_list]
@@ -2247,8 +2249,8 @@ class Failures(TestCase):
             ]
         )
 
-    def _remove_calls(self, n):
-        for name in self.config.calls.names[-n:]:
+    def _remove_calls(self, count):
+        for name in self.config.calls.names[-count:]:
             self.config.calls.remove(name)
 
     def test_corosync_conf_distribution_communication_failure(self):

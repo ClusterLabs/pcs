@@ -1,6 +1,6 @@
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.common.tools import Version
@@ -25,7 +25,7 @@ SetupPatchMixin = create_setup_patch_mixin(
 )
 
 
-class ManageCibAssertionMixin(object):
+class ManageCibAssertionMixin:
     def assert_raises_cib_error(self, callable_obj, message):
         with self.assertRaises(AssertionError) as context_manager:
             callable_obj()
@@ -137,6 +137,7 @@ class GetCib(TestCase, ManageCibAssertionMixin):
 
 
 class PushLoadedCib(TestCase, ManageCibAssertionMixin):
+    # pylint: disable=too-many-public-methods
     wait_timeout = 10
     def setUp(self):
         tmpfile_patcher = mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
@@ -181,7 +182,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
             ),
         ]
 
-    def push_full_forced_reports(self, version):
+    @staticmethod
+    def push_full_forced_reports(version):
         return [
             fixture.warn(
                 report_codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET,

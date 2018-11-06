@@ -3,7 +3,7 @@ from textwrap import dedent
 from pcs import settings
 from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
 
-class SystemctlShortcuts(object):
+class SystemctlShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 

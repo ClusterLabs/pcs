@@ -1,10 +1,13 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import group
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_raise_library_error, assert_xml_equal
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+)
 
 
 class IsGroup(TestCase):
@@ -25,6 +28,7 @@ class ProvideGroup(TestCase):
 
     def test_search_in_whole_tree(self, find_element_by_tag_and_id):
         def find_group(*args, **kwargs):
+            # pylint: disable=unused-argument
             return self.group_element
 
         find_element_by_tag_and_id.side_effect = find_group

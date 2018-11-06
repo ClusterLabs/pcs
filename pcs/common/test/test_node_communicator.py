@@ -37,6 +37,7 @@ class NodeTargetFactory(TestCase):
         )
 
     def test_get_target_not_found(self):
+        # pylint: disable=invalid-name
         with self.assertRaises(lib.HostNotFound) as cm:
             self.factory.get_target(self.unknown_name)
         self.assertEqual(self.unknown_name, cm.exception.name)
@@ -129,37 +130,39 @@ class RequestUrlTest(TestCase):
     def _get_request(self, target):
         return lib.Request(target, lib.RequestData(self.action))
 
-    def assert_url(self, actual_url, host, action, port=None):
+    def assert_url(self, actual_url, hostname, action, port=None):
         if port is None:
             port = settings.pcsd_default_port
         self.assertEqual(
-            "https://{host}:{port}/{action}".format(
-                host=host, action=action, port=port
-            ),
+            f"https://{hostname}:{port}/{action}",
             actual_url
         )
 
     def test_url_basic(self):
-        host = "host"
+        hostname = "host"
         self.assert_url(
-            self._get_request(lib.RequestTarget(host)).url, host, self.action,
+            self._get_request(lib.RequestTarget(hostname)).url,
+            hostname,
+            self.action,
         )
 
     def test_url_with_port(self):
-        host = "host"
+        hostname = "host"
         port = 1234
         self.assert_url(
             self._get_request(
-                lib.RequestTarget(host, dest_list=[Destination(host, port)])
+                lib.RequestTarget(
+                    hostname, dest_list=[Destination(hostname, port)]
+                )
             ).url,
-            host, self.action, port=port,
+            hostname, self.action, port=port,
         )
 
     def test_url_ipv6(self):
-        host = "::1"
+        host_addr = "::1"
         self.assert_url(
-            self._get_request(lib.RequestTarget(host)).url,
-            "[{0}]".format(host), self.action,
+            self._get_request(lib.RequestTarget(host_addr)).url,
+            "[{0}]".format(host_addr), self.action,
         )
 
     def test_url_multiaddr(self):
@@ -180,9 +183,9 @@ class RequestHostTest(TestCase):
         return lib.Request(target, lib.RequestData(self.action))
 
     def test_one_host(self):
-        host = "host"
-        request = self._get_request(lib.RequestTarget(host))
-        self.assertEqual(Destination(host, PORT), request.dest)
+        hostname = "host"
+        request = self._get_request(lib.RequestTarget(hostname))
+        self.assertEqual(Destination(hostname, PORT), request.dest)
         self.assertRaises(StopIteration, request.next_dest)
 
     def test_multiple_hosts(self):
@@ -190,16 +193,17 @@ class RequestHostTest(TestCase):
         request = self._get_request(lib.RequestTarget(
             "label", dest_list=_addr_list_to_dest(hosts)
         ))
-        for host in hosts:
-            self.assertEqual(Destination(host, None), request.dest)
-            if host == hosts[-1]:
+        for hostname in hosts:
+            self.assertEqual(Destination(hostname, None), request.dest)
+            if hostname == hosts[-1]:
                 self.assertRaises(StopIteration, request.next_dest)
             else:
                 request.next_dest()
 
 
 class RequestCookiesTest(TestCase):
-    def _get_request(self, token=None):
+    @staticmethod
+    def _get_request(token=None):
         return lib.Request(
             lib.RequestTarget("host", token=token), lib.RequestData("action")
         )
@@ -213,7 +217,8 @@ class RequestCookiesTest(TestCase):
 
 
 class ResponseTest(TestCase):
-    def fixture_handle(self, info, request, data, debug):
+    @staticmethod
+    def fixture_handle(info, request, data, debug):
         handle = MockCurl(info)
         handle.request_obj = request
         handle.output_buffer = io.BytesIO()
@@ -262,6 +267,7 @@ class ResponseTest(TestCase):
 
 @mock.patch("pcs.common.node_communicator.pycurl.Curl")
 class CreateRequestHandleTest(TestCase):
+    # pylint: disable=no-member, protected-access
     _common_opts = {
         pycurl.PROTOCOLS: pycurl.PROTO_HTTPS,
         pycurl.VERBOSE: 1,
@@ -379,8 +385,11 @@ class CommunicatorSimpleTest(CommunicatorBaseTest):
         return response
 
     def assert_common_checks(self, com, response):
+        # pylint: disable=protected-access
         self.assertEqual(response.handle.error is None, response.was_connected)
-        self.mock_com_log.log_request_start.assert_called_once_with(response.request)
+        self.mock_com_log.log_request_start.assert_called_once_with(
+            response.request
+        )
         self.mock_com_log.log_response.assert_called_once_with(response)
         self.assertEqual(0, self.mock_com_log.log_retry.call_count)
         self.assertEqual(0, self.mock_com_log.log_no_more_addresses.call_count)
@@ -409,7 +418,7 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
         "pcs.common.node_communicator.pycurl.CurlMulti",
         side_effect=lambda: MockCurlMulti([1, 1])
     )
-    def test_call_start_loop_multiple_times(self, _,  mock_create_handle):
+    def test_call_start_loop_multiple_times(self, _, mock_create_handle):
         com = self.get_communicator()
         mock_create_handle.side_effect = lambda request, _, __: MockCurl(
             request=request
@@ -441,7 +450,7 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
         self.assertEqual(0, self.mock_com_log.log_request_start.call_count)
         response_list = []
         for response in com.start_loop():
-            if len(response_list) == 0:
+            if not response_list:
                 request = fixture_request(3, action)
                 request_list.append(request)
                 com.add_requests([request])
@@ -470,14 +479,15 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
+        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()
 
 
-def fixture_logger_request_retry_calls(response, host):
+def fixture_logger_request_retry_calls(response, hostname):
     return [
         mock.call.log_request_start(response.request),
         mock.call.log_response(response),
-        mock.call.log_retry(response, host),
+        mock.call.log_retry(response, hostname),
     ]
 
 
@@ -556,6 +566,7 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
+        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()
 
     def test_failure(
@@ -615,4 +626,5 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
+        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()

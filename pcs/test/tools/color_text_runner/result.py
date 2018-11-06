@@ -23,8 +23,8 @@ def get_text_test_result_class(
     #TextTestResult is neede here. Direct inheriting from TestResult does not
     #work in python 2.6
     TextTestResult = unittest.TextTestResult
-    # pylint: disable=bad-super-call
     class ColorTextTestResult(TextTestResult):
+        # pylint: disable=bad-super-call, invalid-name
         def __init__(self, stream, descriptions, verbosity):
             super(ColorTextTestResult, self).__init__(
                 stream,

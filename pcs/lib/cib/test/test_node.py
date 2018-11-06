@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -12,6 +12,7 @@ from pcs.test.tools.xml import etree_to_str
 
 from pcs.lib.cib import node
 
+# pylint: disable=protected-access
 
 @mock.patch("pcs.lib.cib.node._ensure_node_exists")
 class UpdateNodeInstanceAttrs(TestCase):

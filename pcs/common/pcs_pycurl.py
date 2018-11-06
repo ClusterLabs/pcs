@@ -1,4 +1,5 @@
 import sys
+# pylint: disable=wildcard-import, unused-wildcard-import
 from pycurl import *
 
 # This package defines constants which are not present in some older versions

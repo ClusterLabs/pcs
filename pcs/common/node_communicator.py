@@ -30,7 +30,7 @@ class HostNotFound(Exception):
         self.name = name
 
 
-class NodeTargetFactory(object):
+class NodeTargetFactory():
     def __init__(self, known_hosts):
         self._known_hosts = known_hosts
 
@@ -97,7 +97,7 @@ class RequestTarget(namedtuple(
         return self.dest_list[0].addr
 
 
-class Request(object):
+class Request():
     """
     This class represents request. With usage of RequestTarget it provides
     interface for getting next available host to make request on.
@@ -165,7 +165,7 @@ class Request(object):
         return str("Request({0}, {1})").format(self._target, self._data)
 
 
-class Response(object):
+class Response():
     """
     This class represents response for request which is available as instance
     property.
@@ -250,7 +250,7 @@ class Response(object):
             self.response_code,
         )
 
-class NodeCommunicatorFactory(object):
+class NodeCommunicatorFactory():
     def __init__(self, communicator_logger, user, groups, request_timeout):
         self._logger = communicator_logger
         self._user = user
@@ -274,7 +274,7 @@ class NodeCommunicatorFactory(object):
         )
 
 
-class Communicator(object):
+class Communicator():
     """
     This class provides simple interface for making parallel requests.
     The instances of this class are not thread-safe! It is intended to use it
@@ -429,7 +429,7 @@ class MultiaddressCommunicator(Communicator):
                 yield response
 
 
-class CommunicatorLoggerInterface(object):
+class CommunicatorLoggerInterface():
     def log_request_start(self, request):
         raise NotImplementedError()
 
@@ -477,6 +477,7 @@ def _create_request_handle(request, cookies, timeout):
     # it is not possible to take this callback out of this function, because of
     # curl API
     def __debug_callback(data_type, debug_data):
+        # pylint: disable=no-member
         prefixes = {
             pycurl.DEBUG_TEXT: b"* ",
             pycurl.DEBUG_HEADER_IN: b"< ",

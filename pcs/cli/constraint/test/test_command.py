@@ -13,7 +13,9 @@ def fixture_constraint():
     }
 
 def fixture_constraint_console():
-    return "  set a b c=d e=f (id:) set g h i=j k=l (id:) setoptions m=n o=p (id:)"
+    return (
+        "  set a b c=d e=f (id:) set g h i=j k=l (id:) setoptions m=n o=p (id:)"
+    )
 
 
 class ShowConstraintsWithSetTest(TestCase):

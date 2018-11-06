@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import TestCase
+from lxml import etree
 
 from pcs.lib.cib import status
 
@@ -132,6 +132,7 @@ class GetResourcesFailcounts(TestCase):
         )
 
 class ParseFailureName(TestCase):
+    # pylint: disable=protected-access
     def test_without_clone_id(self):
         self.assertEqual(
             status._parse_failure_name("resource#monitor_1000"),
@@ -306,7 +307,10 @@ class FilterResourceFailcounts(TestCase):
     def test_filter_by_node_and_operation_and_interval(self):
         self.assertEqual(
             status.filter_resources_failcounts(
-                self.failures, node="nodeB", operation="monitor", interval="1000"
+                self.failures,
+                node="nodeB",
+                operation="monitor",
+                interval="1000",
             ),
             [self.fail_03, self.fail_07]
         )

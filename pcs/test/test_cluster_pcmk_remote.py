@@ -5,6 +5,8 @@ from pcs.test.tools.misc import (
     ParametrizedTestMetaClass,
 )
 
+# pylint: disable=line-too-long
+
 def fixture_nolive_add_report(node_name):
     return outdent(f"""\
         Unable to check if there is a conflict with nodes set in corosync because the command does not run on a live cluster (e.g. -f was used)

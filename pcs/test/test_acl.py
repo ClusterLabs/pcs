@@ -14,6 +14,8 @@ from pcs.test.tools.pcs_runner import (
     PcsRunner,
 )
 
+# pylint: disable=too-many-public-methods, invalid-name, no-self-use, bad-whitespace, line-too-long, too-many-statements
+
 old_cib = rc("cib-empty-1.2.xml")
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")

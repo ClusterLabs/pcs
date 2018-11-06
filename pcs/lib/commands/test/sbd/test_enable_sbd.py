@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import json
 from unittest import mock, TestCase
 
@@ -1200,8 +1201,8 @@ class FailureHandling(TestCase):
             node_labels=[self.node_list[0]]
         )
 
-    def _remove_calls(self, n):
-        for name in self.config.calls.names[-n:]:
+    def _remove_calls(self, count):
+        for name in self.config.calls.names[-count:]:
             self.config.calls.remove(name)
 
     @mock.patch("pcs.lib.external.is_systemctl", lambda: True)

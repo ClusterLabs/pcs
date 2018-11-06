@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 # force cathegories
 FORCE = "FORCE"
 FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE = "FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE"

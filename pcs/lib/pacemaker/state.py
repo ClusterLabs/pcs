@@ -20,7 +20,7 @@ from pcs.lib.xml_tools import find_parent
 class ResourceNotFound(Exception):
     pass
 
-class _Attrs(object):
+class _Attrs:
     def __init__(self, owner_name, attrib, required_attrs):
         '''
         attrib lxml.etree._Attrib - wrapped attribute collection
@@ -37,8 +37,7 @@ class _Attrs(object):
                 if isinstance(attr_specification, tuple):
                     attr_name, attr_transform = attr_specification
                     return attr_transform(self.attrib[attr_name])
-                else:
-                    return self.attrib[attr_specification]
+                return self.attrib[attr_specification]
             except KeyError:
                 raise AttributeError(
                     "Missing attribute '{0}' ('{1}' in source) in '{2}'"
@@ -50,7 +49,7 @@ class _Attrs(object):
             .format(self.owner_name, name)
         )
 
-class _Children(object):
+class _Children:
     def __init__(self, owner_name, dom_part, children, sections):
         self.owner_name = owner_name
         self.dom_part = dom_part
@@ -74,7 +73,7 @@ class _Children(object):
             .format(self.owner_name, name)
         )
 
-class _Element(object):
+class _Element:
     required_attrs = {}
     children = {}
     sections = {}
@@ -188,10 +187,7 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
                 node.attrib["name"]
                 for node in resource_element.findall(".//node")
             ])
-    return dict([
-        (role, sorted(nodes))
-        for role, nodes in roles_with_nodes.items()
-    ])
+    return {role: sorted(nodes) for role, nodes in roles_with_nodes.items()}
 
 def info_resource_state(cluster_state, resource_id):
     roles_with_nodes = _get_primitive_roles_with_nodes(

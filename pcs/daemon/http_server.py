@@ -62,7 +62,7 @@ class HttpsServerManage:
 
         self.__server.add_sockets(sockets)
 
-        log.pcsd.info(f"Server is listening")
+        log.pcsd.info("Server is listening")
         self.__server_is_running = True
         return self
 

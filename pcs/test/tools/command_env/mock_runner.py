@@ -3,6 +3,7 @@ from os import path
 from pcs import settings
 from pcs.test.tools.assertions import assert_xml_equal
 
+# pylint: disable=unused-argument
 
 CALL_TYPE_RUNNER = "CALL_TYPE_RUNNER"
 
@@ -14,7 +15,7 @@ def create_check_stdin_xml(expected_stdin):
             (
                 "Trying to run command no. {0}"
                 "\n\n    '{1}'\n\nwith expected xml stdin.\n"
-            ).format(order_num,  command)
+            ).format(order_num, command)
         )
     return stdin_xml_check
 
@@ -70,7 +71,7 @@ def bad_call(order_num, expected_command, entered_command):
     )
 
 
-class Call(object):
+class Call:
     type = CALL_TYPE_RUNNER
 
     def __init__(
@@ -94,7 +95,7 @@ class Call(object):
         )
 
 
-class Runner(object):
+class Runner:
     def __init__(self, call_queue=None, env_vars=None):
         self.__call_queue = call_queue
         self.__env_vars = env_vars if env_vars else {}

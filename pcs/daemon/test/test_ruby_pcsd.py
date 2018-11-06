@@ -9,7 +9,7 @@ from tornado.testing import AsyncTestCase, gen_test
 from tornado.web import HTTPError
 
 from pcs.daemon import ruby_pcsd
-from pcs.test.tools.misc import create_patcher,  get_test_resource as rc
+from pcs.test.tools.misc import create_patcher, get_test_resource as rc
 
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
@@ -31,6 +31,7 @@ def create_http_request():
 
 class GetSinatraRequest(TestCase):
     def test_translate_request(self):
+        # pylint: disable=invalid-name
         self.maxDiff = None
         self.assertEqual(
             create_wrapper().get_sinatra_request(create_http_request()),
@@ -78,8 +79,9 @@ class RunRuby(AsyncTestCase):
         self.assertEqual(json.loads(request_json), self.request)
         return self.stdout, self.stderr
 
-    def create_request(self, type=ruby_pcsd.SYNC_CONFIGS):
-        return {"type": type}
+    @staticmethod
+    def create_request(_type=ruby_pcsd.SYNC_CONFIGS):
+        return {"type": _type}
 
     def set_run_result(self, run_result):
         self.stdout = json.dumps({**run_result, "logs": []})
@@ -103,14 +105,15 @@ class RunRuby(AsyncTestCase):
 
     @gen_test
     def test_sync_config_shortcut_success(self):
-        next = 10
-        self.set_run_result({"next": next})
+        _next = 10
+        self.set_run_result({"next": _next})
         result = yield self.wrapper.sync_configs()
-        self.assertEqual(result, next)
+        self.assertEqual(result, _next)
 
     @patch_ruby_pcsd("now", return_value=0)
     @gen_test
     def test_sync_config_shorcut_fail(self, now):
+        # pylint: disable=unused-argument
         result = yield self.wrapper.sync_configs()
         self.assertEqual(result, ruby_pcsd.DEFAULT_SYNC_CONFIG_DELAY)
 
@@ -169,6 +172,7 @@ class ProcessResponseLog(TestCase):
     @patch_ruby_pcsd("log.from_external_source")
     @patch_ruby_pcsd("next", mock.Mock(return_value=1))
     def test_put_correct_values_to_log(self, from_external_source):
+        # pylint: disable=no-self-use
         ruby_pcsd.process_response_logs([{
             "level": "FATAL",
             "timestamp_usec": 1234567890,

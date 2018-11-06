@@ -9,7 +9,15 @@ from tornado.web import Application
 
 from pcs import settings
 from pcs.common.system import is_systemd
-from pcs.daemon import log, systemd, session, ruby_pcsd, app_remote, app_gui,ssl
+from pcs.daemon import (
+    app_gui,
+    app_remote,
+    log,
+    ruby_pcsd,
+    session,
+    ssl,
+    systemd,
+)
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 

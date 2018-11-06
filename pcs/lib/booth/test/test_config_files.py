@@ -5,7 +5,10 @@ from pcs.common import report_codes, env_file_role_codes as file_roles
 from pcs.lib.booth import config_files
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
-from pcs.test.tools.assertions import assert_raise_library_error, assert_report_item_list_equal
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
 
@@ -31,7 +34,7 @@ class GetAllConfigsFileNamesTest(TestCase):
                 for name in ("dir.cong", "dir")
             ]:
                 return False
-            elif file_name in [
+            if file_name in [
                 os.path.join(BOOTH_CONFIG_DIR, name)
                 for name in (
                     "name1", "name2.conf", "name.conf.conf", ".conf",
@@ -39,8 +42,8 @@ class GetAllConfigsFileNamesTest(TestCase):
                 )
             ]:
                 return True
-            else:
-                raise AssertionError("unexpected input")
+
+            raise AssertionError("unexpected input")
 
         mock_isdir.return_value = True
         mock_is_file.side_effect = mock_is_file_fn
@@ -57,6 +60,7 @@ class GetAllConfigsFileNamesTest(TestCase):
 
 class ReadConfigTest(TestCase):
     def test_success(self):
+        # pylint: disable=invalid-name, protected-access
         self.maxDiff = None
         mock_open = mock.mock_open(read_data="config content")
         with patch_config_files("open", mock_open, create=True):
@@ -86,12 +90,11 @@ class ReadConfigsTest(TestCase):
         def _mock_read_cfg(file):
             if file == "name1.conf":
                 return "config1"
-            elif file == "name2.conf":
+            if file == "name2.conf":
                 return "config2"
-            elif file == "name3.conf":
+            if file == "name3.conf":
                 return "config3"
-            else:
-                raise AssertionError("unexpected input: {0}".format(file))
+            raise AssertionError("unexpected input: {0}".format(file))
         mock_get_configs.return_value = [
             "name1.conf", "name2.conf", "name3.conf"
         ]
@@ -197,6 +200,7 @@ class ReadConfigsTest(TestCase):
 
 class ReadAuthfileTest(TestCase):
     def setUp(self):
+        # pylint: disable=invalid-name
         self.mock_reporter = MockLibraryReportProcessor()
         self.maxDiff = None
 

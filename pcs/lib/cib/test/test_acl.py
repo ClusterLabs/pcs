@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
@@ -332,6 +332,7 @@ class AssignRoleTest(LibraryAclTest):
 @mock.patch("pcs.lib.cib.acl._assign_role")
 class AssignAllRoles(TestCase):
     def test_success(self, assign_role):
+        # pylint: disable=no-self-use
         assign_role.return_value = []
         lib.assign_all_roles("acl_section", ["1", "2", "3"], "element")
         assign_role.assert_has_calls([
@@ -860,6 +861,7 @@ class GetPermissionListTest(LibraryAclTest):
                 "attribute": "attr",
             }
         ]
+        # pylint: disable=protected-access
         self.assertEqual(expected, lib._get_permission_list(role_el))
 
 
@@ -939,6 +941,7 @@ class GetRoleListOfTargetTest(LibraryAclTest):
         etree.SubElement(target_el, "role")
         etree.SubElement(target_el, "role", {"id": "role3"})
         self.assertEqual(
+            # pylint: disable=protected-access
             ["role1", "role2", "role3"], lib._get_role_list_of_target(target_el)
         )
 
@@ -947,6 +950,7 @@ class GetRoleListOfTargetTest(LibraryAclTest):
 @mock.patch("pcs.lib.cib.acl.find_target")
 class FindTargetOrGroup(TestCase):
     def test_returns_target(self, find_target, find_group):
+        # pylint: disable=unused-argument
         find_target.return_value = "target_element"
         self.assertEqual(
             lib.find_target_or_group("acl_section", "target_id"),
@@ -983,6 +987,7 @@ class Find(TestCase):
         common_finder.return_value = "element"
         self.assertEqual(
             "element",
+            # pylint: disable=protected-access
             lib._find(
                 lib.TAG_GROUP,
                 "acl_section",
@@ -1002,6 +1007,7 @@ class Find(TestCase):
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
     def test_map_well_to_common_finder_with_automatic_desc(self, common_finder):
         common_finder.return_value = "element"
+        # pylint: disable=protected-access
         self.assertEqual("element", lib._find(
             lib.TAG_GROUP, "acl_section", "group_id", none_if_id_unused=True
         ))

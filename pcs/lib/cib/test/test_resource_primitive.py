@@ -1,6 +1,6 @@
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.lib.cib.resource import primitive
 

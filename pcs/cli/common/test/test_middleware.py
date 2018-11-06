@@ -9,26 +9,26 @@ class MiddlewareBuildTest(TestCase):
         def command(lib, argv, modifiers):
             log.append('command: {0}, {1}, {2}'.format(lib, argv, modifiers))
 
-        def m1(next, lib, argv, modifiers):
+        def mdw1(_next, lib, argv, modifiers):
             log.append(
-                'm1 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
+                'mdw1 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
             )
-            next(lib, argv, modifiers)
-            log.append('m1 done')
+            _next(lib, argv, modifiers)
+            log.append('mdw1 done')
 
-        def m2(next, lib, argv, modifiers):
+        def mdw2(_next, lib, argv, modifiers):
             log.append(
-                'm2 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
+                'mdw2 start: {0}, {1}, {2}'.format(lib, argv, modifiers)
             )
-            next(lib, argv, modifiers)
-            log.append('m2 done')
+            _next(lib, argv, modifiers)
+            log.append('mdw2 done')
 
-        run_with_middleware = middleware.build(m1, m2)
+        run_with_middleware = middleware.build(mdw1, mdw2)
         run_with_middleware(command, "1", "2", "3")
         self.assertEqual(log, [
-            'm1 start: 1, 2, 3',
-            'm2 start: 1, 2, 3',
+            'mdw1 start: 1, 2, 3',
+            'mdw2 start: 1, 2, 3',
             'command: 1, 2, 3',
-            'm2 done',
-            'm1 done',
+            'mdw2 done',
+            'mdw1 done',
         ])

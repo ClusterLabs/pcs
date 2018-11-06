@@ -9,7 +9,8 @@ class GetFailcounts(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def fixture_cib(self):
+    @staticmethod
+    def fixture_cib():
         return """
         <cib>
             <status>

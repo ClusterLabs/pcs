@@ -20,6 +20,8 @@ from pcs.lib.errors import (
 from pcs.lib.env import LibraryEnvironment
 import pcs.lib.commands.sbd as cmd_sbd
 
+# pylint: disable=protected-access, no-self-use
+
 
 runner = Runner()
 
@@ -385,9 +387,9 @@ class GetFullTargetDictTest(TestCase):
         ]
 
     def test_not_using_default(self):
-        target_dict = dict([
-            ("node" + str(i), "val" + str(i)) for i in range(4)
-        ])
+        target_dict = {
+            "node" + str(i): "val" + str(i) for i in range(4)
+        }
         expected = {
             self.target_list[0].label: "val1",
             self.target_list[1].label: "val2",
@@ -399,9 +401,9 @@ class GetFullTargetDictTest(TestCase):
         )
 
     def test_using_default(self):
-        target_dict = dict([
-            ("node" + str(i), "val" + str(i)) for i in range(3)
-        ])
+        target_dict = {
+            "node" + str(i): "val" + str(i) for i in range(3)
+        }
         default = "default"
         expected = {
             self.target_list[0].label: "val1",
@@ -534,7 +536,7 @@ class InitializeBlockDevicesTest(CommonTest):
 
     def test_no_options(self):
         device_list = ["dev1", "dev2"]
-        runner.set_runs(self.fixture_sbd_init(device_list,{}))
+        runner.set_runs(self.fixture_sbd_init(device_list, {}))
         cmd_sbd.initialize_block_devices(self.env, device_list, {})
         runner.assert_everything_launched()
         self.env.report_processor.assert_reports([

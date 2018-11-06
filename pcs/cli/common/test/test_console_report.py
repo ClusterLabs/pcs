@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 from unittest import TestCase
 
 from pcs.cli.common.console_report import(
@@ -13,6 +15,8 @@ from pcs.common.fencing_topology import (
 )
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
+
+# pylint: disable=invalid-name
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -547,6 +551,7 @@ class FencingLevelAlreadyExists(NameBuildTest):
         )
 
     def test_target_pattern(self):
+        # pylint: disable=anomalous-backslash-in-string
         self.assert_message_from_info(
             "Fencing level for 'node-\d+' at level '1' with device(s) "
                 "'device1,device2' already exists",
@@ -714,7 +719,7 @@ class ResourceRunOnNodes(NameBuildTest):
             "resource 'R' is running on nodes 'node1', 'node2'",
             {
                 "resource_id": "R",
-                "roles_with_nodes": {"Started": ["node1","node2"]},
+                "roles_with_nodes": {"Started": ["node1", "node2"]},
             }
         )
     def test_multiple_role_multiple_nodes(self):
@@ -725,7 +730,7 @@ class ResourceRunOnNodes(NameBuildTest):
             {
                 "resource_id": "R",
                 "roles_with_nodes": {
-                    "Started": ["node1","node2"],
+                    "Started": ["node1", "node2"],
                     "Master": ["node3"],
                 },
             }
@@ -972,7 +977,10 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
 
     def test_with_type(self):
         self.assert_message_from_report(
-            "Cannot set some option 'a' because other option 'b' is already set",
+            (
+                "Cannot set some option 'a' because other option 'b' is "
+                "already set"
+            ),
             reports.prerequisite_option_must_not_be_set(
                 "a", "b", option_type="some", prerequisite_type="other",
             )

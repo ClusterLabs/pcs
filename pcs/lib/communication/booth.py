@@ -56,7 +56,7 @@ class BoothSendConfig(
         self._report(reports_booth.booth_config_distribution_started())
 
 
-class ProcessJsonDataMixin(object):
+class ProcessJsonDataMixin:
     __data = None
 
     @property

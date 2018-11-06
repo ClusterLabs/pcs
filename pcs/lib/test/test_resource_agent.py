@@ -1,6 +1,7 @@
+# pylint: disable=too-many-lines
 from functools import partial
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
@@ -17,6 +18,8 @@ from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 from pcs.lib.external import CommandRunner
+
+# pylint: disable=protected-access
 
 patch_agent = create_patcher("pcs.lib.resource_agent")
 patch_agent_object = partial(mock.patch.object, lib_ra.Agent)
@@ -1012,6 +1015,7 @@ class AgentMetadataGetActionsTest(TestCase):
         )
 
     def test_transfor_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
+        # pylint: disable=invalid-name
         xml = """
             <resource-agent>
                 <actions>
@@ -2136,12 +2140,14 @@ class ResourceAgentTest(TestCase):
         )
 
     def test_does_not_raise_on_valid_name(self):
+        # pylint: disable=no-self-use
         lib_ra.ResourceAgent(mock.MagicMock(), "ocf:heardbeat:name")
 
 
 @patch_agent_object("_get_metadata")
 class ResourceAgentGetParameters(TestCase):
-    def fixture_metadata(self, params):
+    @staticmethod
+    def fixture_metadata(params):
         return etree.XML("""
             <resource-agent>
                 <parameters>{0}</parameters>
@@ -2192,6 +2198,7 @@ class ResourceAgentGetParameters(TestCase):
 
 
 class FindResourceAgentByNameTest(TestCase):
+    # pylint: disable=invalid-name
     def setUp(self):
         self.report_processor = mock.MagicMock()
         self.runner = mock.MagicMock()
@@ -2206,7 +2213,7 @@ class FindResourceAgentByNameTest(TestCase):
     def test_returns_guessed_agent(self, mock_guess, mock_report):
         #setup
         name = "Delay"
-        guessed_name =  "ocf:heartbeat:Delay"
+        guessed_name = "ocf:heartbeat:Delay"
         report = "AGENT_NAME_GUESSED"
 
         agent = mock.MagicMock(get_name=mock.Mock(return_value=guessed_name))
@@ -2295,6 +2302,7 @@ class FindResourceAgentByNameTest(TestCase):
 
 
 class FindStonithAgentByName(TestCase):
+    # pylint: disable=invalid-name
     # It is quite similar to find_valid_stonith_agent_by_name, so only minimum
     # tests here:
     # - test success
@@ -2342,7 +2350,7 @@ class FindStonithAgentByName(TestCase):
 class AbsentResourceAgentTest(TestCase):
     @mock.patch.object(lib_ra.CrmAgent, "_load_metadata")
     def test_behaves_like_a_proper_agent(self, load_metadata):
-        name =  "ocf:heartbeat:Absent"
+        name = "ocf:heartbeat:Absent"
         runner = mock.MagicMock(spec_set=CommandRunner)
         load_metadata.return_value = "<resource-agent/>"
 

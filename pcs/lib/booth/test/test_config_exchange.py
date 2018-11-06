@@ -17,7 +17,11 @@ class FromExchangeFormatTest(TestCase):
                 ]),
             ],
             config_exchange.from_exchange_format([
-                {"key": "authfile","value": "/path/to/auth.file","details": []},
+                {
+                    "key": "authfile",
+                    "value": "/path/to/auth.file",
+                    "details": [],
+                },
                 {"key": "site", "value": "1.1.1.1", "details": []},
                 {"key": "site", "value": "2.2.2.2", "details": []},
                 {"key": "arbitrator", "value": "3.3.3.3", "details": []},

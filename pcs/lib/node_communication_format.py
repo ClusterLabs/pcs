@@ -1,19 +1,16 @@
+import base64
 from collections import namedtuple
+
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-import base64
 
 def create_pcmk_remote_actions(action_list):
-    return dict([
-        (
-            "pacemaker_remote {0}".format(action),
-            service_cmd_format(
-                "pacemaker_remote",
-                action
-            )
+    return {
+        "pacemaker_remote {0}".format(action): service_cmd_format(
+            "pacemaker_remote", action
         )
         for action in action_list
-    ])
+    }
 
 def pcmk_authkey_format(authkey_content):
     """
@@ -136,13 +133,10 @@ def response_items_to_result(response_items, expected_keys, node_label):
         ):
             raise LibraryError(reports.invalid_response_format(node_label))
 
-    return dict([
-        (
-            file_key,
-            Result(raw_result["code"], raw_result["message"])
-        )
+    return {
+        file_key: Result(raw_result["code"], raw_result["message"])
         for file_key, raw_result in response_items.items()
-    ])
+    }
 
 
 def response_to_result(

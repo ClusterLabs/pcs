@@ -16,7 +16,7 @@ class Mixin:
         if self.__session.is_authenticated:
             self.__refresh_auth(
                 await check_user_groups(self.__session.username),
-                ajax_id = self.__session.ajax_id
+                ajax_id=self.__session.ajax_id
             )
 
     async def session_auth_user(self, username, password, sign_rejection=True):

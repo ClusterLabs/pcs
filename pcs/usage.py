@@ -1,5 +1,6 @@
 import re
 
+# pylint: disable=too-many-lines, bad-whitespace, anomalous-backslash-in-string, too-many-branches, global-statement, line-too-long, invalid-name, singleton-comparison, dangerous-default-value, inconsistent-return-statements
 
 examples = ""
 def full_usage():
@@ -70,7 +71,7 @@ def strip_extras(text):
 # If no args, then we return the full output
 
 def sub_usage(args, output):
-    if len(args) == 0:
+    if not args:
         return output
 
     ret = ""
@@ -1120,6 +1121,7 @@ Commands:
         return output
 
 def property(args = [], pout = True):
+    # pylint: disable=redefined-builtin
     output = """
 Usage: pcs property [commands]...
 Configure pacemaker properties

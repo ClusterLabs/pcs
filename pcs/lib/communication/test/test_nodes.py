@@ -17,6 +17,8 @@ class SendPcsdSslCertAndKey(TestCase):
 class RemoveNodesFromCib(TestCase):
     """
     tested in:
-        pcs.lib.commands.test.cluster.test_remove_nodes.RemoveNodesFailureFromCib
-        pcs.lib.commands.test.cluster.test_remove_nodes.RemoveNodesSuccessMinimal
+        pcs.lib.commands.test.cluster.test_remove_nodes
+            .RemoveNodesFailureFromCib
+        pcs.lib.commands.test.cluster.test_remove_nodes
+            .RemoveNodesSuccessMinimal
     """

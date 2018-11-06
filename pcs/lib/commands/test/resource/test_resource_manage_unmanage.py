@@ -638,12 +638,12 @@ fixture_bundle_cib_unmanaged_both_op_disabled = """
     </resources>
 """
 
-def fixture_report_no_monitors(resource):
+def fixture_report_no_monitors(resource_id):
     return (
         severities.WARNING,
         report_codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED,
         {
-            "resource_id": resource,
+            "resource_id": resource_id,
         },
         None
     )

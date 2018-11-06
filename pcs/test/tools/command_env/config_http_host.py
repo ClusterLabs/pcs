@@ -8,7 +8,7 @@ from pcs.test.tools.command_env.mock_node_communicator import (
 )
 
 
-class HostShortcuts(object):
+class HostShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 

@@ -26,6 +26,7 @@ def create(
     ensure_disabled=False,
     wait=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create stonith as resource in a cib.
 
@@ -94,6 +95,7 @@ def create_in_group(
     put_after_adjacent=False,
     wait=False,
 ):
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Create stonith as resource in a cib and put it into defined group.
 

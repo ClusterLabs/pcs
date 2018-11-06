@@ -25,8 +25,8 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     cluster_nodes_names = env.get_corosync_conf().get_nodes_names()
 
     try:
-        with open(settings.pcsd_cert_location, "r") as f:
-            ssl_cert = f.read()
+        with open(settings.pcsd_cert_location, "r") as file:
+            ssl_cert = file.read()
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
@@ -37,8 +37,8 @@ def synchronize_ssl_certificate(env, skip_offline=False):
             )
         )
     try:
-        with open(settings.pcsd_key_location, "r") as f:
-            ssl_key = f.read()
+        with open(settings.pcsd_key_location, "r") as file:
+            ssl_key = file.read()
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(

@@ -3,7 +3,7 @@ from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.corosync.config_parser import Section
 from pcs.test.tools.misc import get_test_resource as rc
 
-class CorosyncConf(object):
+class CorosyncConf:
     def __init__(self, call_collection):
         self.__calls = call_collection
 

@@ -32,9 +32,11 @@ def process_no_existing_file_expectation(file_role, env_file, file_path):
 
 def write(env_file, file_path):
     try:
-        f = open(file_path, "wb" if env_file.get("is_binary", False) else "w")
-        f.write(env_file["content"])
-        f.close()
+        file = open(
+            file_path, "wb" if env_file.get("is_binary", False) else "w"
+        )
+        file.write(env_file["content"])
+        file.close()
     except EnvironmentError as e:
         raise console_report.error(
             "Unable to write {0}: {1}".format(file_path, e.strerror)

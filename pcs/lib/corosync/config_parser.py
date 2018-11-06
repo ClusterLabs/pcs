@@ -1,4 +1,4 @@
-class Section(object):
+class Section:
 
     def __init__(self, name):
         self._parent = None
@@ -97,6 +97,8 @@ class Section(object):
             parent = parent.parent
         if section.parent:
             section.parent.del_section(section)
+        # here we are editing obj's _parent attribute of the same class
+        # pylint: disable=protected-access
         section._parent = self
         self._section_list.append(section)
         return self
@@ -105,6 +107,8 @@ class Section(object):
         self._section_list.remove(section)
         # don't set parent to None if the section was not found in the list
         # thanks to remove raising a ValueError in that case
+        # here we are editing obj's _parent attribute of the same class
+        # pylint: disable=protected-access
         section._parent = None
         return self
 

@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource
 
@@ -15,16 +15,16 @@ def fixture_resources_with_booth(booth_config_file_path):
         </resources>
     '''.format(booth_config_file_path))
 
-def fixture_booth_element(id, booth_config_file_path):
+def fixture_booth_element(_id, booth_config_file_path):
     return etree.fromstring('''
         <primitive id="{0}" type="booth-site">
             <instance_attributes>
                 <nvpair name="config" value="{1}"/>
             </instance_attributes>
         </primitive>
-    '''.format(id, booth_config_file_path))
+    '''.format(_id, booth_config_file_path))
 
-def fixture_ip_element(id, ip=""):
+def fixture_ip_element(_id, ip=""):
     return etree.fromstring('''
         <primitive id="{0}" type="IPaddr2">
             <instance_attributes id="{0}-ia">
@@ -35,14 +35,14 @@ def fixture_ip_element(id, ip=""):
             />
           </instance_attributes>
         </primitive>
-    '''.format(id, ip))
+    '''.format(_id, ip))
 
 class CreateResourceIdTest(TestCase):
     @mock.patch("pcs.lib.booth.resource.find_unique_id")
     def test_return_new_uinq_id(self, mock_find_unique_id):
         resources_section = etree.fromstring('''<resources/>''')
         mock_find_unique_id.side_effect = (
-            lambda resources_section, id: "{0}-n".format(id)
+            lambda resources_section, _id: "{0}-n".format(_id)
         )
         self.assertEqual(
             "booth-some-name-ip-n",
@@ -64,7 +64,7 @@ class FindBoothResourceElementsTest(TestCase):
         first = fixture_booth_element("first", "/PATH/TO/CONF")
         second = fixture_booth_element("second", "/ANOTHER/PATH/TO/CONF")
         third = fixture_booth_element("third", "/PATH/TO/CONF")
-        for element in [first, second,third]:
+        for element in [first, second, third]:
             resources.append(element)
 
         self.assertEqual(
@@ -76,12 +76,14 @@ class FindBoothResourceElementsTest(TestCase):
         )
 
 class RemoveFromClusterTest(TestCase):
-    def call(self, element_list):
+    @staticmethod
+    def call(element_list):
         mock_resource_remove = mock.Mock()
         booth_resource.get_remover(mock_resource_remove)(element_list)
         return mock_resource_remove
 
-    def find_booth_resources(self, tree):
+    @staticmethod
+    def find_booth_resources(tree):
         return tree.xpath('.//primitive[@type="booth-site"]')
 
     def test_remove_ip_when_is_only_booth_sibling_in_group(self):
@@ -171,7 +173,8 @@ class RemoveFromClusterTest(TestCase):
         )
 
 class FindBoundIpTest(TestCase):
-    def fixture_resource_section(self, ip_element_list):
+    @staticmethod
+    def fixture_resource_section(ip_element_list):
         resources_section = etree.fromstring('<resources/>')
         group = etree.SubElement(resources_section, "group")
         group.append(fixture_booth_element("booth1", "/PATH/TO/CONF"))
@@ -180,7 +183,7 @@ class FindBoundIpTest(TestCase):
         return resources_section
 
 
-    def test_returns_None_when_no_ip(self):
+    def test_returns_none_when_no_ip(self):
         self.assertEqual(
             [],
             booth_resource.find_bound_ip(
@@ -200,7 +203,7 @@ class FindBoundIpTest(TestCase):
             )
         )
 
-    def test_returns_None_when_more_ip(self):
+    def test_returns_none_when_more_ip(self):
         self.assertEqual(
             ["192.168.122.31", "192.168.122.32"],
             booth_resource.find_bound_ip(

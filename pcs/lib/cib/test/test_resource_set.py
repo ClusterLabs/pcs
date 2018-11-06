@@ -1,5 +1,5 @@
-from lxml import etree
 from unittest import mock, TestCase
+from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.constraint import resource_set
@@ -8,6 +8,8 @@ from pcs.test.tools.assertions import(
     assert_raise_library_error,
     assert_xml_equal
 )
+
+# pylint: disable=no-self-use
 
 
 class PrepareSetTest(TestCase):
@@ -81,8 +83,8 @@ class CreateTest(TestCase):
 class GetResourceIdListTest(TestCase):
     def test_returns_id_list_from_element(self):
         element = etree.Element("resource_set")
-        for id in ("A", "B"):
-            etree.SubElement(element, "resource_ref").attrib["id"] = id
+        for _id in ("A", "B"):
+            etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
             ["A", "B"],
@@ -93,8 +95,8 @@ class ExportTest(TestCase):
     def test_returns_element_in_dict_representation(self):
         element = etree.Element("resource_set")
         element.attrib.update({"role": "Master"})
-        for id in ("A", "B"):
-            etree.SubElement(element, "resource_ref").attrib["id"] = id
+        for _id in ("A", "B"):
+            etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
             {'options': {'role': 'Master'}, 'ids': ['A', 'B']},

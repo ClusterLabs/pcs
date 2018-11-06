@@ -14,6 +14,7 @@ from pcs.test.tools.misc import get_test_resource
 
 import pcs.lib.corosync.qdevice_net as lib
 
+# pylint: disable=no-self-use
 
 _qnetd_cert_dir = "/etc/corosync/qnetd/nssdb"
 _qnetd_cert_tool = "/usr/bin/corosync-qnetd-certutil"
@@ -797,6 +798,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
         ])
 
 class GetOutputCertificateTest(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.file_path = get_test_resource("qdevice-certs/qnetd-cacert.crt")
         self.file_data = open(self.file_path, "rb").read()

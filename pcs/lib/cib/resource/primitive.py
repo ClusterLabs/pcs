@@ -27,6 +27,7 @@ def create(
     use_default_operations=True,
     resource_type="resource"
 ):
+    # pylint: disable=too-many-arguments
     """
     Prepare all parts of primitive resource and append it into cib.
 

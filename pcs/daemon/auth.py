@@ -10,6 +10,8 @@ from tornado.gen import coroutine
 
 from pcs.daemon import log
 
+# pylint: disable=invalid-name, too-few-public-methods
+
 
 class pam_message(Structure):
     _fields_ = [("msg_style", c_int), ("msg", POINTER(c_char))]
@@ -98,7 +100,8 @@ def get_user_groups_sync(username):
 UserAuthInfo = namedtuple("UserAuthInfo", "name groups is_authorized")
 
 class LoginLogger:
-    def unable_determine_groups(self, username, e):
+    @staticmethod
+    def unable_determine_groups(username, e):
         log.pcsd.info(
             "Unable to determine groups of user '%s': %s",
             username,
@@ -109,25 +112,29 @@ class LoginLogger:
             username
         )
 
-    def not_ha_adm_member(self, username, ha_adm_group):
+    @staticmethod
+    def not_ha_adm_member(username, ha_adm_group):
         log.pcsd.info(
             "Failed login by '%s' (user is not a member of '%s' group)",
             username,
             ha_adm_group
         )
 
-    def success(self, username):
+    @staticmethod
+    def success(username):
         log.pcsd.info("Successful login by '%s'", username)
 
 class PlainLogger:
-    def unable_determine_groups(self, username, e):
+    @staticmethod
+    def unable_determine_groups(username, e):
         log.pcsd.info(
             "Unable to determine groups of user '%s': %s",
             username,
             e
         )
 
-    def not_ha_adm_member(self, username, ha_adm_group):
+    @staticmethod
+    def not_ha_adm_member(username, ha_adm_group):
         log.pcsd.info(
             "User '%s' is not a member of '%s' group",
             username,

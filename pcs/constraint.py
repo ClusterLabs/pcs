@@ -1,6 +1,6 @@
 import sys
-import xml.dom.minidom
 from collections import defaultdict
+import xml.dom.minidom
 from xml.dom.minidom import parseString
 
 from pcs import (
@@ -24,6 +24,10 @@ from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 
+# pylint: disable=too-many-branches, too-many-statements, len-as-condition
+# pylint: disable=invalid-name, unused-argument, too-many-nested-blocks
+# pylint: disable=line-too-long, singleton-comparison, too-many-locals
+# pylint: disable=inconsistent-return-statements, no-else-return
 
 OPTIONS_ACTION = resource_set.ATTRIB["action"]
 
@@ -133,7 +137,7 @@ def constraint_cmd(lib, argv, modifiers):
                 )
         elif sub_cmd in ["remove", "delete"]:
             constraint_rm(lib, argv, modifiers)
-        elif (sub_cmd in ("show", "list")):
+        elif sub_cmd in ("show", "list"):
             # all these commands accept -f and --full therefore there is no
             # need to change something here
             location_show(lib, argv, modifiers)
@@ -163,16 +167,24 @@ def colocation_rm(dummy_lib, argv, modifiers):
     if len(argv) < 2:
         raise CmdLineInputError()
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dom, constraintsElement) = getCurrentConstraints()
 
     resource1 = argv[0]
     resource2 = argv[1]
 
     for co_loc in constraintsElement.getElementsByTagName('rsc_colocation')[:]:
-        if co_loc.getAttribute("rsc") == resource1 and co_loc.getAttribute("with-rsc") == resource2:
+        if (
+            co_loc.getAttribute("rsc") == resource1
+            and
+            co_loc.getAttribute("with-rsc") == resource2
+        ):
             constraintsElement.removeChild(co_loc)
             elementFound = True
-        if co_loc.getAttribute("rsc") == resource2 and co_loc.getAttribute("with-rsc") == resource1:
+        if (
+            co_loc.getAttribute("rsc") == resource2
+            and
+            co_loc.getAttribute("with-rsc") == resource1
+        ):
             constraintsElement.removeChild(co_loc)
             elementFound = True
 
@@ -190,7 +202,7 @@ def parse_score_options(argv):
     Commandline options: no options
     """
     if len(argv) == 0:
-        return "INFINITY",[]
+        return "INFINITY", []
 
     arg_array = []
     first = argv[0]
@@ -201,7 +213,7 @@ def parse_score_options(argv):
 
     for arg in argv:
         args = arg.split('=')
-        if (len(args) != 2):
+        if len(args) != 2:
             continue
         arg_array.append(args)
     return (score, arg_array)
@@ -280,7 +292,7 @@ def colocation_add(dummy_lib, argv, modifiers):
             )
         ))
 
-    (dom,constraintsElement) = getCurrentConstraints(cib_dom)
+    (dom, constraintsElement) = getCurrentConstraints(cib_dom)
 
     # If one role is specified, the other should default to "started"
     if role1 != "" and role2 == "":
@@ -288,9 +300,9 @@ def colocation_add(dummy_lib, argv, modifiers):
     if role2 != "" and role1 == "":
         role1 = DEFAULT_ROLE
     element = dom.createElement("rsc_colocation")
-    element.setAttribute("rsc",resource1)
-    element.setAttribute("with-rsc",resource2)
-    element.setAttribute("score",score)
+    element.setAttribute("rsc", resource1)
+    element.setAttribute("with-rsc", resource2)
+    element.setAttribute("score", score)
     if role1 != "":
         element.setAttribute("rsc-role", role1)
     if role2 != "":
@@ -344,7 +356,7 @@ def order_rm(dummy_lib, argv, modifiers):
         raise CmdLineInputError()
 
     elementFound = False
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dom, constraintsElement) = getCurrentConstraints()
 
     for resource in argv:
         for ord_loc in constraintsElement.getElementsByTagName('rsc_order')[:]:
@@ -495,10 +507,10 @@ def order_add(argv, modifiers):
         order_id = utils.find_unique_id(cib_dom, order_id)
         order_options.append(("id", order_id))
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dom, constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
-    element.setAttribute("first",resource1)
-    element.setAttribute("then",resource2)
+    element.setAttribute("first", resource1)
+    element.setAttribute("then", resource2)
     for order_opt in order_options:
         element.setAttribute(order_opt[0], order_opt[1])
     constraintsElement.appendChild(element)
@@ -574,7 +586,7 @@ def location_show(dummy_lib, argv, modifiers):
     else:
         valid_noderes = []
 
-    (dummy_dom,constraintsElement) = getCurrentConstraints()
+    (dummy_dom, constraintsElement) = getCurrentConstraints()
     nodehashon = {}
     nodehashoff = {}
     rschashon = {}
@@ -720,7 +732,7 @@ def location_show(dummy_lib, argv, modifiers):
                         if showDetail:
                             line_parts.append("(id:{0})".format(options["id"]))
                         print(" ".join(line_parts))
-            miniruleshash={}
+            miniruleshash = {}
             miniruleshash[rsc] = ruleshash[rsc]
             show_location_rules(miniruleshash, showDetail, True)
 
@@ -786,7 +798,7 @@ def location_prefer(lib, argv, modifiers):
 
 
     for nodeconf in argv:
-        nodeconf_a = nodeconf.split("=",1)
+        nodeconf_a = nodeconf.split("=", 1)
         if len(nodeconf_a) == 1:
             node = nodeconf_a[0]
             if prefer:
@@ -834,7 +846,7 @@ def location_add(lib, argv, modifiers):
     if len(argv) > 0:
         for arg in argv:
             if '=' in arg:
-                options.append(arg.split('=',1))
+                options.append(arg.split('=', 1))
             else:
                 raise CmdLineInputError(f"bad option '{arg}'")
             if (
@@ -891,6 +903,7 @@ def location_add(lib, argv, modifiers):
     elementsToRemove = []
     # If the id matches, or the rsc & node match, then we replace/remove
     for rsc_loc in constraintsElement.getElementsByTagName('rsc_location'):
+        # pylint: disable=too-many-boolean-expressions
         if (
             rsc_loc.getAttribute("id") == constraint_id
             or
@@ -917,13 +930,13 @@ def location_add(lib, argv, modifiers):
         constraintsElement.removeChild(etr)
 
     element = dom.createElement("rsc_location")
-    element.setAttribute("id",constraint_id)
+    element.setAttribute("id", constraint_id)
     if rsc_type == RESOURCE_TYPE_RESOURCE:
         element.setAttribute("rsc", rsc_value)
     elif rsc_type == RESOURCE_TYPE_REGEXP:
         element.setAttribute("rsc-pattern", rsc_value)
-    element.setAttribute("node",node)
-    element.setAttribute("score",score)
+    element.setAttribute("node", node)
+    element.setAttribute("score", score)
     for option in options:
         element.setAttribute(option[0], option[1])
     constraintsElement.appendChild(element)
@@ -955,7 +968,7 @@ def location_remove(lib, argv, modifiers):
         if constraint_id == rsc_loc.getAttribute("id"):
             elementsToRemove.append(rsc_loc)
 
-    if (len(elementsToRemove) == 0):
+    if len(elementsToRemove) == 0:
         utils.err("resource location id: " + constraint_id + " not found.")
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
@@ -1194,7 +1207,7 @@ def constraint_ref(dummy_lib, argv, modifiers):
 
     for arg in argv:
         print("Resource: %s" % arg)
-        constraints,set_constraints = find_constraints_containing(arg)
+        constraints, set_constraints = find_constraints_containing(arg)
         if len(constraints) == 0 and len(set_constraints) == 0:
             print("  No Matches.")
         else:
@@ -1203,14 +1216,14 @@ def constraint_ref(dummy_lib, argv, modifiers):
             for constraint in sorted(set_constraints):
                 print("  " + constraint)
 
-def remove_constraints_containing(resource_id,output=False,constraints_element = None, passed_dom=None):
+def remove_constraints_containing(resource_id, output=False, constraints_element=None, passed_dom=None):
     """
     Commandline options:
       * -f - CIB file, effective only if passed_dom is None
     """
     lib = utils.get_library_wrapper()
     modifiers = utils.get_input_modifiers()
-    constraints,set_constraints = find_constraints_containing(resource_id, passed_dom)
+    constraints, set_constraints = find_constraints_containing(resource_id, passed_dom)
     for c in constraints:
         if output == True:
             print("Removing Constraint - " + c)
@@ -1229,7 +1242,7 @@ def remove_constraints_containing(resource_id,output=False,constraints_element =
                 pn = c.parentNode
                 pn.removeChild(c)
                 if output == True:
-                    print("Removing %s from set %s" % (resource_id,pn.getAttribute("id")))
+                    print("Removing %s from set %s" % (resource_id, pn.getAttribute("id")))
                 if pn.getElementsByTagName("resource_ref").length == 0:
                     print("Removing set %s" % pn.getAttribute("id"))
                     pn2 = pn.parentNode
@@ -1262,11 +1275,11 @@ def find_constraints_containing(resource_id, passed_dom=None):
 
     if resource_match:
         if resource_match.parentNode.tagName == "master" or resource_match.parentNode.tagName == "clone":
-            constraints_found,set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"), dom)
+            constraints_found, set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"), dom)
 
     constraints = dom.getElementsByTagName("constraints")
     if len(constraints) == 0:
-        return [],[]
+        return [], []
     else:
         constraints = constraints[0]
 
@@ -1288,7 +1301,7 @@ def find_constraints_containing(resource_id, passed_dom=None):
 
     # Remove duplicates
     set_constraints = list(set(set_constraints))
-    return constraints_found,set_constraints
+    return constraints_found, set_constraints
 
 def remove_constraints_containing_node(dom, node, output=False):
     """
@@ -1325,7 +1338,7 @@ def constraint_resource_update(old_id, dom):
         constraints = dom.getElementsByTagName("rsc_location")
         constraints += dom.getElementsByTagName("rsc_order")
         constraints += dom.getElementsByTagName("rsc_colocation")
-        attrs_to_update=["rsc","first","then", "with-rsc"]
+        attrs_to_update = ["rsc", "first", "then", "with-rsc"]
         for constraint in constraints:
             for attr in attrs_to_update:
                 if constraint.getAttribute(attr) == old_id:
@@ -1365,7 +1378,7 @@ def constraint_rule(dummy_lib, argv, modifiers):
         location_rule_check_duplicates(cib, constraint, modifiers.get("--force"))
         utils.replace_cib_configuration(cib)
 
-    elif command in ["remove","delete"]:
+    elif command in ["remove", "delete"]:
         modifiers.ensure_only_supported("-f")
         cib = utils.get_cib_etree()
         temp_id = argv.pop(0)

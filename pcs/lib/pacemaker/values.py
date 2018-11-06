@@ -93,14 +93,13 @@ def validate_id(id_candidate, description="id", reporter=None):
     # see NCName definition
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
-    if len(id_candidate) < 1:
+    if not id_candidate:
         report = reports.invalid_id_is_empty(id_candidate, description)
-        if reporter is not None:
+        if reporter is None:
             # we check for None so it works with an empty list as well
-            reporter.append(report)
-            return
-        else:
             raise LibraryError(report)
+        reporter.append(report)
+        return
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
         report = reports.invalid_id_bad_char(
             id_candidate, description, id_candidate[0], True
