@@ -3,7 +3,7 @@ from pcs.test.tools import fixture
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
 
-class EnvConfigMixin(object):
+class EnvConfigMixin():
     def __init__(self, call_collection, wrap_helper, config):
         self.__calls = call_collection
         self.config = config
@@ -86,7 +86,6 @@ REPORTS = (fixture.ReportStore()
             "pacemaker_remote stop",
             "pacemaker_remote disable",
         ],
-        description="stop of service pacemaker_remote",
     )
     .info(
         "pcmk_remote_disable_success",
@@ -100,14 +99,13 @@ REPORTS = (fixture.ReportStore()
     )
     .info(
         "authkey_remove_started" ,
-        report_codes.FILES_REMOVE_FROM_NODE_STARTED,
-        file_list=["pacemaker_remote authkey"],
-        description="remote node files",
+        report_codes.FILES_REMOVE_FROM_NODES_STARTED,
+        file_list=["pacemaker authkey"],
     )
     .info(
         "authkey_remove_success",
         report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
-        file_description="pacemaker_remote authkey",
+        file_description="pacemaker authkey",
     )
 )
 
@@ -136,7 +134,7 @@ EXTRA_REPORTS = (fixture.ReportStore()
         "authkey_remove_failed",
         report_codes.FILE_REMOVE_FROM_NODE_ERROR,
         reason="Access denied",
-        file_description="pacemaker_remote authkey",
+        file_description="pacemaker authkey",
         force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
     )
     .as_warn(

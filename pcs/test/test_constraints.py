@@ -1637,9 +1637,8 @@ Ticket Constraints:
         ac(
             output,
             outdent("""\
-            running 'pacemaker_remote stop' on 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-            running 'pacemaker_remote disable' on 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-            'pacemaker authkey' remove from 'guest1' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+            Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
+            Removing 'pacemaker authkey' from 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
             """)
         )
         self.assertEqual(0, returnVal)

@@ -757,29 +757,6 @@ def node_communication_retrying(
     )
 
 
-def cannot_add_node_is_in_cluster(node):
-    """
-    Node is in cluster. It is not possible to add it as a new cluster node.
-    """
-    return ReportItem.error(
-        report_codes.CANNOT_ADD_NODE_IS_IN_CLUSTER,
-        info={"node": node}
-    )
-
-def cannot_add_node_is_running_service(node, service):
-    """
-    Node is running service. It is not possible to add it as a new cluster node.
-    string node address of desired node
-    string service name of service (pacemaker, pacemaker_remote)
-    """
-    return ReportItem.error(
-        report_codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE,
-        info={
-            "node": node,
-            "service": service,
-        }
-    )
-
 def defaults_can_be_overriden():
     """
     Warning when settings defaults (op_defaults, rsc_defaults...)
@@ -2421,9 +2398,12 @@ def sbd_device_dump_error(device, reason):
         }
     )
 
-def files_distribution_started(file_list, node_list=None, description=None):
+def files_distribution_started(file_list, node_list=None):
     """
-    files is about to be sent to nodes
+    files are about to be sent to nodes
+
+    iterable of strings file_list -- files to be sent
+    iterable of strings node_list -- node names where the files are being sent
     """
     file_list = file_list if file_list else []
     return ReportItem.info(
@@ -2431,16 +2411,32 @@ def files_distribution_started(file_list, node_list=None, description=None):
         info={
             "file_list": file_list,
             "node_list": node_list,
-            "description": description,
+        }
+    )
+
+def files_distribution_skipped(reason_type, file_list, node_list):
+    """
+    Files distribution skipped due to unreachable nodes or not live cluster
+
+    string reason_type -- why was the action skipped (unreachable, not_live_cib)
+    iterable of strings file_list -- contains description of files
+    iterable of strings node_list -- where the files should have been distributed
+    """
+    return ReportItem.info(
+        report_codes.FILES_DISTRIBUTION_SKIPPED,
+        info={
+            "reason_type": reason_type,
+            "file_list": file_list,
+            "node_list": node_list,
         }
     )
 
 def file_distribution_success(node=None, file_description=None):
     """
-    files was successfuly distributed on nodes
+    a file has been successfuly distributed to a node
 
-    string node -- name of destination node
-    string file_description -- name (code) of sucessfully put files
+    string node -- name of a destination node
+    string file_description -- name (code) of a sucessfully put file
     """
     return ReportItem.info(
         report_codes.FILE_DISTRIBUTION_SUCCESS,
@@ -2455,11 +2451,11 @@ def file_distribution_error(
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
-    cannot put files to specific nodes
+    cannot put a file to a specific node
 
-    string node -- name of destination node
-    string file_description -- is file code
-    string reason -- is error message
+    string node -- name of a destination node
+    string file_description -- code of a file
+    string reason -- an error message
     """
     return ReportItem(
         report_codes.FILE_DISTRIBUTION_ERROR,
@@ -2472,17 +2468,36 @@ def file_distribution_error(
         forceable=forceable
     )
 
-def files_remove_from_node_started(file_list, node_list=None, description=None):
+def files_remove_from_nodes_started(file_list, node_list=None):
     """
-    files is about to be removed from nodes
+    files are about to be removed from nodes
+
+    iterable of strings file_list -- files to be sent
+    iterable of strings node_list -- node names the files are being removed from
     """
     file_list = file_list if file_list else []
     return ReportItem.info(
-        report_codes.FILES_REMOVE_FROM_NODE_STARTED,
+        report_codes.FILES_REMOVE_FROM_NODES_STARTED,
         info={
             "file_list": file_list,
             "node_list": node_list,
-            "description": description,
+        }
+    )
+
+def files_remove_from_nodes_skipped(reason_type, file_list, node_list):
+    """
+    Files removal skipped due to unreachable nodes or not live cluster
+
+    string reason_type -- why was the action skipped (unreachable, not_live_cib)
+    iterable of strings file_list -- contains description of files
+    iterable of strings node_list -- node names the files are being removed from
+    """
+    return ReportItem.info(
+        report_codes.FILES_REMOVE_FROM_NODES_SKIPPED,
+        info={
+            "reason_type": reason_type,
+            "file_list": file_list,
+            "node_list": node_list,
         }
     )
 
@@ -2523,9 +2538,7 @@ def file_remove_from_node_error(
         forceable=forceable
     )
 
-def service_commands_on_nodes_started(
-    action_list, node_list=None, description=None
-):
+def service_commands_on_nodes_started(action_list, node_list=None):
     """
     node was requested for actions
     """
@@ -2535,7 +2548,23 @@ def service_commands_on_nodes_started(
         info={
             "action_list": action_list,
             "node_list": node_list,
-            "description": description,
+        }
+    )
+
+def service_commands_on_nodes_skipped(reason_type, action_list, node_list):
+    """
+    Service actions skipped due to unreachable nodes or not live cluster
+
+    string reason_type -- why was the action skipped (unreachable, not_live_cib)
+    list action_list -- contains description of service actions
+    list node_list -- destinations where the action should have been executed
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_COMMANDS_ON_NODES_SKIPPED,
+        info={
+            "reason_type": reason_type,
+            "action_list": action_list,
+            "node_list": node_list,
         }
     )
 
@@ -2903,47 +2932,16 @@ def live_environment_required_for_local_node():
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
     )
 
-def nolive_skip_files_distribution(files_description, nodes):
+def corosync_node_conflict_check_skipped(reason_type):
     """
-    When running action with e.g. -f the files was not distributed to nodes.
-    list files_description -- contains description of files
-    list nodes -- destinations where should be files distributed
-    """
-    return ReportItem.info(
-        report_codes.NOLIVE_SKIP_FILES_DISTRIBUTION,
-        info={
-            "files_description": files_description,
-            "nodes": nodes,
-        }
-    )
+    A command has been run with -f, can't check corosync.conf for node conflicts
 
-def nolive_skip_files_remove(files_description, nodes):
-    """
-    When running action with e.g. -f the files was not removed from nodes.
-    list files_description -- contains description of files
-    list nodes -- destinations from where should be files removed
+    string reason_type -- why was the action skipped (unreachable, not_live_cib)
     """
     return ReportItem.info(
-        report_codes.NOLIVE_SKIP_FILES_REMOVE,
+        report_codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED,
         info={
-            "files_description": files_description,
-            "nodes": nodes,
-        }
-    )
-
-def nolive_skip_service_command_on_nodes(service, command, nodes):
-    """
-    When running action with e.g. -f the service command is not run on nodes.
-    string service -- e.g. pacemaker, pacemaker_remote, corosync
-    string command -- e.g. start, enable, stop, disable
-    list nodes -- destinations where should be commad run
-    """
-    return ReportItem.info(
-        report_codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES,
-        info={
-            "service": service,
-            "command": command,
-            "nodes": nodes,
+            "reason_type": reason_type,
         }
     )
 

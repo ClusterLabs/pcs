@@ -791,7 +791,7 @@ Commands:
     node remove <node name> [<node name>]...
         Shutdown specified nodes and remove them from the cluster.
 
-    node add-remote <node host> [<node name>] [options]
+    node add-remote <node name> [<node address>] [options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...] [--wait[=<n>]]
         Add the node to the cluster as a remote node. Sync all relevant
@@ -799,6 +799,10 @@ Commands:
         start the cluster on boot.
         Options are port and reconnect_interval. Operations and meta
         belong to an underlying connection resource (ocf:pacemaker:remote).
+        If node address is not specified for the node, pcs will configure
+        pacemaker to communicate with the node using an address provided in
+        'pcs host auth' command. Otherwise, pcs will configure pacemaker to
+        communicate with the node using the specified addresses.
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
     node delete-remote <node identifier>
@@ -811,11 +815,15 @@ Commands:
         The node-identifier can be the name of the node or the address of the
         node.
 
-    node add-guest <node host> <resource id> [options] [--wait[=<n>]]
+    node add-guest <node name> <resource id> [options] [--wait[=<n>]]
         Make the specified resource a guest node resource. Sync all relevant
         configuration files to the new node. Start the node and configure it to
         start the cluster on boot.
         Options are remote-addr, remote-port and remote-connect-timeout.
+        If remote-addr is not specified for the node, pcs will configure
+        pacemaker to communicate with the node using an address provided in
+        'pcs host auth' command. Otherwise, pcs will configure pacemaker to
+        communicate with the node using the specified addresses.
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
     node delete-guest <node identifier>

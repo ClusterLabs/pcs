@@ -52,6 +52,7 @@ def remote(params, request, auth_user)
       :cluster_disable => method(:cluster_disable),
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
+      # TODO Not used anymore in pcs-0.10. Should we keep it for older versions?
       :node_available => method(:remote_node_available),
       :cluster_add_nodes => method(:cluster_add_nodes),
       :cluster_remove_nodes => method(:cluster_remove_nodes),
@@ -735,6 +736,7 @@ def get_sw_versions(params, request, auth_user)
   return JSON.generate(versions)
 end
 
+# TODO Not used anymore in pcs-0.10. Should we keep it for older versions?
 def remote_node_available(params, request, auth_user)
   if (
     File.exist?(Cfgsync::CorosyncConf.file_path) or \

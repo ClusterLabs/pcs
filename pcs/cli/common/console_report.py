@@ -120,6 +120,15 @@ def typelist_to_string(type_list, article=False):
         types=types
     )
 
+def skip_reason_to_string(reason):
+    translate = {
+        "not_live_cib": "the command does not run on a live cluster (e.g. -f "
+            "was used)"
+        ,
+        "unreachable": "pcs is unable to connect to the node(s)",
+    }
+    return translate.get(reason, reason)
+
 def id_belongs_to_unexpected_type(info):
     return "'{id}' is not {expected_type}".format(
         id=info["id"],
@@ -580,24 +589,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.NODE_COMMUNICATION_PROXY_IS_SET:
         "Proxy is set in environment variables, try disabling it"
-    ,
-
-    codes.CANNOT_ADD_NODE_IS_IN_CLUSTER: lambda info:
-        "cannot add the node '{node}' because it is in a cluster"
-        .format(**info)
-    ,
-
-    codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE: lambda info:
-        (
-            "cannot add the node '{node}' because it is running service"
-            " '{service}'{guess}"
-        ).format(
-            guess=(
-                "" if info["service"] not in ["pacemaker", "pacemaker_remote"]
-                else " (is not the node already in a cluster?)"
-            ),
-            **info
-        )
     ,
 
     codes.DEFAULTS_CAN_BE_OVERRIDEN:
@@ -1290,13 +1281,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.FILES_DISTRIBUTION_STARTED: lambda info:
-        "Sending {description}{where}".format(
-            where=(
+        "Sending {_description}{_where}".format(
+            _where=(
                 "" if not info["node_list"]
                 else " to " + joined_list(info["node_list"])
             ),
-            description=info["description"] if info["description"]
-                else joined_list(info["file_list"])
+            _description=joined_list(info["file_list"])
+        )
+    ,
+
+    codes.FILES_DISTRIBUTION_SKIPPED: lambda info:
+        (
+            "Distribution of {_files} to {_nodes} was skipped because "
+            "{_reason}. Please, distribute the file(s) manually."
+        ).format(
+            _files=joined_list(info["file_list"]),
+            _nodes=joined_list(info["node_list"]),
+            _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
 
@@ -1307,7 +1308,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-
     codes.FILE_DISTRIBUTION_ERROR: lambda info:
         "{node}: unable to distribute file '{file_description}': {reason}"
         .format(
@@ -1315,14 +1315,24 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.FILES_REMOVE_FROM_NODE_STARTED: lambda info:
-        "Requesting remove {description}{where}".format(
-            where=(
+    codes.FILES_REMOVE_FROM_NODES_STARTED: lambda info:
+        "Requesting remove {_description}{_where}".format(
+            _where=(
                 "" if not info["node_list"]
                 else " from " + joined_list(info["node_list"])
             ),
-            description=info["description"] if info["description"]
-                else joined_list(info["file_list"])
+            _description=joined_list(info["file_list"])
+        )
+    ,
+
+    codes.FILES_REMOVE_FROM_NODES_SKIPPED: lambda info:
+        (
+            "Removing {_files} from {_nodes} was skipped because {_reason}. "
+            "Please, remove the file(s) manually."
+        ).format(
+            _files=joined_list(info["file_list"]),
+            _nodes=joined_list(info["node_list"]),
+            _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
 
@@ -1342,13 +1352,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.SERVICE_COMMANDS_ON_NODES_STARTED: lambda info:
-        "Requesting {description}{where}".format(
-            where=(
+        "Requesting {_description}{_where}".format(
+            _where=(
                 "" if not info["node_list"]
                 else " on " + joined_list(info["node_list"])
             ),
-            description=info["description"] if info["description"]
-                else joined_list(info["action_list"])
+            _description=joined_list(info["action_list"])
+        )
+    ,
+
+    codes.SERVICE_COMMANDS_ON_NODES_SKIPPED: lambda info:
+        (
+            "Running action(s) {_actions} on {_nodes} was skipped because "
+            "{_reason}. Please, run the action(s) manually."
+        ).format(
+            _actions=joined_list(info["action_list"]),
+            _nodes=joined_list(info["node_list"]),
+            _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
 
@@ -1543,34 +1563,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Node(s) must be specified if -f is used"
     ,
 
-    codes.NOLIVE_SKIP_FILES_DISTRIBUTION: lambda info:
+    codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED: lambda info:
         (
-            "the distribution of {files} to {nodes} was skipped because command"
-            " does not run on live cluster (e.g. -f was used)."
-            " You will have to do it manually."
+            "Unable to check if there is a conflict with nodes set in corosync "
+            "because {_reason}"
         ).format(
-            files=joined_list(info["files_description"]),
-            nodes=joined_list(info["nodes"]),
-        )
-    ,
-    codes.NOLIVE_SKIP_FILES_REMOVE: lambda info:
-        (
-            "{files} remove from {nodes} was skipped because command"
-            " does not run on live cluster (e.g. -f was used)."
-            " You will have to do it manually."
-        ).format(
-            files=joined_list(info["files_description"]),
-            nodes=joined_list(info["nodes"]),
-        )
-    ,
-    codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES: lambda info:
-        (
-            "running '{command}' on {nodes} was skipped"
-                " because command does not run on live cluster (e.g. -f was"
-                " used). You will have to run it manually."
-        ).format(
-            command="{0} {1}".format(info["service"], info["command"]),
-            nodes=joined_list(info["nodes"]),
+            _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
 

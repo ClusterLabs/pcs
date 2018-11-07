@@ -215,7 +215,7 @@ def reports_success_minimal_fixture(
     node_list=None, using_known_hosts_addresses=True, keys_sync=True,
 ):
     node_list = node_list or NODE_LIST
-    auth_file_list = ["corosync authkey", "pacemaker_remote authkey"]
+    auth_file_list = ["corosync authkey", "pacemaker authkey"]
     pcsd_settings_file = "pcsd settings"
     corosync_conf_file = "corosync.conf"
     report_list = (
@@ -243,10 +243,9 @@ def reports_success_minimal_fixture(
         +
         [
             fixture.info(
-                report_codes.FILES_REMOVE_FROM_NODE_STARTED,
+                report_codes.FILES_REMOVE_FROM_NODES_STARTED,
                 file_list=[pcsd_settings_file],
                 node_list=node_list,
-                description="",
             )
         ]
         +
@@ -265,7 +264,6 @@ def reports_success_minimal_fixture(
                     report_codes.FILES_DISTRIBUTION_STARTED,
                     file_list=auth_file_list,
                     node_list=node_list,
-                    description="",
                 )
             ]
             +
@@ -297,7 +295,6 @@ def reports_success_minimal_fixture(
                 report_codes.FILES_DISTRIBUTION_STARTED,
                 file_list=[corosync_conf_file],
                 node_list=node_list,
-                description="",
             )
         ]
         +
@@ -2614,7 +2611,7 @@ class Failures(TestCase):
                     file_description=file,
                 )
                 for node in NODE_LIST[2:]
-                for file in ["corosync authkey", "pacemaker_remote authkey"]
+                for file in ["corosync authkey", "pacemaker authkey"]
             ]
             +
             [
@@ -2622,7 +2619,7 @@ class Failures(TestCase):
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=NODE_LIST[0],
                     reason=REASON,
-                    file_description="pacemaker_remote authkey",
+                    file_description="pacemaker authkey",
                 ),
                 fixture.info(
                     report_codes.FILE_DISTRIBUTION_SUCCESS,
@@ -2632,7 +2629,7 @@ class Failures(TestCase):
                 fixture.info(
                     report_codes.FILE_DISTRIBUTION_SUCCESS,
                     node=NODE_LIST[1],
-                    file_description="pacemaker_remote authkey",
+                    file_description="pacemaker authkey",
                 ),
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
@@ -2678,7 +2675,7 @@ class Failures(TestCase):
                     file_description=file,
                 )
                 for node in NODE_LIST[1:]
-                for file in ["corosync authkey", "pacemaker_remote authkey"]
+                for file in ["corosync authkey", "pacemaker authkey"]
             ]
             +
             [
@@ -2717,7 +2714,7 @@ class Failures(TestCase):
                     file_description=file,
                 )
                 for node in self.nodes_success
-                for file in ["corosync authkey", "pacemaker_remote authkey"]
+                for file in ["corosync authkey", "pacemaker authkey"]
             ]
             +
             self._get_failure_reports("remote/put_file")

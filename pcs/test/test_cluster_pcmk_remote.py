@@ -7,18 +7,17 @@ from pcs.test.tools.misc import (
 
 def fixture_nolive_add_report(node_name):
     return outdent(f"""\
-        the distribution of 'pacemaker authkey' to '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
-        running 'pacemaker_remote start' on '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-        running 'pacemaker_remote enable' on '{node_name}' was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
+        Unable to check if there is a conflict with nodes set in corosync because the command does not run on a live cluster (e.g. -f was used)
+        Distribution of 'pacemaker authkey' to '{node_name}' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, distribute the file(s) manually.
+        Running action(s) 'pacemaker_remote enable', 'pacemaker_remote start' on '{node_name}' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
         """
     )
 
 def fixture_nolive_remove_report(host_list):
     return outdent(
         """\
-        running 'pacemaker_remote stop' on {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-        running 'pacemaker_remote disable' on {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to run it manually.
-        'pacemaker authkey' remove from {hosts} was skipped because command does not run on live cluster (e.g. -f was used). You will have to do it manually.
+        Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
+        Removing 'pacemaker authkey' from {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
         """
     ).format(hosts=", ".join("'{0}'".format(host) for host in host_list))
 
@@ -32,26 +31,27 @@ class RemoteTest(ResourceTest):
 
 
 class NodeAddRemote(RemoteTest):
-    def test_fail_on_duplicit_host_specification(self):
+    def test_fail_on_duplicit_address_specification(self):
         self.assert_pcs_fail(
-            "cluster node add-remote HOST remote-node server=DIFFERENT",
+            "cluster node add-remote remote-node ADDRESS server=DIFFERENT",
             "Error: invalid resource option 'server', allowed options"
                 " are: port, reconnect_interval, trace_file, trace_ra\n"
-        )
-
-    def test_fail_on_duplicit_host_specification_without_name(self):
-        self.assert_pcs_fail(
-            "cluster node add-remote HOST server=DIFFERENT",
-            "Error: invalid resource option 'server', allowed options"
-                " are: port, reconnect_interval, trace_file, trace_ra\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_on_unknown_instance_attribute_not_offer_server(self):
         self.assert_pcs_fail(
-            "cluster node add-remote HOST remote-node abcd=efgh",
+            "cluster node add-remote remote-node ADDRESS abcd=efgh",
             "Error: invalid resource option 'abcd', allowed options"
                 " are: port, reconnect_interval, trace_file, trace_ra, use"
                 " --force to override\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_on_bad_commandline_usage(self):
@@ -62,14 +62,14 @@ class NodeAddRemote(RemoteTest):
 
     def test_success(self):
         self.assert_effect(
-            "cluster node add-remote node-host node-name",
+            "cluster node add-remote node-name node-addr",
             """<resources>
                 <primitive class="ocf" id="node-name" provider="pacemaker"
                     type="remote"
                 >
                     <instance_attributes id="node-name-instance_attributes">
                         <nvpair id="node-name-instance_attributes-server"
-                            name="server" value="node-host"
+                            name="server" value="node-addr"
                         />
                     </instance_attributes>
                     <operations>
@@ -99,14 +99,14 @@ class NodeAddRemote(RemoteTest):
 
     def test_success_no_default_ops(self):
         self.assert_effect(
-            "cluster node add-remote node-host node-name --no-default-ops",
+            "cluster node add-remote node-name node-addr --no-default-ops",
             """<resources>
                 <primitive class="ocf" id="node-name" provider="pacemaker"
                     type="remote"
                 >
                     <instance_attributes id="node-name-instance_attributes">
                         <nvpair id="node-name-instance_attributes-server"
-                            name="server" value="node-host"
+                            name="server" value="node-addr"
                         />
                     </instance_attributes>
                     <operations>
@@ -121,14 +121,14 @@ class NodeAddRemote(RemoteTest):
 
     def test_fail_when_server_already_used(self):
         self.assert_effect(
-            "cluster node add-remote node-host A --no-default-ops",
+            "cluster node add-remote A node-addr --no-default-ops",
             """<resources>
                 <primitive class="ocf" id="A" provider="pacemaker"
                     type="remote"
                 >
                     <instance_attributes id="A-instance_attributes">
                         <nvpair id="A-instance_attributes-server" name="server"
-                            value="node-host"
+                            value="node-addr"
                         />
                     </instance_attributes>
                     <operations>
@@ -141,8 +141,12 @@ class NodeAddRemote(RemoteTest):
             output=fixture_nolive_add_report("A")
         )
         self.assert_pcs_fail(
-            "cluster node add-remote node-host B",
-            "Error: 'node-host' already exists\n"
+            "cluster node add-remote B node-addr",
+            "Error: 'node-addr' already exists\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_server_already_used_as_guest(self):
@@ -152,12 +156,17 @@ class NodeAddRemote(RemoteTest):
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
-            "cluster node add-guest node-host G",
-            fixture_nolive_add_report("node-host")
+            "cluster node add-guest node-name G remote-addr=node-addr",
+            fixture_nolive_add_report("node-name")
         )
         self.assert_pcs_fail(
-            "cluster node add-remote node-host B",
-            "Error: 'node-host' already exists\n"
+            "cluster node add-remote B node-addr",
+            "Error: 'node-addr' already exists\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
 class NodeAddGuest(RemoteTest):
@@ -183,16 +192,21 @@ class NodeAddGuest(RemoteTest):
             stdout_start="\nUsage: pcs cluster node add-guest..."
         )
 
-    def test_fail_when_resource_does_not_exists(self):
+    def test_fail_when_resource_does_not_exist(self):
         self.assert_pcs_fail(
-            "cluster node add-guest some-host non-existent",
+            "cluster node add-guest node-name non-existent",
             "Error: resource 'non-existent' does not exist\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
+            "No addresses specified for host 'node-name', using 'node-name'\n"
         )
 
     def test_fail_when_option_remote_node_specified(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest some-host G remote-node=node-name",
+            "cluster node add-guest node-name G remote-node=node-name",
             stdout_start="Error: invalid guest option 'remote-node',"
                 " allowed options are: remote-addr, remote-connect-timeout,"
                 " remote-port\n"
@@ -204,45 +218,67 @@ class NodeAddGuest(RemoteTest):
             "resource create already-guest-node ocf:heartbeat:Dummy"
                 " meta remote-node=some --force"
             ,
-            "Warning: this command is not sufficient for creating a guest node, use"
-                " 'pcs cluster node add-guest'\n"
+            "Warning: this command is not sufficient for creating a guest node,"
+                " use 'pcs cluster node add-guest'\n"
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest some-host already-guest-node",
+            "cluster node add-guest node-name already-guest-node remote-addr=a",
             "Error: the resource 'already-guest-node' is already a guest node\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_on_combined_reasons(self):
         self.assert_pcs_fail(
-            "cluster node add-guest node-host G a=b",
+            "cluster node add-guest node-name G a=b remote-addr=a",
             "Error: invalid guest option 'a', allowed options are:"
                 " remote-addr, remote-connect-timeout, remote-port\n"
-                "Error: resource 'G' does not exist\n"
+            "Error: resource 'G' does not exist\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_disallowed_option_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-host G a=b",
+            "cluster node add-guest node-name G a=b remote-addr=a",
             "Error: invalid guest option 'a', allowed options are:"
                 " remote-addr, remote-connect-timeout, remote-port\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_invalid_interval_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-host G remote-connect-timeout=A",
+            "cluster node add-guest node-name G remote-connect-timeout=A "
+                "remote-addr=a"
+            ,
             "Error: 'A' is not a valid remote-connect-timeout value, use time"
                 " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_invalid_port_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-host G remote-port=70000",
+            "cluster node add-guest node-name G remote-port=70000 remote-addr=a",
             "Error: '70000' is not a valid remote-port value, use a port number"
                 " (1-65535)\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
@@ -251,8 +287,12 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_success("resource create CONFLICT ocf:heartbeat:Dummy")
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest CONFLICT G",
+            "cluster node add-guest CONFLICT G remote-addr=a",
             "Error: 'CONFLICT' already exists\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
@@ -261,51 +301,66 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
-            "cluster node add-guest node-host G",
-            fixture_nolive_add_report("node-host")
+            "cluster node add-guest node-name G remote-addr=a",
+            fixture_nolive_add_report("node-name")
         )
         self.assert_pcs_fail(
-            "cluster node add-guest node-host H",
-            "Error: 'node-host' already exists\n"
+            "cluster node add-guest node-name H remote-addr=b",
+            "Error: 'node-name' already exists\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_remote(self):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=node-host --force",
+            "resource create R ocf:pacemaker:remote server=node-addr --force",
             "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest node-host G",
-            "Error: 'node-host' already exists\n"
+            "cluster node add-guest node-name G remote-addr=node-addr",
+            "Error: 'node-addr' already exists\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=node-host --force",
+            "resource create R ocf:pacemaker:remote server=node-addr --force",
             "Warning: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'\n"
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest R G",
+            "cluster node add-guest R G remote-addr=a",
             "Error: 'R' already exists\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)\n"
         )
 
     def test_success(self):
         self.create_resource()
         self.assert_effect(
-            "cluster node add-guest node-host G",
+            "cluster node add-guest node-name G remote-addr=node-addr",
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <meta_attributes id="G-meta_attributes">
+                        <nvpair id="G-meta_attributes-remote-addr"
+                            name="remote-addr" value="node-addr"
+                        />
                         <nvpair id="G-meta_attributes-remote-node"
-                            name="remote-node" value="node-host"
+                            name="remote-node" value="node-name"
                         />
                     </meta_attributes>
                     <operations>
@@ -315,7 +370,7 @@ class NodeAddGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("node-host")
+            output=fixture_nolive_add_report("node-name")
         )
 
     def test_success_when_guest_node_matches_with_existing_guest(self):
@@ -324,25 +379,25 @@ class NodeAddGuest(RemoteTest):
         # keep it here.
         self.create_resource()
         self.assert_pcs_success(
-            "cluster node add-guest node-host G",
-            fixture_nolive_add_report("node-host")
+            "cluster node add-guest node-name G remote-addr=a",
+            fixture_nolive_add_report("node-name")
         )
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource update G meta remote-node=node-host",
+            "resource update G meta remote-node=node-name",
         )
 
     def test_success_with_options(self):
         self.create_resource()
         self.assert_effect(
             "cluster node add-guest node-name G remote-port=3121"
-                " remote-addr=node-host remote-connect-timeout=80s"
+                " remote-addr=node-addr remote-connect-timeout=80s"
             ,
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <meta_attributes id="G-meta_attributes">
                         <nvpair id="G-meta_attributes-remote-addr"
-                            name="remote-addr" value="node-host"
+                            name="remote-addr" value="node-addr"
                         />
                         <nvpair id="G-meta_attributes-remote-connect-timeout"
                             name="remote-connect-timeout" value="80s"

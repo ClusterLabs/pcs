@@ -211,9 +211,11 @@ def place_multinode_call(
             "Exactly one of 'node_labels', 'communication_list' "
             "must be specified"
         )
-    communication_list = communication_list or [
-        {"label": label} for label in node_labels
-    ]
+    communication_list = (
+        communication_list if communication_list is not None
+        else
+        [{"label": label} for label in node_labels]
+    )
     place_communication(calls, name, communication_list, **kwargs)
 
 

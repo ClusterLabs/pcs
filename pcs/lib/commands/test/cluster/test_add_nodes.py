@@ -478,7 +478,7 @@ class LocalConfig():
         pcs_settings_content = "pcs_settigns.conf data"
         file_list = [
             "corosync authkey",
-            "pacemaker_remote authkey",
+            "pacemaker authkey",
             "pcs_settings.conf",
         ]
         local_prefix = "local.files_sync."
@@ -531,7 +531,6 @@ class LocalConfig():
                     report_codes.FILES_DISTRIBUTION_STARTED,
                     file_list=file_list,
                     node_list=node_labels,
-                    description="",
                 )
             ]
             +
@@ -2005,11 +2004,8 @@ class FailureFilesDistribution(TestCase):
         self.distribution_started_reports = [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=[
-                    self.corosync_authkey_file_id, self.pcmk_authkey_file_id
-                ],
+                file_list=["corosync authkey", "pacemaker authkey"],
                 node_list=self.new_nodes,
-                description="",
             )
         ]
         self.successful_reports = [
@@ -2022,7 +2018,7 @@ class FailureFilesDistribution(TestCase):
             fixture.info(
                 report_codes.FILE_DISTRIBUTION_SUCCESS,
                 node=node,
-                file_description=self.pcmk_authkey_file_id,
+                file_description="pacemaker authkey",
             ) for node in self.successful_nodes
         ]
 
@@ -2206,7 +2202,7 @@ class FailureFilesDistribution(TestCase):
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
-                    file_description=self.pcmk_authkey_file_id,
+                    file_description="pacemaker authkey",
                     reason=self.err_msg,
                 ) for node in self.unsuccessful_nodes
             ]

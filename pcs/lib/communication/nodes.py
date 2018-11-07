@@ -104,60 +104,24 @@ class GetHostInfo(
         return self._responses
 
 
-class PrecheckNewNode(
-    SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
-):
-    def __init__(
-        self, report_items, check_response, skip_offline_targets=False
-    ):
-        super(PrecheckNewNode, self).__init__(None)
-        self._set_skip_offline(skip_offline_targets)
-        self._report_items = report_items
-        self._check_response = check_response
-
-    def _get_request_data(self):
-        return RequestData("remote/node_available")
-
-    def _process_response(self, response):
-        # do not send outside any report, just append them into specified list
-        report = self._get_response_report(response)
-        if report:
-            self._report_items.append(report)
-            return
-        target = response.request.target
-        data = None
-        try:
-            data = json.loads(response.data)
-        except ValueError:
-            self._report_items.append(
-                reports.invalid_response_format(target.label)
-            )
-            return
-        is_in_expected_format = (
-            #node_available is a mandatory field
-            isinstance(data, dict) and "node_available" in data
-        )
-        if not is_in_expected_format:
-            self._report_items.append(
-                reports.invalid_response_format(target.label)
-            )
-            return
-        self._check_response(data, self._report_items, target.label)
-
-
 class RunActionBase(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(
         self, report_processor, action_definition,
-        skip_offline_targets=False, allow_fails=False, description="",
+        skip_offline_targets=False, allow_fails=False,
     ):
         super(RunActionBase, self).__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
         self._init_properties()
         self._action_error_force = _force(self._force_code, allow_fails)
         self._action_definition = action_definition
-        self._description = description
+        # Pacemaker has only one authkey, there is no a remote and an ordinary
+        # one. However, we cannot change it now in the network communication
+        # due to backward compatibility. So we translate that for reports only.
+        self._key_to_report = {
+            "pacemaker_remote authkey": "pacemaker authkey",
+        }
 
     def _init_properties(self):
         raise NotImplementedError()
@@ -192,11 +156,14 @@ class RunActionBase(
         for key, item_response in sorted(results.items()):
             if self._is_success(item_response):
                 #only success process individually
-                report = self._success_report(target.label, key)
+                report = self._success_report(
+                    target.label,
+                    self._action_key_to_report(key),
+                )
             else:
                 report = self._failure_report(
                     target.label,
-                    key,
+                    self._action_key_to_report(key),
                     node_communication_format.get_format_result(
                         self._code_message_map
                     )(item_response),
@@ -206,10 +173,15 @@ class RunActionBase(
 
     def before(self):
         self._report(self._start_report(
-            list(self._action_definition.keys()),
+            [
+                self._action_key_to_report(key)
+                for key in self._action_definition.keys()
+            ],
             [target.label for target in self._target_list],
-            self._description
         ))
+
+    def _action_key_to_report(self, key):
+        return self._key_to_report.get(key, key)
 
 
 class ServiceAction(RunActionBase):
@@ -260,7 +232,7 @@ class RemoveFiles(FileActionBase):
     def _init_properties(self):
         super(RemoveFiles, self)._init_properties()
         self._request_url = "remote/remove_file"
-        self._start_report = reports.files_remove_from_node_started
+        self._start_report = reports.files_remove_from_nodes_started
         self._success_report = reports.file_remove_from_node_success
         self._failure_report = reports.file_remove_from_node_error
         self._code_message_map = {}
@@ -328,8 +300,7 @@ class CheckPacemakerStarted(
                 ):
                     self._not_yet_started_target_list.append(target)
                     return
-                else:
-                    report = reports.cluster_start_success(target.label)
+                report = reports.cluster_start_success(target.label)
             except (json.JSONDecodeError, KeyError):
                 report = reports.invalid_response_format(target.label)
         else:
@@ -433,48 +404,3 @@ def _force(force_code, is_forced):
         severity=ReportItemSeverity.ERROR,
         forceable=force_code,
     )
-
-
-def availability_checker_node(availability_info, report_items, node_label):
-    """
-    Check if availability_info means that the node is suitable as cluster
-    (corosync) node.
-    """
-    if availability_info["node_available"]:
-        return
-
-    if availability_info.get("pacemaker_running", False):
-        report_items.append(reports.cannot_add_node_is_running_service(
-            node_label,
-            "pacemaker"
-        ))
-        return
-
-    if availability_info.get("pacemaker_remote", False):
-        report_items.append(reports.cannot_add_node_is_running_service(
-            node_label,
-            "pacemaker_remote"
-        ))
-        return
-
-    report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
-
-def availability_checker_remote_node(
-    availability_info, report_items, node_label
-):
-    """
-    Check if availability_info means that the node is suitable as remote node.
-    """
-    if availability_info["node_available"]:
-        return
-
-    if availability_info.get("pacemaker_running", False):
-        report_items.append(reports.cannot_add_node_is_running_service(
-            node_label,
-            "pacemaker"
-        ))
-        return
-
-    if not availability_info.get("pacemaker_remote", False):
-        report_items.append(reports.cannot_add_node_is_in_cluster(node_label))
-        return

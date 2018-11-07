@@ -138,11 +138,14 @@
   - It is now possible to remove more than one node at once.
   - Removing a cluster node no longer leaves the node in the CIB and therefore
     cluster status even if the removal is run on the node which is being removed
-- Web UI has been updated following changes in authentication and support for
-  Corosync 3.x ([rhbz#1158816], [rhbz#1183103], [rhbz#1549535])
 - Node names are fully supported now and are no longer coupled with node
   addresses. It is possible to set up a cluster where Corosync communicates
   over different addresses than pcs/pcsd. ([rhbz#1158816], [rhbz#1183103])
+- Node names are now required while node addresses are optional in the `pcs
+  cluster node add-guest` and `pcs cluster node add-remove` commands.
+  Previously, it was the other way around.
+- Web UI has been updated following changes in authentication and support for
+  Corosync 3.x ([rhbz#1158816], [rhbz#1183103], [rhbz#1549535])
 - Commands related to resource failures have been overhauled to support changes
   in pacemaker. Failures are now tracked per resource operations on top of
   resources and nodes. ([rhbz#1427273], [rhbz#1588667])

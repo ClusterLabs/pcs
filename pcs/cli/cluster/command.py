@@ -4,22 +4,21 @@ from pcs.cli.resource.parse_args import(
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 
-def _node_add_remote_separate_host_and_name(arg_list):
+def _node_add_remote_separate_name_and_addr(arg_list):
     """
     Commandline options: no options
     """
-    node_host = arg_list[0]
+    node_name = arg_list[0]
     if len(arg_list) == 1:
-        node_name = node_host
+        node_addr = None
         rest_args = []
     elif "=" in arg_list[1] or arg_list[1] in ["op", "meta"]:
-        node_name = node_host
+        node_addr = None
         rest_args = arg_list[1:]
     else:
-        node_name = arg_list[1]
+        node_addr = arg_list[1]
         rest_args = arg_list[2:]
-
-    return node_host, node_name, rest_args
+    return node_name, node_addr, rest_args
 
 def node_add_remote(lib, arg_list, modifiers):
     """
@@ -41,7 +40,7 @@ def node_add_remote(lib, arg_list, modifiers):
     if not arg_list:
         raise CmdLineInputError()
 
-    node_host, node_name, rest_args = _node_add_remote_separate_host_and_name(
+    node_name, node_addr, rest_args = _node_add_remote_separate_name_and_addr(
         arg_list
     )
 
@@ -49,8 +48,8 @@ def node_add_remote(lib, arg_list, modifiers):
     force = modifiers.get("--force")
 
     lib.remote_node.node_add_remote(
-        node_host,
         node_name,
+        node_addr,
         parts["op"],
         parts["meta"],
         parts["options"],

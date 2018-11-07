@@ -1,5 +1,4 @@
 import base64
-import json
 from unittest import mock
 
 from pcs.common import report_codes
@@ -14,7 +13,7 @@ FAIL_HTTP_KWARGS = dict(
     error_msg=OFFLINE_ERROR_MSG,
 )
 
-class EnvConfigMixin(object):
+class EnvConfigMixin():
     PCMK_AUTHKEY_PATH = "/etc/pacemaker/authkey"
     def __init__(self, call_collection, wrap_helper, config):
         self.__calls = call_collection
@@ -51,15 +50,24 @@ class EnvConfigMixin(object):
             **kwargs
         )
 
-    def check_node_availability(self, label, dest_list, result=True, **kwargs):
-        if "output" not in kwargs:
-            kwargs["output"] = json.dumps({"node_available": result})
-
-        self.config.http.place_multinode_call(
-            "node_available",
-            communication_list=[dict(label=label, dest_list=dest_list)],
-            action="remote/node_available",
-            **kwargs
+    def get_host_info(self, label, dest_list, output=None):
+        if output is None:
+            output = dict(
+                services=dict(
+                    pacemaker_remote=dict(
+                        installed=True, enabled=False, running=False
+                    ),
+                ),
+                cluster_configuration_exists=False,
+            )
+        self.config.http.host.get_host_info(
+            communication_list=[
+                {
+                    "label": label,
+                    "dest_list": dest_list,
+                },
+            ],
+            output_data=output
         )
 
     def authkey_exists(self, return_value):
@@ -131,13 +139,12 @@ REPORTS = (fixture.ReportStore()
     .info(
         "authkey_distribution_started" ,
         report_codes.FILES_DISTRIBUTION_STARTED,
-        file_list=["pacemaker_remote authkey"],
-        description="remote node configuration files",
+        file_list=["pacemaker authkey"],
     )
     .info(
         "authkey_distribution_success",
         report_codes.FILE_DISTRIBUTION_SUCCESS,
-        file_description="pacemaker_remote authkey",
+        file_description="pacemaker authkey",
     )
     .info(
         "pcmk_remote_start_enable_started",
@@ -146,7 +153,6 @@ REPORTS = (fixture.ReportStore()
             "pacemaker_remote start",
             "pacemaker_remote enable",
         ],
-        description="start of service pacemaker_remote",
     )
     .info(
         "pcmk_remote_enable_success",
@@ -208,8 +214,64 @@ EXTRA_REPORTS = (fixture.ReportStore()
         "authkey_distribution_failed",
         report_codes.FILE_DISTRIBUTION_ERROR,
         reason="File already exists",
-        file_description="pacemaker_remote authkey",
+        file_description="pacemaker authkey",
         force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS
     )
     .as_warn("authkey_distribution_failed", "authkey_distribution_failed_warn")
 )
+
+def fixture_reports_not_live_cib(node_name):
+    return [
+        fixture.info(
+            report_codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED,
+            reason_type="not_live_cib",
+        ),
+        fixture.info(
+            report_codes.FILES_DISTRIBUTION_SKIPPED,
+            reason_type="not_live_cib",
+            file_list=["pacemaker authkey"],
+            node_list=[node_name],
+        ),
+        fixture.info(
+            report_codes.SERVICE_COMMANDS_ON_NODES_SKIPPED,
+            reason_type="not_live_cib",
+            action_list=[
+                "pacemaker_remote start",
+                "pacemaker_remote enable",
+            ],
+            node_list=[node_name],
+        ),
+    ]
+
+def fixture_reports_new_node_unreachable(node_name, omitting=False):
+    if omitting:
+        report = [
+            fixture.warn(
+                report_codes.OMITTING_NODE,
+                node=node_name,
+            ),
+        ]
+    else:
+        report = [
+            fixture.warn(
+                report_codes.HOST_NOT_FOUND,
+                host_list=[node_name],
+            ),
+        ]
+    return report + [
+        fixture.info(
+            report_codes.FILES_DISTRIBUTION_SKIPPED,
+            reason_type="unreachable",
+            file_list=["pacemaker authkey"],
+            node_list=[node_name],
+        ),
+        fixture.info(
+            report_codes.SERVICE_COMMANDS_ON_NODES_SKIPPED,
+            reason_type="unreachable",
+            action_list=[
+                "pacemaker_remote start",
+                "pacemaker_remote enable"
+            ],
+            node_list=[node_name],
+        ),
+    ]

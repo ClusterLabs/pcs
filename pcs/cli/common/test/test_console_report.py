@@ -774,37 +774,6 @@ class ResourceManagedNoMonitorEnabled(NameBuildTest):
             }
         )
 
-class NodeIsInCluster(NameBuildTest):
-    code = codes.CANNOT_ADD_NODE_IS_IN_CLUSTER
-    def test_build_message(self):
-        self.assert_message_from_info(
-            "cannot add the node 'N1' because it is in a cluster",
-            {
-                "node": "N1",
-            }
-        )
-
-class NodeIsRunningPacemakerRemote(NameBuildTest):
-    code = codes.CANNOT_ADD_NODE_IS_RUNNING_SERVICE
-    def test_build_message(self):
-        self.assert_message_from_info(
-            "cannot add the node 'N1' because it is running service"
-                " 'pacemaker_remote' (is not the node already in a cluster?)"
-            ,
-            {
-                "node": "N1",
-                "service": "pacemaker_remote",
-            }
-        )
-    def test_build_message_with_unknown_service(self):
-        self.assert_message_from_info(
-            "cannot add the node 'N1' because it is running service 'unknown'",
-            {
-                "node": "N1",
-                "service": "unknown",
-            }
-        )
-
 
 class SbdDeviceInitializationStarted(NameBuildTest):
     code = codes.SBD_DEVICE_INITIALIZATION_STARTED
@@ -1082,37 +1051,24 @@ class PrerequisiteOptionIsMissing(NameBuildTest):
             }
         )
 
+
 class FileDistributionStarted(NameBuildTest):
     code = codes.FILES_DISTRIBUTION_STARTED
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending 'first', 'second'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": None,
-                "description": None,
-            }
+            reports.files_distribution_started(["first", "second"])
         )
 
     def test_build_messages_with_nodes(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending 'first', 'second' to 'node1', 'node2'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": None,
-            }
+            reports.files_distribution_started(
+                ["first", "second"],
+                ["node1", "node2"]
+            )
         )
 
-    def test_build_messages_with_description(self):
-        self.assert_message_from_info(
-            "Sending configuration files to 'node1', 'node2'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": "configuration files",
-            }
-        )
 
 class FileDistributionSucess(NameBuildTest):
     code = codes.FILE_DISTRIBUTION_SUCCESS
@@ -1139,29 +1095,18 @@ class FileDistributionError(NameBuildTest):
             }
         )
 
-class FileRemoveFromNodeStarted(NameBuildTest):
-    code = codes.FILES_REMOVE_FROM_NODE_STARTED
+
+class FileRemoveFromNodesStarted(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODES_STARTED
     def test_build_messages(self):
         self.assert_message_from_info(
             "Requesting remove 'first', 'second' from 'node1', 'node2'",
             {
                 "file_list": ["first", "second"],
                 "node_list": ["node1", "node2"],
-                "description": None,
             }
         )
 
-    def test_build_messages_with_description(self):
-        self.assert_message_from_info(
-            "Requesting remove remote configuration files from 'node1',"
-                " 'node2'"
-            ,
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": "remote configuration files",
-            }
-        )
 
 class FileRemoveFromNodeSucess(NameBuildTest):
     code = codes.FILE_REMOVE_FROM_NODE_SUCCESS
@@ -1189,37 +1134,25 @@ class FileRemoveFromNodeError(NameBuildTest):
         )
 
 
-class ActionsOnNodesStarted(NameBuildTest):
+class ServiceCommandsOnNodesStarted(NameBuildTest):
     code = codes.SERVICE_COMMANDS_ON_NODES_STARTED
     def test_build_messages(self):
-        self.assert_message_from_info(
-            "Requesting 'first', 'second'",
-            {
-                "action_list": ["first", "second"],
-                "node_list": None,
-                "description": None,
-            }
+        self.assert_message_from_report(
+            "Requesting 'action1', 'action2'",
+            reports.service_commands_on_nodes_started(
+                ["action1", "action2"]
+            )
         )
 
     def test_build_messages_with_nodes(self):
-        self.assert_message_from_info(
-            "Requesting 'first', 'second' on 'node1', 'node2'",
-            {
-                "action_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": None,
-            }
+        self.assert_message_from_report(
+            "Requesting 'action1', 'action2' on 'node1', 'node2'",
+            reports.service_commands_on_nodes_started(
+                ["action1", "action2"],
+                ["node1", "node2"],
+            )
         )
 
-    def test_build_messages_with_description(self):
-        self.assert_message_from_info(
-            "Requesting running pacemaker_remote on 'node1', 'node2'",
-            {
-                "action_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": "running pacemaker_remote",
-            }
-        )
 
 class ActionsOnNodesSuccess(NameBuildTest):
     code = codes.SERVICE_COMMAND_ON_NODE_SUCCESS
@@ -1272,49 +1205,141 @@ class live_environment_required(NameBuildTest):
             }
         )
 
-class nolive_skip_files_distribution(NameBuildTest):
-    code = codes.NOLIVE_SKIP_FILES_DISTRIBUTION
-    def test_build_messages(self):
-        self.assert_message_from_info(
-            "the distribution of 'file1', 'file2' to 'node1', 'node2' was"
-                " skipped because command"
-                " does not run on live cluster (e.g. -f was used)."
-                " You will have to do it manually."
+class CorosyncNodeConflictCheckSkipped(NameBuildTest):
+    code = codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to check if there is a conflict with nodes set in corosync "
+                "because the command does not run on a live cluster (e.g. -f "
+                "was used)"
             ,
-            {
-                "files_description": ["file1", 'file2'],
-                "nodes": ["node1", "node2"],
-            }
+            reports.corosync_node_conflict_check_skipped("not_live_cib")
         )
 
-class nolive_skip_files_remove(NameBuildTest):
-    code = codes.NOLIVE_SKIP_FILES_REMOVE
-    def test_build_messages(self):
-        self.assert_message_from_info(
-            "'file1', 'file2' remove from 'node1', 'node2'"
-                " was skipped because command"
-                " does not run on live cluster (e.g. -f was used)."
-                " You will have to do it manually."
+
+class FilesDistributionSkipped(NameBuildTest):
+    code = codes.FILES_DISTRIBUTION_SKIPPED
+    def test_not_live(self):
+        self.assert_message_from_report(
+            "Distribution of 'file1' to 'nodeA', 'nodeB' was skipped because "
+                "the command does not run on a live cluster (e.g. -f was used)."
+                " Please, distribute the file(s) manually."
             ,
-            {
-                "files_description": ["file1", 'file2'],
-                "nodes": ["node1", "node2"],
-            }
+            reports.files_distribution_skipped(
+                "not_live_cib",
+                ["file1"],
+                ["nodeA", "nodeB"]
+            )
         )
 
-class nolive_skip_service_command_on_nodes(NameBuildTest):
-    code = codes.NOLIVE_SKIP_SERVICE_COMMAND_ON_NODES
-    def test_build_messages(self):
-        self.assert_message_from_info(
-            "running 'pacemaker_remote start' on 'node1', 'node2' was skipped"
-                " because command does not run on live cluster (e.g. -f was"
-                " used). You will have to run it manually."
+    def test_unreachable(self):
+        self.assert_message_from_report(
+            "Distribution of 'file1', 'file2' to 'nodeA' was skipped because "
+                "pcs is unable to connect to the node(s). Please, distribute "
+                "the file(s) manually."
             ,
-            {
-                "service": "pacemaker_remote",
-                "command": "start",
-                "nodes": ["node1", "node2"]
-            }
+            reports.files_distribution_skipped(
+                "unreachable",
+                ["file1", "file2"],
+                ["nodeA"]
+            )
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message_from_report(
+            "Distribution of 'file1', 'file2' to 'nodeA', 'nodeB' was skipped "
+                "because some undefined reason. Please, distribute the file(s) "
+                "manually."
+            ,
+            reports.files_distribution_skipped(
+                "some undefined reason",
+                ["file1", "file2"],
+                ["nodeA", "nodeB"]
+            )
+        )
+
+
+class FilesRemoveFromNodesSkipped(NameBuildTest):
+    code = codes.FILES_REMOVE_FROM_NODES_SKIPPED
+    def test_not_live(self):
+        self.assert_message_from_report(
+            "Removing 'file1' from 'nodeA', 'nodeB' was skipped because the "
+                "command does not run on a live cluster (e.g. -f was used). "
+                "Please, remove the file(s) manually."
+            ,
+            reports.files_remove_from_nodes_skipped(
+                "not_live_cib",
+                ["file1"],
+                ["nodeA", "nodeB"]
+            )
+        )
+
+    def test_unreachable(self):
+        self.assert_message_from_report(
+            "Removing 'file1', 'file2' from 'nodeA' was skipped because pcs is "
+                "unable to connect to the node(s). Please, remove the file(s) "
+                "manually."
+            ,
+            reports.files_remove_from_nodes_skipped(
+                "unreachable",
+                ["file1", "file2"],
+                ["nodeA"]
+            )
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message_from_report(
+            "Removing 'file1', 'file2' from 'nodeA', 'nodeB' was skipped "
+                "because some undefined reason. Please, remove the file(s) "
+                "manually."
+            ,
+            reports.files_remove_from_nodes_skipped(
+                "some undefined reason",
+                ["file1", "file2"],
+                ["nodeA", "nodeB"]
+            )
+        )
+
+class ServiceCommandsOnNodesSkipped(NameBuildTest):
+    code = codes.SERVICE_COMMANDS_ON_NODES_SKIPPED
+    def test_not_live(self):
+        self.assert_message_from_report(
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+                "start' on 'nodeA', 'nodeB' was skipped because the command "
+                "does not run on a live cluster (e.g. -f was used). Please, "
+                "run the action(s) manually."
+            ,
+            reports.service_commands_on_nodes_skipped(
+                "not_live_cib",
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"]
+            )
+        )
+
+    def test_unreachable(self):
+        self.assert_message_from_report(
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+                "start' on 'nodeA', 'nodeB' was skipped because pcs is unable "
+                "to connect to the node(s). Please, run the action(s) manually."
+            ,
+            reports.service_commands_on_nodes_skipped(
+                "unreachable",
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"]
+            )
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message_from_report(
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+                "start' on 'nodeA', 'nodeB' was skipped because some undefined "
+                "reason. Please, run the action(s) manually."
+            ,
+            reports.service_commands_on_nodes_skipped(
+                "some undefined reason",
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"]
+            )
         )
 
 

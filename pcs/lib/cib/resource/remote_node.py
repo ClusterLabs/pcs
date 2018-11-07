@@ -184,8 +184,7 @@ def create(
         actions specified in resource agent
     """
     all_instance_attributes = instance_attributes.copy()
-    if host != node_name:
-        all_instance_attributes.update({"server": host})
+    all_instance_attributes.update({"server": host})
     try:
         return primitive.create(
             report_processor,
