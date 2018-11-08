@@ -29,7 +29,7 @@ def acl_cmd(lib, argv, modifiers):
             acl_disable(lib, argv_next, modifiers)
         elif sub_cmd == "role":
             acl_role(lib, argv_next, modifiers)
-        elif sub_cmd in ["target", "user"]:
+        elif sub_cmd == "user":
             acl_user(lib, argv_next, modifiers)
         elif sub_cmd == "group":
             acl_group(lib, argv_next, modifiers)

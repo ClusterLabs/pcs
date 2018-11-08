@@ -31,6 +31,7 @@
 - Subcommand `pcs status groups` as it was not showing a cluster status but
   cluster configuration. The same funcionality is still available using command
   `pcs resource group list`
+- Undocumented command `pcs acl target`, use `pcs acl user` instead
 
 ### Added
 - Validation for an unaccessible resource inside a bundle ([rhbz#1462248])
