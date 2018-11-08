@@ -19,8 +19,6 @@ from pcs.common import (
 )
 from pcs.lib.commands import cluster
 
-# pylint: disable=line-too-long
-
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"
 
@@ -1432,7 +1430,9 @@ class FailureReloadCorosyncConf(TestCase):
                 )],
                 [dict(
                     label="node2",
-                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                    output=json.dumps(
+                        dict(code="failed", message=self.err_msg)
+                    ),
                 )],
                 [dict(
                     label="node3",
@@ -1477,7 +1477,9 @@ class FailureReloadCorosyncConf(TestCase):
                 )],
                 [dict(
                     label="node2",
-                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                    output=json.dumps(
+                        dict(code="failed", message=self.err_msg)
+                    ),
                 )],
                 [dict(
                     label="node3",
@@ -1548,7 +1550,9 @@ class FailureReloadCorosyncConf(TestCase):
                 )],
                 [dict(
                     label="node2",
-                    output=json.dumps(dict(code="failed", message=self.err_msg)),
+                    output=json.dumps(
+                        dict(code="failed", message=self.err_msg)
+                    ),
                 )],
                 [dict(
                     label="node3",
@@ -2065,7 +2069,9 @@ class FailureFilesDistribution(TestCase):
                     report_codes.FILE_IO_ERROR,
                     file_role=env_file_role_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
-                    reason=f"{self.err_msg}: '{settings.corosync_authkey_file}'",
+                    reason=(
+                        f"{self.err_msg}: '{settings.corosync_authkey_file}'"
+                    ),
                     operation="read",
                     force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
                 ),
@@ -2073,7 +2079,9 @@ class FailureFilesDistribution(TestCase):
                     report_codes.FILE_IO_ERROR,
                     file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
-                    reason=f"{self.err_msg}: '{settings.pacemaker_authkey_file}'",
+                    reason=(
+                        f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
+                    ),
                     operation="read",
                     force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
                 )
@@ -2129,14 +2137,18 @@ class FailureFilesDistribution(TestCase):
                     report_codes.FILE_IO_ERROR,
                     file_role=env_file_role_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
-                    reason=f"{self.err_msg}: '{settings.corosync_authkey_file}'",
+                    reason=(
+                        f"{self.err_msg}: '{settings.corosync_authkey_file}'"
+                    ),
                     operation="read",
                 ),
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
-                    reason=f"{self.err_msg}: '{settings.pacemaker_authkey_file}'",
+                    reason=(
+                        f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
+                    ),
                     operation="read",
                 )
             ]
@@ -3521,7 +3533,9 @@ class FailureQdevice(TestCase):
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
-                    command="remote/qdevice_net_client_init_certificate_storage",
+                    command=(
+                        "remote/qdevice_net_client_init_certificate_storage"
+                    ),
                     reason=self.err_msg,
                 ) for node in self.unsuccessful_nodes
             ]

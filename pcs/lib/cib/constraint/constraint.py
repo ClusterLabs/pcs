@@ -1,4 +1,3 @@
-
 from lxml import etree
 
 from pcs.common import report_codes

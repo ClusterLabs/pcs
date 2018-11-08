@@ -552,7 +552,7 @@ def _validate_port_map_list(options_list, id_provider, force_options):
         validate.value_port_range(
             "range",
             code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            allow_extra_values=force_options
+            extra_values_allowed=force_options
         ),
     ]
     report_list = []
@@ -619,7 +619,7 @@ def _value_host_netmask(option_name, force_options):
         # Leaving a possibility to force this validation, if pacemaker
         # starts supporting IPv6 or other format of the netmask
         code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-        allow_extra_values=force_options
+        extra_values_allowed=force_options
     )
 
 def _append_port_map(parent_element, id_provider, id_base, port_map_options):

@@ -69,7 +69,12 @@ from pcs.lib.pacemaker.values import(
     validate_id,
 )
 
-# pylint: disable=invalid-name, bad-whitespace, line-too-long, redefined-outer-name, too-many-boolean-expressions, too-many-locals, too-many-branches, too-many-statements, singleton-comparison, too-many-return-statements, misplaced-comparison-constant, superfluous-parens, too-many-nested-blocks, bare-except, redefined-builtin
+# pylint: disable=invalid-name
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-nested-blocks
+# pylint: disable=too-many-return-statements
+# pylint: disable=too-many-statements
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -96,17 +101,24 @@ def getValidateWithVersion(dom):
     major = int(m.group(1))
     minor = int(m.group(2))
     rev = int(m.group(3) or 0)
-    return (major,minor,rev)
+    return (major, minor, rev)
 
 # Check the current pacemaker version in cib and upgrade it if necessary
 # Returns False if not upgraded and True if upgraded
-def checkAndUpgradeCIB(major,minor,rev):
+def checkAndUpgradeCIB(major, minor, rev):
     """
     Commandline options:
       * -f - CIB file
     """
     cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
-    if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
+    # pylint: disable=too-many-boolean-expressions
+    if (
+        cmajor > major
+        or
+        (cmajor == major and cminor > minor)
+        or
+        (cmajor == major and cminor == minor and crev >= rev)
+    ):
         return False
     cluster_upgrade()
     return True
@@ -134,7 +146,9 @@ def cluster_upgrade_to_version(required_version):
             console_report.CODE_TO_MESSAGE_BUILDER_MAP[
                 report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION
             ]({
-                "required_version": ".".join([str(x) for x in required_version]),
+                "required_version": ".".join(
+                    [str(x) for x in required_version]
+                ),
                 "current_version": ".".join([str(x) for x in current_version]),
             })
         )
@@ -163,20 +177,21 @@ def get_uid_gid_file_name(uid, gid):
     return "pcs-uidgid-%s-%s" % (uid, gid)
 
 # Reads in uid file and returns dict of values {'uid':'theuid', 'gid':'thegid'}
-def read_uid_gid_file(filename):
+def read_uid_gid_file(uidgid_filename):
     """
     Commandline options: no options
     """
     uidgid = {}
     with open(
-        os.path.join(settings.corosync_uidgid_dir, filename), "r"
+        os.path.join(settings.corosync_uidgid_dir, uidgid_filename),
+        "r"
     ) as myfile:
         data = myfile.read().split('\n')
     in_uidgid = False
     for line in data:
-        line = re.sub(r'#.*','', line)
+        line = re.sub(r'#.*', '', line)
         if not in_uidgid:
-            if re.search(r'uidgid.*{',line):
+            if re.search(r'uidgid.*{', line):
                 in_uidgid = True
             else:
                 continue
@@ -190,27 +205,29 @@ def read_uid_gid_file(filename):
 
     return uidgid
 
-def write_uid_gid_file(uid,gid):
+def write_uid_gid_file(uid, gid):
     """
     Commandline options: no options
     """
-    orig_filename = get_uid_gid_file_name(uid,gid)
-    filename = orig_filename
+    orig_filename = get_uid_gid_file_name(uid, gid)
+    uidgid_filename = orig_filename
     counter = 0
-    if find_uid_gid_files(uid,gid):
-        err("uidgid file with uid=%s and gid=%s already exists" % (uid,gid))
+    if find_uid_gid_files(uid, gid):
+        err("uidgid file with uid=%s and gid=%s already exists" % (uid, gid))
 
-    while os.path.exists(os.path.join(settings.corosync_uidgid_dir, filename)):
+    while os.path.exists(
+        os.path.join(settings.corosync_uidgid_dir, uidgid_filename)
+    ):
         counter = counter + 1
-        filename = orig_filename + "-" + str(counter)
+        uidgid_filename = orig_filename + "-" + str(counter)
 
-    data = "uidgid {\n  uid: %s\ngid: %s\n}\n" % (uid,gid)
+    data = "uidgid {\n  uid: %s\ngid: %s\n}\n" % (uid, gid)
     with open(
-        os.path.join(settings.corosync_uidgid_dir, filename), 'w'
+        os.path.join(settings.corosync_uidgid_dir, uidgid_filename), 'w'
     ) as uidgid_file:
         uidgid_file.write(data)
 
-def find_uid_gid_files(uid,gid):
+def find_uid_gid_files(uid, gid):
     """
     Commandline options: no options
     """
@@ -221,9 +238,17 @@ def find_uid_gid_files(uid,gid):
     uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
     for uidgid_file in uid_gid_files:
         uid_gid_dict = read_uid_gid_file(uidgid_file)
-        if ("uid" in uid_gid_dict and uid == "") or ("uid" not in uid_gid_dict and uid != ""):
+        if (
+            ("uid" in uid_gid_dict and uid == "")
+            or
+            ("uid" not in uid_gid_dict and uid != "")
+        ):
             continue
-        if ("gid" in uid_gid_dict and gid == "") or ("gid" not in uid_gid_dict and gid != ""):
+        if (
+            ("gid" in uid_gid_dict and gid == "")
+            or
+            ("gid" not in uid_gid_dict and gid != "")
+        ):
             continue
         if "uid" in uid_gid_dict and uid != uid_gid_dict["uid"]:
             continue
@@ -235,7 +260,7 @@ def find_uid_gid_files(uid,gid):
     return found_files
 # Removes all uid/gid files with the specified uid/gid, returns false if we
 # couldn't find one
-def remove_uid_gid_file(uid,gid):
+def remove_uid_gid_file(uid, gid):
     """
     Commandline options: no options
     """
@@ -243,7 +268,7 @@ def remove_uid_gid_file(uid,gid):
         return False
 
     file_removed = False
-    for uidgid_file in find_uid_gid_files(uid,gid):
+    for uidgid_file in find_uid_gid_files(uid, gid):
         os.remove(os.path.join(settings.corosync_uidgid_dir, uidgid_file))
         file_removed = True
 
@@ -302,7 +327,7 @@ def getCorosyncConfig(node):
     """
     return sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
 
-def setCorosyncConfig(node,config):
+def setCorosyncConfig(node, config):
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -395,7 +420,9 @@ def destroyCluster(node, quiet=False):
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    return sendHTTPRequest(node, 'remote/cluster_destroy', None, not quiet, not quiet)
+    return sendHTTPRequest(
+        node, 'remote/cluster_destroy', None, not quiet, not quiet
+    )
 
 def restoreConfig(node, tarball_data):
     """
@@ -638,7 +665,7 @@ def getCorosyncActiveNodes():
     """
     Commandline options: no options
     """
-    output,retval = run(["corosync-cmapctl"])
+    output, retval = run(["corosync-cmapctl"])
     if retval != 0:
         return []
 
@@ -669,7 +696,7 @@ def getCorosyncActiveNodes():
             print("Error mapping %s" % node_name)
 
     nodes_active = []
-    for node,status in node_status.items():
+    for node, status in node_status.items():
         if status == "joined":
             nodes_active.append(node)
 
@@ -696,14 +723,15 @@ def need_to_handle_qdevice_service():
 def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-def touch_cib_file(filename):
-    if not os.path.isfile(filename):
+def touch_cib_file(cib_filename):
+    if not os.path.isfile(cib_filename):
         try:
-            write_empty_cib(filename)
+            write_empty_cib(cib_filename)
         except EnvironmentError as e:
-            err(
-                "Unable to write to file: '{0}': '{1}'".format(filename, str(e))
-            )
+            err("Unable to write to file: '{0}': '{1}'".format(
+                cib_filename,
+                str(e)
+            ))
 
 # Run command, with environment and return (output, retval)
 # DEPRECATED, please use lib.external.CommandRunner via utils.cmd_runner()
@@ -741,7 +769,7 @@ def run(
                 print("--Debug Input End--")
 
         # Some commands react differently if you give them anything via stdin
-        if string_for_stdin != None:
+        if string_for_stdin is not None:
             stdin_pipe = subprocess.PIPE
         else:
             stdin_pipe = subprocess.DEVNULL
@@ -863,7 +891,7 @@ def auth_hosts(host_dict):
                     print("{0}: Authorized".format(node))
                 elif result['status'] == 'bad_password':
                     err(
-                        "{0}: Username and/or password is incorrect".format(node),
+                        f"{node}: Username and/or password is incorrect",
                         False
                     )
                     failed = True
@@ -909,7 +937,7 @@ def call_local_pcsd(argv, std_in=None):
         "localhost", "run_pcs", data_send, False, False
     )
 
-    if 3 == code: # not authenticated
+    if code == 3: # not authenticated
         return [
             [
                 "Unable to authenticate against the local pcsd. Run the same "
@@ -917,7 +945,7 @@ def call_local_pcsd(argv, std_in=None):
                 "using command 'pcs client local-auth'"
             ], 1, '', ''
         ]
-    if 0 != code: # http error connecting to localhost
+    if code != 0: # http error connecting to localhost
         return [[output], 1, '', '']
 
     try:
@@ -948,9 +976,9 @@ def map_for_error_list(callab, iterab):
     """
     error_list = []
     for item in iterab:
-        (retval, err) = callab(item)
+        retval, error = callab(item)
         if retval != 0:
-            error_list.append(err)
+            error_list.append(error)
     return error_list
 
 def run_parallel(worker_list, wait_seconds=1):
@@ -1010,8 +1038,8 @@ def does_exist(xpath_query):
       * -f - CIB file
     """
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
-    dummy_output,retval = run(args)
-    if (retval != 0):
+    dummy_output, retval = run(args)
+    if retval != 0:
         return False
     return True
 
@@ -1025,7 +1053,7 @@ def get_group_children(group_id):
     for g in groups:
         if g.getAttribute("id") == group_id:
             for child in g.childNodes:
-                if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
+                if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
                     continue
                 if child.tagName == "primitive":
                     child_resources.append(child.getAttribute("id"))
@@ -1470,8 +1498,8 @@ def get_cib_xpath(xpath_query):
       * -f - CIB file
     """
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
-    output,retval = run(args)
-    if (retval != 0):
+    output, retval = run(args)
+    if retval != 0:
         return ""
     return output
 
@@ -1496,6 +1524,7 @@ def get_cib_dom():
     Commandline options:
       * -f - CIB file
     """
+    # pylint: disable=bare-except
     try:
         dom = parseString(get_cib())
         return dom
@@ -1507,6 +1536,7 @@ def get_cib_etree():
     Commandline options:
       * -f - CIB file
     """
+    # pylint: disable=bare-except
     try:
         root = ET.fromstring(get_cib())
         return root
@@ -1595,7 +1625,7 @@ def find_unique_id(dom, check_id):
     """
     counter = 1
     temp_id = check_id
-    while does_id_exist(dom,temp_id):
+    while does_id_exist(dom, temp_id):
         temp_id = check_id + "-" + str(counter)
         counter += 1
     return temp_id
@@ -1614,7 +1644,10 @@ def operation_exists(operations_el, op_el):
         if (
             op.getAttribute("name") == op_name
             and
-            get_timeout_seconds(op.getAttribute("interval"), True) == op_interval
+            get_timeout_seconds(
+                op.getAttribute("interval"),
+                True
+            ) == op_interval
         ):
             existing.append(op)
     return existing
@@ -1627,7 +1660,7 @@ def operation_exists_by_name(operations_el, op_el):
     op_name = op_el.getAttribute("name")
     op_role = op_el.getAttribute("role") or "Started"
     ocf_check_level = None
-    if "monitor" == op_name:
+    if op_name == "monitor":
         ocf_check_level = get_operation_ocf_check_level(op_el)
 
     for op in operations_el.getElementsByTagName("op"):
@@ -1658,7 +1691,7 @@ def get_node_attributes(filter_node=None, filter_attr=None):
       * -f - CIB file
     """
     node_config = get_cib_xpath("//nodes")
-    if (node_config == ""):
+    if node_config == "":
         err("unable to get crm_config, is pacemaker running?")
     dom = parseString(node_config).documentElement
     nas = dict()
@@ -1685,8 +1718,11 @@ def set_node_attribute(prop, value, node):
       * -f - CIB file
       * --force - no error if attribute to delete doesn't exist
     """
-    if (value == ""):
-        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--query"])
+    if value == "":
+        o, r = run([
+            "crm_attribute",
+            "-t", "nodes", "--node", node, "--name", prop, "--query"
+        ])
         if r != 0 and "--force" not in pcs_options:
             err(
                 "attribute: '%s' doesn't exist for node: '%s'" % (prop, node),
@@ -1694,12 +1730,18 @@ def set_node_attribute(prop, value, node):
             )
             # This return code is used by pcsd
             sys.exit(2)
-        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
+        o, r = run([
+            "crm_attribute",
+            "-t", "nodes", "--node", node, "--name", prop, "--delete"
+        ])
     else:
-        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--update",value])
+        o, r = run([
+            "crm_attribute",
+            "-t", "nodes", "--node", node, "--name", prop, "--update", value
+        ])
 
     if r != 0:
-        err("unable to set attribute %s\n%s" % (prop,o))
+        err("unable to set attribute %s\n%s" % (prop, o))
 
 
 # If the property exists, remove it and replace it with the new property
@@ -1750,6 +1792,7 @@ def getTerminalSize(fd=1):
 
     Commandline options: no options
     """
+    # pylint: disable=bare-except
     try:
         import fcntl
         import termios
@@ -1808,13 +1851,13 @@ def getClusterStateXml():
     Commandline options:
       * -f - CIB file
     """
-    xml, returncode = run(
+    xml_string, returncode = run(
         ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
         ignore_stderr=True
     )
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
-    return xml
+    return xml_string
 
 def getClusterName():
     """
@@ -1823,8 +1866,9 @@ def getClusterName():
       * --corosync_conf - path to a mocked corosync.conf is set directly to
         settings
     """
+    # pylint: disable=bare-except
     try:
-        f = open(settings.corosync_conf_file,'r')
+        f = open(settings.corosync_conf_file, 'r')
         conf = corosync_conf_parser.parse_string(f.read())
         f.close()
         # mimic corosync behavior - the last cluster_name found is used
@@ -2044,7 +2088,10 @@ def write_file(path, data, permissions=0o644, binary=False):
             return False, "unable to remove '%s': %s" % (path, e)
     mode = "wb" if binary else "w"
     try:
-        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, permissions), mode) as outfile:
+        with os.fdopen(
+            os.open(path, os.O_WRONLY | os.O_CREAT, permissions),
+            mode
+        ) as outfile:
             outfile.write(data)
     except EnvironmentError as e:
         return False, "unable to write to '%s': %s" % (path, e)
@@ -2185,7 +2232,7 @@ def is_node_offline_by_quorumtool_output(quorum_info):
     """
     return quorum_info.strip() == "Cannot initialize CMAP service"
 
-def dom_prepare_child_element(dom_element, tag_name, id):
+def dom_prepare_child_element(dom_element, tag_name, id_candidate):
     """
     Commandline options: no options
     """
@@ -2197,7 +2244,7 @@ def dom_prepare_child_element(dom_element, tag_name, id):
 
     if not child_elements:
         child_element = dom.createElement(tag_name)
-        child_element.setAttribute("id", find_unique_id(dom, id))
+        child_element.setAttribute("id", find_unique_id(dom, id_candidate))
         dom_element.appendChild(child_element)
     else:
         child_element = child_elements[0]
@@ -2235,7 +2282,7 @@ def convert_args_to_tuples(ra_values):
     for ra_val in ra_values:
         if ra_val.count("=") != 0:
             split_val = ra_val.split("=", 1)
-            ret.append((split_val[0],split_val[1]))
+            ret.append((split_val[0], split_val[1]))
     return ret
 
 def is_int(val):
@@ -2314,33 +2361,33 @@ def get_utilization_str(element, filter_name=None):
         output.append(name + "=" + value)
     return " ".join(output)
 
-def is_valid_cluster_property(prop_def_dict, property, value):
+def is_valid_cluster_property(prop_def_dict, property_name, value):
     """
     Commandline options: no options
     """
-    if property not in prop_def_dict:
+    if property_name not in prop_def_dict:
         raise UnknownPropertyException(
-            "unknown cluster property: '{0}'".format(property)
+            "unknown cluster property: '{0}'".format(property_name)
         )
     return is_valid_cib_value(
-        prop_def_dict[property]["type"],
+        prop_def_dict[property_name]["type"],
         value,
-        prop_def_dict[property].get("enum", [])
+        prop_def_dict[property_name].get("enum", [])
     )
 
 
-def is_valid_cib_value(type, value, enum_options=()):
+def is_valid_cib_value(value_type, value, enum_options=()):
     """
     Commandline options: no options
     """
-    type = type.lower()
-    if type == "enum":
+    value_type = value_type.lower()
+    if value_type == "enum":
         return value in enum_options
-    if type == "boolean":
+    if value_type == "boolean":
         return is_boolean(value)
-    if type == "integer":
+    if value_type == "integer":
         return is_score(value)
-    if type == "time":
+    if value_type == "time":
         return get_timeout_seconds(value) is not None
     return True
 
@@ -2420,7 +2467,7 @@ def get_cluster_property_from_xml(etree_el):
     """
     Commandline options: no options
     """
-    property = {
+    prop = {
         "name": etree_el.get("name", ""),
         "shortdesc": "",
         "longdesc": "",
@@ -2428,29 +2475,29 @@ def get_cluster_property_from_xml(etree_el):
     for item in ["shortdesc", "longdesc"]:
         item_el = etree_el.find(item)
         if item_el is not None and item_el.text is not None:
-            property[item] = item_el.text
+            prop[item] = item_el.text
 
     content = etree_el.find("content")
     if content is None:
-        property["type"] = ""
-        property["default"] = ""
+        prop["type"] = ""
+        prop["default"] = ""
     else:
-        property["type"] = content.get("type", "")
-        property["default"] = content.get("default", "")
+        prop["type"] = content.get("type", "")
+        prop["default"] = content.get("default", "")
 
-    if property["type"] == "enum":
-        property["enum"] = []
-        if property["longdesc"]:
-            values = property["longdesc"].split("  Allowed values: ")
+    if prop["type"] == "enum":
+        prop["enum"] = []
+        if prop["longdesc"]:
+            values = prop["longdesc"].split("  Allowed values: ")
             if len(values) == 2:
-                property["enum"] = values[1].split(", ")
-                property["longdesc"] = values[0]
-        if property["default"] not in property["enum"]:
-            property["enum"].append(property["default"])
+                prop["enum"] = values[1].split(", ")
+                prop["longdesc"] = values[0]
+        if prop["default"] not in prop["enum"]:
+            prop["enum"].append(prop["default"])
 
-    if property["longdesc"] == property["shortdesc"]:
-        property["longdesc"] = ""
-    return property
+    if prop["longdesc"] == prop["shortdesc"]:
+        prop["longdesc"] = ""
+    return prop
 
 def get_lib_env():
     """
@@ -2465,7 +2512,7 @@ def get_lib_env():
         for name in ("CIB_user", "CIB_user_groups"):
             if name in os.environ and os.environ[name].strip():
                 value = os.environ[name].strip()
-                if "CIB_user" == name:
+                if name == "CIB_user":
                     user = value
                 else:
                     groups = value.split(" ")
@@ -2503,7 +2550,7 @@ def get_cib_user_groups():
         for name in ("CIB_user", "CIB_user_groups"):
             if name in os.environ and os.environ[name].strip():
                 value = os.environ[name].strip()
-                if "CIB_user" == name:
+                if name == "CIB_user":
                     user = value
                 else:
                     groups = value.split(" ")
@@ -2573,7 +2620,7 @@ def get_set_properties(prop_name=None, defaults=None):
       * -f - CIB file
     """
     properties = {} if defaults is None else dict(defaults)
-    (output, retVal) = run(["cibadmin","-Q","--scope", "crm_config"])
+    (output, retVal) = run(["cibadmin", "-Q", "--scope", "crm_config"])
     if retVal != 0:
         err("unable to get crm_config\n"+output)
     dom = parseString(output)

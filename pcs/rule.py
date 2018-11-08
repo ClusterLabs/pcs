@@ -3,7 +3,7 @@ import xml.dom.minidom
 
 from pcs import utils
 
-# pylint: disable=no-else-return, no-self-use, not-callable, unsubscriptable-object, anomalous-backslash-in-string
+# pylint: disable=not-callable
 
 # main functions
 
@@ -113,7 +113,7 @@ class ExportDetailed:
         return indent + ("\n" + indent).join(self.list_rule(rule))
 
     def list_rule(self, rule):
-        rule_parts = ["Rule: %s" % " ".join(self.list_attributes(rule))]
+        rule_parts = ["Rule: %s" % " ".join(self._list_attributes(rule))]
         for child in rule.childNodes:
             if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
@@ -146,7 +146,7 @@ class ExportDetailed:
     def list_date_expression(self, expression):
         operation = expression.getAttribute("operation")
         if operation == "date_spec":
-            date_spec_parts = self.list_attributes(
+            date_spec_parts = self._list_attributes(
                 expression.getElementsByTagName("date_spec")[0]
             )
             exp_parts = ["Expression:"]
@@ -156,7 +156,7 @@ class ExportDetailed:
                 [" ".join(exp_parts)],
                 ["Date Spec: %s" % " ".join(date_spec_parts)]
             )
-        elif operation == "in_range":
+        if operation == "in_range":
             exp_parts = ["date", "in_range"]
             if expression.hasAttribute("start"):
                 exp_parts.extend([expression.getAttribute("start"), "to"])
@@ -165,7 +165,7 @@ class ExportDetailed:
             durations = expression.getElementsByTagName("duration")
             if durations:
                 exp_parts.append("duration")
-                duration_parts = self.list_attributes(durations[0])
+                duration_parts = self._list_attributes(durations[0])
             if self.show_detail:
                 exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
             result = ["Expression: %s" % " ".join(exp_parts)]
@@ -175,23 +175,23 @@ class ExportDetailed:
                     ["Duration: %s" % " ".join(duration_parts)]
                 )
             return result
-        else:
-            exp_parts = ["date", expression.getAttribute("operation")]
-            if expression.hasAttribute("start"):
-                exp_parts.append(expression.getAttribute("start"))
-            if expression.hasAttribute("end"):
-                exp_parts.append(expression.getAttribute("end"))
-            if self.show_detail:
-                exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
-            return ["Expression: " + " ".join(exp_parts)]
+        exp_parts = ["date", expression.getAttribute("operation")]
+        if expression.hasAttribute("start"):
+            exp_parts.append(expression.getAttribute("start"))
+        if expression.hasAttribute("end"):
+            exp_parts.append(expression.getAttribute("end"))
+        if self.show_detail:
+            exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
+        return ["Expression: " + " ".join(exp_parts)]
 
-    def list_attributes(self, element):
+    def _list_attributes(self, element):
         attributes = utils.dom_attrs_to_list(element, with_id=False)
         if self.show_detail:
             attributes.append(" (id:%s)" % (element.getAttribute("id")))
         return attributes
 
-    def indent_append(self, target, source, indent="  "):
+    @staticmethod
+    def indent_append(target, source, indent="  "):
         for part in source:
             target.append(indent + part)
         return target
@@ -245,11 +245,11 @@ class ExportAsExpression:
     def string_date_expression(self, expression):
         operation = expression.getAttribute("operation")
         if operation == "date_spec":
-            exp_parts = ["date-spec"] + self.list_attributes(
+            exp_parts = ["date-spec"] + self._list_attributes(
                 expression.getElementsByTagName("date_spec")[0]
             )
             return " ".join(exp_parts)
-        elif operation == "in_range":
+        if operation == "in_range":
             exp_parts = ["date", "in_range"]
             if expression.hasAttribute("start"):
                 exp_parts.extend([expression.getAttribute("start"), "to"])
@@ -258,17 +258,17 @@ class ExportAsExpression:
             durations = expression.getElementsByTagName("duration")
             if durations:
                 exp_parts.append("duration")
-                exp_parts.extend(self.list_attributes(durations[0]))
+                exp_parts.extend(self._list_attributes(durations[0]))
             return " ".join(exp_parts)
-        else:
-            exp_parts = ["date", expression.getAttribute("operation")]
-            if expression.hasAttribute("start"):
-                exp_parts.append(expression.getAttribute("start"))
-            if expression.hasAttribute("end"):
-                exp_parts.append(expression.getAttribute("end"))
-            return " ".join(exp_parts)
+        exp_parts = ["date", expression.getAttribute("operation")]
+        if expression.hasAttribute("start"):
+            exp_parts.append(expression.getAttribute("start"))
+        if expression.hasAttribute("end"):
+            exp_parts.append(expression.getAttribute("end"))
+        return " ".join(exp_parts)
 
-    def list_attributes(self, element):
+    @staticmethod
+    def _list_attributes(element):
         attributes = utils.dom_attrs_to_list(element, with_id=False)
         # sort it always to get the same output for the same input as dict is
         # unordered
@@ -337,7 +337,7 @@ class SymbolParenthesisOpen(SymbolBase):
 class SymbolOperator(SymbolBase):
 
     expression_func = None
-    allowed_child_ids = None
+    allowed_child_ids = []
 
     def __init__(self):
         self.children = []
@@ -580,7 +580,6 @@ class UnexpectedEndOfInput(ParserException):
 
 
 class SyntaxError(ParserException):
-    # TODO: fix
     # pylint: disable=redefined-builtin
     pass
 
@@ -643,7 +642,7 @@ class DateCommonValue:
 class DateSpecValue(DateCommonValue):
 
     KEYWORD = "date-spec"
-    part_re = re.compile("^(?P<since>\d+)(-(?P<until>\d+))?$")
+    part_re = re.compile(r"^(?P<since>\d+)(-(?P<until>\d+))?$")
     part_limits = {
         "hours" : (0, 23),
         "monthdays" : (0, 31),
@@ -681,7 +680,8 @@ class DateSpecValue(DateCommonValue):
                 return False
         return True
 
-    def valid_part_limits(self, name, value):
+    @staticmethod
+    def valid_part_limits(name, value):
         if name not in DateSpecValue.part_limits:
             return True
         limits = DateSpecValue.part_limits[name]
@@ -777,9 +777,11 @@ class RuleParser(Parser):
 
         for operator in RuleParser.simple_type_list:
             symbol_class = self.new_symbol_type(operator, 70)
-        self.symbol_table.get_symbol("integer").value_re = re.compile("^-?\d+$")
+        self.symbol_table.get_symbol("integer").value_re = re.compile(
+            r"^-?\d+$"
+        )
         self.symbol_table.get_symbol("version").value_re = re.compile(
-            "^\d+(\.\d+)*$"
+            r"^\d+(\.\d+)*$"
         )
         symbol_class = self.new_symbol_type_date(DateSpecValue, 70)
         symbol_class = self.new_symbol_type_date(DateDurationValue, 70)
@@ -958,7 +960,8 @@ class CibBuilder:
             else:
                 self.build_rule(dom_element, subtree)
 
-    def add_element(self, parent, tag_name, element_id):
+    @staticmethod
+    def add_element(parent, tag_name, element_id):
         dom = parent.ownerDocument
         child = parent.appendChild(dom.createElement(tag_name))
         child.setAttribute("id", utils.find_unique_id(dom, element_id))
@@ -984,7 +987,8 @@ class TokenPreprocessor:
             )
         )
 
-    def separate_parenthesis(self, input_list):
+    @staticmethod
+    def separate_parenthesis(input_list):
         output_list = []
         for token in input_list:
             if not (
@@ -1010,7 +1014,8 @@ class TokenPreprocessor:
                     output_list.append("".join(part))
         return output_list
 
-    def join_date_common(self, input_list):
+    @staticmethod
+    def join_date_common(input_list):
         output_list = []
         token_parts = []
         in_datecommon = False
@@ -1042,7 +1047,8 @@ class TokenPreprocessor:
                 output_list.append(" ".join(token_parts[1:]))
         return output_list
 
-    def convert_legacy_date(self, input_list):
+    @staticmethod
+    def convert_legacy_date(input_list):
         output_list = []
         in_date = False
         date_start = ""

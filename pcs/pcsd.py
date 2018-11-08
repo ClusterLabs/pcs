@@ -8,10 +8,8 @@ from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
-# pylint: disable=len-as-condition, unused-argument, line-too-long
-
 def pcsd_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         usage.pcsd()
         sys.exit(1)
 
@@ -32,11 +30,12 @@ def pcsd_cmd(lib, argv, modifiers):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "pcsd", sub_cmd)
 
-def pcsd_certkey(dummy_lib, argv, modifiers):
+def pcsd_certkey(lib, argv, modifiers):
     """
     Options:
       * --force - overwrite existing file
     """
+    del lib
     modifiers.ensure_only_supported("--force")
     if len(argv) != 2:
         raise CmdLineInputError()
@@ -66,7 +65,9 @@ def pcsd_certkey(dummy_lib, argv, modifiers):
             os.path.exists(settings.pcsd_key_location)
         )
     ):
-        utils.err("certificate and/or key already exists, use --force to overwrite")
+        utils.err(
+            "certificate and/or key already exists, use --force to overwrite"
+        )
 
     try:
         try:
@@ -79,16 +80,33 @@ def pcsd_certkey(dummy_lib, argv, modifiers):
         except OSError: # If the file doesn't exist, we don't care
             pass
 
-        with os.fdopen(os.open(settings.pcsd_cert_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), 'w') as myfile:
+        with os.fdopen(
+            os.open(
+                settings.pcsd_cert_location,
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+                0o700
+            ),
+            'w'
+        ) as myfile:
             myfile.write(cert)
 
-        with os.fdopen(os.open(settings.pcsd_key_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), 'w') as myfile:
+        with os.fdopen(
+            os.open(
+                settings.pcsd_key_location,
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+                0o700
+            ),
+            'w'
+        ) as myfile:
             myfile.write(key)
 
     except IOError as e:
         utils.err(e)
 
-    print("Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect")
+    print(
+        "Certificate and key updated, you may need to restart pcsd for new "
+            "settings to take effect"
+    )
 
 def pcsd_sync_certs(lib, argv, modifiers):
     """
@@ -96,19 +114,20 @@ def pcsd_sync_certs(lib, argv, modifiers):
       * --skip-offline - skip offline nodes
     """
     modifiers.ensure_only_supported("--skip-offline")
-    if len(argv) > 0:
+    if argv:
         raise CmdLineInputError()
     lib.pcsd.synchronize_ssl_certificate(
         skip_offline=modifiers.get("--skip-offline")
     )
 
-def pcsd_deauth(dummy_lib, argv, modifiers):
+def pcsd_deauth(lib, argv, modifiers):
     """
     Options: No options
     """
+    del lib
     modifiers.ensure_only_supported()
     filepath = settings.pcsd_users_conf_location
-    if len(argv) < 1:
+    if not argv:
         try:
             users_file = open(filepath, "w")
             users_file.write(json.dumps([]))

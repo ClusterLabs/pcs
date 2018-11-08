@@ -19,14 +19,13 @@ from pcs.common.fencing_topology import (
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
-# pylint: disable=too-many-branches, too-many-statements, len-as-condition
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=too-many-branches, too-many-statements, protected-access
 
 def stonith_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        sub_cmd, argv_next = "status", []
-    else:
+    if argv:
         sub_cmd, argv_next = argv[0], argv[1:]
+    else:
+        sub_cmd, argv_next = "status", []
 
     try:
         if sub_cmd == "help":
@@ -75,10 +74,10 @@ def stonith_cmd(lib, argv, modifiers):
         utils.exit_on_cmdline_input_errror(e, "stonith", sub_cmd)
 
 def stonith_level_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        sub_cmd, argv_next = "config", []
-    else:
+    if argv:
         sub_cmd, argv_next = argv[0], argv[1:]
+    else:
+        sub_cmd, argv_next = "config", []
 
     try:
         if sub_cmd == "add":
@@ -100,10 +99,10 @@ def stonith_level_cmd(lib, argv, modifiers):
         )
 
 def stonith_history_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        sub_cmd, argv_next = "show", []
-    else:
+    if argv:
         sub_cmd, argv_next = argv[0], argv[1:]
+    else:
+        sub_cmd, argv_next = "show", []
 
     try:
         if sub_cmd == "show":
@@ -388,7 +387,7 @@ def stonith_level_config_cmd(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) > 0:
+    if argv:
         raise CmdLineInputError()
     lines = stonith_level_config_to_str(lib.fencing_topology.get_config())
     # do not print \n when lines are empty
@@ -401,7 +400,7 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
     target_type, target_value, devices = None, None, None
     level = argv[0]
@@ -460,16 +459,17 @@ def stonith_level_verify_cmd(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) > 0:
+    if argv:
         raise CmdLineInputError()
     # raises LibraryError in case of problems, else we don't want to do anything
     lib.fencing_topology.verify()
 
-def stonith_fence(dummy_lib, argv, modifiers):
+def stonith_fence(lib, argv, modifiers):
     """
     Options:
       * --off - use off action of fence agent
     """
+    del lib
     modifiers.ensure_only_supported("--off")
     if len(argv) != 1:
         utils.err("must specify one (and only one) node to fence")
@@ -491,6 +491,7 @@ def stonith_confirm(lib, argv, modifiers):
     Options:
       * --force - do not warn user
     """
+    del lib
     modifiers.ensure_only_supported("--force")
     if len(argv) != 1:
         utils.err("must specify one (and only one) node to confirm fenced")
@@ -518,10 +519,11 @@ def stonith_confirm(lib, argv, modifiers):
 
 
 # This is used only by pcsd, will be removed in new architecture
-def get_fence_agent_info(dummy_lib, argv, modifiers):
+def get_fence_agent_info(lib, argv, modifiers):
     """
     Options: no options
     """
+    del lib
     modifiers.ensure_only_supported()
     if len(argv) != 1:
         utils.err("One parameter expected")
@@ -546,7 +548,7 @@ def get_fence_agent_info(dummy_lib, argv, modifiers):
 
 
 def sbd_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
     cmd = argv.pop(0)
     try:
@@ -574,7 +576,7 @@ def sbd_cmd(lib, argv, modifiers):
 
 
 def sbd_watchdog_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
     cmd = argv.pop(0)
     try:
@@ -640,7 +642,7 @@ def sbd_watchdog_test(lib, argv, modifiers):
 
 
 def sbd_device_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
     cmd = argv.pop(0)
     try:
@@ -770,7 +772,7 @@ def sbd_status(lib, argv, modifiers):
         raise CmdLineInputError()
 
     status_list = lib.sbd.get_cluster_sbd_status()
-    if not len(status_list):
+    if not status_list:
         utils.err("Unable to get SBD status from any node.")
 
     print("SBD STATUS")

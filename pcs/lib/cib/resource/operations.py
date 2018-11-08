@@ -134,7 +134,7 @@ def validate_operation_list(
             allowed_operation_name_list,
             option_name_for_report="operation name",
             code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            allow_extra_values=allow_invalid,
+            extra_values_allowed=allow_invalid,
         ),
         validate.value_id("id", option_name_for_report="operation id"),
     ]

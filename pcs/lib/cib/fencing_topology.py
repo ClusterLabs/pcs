@@ -173,9 +173,9 @@ def verify(reporter, topology_el, resources_el, cluster_status_nodes):
             allow_force=False
         )
 
-# TODO: fix
-# pylint: disable=inconsistent-return-statements
 def _validate_level(reporter, level):
+    # TODO this should not rely on the report to be sent and the execution
+    # ended in a caller
     try:
         candidate = int(level)
         if candidate > 0:
@@ -185,6 +185,7 @@ def _validate_level(reporter, level):
     reporter.append(
         reports.invalid_option_value("level", level, "a positive integer")
     )
+    return None
 
 def _validate_target(
     reporter, cluster_status_nodes, target_type, target_value,

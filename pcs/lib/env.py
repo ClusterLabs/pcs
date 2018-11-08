@@ -57,11 +57,10 @@ class LibraryEnvironment:
         cib_data=None,
         corosync_conf_data=None,
         booth=None,
-        pacemaker=None,
         known_hosts_getter=None,
         request_timeout=None,
     ):
-        # pylint: disable=too-many-arguments, unused-argument
+        # pylint: disable=too-many-arguments
         self._logger = logger
         self._report_processor = report_processor
         self._user_login = user_login

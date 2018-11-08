@@ -281,7 +281,7 @@ class ValueCondTest(TestCase):
                 self.predicate,
                 "test",
                 code_to_allow_extra_values="FORCE",
-                allow_extra_values=True
+                extra_values_allowed=True
             )(
                 {"a": "c"}
             ),
@@ -564,7 +564,7 @@ class ValueIn(TestCase):
                 "a",
                 ["b"],
                 code_to_allow_extra_values="FORCE",
-                allow_extra_values=True
+                extra_values_allowed=True
             )(
                 {"a": "c"}
             ),

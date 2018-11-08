@@ -45,7 +45,7 @@ import pcs.cli.constraint_ticket.command as ticket_command
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 
-# pylint: disable=too-many-branches, unused-argument, too-many-locals, too-many-statements, broad-except
+# pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
 def config_cmd(lib, argv, modifiers):
     if not argv:
@@ -178,11 +178,12 @@ def config_show_cib(lib):
         lib, [], modifiers.get_subset("--defaults", "--all", "-f")
     )
 
-def config_backup(dummy_lib, argv, modifiers):
+def config_backup(lib, argv, modifiers):
     """
     Options:
       * --force - overwrite file if already exists
     """
+    del lib
     modifiers.ensure_only_supported("--force")
     if len(argv) > 1:
         usage.config(["backup"])
@@ -231,13 +232,14 @@ def config_backup_local():
     tar_data.close()
     return tar
 
-def config_restore(dummy_lib, argv, modifiers):
+def config_restore(lib, argv, modifiers):
     """
     Options:
       * --local - restore config only on local node
       * --request-timeout - timeout for HTTP requests, used only if --local was
         not defined or user is not root
     """
+    del lib
     modifiers.ensure_only_supported("--local", "--request-timeout")
     if len(argv) > 1:
         usage.config(["restore"])
@@ -604,10 +606,11 @@ def config_backup_version():
     """
     return 1
 
-def config_checkpoint_list(dummy_lib, argv, modifiers):
+def config_checkpoint_list(lib, argv, modifiers):
     """
     Options: no options
     """
+    del lib
     modifiers.ensure_only_supported()
     if argv:
         raise CmdLineInputError()
@@ -654,11 +657,13 @@ def config_checkpoint_view(lib, argv, modifiers):
         utils.err("unable to read the checkpoint")
     config_show_cib(lib)
 
-def config_checkpoint_restore(dummy_lib, argv, modifiers):
+def config_checkpoint_restore(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file, a checkpoint will be restored into a specified file
     """
+    # pylint: disable=broad-except
+    del lib
     modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         usage.config(["checkpoint", "restore"])
@@ -671,14 +676,15 @@ def config_checkpoint_restore(dummy_lib, argv, modifiers):
         utils.err("unable to read the checkpoint: %s" % e)
     utils.replace_cib_configuration(snapshot_dom)
 
-def config_import_cman(dummy_lib, argv, modifiers):
-    # pylint: disable=no-member
+def config_import_cman(lib, argv, modifiers):
     """
     Options:
       * --force - skip checks, overwrite files
       * --interactive - interactive issue resolving
       * --request-timeout - effective only when ouput is not specified
     """
+    # pylint: disable=no-member
+    del lib
     modifiers.ensure_only_supported(
         "--force", "interactive", "--request-timeout",
     )
@@ -877,6 +883,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
       * -f - CIB file
       * --corosync_conf
     """
+    del lib
     modifiers.ensure_only_supported(
         "--force", "--interactive", "-f", "--corosync_conf"
     )
@@ -969,6 +976,7 @@ def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
     Commandline options: no options used but messages which include --force,
       --debug and --interactive are generated
     """
+    # pylint: disable=broad-except
     try:
         result = None
         cmd_manager = clufter.command_manager.CommandManager.init_lookup(

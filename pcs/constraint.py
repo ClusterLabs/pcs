@@ -24,10 +24,9 @@ from pcs.lib.env_tools import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 
-# pylint: disable=too-many-branches, too-many-statements, len-as-condition
-# pylint: disable=invalid-name, unused-argument, too-many-nested-blocks
-# pylint: disable=line-too-long, singleton-comparison, too-many-locals
-# pylint: disable=inconsistent-return-statements, no-else-return
+# pylint: disable=too-many-branches, too-many-statements
+# pylint: disable=invalid-name, too-many-nested-blocks
+# pylint: disable=too-many-locals
 
 OPTIONS_ACTION = resource_set.ATTRIB["action"]
 
@@ -45,7 +44,7 @@ RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
 
 def constraint_cmd(lib, argv, modifiers):
-    if len(argv) == 0:
+    if not argv:
         argv = ["list"]
     sub_cmd = argv.pop(0)
 
@@ -54,7 +53,7 @@ def constraint_cmd(lib, argv, modifiers):
             usage.constraint(argv)
         elif sub_cmd == "location":
             try:
-                if len(argv) == 0:
+                if not argv:
                     sub_cmd2 = "show"
                 else:
                     sub_cmd2 = argv.pop(0)
@@ -77,7 +76,7 @@ def constraint_cmd(lib, argv, modifiers):
                     e, "constraint", f"location {sub_cmd2}"
                 )
         elif sub_cmd == "order":
-            if len(argv) == 0:
+            if not argv:
                 sub_cmd2 = "show"
             else:
                 sub_cmd2 = argv.pop(0)
@@ -115,7 +114,7 @@ def constraint_cmd(lib, argv, modifiers):
                 utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
 
         elif sub_cmd == "colocation":
-            if len(argv) == 0:
+            if not argv:
                 sub_cmd2 = "show"
             else:
                 sub_cmd2 = argv.pop(0)
@@ -157,11 +156,12 @@ def constraint_cmd(lib, argv, modifiers):
 
 
 
-def colocation_rm(dummy_lib, argv, modifiers):
+def colocation_rm(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("-f")
     elementFound = False
     if len(argv) < 2:
@@ -188,7 +188,7 @@ def colocation_rm(dummy_lib, argv, modifiers):
             constraintsElement.removeChild(co_loc)
             elementFound = True
 
-    if elementFound == True:
+    if elementFound:
         utils.replace_cib_configuration(dom)
     else:
         print("No matching resources found in ordering list")
@@ -201,7 +201,7 @@ def parse_score_options(argv):
     """
     Commandline options: no options
     """
-    if len(argv) == 0:
+    if not argv:
         return "INFINITY", []
 
     arg_array = []
@@ -224,12 +224,13 @@ def parse_score_options(argv):
 #        <src> with <role> <tgt> [score] [options]
 # <role> <src> with        <tgt> [score] [options]
 # <role> <src> with <role> <tgt> [score] [options]
-def colocation_add(dummy_lib, argv, modifiers):
+def colocation_add(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
       * --force - allow constraint on any resource, allow duplicate constraints
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
@@ -315,10 +316,12 @@ def colocation_add(dummy_lib, argv, modifiers):
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join([
-                    "  " + constraint_colocation.console_report.constraint_plain(
-                            {"options": dict(dup.attributes.items())},
-                            True
-                        )
+                    "  "
+                    +
+                    constraint_colocation.console_report.constraint_plain(
+                        {"options": dict(dup.attributes.items())},
+                        True
+                    )
                     for dup in duplicates
                 ])
             )
@@ -346,13 +349,14 @@ def colocation_find_duplicates(dom, constraint_el):
             and normalized_el == normalize(other_el)
     ]
 
-def order_rm(dummy_lib, argv, modifiers):
+def order_rm(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("-f")
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
 
     elementFound = False
@@ -360,7 +364,11 @@ def order_rm(dummy_lib, argv, modifiers):
 
     for resource in argv:
         for ord_loc in constraintsElement.getElementsByTagName('rsc_order')[:]:
-            if ord_loc.getAttribute("first") == resource or ord_loc.getAttribute("then") == resource:
+            if (
+                ord_loc.getAttribute("first") == resource
+                or
+                ord_loc.getAttribute("then") == resource
+            ):
                 constraintsElement.removeChild(ord_loc)
                 elementFound = True
 
@@ -375,22 +383,23 @@ def order_rm(dummy_lib, argv, modifiers):
             res_order = res_set.parentNode
 
             res_ref.parentNode.removeChild(res_ref)
-            if len(res_set.getElementsByTagName('resource_ref')) <= 0:
+            if not res_set.getElementsByTagName('resource_ref'):
                 res_set.parentNode.removeChild(res_set)
-                if len(res_order.getElementsByTagName('resource_set')) <= 0:
+                if not res_order.getElementsByTagName('resource_set'):
                     res_order.parentNode.removeChild(res_order)
 
-    if elementFound == True:
+    if elementFound:
         utils.replace_cib_configuration(dom)
     else:
         utils.err("No matching resources found in ordering list")
 
-def order_start(dummy_lib, argv, modifiers):
+def order_start(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
       * --force - allow constraint for any resource, allow duplicate constraints
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
@@ -406,7 +415,7 @@ def order_start(dummy_lib, argv, modifiers):
     if argv.pop(0) != "then":
         raise CmdLineInputError()
 
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
 
     action = argv[0]
@@ -414,12 +423,12 @@ def order_start(dummy_lib, argv, modifiers):
         then_action = action
         argv.pop(0)
 
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
     resource2 = argv.pop(0)
 
     order_options = []
-    if len(argv) != 0:
+    if argv:
         order_options = order_options + argv[:]
 
     order_options.append("first-action="+first_action)
@@ -459,7 +468,10 @@ def order_add(argv, modifiers):
         elif "=" in arg:
             name, value = arg.split("=", 1)
             if name == "id":
-                id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+                id_valid, id_error = utils.validate_xml_id(
+                    value,
+                    'constraint id'
+                )
                 if not id_valid:
                     utils.err(id_error)
                 if utils.does_id_exist(cib_dom, value):
@@ -537,6 +549,7 @@ def order_find_duplicates(dom, constraint_el):
     Commandline options: no options
     """
     def normalize(constraint_el):
+        # pylint: disable=line-too-long
         return (
             constraint_el.getAttribute("first"),
             constraint_el.getAttribute("then"),
@@ -554,14 +567,15 @@ def order_find_duplicates(dom, constraint_el):
     ]
 
 # Show the currently configured location constraints by node or resource
-def location_show(dummy_lib, argv, modifiers):
+def location_show(lib, argv, modifiers):
     """
     Options:
       * --full - print all details
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--full")
-    if (len(argv) != 0 and argv[0] == "nodes"):
+    if argv and argv[0] == "nodes":
         byNode = True
         showDetail = False
     elif modifiers.get("--full"):
@@ -592,7 +606,9 @@ def location_show(dummy_lib, argv, modifiers):
     rschashon = {}
     rschashoff = {}
     ruleshash = defaultdict(list)
-    all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
+    all_loc_constraints = constraintsElement.getElementsByTagName(
+        'rsc_location'
+    )
 
     print("Location Constraints:")
     for rsc_loc in all_loc_constraints:
@@ -629,7 +645,7 @@ def location_show(dummy_lib, argv, modifiers):
         else:
             positive = False
 
-        if positive == True:
+        if positive:
             nodeshash = nodehashon
             rschash = rschashon
         else:
@@ -667,9 +683,9 @@ def location_show(dummy_lib, argv, modifiers):
         )
     )
 
-    if byNode == True:
+    if byNode:
         for node in nodelist:
-            if len(valid_noderes) != 0:
+            if valid_noderes:
                 if node not in valid_noderes:
                     continue
             print("  Node: " + node)
@@ -701,7 +717,7 @@ def location_show(dummy_lib, argv, modifiers):
         show_location_rules(ruleshash, showDetail)
     else:
         for rsc in rsclist:
-            if len(valid_noderes) != 0:
+            if valid_noderes:
                 if rsc[0:2] not in valid_noderes:
                     continue
             print("  {0}".format(rsc[2]))
@@ -759,11 +775,21 @@ def show_location_rules(ruleshash, showDetail, noheader=False):
             constrainthash[constraint_id].append(rule)
             constraint_options[constraint_id] = []
             if rule.parentNode.getAttribute("resource-discovery"):
-                constraint_options[constraint_id].append("resource-discovery=%s" % rule.parentNode.getAttribute("resource-discovery"))
+                constraint_options[constraint_id].append(
+                    "resource-discovery=%s" % rule.parentNode.getAttribute(
+                        "resource-discovery"
+                    )
+                )
 
         for constraint_id in sorted(constrainthash.keys()):
-            if constraint_id in constraint_options and len(constraint_options[constraint_id]) > 0:
-                constraint_option_info = " (" + " ".join(constraint_options[constraint_id]) + ")"
+            if (
+                constraint_id in constraint_options
+                and
+                constraint_options[constraint_id]
+            ):
+                constraint_option_info = (
+                    " (" + " ".join(constraint_options[constraint_id]) + ")"
+                )
             else:
                 constraint_option_info = ""
 
@@ -808,7 +834,10 @@ def location_prefer(lib, argv, modifiers):
         else:
             score = nodeconf_a[1]
             if not utils.is_score(score):
-                utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
+                utils.err(
+                    "invalid score '%s', use integer or INFINITY or -INFINITY"
+                    % score
+                )
             if not prefer:
                 if score[0] == "-":
                     score = score[1:]
@@ -829,6 +858,7 @@ def location_add(lib, argv, modifiers):
       * --force - allow unknown options, allow constraint for any resource type
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("--force", "-f")
     if len(argv) < 4:
         raise CmdLineInputError()
@@ -843,7 +873,7 @@ def location_add(lib, argv, modifiers):
     score = argv.pop(0)
     options = []
     # For now we only allow setting resource-discovery
-    if len(argv) > 0:
+    if argv:
         for arg in argv:
             if '=' in arg:
                 options.append(arg.split('=', 1))
@@ -854,14 +884,18 @@ def location_add(lib, argv, modifiers):
                 and
                 not modifiers.get("--force")
             ):
-                utils.err("bad option '%s', use --force to override" % options[-1][0])
+                utils.err(
+                    "bad option '%s', use --force to override" % options[-1][0]
+                )
 
     id_valid, id_error = utils.validate_xml_id(constraint_id, 'constraint id')
     if not id_valid:
         utils.err(id_error)
 
     if not utils.is_score(score):
-        utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
+        utils.err(
+            "invalid score '%s', use integer or INFINITY or -INFINITY" % score
+        )
 
     required_version = None
     if [x for x in options if x[0] == "resource-discovery"]:
@@ -956,6 +990,7 @@ def location_remove(lib, argv, modifiers):
     # constraint remove" which also removes constraints by id. For now I keep
     # things as they are but we should solve this when moving these functions
     # to pcs.lib.
+    del lib
     modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
         raise CmdLineInputError()
@@ -968,20 +1003,21 @@ def location_remove(lib, argv, modifiers):
         if constraint_id == rsc_loc.getAttribute("id"):
             elementsToRemove.append(rsc_loc)
 
-    if len(elementsToRemove) == 0:
+    if not elementsToRemove:
         utils.err("resource location id: " + constraint_id + " not found.")
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
 
     utils.replace_cib_configuration(dom)
 
-def location_rule(dummy_lib, argv, modifiers):
+def location_rule(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
       * --force - allow constraint on any resource type, allow duplicate
         constraints
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         usage.constraint(["location", "rule"])
@@ -1142,7 +1178,7 @@ def constraint_rm(
     """
     if passed_dom is None:
         modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     bad_constraint = False
@@ -1154,10 +1190,9 @@ def constraint_rm(
                 bad_constraint = True
         if bad_constraint:
             sys.exit(1)
-        return
-    else:
-        c_id = argv.pop(0)
+        return None
 
+    c_id = argv.pop(0)
     elementFound = False
 
     if not constraintsElement:
@@ -1179,10 +1214,10 @@ def constraint_rm(
                 elementFound = True
                 parent = rule.parentNode
                 parent.removeChild(rule)
-                if len(parent.getElementsByTagName("rule")) == 0:
+                if not parent.getElementsByTagName("rule"):
                     parent.parentNode.removeChild(parent)
 
-    if elementFound == True:
+    if elementFound:
         if passed_dom:
             return dom
         if use_cibadmin:
@@ -1194,21 +1229,23 @@ def constraint_rm(
         if returnStatus:
             return False
         sys.exit(1)
+    return None
 
 
-def constraint_ref(dummy_lib, argv, modifiers):
+def constraint_ref(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
     """
+    del lib
     modifiers.ensure_only_supported("-f")
-    if len(argv) == 0:
+    if not argv:
         raise CmdLineInputError()
 
     for arg in argv:
         print("Resource: %s" % arg)
         constraints, set_constraints = find_constraints_containing(arg)
-        if len(constraints) == 0 and len(set_constraints) == 0:
+        if not constraints and not set_constraints:
             print("  No Matches.")
         else:
             for constraint in constraints:
@@ -1216,23 +1253,31 @@ def constraint_ref(dummy_lib, argv, modifiers):
             for constraint in sorted(set_constraints):
                 print("  " + constraint)
 
-def remove_constraints_containing(resource_id, output=False, constraints_element=None, passed_dom=None):
+def remove_constraints_containing(
+    resource_id, output=False, constraints_element=None, passed_dom=None
+):
     """
     Commandline options:
       * -f - CIB file, effective only if passed_dom is None
     """
     lib = utils.get_library_wrapper()
     modifiers = utils.get_input_modifiers()
-    constraints, set_constraints = find_constraints_containing(resource_id, passed_dom)
+    constraints, set_constraints = find_constraints_containing(
+        resource_id,
+        passed_dom
+    )
     for c in constraints:
-        if output == True:
+        if output:
             print("Removing Constraint - " + c)
-        if constraints_element != None:
-            constraint_rm(lib, [c], modifiers, True, constraints_element, passed_dom=passed_dom)
+        if constraints_element is not None:
+            constraint_rm(
+                lib, [c], modifiers, True, constraints_element,
+                passed_dom=passed_dom
+            )
         else:
             constraint_rm(lib, [c], modifiers, passed_dom=passed_dom)
 
-    if len(set_constraints) != 0:
+    if set_constraints:
         (dom, constraintsElement) = getCurrentConstraints(passed_dom)
         for c in constraintsElement.getElementsByTagName("resource_ref")[:]:
             # If resource id is in a set, remove it from the set, if the set
@@ -1241,8 +1286,11 @@ def remove_constraints_containing(resource_id, output=False, constraints_element
             if c.getAttribute("id") == resource_id:
                 pn = c.parentNode
                 pn.removeChild(c)
-                if output == True:
-                    print("Removing %s from set %s" % (resource_id, pn.getAttribute("id")))
+                if output:
+                    print(
+                        "Removing %s from set %s"
+                        % (resource_id, pn.getAttribute("id"))
+                    )
                 if pn.getElementsByTagName("resource_ref").length == 0:
                     print("Removing set %s" % pn.getAttribute("id"))
                     pn2 = pn.parentNode
@@ -1253,6 +1301,7 @@ def remove_constraints_containing(resource_id, output=False, constraints_element
         if passed_dom:
             return dom
         utils.replace_cib_configuration(dom)
+    return None
 
 def find_constraints_containing(resource_id, passed_dom=None):
     """
@@ -1274,15 +1323,21 @@ def find_constraints_containing(resource_id, passed_dom=None):
             break
 
     if resource_match:
-        if resource_match.parentNode.tagName == "master" or resource_match.parentNode.tagName == "clone":
-            constraints_found, set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"), dom)
+        if (
+            resource_match.parentNode.tagName == "master"
+            or
+            resource_match.parentNode.tagName == "clone"
+        ):
+            constraints_found, set_constraints = find_constraints_containing(
+                resource_match.parentNode.getAttribute("id"),
+                dom
+            )
 
     constraints = dom.getElementsByTagName("constraints")
-    if len(constraints) == 0:
+    if not constraints:
         return [], []
-    else:
-        constraints = constraints[0]
 
+    constraints = constraints[0]
     myConstraints = constraints.getElementsByTagName("rsc_colocation")
     myConstraints += constraints.getElementsByTagName("rsc_location")
     myConstraints += constraints.getElementsByTagName("rsc_order")
@@ -1345,7 +1400,7 @@ def constraint_resource_update(old_id, dom):
                     constraint.setAttribute(attr, new_id)
     return dom
 
-def constraint_rule(dummy_lib, argv, modifiers):
+def constraint_rule(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
@@ -1353,6 +1408,7 @@ def constraint_rule(dummy_lib, argv, modifiers):
 
     NOTE: modifiers check is in subcommand
     """
+    del lib
     if len(argv) < 2:
         raise CmdLineInputError()
 
@@ -1375,7 +1431,11 @@ def constraint_rule(dummy_lib, argv, modifiers):
             utils.err("Unable to find constraint: " + constraint_id)
         options, rule_argv = rule_utils.parse_argv(argv)
         rule_utils.dom_rule_add(constraint, options, rule_argv)
-        location_rule_check_duplicates(cib, constraint, modifiers.get("--force"))
+        location_rule_check_duplicates(
+            cib,
+            constraint,
+            modifiers.get("--force")
+        )
         utils.replace_cib_configuration(cib)
 
     elif command in ["remove", "delete"]:
@@ -1401,7 +1461,7 @@ def constraint_rule(dummy_lib, argv, modifiers):
                         found = True
                         break
 
-            if found == True:
+            if found:
                 break
 
         if found:

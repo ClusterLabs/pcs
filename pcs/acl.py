@@ -10,13 +10,13 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
 
-# pylint: disable=too-many-branches, len-as-condition
+# pylint: disable=too-many-branches
 
 def acl_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        sub_cmd, argv_next = "show", []
-    else:
+    if argv:
         sub_cmd, argv_next = argv[0], argv[1:]
+    else:
+        sub_cmd, argv_next = "show", []
 
     try:
         if sub_cmd == "help":
@@ -102,7 +102,7 @@ def acl_disable(lib, argv, modifiers):
 
 
 def acl_role(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -123,7 +123,7 @@ def acl_role(lib, argv, modifiers):
 
 
 def acl_user(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -145,7 +145,7 @@ def user_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
     user_name, role_list = argv[0], argv[1:]
     lib.acl.create_target(user_name, role_list)
@@ -163,7 +163,7 @@ def user_delete(lib, argv, modifiers):
 
 
 def acl_group(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -187,7 +187,7 @@ def group_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
     group_name, role_list = argv[0], argv[1:]
     lib.acl.create_group(group_name, role_list)
@@ -205,7 +205,7 @@ def group_delete(lib, argv, modifiers):
 
 
 def acl_permission(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
@@ -256,7 +256,7 @@ def role_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) < 1:
+    if not argv:
         raise CmdLineInputError()
 
     role_id = argv.pop(0)

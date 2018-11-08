@@ -16,8 +16,6 @@ from pcs.common.fencing_topology import (
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
 
-# pylint: disable=invalid-name
-
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
         self.assertEqual(
@@ -551,14 +549,13 @@ class FencingLevelAlreadyExists(NameBuildTest):
         )
 
     def test_target_pattern(self):
-        # pylint: disable=anomalous-backslash-in-string
         self.assert_message_from_info(
-            "Fencing level for 'node-\d+' at level '1' with device(s) "
+            "Fencing level for 'node-\\d+' at level '1' with device(s) "
                 "'device1,device2' already exists",
             {
                 "level": "1",
                 "target_type": TARGET_TYPE_REGEXP,
-                "target_value": "node-\d+",
+                "target_value": "node-\\d+",
                 "devices": ["device1", "device2"],
             }
         )
@@ -977,10 +974,9 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
 
     def test_with_type(self):
         self.assert_message_from_report(
-            (
-                "Cannot set some option 'a' because other option 'b' is "
+            "Cannot set some option 'a' because other option 'b' is "
                 "already set"
-            ),
+            ,
             reports.prerequisite_option_must_not_be_set(
                 "a", "b", option_type="some", prerequisite_type="other",
             )
@@ -1187,7 +1183,7 @@ class ActionOnNodesError(NameBuildTest):
             }
         )
 
-class resource_is_guest_node_already(NameBuildTest):
+class ResourceIsGuestNodeAlready(NameBuildTest):
     code = codes.RESOURCE_IS_GUEST_NODE_ALREADY
     def test_build_messages(self):
         self.assert_message_from_info(
@@ -1195,7 +1191,7 @@ class resource_is_guest_node_already(NameBuildTest):
             {"resource_id": "some-resource"}
         )
 
-class live_environment_required(NameBuildTest):
+class LiveEnvironmentRequired(NameBuildTest):
     code = codes.LIVE_ENVIRONMENT_REQUIRED
     def test_build_messages(self):
         self.assert_message_from_info(

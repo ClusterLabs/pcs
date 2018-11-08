@@ -1,29 +1,29 @@
 import re
 
-# pylint: disable=too-many-lines, bad-whitespace, anomalous-backslash-in-string, too-many-branches, global-statement, line-too-long, invalid-name, singleton-comparison, dangerous-default-value, inconsistent-return-statements
+# pylint: disable=too-many-lines, too-many-branches, global-statement
 
 examples = ""
 def full_usage():
     out = ""
     out += main(False)
-    out += strip_extras(resource([],False))
-    out += strip_extras(cluster([],False))
-    out += strip_extras(stonith([],False))
-    out += strip_extras(property([],False))
-    out += strip_extras(constraint([],False))
-    out += strip_extras(node([],False))
-    out += strip_extras(acl([],False))
-    out += strip_extras(qdevice([],False))
-    out += strip_extras(quorum([],False))
-    out += strip_extras(booth([],False))
-    out += strip_extras(status([],False))
-    out += strip_extras(config([],False))
-    out += strip_extras(pcsd([],False))
-    out += strip_extras(host([],False))
+    out += strip_extras(resource([], False))
+    out += strip_extras(cluster([], False))
+    out += strip_extras(stonith([], False))
+    out += strip_extras(property([], False))
+    out += strip_extras(constraint([], False))
+    out += strip_extras(node([], False))
+    out += strip_extras(acl([], False))
+    out += strip_extras(qdevice([], False))
+    out += strip_extras(quorum([], False))
+    out += strip_extras(booth([], False))
+    out += strip_extras(status([], False))
+    out += strip_extras(config([], False))
+    out += strip_extras(pcsd([], False))
+    out += strip_extras(host([], False))
     out += strip_extras(alert([], False))
     out += strip_extras(client([], False))
     print(out.strip())
-    print("Examples:\n" + examples.replace(" \ ",""))
+    print("Examples:\n" + examples.replace(r" \ ", ""))
 
 def strip_extras(text):
     global examples
@@ -77,11 +77,17 @@ def sub_usage(args, output):
     ret = ""
     lines = output.split('\n')
     begin_printing = False
-    usage = re.sub("\[commands\]", args[0], lines[1])
+    usage = re.sub(r"\[commands\]", args[0], lines[1])
     for line in lines:
-        if begin_printing == True and re.match("^    [^ ]",line) and not re.match("^    " + args[0], line):
+        if (
+            begin_printing
+            and
+            re.match("^    [^ ]", line)
+            and
+            not re.match("^    " + args[0], line)
+        ):
             begin_printing = False
-        if not re.match("^ ",line) and not re.match("^$",line):
+        if not re.match("^ ", line) and not re.match("^$", line):
             begin_printing = False
         if re.match("^    " + args[0], line):
             begin_printing = True
@@ -94,24 +100,25 @@ def sub_usage(args, output):
     return sub_usage([" ".join(args[0].split()[:-1])], output)
 
 def dict_depth(d, depth=0):
+    # pylint: disable=invalid-name
     if not isinstance(d, dict) or not d:
         return depth
     return max(dict_depth(v, depth+1) for k, v in d.items())
 
 def generate_completion_tree_from_usage():
     tree = {}
-    tree["resource"] = generate_tree(resource([],False))
-    tree["cluster"] = generate_tree(cluster([],False))
-    tree["stonith"] = generate_tree(stonith([],False))
-    tree["property"] = generate_tree(property([],False))
-    tree["acl"] = generate_tree(acl([],False))
-    tree["constraint"] = generate_tree(constraint([],False))
-    tree["qdevice"] = generate_tree(qdevice([],False))
-    tree["quorum"] = generate_tree(quorum([],False))
-    tree["status"] = generate_tree(status([],False))
-    tree["config"] = generate_tree(config([],False))
-    tree["pcsd"] = generate_tree(pcsd([],False))
-    tree["host"] = generate_tree(host([],False))
+    tree["resource"] = generate_tree(resource([], False))
+    tree["cluster"] = generate_tree(cluster([], False))
+    tree["stonith"] = generate_tree(stonith([], False))
+    tree["property"] = generate_tree(property([], False))
+    tree["acl"] = generate_tree(acl([], False))
+    tree["constraint"] = generate_tree(constraint([], False))
+    tree["qdevice"] = generate_tree(qdevice([], False))
+    tree["quorum"] = generate_tree(quorum([], False))
+    tree["status"] = generate_tree(status([], False))
+    tree["config"] = generate_tree(config([], False))
+    tree["pcsd"] = generate_tree(pcsd([], False))
+    tree["host"] = generate_tree(host([], False))
     tree["node"] = generate_tree(node([], False))
     tree["alert"] = generate_tree(alert([], False))
     tree["booth"] = generate_tree(booth([], False))
@@ -121,19 +128,19 @@ def generate_completion_tree_from_usage():
 def generate_tree(usage_txt):
     ignore = True
     ret_hash = {}
-    for l in usage_txt.split('\n'):
-        if l.startswith("Commands:"):
+    for line in usage_txt.split('\n'):
+        if line.startswith("Commands:"):
             ignore = False
             continue
 
-        if l.startswith("Examples:"):
+        if line.startswith("Examples:"):
             break
 
-        if ignore == True:
+        if ignore:
             continue
 
-        if re.match("^    \w",l):
-            args = l.split()
+        if re.match(r"^    \w", line):
+            args = line.split()
             arg = args.pop(0)
             if not arg in ret_hash:
                 ret_hash[arg] = {}
@@ -147,7 +154,7 @@ def generate_tree(usage_txt):
     return ret_hash
 
 def main(pout=True):
-    output =  """
+    output = """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
@@ -185,11 +192,11 @@ Commands:
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
     if pout:
         print(output)
-    else:
-        return output
+        return None
+    return output
 
 
-def resource(args = [], pout = True):
+def resource(args=(), pout=True):
     output = """
 Usage: pcs resource [commands]...
 Manage pacemaker resources
@@ -584,10 +591,10 @@ Notes:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def cluster(args = [], pout = True):
+def cluster(args=(), pout=True):
     output = """
 Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
@@ -891,10 +898,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def stonith(args = [], pout = True):
+def stonith(args=(), pout=True):
     output = """
 Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
@@ -1117,10 +1124,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def property(args = [], pout = True):
+def property(args=(), pout=True):
     # pylint: disable=redefined-builtin
     output = """
 Usage: pcs property [commands]...
@@ -1153,10 +1160,10 @@ Examples:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def constraint(args = [], pout = True):
+def constraint(args=(), pout=True):
     output = """
 Usage: pcs constraint [constraints]...
 Manage resource constraints
@@ -1336,10 +1343,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def acl(args = [], pout = True):
+def acl(args=(), pout=True):
     output = """
 Usage: pcs acl [commands]...
 View and modify current cluster access control lists
@@ -1417,10 +1424,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def status(args = [], pout = True):
+def status(args=(), pout=True):
     output = """
 Usage: pcs status [commands]...
 View current cluster and resource status
@@ -1466,10 +1473,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def config(args=[], pout=True):
+def config(args=(), pout=True):
     output = """
 Usage: pcs config [commands]...
 View and manage cluster configuration
@@ -1529,10 +1536,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def pcsd(args=[], pout=True):
+def pcsd(args=(), pout=True):
     output = """
 Usage: pcs pcsd [commands]...
 Manage pcs daemon
@@ -1552,10 +1559,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def host(args=[], pout=True):
+def host(args=(), pout=True):
     output = """
 Usage: pcs host [commands]...
 Manage hosts known to pcs/pcsd
@@ -1578,10 +1585,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def node(args=[], pout=True):
+def node(args=(), pout=True):
     output = """
 Usage: pcs node <command>
 Manage cluster nodes
@@ -1644,10 +1651,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def qdevice(args=[], pout=True):
+def qdevice(args=(), pout=True):
     output = """
 Usage: pcs qdevice <command>
 Manage quorum device provider on the local host, currently only 'net' model is
@@ -1690,10 +1697,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def quorum(args=[], pout=True):
+def quorum(args=(), pout=True):
     output = """
 Usage: pcs quorum <command>
 Manage cluster quorum settings.
@@ -1774,10 +1781,10 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
-def booth(args=[], pout=True):
+def booth(args=(), pout=True):
     output = """
 Usage: pcs booth <command>
 Manage booth (cluster ticket manager)
@@ -1856,11 +1863,11 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
 
-def alert(args=[], pout=True):
+def alert(args=(), pout=True):
     output = """
 Usage: pcs alert <command>
 Set pacemaker alerts.
@@ -1902,11 +1909,11 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
 
-def client(args=[], pout=True):
+def client(args=(), pout=True):
     output = """
 Usage: pcs client <command>
 Manage pcsd client configuration.
@@ -1919,8 +1926,8 @@ Commands:
 """
     if pout:
         print(sub_usage(args, output))
-    else:
-        return output
+        return None
+    return output
 
 
 def show(main_usage_name, rest_usage_names):
@@ -1945,6 +1952,6 @@ def show(main_usage_name, rest_usage_names):
     if main_usage_name not in usage_map:
         raise Exception(
             "Bad usage name '{0}' there can be '{1}'"
-            .format(main_usage_name,  list(usage_map.keys()))
+            .format(main_usage_name, list(usage_map.keys()))
         )
     usage_map[main_usage_name](rest_usage_names)

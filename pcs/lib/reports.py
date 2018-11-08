@@ -4,9 +4,6 @@ from functools import partial
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, ReportItemSeverity
 
-# TODO fix
-# pylint: disable=invalid-name, redefined-builtin
-
 def forceable_error(force_code, report_creator, *args, **kwargs):
     """
     Return ReportItem created by report_creator.
@@ -407,6 +404,8 @@ def invalid_cib_content(report):
 
 
 def invalid_id_is_empty(id, id_description):
+    # pylint says 'id' is wrong
+    # pylint: disable=invalid-name, redefined-builtin
     """
     empty string was specified as an id, which is not valid
     id string specified id
@@ -421,6 +420,8 @@ def invalid_id_is_empty(id, id_description):
     )
 
 def invalid_id_bad_char(id, id_description, bad_char, is_first_char):
+    # pylint says 'id' is wrong
+    # pylint: disable=invalid-name, redefined-builtin
     """
     specified id is not valid as it contains a forbidden character
     id string specified id
@@ -1364,6 +1365,8 @@ def qdevice_used_by_clusters(
     )
 
 def id_already_exists(id):
+    # pylint says 'id' is wrong
+    # pylint: disable=invalid-name, redefined-builtin
     """
     specified id already exists in CIB and cannot be used for a new CIB object
     id string existing id
@@ -1374,6 +1377,8 @@ def id_already_exists(id):
     )
 
 def id_belongs_to_unexpected_type(id, expected_types, current_type):
+    # pylint says 'id' is wrong
+    # pylint: disable=invalid-name, redefined-builtin
     """
     Specified id exists but for another element than expected.
     For example user wants to create resource in group that is specifies by id.
@@ -1407,6 +1412,8 @@ def object_with_id_in_unexpected_context(
 
 
 def id_not_found(id, expected_types, context_type="", context_id=""):
+    # pylint says 'id' is wrong
+    # pylint: disable=invalid-name, redefined-builtin
     """
     specified id does not exist in CIB, user referenced a nonexisting id
 

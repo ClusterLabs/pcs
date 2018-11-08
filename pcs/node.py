@@ -13,10 +13,8 @@ from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 
-# pylint: disable=len-as-condition, unused-argument
-
 def node_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
+    if not argv:
         usage.node()
         sys.exit(1)
 
@@ -54,10 +52,11 @@ def node_attribute_cmd(lib, argv, modifiers):
       * --force - allows not unique recipient values
       * --name - specify attribute name to filter out
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--force", "--name")
     if modifiers.get("--name") and len(argv) > 1:
         raise CmdLineInputError()
-    if len(argv) == 0:
+    if not argv:
         attribute_show_cmd(filter_attr=modifiers.get("--name"))
     elif len(argv) == 1:
         attribute_show_cmd(argv.pop(0), filter_attr=modifiers.get("--name"))
@@ -71,10 +70,11 @@ def node_utilization_cmd(lib, argv, modifiers):
       * -f - CIB file (in lib wrapper)
       * --name - specify attribute name to filter out
     """
+    del lib
     modifiers.ensure_only_supported("-f", "--name")
     if modifiers.get("--name") and len(argv) > 1:
         raise CmdLineInputError()
-    if len(argv) == 0:
+    if not argv:
         print_node_utilization(filter_name=modifiers.get("--name"))
     elif len(argv) == 1:
         print_node_utilization(argv.pop(0), filter_name=modifiers.get("--name"))
@@ -89,7 +89,7 @@ def node_maintenance_cmd(lib, argv, modifiers, enable):
       * --all - all cluster nodes
     """
     modifiers.ensure_only_supported("-f", "--wait", "--all")
-    if len(argv) > 0 and modifiers.get("--all"):
+    if argv and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
     wait = modifiers.get("--wait")
     if modifiers.get("--all"):
@@ -108,7 +108,7 @@ def node_standby_cmd(lib, argv, modifiers, enable):
       * --all - all cluster nodes
     """
     modifiers.ensure_only_supported("-f", "--wait", "--all")
-    if len(argv) > 0 and modifiers.get("--all"):
+    if argv and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
     wait = modifiers.get("--wait")
     if modifiers.get("--all"):
@@ -138,7 +138,7 @@ def set_node_utilization(node, argv):
             utils.err("Unable to find a node: {0}".format(node))
 
         nodes_section_list = cib.getElementsByTagName("nodes")
-        if len(nodes_section_list) == 0:
+        if not nodes_section_list:
             utils.err("Unable to get nodes section of cib")
 
         dom = nodes_section_list[0].ownerDocument
@@ -191,10 +191,13 @@ def print_node_utilization(filter_node=None, filter_name=None):
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))
 
-def node_pacemaker_status(lib, argv, dummy_modifiers):
+def node_pacemaker_status(lib, argv, modifiers):
     """
     Internal pcs-pcsd command
     """
+    del lib
+    del argv
+    del modifiers
     print(json.dumps(
         lib_pacemaker.get_local_node_status(utils.cmd_runner())
     ))

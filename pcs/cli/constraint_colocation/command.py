@@ -36,7 +36,7 @@ def show(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--full")
     if argv:
-        raise CmdLineInputError
+        raise CmdLineInputError()
     print("\n".join(command.show(
          "Colocation Constraints:",
         lib.constraint_colocation.show,

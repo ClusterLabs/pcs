@@ -18,7 +18,7 @@ from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
-# pylint: disable=too-many-branches, too-many-nested-blocks, too-many-locals, superfluous-parens, too-many-statements
+# pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
 def status_cmd(lib, argv, modifiers):
     try:
@@ -90,7 +90,7 @@ def full_status(lib, argv, modifiers):
 
     stdout, stderr, retval = utils.cmd_runner().run(monitor_command)
 
-    if (retval != 0):
+    if retval != 0:
         utils.err("cluster is not currently running on this node")
 
     warnings = []
@@ -138,6 +138,7 @@ def status_stonith_check(modifiers):
         stonith-enabled from CIB, to determine whenever we are working with
         files or cluster
     """
+    # pylint: disable=too-many-nested-blocks
     # We should read the default value from pacemaker. However that may slow
     # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
     warnings = []
@@ -333,7 +334,7 @@ def cluster_status(lib, argv, modifiers):
         raise CmdLineInputError()
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
-    if (retval != 0):
+    if retval != 0:
         utils.err("cluster is not currently running on this node")
 
     first_empty_line = False
@@ -379,7 +380,7 @@ def xml_status(lib, argv, modifiers):
         ignore_stderr=True
     )
 
-    if (retval != 0):
+    if retval != 0:
         utils.err("running crm_mon, is pacemaker running?")
     print(output.rstrip())
 

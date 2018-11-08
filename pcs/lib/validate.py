@@ -232,10 +232,8 @@ def names_in(
 
 def value_cond(
     option_name, predicate, value_type_or_enum, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Return a validation  function that takes option_dict and returns report list
     (with INVALID_OPTION_VALUE when option_name is not in allowed_values).
@@ -248,7 +246,7 @@ def value_cond(
     string code_to_allow_extra_values is code for forcing invalid names. If it
         is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
         not empty report INVALID_OPTION_VALUE is forceable error or warning.
-    bool allow_extra_values is flag that complements code_to_allow_extra_values
+    bool extra_values_allowed flag that complements code_to_allow_extra_values
         and determines wheter is report INVALID_OPTION_VALUE forceable error or
         warning.
     """
@@ -259,7 +257,7 @@ def value_cond(
         if not predicate(value.normalized):
             create_report = reports.get_problem_creator(
                 code_to_allow_extra_values,
-                allow_extra_values
+                extra_values_allowed
             )
             return [create_report(
                 reports.invalid_option_value,
@@ -311,10 +309,8 @@ def value_id(option_name, option_name_for_report=None, id_provider=None):
 
 def value_in(
     option_name, allowed_values, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Special case of value_cond function.returned function checks whenever value
     is included allowed_values. If not list of ReportItem will be returned.
@@ -325,7 +321,7 @@ def value_in(
     code_to_allow_extra_values -- string, code for forcing invalid names. If it
         is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
         not empty report INVALID_OPTION_VALUE is forceable error or warning.
-    allow_extra_values -- bool, flag that complements code_to_allow_extra_values
+    extra_values_allowed -- bool flag complementing code_to_allow_extra_values
         and determines wheter is report INVALID_OPTION_VALUE forceable error or
         warning.
     """
@@ -335,15 +331,13 @@ def value_in(
         allowed_values,
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_integer_in_range(
     option_name, at_least, at_most, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not an
     integer such that at_least <= value <= at_most
@@ -353,7 +347,7 @@ def value_integer_in_range(
     int at_most -- maximal allowed value
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -361,15 +355,13 @@ def value_integer_in_range(
         "{min}..{max}".format(min=at_least, max=at_most),
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_ip_address(
     option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an IP address
@@ -377,7 +369,7 @@ def value_ip_address(
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -385,15 +377,13 @@ def value_ip_address(
         "an IP address",
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_nonnegative_integer(
     option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an integer greater than -1
@@ -401,7 +391,7 @@ def value_nonnegative_integer(
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -409,22 +399,20 @@ def value_nonnegative_integer(
         "a non-negative integer",
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_not_empty(
     option_name, value_type_or_enum, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is empty
 
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -432,15 +420,13 @@ def value_not_empty(
         value_type_or_enum,
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_port_number(
     option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
     or UDP port number
@@ -448,7 +434,7 @@ def value_port_number(
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -456,15 +442,13 @@ def value_port_number(
         "a port number (1-65535)",
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_port_range(
     option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
     or UDP port range
@@ -472,7 +456,7 @@ def value_port_range(
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -484,15 +468,13 @@ def value_port_range(
         "port-port",
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_positive_integer(
     option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
-    # TODO: fix
-    # pylint: disable=redefined-outer-name
     """
     Get a validator reporting INVALID_OPTION_VALUE when the value is not
     an integer greater than zero
@@ -500,7 +482,7 @@ def value_positive_integer(
     string option_name -- name of the option to check
     string option_name_for_report -- substitued by the option_name if not set
     string code_to_allow_extra_values -- create a report forceable by this code
-    bool allow_extra_values -- create a warning instead of an error if True
+    bool extra_values_allowed -- create a warning instead of an error if True
     """
     return value_cond(
         option_name,
@@ -508,7 +490,7 @@ def value_positive_integer(
         "a positive integer",
         option_name_for_report=option_name_for_report,
         code_to_allow_extra_values=code_to_allow_extra_values,
-        allow_extra_values=allow_extra_values,
+        extra_values_allowed=extra_values_allowed,
     )
 
 def value_time_interval(option_name, option_name_for_report=None):
@@ -625,7 +607,7 @@ def allow_extra_values(code_to_allow, allow):
     """
     return {
         "code_to_allow_extra_values": code_to_allow,
-        "allow_extra_values": allow,
+        "extra_values_allowed": allow,
     }
 
 def allow_extra_names(code_to_allow, allow):

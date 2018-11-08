@@ -1313,7 +1313,7 @@ def _get_qdevice_model_net_options_validators(
     )
 
 def _validate_qdevice_net_algorithm(
-    code_to_allow_extra_values=None, allow_extra_values=False
+    code_to_allow_extra_values=None, extra_values_allowed=False
 ):
     # pylint: disable=protected-access
     @validate._if_option_exists("algorithm")
@@ -1335,6 +1335,6 @@ def _validate_qdevice_net_algorithm(
             "algorithm",
             allowed_algorithms,
             code_to_allow_extra_values=code_to_allow_extra_values,
-            allow_extra_values=allow_extra_values
+            extra_values_allowed=extra_values_allowed
         )(option_dict)
     return validate_func

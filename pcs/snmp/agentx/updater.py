@@ -70,7 +70,6 @@ def _find_oid_in_sub_tree(sub_tree, section_name):
     return None
 
 
-# pylint: disable=inconsistent-return-statements
 def _str_oid_to_oid(sub_tree, str_oid):
     sections = str_oid.split(".")
     oid_list = []
@@ -86,6 +85,7 @@ def _str_oid_to_oid(sub_tree, str_oid):
         if sub_tree.data_type:
             oid = ".".join(oid_list)
             return (oid, sub_tree)
+    return None
 
 
 def _str_to_oid(data):

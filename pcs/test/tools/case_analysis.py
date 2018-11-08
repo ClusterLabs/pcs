@@ -1,8 +1,9 @@
-# pylint: disable=inconsistent-return-statements, protected-access
+# pylint: disable=protected-access
 
 def _list2reason(test, exc_list):
     if exc_list and exc_list[-1][0] is test:
         return exc_list[-1][1]
+    return None
 
 def test_failed(test):
     # Borrowed from
