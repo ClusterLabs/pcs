@@ -87,7 +87,12 @@ class UidGidTest(unittest.TestCase):
 
         o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
         assert r == 1
-        ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
+        ac(
+            o,
+            "'pcs cluster uidgid rm' has been deprecated, use 'pcs cluster "
+                "uidgid delete' or 'pcs cluster uidgid remove' instead\n"
+            "Error: no uidgid files with uid=testuid2 and gid=testgid found\n"
+        )
 
         o,r = _pcs("cluster uidgid")
         assert r == 0
@@ -118,7 +123,11 @@ class UidGidTest(unittest.TestCase):
         ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
         o,r = _pcs("cluster uidgid rm uid=testuid gid=testgid")
-        ac(o, "")
+        ac(
+            o,
+            "'pcs cluster uidgid rm' has been deprecated, use 'pcs cluster "
+                "uidgid delete' or 'pcs cluster uidgid remove' instead\n"
+        )
         assert r == 0
 
         o,r = _pcs("cluster uidgid")

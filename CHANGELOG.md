@@ -189,6 +189,8 @@
 ### Deprecated
 - The `masters` bundle option is obsoleted by the `promoted-max` option
   in Pacemaker 2.x and therefore in pcs ([rhbz#1542288])
+- `pcs cluster uidgid rm`, use `pcs cluster uidgid delete` or `pcs cluster
+  uidgid remove` instead
 
 [ghpull#166]: https://github.com/ClusterLabs/pcs/pull/166
 [rhbz#1158816]: https://bugzilla.redhat.com/show_bug.cgi?id=1158816

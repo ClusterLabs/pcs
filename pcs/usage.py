@@ -865,10 +865,6 @@ Commands:
         Remove the specified uid and/or gid from the list of users/groups
         allowed to connect to corosync.
 
-    uidgid rm [uid=<uid>] [gid=<gid>]
-        Remove the specified uid and/or gid from the list of users/groups
-        allowed to connect to corosync.
-
     corosync [node]
         Get the corosync.conf from the specified node or from the current node
         if node not specified.

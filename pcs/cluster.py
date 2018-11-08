@@ -1115,6 +1115,12 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
         if command == "add":
             utils.write_uid_gid_file(uid, gid)
         elif command in {"delete", "remove", "rm"}:
+            if command == "rm":
+                sys.stderr.write(
+                    "'pcs cluster uidgid rm' has been deprecated, use 'pcs "
+                    "cluster uidgid delete' or 'pcs cluster uidgid remove' "
+                    "instead\n"
+                )
             file_removed = utils.remove_uid_gid_file(uid, gid)
             if not file_removed:
                 utils.err(
