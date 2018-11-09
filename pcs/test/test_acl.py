@@ -388,7 +388,7 @@ Role: role2
 """)
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role1")
+        o, r = pcs(temp_cib, "acl role delete role1 --autodelete")
         ac(o, "")
         assert r == 0
 
@@ -401,6 +401,19 @@ User: user1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
+        o, r = pcs(temp_cib, "acl role delete role2")
+        ac(o, "")
+        assert r == 0
+
+        o, r = pcs(temp_cib, "acl")
+        ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
+User: user1
+  Roles:
 """)
         assert r == 0
 

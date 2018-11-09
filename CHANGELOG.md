@@ -103,6 +103,8 @@
 - Fixed several issues in parsing `pcs constraint colocation add` command.
 - All `remove` subcommands now have `delete` aliases and vice versa. Previously,
   only some of them did and it was mostly undocumented.
+- The `pcs acl role delete` command no longer deletes ACL users and groups with
+  no ACL roles assigned
 
 ### Changed
 - Authentication has been overhauled ([rhbz#1549535]):

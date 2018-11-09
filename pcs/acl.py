@@ -10,9 +10,9 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
 
-# pylint: disable=too-many-branches
 
 def acl_cmd(lib, argv, modifiers):
+    # pylint: disable=too-many-branches
     if argv:
         sub_cmd, argv_next = argv[0], argv[1:]
     else:
@@ -273,12 +273,16 @@ def role_delete(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
+      * --autodelete - autodelete empty targets, groups
     """
-    modifiers.ensure_only_supported("-f")
+    modifiers.ensure_only_supported("-f", "--autodelete")
     if len(argv) != 1:
         raise CmdLineInputError()
 
-    lib.acl.remove_role(argv[0], autodelete_users_groups=True)
+    lib.acl.remove_role(
+        argv[0],
+        autodelete_users_groups=modifiers.get("--autodelete")
+    )
 
 
 def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
