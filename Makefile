@@ -174,7 +174,7 @@ else
 	cp -r pcsd ${DESTDIR}${PCSD_PARENT_DIR}/
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
 	install -d ${DESTDIR}/etc/pam.d
-	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
+	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
   ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DESTDIR}/${systemddir}/system/
 	install -m 644 pcsd/pcsd.service ${DESTDIR}/${systemddir}/system/
