@@ -160,6 +160,6 @@ def print_cluster_properties_definition(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported()
-    if not argv:
+    if argv:
         raise CmdLineInputError()
     print(json.dumps(utils.get_cluster_properties_definition()))
