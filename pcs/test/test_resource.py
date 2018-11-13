@@ -26,6 +26,7 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
+from pcs.test.bin_mock import get_mock_settings
 
 from pcs import utils
 from pcs import resource
@@ -39,6 +40,7 @@ temp_large_cib  = rc("temp-cib-large.xml")
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     def fixture_description(self, advanced=False):
         advanced_params = (
@@ -94,13 +96,11 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
 
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
-            "resource describe ocf:pacemaker:nonexistent",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
-                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or "
+            "resource describe ocf:heartbeat:NoExisting",
+            stdout_full=(
+                "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
                 "does not provide valid metadata: Metadata query for "
-                "ocf:pacemaker:nonexistent failed: (-5|Input/output error)\n"
-                "$", re.MULTILINE
+                "ocf:heartbeat:NoExisting failed: Input/output error\n"
             )
         )
 
@@ -139,10 +139,12 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
+        self.mock_settings = get_mock_settings("crm_resource_binary")
         self.pcs_runner = PcsRunner(temp_cib)
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
+        self.pcs_runner.mock_settings = self.mock_settings
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -175,9 +177,14 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource master Master ClusterIP5")
 
     def testCaseInsensitive(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
-        ac(o, "Error: Multiple agents match 'dummy', please specify full name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n")
-        assert r == 1
+        self.pcs_runner.mock_settings = self.mock_settings
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D0 dummy",
+            stdout_full=(
+                "Error: Multiple agents match 'dummy', please specify full "
+                "name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n"
+            )
+        )
 
         self.assert_pcs_success(
             "resource create --no-default-ops D1 systemhealth",
@@ -197,9 +204,13 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
                 " (deduced from 'ipaddr2')\n"
         )
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D4 ipaddr3")
-        ac(o,"Error: Unable to find agent 'ipaddr3', try specifying its full name\n")
-        assert r == 1
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D4 ipaddr3",
+            stdout_full=(
+                "Error: Unable to find agent 'ipaddr3', try specifying its "
+                "full name\n"
+            )
+        )
 
     def testEmpty(self):
         output, returnVal = pcs(temp_cib, "resource")
@@ -207,53 +218,55 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         assert output == "NO resources configured\n", "Bad output"
 
     def testAddResourcesLargeCib(self):
-        self.pcs_runner = PcsRunner(temp_large_cib)
-        output, returnVal = pcs(
-            temp_large_cib,
+        self.pcs_runner = PcsRunner(
+            temp_large_cib, mock_settings=self.mock_settings
+        )
+        self.assert_pcs_success(
             "resource create dummy0 ocf:heartbeat:Dummy"
         )
-        ac(output, '')
-        assert returnVal == 0
 
         self.assert_pcs_success(
-            "resource show dummy0", stdout_regexp=re.compile(outdent(
+            "resource show dummy0",
+            stdout_full=outdent(
                 """\
-                 Resource: dummy0 \\(class=ocf provider=heartbeat type=Dummy\\)
-                  Operations: migrate_from interval=0s timeout=20s? \\(dummy0-migrate_from-interval-0s\\)
-                              migrate_to interval=0s timeout=20s? \\(dummy0-migrate_to-interval-0s\\)
-                              monitor interval=10s? timeout=20s? \\(dummy0-monitor-interval-10s?\\)
-                              reload interval=0s timeout=20s? \\(dummy0-reload-interval-0s\\)
-                              start interval=0s timeout=20s? \\(dummy0-start-interval-0s\\)
-                              stop interval=0s timeout=20s? \\(dummy0-stop-interval-0s\\)
-                """), re.MULTILINE
+                 Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+                  Operations: migrate_from interval=0s timeout=20s (dummy0-migrate_from-interval-0s)
+                              migrate_to interval=0s timeout=20s (dummy0-migrate_to-interval-0s)
+                              monitor interval=10s timeout=20s (dummy0-monitor-interval-10s)
+                              reload interval=0s timeout=20s (dummy0-reload-interval-0s)
+                              start interval=0s timeout=20s (dummy0-start-interval-0s)
+                              stop interval=0s timeout=20s (dummy0-stop-interval-0s)
+                """
             )
         )
 
     def testDeleteResources(self):
+        self.pcs_runner.mock_settings = self.mock_settings
         # Verify deleting resources works
         # Additional tests are in class BundleDeleteTest
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
             " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
         )
-
-        line = 'resource delete'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output.startswith("\nUsage: pcs resource")
+        self.assert_pcs_fail(
+            'resource delete',
+            stdout_start="\nUsage: pcs resource",
+        )
 
         self.assert_pcs_success(
             "resource delete ClusterIP",
             "Deleting Resource - ClusterIP\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        assert returnVal == 1
-        assert output == "Error: unable to find resource 'ClusterIP'\n"
+        self.assert_pcs_fail(
+            "resource show ClusterIP",
+            "Error: unable to find resource 'ClusterIP'\n",
+        )
 
-        output, returnVal = pcs(temp_cib, "resource show")
-        assert returnVal == 0
-        assert output == 'NO resources configured\n'
+        self.assert_pcs_success(
+            "resource show",
+            'NO resources configured\n',
+        )
 
         self.assert_pcs_fail(
             "resource delete ClusterIP",
@@ -261,6 +274,7 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         )
 
     def testResourceShow(self):
+        self.pcs_runner.mock_settings = self.mock_settings
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
                 " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -2594,6 +2608,7 @@ Ticket Constraints:
         )
 
     def testLSBResource(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:network foo=bar",
             "Error: invalid resource option 'foo', there are no options"

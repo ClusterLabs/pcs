@@ -9,27 +9,32 @@ import re
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
-    skip_unless_pacemaker_supports_systemd,
 )
 from pcs.test.cib_resource.common import ResourceTest
+from pcs.test.bin_mock import get_mock_settings
 
 
-class Success(ResourceTest):
+class ResourceTestLocal(ResourceTest):
+    def setUp(self):
+        super(ResourceTestLocal, self).setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+
+class Success(ResourceTestLocal):
     def test_base_create(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy --no-default-ops",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
             </resources>"""
         )
 
-    @skip_unless_pacemaker_supports_systemd()
     def test_base_create_with_agent_name_including_systemd_instance(self):
         # crm_resource returns the same metadata for any systemd resource, no
         # matter if it exists or not
@@ -53,22 +58,22 @@ class Success(ResourceTest):
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
                         <op id="R-migrate_from-interval-0s" interval="0s"
-                            name="migrate_from" timeout="20"
+                            name="migrate_from" timeout="20s"
                         />
                         <op id="R-migrate_to-interval-0s" interval="0s"
-                            name="migrate_to" timeout="20"
+                            name="migrate_to" timeout="20s"
                         />
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-reload-interval-0s" interval="0s"
-                            name="reload" timeout="20"
+                            name="reload" timeout="20s"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
-                            timeout="20"
+                            timeout="20s"
                         />
                         <op id="R-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
+                            timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -122,8 +127,8 @@ class Success(ResourceTest):
                         />
                     </instance_attributes>
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -167,8 +172,8 @@ class Success(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -188,8 +193,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -216,8 +221,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -242,8 +247,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -282,7 +287,7 @@ class Success(ResourceTest):
             </resources>"""
         )
 
-class SuccessOperations(ResourceTest):
+class SuccessOperations(ResourceTestLocal):
     def test_create_with_operations(self):
         self.assert_effect(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
@@ -387,22 +392,22 @@ class SuccessOperations(ResourceTest):
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
                         <op id="R-migrate_from-interval-0s" interval="0s"
-                            name="migrate_from" timeout="20"
+                            name="migrate_from" timeout="20s"
                         />
                         <op id="R-migrate_to-interval-0s" interval="0s"
-                            name="migrate_to" timeout="20"
+                            name="migrate_to" timeout="20s"
                         />
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-reload-interval-0s" interval="0s"
-                            name="reload" timeout="20"
+                            name="reload" timeout="20s"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
-                            timeout="20"
+                            timeout="20s"
                         />
                         <op id="R-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
+                            timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -416,22 +421,22 @@ class SuccessOperations(ResourceTest):
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
                         <op id="R-migrate_from-interval-0s" interval="0s"
-                            name="migrate_from" timeout="20"
+                            name="migrate_from" timeout="20s"
                         />
                         <op id="R-migrate_to-interval-0s" interval="0s"
-                            name="migrate_to" timeout="20"
+                            name="migrate_to" timeout="20s"
                         />
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-reload-interval-0s" interval="0s"
-                            name="reload" timeout="20"
+                            name="reload" timeout="20s"
                         />
                         <op id="R-start-interval-0s" interval="0s" name="start"
                             timeout="200"
                         />
                         <op id="R-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
+                            timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -444,8 +449,8 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -491,8 +496,8 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-monitro-interval-30s" interval="30s"
                             name="monitro"
@@ -520,7 +525,7 @@ class SuccessOperations(ResourceTest):
             </resources>"""
         )
 
-class SuccessGroup(ResourceTest):
+class SuccessGroup(ResourceTestLocal):
     def test_with_group(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --group G",
@@ -530,8 +535,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -558,8 +563,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R0-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -567,8 +572,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -591,8 +596,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R0-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -600,8 +605,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -609,8 +614,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R1-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R1-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -633,8 +638,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -642,8 +647,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R0-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -651,7 +656,7 @@ class SuccessGroup(ResourceTest):
             </resources>"""
         )
 
-class SuccessMaster(ResourceTest):
+class SuccessMaster(ResourceTestLocal):
     def test_disable_is_on_master_element(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled --master",
@@ -666,8 +671,8 @@ class SuccessMaster(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -695,22 +700,22 @@ class SuccessMaster(ResourceTest):
                         </instance_attributes>
                         <operations>
                             <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20"
+                                name="migrate_from" timeout="20s"
                             />
                             <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20"
+                                name="migrate_to" timeout="20s"
                             />
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                             <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20"
+                                name="reload" timeout="20s"
                             />
                             <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
+                                name="start" timeout="20s"
                             />
                             <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
+                                name="stop" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -776,8 +781,8 @@ class SuccessMaster(ResourceTest):
                             />
                         </meta_attributes>
                         <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -820,7 +825,7 @@ class SuccessMaster(ResourceTest):
             </resources>"""
         )
 
-class SuccessClone(ResourceTest):
+class SuccessClone(ResourceTestLocal):
     def test_clone_does_not_overshadow_meta_options(self):
         self.assert_effect(
             [
@@ -839,22 +844,22 @@ class SuccessClone(ResourceTest):
                         </meta_attributes>
                         <operations>
                             <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20"
+                                name="migrate_from" timeout="20s"
                             />
                             <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20"
+                                name="migrate_to" timeout="20s"
                             />
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                             <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20"
+                                name="reload" timeout="20s"
                             />
                             <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
+                                name="start" timeout="20s"
                             />
                             <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
+                                name="stop" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -884,22 +889,22 @@ class SuccessClone(ResourceTest):
                     >
                         <operations>
                             <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20"
+                                name="migrate_from" timeout="20s"
                             />
                             <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20"
+                                name="migrate_to" timeout="20s"
                             />
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor"
                             />
                             <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20"
+                                name="reload" timeout="20s"
                             />
                             <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
+                                name="start" timeout="20s"
                             />
                             <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
+                                name="stop" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -927,22 +932,22 @@ class SuccessClone(ResourceTest):
                     >
                         <operations>
                             <op id="R-migrate_from-interval-0s" interval="0s"
-                                name="migrate_from" timeout="20"
+                                name="migrate_from" timeout="20s"
                             />
                             <op id="R-migrate_to-interval-0s" interval="0s"
-                                name="migrate_to" timeout="20"
+                                name="migrate_to" timeout="20s"
                             />
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                             <op id="R-reload-interval-0s" interval="0s"
-                                name="reload" timeout="20"
+                                name="reload" timeout="20s"
                             />
                             <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
+                                name="start" timeout="20s"
                             />
                             <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
+                                name="stop" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -952,7 +957,7 @@ class SuccessClone(ResourceTest):
 
 
 @skip_unless_pacemaker_supports_bundle
-class Bundle(ResourceTest):
+class Bundle(ResourceTestLocal):
     empty_cib = rc("cib-empty-2.8.xml")
 
     def fixture_primitive(self, name, bundle=None):
@@ -1019,8 +1024,8 @@ class Bundle(ResourceTest):
                             type="Dummy"
                         >
                             <operations>
-                                <op id="R1-monitor-interval-10" interval="10"
-                                    name="monitor" timeout="20"
+                                <op id="R1-monitor-interval-10s" interval="10s"
+                                    name="monitor" timeout="20s"
                                 />
                             </operations>
                         </primitive>
@@ -1030,7 +1035,7 @@ class Bundle(ResourceTest):
         )
 
 
-class FailOrWarn(ResourceTest):
+class FailOrWarn(ResourceTestLocal):
     def test_error_group_clone_combination(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
@@ -1265,7 +1270,7 @@ class FailOrWarn(ResourceTest):
                 " '20'\n"
         )
 
-class FailOrWarnOp(ResourceTest):
+class FailOrWarnOp(ResourceTestLocal):
     def test_fail_empty(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
@@ -1382,7 +1387,7 @@ class FailOrWarnOp(ResourceTest):
                 " and 'start-delay' can be used\n"
         )
 
-class FailOrWarnGroup(ResourceTest):
+class FailOrWarnGroup(ResourceTestLocal):
     def test_fail_when_invalid_group(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --group 1",
@@ -1401,8 +1406,8 @@ class FailOrWarnGroup(ResourceTest):
                         <nvpair id="R1-meta_attributes-a" name="a" value="b"/>
                     </meta_attributes>
                     <operations>
-                        <op id="R1-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R1-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>

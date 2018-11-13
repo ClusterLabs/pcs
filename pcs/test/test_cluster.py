@@ -5,6 +5,7 @@ from __future__ import (
 )
 
 import os
+import os.path
 import shutil
 import socket
 from pcs.test.tools import pcs_unittest as unittest
@@ -23,6 +24,7 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
+from pcs.test.bin_mock import get_mock_settings
 
 from pcs import utils
 
@@ -67,22 +69,33 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
 
     def testRemoteNode(self):
         #pylint: disable=trailing-whitespace
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         o,r = pcs(
             temp_cib,
-            "resource create D1 ocf:heartbeat:Dummy --no-default-ops"
+            "resource create D1 ocf:heartbeat:Dummy --no-default-ops",
+            mock_settings=self.pcs_runner.mock_settings,
         )
         assert r==0 and o==""
 
         o,r = pcs(
             temp_cib,
-            "resource create D2 ocf:heartbeat:Dummy --no-default-ops"
+            "resource create D2 ocf:heartbeat:Dummy --no-default-ops",
+            mock_settings=self.pcs_runner.mock_settings,
         )
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "cluster remote-node rh7-2g D1")
+        o,r = pcs(
+            temp_cib,
+            "cluster remote-node rh7-2g D1",
+            mock_settings=self.pcs_runner.mock_settings,
+        )
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node add rh7-2g D1 --force")
+        o,r = pcs(
+            temp_cib,
+            "cluster remote-node add rh7-2g D1 --force",
+            mock_settings=self.pcs_runner.mock_settings,
+        )
         assert r==0
         self.assertEqual(
             o,
@@ -93,7 +106,8 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         o,r = pcs(
             temp_cib,
             "cluster remote-node add rh7-1 D2 remote-port=100 remote-addr=400"
-            " remote-connect-timeout=50 --force"
+            " remote-connect-timeout=50 --force",
+            mock_settings=self.pcs_runner.mock_settings,
         )
         assert r==0
         self.assertEqual(
@@ -106,14 +120,18 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: remote-node=rh7-2g 
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
-              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
-        o,r = pcs(temp_cib, "cluster remote-node remove")
+        o,r = pcs(
+            temp_cib,
+            "cluster remote-node remove",
+            mock_settings=self.pcs_runner.mock_settings,
+        )
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
         self.assert_pcs_fail(
@@ -151,10 +169,10 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
               Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
-              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 
@@ -172,9 +190,9 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10 timeout=20 (D2-monitor-interval-10)
+              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
 

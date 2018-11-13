@@ -6,6 +6,8 @@ from __future__ import (
 
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.misc import outdent
+from pcs.test.bin_mock import get_mock_settings
+
 
 fixture_nolive_add_report = outdent(
     """\
@@ -154,14 +156,18 @@ class NodeAddRemote(ResourceTest):
         )
 
 class NodeAddGuest(ResourceTest):
+    def setUp(self):
+        super(NodeAddGuest, self).setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
     def create_resource(self):
         self.assert_effect(
             "resource create G ocf:heartbeat:Dummy --no-default-ops",
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -290,8 +296,8 @@ class NodeAddGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -335,8 +341,8 @@ class NodeAddGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="G-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="G-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -466,6 +472,10 @@ class NodeRemoveRemote(ResourceTest):
         )
 
 class NodeRemoveGuest(ResourceTest):
+    def setUp(self):
+        super(NodeRemoveGuest, self).setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
     def fixture_guest_node(self):
         self.assert_effect(
             "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops"
@@ -484,8 +494,8 @@ class NodeRemoveGuest(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="NODE-ID-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="NODE-ID-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -510,8 +520,8 @@ class NodeRemoveGuest(ResourceTest):
                     type="Dummy"
                 >
                     <operations>
-                        <op id="NODE-ID-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="NODE-ID-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>

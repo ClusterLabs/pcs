@@ -11,6 +11,7 @@ from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import  get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
 from pcs.test.tools.pcs_unittest import TestCase
+from pcs.test.bin_mock import get_mock_settings
 
 
 class OperationAdd(
@@ -19,6 +20,7 @@ class OperationAdd(
 ):
     temp_cib = rc("temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
+    mock_settings = get_mock_settings("crm_resource_binary")
 
     def setUp(self):
         self.prepare_cib_file()
@@ -35,7 +37,9 @@ class OperationAdd(
 
     def fixture_cib(self):
         shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner = PcsRunner(
+            self.temp_cib, mock_settings=self.mock_settings
+        )
         self.assert_pcs_success(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
         )
@@ -61,8 +65,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -80,8 +84,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op description="test-description" name="start"
                             id="R-start-interval-20s" interval="20s"
@@ -106,8 +110,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -121,8 +125,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -141,8 +145,8 @@ class OperationAdd(
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                         <op id="abcd" interval="0s" name="start" timeout="30" />
                     </operations>

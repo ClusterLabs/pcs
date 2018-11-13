@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="Stateful" version="1.0">
+<version>1.0</version>
+
+<longdesc lang="en">
+This is an example resource agent that implements two states
+</longdesc>
+<shortdesc lang="en">Example stateful resource agent</shortdesc>
+
+<parameters>
+
+<parameter name="state" unique="1">
+<longdesc lang="en">
+Location to store the resource state in
+</longdesc>
+<shortdesc lang="en">State file</shortdesc>
+<content type="string" default="/var/run/Stateful-Stateful.state" />
+</parameter>
+
+<parameter name="envfile" unique="1">
+<longdesc lang="en">
+If this is set, the environment will be dumped to this file for every call.
+</longdesc>
+<shortdesc lang="en">Environment dump file</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+</parameters>
+
+<actions>
+<action name="start"   timeout="20" />
+<action name="stop"    timeout="20" />
+<action name="monitor" depth="0"  timeout="20" interval="10" role="Master"/>
+<action name="monitor" depth="0"  timeout="20" interval="10" role="Slave"/>
+<action name="notify"  timeout="5" />
+<action name="meta-data"  timeout="5" />
+<action name="validate-all"  timeout="30" />
+</actions>
+</resource-agent>
+
