@@ -74,10 +74,14 @@ Stonith options:
         self.assert_pcs_fail(
             "stonith describe fence_noexist",
             # pacemaker 1.1.18 changes -5 to Input/output error
+            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
+            #   does not support meta-data: Invalid argument (22)"
             stdout_regexp=re.compile("^"
                 "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error)\n"
+                "provide valid metadata: (Agent fence_noexist not found or "
+                "does not support meta-data: Invalid argument \\(22\\)\n)?"
+                "Metadata query for stonith:fence_noexist failed: "
+                "(-5|Input/output error)\n"
                 "$", re.MULTILINE
             )
         )
@@ -104,11 +108,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
             # pacemaker 1.1.18 changes -5 to Input/output error
+            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
+            #   does not support meta-data: Invalid argument (22)"
             stdout_regexp=re.compile("^"
                 "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error), use "
-                "--force to override\n"
+                "provide valid metadata: (Agent fence_noexist not found or "
+                "does not support meta-data: Invalid argument \\(22\\)\n)?"
+                "Metadata query for stonith:fence_noexist failed: "
+                "(-5|Input/output error), use --force to override\n"
                 "$", re.MULTILINE
             )
         )
@@ -116,10 +123,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "stonith create test1 fence_noexist --force",
             # pacemaker 1.1.18 changes -5 to Input/output error
+            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
+            #   does not support meta-data: Invalid argument (22)"
             stdout_regexp=re.compile("^"
                 "Warning: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: Metadata query for "
-                "stonith:fence_noexist failed: (-5|Input/output error)\n"
+                "provide valid metadata: (Agent fence_noexist not found or "
+                "does not support meta-data: Invalid argument \\(22\\)\n)?"
+                "Metadata query for stonith:fence_noexist failed: "
+                "(-5|Input/output error)\n"
                 "$", re.MULTILINE
             )
         )
