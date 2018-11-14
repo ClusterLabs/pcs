@@ -1484,7 +1484,6 @@ def _parse_node_options(
 
 TRANSPORT_KEYWORD = "transport"
 TRANSPORT_DEFAULT_SECTION = "__default__"
-KNET_KEYWORD = "knet"
 LINK_KEYWORD = "link"
 def _parse_transport(transport_args):
     """
@@ -1531,7 +1530,6 @@ def cluster_setup(lib, argv, modifiers):
         "--wait", "--start", "--enable", "--force", "--no-keys-sync"
     )
     # pylint: disable=invalid-name
-    DEFAULT_TRANSPORT_TYPE = KNET_KEYWORD
     if len(argv) < 2:
         raise CmdLineInputError()
     cluster_name, *argv = argv
@@ -1551,7 +1549,7 @@ def cluster_setup(lib, argv, modifiers):
         ).items()
     ]
 
-    transport_type = DEFAULT_TRANSPORT_TYPE
+    transport_type = None
     transport_options = {}
 
     if TRANSPORT_KEYWORD in parsed_args:

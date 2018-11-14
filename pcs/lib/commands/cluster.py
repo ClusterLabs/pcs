@@ -194,6 +194,7 @@ def setup(
         force_flags = []
     force = report_codes.FORCE in force_flags
 
+    transport_type = transport_type or "knet"
     transport_options = transport_options or {}
     link_list = link_list or []
     compression_options = compression_options or {}

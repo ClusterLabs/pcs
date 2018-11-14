@@ -208,7 +208,7 @@ class ClusterSetup(unittest.TestCase):
 
     def assert_setup_called_with(self, node_list, **kwargs):
         default_kwargs = dict(
-            transport_type=DEFAULT_TRANSPORT_TYPE,
+            transport_type=None,
             transport_options={},
             link_list=[],
             compression_options={},

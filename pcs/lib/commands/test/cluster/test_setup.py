@@ -27,7 +27,6 @@ PCSD_SSL_KEY = generate_key()
 PCSD_SSL_CERT = generate_cert(PCSD_SSL_KEY, "servername")
 PCSD_SSL_KEY_DUMP = dump_key(PCSD_SSL_KEY)
 PCSD_SSL_CERT_DUMP = dump_cert(PCSD_SSL_CERT)
-DEFAULT_TRANSPORT_TYPE = "knet"
 RANDOM_KEY = "I'm so random!".encode()
 CLUSTER_NAME = "myCluster"
 NODE_LIST = ["node1", "node2", "node3"]
@@ -104,7 +103,7 @@ def options_fixture(options):
     ])
 
 def corosync_conf_fixture(
-    node_addrs, transport_type=DEFAULT_TRANSPORT_TYPE, link_list=None,
+    node_addrs, transport_type="knet", link_list=None,
     links_numbers=None, quorum_options=None, totem_options=None,
     transport_options=None, compression_options=None, crypto_options=None,
 ):
@@ -326,7 +325,6 @@ class CheckLive(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [{"name": name} for name in self.node_names],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
             ),
             [
                 fixture.error(
@@ -378,7 +376,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -388,7 +385,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
         )
         self.env_assist.assert_reports(
@@ -408,7 +404,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             start=True,
         )
         self.env_assist.assert_reports(
@@ -427,7 +422,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             start=True,
             wait=True,
         )
@@ -459,7 +453,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
             start=True,
         )
@@ -487,7 +480,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             enable=True,
             start=True,
             wait=True,
@@ -527,7 +519,6 @@ class SetupSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             no_keys_sync=True,
         )
 
@@ -597,7 +588,6 @@ class SetupSuccessAddresses(TestCase):
                 {"name": name, "addrs": [addr]}
                 for name, addr in zip(self.node_names, self.node_coros)
             ],
-            transport_type=DEFAULT_TRANSPORT_TYPE,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture(
             using_known_hosts_addresses=False
@@ -667,7 +657,6 @@ class Setup2NodeSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [dict(name=node, addrs=None) for node in self.node_list],
-            transport_type=DEFAULT_TRANSPORT_TYPE,
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture(node_list=self.node_list)
@@ -687,7 +676,6 @@ class Setup2NodeSuccessMinimal(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [dict(name=node, addrs=None) for node in self.node_list],
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             quorum_options=dict(auto_tie_breaker="1")
         )
         self.env_assist.assert_reports(
@@ -1853,7 +1841,6 @@ class SetupWithWait(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 start=True,
                 wait=1,
             ),
@@ -1889,7 +1876,6 @@ class SetupWithWait(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 start=True,
                 wait=1,
             ),
@@ -1936,7 +1922,6 @@ class SetupWithWait(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [dict(name=node, addrs=None) for node in NODE_LIST],
-            transport_type=DEFAULT_TRANSPORT_TYPE,
             start=True,
             wait=5,
         )
@@ -2015,7 +2000,6 @@ class SetupWithWait(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 start=True,
                 wait=5,
             ),
@@ -2087,7 +2071,6 @@ class SetupWithWait(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 start=True,
                 wait=2,
             ),
@@ -2200,7 +2183,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2230,7 +2212,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2265,7 +2246,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2311,7 +2291,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2357,7 +2336,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2402,7 +2380,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
             ),
             []
         )
@@ -2437,7 +2414,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2482,7 +2458,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2527,7 +2502,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2597,7 +2571,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2661,7 +2634,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2700,7 +2672,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2733,7 +2704,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
@@ -2755,7 +2725,6 @@ class Failures(TestCase):
                 self.env_assist.get_env(),
                 CLUSTER_NAME,
                 [dict(name=node, addrs=None) for node in NODE_LIST],
-                transport_type=DEFAULT_TRANSPORT_TYPE,
                 enable=True,
                 start=True,
             ),
