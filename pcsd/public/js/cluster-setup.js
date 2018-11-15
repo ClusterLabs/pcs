@@ -35,8 +35,8 @@ clusterSetup.link.pairAttr = "data-transport-link-id";
 clusterSetup.link.create = function(transportType, actions){
   return tools.snippet.take("transport-link")
     .click(actions.setCurrent)
-    .find(".label").text(transportType+" link").parent()
-    .find(".delete").click(actions.delete).parent()
+    .find(".label").text(transportType+" link").parents(".transport-link")
+    .find(".delete").click(actions.delete).parents(".transport-link")
   ; 
 };
 

@@ -926,9 +926,9 @@ table.args-table td.reg {
   color: #f79727;
 }
 #csetup-transport-netmaps .type-netmap .current:after {
-  content: " ⯈";
+  content: " >";
 }
-#csetup-transport-netmaps .type-netmap li .label:hover {
+#csetup-transport-netmaps .type-netmap li .link-label:hover {
   background: #4c4c4c;
 }
 #csetup  table.key-value td:first-child {
