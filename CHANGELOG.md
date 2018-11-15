@@ -129,6 +129,7 @@
     significantly increased.
   - The syntax of the command has been completely changed to accommodate the
     changes and new features.
+  - Corosync encryption is enabled by default when knet is used ([rhbz#1648942])
 - The `pcs cluster node add` command has been overhauled ([rhbz#1158816],
   [rhbz#1183103])
   - It works with Corosync 3.x only and supports knet as well as udp/udpu.
@@ -229,6 +230,7 @@
 [rhbz#1620190]: https://bugzilla.redhat.com/show_bug.cgi?id=1620190
 [rhbz#1638852]: https://bugzilla.redhat.com/show_bug.cgi?id=1638852
 [rhbz#1640477]: https://bugzilla.redhat.com/show_bug.cgi?id=1640477
+[rhbz#1648942]: https://bugzilla.redhat.com/show_bug.cgi?id=1648942
 
 
 ## [0.9.163] - 2018-02-20

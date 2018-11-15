@@ -664,9 +664,9 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
     )
     if (
         # default values taken from `man corosync.conf`
-        crypto_options.get("cipher", "aes256") != "none"
+        crypto_options.get("cipher", "none") != "none"
         and
-        crypto_options.get("hash", "sha1") == "none"
+        crypto_options.get("hash", "none") == "none"
     ):
         report_items.append(
             reports.prerequisite_option_must_be_enabled_as_well(

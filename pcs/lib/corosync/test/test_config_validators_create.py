@@ -1393,7 +1393,15 @@ class CreateTransportKnet(TestCase):
                     "cipher": "aes256",
                 }
             ),
-            []
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="cipher",
+                    option_type="crypto",
+                    prerequisite_name="hash",
+                    prerequisite_type="crypto"
+                )
+            ]
         )
 
     def test_crypto_disabled_cipher_default_hash(self):
@@ -1442,15 +1450,7 @@ class CreateTransportKnet(TestCase):
                     "hash": "none",
                 }
             ),
-            [
-                fixture.error(
-                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
-                    option_name="cipher",
-                    option_type="crypto",
-                    prerequisite_name="hash",
-                    prerequisite_type="crypto"
-                )
-            ]
+            []
         )
 
 

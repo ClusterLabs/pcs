@@ -204,6 +204,11 @@ def setup(
     nodes = [
         _normalize_dict(node, {"addrs"}) for node in nodes
     ]
+    if transport_type == "knet" and not crypto_options:
+        crypto_options = {
+            "cipher": "aes256",
+            "hash": "sha256",
+        }
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()

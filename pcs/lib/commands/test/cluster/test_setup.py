@@ -108,6 +108,11 @@ def corosync_conf_fixture(
     transport_options=None, compression_options=None, crypto_options=None,
 ):
     # pylint: disable=too-many-arguments
+    if transport_type == "knet" and not crypto_options:
+        crypto_options = {
+            "cipher": "aes256",
+            "hash": "sha256",
+        }
     interface_list = ""
     if link_list:
         link_list = [dict(link) for link in link_list]
@@ -1671,6 +1676,38 @@ class TransportKnetSuccess(TestCase):
             crypto_options=crypto_options,
             totem_options=TOTEM_OPTIONS,
             quorum_options=QUORUM_OPTIONS,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture(
+            using_known_hosts_addresses=False
+        ))
+
+    def test_disable_crypto(self):
+        node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
+        self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
+        crypto_options = dict(
+            cipher="none",
+            hash="none",
+        )
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(
+                node_addrs,
+                transport_type=self.transport_type,
+                crypto_options=crypto_options,
+            ),
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            [
+                dict(
+                    name=node,
+                    addrs=addrs,
+                ) for node, addrs in node_addrs.items()
+            ],
+            transport_type=self.transport_type,
+            crypto_options=crypto_options,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture(
             using_known_hosts_addresses=False

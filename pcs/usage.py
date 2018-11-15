@@ -627,6 +627,8 @@ Commands:
             level, model, threshold
         Crypto options are:
             cipher, hash, model
+            By default, encryption is enabled with cipher=aes256 and
+            hash=sha256. To disable encryption, set cipher=none and hash=none.
 
         Transports udp and udpu:
         These transports are limited for one address per node. They do not
