@@ -1,7 +1,7 @@
 dev.utils.clusterSetupDialog = {
   wasRun: false,
 };
-dev.utils.clusterSetupDialog.prefill = function(nodesNames){
+dev.utils.clusterSetupDialog.prefill = function(url, nodesNames){
   nodesNames = nodesNames || ["dave8", "kryten8", "holly8"];
 
   if(dev.utils.clusterSetupDialog.wasRun){ return }
@@ -13,7 +13,7 @@ dev.utils.clusterSetupDialog.prefill = function(nodesNames){
   nodesNames.forEach(function(name, i){ nodes.eq(i).val(name) });
 
   setTimeout(function(){
-    // clusterSetup.submit.run(true);
+    clusterSetup.submit.run(true);
 
     setTimeout(function(){
       dev.utils.clusterSetupDialog.prefillKnet();
@@ -203,22 +203,22 @@ dev.utils.clusterSetupDialog.logSetupData = function(setupData){
 };
 testClusterSetup = { clusterName: "starbug8" };
 
-// dev.patch.ajax_wrapper(
-//   function(url){
-//     switch(url){
-//       case "/clusters_overview":
-//         if(dev.flags.cluster_overview_run === undefined){
-//           dev.flags.cluster_overview_run = true;
-//           console.group('Wrapping ajax_wrapper');
-//           console.log(url);
-//           console.groupEnd();
-//           return mock.clusters_overview;
-//         }
-//       default: return undefined;
-//     }
-//   },
-//   dev.utils.clusterSetupDialog.prefill,
-// );
+dev.patch.ajax_wrapper(
+  function(url){
+    switch(url){
+      case "/clusters_overview":
+        if(dev.flags.cluster_overview_run === undefined){
+          dev.flags.cluster_overview_run = true;
+          console.group('Wrapping ajax_wrapper');
+          console.log(url);
+          console.groupEnd();
+          return mock.clusters_overview;
+        }
+      default: return undefined;
+    }
+  },
+  dev.utils.clusterSetupDialog.prefill,
+);
 
 
 testClusterSetup.successPath = function(url, data, success, fail){
@@ -289,6 +289,8 @@ testClusterSetup.checkAuth500 = function(url, data, success, fail){
 testClusterSetup.checkAuthFails = function(url, data, success, fail){
   switch(url){
     case "/manage/check_auth_against_nodes": return fail();
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
@@ -299,6 +301,8 @@ testClusterSetup.checkAuthNodesNotAuth = function(url, data, success, fail){
       kryten8: "Unable to authenticate",
       holly8: "Cant connect",
     }));
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
@@ -429,7 +433,7 @@ testClusterSetup.startClusterFail = function(url, data, success, fail){
 
 
 
-// dev.runScenario(
+dev.runScenario(
   // testClusterSetup.canAddClusterOrNodes403
   // testClusterSetup.canAddClusterOrNodes500
   // testClusterSetup.canAddClusterOrNodes400
@@ -448,5 +452,5 @@ testClusterSetup.startClusterFail = function(url, data, success, fail){
   // testClusterSetup.clusterSetupForce
   // testClusterSetup.rememberFail
   // testClusterSetup.startClusterFail
-//   testClusterSetup.successPath
-// );
+  testClusterSetup.successPath
+);

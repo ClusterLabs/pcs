@@ -738,6 +738,7 @@ clusterSetup.submit.run = function(useAdvancedOptions){
         break;
 
       case api.err.CLUSTER_SETUP.PCS_LIB_EXCEPTION:
+        clusterSetup.step.clusterNameNodes();
         alert("Server returned an error: "+data.msg);
         break;
 
