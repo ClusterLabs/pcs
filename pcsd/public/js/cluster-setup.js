@@ -68,9 +68,9 @@ clusterSetup.link.detail.create = function(transportType, nodesNames){
 };
 
 //------------------------------------------------------------------------------
-clusterSetup.netmap.updateAddLinkAbility = function(linkList){
+clusterSetup.netmap.updateAddLinkAbility = function(transportType, linkList){
   var addLinkButton = $("#csetup-transport-netmaps .add-link");
-  var maxLinkCount = clusterSetup.transportType.current() === "knet" ? 8 : 1;
+  var maxLinkCount = transportType === "knet" ? 8 : 1;
   if (linkList.length >= maxLinkCount) {
     addLinkButton.hide();
   }else{
@@ -81,7 +81,10 @@ clusterSetup.netmap.updateAddLinkAbility = function(linkList){
 clusterSetup.netmap.onLinksChange = function(){
   var linkList = clusterSetup.netmap.current.linkList();
 
-  clusterSetup.netmap.updateAddLinkAbility(linkList);
+  clusterSetup.netmap.updateAddLinkAbility(
+    clusterSetup.transportType.current(),
+    linkList,
+  );
 
   if(linkList.length < 1){
     clusterSetup.netmap.current.get().hide();
@@ -123,7 +126,8 @@ clusterSetup.netmap.current.adaptToType = function(){
     clusterSetup.netmap.current.get().show();
   }
   clusterSetup.netmap.updateAddLinkAbility(
-    clusterSetup.netmap.current.linkList()
+    clusterSetup.transportType.current(),
+    clusterSetup.netmap.current.linkList(),
   );
 };
 
