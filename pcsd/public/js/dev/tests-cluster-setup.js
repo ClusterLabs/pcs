@@ -16,17 +16,18 @@ dev.utils.clusterSetupDialog.prefill = function(url, nodesNames){
     clusterSetup.submit.run(true);
 
     setTimeout(function(){
-      dev.utils.clusterSetupDialog.prefillKnet();
-      // $("[href='#csetup-transport-options']").trigger("click");
+      // dev.utils.clusterSetupDialog.prefillKnet();
       dev.utils.clusterSetupDialog.prefillCompression();
       dev.utils.clusterSetupDialog.prefillCrypto();
       dev.utils.clusterSetupDialog.prefillTotem();
       dev.utils.clusterSetupDialog.prefillQuorum();
+      dev.utils.clusterSetupDialog.prefillTransportOptionsUdp("udp");
+      $("[href='#csetup-transport-options']").trigger("click");
       // $("[href='#csetup-quorum']").trigger("click");
-      // dev.utils.clusterSetupDialog.prefillUdp("udpu");
-      // $(".ui-dialog:has('#csetup') button:contains('Create Cluster')")
-      //   .trigger("click")
-      // ;
+      dev.utils.clusterSetupDialog.prefillUdp("udpu");
+      $(".ui-dialog:has('#csetup') button:contains('Create cluster')")
+        // .trigger("click")
+      ;
       // $("[href='#csetup-totem']").trigger("click");
     }, 500);
   }, 5);
@@ -55,6 +56,26 @@ dev.utils.clusterSetupDialog.prefillCompression = function(){
       model: "zlib",
       threshold: "101",
       level: "1",
+    },
+  );
+};
+
+dev.utils.clusterSetupDialog.prefillTransportOptionsKnet = function(){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .options-container .options.knet"),
+    {
+      ip_version: "ipv4",
+      knet_pmtud_interval: "2",
+      link_mode: "rr",
+    },
+  );
+};
+dev.utils.clusterSetupDialog.prefillTransportOptionsUdp = function(type){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .options-container .options."+type),
+    {
+      ip_version: "ipv4",
+      netmtu: "1501",
     },
   );
 };

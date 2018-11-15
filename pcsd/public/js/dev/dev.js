@@ -5,10 +5,20 @@ dev = {
   utils: {},
 };
 
+dev.utils.urlSpecificRequestDataForLog = function(url, requestData){
+  switch(url){
+    case "/manage/cluster-setup": return {
+      target_node: requestData.target_node,
+      setup_data: JSON.parse(requestData.setup_data),
+    };
+    default: return requestData;
+  }
+};
+
 dev.promise.success = function(url, requestData){
   return function(responseData){
     console.group('Ajax sent: '+url);
-    console.log(requestData);
+    console.log(dev.utils.urlSpecificRequestDataForLog(url, requestData));
     console.groupEnd();
 
     var dfd = $.Deferred();
@@ -16,7 +26,7 @@ dev.promise.success = function(url, requestData){
       function(){
         console.group('Ajax succeeded: '+url);
         console.log("REQUEST DATA:");
-        console.log(requestData);
+        console.log(dev.utils.urlSpecificRequestDataForLog(url, requestData));
         console.log("RESPONSE DATA:");
         console.log(responseData);
         console.groupEnd();
@@ -31,7 +41,7 @@ dev.promise.success = function(url, requestData){
 dev.promise.fail = function(url, requestData, rejectCode){
   return function(status, responseText){
     console.group('Ajax sent: '+url);
-    console.log(requestData);
+    console.log(dev.utils.urlSpecificRequestDataForLog(url, requestData));
     console.groupEnd();
 
     var dfd = $.Deferred();
@@ -39,7 +49,7 @@ dev.promise.fail = function(url, requestData, rejectCode){
       function(){
         console.group('Ajax failed: '+url);
         console.log("REQUEST DATA:");
-        console.log(requestData);
+        console.log(dev.utils.urlSpecificRequestDataForLog(url, requestData));
         console.log("RESPONSE STATUS:");
         console.log(status);
         console.log("RESPONSE TEXT:");

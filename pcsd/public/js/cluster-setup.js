@@ -383,6 +383,11 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
         .toArray()
       ,
 
+      transportOptions: fromForm(
+        $("#csetup-transport-options .options-container .options.knet"),
+        ["ip_version", "knet_pmtud_interval", "link_mode"],
+      ),
+
       compression: fromForm(
         $("#csetup-transport-options .compression-options"),
         ["model", "threshold", "level"]
@@ -395,6 +400,14 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
     }
 
     : {
+      transportOptions: fromForm(
+        $(
+          "#csetup-transport-options .options-container .options."
+          +
+          clusterSetup.transportType.current()
+        ),
+        ["ip_version", "netmtu"],
+      ),
       compression: {},
       crypto: {},
       linkList: clusterSetup.netmap.current.detailList().find(".detail")

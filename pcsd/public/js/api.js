@@ -218,7 +218,17 @@ api.clusterSetup = function(submitData, processOptions){
       };
     }),
     transport_type: setupData.transportType,
-    transport_options: {},
+    transport_options: setupData.transportType == "knet"
+      ? {
+        ip_version: setupData.transportOptions.ip_version,
+        knet_pmtud_interval: setupData.transportOptions.knet_pmtud_interval,
+        link_mode: setupData.transportOptions.link_mode,
+      }
+      : {
+        ip_version: setupData.transportOptions.ip_version,
+        netmtu: setupData.transportOptions.netmtu,
+      }
+    ,
     link_list: setupData.linkList.map(function(link){
       return {
         linknumber: link.linknumber,
@@ -270,7 +280,6 @@ api.clusterSetup = function(submitData, processOptions){
       wait_for_all: setupData.quorum.wait_for_all,
     },
   };
-
 
   var apiCall = function(force){
     data.force_flags = api.tools.forceFlags(force);
