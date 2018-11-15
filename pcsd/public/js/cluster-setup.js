@@ -447,7 +447,7 @@ clusterSetup.step.clusterSettings = function(clusterName, nodesNames, actions){
         click: actions.back,
       },
       {
-        text: "Create Cluster",
+        text: "Create cluster",
         click: actions.create,
       },
       {
@@ -505,7 +505,17 @@ clusterSetup.dialog.close = function() {
 };
 
 clusterSetup.dialog.setSubmitAbility = tools.dialog.setActionAbility(
-   ".ui-dialog:has('#csetup') button:contains('Next')"
+   ".ui-dialog:has('#csetup') button:contains('Create cluster'),"
+   +".ui-dialog:has('#csetup') button:contains('Go to advanced settings')"
+);
+
+clusterSetup.dialog.setSubmitAdvancedAbility = tools.dialog.setActionAbility(
+   ".ui-dialog:has('#csetup') button:contains('Back'),"
+   +".ui-dialog:has('#csetup') button:contains('Create cluster')"
+);
+
+clusterSetup.dialog.setSubmitStartAbility = tools.dialog.setActionAbility(
+   ".ui-dialog:has('#csetup') button:contains('Finish')"
 );
 
 /**
@@ -627,6 +637,7 @@ clusterSetup.submit.run = function(useAdvancedOptions){
             dialogPromise.reject(clusterSetup.const.BACK_TO_NODES);
           },
           create: function(){
+            clusterSetup.dialog.setSubmitAdvancedAbility(false);
             dialogPromise.resolve(clusterSetup.data.settings(
               formData.clusterName,
               formData.nodesNames
@@ -660,7 +671,10 @@ clusterSetup.submit.run = function(useAdvancedOptions){
   }).then(function(){
     return promise.with(function(dialogPromise){
       clusterSetup.step.clusterStart(formData.clusterName, {
-        finish: function(){ dialogPromise.resolve(clusterSetup.data.start()) },
+        finish: function(){
+          clusterSetup.dialog.setSubmitStartAbility(false);
+          dialogPromise.resolve(clusterSetup.data.start());
+        },
       });
     });
 
@@ -676,6 +690,8 @@ clusterSetup.submit.run = function(useAdvancedOptions){
 
   }).fail(function(rejectCode, data){
     clusterSetup.dialog.setSubmitAbility(true);
+    clusterSetup.dialog.setSubmitAdvancedAbility(true);
+    clusterSetup.dialog.setSubmitStartAbility(true);
     switch(rejectCode){
       case api.err.CAN_ADD_CLUSTER_OR_NODES.FAILED:
         clusterSetup.submit.onCallFail(data.XMLHttpRequest, [400]);
