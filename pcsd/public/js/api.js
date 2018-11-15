@@ -230,17 +230,26 @@ api.clusterSetup = function(submitData, processOptions){
       }
     ,
     link_list: setupData.linkList.map(function(link){
-      return {
-        linknumber: link.linknumber,
-        ip_version: link.ip_version,
-        link_priority: link.link_priority,
-        mcastport: link.mcastport,
-        ping_interval: link.ping_interval,
-        ping_precision: link.ping_precision,
-        ping_timeout: link.ping_timeout,
-        pong_count: link.pong_count,
-        transport: link.transport,
-      };
+      return setupData.transportType == "knet"
+        ? {
+          linknumber: link.linknumber,
+          ip_version: link.ip_version,
+          link_priority: link.link_priority,
+          mcastport: link.mcastport,
+          ping_interval: link.ping_interval,
+          ping_precision: link.ping_precision,
+          ping_timeout: link.ping_timeout,
+          pong_count: link.pong_count,
+          transport: link.transport,
+        }
+        : {
+          bindnetaddr: link.bindnetaddr,
+          broadcast: link.broadcast,
+          mcastaddr: link.mcastaddr,
+          mcastport: link.mcastport,
+          ttl: link.ttl,
+        }
+      ;
     }),
     compression_options: {
       model: setupData.compression.model,

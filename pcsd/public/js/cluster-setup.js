@@ -414,7 +414,12 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
         .map(function(linknumber, form){
           return fromForm(
             form,
-            ["bindnetaddr", "broadcast", "mcastaddr", "mcastport", "ttl"]
+            ["bindnetaddr", "broadcast", "mcastaddr", "mcastport", "ttl"],
+            function(name, value){
+              if (name === "broadcast"){
+                return value == "yes" ? "1" : "0";
+              }
+            },
           );
         })
         .toArray()

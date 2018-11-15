@@ -1134,7 +1134,13 @@ It is very useful when combined with Last Man Standing.
   </tr>
   <tr title="<%= h(udp_broadcast) %>">
     <td>Broadcast:</td>
-    <td><input type="text" data-name="broadcast" /></td>
+    <td>
+      <select data-name="broadcast">
+        <option value="">(Default)</option>
+        <option value="yes">yes</option>
+        <option value="no">no</option>
+      </select>
+    </td>
   </tr>
   <tr title="<%= h(udp_mcastaddr) %>">
     <td>Multicast Address:</td>
