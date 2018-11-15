@@ -209,7 +209,7 @@ compression as well as using multiple addresses (links) for nodes.
 "%>
 
 <% transport_type_udp = "
-These transports are limited for one address per node. They do not support
+This transport is limited for one address per node. It does not support
 traffic encryption nor compression.
 "%>
 <!-- udp options -->
@@ -247,28 +247,20 @@ This specifies the network address the corosync executive should bind to when
 using udp.
 <br/><br/>
 
-bindnetaddr (udp only) should be an IP address configured on the system, or a
-network address.
-<br/><br/>
-
-For example, if the local interface is 192.168.5.92 with netmask
-255.255.255.0, you should set bindnetaddr to 192.168.5.92 or 192.168.5.0. If
-the local interface is 192.168.5.92 with netmask 255.255.255.192, set
-bindnetaddr to 192.168.5.92 or 192.168.5.64, and so forth.
+For example, if the local interface is 192.168.5.92 with netmask 255.255.255.0,
+you should set bindnetaddr to 192.168.5.0. If the local interface is
+192.168.5.92 with netmask 255.255.255.192, set bindnetaddr to 192.168.5.64, and
+so forth.
 <br/><br/>
 
 This may also be an IPV6 address, in which case IPV6 networking will be used.
 In this case, the exact address must be specified and there is no automatic
 selection of the network interface within a specific subnet as with IPv4.
-<br/><br/>
-
-If IPv6 networking is used, the nodeid field in nodelist must be specified.
 "%>
 
 <% udp_broadcast = "
-This is optional and can be set to yes. If it is set to yes, the broadcast
-address will be used for communication. If this option is set, mcastaddr should
-not be set.
+If this is enable, the broadcast address will be used for communication. If
+this option is enabled, Multicast address should not be set.
 "%>
 
 <% udp_mcastaddr = "
@@ -279,21 +271,16 @@ address.
 <br/><br/>
 
 This may also be an IPV6 multicast address, in which case IPV6 networking will
-be used. If IPv6 networking is used, the nodeid field in nodelist must be
-specified.
-<br/><br/>
-
-It's not necessary to use this option if cluster_name option is used. If both
-options are used, mcastaddr has higher priority.
-
+be used.
 "%>
 
 <% udp_mcastport = "
 This specifies the UDP port number. It is possible to use the same multicast
 address on a network with the corosync services configured for different UDP
-ports. Please note corosync uses two UDP ports mcastport (for mcast receives)
-and mcastport - 1 (for mcast sends). If you have multiple clusters on the same
-network using the same mcastaddr please configure the mcastports with a gap.
+ports. Please note corosync uses two UDP ports: Multicast Port (for mcast
+receives) and Multicast Port - 1 (for mcast sends). If you have multiple
+clusters on the same network using the same Multicast Address please configure
+the Multicast Ports with a gap.
 "%>
 
 <% udp_ttl = "
@@ -305,31 +292,27 @@ increase this up to 255. The valid range is 0..255.
 <!-- knet options -->
 <% knet_pmtud_interval = "
 How often the knet PMTUd runs to look for network MTU changes. Value in
-seconds, default: 60
+seconds.
+<br/><br/>
+Default: 60
 "%>
 
 <% knet_link_mode = "
-This specifies the Kronosnet mode, which may be passive, active, or rr
-(round-robin).
+This specifies the knet mode.
 <br/><br/>
 
-passive: the active link with the lowest priority will be used. If one or more
+passive: The active link with the lowest priority will be used. If one or more
 links share the same priority the one with the lowest link ID will be used.
 <br/><br/>
 
-active: All active links will be used simultaneously to send traffic. link
+active: All active links will be used simultaneously to send traffic, link
 priority is ignored.
 <br/><br/>
 
-rr: Round-Robin policy. Each packet will be sent to the next active link in
-order.
+round-robin: Each packet will be sent to the next active link in order.
 <br/><br/>
 
 If only one interface directive is specified, passive is automatically chosen.
-<br/><br/>
-
-The maximum number of interface directives that is allowed with Kronosnet is 8.
-For other transports it is 1.
 "%>
 
 
@@ -339,54 +322,68 @@ Specifies the priority for the link when knet is used in 'passive' mode.
 "%>
 
 <% knet_ping_interval = "
-Specifies the interval between knet link pings. knet_ping_interval and
-knet_ping_timeout are a pair, if one is specified the other should be too,
-otherwise one will be calculated from the token timeout and one will be taken
-from the config file. (default is token timeout / (knet_pong_count*2)).
+Specifies the interval between knet link pings.
+Ping Interval and Ping Timeout are a pair, if one is specified the other should
+be too, otherwise one will be calculated from the token timeout and one will be
+taken from the config file.
+<br/><br/>
+
+Default: Token Timeout / (Pong Count * 2)
 "%>
 
 <% knet_ping_precision = "
 How many values of latency are used to calculate the average link latency.
-(default 2048 samples)
+<br/><br/>
+
+Default: 2048 samples
 "%>
 
 <% knet_ping_timeout = "
 If no ping is received within this time, the knet link is declared dead.
-knet_ping_interval and knet_ping_timeout are a pair, if one is specified the
-other should be too, otherwise one will be calculated from the token timeout and
-one will be taken from the config file. (default is token timeout /
-knet_pong_count)
+Ping Interval and Ping Timeout are a pair, if one is specified the other should
+be too, otherwise one will be calculated from the token timeout and one will be
+taken from the config file.
+<br/><br/>
+
+Default: Token Timeout / (Pong Count * 2)
 "%>
 
 <% knet_pong_count = "
-How many valid ping/pongs before a link is marked UP. (default 5)
+How many valid ping/pongs before a link is marked UP.
+<br/><br/>
+
+Default: 5
 "%>
 
 <% knet_transport = "
-Which IP transport knet should use. valid values are 'sctp' or 'udp'. (default:
-udp)
+Which IP transport knet should use.
+<br/><br/>
+
+Default: udp
 "%>
 
 <% knet_mcastport = "
-Tells knet to use that port number for communication. The default remains
-the old one of 5405 +linknumber, but you can override it per link here. Even
-though knet doesn't do actual multicasting the name remains for old time's sake.
+Port number to be used for communication. The default remains
+the old one of 5405 + linknumber, but you can override it per link here.
 "%>
 
 
 <!-- knet compression options -->
 <% knet_compression_model = "
-The (optional) type of compression used by Kronosnet. The values available
-depend on the build and also avaialable libraries. Typically zlib and lz4 will
-be available but bzip2 and others could also be allowed. The default is 'none'.
+The (optional) type of compression used by knet. The values available depend on
+the build and also available libraries. Typically zlib and lz4 will be
+available but bzip2 and others could also be allowed.
+<br/><br/>
+
+Default: none
 "%>
 
 <% knet_compression_threshold = "
 Tells knet to NOT compress any packets that are smaller than the value
-indicated. Default 100 bytes.
+indicated. Set to 0 to reset to the default. Set to 1 to compress everything.
 <br/><br/>
 
-Set to 0 to reset to the default. Set to 1 to compress everything.
+Default: 100 bytes
 "%>
 
 <% knet_compression_level = "
@@ -401,33 +398,31 @@ consult the library's documentation for more detailed information.
 This specifies which cryptographic library should be used by knet.
 <br/><br/>
 
-The default is nss.
+Default: nss
 "%>
 
 <% knet_crypto_hash = "
 This specifies which HMAC authentication should be used to authenticate all
-messages. 
+messages.
 <br/><br/>
 
-The default is sha1.
+Default: sha256
 "%>
 
 <% knet_crypto_cipher = "
 This specifies which cipher should be used to encrypt all messages. Enabling
-crypto_cipher, requires also enabling of crypto_hash. Encrypted transmission is
-only supported for the knet transport.
+Cipher requires also enabling of Hash.
 <br/><br/>
 
-The default is aes256.
-
+Default: aes256
 "%>
 
 <!-- totem options -->
 <% totem_consensus = "
 This timeout specifies in milliseconds how long to wait for consensus to be
 achieved before starting a new round of membership configuration. The minimum
-value for consensus must be 1.2 * token. This value will be automatically cal‐
-culated at 1.2 * token if the user doesn't specify a consensus value.
+value for consensus must be 1.2 * token. This value will be automatically
+calculated at 1.2 * token if the user doesn't specify a consensus value.
 <br/><br/>
 
 For two node clusters, a consensus larger than the join timeout but less than
@@ -460,8 +455,8 @@ The default is 2500 failures to receive a message.
 <% totem_heartbeat_failures_allowed = "
 [HeartBeating  mechanism]  Configures  the  optional HeartBeating mechanism for
 faster failure detection. Keep in mind that engaging this mechanism in lossy
-networks could cause faulty loss declaration as the mechanism relies on the net‐
-work for heartbeating.
+networks could cause faulty loss declaration as the mechanism relies on the
+network for heartbeating.
 <br/><br/>
 
 So as a rule of thumb use this mechanism if you require improved failure in low
@@ -471,7 +466,7 @@ to medium utilized networks.
 This constant specifies the number of heartbeat failures the system should
 tolerate before declaring heartbeat failure e.g 3. Also if this value is not set
 or is 0 then the heartbeat mechanism is not engaged in the system and token
-rota‐ tion is the method of failure detection
+rotation is the method of failure detection
 <br/><br/>
 
 The default is 0 (disabled).
@@ -504,10 +499,10 @@ The default is 17 messages.
 "%>
 
 <% totem_max_network_delay = "
-[HeartBeating mechanism] This constant specifies in milliseconds the approximate
-delay that your network takes to transport one packet from one machine to
-another. This value is to be set by system engineers and please don't change if
-not sure as this effects the failure detection mechanism using
+[HeartBeating mechanism] This constant specifies in milliseconds the
+approximate delay that your network takes to transport one packet from one
+machine to another. This value is to be set by system engineers and please
+don't change if not sure as this effects the failure detection mechanism using
 heartbeat.
 <br/><br/>
 
@@ -516,9 +511,9 @@ The default is 50 milliseconds
 
 <% totem_merge = "
 This timeout specifies in milliseconds how long to wait before checking for a
-partition when no multicast traffic is being sent. If multicast traffic is being
-sent, the merge detection happens automatically as a function of the
-proto‐ col.
+partition when no multicast traffic is being sent. If multicast traffic is
+being sent, the merge detection happens automatically as a function of the
+protocol.
 <br/><br/>
 
 The default is 200 milliseconds.
@@ -527,8 +522,8 @@ The default is 200 milliseconds.
 <% totem_miss_count_const = "
 This constant defines the maximum number of times on receipt of a token a
 message is checked for retransmission before a retransmission occurs. This
-parameter is useful to modify for switches that delay multicast packets compared
-to unicast packets. The default setting works well for nearly all
+parameter is useful to modify for switches that delay multicast packets
+compared to unicast packets. The default setting works well for nearly all
 modern switches.
 <br/><br/>
 
@@ -538,7 +533,7 @@ The default is 5 messages.
 <% totem_send_join = "
 This timeout specifies in milliseconds an upper range between 0 and send_join to
 wait before sending a join message. For configurations with less than 32 nodes,
-this parameter is not necessary. For larger rings, this parameter is nec‐ essary
+this parameter is not necessary. For larger rings, this parameter is necessary
 to ensure the NIC is not overflowed with join messages on formation of a new
 ring. A reasonable value for large rings (128 nodes) would be 80msec. Other
 timer values must also change if this value is changed. Seek advice from the
@@ -558,7 +553,7 @@ The default is 30 rotations.
 
 <% totem_token = "
 This timeout is used directly or as a base for real token timeout calculation
-(explained in token_coefficient sec‐ tion). Token timeout specifies in
+(explained in token_coefficient section). Token timeout specifies in
 milliseconds until a token loss is declared after not receiving a token. This is
 the time spent detecting a failure of a processor in the current configuration.
 Reforming a new configuration takes about 50 milliseconds in addition to this
@@ -604,7 +599,7 @@ The default is 4 retransmissions.
 
 <% totem_window_size = "
 This constant specifies the maximum number of messages that may be sent on one
-token rotation. If all processors per‐ form equally well, this value could be
+token rotation. If all processors perform equally well, this value could be
 large (300), which would introduce higher latency from origination to delivery
 for very large rings. To reduce latency in large rings(16+), the defaults are a
 safe compromise. If 1 or more slow processor(s) are present among fast
@@ -637,19 +632,18 @@ remain quorate. The other nodes will be inquorate.
 Enables Last Man Standing (LMS) feature (default: off).
 <br/><br/>
 
-The general behaviour of votequorum is to set expected_votes and quorum at
-startup (unless modified by the user at runtime, see below) and use those values
-during the whole lifetime of the cluster.
+The general behaviour of votequorum is to set Expected Votes and Quorum at
+startup and use those values during the whole lifetime of the cluster.
 <br/><br/>
 
-Using for example an 8 node cluster where each node has 1 vote, expected_votes
-is set to 8 and quorum to 5. This condition allows a total failure of 3 nodes.
+Using for example an 8 node cluster where each node has 1 vote, Expected Votes
+is set to 8 and Quorum to 5. This condition allows a total failure of 3 nodes.
 If a 4th node fails, the cluster becomes inquorate and it will stop providing
 services.
 <br/><br/>
 
-Enabling LMS allows the cluster to dynamically recalculate expected_votes and
-quorum under specific circumstances. It is essential to enable WFA when using
+Enabling LMS allows the cluster to dynamically recalculate Expected Votes and
+Quorum under specific circumstances. It is essential to enable WFA when using
 LMS in High Availability clusters.
 <br/><br/>
 
@@ -663,7 +657,7 @@ Tunes Last Man Standing Window (default: 10000 ms)
 <br/><br/>
 
 The window of time between when a node (or group of nodes die) and quorum is
-recalculated if the 'Last Man Standing' option is enabled.
+recalculated if the Last Man Standing option is enabled.
 "%>
 
 <% quorum_wait_for_all = "
@@ -672,18 +666,18 @@ Enables Wait For All (WFA) feature (default: off).
 
 The general behaviour of votequorum is to switch a cluster from inquorate to
 quorate as soon as possible. For example, in an 8 node cluster, where every node
-has 1 vote, expected_votes is set to 8 and quorum is (50% + 1) 5. As soon as 5
+has 1 vote, Expected Votes is set to 8 and Quorum is (50% + 1) 5. As soon as 5
 (or more) nodes are visible to each other, the partition of 5 (or more) becomes
 quorate and can start operating.
 <br/><br/>
 
 When WFA is enabled, the cluster will be quorate for the first time only after
-all nodes have been visible at least once at the same time. 
+all nodes have been visible at least once at the same time.
 <br/><br/>
 
 This feature has the advantage of avoiding some startup race conditions, with
 the cost that all nodes need to be up at the same time at least once before the
-cluster can operate. 
+cluster can operate.
 <br/><br/>
 
 A common startup race condition based on the above example is that as soon as 5
@@ -740,7 +734,7 @@ It is very useful when combined with Last Man Standing.
       <li><a href="#csetup-quorum">Quorum</a></li>
       <li><a href="#csetup-totem">Totem</a></li>
     </ul>
-    
+
     <div id="csetup-transport">
       <fieldset class="transport-types">
         <legend>Select transport type</legend>
@@ -779,7 +773,7 @@ It is very useful when combined with Last Man Standing.
         </ol>
 
         <div id="csetup-transport-netmaps">
-          <div class="action-link add-link"> Add link... </div>
+          <div class="action-link add-link">Add link...</div>
           <!--
             For each transport type (knet, udp, udpu)
             the snippet transport-links-setting is put here (in js code).
@@ -790,7 +784,7 @@ It is very useful when combined with Last Man Standing.
           <fieldset class="options-container">
             <legend>Transport options</legend>
           </fieldset>
-          
+
           <fieldset class="compression-options">
             <legend>Compression options</legend>
             <table class="key-value knet-only">
@@ -811,7 +805,7 @@ It is very useful when combined with Last Man Standing.
             Compression is supported only with knet.
             </p>
           </fieldset>
-          
+
           <fieldset class="crypto-options">
             <legend>Crypto options</legend>
             <table class="key-value knet-only">
@@ -845,10 +839,10 @@ It is very useful when combined with Last Man Standing.
                   <select name="cipher">
                     <option value="">(Default)</option>
                     <option value="none">none</option>
-                    <option value="aes256">aes256</option>
-                    <option value="aes192">aes192</option>
-                    <option value="aes128">aes128</option>
                     <option value="3des">3des</option>
+                    <option value="aes128">aes128</option>
+                    <option value="aes192">aes192</option>
+                    <option value="aes256">aes256</option>
                   </select>
                 </td>
               </tr>
@@ -866,42 +860,42 @@ It is very useful when combined with Last Man Standing.
           <td>Consensus Timeout:</td>
           <td><input type="text" name="consensus" /> ms</td>
         </tr>
-        
+
         <tr title="<%= h(totem_downcheck) %>">
           <td>Downcheck Timeout:</td>
           <td><input type="text" name="downcheck" /> ms</td>
         </tr>
-        
+
         <tr title="<%= h(totem_fail_recv_const) %>">
           <td>Fail Receive Constant:</td>
           <td><input type="text" name="fail_recv_const" /></td>
         </tr>
-        
+
         <tr title="<%= h(totem_heartbeat_failures_allowed) %>">
-          <td>Heartbeat failures allowed:</td>
+          <td>Heartbeat Failures Allowed:</td>
           <td><input type="text" name="heartbeat_failures_allowed" /></td>
         </tr>
-        
+
         <tr title="<%= h(totem_hold) %>">
           <td>Hold Timeout:</td>
           <td><input type="text" name="hold" /> ms</td>
         </tr>
-        
+
         <tr title="<%= h(totem_join) %>">
           <td>Join Timeout:</td>
           <td><input type="text" name="join" /> ms</td>
         </tr>
-         
+
         <tr title="<%= h(totem_max_messages) %>">
           <td>Max Messages:</td>
           <td><input type="text" name="max_messages" /></td>
         </tr>
-        
+
         <tr title="<%= h(totem_max_network_delay) %>">
           <td>Max Network Delay:</td>
           <td><input type="text" name="max_network_delay" /> ms</td>
         </tr>
-         
+
         <tr title="<%= h(totem_merge) %>">
           <td>Merge Timeout:</td>
           <td><input type="text" name="merge" /> ms</td>
@@ -916,12 +910,12 @@ It is very useful when combined with Last Man Standing.
           <td>Send Join Timeout:</td>
           <td><input type="text" name="send_join" /> ms</td>
         </tr>
-    
+
         <tr title="<%= h(totem_seqno_unchanged_const) %>">
           <td>Seqno Unchanged Constant:</td>
           <td><input type="text" name="seqno_unchanged_const" /></td>
         </tr>
-        
+
         <tr title="<%= h(totem_token) %>">
           <td>Token Timeout:</td>
           <td><input type="text" name="token" /> ms</td>
@@ -943,12 +937,12 @@ It is very useful when combined with Last Man Standing.
             <input type="text" name="token_retransmits_before_loss_const" />
           </td>
         </tr>
-        
+
         <tr title="<%= h(totem_window_size) %>">
           <td>Window Size:</td>
           <td><input type="text" name="window_size" /></td>
         </tr>
-        
+
       </table>
     </div>
     <div id="csetup-quorum">
@@ -987,7 +981,7 @@ It is very useful when combined with Last Man Standing.
           </select>
         </td>
       </tr>
-      
+
       </table>
     </div>
   </div>
@@ -1021,13 +1015,13 @@ It is very useful when combined with Last Man Standing.
     <td>
       <select data-name="ip_version">
         <option value="">(Default)</option>
-        <option value="ipv4">ipv4</option>
-        <option value="ipv6">ipv6</option>
+        <option value="ipv4">IPv4</option>
+        <option value="ipv6">IPv6</option>
       </select>
     </td>
   </tr>
   <tr title="<%= h(knet_pmtud_interval) %>">
-    <td>Knet Pmtud Interval: </td>
+    <td>PMTUd Interval: </td>
     <td><input type="text" data-name="knet_pmtud_interval"/> s</td>
   </tr>
   <tr title="<%= h(knet_link_mode) %>">
@@ -1036,7 +1030,7 @@ It is very useful when combined with Last Man Standing.
       <select data-name="link_mode">
         <option value="passive">passive</option>
         <option value="active">active</option>
-        <option value="rr">rr (round-robin)</option>
+        <option value="rr">round-robin</option>
       </select>
     </td>
   </tr>
@@ -1048,8 +1042,8 @@ It is very useful when combined with Last Man Standing.
     <td>
       <select data-name="ip_version">
         <option value="">(Default)</option>
-        <option value="ipv4">ipv4</option>
-        <option value="ipv6">ipv6</option>
+        <option value="ipv4">IPv4</option>
+        <option value="ipv6">IPv6</option>
       </select>
     </td>
   </tr>
@@ -1069,7 +1063,7 @@ It is very useful when combined with Last Man Standing.
     <legend>Addresses</legend>
     <table class="transport-addresses key-value"></table>
   </fieldset>
-  
+
   <fieldset class="options">
     <legend>Options</legend>
   </fieldset>
@@ -1091,8 +1085,8 @@ It is very useful when combined with Last Man Standing.
     <td>
       <select data-name="ip_version">
         <option value="">(Default)</option>
-        <option value="ipv4">ipv4</option>
-        <option value="ipv6">ipv6</option>
+        <option value="ipv4">IPv4</option>
+        <option value="ipv6">IPv6</option>
       </select>
     </td>
   </tr>
@@ -1101,7 +1095,7 @@ It is very useful when combined with Last Man Standing.
     <td><input type="text" data-name="link_priority" /></td>
   </tr>
   <tr title="<%= h(knet_mcastport) %>">
-    <td>Mcastport:</td>
+    <td>Port:</td>
     <td><input type="text" data-name="mcastport" /></td>
   </tr>
   <tr title="<%= h(knet_ping_interval) %>">
@@ -1134,23 +1128,23 @@ It is very useful when combined with Last Man Standing.
 
 <table data-snippet="transport-link-options-udp">
   <tr title="<%= h(udp_bindnetaddr) %>">
-    <td>Bindnetaddr</td>
+    <td>Bindnetaddr:</td>
     <td><input type="text" data-name="bindnetaddr" /></td>
   </tr>
   <tr title="<%= h(udp_broadcast) %>">
-    <td>Broadcast</td>
+    <td>Broadcast:</td>
     <td><input type="text" data-name="broadcast" /></td>
   </tr>
   <tr title="<%= h(udp_mcastaddr) %>">
-    <td>Mcastaddr</td>
+    <td>Multicast Address:</td>
     <td><input type="text" data-name="mcastaddr" /></td>
   </tr>
   <tr title="<%= h(udp_mcastport) %>">
-    <td>Mcastport</td>
+    <td>Multicast Port:</td>
     <td><input type="text" data-name="mcastport" /></td>
   </tr>
   <tr title="<%= h(udp_ttl) %>">
-    <td>Ttl</td>
+    <td>TTL:</td>
     <td><input type="text" data-name="ttl" /></td>
   </tr>
 </table>
