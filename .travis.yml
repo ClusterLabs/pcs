@@ -9,9 +9,7 @@ env:
     # some tests are disabled
     - DIST=centos7
       RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS="--all-but
-        pcs.test.test_resource.ResourceTest.testLSBResource
-        pcs.test.cib_resource.test_create.Success.test_base_create_with_agent_name_including_systemd_instance"
+      PYTHON_TEST_ARGS=""
 
 services:
   - docker

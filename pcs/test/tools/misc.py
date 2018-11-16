@@ -89,15 +89,6 @@ skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
     "bundle resources"
 )
 
-def skip_unless_pacemaker_supports_systemd():
-    output, dummy_stderr, dummy_retval = runner.run(
-        ["pacemakerd", "--features"]
-    )
-    return skipUnless(
-        "systemd" in output,
-        "Pacemaker does not support systemd resources"
-    )
-
 def skip_if_service_enabled(service_name):
     return skipUnless(
         not is_service_enabled(runner, service_name),

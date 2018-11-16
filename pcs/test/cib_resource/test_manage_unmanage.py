@@ -4,13 +4,14 @@ from __future__ import (
     print_function,
 )
 
-from lxml import etree
 import shutil
+from lxml import etree
 
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
+from pcs.test.bin_mock import get_mock_settings
 
 
 class ManageUnmanage(
@@ -34,15 +35,15 @@ class ManageUnmanage(
                     />
                 </meta_attributes>
                 <operations>
-                    <op id="A-monitor-interval-10" interval="10"
-                        name="monitor" timeout="20"
+                    <op id="A-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
                     />
                 </operations>
             </primitive>
             <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                 <operations>
-                    <op id="B-monitor-interval-10" interval="10"
-                        name="monitor" timeout="20"
+                    <op id="B-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
                     />
                 </operations>
             </primitive>
@@ -51,7 +52,10 @@ class ManageUnmanage(
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner = PcsRunner(
+            self.temp_cib,
+            mock_settings=get_mock_settings("crm_resource_binary"),
+        )
 
     def fixture_resource(self, name, managed=True, with_monitors=False):
         self.assert_pcs_success(
@@ -102,8 +106,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20" enabled="false"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s" enabled="false"
                         />
                     </operations>
                 </primitive>
@@ -124,8 +128,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -141,8 +145,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -158,8 +162,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20" enabled="false"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s" enabled="false"
                         />
                     </operations>
                 </primitive>
@@ -183,8 +187,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -195,8 +199,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="B-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="B-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -213,15 +217,15 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="B-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="B-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -241,8 +245,8 @@ class ManageUnmanage(
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -267,8 +271,8 @@ class ManageUnmanage(
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>

@@ -4,19 +4,18 @@ from __future__ import (
     print_function,
 )
 
-import re
-
-from pcs import utils
 from pcs.test.cib_resource.common import ResourceTest
-from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.cib_resource.stonith_common import need_load_xvm_fence_agent
+from pcs.test.bin_mock import get_mock_settings
 
-need_fence_scsi_providing_unfencing = unittest.skipUnless(
-    not utils.is_rhel6(),
-    "test requires system where stonith agent 'fence_scsi' provides unfencing"
-)
 
-class PlainStonith(ResourceTest):
+class ResourceTestLocal(ResourceTest):
+    def setUp(self):
+        super(ResourceTestLocal, self).setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+
+class PlainStonith(ResourceTestLocal):
     @need_load_xvm_fence_agent
     def test_simplest(self):
         self.assert_effect(
@@ -32,7 +31,6 @@ class PlainStonith(ResourceTest):
             </resources>"""
         )
 
-    @need_fence_scsi_providing_unfencing
     def test_base_with_agent_that_provides_unfencing(self):
         self.assert_effect(
             "stonith create S fence_scsi",
@@ -64,12 +62,12 @@ class PlainStonith(ResourceTest):
     def test_error_when_not_valid_agent(self):
         self.assert_pcs_fail(
             "stonith create S absent",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
+            stdout_full=(
                 "Error: Agent 'absent' is not installed or does not provide "
-                "valid metadata: Metadata query for stonith:absent failed: "
-                "(-5|Input/output error), use --force to override\n"
-                "$", re.MULTILINE
+                "valid metadata: Agent absent not found or does not support "
+                "meta-data: Invalid argument (22)\nMetadata query for "
+                "stonith:absent failed: Input/output error, use --force to "
+                "override\n"
             )
         )
 
@@ -85,12 +83,11 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            output_regexp=re.compile("^"
+            output=(
                 "Warning: Agent 'absent' is not installed or does not provide "
-                    "valid metadata: Metadata query for stonith:absent failed: "
-                    "(-5|Input/output error)\n"
-                "$", re.MULTILINE
+                "valid metadata: Agent absent not found or does not support "
+                "meta-data: Invalid argument (22)\nMetadata query for "
+                "stonith:absent failed: Input/output error\n"
             )
         )
 
@@ -174,7 +171,7 @@ class PlainStonith(ResourceTest):
         )
 
 
-class WithMeta(ResourceTest):
+class WithMeta(ResourceTestLocal):
     @need_load_xvm_fence_agent
     def test_simplest_with_meta_provides(self):
         self.assert_effect(
@@ -195,7 +192,6 @@ class WithMeta(ResourceTest):
             </resources>"""
         )
 
-    @need_fence_scsi_providing_unfencing
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
         self.assert_effect(
             "stonith create S fence_scsi meta provides=something",
@@ -215,7 +211,7 @@ class WithMeta(ResourceTest):
             </resources>"""
         )
 
-class InGroup(ResourceTest):
+class InGroup(ResourceTestLocal):
     @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group(self):
         self.assert_effect(

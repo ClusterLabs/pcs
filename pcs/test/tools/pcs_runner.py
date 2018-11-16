@@ -12,14 +12,15 @@ from pcs import utils
 
 __pcs_location = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "pcs"
+    "pcs_for_tests"
 )
 _temp_cib = rc("temp-cib.xml")
 
 
 class PcsRunner(object):
     def __init__(
-        self, cib_file=_temp_cib, corosync_conf_file=None, cluster_conf_file=None
+        self, cib_file=_temp_cib, corosync_conf_file=None,
+        cluster_conf_file=None, mock_settings=None,
     ):
         self.cib_file = cib_file
         self.corosync_conf_file = (
@@ -30,6 +31,7 @@ class PcsRunner(object):
             rc("cluster.conf") if cluster_conf_file is None
             else cluster_conf_file
         )
+        self.mock_settings = mock_settings
 
     def run(self, args):
         args_with_files = (
@@ -37,16 +39,20 @@ class PcsRunner(object):
             + "--cluster_conf={0} ".format(self.cluster_conf_file)
             + args
         )
-        return pcs(self.cib_file, args_with_files)
+        return pcs(
+            self.cib_file, args_with_files, mock_settings=self.mock_settings
+        )
 
 
-def pcs(testfile, args = ""):
+def pcs(testfile, args="", mock_settings=None):
     """
     Run pcs with -f on specified file
     Return tuple with:
         shell stdoutdata
         shell returncode
     """
+    if mock_settings is None:
+        mock_settings = {}
     if args == "":
         args = testfile
         testfile = _temp_cib
@@ -70,8 +76,11 @@ def pcs(testfile, args = ""):
     if "--cluster_conf" not in args:
         cluster_conf = rc("cluster.conf")
         conf_opts.append("--cluster_conf=" + cluster_conf)
+    env_mock_settings_prefix = "PCS.SETTINGS."
     return utils.run(
-        [__pcs_location, "-f", testfile] + conf_opts + arg_split_temp
+        [__pcs_location, "-f", testfile] + conf_opts + arg_split_temp,
+        env_extend={
+            "{}{}".format(env_mock_settings_prefix, option): value
+            for option, value in mock_settings.items()
+        },
     )
-
-
