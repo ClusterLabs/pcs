@@ -84,7 +84,7 @@ class SetupTest(BoothMixin, TestCase):
                 "arbitrator = 3.3.3.3",
             )
         )
-        with open(BOOTH_KEY_FILE) as key_file:
+        with open(BOOTH_KEY_FILE, "rb") as key_file:
             self.assertEqual(64, len(key_file.read()))
 
 

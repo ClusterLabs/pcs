@@ -38,7 +38,12 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         *config_structure.take_peers(config_content)
     )
 
-    env.booth.create_key(tools.generate_key(), overwrite_existing)
+    env.booth.create_key(
+        tools.generate_binary_key(
+            random_bytes_count=settings.booth_authkey_bytes
+        ),
+        overwrite_existing
+    )
     config_content = config_structure.set_authfile(
         config_content,
         env.booth.key_path

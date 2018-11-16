@@ -188,9 +188,9 @@ class AddRemote(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.commands.remote_node.generate_key")
-    def test_success_generated_authkey(self, generate_key):
-        generate_key.return_value = b"password"
+    @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
+    def test_success_generated_authkey(self, generate_binary_key):
+        generate_binary_key.return_value = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .http.host.check_auth(
@@ -206,13 +206,13 @@ class AddRemote(TestCase):
                     dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
                 ],
-                pcmk_authkey_content=generate_key.return_value,
+                pcmk_authkey_content=generate_binary_key.return_value,
             )
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
-        generate_key.assert_called_once_with()
+        generate_binary_key.assert_called_once_with(random_bytes_count=384)
         self.env_assist.assert_reports(
             REPORTS
                 .adapt(
@@ -280,9 +280,9 @@ class AddRemote(TestCase):
             fixture_reports_new_node_unreachable(NODE_NAME, omitting=True)
         )
 
-    @mock.patch("pcs.lib.commands.remote_node.generate_key")
-    def test_can_skip_all_offline(self, generate_key):
-        generate_key.return_value = b"password"
+    @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
+    def test_can_skip_all_offline(self, generate_binary_key):
+        generate_binary_key.return_value = b"password"
         (self.config
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .http.host.check_auth(
@@ -300,7 +300,7 @@ class AddRemote(TestCase):
                     dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
                     dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
                 ],
-                pcmk_authkey_content=generate_key.return_value,
+                pcmk_authkey_content=generate_binary_key.return_value,
                 **FAIL_HTTP_KWARGS
             )
             .env.push_cib(resources=FIXTURE_RESOURCES)
@@ -485,9 +485,11 @@ class AddRemote(TestCase):
             fixture_reports_new_node_unreachable(NODE_NAME)
         )
 
-    @mock.patch("pcs.lib.commands.remote_node.generate_key")
-    def test_unknown_host_skip_offline_authkey_distribution(self, generate_key):
-        generate_key.return_value = b"password"
+    @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
+    def test_unknown_host_skip_offline_authkey_distribution(
+        self, generate_binary_key
+    ):
+        generate_binary_key.return_value = b"password"
         self.config.env.set_known_hosts_dests({
             NODE_1: NODE_1_DEST_LIST,
             NODE_2: NODE_2_DEST_LIST,
@@ -500,12 +502,12 @@ class AddRemote(TestCase):
                     dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
                     dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
                 ],
-                pcmk_authkey_content=generate_key.return_value,
+                pcmk_authkey_content=generate_binary_key.return_value,
             )
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env(), skip_offline_nodes=True)
-        generate_key.assert_called_once_with()
+        generate_binary_key.assert_called_once_with(random_bytes_count=384)
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME)
             + [

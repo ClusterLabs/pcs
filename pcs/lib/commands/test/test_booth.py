@@ -39,12 +39,12 @@ def _env_fixture(booth_name):
 
 patch_commands = create_patcher("pcs.lib.commands.booth")
 
-@mock.patch("pcs.lib.tools.generate_key", return_value="key value")
+@mock.patch("pcs.lib.tools.generate_binary_key", return_value=b"key value")
 @mock.patch("pcs.lib.commands.booth.build", return_value="config content")
 @mock.patch("pcs.lib.booth.config_structure.validate_peers")
 class ConfigSetupTest(TestCase):
     def test_successfuly_build_and_write_to_std_path(
-        self, mock_validate_peers, mock_build, mock_generate_key
+        self, mock_validate_peers, mock_build, mock_generate_binary_key
     ):
         env = _env_fixture("booth_name")
         commands.config_setup(
@@ -59,21 +59,23 @@ class ConfigSetupTest(TestCase):
             False
         )
         env.booth.create_key.assert_called_once_with(
-            "key value",
+            b"key value",
             False
         )
         mock_validate_peers.assert_called_once_with(
             ["1.1.1.1"], ["2.2.2.2"]
         )
+        mock_generate_binary_key.assert_called_once_with(random_bytes_count=64)
 
     def test_sanitize_peers_before_validation(
-        self, mock_validate_peers, mock_build, mock_generate_key
+        self, mock_validate_peers, mock_build, mock_generate_binary_key
     ):
         commands.config_setup(
             env=_env_fixture("booth_name"),
             booth_configuration={},
         )
         mock_validate_peers.assert_called_once_with([], [])
+        mock_generate_binary_key.assert_called_once_with(random_bytes_count=64)
 
 
 class ConfigDestroyTest(TestCase):

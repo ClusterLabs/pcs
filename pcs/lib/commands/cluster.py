@@ -322,8 +322,12 @@ def setup(
         # Distribute configuration files except corosync.conf. Sending
         # corosync.conf serves as a "commit" as its presence on a node marks the
         # node as a part of a cluster.
-        corosync_authkey = generate_binary_key(random_bytes_count=128)
-        pcmk_authkey = generate_binary_key(random_bytes_count=128)
+        corosync_authkey = generate_binary_key(
+            random_bytes_count=settings.corosync_authkey_bytes
+        )
+        pcmk_authkey = generate_binary_key(
+            random_bytes_count=settings.pacemaker_authkey_bytes
+        )
         actions = {}
         actions.update(
             node_communication_format.corosync_authkey_file(corosync_authkey)

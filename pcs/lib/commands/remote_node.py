@@ -1,7 +1,8 @@
+from pcs import settings
 from pcs.common import report_codes
 from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format
-from pcs.lib.tools import generate_key
+from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
 from pcs.lib.communication.nodes import (
@@ -136,7 +137,9 @@ def _prepare_pacemaker_remote_environment(
         authkey_content = env.pacemaker.get_authkey_content()
         authkey_targets = online_new_target_list
     else:
-        authkey_content = generate_key()
+        authkey_content = generate_binary_key(
+            random_bytes_count=settings.pacemaker_authkey_bytes
+        )
         authkey_targets = existing_nodes_target_list + online_new_target_list
     if authkey_targets:
         com_cmd = DistributeFiles(

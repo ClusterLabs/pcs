@@ -1,10 +1,6 @@
-import binascii
 import os
 import tempfile
 
-
-def generate_key(random_bytes_count=32):
-    return binascii.hexlify(generate_binary_key(random_bytes_count))
 
 def generate_binary_key(random_bytes_count):
     return os.urandom(random_bytes_count)
