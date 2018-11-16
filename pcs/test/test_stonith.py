@@ -4,11 +4,11 @@ from __future__ import (
     print_function,
 )
 
-import re
 import shutil
 
 from pcs import utils
 from pcs.cli.common.console_report import indent
+from pcs.test.bin_mock import get_mock_settings
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
@@ -50,6 +50,7 @@ skip_unless_fencing_level_attribute_supported = skip_unless_pacemaker_version(
 class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     def test_success(self):
         self.assert_pcs_success(
@@ -72,18 +73,11 @@ Stonith options:
 
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
-            "stonith describe fence_noexist",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
-            #   does not support meta-data: Invalid argument (22)"
-            stdout_regexp=re.compile("^"
-                "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: (Agent fence_noexist not found or "
-                "does not support meta-data: Invalid argument \\(22\\)\n)?"
-                "Metadata query for stonith:fence_noexist failed: "
-                "(-5|Input/output error)\n"
-                "$", re.MULTILINE
-            )
+            "stonith describe absent",
+            "Error: Agent 'absent' is not installed or does not provide valid "
+            "metadata: Agent absent not found or does not support meta-data: "
+            "Invalid argument (22)\nMetadata query for stonith:absent failed: "
+            "Input/output error\n"
         )
 
     def test_not_enough_params(self):
@@ -102,37 +96,24 @@ Stonith options:
 class StonithTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         shutil.copy(empty_cib, temp_cib)
 
     def testStonithCreation(self):
         self.assert_pcs_fail(
-            "stonith create test1 fence_noexist",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
-            #   does not support meta-data: Invalid argument (22)"
-            stdout_regexp=re.compile("^"
-                "Error: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: (Agent fence_noexist not found or "
-                "does not support meta-data: Invalid argument \\(22\\)\n)?"
-                "Metadata query for stonith:fence_noexist failed: "
-                "(-5|Input/output error), use --force to override\n"
-                "$", re.MULTILINE
-            )
+            "stonith create test1 absent",
+            "Error: Agent 'absent' is not installed or does not provide valid "
+            "metadata: Agent absent not found or does not support meta-data: "
+            "Invalid argument (22)\nMetadata query for stonith:absent failed: "
+            "Input/output error, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "stonith create test1 fence_noexist --force",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            # pacemaker 1.1.19 adds message: "Agent fence_noexist not found or
-            #   does not support meta-data: Invalid argument (22)"
-            stdout_regexp=re.compile("^"
-                "Warning: Agent 'fence_noexist' is not installed or does not "
-                "provide valid metadata: (Agent fence_noexist not found or "
-                "does not support meta-data: Invalid argument \\(22\\)\n)?"
-                "Metadata query for stonith:fence_noexist failed: "
-                "(-5|Input/output error)\n"
-                "$", re.MULTILINE
-            )
+            "stonith create test1 absent --force",
+            "Warning: Agent 'absent' is not installed or does not provide valid "
+            "metadata: Agent absent not found or does not support meta-data: "
+            "Invalid argument (22)\nMetadata query for stonith:absent failed: "
+            "Input/output error\n"
         )
 
         self.assert_pcs_fail(
@@ -225,7 +206,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
- Resource: test1 (class=stonith type=fence_noexist)
+ Resource: test1 (class=stonith type=absent)
   Operations: monitor interval=60s (test1-monitor-interval-60s)
  Resource: test2 (class=stonith type=fence_apc)
   Operations: monitor interval=60s (test2-monitor-interval-60s)
@@ -250,7 +231,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             Resources:
 
             Stonith Devices:
-             Resource: test1 (class=stonith type=fence_noexist)
+             Resource: test1 (class=stonith type=absent)
               Operations: monitor interval=60s (test1-monitor-interval-60s)
              Resource: test2 (class=stonith type=fence_apc)
               Operations: monitor interval=60s (test2-monitor-interval-60s)
@@ -787,6 +768,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         else:
             shutil.copy(rc("cib-empty-2.3-withnodes.xml"), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.config = ""
         self.config_lines = []
 

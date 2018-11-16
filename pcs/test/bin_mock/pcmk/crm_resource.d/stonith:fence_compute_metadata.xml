@@ -1,0 +1,281 @@
+<resource-agent name="fence_compute" shortdesc="Fence agent for the automatic resurrection of OpenStack compute instances">
+  <longdesc>
+    Used to tell Nova that compute nodes are down and to reschedule flagged instances
+  </longdesc>
+  <vendor-url/>
+  <parameters>
+    <parameter name="action" unique="0" required="1">
+      <getopt mixed="-o, --action=[action]"/>
+      <content type="string" default="off"/>
+      <shortdesc lang="en">
+        Fencing action
+      </shortdesc>
+    </parameter>
+    <parameter name="auth_url" unique="0" required="0">
+      <getopt mixed="-k, --auth-url=[url]"/>
+      <content type="string" default=""/>
+      <shortdesc lang="en">
+        Keystone Admin Auth URL
+      </shortdesc>
+    </parameter>
+    <parameter name="endpoint_type" unique="0" required="0">
+      <getopt mixed="-e, --endpoint-type=[endpoint]"/>
+      <content type="string" default="internalURL"/>
+      <shortdesc lang="en">
+        Nova Endpoint type
+      </shortdesc>
+    </parameter>
+    <parameter name="login" unique="0" required="0" deprecated="1">
+      <getopt mixed="-l, --username=[name]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login name
+      </shortdesc>
+    </parameter>
+    <parameter name="passwd" unique="0" required="0" deprecated="1">
+      <getopt mixed="-p, --password=[password]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login password or passphrase
+      </shortdesc>
+    </parameter>
+    <parameter name="passwd_script" unique="0" required="0" deprecated="1">
+      <getopt mixed="-S, --password-script=[script]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Script to run to retrieve password
+      </shortdesc>
+    </parameter>
+    <parameter name="password" unique="0" required="0" obsoletes="passwd">
+      <getopt mixed="-p, --password=[password]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login password or passphrase
+      </shortdesc>
+    </parameter>
+    <parameter name="password_script" unique="0" required="0" obsoletes="passwd_script">
+      <getopt mixed="-S, --password-script=[script]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Script to run to retrieve password
+      </shortdesc>
+    </parameter>
+    <parameter name="plug" unique="0" required="1" obsoletes="port">
+      <getopt mixed="-n, --plug=[id]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Physical plug number on device, UUID or identification of machine
+      </shortdesc>
+    </parameter>
+    <parameter name="port" unique="0" required="0" deprecated="1">
+      <getopt mixed="-n, --plug=[id]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Physical plug number on device, UUID or identification of machine
+      </shortdesc>
+    </parameter>
+    <parameter name="region_name" unique="0" required="0">
+      <getopt mixed="--region-name=[region]"/>
+      <content type="boolean" default=""/>
+      <shortdesc lang="en">
+        Region Name
+      </shortdesc>
+    </parameter>
+    <parameter name="tenant_name" unique="0" required="0">
+      <getopt mixed="-t, --tenant-name=[name]"/>
+      <content type="string" default=""/>
+      <shortdesc lang="en">
+        Keystone Admin Tenant or v3 Project
+      </shortdesc>
+    </parameter>
+    <parameter name="username" unique="0" required="0" obsoletes="login">
+      <getopt mixed="-l, --username=[name]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login name
+      </shortdesc>
+    </parameter>
+    <parameter name="insecure" unique="0" required="0">
+      <getopt mixed="--insecure"/>
+      <content type="boolean" default="False"/>
+      <shortdesc lang="en">
+        Allow Insecure TLS Requests
+      </shortdesc>
+    </parameter>
+    <parameter name="project-domain" unique="0" required="0" deprecated="1">
+      <getopt mixed="-d, --project-domain=[name]"/>
+      <content type="string" default="Default"/>
+      <shortdesc lang="en">
+        Keystone v3 Project Domain
+      </shortdesc>
+    </parameter>
+    <parameter name="project_domain" unique="0" required="0" obsoletes="project-domain">
+      <getopt mixed="-d, --project-domain=[name]"/>
+      <content type="string" default="Default"/>
+      <shortdesc lang="en">
+        Keystone v3 Project Domain
+      </shortdesc>
+    </parameter>
+    <parameter name="user-domain" unique="0" required="0" deprecated="1">
+      <getopt mixed="-u, --user-domain=[name]"/>
+      <content type="string" default="Default"/>
+      <shortdesc lang="en">
+        Keystone v3 User Domain
+      </shortdesc>
+    </parameter>
+    <parameter name="user_domain" unique="0" required="0" obsoletes="user-domain">
+      <getopt mixed="-u, --user-domain=[name]"/>
+      <content type="string" default="Default"/>
+      <shortdesc lang="en">
+        Keystone v3 User Domain
+      </shortdesc>
+    </parameter>
+    <parameter name="domain" unique="0" required="0">
+      <getopt mixed="-d, --domain=[string]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        DNS domain in which hosts live
+      </shortdesc>
+    </parameter>
+    <parameter name="instance_filtering" unique="0" required="0">
+      <getopt mixed="--instance-filtering"/>
+      <content type="boolean" default="True"/>
+      <shortdesc lang="en">
+        Allow instances to be evacuated
+      </shortdesc>
+    </parameter>
+    <parameter name="no_shared_storage" unique="0" required="0">
+      <getopt mixed="--no-shared-storage"/>
+      <content type="boolean" default="False"/>
+      <shortdesc lang="en">
+        Disable functionality for dealing with shared storage
+      </shortdesc>
+    </parameter>
+    <parameter name="record_only" unique="0" required="0">
+      <getopt mixed="--record-only"/>
+      <content type="string" default="False"/>
+      <shortdesc lang="en">
+        Only record the target as needing evacuation
+      </shortdesc>
+    </parameter>
+    <parameter name="compute-domain" unique="0" required="0" deprecated="1">
+      <getopt mixed="--compute-domain=[string]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Replaced by domain
+      </shortdesc>
+    </parameter>
+    <parameter name="compute_domain" unique="0" required="0" obsoletes="compute-domain">
+      <getopt mixed="--compute-domain=[string]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Replaced by domain
+      </shortdesc>
+    </parameter>
+    <parameter name="quiet" unique="0" required="0">
+      <getopt mixed="-q, --quiet"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Disable logging to stderr. Does not affect --verbose or --debug-file or logging to syslog.
+      </shortdesc>
+    </parameter>
+    <parameter name="verbose" unique="0" required="0">
+      <getopt mixed="-v, --verbose"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Verbose mode
+      </shortdesc>
+    </parameter>
+    <parameter name="debug" unique="0" required="0" deprecated="1">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+    <parameter name="debug_file" unique="0" required="0" obsoletes="debug">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+    <parameter name="version" unique="0" required="0">
+      <getopt mixed="-V, --version"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Display version information and exit
+      </shortdesc>
+    </parameter>
+    <parameter name="help" unique="0" required="0">
+      <getopt mixed="-h, --help"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Display help and exit
+      </shortdesc>
+    </parameter>
+    <parameter name="separator" unique="0" required="0">
+      <getopt mixed="-C, --separator=[char]"/>
+      <content type="string" default=","/>
+      <shortdesc lang="en">
+        Separator for CSV created by 'list' operation
+      </shortdesc>
+    </parameter>
+    <parameter name="delay" unique="0" required="0">
+      <getopt mixed="--delay=[seconds]"/>
+      <content type="second" default="0"/>
+      <shortdesc lang="en">
+        Wait X seconds before fencing is started
+      </shortdesc>
+    </parameter>
+    <parameter name="login_timeout" unique="0" required="0">
+      <getopt mixed="--login-timeout=[seconds]"/>
+      <content type="second" default="5"/>
+      <shortdesc lang="en">
+        Wait X seconds for cmd prompt after login
+      </shortdesc>
+    </parameter>
+    <parameter name="power_timeout" unique="0" required="0">
+      <getopt mixed="--power-timeout=[seconds]"/>
+      <content type="second" default="20"/>
+      <shortdesc lang="en">
+        Test X seconds for status change after ON/OFF
+      </shortdesc>
+    </parameter>
+    <parameter name="power_wait" unique="0" required="0">
+      <getopt mixed="--power-wait=[seconds]"/>
+      <content type="second" default="0"/>
+      <shortdesc lang="en">
+        Wait X seconds after issuing ON/OFF
+      </shortdesc>
+    </parameter>
+    <parameter name="shell_timeout" unique="0" required="0">
+      <getopt mixed="--shell-timeout=[seconds]"/>
+      <content type="second" default="180"/>
+      <shortdesc lang="en">
+        Wait X seconds for cmd prompt after issuing command
+      </shortdesc>
+    </parameter>
+    <parameter name="retry_on" unique="0" required="0">
+      <getopt mixed="--retry-on=[attempts]"/>
+      <content type="integer" default="1"/>
+      <shortdesc lang="en">
+        Count of attempts to retry power on
+      </shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="on" automatic="1"/>
+    <action name="off"/>
+    <action name="status"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="monitor"/>
+    <action name="metadata"/>
+    <action name="manpage"/>
+    <action name="validate-all"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+  </actions>
+</resource-agent>
+
