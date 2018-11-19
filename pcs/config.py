@@ -693,6 +693,8 @@ def config_import_cman(lib, argv, modifiers):
             "Unable to perform a CMAN cluster conversion due to missing "
             "python-clufter package"
         )
+    clufter_supports_corosync3 = hasattr(clufter.facts, "cluster_pcs_camelback")
+
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
@@ -734,7 +736,12 @@ def config_import_cman(lib, argv, modifiers):
     interactive = modifiers.get("--interactive")
 
     if dist is not None:
-        if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
+        if not clufter_supports_corosync3:
+            utils.err(
+                "Unable to perform a CMAN cluster conversion due to clufter "
+                "not supporting Corosync 3. Please, upgrade clufter packages."
+            )
+        if not clufter.facts.cluster_pcs_camelback("linux", dist.split(",")):
             utils.err("dist does not match output-format")
     elif output_format == "corosync.conf":
         dist = _get_linux_dist()
@@ -759,7 +766,7 @@ def config_import_cman(lib, argv, modifiers):
         logging.getLogger("clufter").setLevel(logging.DEBUG)
     if output_format == "corosync.conf":
         clufter_args["coro"] = {"passin": "struct"}
-        cmd_name = "ccs2pcs-needle"
+        cmd_name = "ccs2pcs-camelback"
     elif output_format in ("pcs-commands", "pcs-commands-verbose"):
         clufter_args["output"] = {"passin": "bytestring"}
         clufter_args["start_wait"] = "60"
@@ -776,6 +783,12 @@ def config_import_cman(lib, argv, modifiers):
             cmd_name = "ccs2pcscmd-flatiron"
         elif clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
             cmd_name = "ccs2pcscmd-needle"
+        elif (
+            clufter_supports_corosync3
+            and
+            clufter.facts.cluster_pcs_camelback("linux", dist.split(","))
+        ):
+            cmd_name = "ccs2pcscmd-camelback"
         else:
             utils.err(
                 "unrecognized dist, try something recognized"
@@ -893,9 +906,9 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
         )
 
     # parse options
-    debug = "--debug" in utils.pcs_options
-    force = "--force" in utils.pcs_options
-    interactive = "--interactive" in utils.pcs_options
+    debug = modifiers.get("--debug")
+    force = modifiers.get("--force")
+    interactive = modifiers.get("--interactive")
     invalid_args = False
     output_file = None
     dist = None
@@ -925,7 +938,6 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
         "sys": "linux",
         "dist": dist,
         "coro": settings.corosync_conf_file,
-        "ccs": settings.cluster_conf_file,
         "start_wait": "60",
         "tmp_cib": "tmp-cib.xml",
         "force": force,
@@ -953,7 +965,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
         clufter_args["silent"] = False
         clufter_args["noguidance"] = False
     clufter_args_obj = type(str("ClufterOptions"), (object, ), clufter_args)
-    cmd_name = "pcs2pcscmd-needle"
+    cmd_name = "pcs2pcscmd-camelback"
 
     # run convertor
     run_clufter(
