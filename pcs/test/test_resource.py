@@ -7,6 +7,7 @@ from textwrap import dedent
 from unittest import mock, skip, TestCase
 from lxml import etree
 
+from pcs.test.bin_mock import get_mock_settings
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
     ac,
@@ -21,7 +22,6 @@ from pcs.test.tools.fixture_cib import (
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
-    skip_unless_lsb_network_available,
     skip_unless_pacemaker_supports_bundle,
 )
 from pcs.test.tools.pcs_runner import (
@@ -50,6 +50,7 @@ temp_large_cib  = os.path.join(RESOURCES_TMP, "temp-cib-large.xml")
 class ResourceDescribe(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(None)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     def fixture_description(self, advanced=False):
         advanced_params = (
@@ -106,13 +107,9 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
             "resource describe ocf:pacemaker:nonexistent",
-            # pacemaker 1.1.18 changes -5 to Input/output error
-            stdout_regexp=re.compile("^"
-                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or "
-                "does not provide valid metadata: Metadata query for "
-                "ocf:pacemaker:nonexistent failed: (-5|Input/output error)\n"
-                "$", re.MULTILINE
-            )
+            "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or does "
+                "not provide valid metadata: Metadata query for "
+                "ocf:pacemaker:nonexistent failed: Input/output error\n"
         )
 
     def test_nonextisting_agent_guess_name(self):
@@ -151,6 +148,7 @@ class Resource(TestCase, AssertPcsMixin):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
@@ -1644,7 +1642,9 @@ monitor interval=20 (A-monitor-interval-20)
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
-        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
+        self.pcs_runner.mock_settings = {
+            "corosync_conf_file": rc("corosync.conf"),
+        }
         self.assert_pcs_success("config",outdent("""\
             Cluster Name: test99
             Corosync Nodes:
@@ -1829,7 +1829,9 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
-        self.pcs_runner.corosync_conf_file = rc("corosync.conf")
+        self.pcs_runner.mock_settings = {
+            "corosync_conf_file": rc("corosync.conf"),
+        }
         self.assert_pcs_success("config", outdent(
             """\
             Cluster Name: test99
@@ -1885,7 +1887,7 @@ monitor interval=20 (A-monitor-interval-20)
               Options:
             """
         ))
-        self.pcs_runner.corosync_conf_file = None
+        del self.pcs_runner.mock_settings["corosync_conf_file"]
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -2661,7 +2663,6 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
-    @skip_unless_lsb_network_available()
     def testLSBResource(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:network foo=bar",
@@ -4891,44 +4892,25 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert retVal == 0
 
     def test_relocate_stickiness(self):
-        output, retVal = pcs(
-            temp_cib, "resource create D1 ocf:pacemaker:Dummy --no-default-ops"
+        self.assert_pcs_success(
+            "resource create D1 ocf:pacemaker:Dummy --no-default-ops"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(
-            temp_cib,
+        self.assert_pcs_success(
             "resource create DG1 ocf:pacemaker:Dummy --no-default-ops --group GR"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(
-            temp_cib,
+        self.assert_pcs_success(
             "resource create DG2 ocf:pacemaker:Dummy --no-default-ops --group GR"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(
-            temp_cib,
+        self.assert_pcs_success(
             "resource create DC ocf:pacemaker:Dummy --no-default-ops clone"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(
-            temp_cib,
+        self.assert_pcs_success(
             "resource create DGC1 ocf:pacemaker:Dummy --no-default-ops --group GRC"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(
-            temp_cib,
+        self.assert_pcs_success(
             "resource create DGC2 ocf:pacemaker:Dummy --no-default-ops --group GRC"
         )
-        self.assertEqual(0, retVal)
-        ac(output, "")
-        output, retVal = pcs(temp_cib, "resource clone GRC")
-        self.assertEqual(0, retVal)
-        ac(output, "")
+        self.assert_pcs_success("resource clone GRC")
 
         status = outdent(
             """\
@@ -4958,18 +4940,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             "D1", "DG1", "DG2", "GR", "DC", "DC-clone", "DGC1", "DGC2", "GRC",
             "GRC-clone"
         ])
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
             cib_in
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
 
@@ -5007,18 +4985,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["D1", "DG1", "DC", "DGC1"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
             cib_in, resources
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource config", outdent(
@@ -5049,18 +5023,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["GRC-clone", "GRC", "DGC1", "DGC2"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
             cib_in, ["GRC-clone"]
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource config", outdent(
@@ -5091,18 +5061,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         resources = set(["GR", "DG1", "DG2", "DC-clone", "DC"])
         with open(temp_cib, "w") as f:
             f.write(cib_original)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
             cib_in, ["GR", "DC-clone"]
         )
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
-        output, retVal = pcs(temp_cib, "resource config")
-        ac(output, status)
-        self.assertEqual(0, retVal)
+        self.assert_pcs_success("resource config", status)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource config", outdent(

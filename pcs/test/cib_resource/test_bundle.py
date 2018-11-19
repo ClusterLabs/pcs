@@ -2,6 +2,7 @@ import shutil
 from unittest import TestCase
 from lxml import etree
 
+from pcs.test.bin_mock import get_mock_settings
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
@@ -28,6 +29,7 @@ class BundleCreateCommon(
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
 
 @skip_unless_pacemaker_supports_bundle
@@ -602,6 +604,7 @@ class BundleShow(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     def test_minimal(self):
         self.assert_pcs_success(

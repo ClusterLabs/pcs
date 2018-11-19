@@ -74,11 +74,15 @@ class RequestDataUrlEncodeTest(TestCase):
         data = lib.RequestData(action, orig_data)
         self.assertEqual(action, data.action)
         self.assertEqual(orig_data, data.structured_data)
-        expected_raw_data = (
-            "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B" +
-            "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E"
+        expected_raw_data_variants = (
+            "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B"
+                "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E"
+            ,
+            "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B"
+                "%5D%28%29%2A%5E%24%23%40%21~%60%7B%3A%7D%3C%3E"
+            ,
         )
-        self.assertEqual(expected_raw_data, data.data)
+        self.assertTrue(data.data in expected_raw_data_variants)
 
 
 def _addr_list_to_dest(addr_list, port=None):

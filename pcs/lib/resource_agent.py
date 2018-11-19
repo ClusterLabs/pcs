@@ -1,4 +1,3 @@
-import os
 import re
 from collections import namedtuple
 from lxml import etree
@@ -12,8 +11,6 @@ from pcs.lib.pacemaker.values import is_true
 
 # TODO: fix
 # pylint: disable=no-self-use
-
-_crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
 # Operation monitor is required always! No matter if --no-default-ops was
 # entered or if agent does not specify it. See
@@ -133,7 +130,7 @@ def list_resource_agents_standards(runner):
     """
     # retval is number of standards found
     stdout, dummy_stderr, dummy_retval = runner.run([
-        _crm_resource, "--list-standards"
+        settings.crm_resource_binary, "--list-standards"
     ])
     ignored_standards = frozenset([
         # we are only interested in RESOURCE agents
@@ -149,7 +146,7 @@ def list_resource_agents_ocf_providers(runner):
     """
     # retval is number of providers found
     stdout, dummy_stderr, dummy_retval = runner.run([
-        _crm_resource, "--list-ocf-providers"
+        settings.crm_resource_binary, "--list-ocf-providers"
     ])
     return _prepare_agent_list(stdout)
 
@@ -187,7 +184,7 @@ def list_resource_agents(runner, standard_provider):
     """
     # retval is 0 on success, anything else when no agents found
     stdout, dummy_stderr, retval = runner.run([
-        _crm_resource, "--list-agents", standard_provider
+        settings.crm_resource_binary, "--list-agents", standard_provider
     ])
     if retval != 0:
         return []
@@ -201,7 +198,7 @@ def list_stonith_agents(runner):
     """
     # retval is 0 on success, anything else when no agents found
     stdout, dummy_stderr, retval = runner.run([
-        _crm_resource, "--list-agents", "stonith"
+        settings.crm_resource_binary, "--list-agents", "stonith"
     ])
     if retval != 0:
         return []
@@ -858,7 +855,11 @@ class CrmAgent(Agent):
             "/usr/bin/",
         ])
         stdout, stderr, retval = self._runner.run(
-            [_crm_resource, "--show-metadata", self._get_full_name()],
+            [
+                settings.crm_resource_binary,
+                "--show-metadata",
+                self._get_full_name(),
+            ],
             env_extend={
                 "PATH": env_path,
             }

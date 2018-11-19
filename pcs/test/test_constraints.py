@@ -9,6 +9,7 @@ from pcs.test.tools.assertions import (
     AssertPcsMixin,
     console_report,
 )
+from pcs.test.bin_mock import get_mock_settings
 from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.fixture_cib import (
     fixture_master_xml,
@@ -1144,7 +1145,8 @@ Ticket Constraints:
         fixture_to_cib(temp_cib, fixture_master_xml("stateful1"))
 
         o,r = pcs(temp_cib,
-            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
+            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG",
+            mock_settings=get_mock_settings("crm_resource_binary")
         )
         ac(o, """\
 Warning: changing a monitor operation interval from 10s to 11 to make the operation unique

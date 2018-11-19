@@ -2,19 +2,24 @@ import re
 from unittest import mock, TestCase
 
 from pcs import resource
+from pcs.test.bin_mock import get_mock_settings
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
-    skip_unless_pacemaker_supports_systemd,
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 from pcs.test.cib_resource.common import ResourceTest
 
-# pylint: disable=invalid-name, no-self-use, unused-argument, line-too-long, too-many-public-methods
+# pylint: disable=invalid-name, no-self-use, unused-argument, line-too-long
+# pylint: disable=too-many-public-methods
 
 class Success(ResourceTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
     def test_base_create(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy --no-default-ops",
@@ -29,7 +34,6 @@ class Success(ResourceTest):
             </resources>"""
         )
 
-    @skip_unless_pacemaker_supports_systemd()
     def test_base_create_with_agent_name_including_systemd_instance(self):
         # crm_resource returns the same metadata for any systemd resource, no
         # matter if it exists or not
@@ -251,6 +255,10 @@ class Success(ResourceTest):
         )
 
 class SuccessOperations(ResourceTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
     def test_create_with_operations(self):
         self.assert_effect(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"

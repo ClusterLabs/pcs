@@ -15,23 +15,23 @@ _temp_cib = rc("temp-cib.xml")
 
 class PcsRunner:
     def __init__(
-        self, cib_file=_temp_cib, corosync_conf_file=None,
-        corosync_conf_opt=None
+        self, cib_file=_temp_cib, corosync_conf_opt=None, mock_settings=None
     ):
         self.cib_file = cib_file
-        self.corosync_conf_file = corosync_conf_file
         self.corosync_conf_opt = corosync_conf_opt
+        self.mock_settings = mock_settings
 
     def run(self, args):
         return pcs(
-            self.cib_file, args, corosync_conf_file=self.corosync_conf_file,
-            corosync_conf_opt=self.corosync_conf_opt
+            self.cib_file,
+            args,
+            corosync_conf_opt=self.corosync_conf_opt,
+            mock_settings=self.mock_settings
         )
 
 
 def pcs(
-    cib_file, args, corosync_conf_file=None, uid_gid_dir=None,
-    corosync_conf_opt=None
+    cib_file, args, corosync_conf_opt=None, mock_settings=None
 ):
     """
     Run pcs with -f on specified file
@@ -39,6 +39,8 @@ def pcs(
         shell stdoutdata
         shell returncode
     """
+    if mock_settings is None:
+        mock_settings = {}
     arg_split = args.split()
     arg_split_temp = []
     in_quote = False
@@ -52,15 +54,16 @@ def pcs(
             if arg.find("'") != -1 and not (arg[0] == "'" and arg[-1] == "'"):
                 in_quote = True
 
-    env = {}
-    env_pcs_settings_prefix = "PCS.SETTINGS."
-    if corosync_conf_file:
-        env[f"{env_pcs_settings_prefix}corosync_conf_file"] = corosync_conf_file
-    if uid_gid_dir:
-        env[f"{env_pcs_settings_prefix}corosync_uidgid_dir"] = uid_gid_dir
+    env_mock_settings_prefix = "PCS.SETTINGS."
+    env = {
+        "{}{}".format(env_mock_settings_prefix, option): value
+        for option, value in mock_settings.items()
+    }
+
     cmd = [__pcs_location] + arg_split_temp
     if cib_file:
         cmd.extend(["-f", cib_file])
     if corosync_conf_opt:
         cmd.extend(["--corosync_conf", corosync_conf_opt])
+
     return utils.run(cmd, env_extend=env)

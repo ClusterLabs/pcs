@@ -1,6 +1,7 @@
 import shutil
 from unittest import TestCase
 
+from pcs.test.bin_mock import get_mock_settings
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
@@ -14,6 +15,7 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
     def test_warning_old_push(self):
         self.assert_pcs_success(

@@ -4,6 +4,7 @@ systemctl_binary = "/bin/systemctl"
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "/sbin/service"
 pacemaker_binaries = "/usr/sbin/"
+crm_resource_binary = os.path.join(pacemaker_binaries, "crm_resource")
 corosync_binaries = "/usr/sbin/"
 corosync_qnet_binaries = "/usr/bin/"
 ccs_binaries = "/usr/sbin/"

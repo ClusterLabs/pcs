@@ -52,7 +52,11 @@ class UidGidTest(unittest.TestCase):
         shutil.rmtree(self.uid_gid_dir)
 
     def testUIDGID(self):
-        _pcs = partial(pcs, None, uid_gid_dir=self.uid_gid_dir)
+        _pcs = partial(
+            pcs,
+            None,
+            mock_settings={"corosync_uidgid_dir": self.uid_gid_dir}
+        )
         o,r = _pcs("cluster uidgid")
         ac(o, "No uidgids configured\n")
         assert r == 0
