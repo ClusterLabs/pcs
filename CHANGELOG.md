@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- pcsd.service now depends on network-online.target ([rhbz#1638376])
+
+[rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
+
+
 ## [0.9.166] - 2018-09-30
 
 ### Fixed
