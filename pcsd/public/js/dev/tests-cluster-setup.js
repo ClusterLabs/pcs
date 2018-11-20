@@ -1,19 +1,227 @@
 dev.utils.clusterSetupDialog = {
   wasRun: false,
-  prefill: function(){
-    if(dev.utils.clusterSetupDialog.wasRun){
-      return;
-    }
-    dev.utils.clusterSetupDialog.wasRun = true;
-    clusterSetup.dialog.create();
-    $('input[name^="clustername"]').val(testClusterSetup.clusterName);
-    $('#create_new_cluster input[name="node-1"]').val("dave8");
-    $('#create_new_cluster input[name="node-2"]').val("kryten8");
-    $('#create_new_cluster input[name="node-3"]').val("holly8");
-    setTimeout(function(){ clusterSetup.submit.run() }, 500);
-  },
+};
+dev.utils.clusterSetupDialog.prefill = function(url, nodesNames){
+  nodesNames = nodesNames || ["dave8", "kryten8", "holly8"];
+
+  if(dev.utils.clusterSetupDialog.wasRun){ return }
+
+  dev.utils.clusterSetupDialog.wasRun = true;
+  clusterSetup.dialog.create();
+  $('input[name^="clustername"]').val(testClusterSetup.clusterName);
+  var nodes = $('#csetup input[name="node[]"]');
+  nodesNames.forEach(function(name, i){ nodes.eq(i).val(name) });
+
+  setTimeout(function(){
+    clusterSetup.submit.run(true);
+
+    setTimeout(function(){
+      // dev.utils.clusterSetupDialog.prefillKnet();
+      dev.utils.clusterSetupDialog.prefillCompression();
+      dev.utils.clusterSetupDialog.prefillCrypto();
+      dev.utils.clusterSetupDialog.prefillTotem();
+      dev.utils.clusterSetupDialog.prefillQuorum();
+      dev.utils.clusterSetupDialog.prefillTransportOptionsUdp("udp");
+      $("[href='#csetup-transport-options']").trigger("click");
+      // $("[href='#csetup-quorum']").trigger("click");
+      dev.utils.clusterSetupDialog.prefillUdp("udpu");
+      $(".ui-dialog:has('#csetup') button:contains('Create cluster')")
+        // .trigger("click")
+      ;
+      // $("[href='#csetup-totem']").trigger("click");
+    }, 500);
+  }, 5);
 };
 
+dev.utils.clusterSetupDialog.prefillForm = function(context, data, correct){
+  correct = correct || function(name, value){ return value };
+
+  for(var name in data){
+    var widget = $("[name='"+name+"']", context);
+
+    var value = correct(name, data[name]);
+    if (widget.attr("type") === "checkbox") {
+      widget.prop("checked", value);
+    } else {
+      widget.val(value);
+    }
+
+  }
+};
+
+dev.utils.clusterSetupDialog.prefillCompression = function(){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .compression-options"),
+    {
+      model: "zlib",
+      threshold: "101",
+      level: "1",
+    },
+  );
+};
+
+dev.utils.clusterSetupDialog.prefillTransportOptionsKnet = function(){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .options-container .options.knet"),
+    {
+      ip_version: "ipv4",
+      knet_pmtud_interval: "2",
+      link_mode: "rr",
+    },
+  );
+};
+dev.utils.clusterSetupDialog.prefillTransportOptionsUdp = function(type){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .options-container .options."+type),
+    {
+      ip_version: "ipv4",
+      netmtu: "1501",
+    },
+  );
+};
+
+dev.utils.clusterSetupDialog.prefillTotem = function(){
+  dev.utils.clusterSetupDialog.prefillForm($("#csetup-totem"), {
+    consensus: 1201,
+    downcheck: 1001,
+    fail_recv_const: 2501,
+    heartbeat_failures_allowed: 1,
+    hold: 181,
+    join: 51,
+    max_messages: 18,
+    max_network_delay: 51,
+    merge: 201,
+    miss_count_const: 6,
+    send_join: 1,
+    seqno_unchanged_const: 31,
+    token: 1001,
+    token_coefficient: 651,
+    token_retransmit: 239,
+    token_retransmits_before_loss_const: 5,
+    window_size: 51,
+  });
+};
+
+dev.utils.clusterSetupDialog.prefillQuorum = function(){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-quorum"),
+    {
+      auto_tie_breaker: true,
+      last_man_standing: true,
+      last_man_standing_window: 1001,
+      wait_for_all: true,
+    },
+    function(name, value){
+      if (
+        [
+          "auto_tie_breaker",
+          "last_man_standing",
+          "wait_for_all",
+        ].includes(name)
+      ) {
+        return value ? "on" : "off";
+      }
+      return value;
+    }
+  );
+};
+
+dev.utils.clusterSetupDialog.prefillCrypto = function(){
+  dev.utils.clusterSetupDialog.prefillForm(
+    $("#csetup-transport-options .crypto-options"),
+    {
+      model: "nss",
+      hash: "sha256",
+      cipher: "aes192",
+    },
+  );
+};
+
+dev.utils.clusterSetupDialog.addLink = function(addressPrefix, data){
+  $("#csetup-transport-netmaps .add-link").trigger("click");
+  clusterSetup.netmap.current.detailList().find("[name$='-address[]']").each(
+    function(i, input){ $(input).val(addressPrefix+(71 + i)) }
+  );
+
+  var currentLinkId = clusterSetup.netmap.current.linksContainer()
+    .find(".current")
+    .attr("data-transport-link-id")
+  ;
+
+  dev.utils.clusterSetupDialog.prefillForm(
+    clusterSetup.netmap.current.detailList().find(
+      "[data-transport-link-id='"+currentLinkId+"']"
+    ),
+    data
+  );
+};
+
+dev.utils.clusterSetupDialog.prefillUdp = function(udpType){
+  $("#csetup-transport-"+udpType).trigger("click");
+  dev.utils.clusterSetupDialog.addLink("127.0.0.", {
+    bindnetaddr: 1,
+    broadcast: 2,
+    mcastaddr: 3,
+    mcastport: 4,
+    ttl: 5,
+  });
+};
+
+dev.utils.clusterSetupDialog.prefillKnet = function(){
+  $("#csetup-transport-knet").trigger("click");
+  var getData = function(multi){
+    return {
+      link_priority: 1,
+      mcastport: "",
+      ping_interval: 95,
+      ping_precision: 2049,
+      ping_timeout: 195,
+      pong_count: 6,
+      transport: "udp",
+    };
+  };
+  dev.utils.clusterSetupDialog.addLink("127.0.0.", getData(1));
+};
+
+dev.utils.clusterSetupDialog.logSetupData = function(setupData){
+  console.group('SETUP DATA', setupData);
+
+  console.group('nodes');
+  setupData.nodeList.forEach(function(node){
+    console.group(node.name);
+    console.log("addrs:", node.addrs);
+    console.groupEnd();
+  });
+  console.groupEnd();
+
+  console.group('linkList');
+  setupData.linkList.forEach(function(link){
+    console.log(link);
+  });
+  console.groupEnd();
+
+  if (setupData.compression !== undefined) {
+    console.group('compression');
+    console.log(setupData.compression);
+    console.groupEnd();
+  }
+
+  if (setupData.crypto !== undefined) {
+    console.group('crypto');
+    console.log(setupData.crypto);
+    console.groupEnd();
+  }
+
+  console.group('totem');
+  console.log(setupData.totem);
+  console.groupEnd();
+
+  console.group('quorum');
+  console.log(setupData.quorum);
+  console.groupEnd();
+
+  console.groupEnd();
+};
 testClusterSetup = { clusterName: "starbug8" };
 
 dev.patch.ajax_wrapper(
@@ -102,6 +310,8 @@ testClusterSetup.checkAuth500 = function(url, data, success, fail){
 testClusterSetup.checkAuthFails = function(url, data, success, fail){
   switch(url){
     case "/manage/check_auth_against_nodes": return fail();
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
@@ -112,6 +322,8 @@ testClusterSetup.checkAuthNodesNotAuth = function(url, data, success, fail){
       kryten8: "Unable to authenticate",
       holly8: "Cant connect",
     }));
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
   }
 };
 
