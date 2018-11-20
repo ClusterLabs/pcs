@@ -631,7 +631,7 @@ Commands:
             hash=sha256. To disable encryption, set cipher=none and hash=none.
 
         Transports udp and udpu:
-        These transports are limited for one address per node. They do not
+        These transports are limited to one address per node. They do not
         support traffic encryption nor compression.
         Transport options are:
             ip_version, netmtu
