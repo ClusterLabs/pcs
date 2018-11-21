@@ -117,16 +117,27 @@ module CorosyncConf
   end
 
   def CorosyncConf::parse_section(lines, section)
-    # parser is trying to work the same way as an original corosync parser
+    # parser should work the same way as the original parser in corosync
     while not lines.empty?
       current_line = lines.shift().strip()
       next if current_line.empty? or current_line.start_with?('#')
       if current_line.include?('{')
-        section_name = current_line.rpartition('{').first
-        new_section = Section.new(section_name.strip)
+        line_parts = current_line.rpartition('{')
+        section_name = line_parts.first.strip
+        after_brace_junk = line_parts.last.strip
+        if after_brace_junk != ''
+          raise ParseErrorException, 'Extra characters after {'
+        end
+        if section_name == ''
+          raise ParseErrorException, 'Missing a section name before {'
+        end
+        new_section = Section.new(section_name)
         section.add_section(new_section)
         self.parse_section(lines, new_section)
       elsif current_line.include?('}')
+        if current_line.strip != '}'
+          raise ParseErrorException, 'Extra characters before or after }'
+        end
         if not section.parent
           raise ParseErrorException, 'Unexpected closing brace'
         end
@@ -135,6 +146,8 @@ module CorosyncConf
         section.add_attribute(
           *current_line.split(':', 2).map { |part| part.strip }
         )
+      else
+          raise ParseErrorException, 'Line is not opening or closing a section or key: value'
       end
     end
     raise ParseErrorException, 'Missing closing brace' if section.parent
