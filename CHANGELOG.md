@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+- Command `pcs client local-auth` for authentication of pcs client against local
+  pcsd. This is required when a non-root user wants to execute a command which
+  requires root permissions (e.g. `pcs cluster start`). ([rhbz#1554302])
+
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
 
+[rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 
 

@@ -367,7 +367,7 @@ def print_pcsd_daemon_status():
         cluster_pcsd_status([], True)
     else:
         err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
-            ['status', 'pcsd'], True
+            ['status', 'pcsd']
         )
         if err_msgs:
             for msg in err_msgs:

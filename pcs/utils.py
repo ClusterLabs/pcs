@@ -1196,7 +1196,7 @@ def auth_nodes_do(nodes, username, password, force, local):
     err('Unable to communicate with pcsd')
 
 
-def call_local_pcsd(argv, interactive_auth=False, std_in=None):
+def call_local_pcsd(argv, std_in=None):
     # some commands cannot be run under a non-root account
     # so we pass those commands to locally running pcsd to execute them
     # returns [list_of_errors, exit_code, stdout, stderr]
@@ -1209,29 +1209,14 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
     code, output = sendHTTPRequest(
         "localhost", "run_pcs", data_send, False, False
     )
-
-    # authenticate against local pcsd and run again
-    if interactive_auth and 3 == code: # not authenticated
-        print('Please authenticate yourself to the local pcsd')
-        username = get_terminal_input('Username: ')
-        password = get_terminal_password()
-        port = get_terminal_input(
-            'Port (default: {0}): '.format(settings.pcsd_default_port)
-            # default port is not completely correct, because default port from
-            # pcsd will be used
-        )
-        if not port:
-            port = None
-        auth_nodes_do({"localhost": port}, username, password, True, True)
-        print()
-        code, output = sendHTTPRequest(
-            "localhost", "run_pcs", data_send, False, False
-        )
-
     if 3 == code: # not authenticated
-        # don't advise to run 'pcs cluster auth' as that is not used to auth
-        # to localhost
-        return [['Unable to authenticate to the local pcsd'], 1, '', '']
+        return [
+            [
+                "Unable to authenticate against the local pcsd. Run the same "
+                "command as root or authenticate yourself to the local pcsd "
+                "using command 'pcs client local-auth'"
+            ], 1, '', ''
+        ]
     if 0 != code: # http error connecting to localhost
         return [[output], 1, '', '']
 
@@ -1995,6 +1980,17 @@ def get_terminal_password(message="Password: "):
     else:
         return get_terminal_input(message)
 
+def get_user_and_pass():
+    username = (
+        pcs_options["-u"] if "-u" in pcs_options
+        else get_terminal_input("Username: ")
+    )
+    password = (
+        pcs_options["-p"] if "-p" in pcs_options
+        else get_terminal_password()
+    )
+    return username, password
+
 # Returns an xml dom containing the current status of the cluster
 # DEPRECATED, please use ClusterState(getClusterStateXml()) instead
 def getClusterState():
@@ -2028,7 +2024,7 @@ def getCorosyncNodesID(allow_failure=False):
         (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
     else:
         err_msgs, retval, output, dummy_std_err = call_local_pcsd(
-            ['status', 'nodes', 'corosync-id'], True
+            ['status', 'nodes', 'corosync-id']
         )
         if err_msgs and not allow_failure:
             for msg in err_msgs:
@@ -2064,7 +2060,7 @@ def getPacemakerNodesID(allow_failure=False):
         (output, retval) = run(['crm_node', '-l'])
     else:
         err_msgs, retval, output, dummy_std_err = call_local_pcsd(
-            ['status', 'nodes', 'pacemaker-id'], True
+            ['status', 'nodes', 'pacemaker-id']
         )
         if err_msgs and not allow_failure:
             for msg in err_msgs:
@@ -2921,7 +2917,7 @@ def get_modifiers():
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
-    if error.message:
+    if error and error.message:
         err(error.message)
     else:
         usage.show(main_name, [usage_name])

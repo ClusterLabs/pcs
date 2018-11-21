@@ -25,6 +25,7 @@ def full_usage():
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
     out += strip_extras(alert([], False))
+    out += strip_extras(client([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(" \ ",""))
 
@@ -118,6 +119,7 @@ def generate_completion_tree_from_usage():
     tree["node"] = generate_tree(node([], False))
     tree["alert"] = generate_tree(alert([], False))
     tree["booth"] = generate_tree(booth([], False))
+    tree["client"] = generate_tree(client([], False))
     return tree
 
 def generate_tree(usage_txt):
@@ -180,6 +182,7 @@ Commands:
     pcsd        Manage pcs daemon.
     node        Manage cluster nodes.
     alert       Manage pacemaker alerts.
+    client      Manage pcsd client configuration.
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -1768,10 +1771,29 @@ Commands:
         return output
 
 
+def client(args=[], pout=True):
+    output = """
+Usage: pcs client <command>
+Manage pcsd client configuration.
+
+Commands:
+    local-auth [<pcsd-port>] [-u <username>] [-p <password>]
+        Authenticate current user to local pcsd. This is requiered to run some
+        pcs commands which may require permissions of root user such as 'pcs
+        cluster start'.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
+
 def show(main_usage_name, rest_usage_names):
     usage_map = {
         "acl": acl,
         "alert": alert,
+        "booth": booth,
+        "client": client,
         "cluster": cluster,
         "config": config,
         "constraint": constraint,
@@ -1780,7 +1802,6 @@ def show(main_usage_name, rest_usage_names):
         "property": property,
         "qdevice": qdevice,
         "quorum": quorum,
-        "booth": booth,
         "resource": resource,
         "status": status,
         "stonith": stonith,
