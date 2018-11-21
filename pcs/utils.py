@@ -2638,8 +2638,14 @@ def get_user_and_pass():
       * -u - username
       * -p - password
     """
-    username = pcs_options.get("-u", get_terminal_input('Username: '))
-    password = pcs_options.get("-p", get_terminal_password())
+    username = (
+        pcs_options["-u"] if "-u" in pcs_options
+        else get_terminal_input("Username: ")
+    )
+    password = (
+        pcs_options["-p"] if "-p" in pcs_options
+        else get_terminal_password()
+    )
     return username, password
 
 
