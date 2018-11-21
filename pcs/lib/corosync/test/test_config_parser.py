@@ -746,7 +746,7 @@ class SectionTest(TestCase):
 
 
 class ParserTest(TestCase):
-
+    # pylint: disable=too-many-public-methods
     def test_empty(self):
         self.assertEqual(str(config_parser.parse_string("")), "")
 
@@ -852,13 +852,11 @@ class ParserTest(TestCase):
         )
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
-    def test_sections_junk_around_braces(self):
+    def test_sections_no_name_before_opening(self):
         string = outdent("""\
             section1 {
-                section1a junk1 { junk2
-                junk3 } junk4
-                section1b junk5{junk6
-                junk7}junk8
+                {
+                }
             }
             section2 {
                section2a {
@@ -868,25 +866,105 @@ class ParserTest(TestCase):
             }
             """
         )
-        parsed = outdent("""\
-            section1 {
-                section1a junk1 {
-                }
+        self.assertRaises(
+            config_parser.MissingSectionNameBeforeOpeningBraceException,
+            config_parser.parse_string, string
+        )
 
-                section1b junk5 {
+    def test_sections_junk_after_opening(self):
+        string = outdent("""\
+            section1 {
+                section1a {junk
                 }
             }
-
             section2 {
-                section2a {
-                }
-
-                section2b {
-                }
+               section2a {
+               }
+               section2b {
+               }
             }
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertRaises(
+            config_parser.ExtraCharactersAfterOpeningBraceException,
+            config_parser.parse_string, string
+        )
+
+    def test_sections_comment_junk_after_opening(self):
+        string = outdent("""\
+            section1 {
+                section1a { #junk
+                }
+            }
+            section2 {
+               section2a {
+               }
+               section2b {
+               }
+            }
+            """
+        )
+        self.assertRaises(
+            config_parser.ExtraCharactersAfterOpeningBraceException,
+            config_parser.parse_string, string
+        )
+
+    def test_sections_junk_before_closing(self):
+        string = outdent("""\
+            section1 {
+                section1a {
+                junk}
+            }
+            section2 {
+               section2a {
+               }
+               section2b {
+               }
+            }
+            """
+        )
+        self.assertRaises(
+            config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
+            config_parser.parse_string, string
+        )
+
+    def test_sections_junk_after_closing(self):
+        string = outdent("""\
+            section1 {
+                section1a {
+                }junk
+            }
+            section2 {
+               section2a {
+               }
+               section2b {
+               }
+            }
+            """
+        )
+        self.assertRaises(
+            config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
+            config_parser.parse_string, string
+        )
+
+    def test_sections_comment_junk_after_closing(self):
+        string = outdent("""\
+            section1 {
+                section1a {
+                } #junk
+            }
+            section2 {
+               section2a {
+               }
+               section2b {
+               }
+            }
+            """
+        )
+        self.assertRaises(
+            config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
+            config_parser.parse_string, string
+        )
 
     def test_sections_unexpected_closing_brace(self):
         string = outdent("""\
@@ -940,6 +1018,23 @@ class ParserTest(TestCase):
             config_parser.parse_string, string
         )
 
+    def test_junk_line(self):
+        string = outdent("""\
+            name1: value1
+            section1 {
+                section1a {
+                    name1a: value1a
+                }
+            junk line
+                section1b {
+                }
+            }
+            """
+        )
+        self.assertRaises(
+            config_parser.LineIsNotSectionNorKeyValueException,
+            config_parser.parse_string, string
+        )
 
     def test_comments_attributes(self):
         string = outdent("""\
@@ -958,30 +1053,6 @@ class ParserTest(TestCase):
             name2: value2#junk3
             name3: value3 #junk4
             name4 # junk5: value4
-            """
-        )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
-
-    def test_comments_sections(self):
-        string = outdent("""\
-            # junk1
-            section1 { # junk2
-            }
-            section2 # junk2 {
-            }
-            section3 {
-            } #junk3
-            """
-        )
-        parsed = outdent("""\
-            section1 {
-            }
-
-            section2 # junk2 {
-            }
-
-            section3 {
-            }
             """
         )
         self.assertEqual(str(config_parser.parse_string(string)), parsed)

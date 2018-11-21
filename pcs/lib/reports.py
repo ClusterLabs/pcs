@@ -958,6 +958,41 @@ def corosync_config_parser_unexpected_closing_brace():
         report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
     )
 
+def corosync_config_parser_missing_section_name_before_opening_brace():
+    """
+    corosync config cannot be parsed due to a section name missing before {
+    """
+    # pylint: disable=line-too-long
+    return ReportItem.error(
+        report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE,
+    )
+
+def corosync_config_parser_extra_characters_after_opening_brace():
+    """
+    corosync config cannot be parsed due to extra characters after {
+    """
+    # pylint: disable=line-too-long
+    return ReportItem.error(
+        report_codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_AFTER_OPENING_BRACE,
+    )
+
+def corosync_config_parser_extra_characters_before_or_after_closing_brace():
+    """
+    corosync config cannot be parsed due to extra characters before or after }
+    """
+    # pylint: disable=line-too-long
+    return ReportItem.error(
+        report_codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE,
+    )
+
+def corosync_config_parser_line_is_not_section_nor_key_value():
+    """
+    corosync config cannot be parsed due to a line is not a section nor key:val
+    """
+    return ReportItem.error(
+        report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
+    )
+
 def corosync_config_parser_other_error():
     """
     corosync config cannot be parsed, the cause is not specified
