@@ -9,7 +9,11 @@
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
+- Propose removing nodes from their clusters instead of destroying cluster on
+  the nodes when trying to create new cluster from nodes which are already in
+  a cluster ([rhbz#1474747])
 
+[rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
 [rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 

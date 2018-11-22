@@ -1180,7 +1180,10 @@ function update_create_cluster_dialog(nodes, version_info) {
             "to add this cluster as existing one."
           );
         } else {
-          err_msg = xhr.responseText;
+          err_msg = xhr.responseText.replace(
+            /, use --force to override[^\n]*/g,
+            ''
+          );
         }
         alert(err_msg);
         $("#create_cluster_submit_btn").button("option", "disabled", false);

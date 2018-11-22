@@ -512,7 +512,9 @@ def cluster_setup(argv):
             if not all_nodes_available:
                 utils.err(
                     "nodes availability check failed, use --force to override. "
-                    + "WARNING: This will destroy existing cluster on the nodes."
+                    "WARNING: This will destroy existing cluster on the nodes. "
+                    "You should remove the nodes from their clusters instead "
+                    "to keep the clusters working properly."
                 )
         print("Destroying cluster on nodes: {0}...".format(
             ", ".join(primary_addr_list)

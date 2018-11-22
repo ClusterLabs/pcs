@@ -634,7 +634,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
         return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
       end
     else
-      return 400, "Unable to create new cluster. If cluster already exists on one or more of the nodes run 'pcs cluster destroy' on all nodes to remove current cluster configuration.\n\n#{node_to_send_to}: #{out}"
+      return 400, "Unable to create new cluster. If one or more of the nodes belong to a cluster already, remove such nodes from their clusters. If you are sure the nodes are not a part of any cluster, run 'pcs cluster destroy' on such nodes to remove current cluster configuration.\n\n#{node_to_send_to}: #{out}"
     end
 
     return warning_messages.join("\n\n")
