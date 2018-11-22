@@ -18,6 +18,9 @@ def node_addresses_contain_host(node_addresses_list, host):
 def node_addresses_contain_name(node_addresses_list, name):
     return name in [node.name for node in node_addresses_list]
 
+def node_addresses_contain_label(node_addresses_list, label):
+    return label in [node.label for node in node_addresses_list]
+
 
 class NodeAddresses(object):
     def __init__(self, ring0, ring1=None, name=None, id=None):

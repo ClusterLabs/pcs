@@ -6,6 +6,8 @@
 - Command `pcs client local-auth` for authentication of pcs client against local
   pcsd. This is required when a non-root user wants to execute a command which
   requires root permissions (e.g. `pcs cluster start`). ([rhbz#1554302])
+- A warning is printed when adding a location constraint for a non-existent
+  node ([rhbz#1522858])
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
@@ -14,6 +16,7 @@
   a cluster ([rhbz#1474747])
 
 [rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
+[rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
 [rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 

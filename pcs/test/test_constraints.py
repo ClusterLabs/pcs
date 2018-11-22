@@ -36,6 +36,9 @@ skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
     (1, 1, 16),
     "location constraints with resource patterns"
 )
+LOCATION_NODE_VALIDATION_SKIP_WARNING = (
+    "Warning: Validation for node existence in the cluster will be skipped\n"
+)
 
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
@@ -284,7 +287,7 @@ Ticket Constraints:
 
     def testAllConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint order Master then D5")
         assert returnVal == 0 and output == "Adding Master D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n", output
@@ -303,16 +306,16 @@ Ticket Constraints:
     def testLocationConstraints(self):
         # see also BundleLocation
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node2")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint")
         assert returnVal == 0
@@ -324,10 +327,10 @@ Ticket Constraints:
 
     def testConstraintRemoval(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint location D6 prefers node1")
-        assert returnVal == 0 and output == "", output
+        assert returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING, output
 
         output, returnVal = pcs(temp_cib, "constraint remove blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
@@ -594,11 +597,18 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        ac(
+            o,
+            (
+                "Cluster CIB has been upgraded to latest version\n"
+                +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
+        )
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs("constraint --full")
@@ -831,10 +841,10 @@ Ticket Constraints:
 
     def testLocationConstraintRule(self):
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
-        assert r == 0 and o == "", o
+        assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
 
         o, r = pcs(temp_cib, "constraint location D2 prefers rh7-2")
-        assert r == 0 and o == "", o
+        assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
 
         o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1")
         assert r == 0 and o == "", o
@@ -1060,7 +1070,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs("constraint location stateful1 prefers rh7-1 --force")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs("constraint location statefulG rule #uname eq rh7-1 --force")
@@ -1132,13 +1142,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         output, returnVal = pcs(
             "constraint location stateful1 prefers rh7-1 --autocorrect"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             "constraint location statefulG prefers rh7-1 --autocorrect"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -1427,7 +1437,7 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs("constraint location dummy prefers rh7-1 --force")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs("constraint location dummyG rule #uname eq rh7-1 --force")
@@ -1495,13 +1505,13 @@ Ticket Constraints:
         output, returnVal = pcs(
             "constraint location dummy prefers rh7-1 --autocorrect"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             "constraint location dummyG prefers rh7-1 --autocorrect"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -1731,7 +1741,7 @@ Ticket Constraints:
         shutil.copy(large_cib, temp_cib)
 
         output, returnVal = pcs(temp_cib, "constraint location dummy prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
@@ -1759,7 +1769,7 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location dummy prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
@@ -1772,7 +1782,7 @@ Ticket Constraints:
 
     def testConstraintResourceCloneUpdate(self):
         output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
@@ -1812,7 +1822,7 @@ Ticket Constraints:
 
     def testConstraintResourceMasterUpdate(self):
         output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
@@ -1856,7 +1866,7 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
@@ -1900,7 +1910,7 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
@@ -1957,25 +1967,25 @@ Ticket Constraints:
         output, returnVal = pcs(
             temp_cib, "constraint location D1 prefers node1=100"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib, "constraint location D1 prefers guest1=200"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib, "constraint location D2 avoids node2=300"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib, "constraint location D2 avoids guest1=400"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2034,13 +2044,13 @@ Ticket Constraints:
         output, returnVal = pcs(
             temp_cib, "constraint location D1 prefers guest1=200"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib, "constraint location D2 avoids guest1=400"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2101,7 +2111,7 @@ Ticket Constraints:
         output, returnVal = pcs(
             temp_cib, "constraint location vm-guest1 prefers node1"
         )
-        ac(output, "")
+        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
@@ -2869,7 +2879,8 @@ class LocationTypeId(ConstraintEffect):
                 <rsc_location id="location-A-node1-INFINITY" node="node1"
                     rsc="A" score="INFINITY"
                 />
-            </constraints>"""
+            </constraints>""",
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_avoids(self):
@@ -2884,7 +2895,8 @@ class LocationTypeId(ConstraintEffect):
                 <rsc_location id="location-A-node1--INFINITY" node="node1"
                     rsc="A" score="-INFINITY"
                 />
-            </constraints>"""
+            </constraints>""",
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_add(self):
@@ -2897,7 +2909,8 @@ class LocationTypeId(ConstraintEffect):
             ],
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
-            </constraints>"""
+            </constraints>""",
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_rule(self):
@@ -2939,7 +2952,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="INFINITY"
                 />
             </constraints>""",
-            self.stdout()
+            self.stdout() + LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_avoids(self):
@@ -2950,7 +2963,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="-INFINITY"
                 />
             </constraints>""",
-            self.stdout()
+            self.stdout() + LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_add(self):
@@ -2961,7 +2974,7 @@ class LocationTypePattern(ConstraintEffect):
                     score="INFINITY"
                 />
             </constraints>""",
-            self.stdout()
+            self.stdout() + LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_rule(self):
@@ -3264,7 +3277,8 @@ class BundleLocation(Bundle):
                         rsc="B" score="INFINITY"
                     />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_bundle_avoids(self):
@@ -3276,7 +3290,8 @@ class BundleLocation(Bundle):
                         rsc="B" score="-INFINITY"
                     />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_bundle_location(self):
@@ -3286,7 +3301,8 @@ class BundleLocation(Bundle):
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="B" score="100" />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_primitive_prefers(self):
@@ -3307,7 +3323,8 @@ class BundleLocation(Bundle):
                         rsc="R" score="INFINITY"
                     />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_primitive_avoids(self):
@@ -3328,7 +3345,8 @@ class BundleLocation(Bundle):
                         rsc="R" score="-INFINITY"
                     />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
     def test_primitive_location(self):
@@ -3347,7 +3365,8 @@ class BundleLocation(Bundle):
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="R" score="100" />
                 </constraints>
-            """
+            """,
+            output=LOCATION_NODE_VALIDATION_SKIP_WARNING
         )
 
 

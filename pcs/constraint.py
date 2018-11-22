@@ -19,13 +19,16 @@ from pcs.cli import (
     constraint_order,
 )
 from pcs.cli.common import parse_args
+from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
+from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
+from pcs.lib.node import node_addresses_contain_label
 from pcs.lib.pacemaker.values import sanitize_id
 
 
@@ -835,6 +838,24 @@ def location_add(argv,rm=False):
             rsc_value = correct_id
         elif not rsc_valid:
             utils.err(rsc_error)
+
+    # Verify that specified node exists in the cluster
+    if not utils.usefile:
+        lib_env = utils.get_lib_env()
+        existing_nodes = get_nodes(
+            corosync_conf=lib_env.get_corosync_conf(),
+            tree=lib_env.get_cib(),
+        )
+        if not node_addresses_contain_label(existing_nodes, node):
+            warn(
+                (
+                    "Node '{node}' does not seem to be in the cluster. If you "
+                    "are about to add node '{node}' to the cluster, you can "
+                    "safely ignore this warning."
+                ).format(node=node)
+            )
+    else:
+        warn("Validation for node existence in the cluster will be skipped")
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint

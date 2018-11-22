@@ -36,6 +36,9 @@ temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
+LOCATION_NODE_VALIDATION_SKIP_WARNING = (
+    "Warning: Validation for node existence in the cluster will be skipped\n"
+)
 
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -980,8 +983,8 @@ monitor interval=20 (A-monitor-interval-20)
     def testGroupRemoveTest(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         self.assert_pcs_success(
             "resource delete ClusterIP2",
@@ -1067,8 +1070,8 @@ monitor interval=20 (A-monitor-interval-20)
 """)
 
         o,r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
-        ac(o,'')
 
         o,r = pcs(temp_cib, "resource ungroup AGroup A2")
         assert r == 0
@@ -1675,11 +1678,11 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs("constraint location D1-clone prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs("constraint location D1 prefers rh7-1 --force")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         self.assert_pcs_success(
@@ -1754,12 +1757,12 @@ Ticket Constraints:
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "constraint location Master prefers rh7-2")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         self.assert_pcs_success("resource delete Master", outdent(
             """\
@@ -1777,12 +1780,13 @@ Ticket Constraints:
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
+
         self.assert_pcs_success("resource delete ClusterIP5", outdent(
             """\
             Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
@@ -1797,12 +1801,12 @@ Ticket Constraints:
         )
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
+        assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         assert returnVal == 0
-        assert output == ""
 
         self.assert_pcs_success("config", outdent(
             """\
@@ -2033,7 +2037,7 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location D0-clone prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint")
@@ -3334,7 +3338,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location AG prefers rh7-1")
-        ac(o,"")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o,r = pcs(temp_cib, "resource ungroup AG")
@@ -3365,6 +3369,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         o,r = pcs(temp_cib, "resource master AA")
         assert r == 0
         o,r = pcs(temp_cib, "constraint location AA-master prefers rh7-1")
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         self.assert_pcs_success(
