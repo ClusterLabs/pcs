@@ -233,9 +233,13 @@ def main(argv=None):
         ['cluster', 'sync', '...'],
         # ['config', 'restore', '...'], # handled in config.config_restore
         ['pcsd', 'sync-certificates'],
+        ["quorum", "device", "status", "..."],
+        ["quorum", "status", "..."],
+        ['status', 'corosync', '...'],
         ['status', 'nodes', 'corosync-id'],
         ['status', 'nodes', 'pacemaker-id'],
         ['status', 'pcsd', '...'],
+        ['status', 'quorum', '...'],
     ]
     argv_cmd = argv[:]
     argv_cmd.insert(0, command)

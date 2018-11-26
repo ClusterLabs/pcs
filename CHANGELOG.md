@@ -8,6 +8,9 @@
   requires root permissions (e.g. `pcs cluster start`). ([rhbz#1554302])
 - A warning is printed when adding a location constraint for a non-existent
   node ([rhbz#1522858])
+- Allow non-root users to read quorum status (commands `pcs status corosync`,
+  `pcs status quorum`, `pcs quorum device status`, `pcs quorum status`)
+  ([rhbz#1594738])
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
@@ -41,6 +44,7 @@
 [rhbz#1462248]: https://bugzilla.redhat.com/show_bug.cgi?id=1462248
 [rhbz#1475318]: https://bugzilla.redhat.com/show_bug.cgi?id=1475318
 [rhbz#1488044]: https://bugzilla.redhat.com/show_bug.cgi?id=1488044
+[rhbz#1594738]: https://bugzilla.redhat.com/show_bug.cgi?id=1594738
 [rhbz#1600169]: https://bugzilla.redhat.com/show_bug.cgi?id=1600169
 [rhbz#1623181]: https://bugzilla.redhat.com/show_bug.cgi?id=1623181
 

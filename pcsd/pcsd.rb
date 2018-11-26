@@ -339,6 +339,18 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
+    ['quorum', 'device', 'status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['quorum', 'status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'corosync', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
     ['status', 'nodes', 'corosync-id', '...'] => {
       'only_superuser' => false,
       'permissions' => Permissions::READ,
@@ -350,6 +362,10 @@ post '/run_pcs' do
     ['status', 'pcsd', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
+    },
+    ['status', 'quorum', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
     },
   }
   allowed = false
