@@ -5,6 +5,11 @@
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
   corosync
+- Allow non-root users to read quorum status (commands `pcs status corosync`,
+  `pcs status quorum`, `pcs quorum device status`, `pcs quorum status`)
+  ([rhbz#1653316])
+
+[rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 
 
 ## [0.10.1] - 2018-11-23

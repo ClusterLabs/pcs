@@ -255,6 +255,22 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
+    ['quorum', 'device', 'status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['quorum', 'status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'corosync', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'quorum', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
     ['status', 'pcsd', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,

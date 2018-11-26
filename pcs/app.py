@@ -196,6 +196,10 @@ def main(argv=None):
         ['host', 'deauth', '...'],
         ['pcsd', 'deauth', '...'],
         ['pcsd', 'sync-certificates'],
+        ["quorum", "device", "status", "..."],
+        ["quorum", "status", "..."],
+        ['status', 'corosync', '...'],
+        ['status', 'quorum', '...'],
         ['status', 'pcsd', '...'],
     ]
     argv_cmd = argv[:]
