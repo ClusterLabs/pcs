@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Corosync config file parser updated and made more strict to match changes in
+  corosync
+
+
 ## [0.10.1] - 2018-11-23
 
 ### Removed
