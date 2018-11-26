@@ -679,8 +679,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_AFTER_OPENING_BRACE:
+        "Unable to parse corosync config: extra characters after {"
+    ,
+
+    codes
+    .PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE:
+        "Unable to parse corosync config: extra characters before or after }"
+    ,
+
+    codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE:
+        "Unable to parse corosync config: a line is not opening or closing "
+        "a section or key: value"
+    ,
+
     codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE:
         "Unable to parse corosync config: missing closing brace"
+    ,
+
+    codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE:
+        "Unable to parse corosync config: missing a section name before {"
     ,
 
     codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE:

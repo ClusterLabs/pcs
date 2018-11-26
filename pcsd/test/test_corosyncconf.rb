@@ -747,7 +747,7 @@ class TestCorosyncConfParser < Test::Unit::TestCase
     assert_equal('', CorosyncConf::parse_string('').text)
   end
 
-  def test_attributes
+  def test_attributes_one_attribute
     string = "\
 name:value\
 "
@@ -755,7 +755,9 @@ name:value\
 name: value
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
+  def test_attributes_two_attributes_same_name
     string = "\
 name:value
 name:value
@@ -765,7 +767,9 @@ name: value
 name: value
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
+  def test_attributes_more_attributes_whitespace
     string = "\
   name1:value1  
 name2  :value2
@@ -779,7 +783,9 @@ name3: value3
 name4: value4
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
+  def test_attributes_colon_in_value
     string = "\
 name:foo:value
 "
@@ -792,7 +798,9 @@ name: foo:value
       root.attributes
     )
     assert_equal(parsed, root.text)
+  end
 
+  def test_attributes_empty_value
     string = "\
 name :  
 "
@@ -807,7 +815,7 @@ name:
     assert_equal(parsed, root.text)
   end
 
-  def test_section
+  def test_sections_empty_section
     string = "\
 section1 {
 }\
@@ -817,7 +825,9 @@ section1 {
 }
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
+  def test_sections_empty_section_in_section_whitespace
     string = "\
 section1 {
     section1a   {
@@ -836,13 +846,13 @@ section1 {
 }
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
-    string = "\
+  def test_sections_no_name_before_opening
+        string = "\
 section1 {
-    section1a junk1 { junk2
-    junk3 } junk4
-    section1b junk5{junk6
-    junk7}junk8
+    {
+    }
 }
 section2 {
    section2a {
@@ -851,58 +861,102 @@ section2 {
    }
 }
 "
-    parsed = "\
-section1 {
-    section1a junk1 {
-    }
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
 
-    section1b junk5 {
+  def test_sections_junk_after_opening
+    string = "\
+section1 {
+    section1a {junk
     }
 }
-
 section2 {
-    section2a {
-    }
-
-    section2b {
-    }
+   section2a {
+   }
+   section2b {
+   }
 }
 "
-    assert_equal(parsed, CorosyncConf::parse_string(string).text)
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
 
+  def test_sections_comment_junk_after_opening
+    string = "\
+section1 {
+    section1a { #junk
+    }
+}
+section2 {
+   section2a {
+   }
+   section2b {
+   }
+}
+"
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
+
+  def test_sections_junk_before_closing
     string = "\
 section1 {
     section1a {
-    }
-
-    section1b {
-    }
+    junk}
 }
+section2 {
+   section2a {
+   }
+   section2b {
+   }
 }
 "
     assert_raise CorosyncConf::ParseErrorException do
       CorosyncConf::parse_string(string)
     end
+  end
 
+  def test_sections_junk_after_closing
     string = "\
 section1 {
     section1a {
-
-    section1b {
-    }
+    }junk
+}
+section2 {
+   section2a {
+   }
+   section2b {
+   }
 }
 "
     assert_raise CorosyncConf::ParseErrorException do
       CorosyncConf::parse_string(string)
     end
+  end
 
+  def test_sections_comment_junk_after_closing
     string = "\
 section1 {
+    section1a {
+    } #junk
+}
+section2 {
+   section2a {
+   }
+   section2b {
+   }
+}
 "
     assert_raise CorosyncConf::ParseErrorException do
       CorosyncConf::parse_string(string)
     end
+  end
 
+  def test_sections_unexpected_closing_brace
     string = "\
 }
 "
@@ -911,7 +965,63 @@ section1 {
     end
   end
 
-  def test_comment
+  def test_sections_unexpected_closing_brace_inner_section
+    string = "\
+section1 {
+    section1a {
+    }
+
+    section1b {
+    }
+}
+}
+"
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
+
+  def test_sections_missing_closing_brace
+    string = "\
+section1 {
+"
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
+
+  def test_sections_missing_closing_brace_inner_section
+    string = "\
+section1 {
+    section1a {
+
+    section1b {
+    }
+}
+"
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
+
+  def test_junk_line
+    string = "\
+name1: value1
+section1 {
+    section1a {
+        name1a: value1a
+    }
+junk line
+    section1b {
+    }
+}
+"
+    assert_raise CorosyncConf::ParseErrorException do
+      CorosyncConf::parse_string(string)
+    end
+  end
+
+  def test_comments_attributes
     string= "\
 # junk1
 name1: value1
@@ -929,28 +1039,9 @@ name3: value3 #junk4
 name4 # junk5: value4
 "
     assert_equal(parsed, CorosyncConf::parse_string(string).text)
+  end
 
-    string= "\
-# junk1
-section1 { # junk2
-}
-section2 # junk2 {
-}
-section3 {
-} #junk3
-"
-    parsed = "\
-section1 {
-}
-
-section2 # junk2 {
-}
-
-section3 {
-}
-"
-    assert_equal(parsed, CorosyncConf::parse_string(string).text)
-
+  def test_comments_sections_closing_brace
     string = "\
 section {
 #}
@@ -958,7 +1049,9 @@ section {
     assert_raise CorosyncConf::ParseErrorException do
       CorosyncConf::parse_string(string)
     end
+  end
 
+  def test_comments_sections_opening_brace
     string = "\
 #section {
 }

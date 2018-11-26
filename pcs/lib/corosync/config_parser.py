@@ -122,17 +122,26 @@ def parse_string(conf_text):
     return root
 
 def _parse_section(lines, section):
-    # parser is trying to work the same way as an original corosync parser
+    # parser should work the same way as the original parser in corosync
     while lines:
         current_line = lines.pop(0).strip()
         if not current_line or current_line[0] == "#":
             continue
         if "{" in current_line:
-            section_name, dummy_junk = current_line.rsplit("{", 1)
+            section_name_candidate, after_brace_junk = current_line.rsplit(
+                "{", 1
+            )
+            if after_brace_junk.strip():
+                raise ExtraCharactersAfterOpeningBraceException()
+            section_name = section_name_candidate.strip()
+            if not section_name:
+                raise MissingSectionNameBeforeOpeningBraceException()
             new_section = Section(section_name.strip())
             section.add_section(new_section)
             _parse_section(lines, new_section)
         elif "}" in current_line:
+            if current_line.strip() != "}":
+                raise ExtraCharactersBeforeOrAfterClosingBraceException()
             if not section.parent:
                 raise UnexpectedClosingBraceException()
             return
@@ -140,6 +149,8 @@ def _parse_section(lines, section):
             section.add_attribute(
                 *[x.strip() for x in current_line.split(":", 1)]
             )
+        else:
+            raise LineIsNotSectionNorKeyValueException()
     if section.parent:
         raise MissingClosingBraceException()
 
@@ -157,4 +168,16 @@ class MissingClosingBraceException(ParseErrorException):
     pass
 
 class UnexpectedClosingBraceException(ParseErrorException):
+    pass
+
+class MissingSectionNameBeforeOpeningBraceException(ParseErrorException):
+    pass
+
+class ExtraCharactersAfterOpeningBraceException(ParseErrorException):
+    pass
+
+class ExtraCharactersBeforeOrAfterClosingBraceException(ParseErrorException):
+    pass
+
+class LineIsNotSectionNorKeyValueException(ParseErrorException):
     pass

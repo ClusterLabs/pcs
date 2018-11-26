@@ -24,6 +24,26 @@ class ConfigFacade:
             raise LibraryError(
                 reports.corosync_config_parser_unexpected_closing_brace()
             )
+        except config_parser.MissingSectionNameBeforeOpeningBraceException:
+            # pylint: disable=line-too-long
+            raise LibraryError(
+                reports.corosync_config_parser_missing_section_name_before_opening_brace()
+            )
+        except config_parser.ExtraCharactersAfterOpeningBraceException:
+            # pylint: disable=line-too-long
+            raise LibraryError(
+                reports.corosync_config_parser_extra_characters_after_opening_brace()
+            )
+        except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException:
+            # pylint: disable=line-too-long
+            raise LibraryError(
+                reports.corosync_config_parser_extra_characters_before_or_after_closing_brace()
+            )
+        except config_parser.LineIsNotSectionNorKeyValueException:
+            # pylint: disable=line-too-long
+            raise LibraryError(
+                reports.corosync_config_parser_line_is_not_section_nor_key_value()
+            )
         except config_parser.CorosyncConfParserException:
             raise LibraryError(
                 reports.corosync_config_parser_other_error()
