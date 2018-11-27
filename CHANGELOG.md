@@ -41,7 +41,7 @@
 - Deprecated command `pcs cluster quorum unblock` which was replaced by
   `pcs quorum unblock`
 - Subcommand `pcs status groups` as it was not showing a cluster status but
-  cluster configuration. The same funcionality is still available using command
+  cluster configuration. The same functionality is still available using command
   `pcs resource group list`
 - Undocumented command `pcs acl target`, use `pcs acl user` instead
 
@@ -104,7 +104,7 @@
   is printed instead of printing the whole usage
 - Show more user friendly error message when testing watchdog device and
   multiple devices are present ([rhbz#1578891])
-- Do not distinguish betwen supported and unsupported watchdog devices as SBD
+- Do not distinguish between supported and unsupported watchdog devices as SBD
   cannot reliably provide such information ([rhbz#1578891])
 - `pcs config` no longer crashes when `crm_mon` prints something to stderr
   ([rhbz#1578955])
