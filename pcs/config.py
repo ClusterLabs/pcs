@@ -712,7 +712,7 @@ def config_checkpoint_view(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported()
     if len(argv) != 1:
-        usage.config(["checkpoint", "view"])
+        usage.config(["checkpoint view"])
         sys.exit(1)
 
     loaded, lines = _checkpoint_to_lines(lib, argv[0])
@@ -774,7 +774,7 @@ def config_checkpoint_restore(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
-        usage.config(["checkpoint", "restore"])
+        usage.config(["checkpoint restore"])
         sys.exit(1)
 
     cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
@@ -1033,7 +1033,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
             invalid_args = True
     # check options
     if invalid_args:
-        usage.config(["export", "pcs-commands"])
+        usage.config(["export pcs-commands"])
         sys.exit(1)
     # complete optional options
     if dist is None:
