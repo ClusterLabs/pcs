@@ -2873,17 +2873,6 @@ def _bundle_mapping_strings(first_line, map_items):
         return [first_line] + indent(map_lines, indent_step=1)
     return []
 
-def print_utilization_string(element, spaces):
-    """
-    Commandline options: no options
-    """
-    output = []
-    mvars = element.findall("utilization/nvpair")
-    for mvar in mvars:
-        output.append(mvar.attrib["name"] + "=" + mvar.attrib["value"])
-    if output:
-        print(spaces + " Utilization: " + " ".join(output))
-
 def _nvpairs_strings(node, parent_tag, extra_vars_dict=None):
     """
     Commandline options: no options
