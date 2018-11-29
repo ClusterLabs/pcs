@@ -37,6 +37,7 @@ from pcs import (
     utils,
     alert,
 )
+from pcs.cli.common import middleware
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command as constraint_command
@@ -690,20 +691,28 @@ def config_checkpoint_list(lib, argv, modifiers):
         )
 
 def _checkpoint_to_lines(lib, checkpoint_number):
+    # backup current settings
     orig_usefile = utils.usefile
     orig_filename = utils.filename
-
+    orig_middleware = lib.middleware_factory
+    # configure old code to read the CIB from a file
     utils.usefile = True
     utils.filename = os.path.join(
         settings.cib_dir,
         "cib-%s.raw" % checkpoint_number
     )
+    # configure new code to read the CIB from a file
+    lib.middleware_factory = orig_middleware._replace(
+        cib=middleware.cib(utils.filename, utils.touch_cib_file)
+    )
+    # export the CIB to text
     result = False, []
     if os.path.isfile(utils.filename):
         result = True, _config_show_cib_lines(lib)
-
+    # restore original settings
     utils.usefile = orig_usefile
     utils.filename = orig_filename
+    lib.middleware_factory = orig_middleware
     return result
 
 def config_checkpoint_view(lib, argv, modifiers):
