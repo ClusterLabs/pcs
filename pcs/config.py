@@ -27,7 +27,6 @@ except ImportError:
 from pcs import (
     cluster,
     constraint,
-    prop,
     quorum,
     resource,
     settings,
@@ -37,13 +36,16 @@ from pcs import (
     utils,
     alert,
 )
-from pcs.lib.errors import LibraryError
-from pcs.lib.commands import quorum as lib_quorum
-import pcs.cli.constraint_colocation.command as colocation_command
-import pcs.cli.constraint_order.command as order_command
-import pcs.cli.constraint_ticket.command as ticket_command
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.constraint import command as constraint_command
+from pcs.cli.constraint_colocation import (
+    console_report as colocation_console_report,
+)
+from pcs.cli.constraint_order import console_report as order_console_report
+from pcs.cli.constraint_ticket import console_report as ticket_console_report
+from pcs.lib.errors import LibraryError
+from pcs.lib.commands import quorum as lib_quorum
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
@@ -104,7 +106,7 @@ def config_show(lib, argv, modifiers):
     print("Cluster Name: %s" % utils.getClusterName())
     status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
     print()
-    config_show_cib(lib)
+    print("\n".join(_config_show_cib_lines(lib)))
     if (
         utils.hasCorosyncConf()
         and
@@ -128,55 +130,97 @@ def config_show(lib, argv, modifiers):
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
-def config_show_cib(lib):
+def _config_show_cib_lines(lib):
     """
     Commandline options:
       * -f - CIB file
     """
-    print("Resources:")
     # update of pcs_options will change output of constraint show
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_input_modifiers()
-    resource.resource_config(
-        lib,
-        [],
-        modifiers.get_subset("-f")
-    )
+    cib_xml = utils.get_cib()
+    cib_etree = utils.get_cib_etree(cib_xml=cib_xml)
+    cib_dom = utils.get_cib_dom(cib_xml=cib_xml)
 
-    print()
-    print("Stonith Devices:")
-    resource.resource_config(
-        lib,
-        [],
-        modifiers.get_subset("-f"),
-        stonith=True,
-    )
-    print("Fencing Levels:")
-    levels = stonith.stonith_level_config_to_str(
+    resource_lines = []
+    stonith_lines = []
+    for resource_el in cib_etree.find(".//resources"):
+        is_stonith = (
+            "class" in resource_el.attrib
+            and
+            resource_el.attrib["class"] == "stonith"
+        )
+        resource_el_lines = resource.resource_node_lines(resource_el)
+        if is_stonith:
+            stonith_lines += resource_el_lines
+        else:
+            resource_lines += resource_el_lines
+
+    all_lines = []
+
+    all_lines.append("Resources:")
+    all_lines.extend(indent(resource_lines, indent_step=1))
+    all_lines.append("")
+    all_lines.append("Stonith Devices:")
+    all_lines.extend(indent(stonith_lines, indent_step=1))
+    all_lines.append("Fencing Levels:")
+    levels_lines = stonith.stonith_level_config_to_str(
         lib.fencing_topology.get_config()
     )
-    if levels:
-        print("\n".join(indent(levels, 2)))
+    if levels_lines:
+        all_lines.extend(indent(levels_lines, indent_step=2))
 
-    print()
-    constraint.location_show(lib, [], modifiers.get_subset("-f", "--full"))
-    order_command.show(lib, [], modifiers.get_subset("-f", "--full"))
-    colocation_command.show(lib, [], modifiers.get_subset("-f", "--full"))
-    ticket_command.show(lib, [], modifiers.get_subset("-f", "--full"))
-
-    print()
-    alert.print_alert_config(lib, [], modifiers.get_subset("-f"))
-
-    print()
-    print("Resources Defaults:")
-    resource.show_defaults("rsc_defaults", indent=" ")
-    print("Operations Defaults:")
-    resource.show_defaults("op_defaults", indent=" ")
-    print()
-    prop.list_property(
-        lib, [], modifiers.get_subset("--defaults", "--all", "-f")
+    all_lines.append("")
+    constraints_element = cib_dom.getElementsByTagName('constraints')[0]
+    all_lines.extend(
+        constraint.location_lines(constraints_element, showDetail=True)
     )
+    all_lines.extend(constraint_command.show(
+        "Ordering Constraints:",
+        lib.constraint_order.show,
+        order_console_report.constraint_plain,
+        modifiers.get_subset("-f", "--full"),
+    ))
+    all_lines.extend(constraint_command.show(
+         "Colocation Constraints:",
+        lib.constraint_colocation.show,
+        colocation_console_report.constraint_plain,
+        modifiers.get_subset("-f", "--full"),
+    ))
+    all_lines.extend(constraint_command.show(
+        "Ticket Constraints:",
+        lib.constraint_ticket.show,
+        ticket_console_report.constraint_plain,
+        modifiers.get_subset("-f", "--full"),
+    ))
+
+    all_lines.append("")
+    all_lines.extend(alert.alert_config_lines(lib))
+
+    all_lines.append("")
+    all_lines.append("Resources Defaults:")
+    all_lines.extend(indent(
+        resource.show_defaults(cib_dom, "rsc_defaults"),
+        indent_step=1
+    ))
+    all_lines.append("Operations Defaults:")
+    all_lines.extend(indent(
+        resource.show_defaults(cib_dom, "op_defaults"),
+        indent_step=1
+    ))
+
+    all_lines.append("")
+    all_lines.append("Cluster Properties:")
+    properties = utils.get_set_properties()
+    all_lines.extend(indent(
+        [
+            "{0}: {1}".format(prop, val)
+            for prop, val in sorted(properties.items())
+        ],
+        indent_step=1
+    ))
+    return all_lines
 
 def config_backup(lib, argv, modifiers):
     """
@@ -655,7 +699,7 @@ def config_checkpoint_view(lib, argv, modifiers):
     utils.filename = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
     if not os.path.isfile(utils.filename):
         utils.err("unable to read the checkpoint")
-    config_show_cib(lib)
+    print("\n".join(_config_show_cib_lines(lib)))
 
 def config_checkpoint_restore(lib, argv, modifiers):
     """
