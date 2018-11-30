@@ -11,7 +11,6 @@ from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
-    ReportListAnalyzer,
 )
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
@@ -24,7 +23,7 @@ TAG = "bundle"
 
 GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 
-_generic_container_options = set((
+GENERIC_CONTAINER_OPTIONS = frozenset((
     "image",
     "masters",
     "network",
@@ -35,11 +34,26 @@ _generic_container_options = set((
     "replicas-per-host",
 ))
 
-_network_options = set((
+NETWORK_OPTIONS = frozenset((
     "control-port",
     "host-interface",
     "host-netmask",
     "ip-range-start",
+))
+
+PORT_MAP_OPTIONS = frozenset((
+    "id",
+    "port",
+    "internal-port",
+    "range",
+))
+
+STORAGE_MAP_OPTIONS = frozenset((
+    "id",
+    "options",
+    "source-dir",
+    "source-dir-root",
+    "target-dir",
 ))
 
 def is_bundle(resource_el):
@@ -61,9 +75,7 @@ def validate_new(
     list of dict storage_map -- list of storage mapping options
     bool force_options -- return warnings instead of forceable errors
     """
-    report_list = []
-
-    report_list.extend(
+    return (
         validate.run_collection_of_option_validators(
             {"id": bundle_id},
             [
@@ -71,30 +83,17 @@ def validate_new(
                 validate.value_id("id", "bundle name", id_provider),
             ]
         )
-    )
-
-    aux_reports = _validate_container_type(container_type)
-    report_list.extend(aux_reports)
-    if not ReportListAnalyzer(aux_reports).error_list:
-        report_list.extend(
-            # TODO call the proper function once more container_types are
-            # supported by pacemaker
-            _validate_generic_container_options_new(
-                container_options,
-                force_options
-            )
+        +
+        validate_reset(
+            id_provider,
+            container_type,
+            container_options,
+            network_options,
+            port_map,
+            storage_map,
+            force_options
         )
-    report_list.extend(
-        _validate_network_options_new(network_options, force_options)
     )
-    report_list.extend(
-        _validate_port_map_list(port_map, id_provider, force_options)
-    )
-    report_list.extend(
-        _validate_storage_map_list(storage_map, id_provider, force_options)
-    )
-
-    return report_list
 
 def append_new(
     parent_element, id_provider, bundle_id, container_type, container_options,
@@ -115,30 +114,94 @@ def append_new(
     dict meta_attributes -- meta attributes
     """
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
-    # TODO create the proper element once more container_types are supported
-    # by pacemaker
-    container_element = etree.SubElement(bundle_element, container_type)
-    # Do not add options with empty values. When updating, an empty value means
-    # remove the option.
-    update_attributes_remove_empty(container_element, container_options)
-    if network_options or port_map:
-        network_element = etree.SubElement(bundle_element, "network")
-        # Do not add options with empty values. When updating, an empty value
-        # means remove the option.
-        update_attributes_remove_empty(network_element, network_options)
-        for port_map_options in port_map:
-            _append_port_map(
-                network_element, id_provider, bundle_id, port_map_options
-            )
-    if storage_map:
-        storage_element = etree.SubElement(bundle_element, "storage")
-        for storage_map_options in storage_map:
-            _append_storage_map(
-                storage_element, id_provider, bundle_id, storage_map_options
-            )
-    if meta_attributes:
-        append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
+    _append_container(bundle_element, container_type, container_options)
+    _configure(
+        bundle_element,
+        id_provider,
+        bundle_id,
+        network_options,
+        port_map,
+        storage_map,
+        meta_attributes,
+    )
     return bundle_element
+
+def validate_reset(
+    id_provider, container_type, container_options, network_options,
+    port_map, storage_map, force_options=False
+):
+    """
+    Validate bundle parameters, return list of report items
+
+    IdProvider id_provider -- elements' ids generator and uniqueness checker
+    string container_type -- bundle container type
+    dict container_options -- container options
+    dict network_options -- network options
+    list of dict port_map -- list of port mapping options
+    list of dict storage_map -- list of storage mapping options
+    bool force_options -- return warnings instead of forceable errors
+    """
+    return (
+        _validate_container(container_type, container_options, force_options)
+        +
+        _validate_network_options_new(network_options, force_options)
+        +
+        _validate_port_map_list(port_map, id_provider, force_options)
+        +
+        _validate_storage_map_list(storage_map, id_provider, force_options)
+    )
+
+def reset(
+    bundle_element, id_provider, bundle_id, container_type, container_options,
+    network_options, port_map, storage_map, meta_attributes
+):
+    """
+    Remove configuration of bundle_element and create new one.
+
+    etree bundle_element -- the bundle element that will be reset
+    IdProvider id_provider -- elements' ids generator
+    string bundle_id -- id of the bundle
+    string container_type -- bundle container type
+    dict container_options -- container options
+    dict network_options -- network options
+    list of dict port_map -- list of port mapping options
+    list of dict storage_map -- list of storage mapping options
+    dict meta_attributes -- meta attributes
+    """
+    # pylint: disable=too-many-arguments
+
+    # Old bundle configuration is removed and re-created. We aren't trying
+    # to keep ids:
+    # * It doesn't make sense to reference this ids.
+    # * There is VERY HIGHT probablity that the newly created ids will have
+    #   the same value since they are based on id of bundle element which is
+    #   kept.
+    elements_without_reset_impact = []
+    for child in list(bundle_element):
+        if child.tag not in (
+            list(GENERIC_CONTAINER_TYPES)
+            +
+            ["network", "storage", "meta_attributes"]
+        ):
+            # Only primitive shoulud be found here, currently.
+            # The order of different element tags has no practical impact so we
+            # don't care about it here.
+            elements_without_reset_impact.append(child)
+        bundle_element.remove(child)
+
+    _append_container(bundle_element, container_type, container_options)
+    _configure(
+        bundle_element,
+        id_provider,
+        bundle_id,
+        network_options,
+        port_map,
+        storage_map,
+        meta_attributes,
+    )
+
+    for element in elements_without_reset_impact:
+        bundle_element.append(element)
 
 def validate_update(
     id_provider, bundle_el, container_options, network_options,
@@ -339,18 +402,16 @@ def get_inner_resource(bundle_el):
         return resources[0]
     return None
 
-def _validate_container_type(container_type):
-    return validate.value_in(
-        "type",
-        GENERIC_CONTAINER_TYPES,
-        "container type"
-    )(
-        {
-            "type": container_type,
-        }
-    )
+def _validate_container(container_type, container_options, force_options=False):
+    if not container_type in GENERIC_CONTAINER_TYPES:
+        return [
+            reports.invalid_option_value(
+                "container type",
+                container_type,
+                GENERIC_CONTAINER_TYPES,
+            )
+        ]
 
-def _validate_generic_container_options_new(options, force_options):
     validators = [
         validate.is_required("image", "container"),
         validate.value_not_empty("image", "image name"),
@@ -361,7 +422,7 @@ def _validate_generic_container_options_new(options, force_options):
         validate.value_positive_integer("replicas-per-host"),
     ]
     deprecation_reports = []
-    if "masters" in options:
+    if "masters" in container_options:
         deprecation_reports.append(
             reports.deprecated_option(
                 "masters", ["promoted-max"], "container",
@@ -369,13 +430,16 @@ def _validate_generic_container_options_new(options, force_options):
             )
         )
     return (
-        validate.run_collection_of_option_validators(options, validators)
+        validate.run_collection_of_option_validators(
+            container_options,
+            validators
+        )
         +
         deprecation_reports
         +
         validate.names_in(
-            _generic_container_options,
-            options.keys(),
+            GENERIC_CONTAINER_OPTIONS,
+            container_options.keys(),
             "container",
             report_codes.FORCE_OPTIONS,
             force_options
@@ -462,7 +526,7 @@ def _validate_generic_container_options_update(
         +
         validate.names_in(
             # allow to remove options even if they are not allowed
-            _generic_container_options | _options_to_remove(options),
+            GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
             options.keys(),
             "container",
             report_codes.FORCE_OPTIONS,
@@ -480,7 +544,7 @@ def _validate_network_options_new(options, force_options):
         validate.run_collection_of_option_validators(options, validators)
         +
         validate.names_in(
-            _network_options,
+            NETWORK_OPTIONS,
             options.keys(),
             "network",
             report_codes.FORCE_OPTIONS,
@@ -543,7 +607,7 @@ def _validate_network_options_update(
         +
         validate.names_in(
             # allow to remove options even if they are not allowed
-            _network_options | _options_to_remove(options),
+            NETWORK_OPTIONS | _options_to_remove(options),
             options.keys(),
             "network",
             report_codes.FORCE_OPTIONS,
@@ -552,12 +616,6 @@ def _validate_network_options_update(
     )
 
 def _validate_port_map_list(options_list, id_provider, force_options):
-    allowed_options = [
-        "id",
-        "port",
-        "internal-port",
-        "range",
-    ]
     validators = [
         validate.value_id("id", "port-map id", id_provider),
         validate.depends_on_option(
@@ -579,7 +637,7 @@ def _validate_port_map_list(options_list, id_provider, force_options):
             validate.run_collection_of_option_validators(options, validators)
             +
             validate.names_in(
-                allowed_options,
+                PORT_MAP_OPTIONS,
                 options.keys(),
                 "port-map",
                 report_codes.FORCE_OPTIONS,
@@ -589,13 +647,6 @@ def _validate_port_map_list(options_list, id_provider, force_options):
     return report_list
 
 def _validate_storage_map_list(options_list, id_provider, force_options):
-    allowed_options = [
-        "id",
-        "options",
-        "source-dir",
-        "source-dir-root",
-        "target-dir",
-    ]
     source_dir_options = ["source-dir", "source-dir-root"]
     validators = [
         validate.value_id("id", "storage-map id", id_provider),
@@ -609,7 +660,7 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
             validate.run_collection_of_option_validators(options, validators)
             +
             validate.names_in(
-                allowed_options,
+                STORAGE_MAP_OPTIONS,
                 options.keys(),
                 "storage-map",
                 report_codes.FORCE_OPTIONS,
@@ -639,6 +690,37 @@ def _value_host_netmask(option_name, force_options):
         code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
         extra_values_allowed=force_options
     )
+
+def _append_container(bundle_element, container_type, container_options):
+    # Do not add options with empty values. When updating, an empty value means
+    # remove the option.
+    update_attributes_remove_empty(
+        etree.SubElement(bundle_element, container_type),
+        container_options,
+    )
+
+def _configure(
+    bundle_element, id_provider, id_base,
+    network_options, port_map, storage_map, meta_attributes
+):
+    if network_options or port_map:
+        network_element = etree.SubElement(bundle_element, "network")
+        # Do not add options with empty values. When updating, an empty value
+        # means remove the option.
+        update_attributes_remove_empty(network_element, network_options)
+        for port_map_options in port_map:
+            _append_port_map(
+                network_element, id_provider, id_base, port_map_options
+            )
+    if storage_map:
+        storage_element = etree.SubElement(bundle_element, "storage")
+        for storage_map_options in storage_map:
+            _append_storage_map(
+                storage_element, id_provider, id_base, storage_map_options
+            )
+    if meta_attributes:
+        append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
+
 
 def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     if "id" not in port_map_options:
