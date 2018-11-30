@@ -601,6 +601,20 @@ def location_show(lib, argv, modifiers):
         valid_noderes = []
 
     (dummy_dom, constraintsElement) = getCurrentConstraints()
+    print("\n".join(location_lines(
+        constraintsElement,
+        showDetail=showDetail,
+        byNode=byNode,
+        valid_noderes=valid_noderes
+    )))
+
+def location_lines(
+    constraintsElement, showDetail=False, byNode=False, valid_noderes=None
+):
+    """
+    Commandline options: no options
+    """
+    all_lines = []
     nodehashon = {}
     nodehashoff = {}
     rschashon = {}
@@ -610,7 +624,7 @@ def location_show(lib, argv, modifiers):
         'rsc_location'
     )
 
-    print("Location Constraints:")
+    all_lines.append("Location Constraints:")
     for rsc_loc in all_loc_constraints:
         if rsc_loc.hasAttribute("rsc-pattern"):
             lc_rsc_type = RESOURCE_TYPE_REGEXP
@@ -688,7 +702,7 @@ def location_show(lib, argv, modifiers):
             if valid_noderes:
                 if node not in valid_noderes:
                     continue
-            print("  Node: " + node)
+            all_lines.append("  Node: " + node)
 
             nodehash_label = (
                 (nodehashon, "    Allowed to run:"),
@@ -696,7 +710,7 @@ def location_show(lib, argv, modifiers):
             )
             for nodehash, label in nodehash_label:
                 if node in nodehash:
-                    print(label)
+                    all_lines.append(label)
                     for options in nodehash[node]:
                         line_parts = [(
                             "      " + options["rsc_label"]
@@ -713,14 +727,14 @@ def location_show(lib, argv, modifiers):
                                 )
                             )
                         line_parts.append("Score: " + options["score"])
-                        print(" ".join(line_parts))
-        show_location_rules(ruleshash, showDetail)
+                        all_lines.append(" ".join(line_parts))
+        all_lines += _show_location_rules(ruleshash, showDetail)
     else:
         for rsc in rsclist:
             if valid_noderes:
                 if rsc[0:2] not in valid_noderes:
                     continue
-            print("  {0}".format(rsc[2]))
+            all_lines.append("  {0}".format(rsc[2]))
             rschash_label = (
                 (rschashon, "    Enabled on:"),
                 (rschashoff, "    Disabled on:"),
@@ -747,15 +761,17 @@ def location_show(lib, argv, modifiers):
                             )
                         if showDetail:
                             line_parts.append("(id:{0})".format(options["id"]))
-                        print(" ".join(line_parts))
+                        all_lines.append(" ".join(line_parts))
             miniruleshash = {}
             miniruleshash[rsc] = ruleshash[rsc]
-            show_location_rules(miniruleshash, showDetail, True)
+            all_lines += _show_location_rules(miniruleshash, showDetail, True)
+    return all_lines
 
-def show_location_rules(ruleshash, showDetail, noheader=False):
+def _show_location_rules(ruleshash, showDetail, noheader=False):
     """
     Commandline options: no options
     """
+    all_lines = []
     constraint_options = {}
     for rsc in sorted(
         ruleshash.keys(),
@@ -769,7 +785,7 @@ def show_location_rules(ruleshash, showDetail, noheader=False):
     ):
         constrainthash = defaultdict(list)
         if not noheader:
-            print("  {0}".format(rsc[2]))
+            all_lines.append("  {0}".format(rsc[2]))
         for rule in ruleshash[rsc]:
             constraint_id = rule.parentNode.getAttribute("id")
             constrainthash[constraint_id].append(rule)
@@ -793,11 +809,14 @@ def show_location_rules(ruleshash, showDetail, noheader=False):
             else:
                 constraint_option_info = ""
 
-            print("    Constraint: " + constraint_id + constraint_option_info)
+            all_lines.append(
+                "    Constraint: " + constraint_id + constraint_option_info
+            )
             for rule in constrainthash[constraint_id]:
-                print(rule_utils.ExportDetailed().get_string(
+                all_lines.append(rule_utils.ExportDetailed().get_string(
                     rule, showDetail, "      "
                 ))
+    return all_lines
 
 def location_prefer(lib, argv, modifiers):
     """

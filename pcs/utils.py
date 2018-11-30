@@ -1519,26 +1519,30 @@ def get_cib(scope=None):
             err("unable to get cib")
     return output
 
-def get_cib_dom():
+def get_cib_dom(cib_xml=None):
     """
     Commandline options:
       * -f - CIB file
     """
     # pylint: disable=bare-except
+    if cib_xml is None:
+        cib_xml = get_cib()
     try:
-        dom = parseString(get_cib())
+        dom = parseString(cib_xml)
         return dom
     except:
         err("unable to get cib")
 
-def get_cib_etree():
+def get_cib_etree(cib_xml=None):
     """
     Commandline options:
       * -f - CIB file
     """
     # pylint: disable=bare-except
+    if cib_xml is None:
+        cib_xml = get_cib()
     try:
-        root = ET.fromstring(get_cib())
+        root = ET.fromstring(cib_xml)
         return root
     except:
         err("unable to get cib")

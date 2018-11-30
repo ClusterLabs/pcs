@@ -1956,7 +1956,7 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success("resource config D0", outdent(
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Attributes: test=testB test2=testC test4=test4A test3=testD
+              Attributes: test=testB test2=testC test3=testD test4=test4A
               Meta Attrs: test6= test7=test7a
               Operations: monitor interval=35 (D0-monitor-interval-35)
             """
@@ -2704,7 +2704,7 @@ monitor interval=20 (A-monitor-interval-20)
             outdent(
                 """\
                  Resource: D2 (class=lsb type=network)
-                  Attributes: foo=bar bar=baz
+                  Attributes: bar=baz foo=bar
                   Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
                 """
             )

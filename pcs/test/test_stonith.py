@@ -427,7 +427,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i username=u action=a
+                  Attributes: action=a ip=i username=u
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )

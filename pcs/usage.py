@@ -1499,6 +1499,10 @@ Commands:
     checkpoint view <checkpoint_number>
         Show specified configuration checkpoint.
 
+    checkpoint diff <checkpoint_number> <checkpoint_number>
+        Show differences between the two specified checkpoints. Use checkpoint
+        number 'live' to compare a checkpoint to the current live configuration.
+
     checkpoint restore <checkpoint_number>
         Restore cluster configuration to specified checkpoint.
 
