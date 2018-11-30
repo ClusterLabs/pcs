@@ -1917,11 +1917,10 @@ Ticket Constraints:
         )
 
         self.assert_pcs_success("resource show D0", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Attributes: test=testB test2=testC test4=test4A test3=testD
-              Meta Attrs: test6= test7=test7a 
+              Attributes: test=testB test2=testC test3=testD test4=test4A
+              Meta Attrs: test6= test7=test7a
               Operations: monitor interval=35 (D0-monitor-interval-35)
             """
         ))
@@ -1967,13 +1966,13 @@ Ticket Constraints:
         ac(output, """\
  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
   Attributes: test=testC test2=test2a
-  Meta Attrs: test5=test5a test7=test7a 
+  Meta Attrs: test5=test5a test7=test7a
   Operations: monitor interval=35 (D0-monitor-interval-35)
  Group: TestRG
-  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2 
+  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
    Attributes: test=testA test2=test2a
-   Meta Attrs: d1meta=superd1meta 
+   Meta Attrs: d1meta=superd1meta
    Operations: monitor interval=30 (D1-monitor-interval-30)
 """)
         assert returnVal == 0
@@ -2653,7 +2652,7 @@ Ticket Constraints:
             outdent(
                 """\
                  Resource: D2 (class=lsb type=network)
-                  Attributes: foo=bar bar=baz
+                  Attributes: bar=baz foo=bar
                   Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
                 """
             )
@@ -3280,12 +3279,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, r)
 
         self.assert_pcs_success(
-            # pylint:disable=trailing-whitespace
             "resource --full",
             stdout_regexp=re.compile(outdent(
                 """\
                  Clone: D1-clone
-                  Meta Attrs: foo=bar 
+                  Meta Attrs: foo=bar
                   Resource: D1 \\(class=ocf provider=heartbeat type=Dummy\\)
                    Operations: monitor interval=10s? timeout=20s? \\(D1-monitor-interval-10s?\\)
                 """), re.MULTILINE
@@ -3295,12 +3293,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_success("resource update D1-clone bar=baz")
 
         self.assert_pcs_success(
-            # pylint:disable=trailing-whitespace
             "resource --full",
             stdout_regexp=re.compile(outdent(
                 """\
                  Clone: D1-clone
-                  Meta Attrs: foo=bar bar=baz 
+                  Meta Attrs: bar=baz foo=bar
                   Resource: D1 \\(class=ocf provider=heartbeat type=Dummy\\)
                    Operations: monitor interval=10s? timeout=20s? \\(D1-monitor-interval-10s?\\)
                 """), re.MULTILINE
@@ -3312,12 +3309,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, "")
 
         self.assert_pcs_success(
-            # pylint:disable=trailing-whitespace
             "resource --full",
             stdout_regexp=re.compile(outdent(
                 """\
                  Clone: D1-clone
-                  Meta Attrs: bar=baz 
+                  Meta Attrs: bar=baz
                   Resource: D1 \\(class=ocf provider=heartbeat type=Dummy\\)
                    Operations: monitor interval=10s? timeout=20s? \\(D1-monitor-interval-10s?\\)
                 """), re.MULTILINE
@@ -3568,10 +3564,9 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show D1",
             stdout_regexp=re.compile(outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: D1 \\(class=ocf provider=heartbeat type=Dummy\\)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10s? timeout=20s? \\(D1-monitor-interval-10s?\\)
                 """), re.MULTILINE
             )
@@ -3841,12 +3836,11 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success(
-            # pylint:disable=trailing-whitespace
             "resource show dummy-clone",
             stdout_regexp=re.compile(outdent(
                 """\
                  Clone: dummy-clone
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Resource: dummy \\(class=ocf provider=heartbeat type=Dummy\\)
                    Operations: monitor interval=10s? timeout=20s? \\(dummy-monitor-interval-10s?\\)
                 """), re.MULTILINE
@@ -3876,12 +3870,11 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success(
-            # pylint:disable=trailing-whitespace
             "resource show dummy-clone",
             stdout_regexp=re.compile(outdent(
                 """\
                  Clone: dummy-clone
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Resource: dummy \\(class=ocf provider=heartbeat type=Dummy\\)
                    Operations: monitor interval=10s? timeout=20s? \\(dummy-monitor-interval-10s?\\)
                 """), re.MULTILINE
@@ -3999,10 +3992,9 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Master: dummy-master
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -4030,10 +4022,9 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(retVal, 0)
 
         self.assert_pcs_success("resource show dummy-master", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Master: dummy-master
-              Meta Attrs: target-role=Stopped 
+              Meta Attrs: target-role=Stopped
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
                            monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
@@ -4085,13 +4076,12 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
@@ -4103,16 +4093,15 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4122,14 +4111,13 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4142,14 +4130,13 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4162,14 +4149,13 @@ Error: Cannot remove more than one resource from cloned group
         self.assert_pcs_success(
             "resource show --full",
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
                  Resource: dummy1 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy1-monitor-interval-10)
                  Resource: dummy2 (class=ocf provider=pacemaker type=Dummy)
                   Operations: monitor interval=10 timeout=20 (dummy2-monitor-interval-10)
                  Resource: dummy3 (class=ocf provider=pacemaker type=Dummy)
-                  Meta Attrs: target-role=Stopped 
+                  Meta Attrs: target-role=Stopped
                   Operations: monitor interval=10 timeout=20 (dummy3-monitor-interval-10)
                 """
             )
@@ -4617,33 +4603,32 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
 
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
             """
         ))
@@ -4666,25 +4651,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
               Group: GRC
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
@@ -4709,7 +4693,6 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
@@ -4722,14 +4705,14 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC1-monitor-interval-10)
                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0 
+                Meta Attrs: resource-stickiness=0
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
             """
         ))
@@ -4752,22 +4735,21 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         with open(temp_cib, "w") as f:
             f.write(cib_out.toxml())
         self.assert_pcs_success("resource --full", outdent(
-            # pylint:disable=trailing-whitespace
             """\
              Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10 timeout=20 (D1-monitor-interval-10)
              Group: GR
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG1-monitor-interval-10)
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DG2-monitor-interval-10)
              Clone: DC-clone
-              Meta Attrs: resource-stickiness=0 
+              Meta Attrs: resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0 
+               Meta Attrs: resource-stickiness=0
                Operations: monitor interval=10 timeout=20 (DC-monitor-interval-10)
              Clone: GRC-clone
               Group: GRC

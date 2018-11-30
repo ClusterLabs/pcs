@@ -68,7 +68,6 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 0
 
     def testRemoteNode(self):
-        #pylint: disable=trailing-whitespace
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         o,r = pcs(
             temp_cib,
@@ -119,10 +118,10 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource --full", outdent(
             """\
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-2g 
+              Meta Attrs: remote-node=rh7-2g
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
+              Meta Attrs: remote-addr=400 remote-connect-timeout=50 remote-node=rh7-1 remote-port=100
               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))
@@ -171,7 +170,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
              Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 
+              Meta Attrs: remote-addr=400 remote-connect-timeout=50 remote-node=rh7-1 remote-port=100
               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
             """
         ))

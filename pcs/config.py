@@ -33,7 +33,6 @@ except ImportError:
 from pcs import (
     cluster,
     constraint,
-    prop,
     quorum,
     resource,
     settings,
@@ -43,12 +42,15 @@ from pcs import (
     utils,
     alert,
 )
+from pcs.cli.common.console_report import indent
+from pcs.cli.constraint import command as constraint_command
+from pcs.cli.constraint_colocation import (
+    console_report as colocation_console_report,
+)
+from pcs.cli.constraint_order import console_report as order_console_report
+from pcs.cli.constraint_ticket import console_report as ticket_console_report
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
-import pcs.cli.constraint_colocation.command as colocation_command
-import pcs.cli.constraint_order.command as order_command
-import pcs.cli.constraint_ticket.command as ticket_command
-from pcs.cli.common.console_report import indent
 
 
 def config_cmd(argv):
@@ -96,7 +98,7 @@ def config_show(argv):
     print("Cluster Name: %s" % utils.getClusterName())
     status.nodes_status(["config"])
     print()
-    config_show_cib()
+    print("\n".join(_config_show_cib_lines()))
     if (
         utils.hasCorosyncConf()
         and
@@ -122,42 +124,96 @@ def config_show(argv):
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
-def config_show_cib():
-    lib = utils.get_library_wrapper()
-    modifiers = utils.get_modifiers()
-
-    print("Resources:")
+def _config_show_cib_lines():
+    # update of pcs_options will change output of constraint show
     utils.pcs_options["--all"] = 1
     utils.pcs_options["--full"] = 1
-    resource.resource_show([])
+    # get latest modifiers object after updating pcs_options
+    modifiers = utils.get_modifiers()
 
-    print()
-    print("Stonith Devices:")
-    resource.resource_show([], True)
-    print("Fencing Levels:")
-    levels = stonith.stonith_level_config_to_str(
+    lib = utils.get_library_wrapper()
+    cib_xml = utils.get_cib()
+    cib_etree = utils.get_cib_etree(cib_xml=cib_xml)
+    cib_dom = utils.get_cib_dom(cib_xml=cib_xml)
+
+    resource_lines = []
+    stonith_lines = []
+    for resource_el in cib_etree.find(".//resources"):
+        is_stonith = (
+            "class" in resource_el.attrib
+            and
+            resource_el.attrib["class"] == "stonith"
+        )
+        resource_el_lines = resource.resource_node_lines(resource_el)
+        if is_stonith:
+            stonith_lines += resource_el_lines
+        else:
+            resource_lines += resource_el_lines
+
+    all_lines = []
+
+    all_lines.append("Resources:")
+    all_lines.extend(indent(resource_lines, indent_step=1))
+    all_lines.append("")
+    all_lines.append("Stonith Devices:")
+    all_lines.extend(indent(stonith_lines, indent_step=1))
+    all_lines.append("Fencing Levels:")
+    levels_lines = stonith.stonith_level_config_to_str(
         lib.fencing_topology.get_config()
+             )
+    if levels_lines:
+        all_lines.extend(indent(levels_lines, indent_step=2))
+
+    all_lines.append("")
+    constraints_element = cib_dom.getElementsByTagName('constraints')[0]
+    all_lines.extend(
+        constraint.location_lines(constraints_element, showDetail=True)
     )
-    if levels:
-        print("\n".join(indent(levels, 2)))
+    all_lines.extend(constraint_command.show(
+        "Ordering Constraints:",
+        lib.constraint_order.show,
+        order_console_report.constraint_plain,
+        modifiers
+    ))
+    all_lines.extend(constraint_command.show(
+         "Colocation Constraints:",
+        lib.constraint_colocation.show,
+        colocation_console_report.constraint_plain,
+        modifiers
+    ))
+    all_lines.extend(constraint_command.show(
+        "Ticket Constraints:",
+        lib.constraint_ticket.show,
+        ticket_console_report.constraint_plain,
+        modifiers
+    ))
 
-    print()
-    constraint.location_show([])
-    order_command.show(lib, [], modifiers)
-    colocation_command.show(lib, [], modifiers)
-    ticket_command.show(lib, [], modifiers)
+    all_lines.append("")
+    all_lines.extend(alert.alert_config_lines(lib))
 
-    print()
-    alert.print_alert_config(lib, [], modifiers)
+    all_lines.append("")
+    all_lines.append("Resources Defaults:")
+    all_lines.extend(indent(
+        resource.show_defaults(cib_dom, "rsc_defaults"),
+        indent_step=1
+    ))
+    all_lines.append("Operations Defaults:")
+    all_lines.extend(indent(
+        resource.show_defaults(cib_dom, "op_defaults"),
+        indent_step=1
+    ))
 
-    print()
-    del utils.pcs_options["--all"]
-    print("Resources Defaults:")
-    resource.show_defaults("rsc_defaults", indent=" ")
-    print("Operations Defaults:")
-    resource.show_defaults("op_defaults", indent=" ")
-    print()
-    prop.list_property([])
+    all_lines.append("")
+    all_lines.append("Cluster Properties:")
+    properties = utils.get_set_properties()
+    all_lines.extend(indent(
+        [
+            "{0}: {1}".format(prop, val)
+            for prop, val in sorted(properties.items())
+        ],
+        indent_step=1
+    ))
+    return all_lines
 
 def config_backup(argv):
     if len(argv) > 1:
@@ -597,7 +653,7 @@ def config_checkpoint_view(argv):
     utils.filename = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
     if not os.path.isfile(utils.filename):
         utils.err("unable to read the checkpoint")
-    config_show_cib()
+    print("\n".join(_config_show_cib_lines()))
 
 def config_checkpoint_restore(argv):
     if len(argv) != 1:
