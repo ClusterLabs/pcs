@@ -281,19 +281,18 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success("stonith show --full", outdent(
-            # pylint: disable=trailing-whitespace
             """\
              Resource: f1 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f1-monitor-interval-60s)
              Resource: f2 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f2-monitor-interval-60s)
              Resource: f3 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f3-monitor-interval-60s)
              Resource: f4 (class=stonith type=fence_xvm)
-              Meta Attrs: provides=something 
+              Meta Attrs: provides=something
               Operations: monitor interval=60s (f4-monitor-interval-60s)
             """
         ))
@@ -319,22 +318,21 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success("stonith show --full", outdent(
-            # pylint: disable=trailing-whitespace
             """\
              Resource: f1 (class=stonith type=fence_mpath)
               Attributes: key=abc
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f1-monitor-interval-60s)
              Resource: f2 (class=stonith type=fence_mpath)
               Attributes: key=abc
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f2-monitor-interval-60s)
              Resource: f3 (class=stonith type=fence_mpath)
               Attributes: key=abc
-              Meta Attrs: provides=unfencing 
+              Meta Attrs: provides=unfencing
               Operations: monitor interval=60s (f3-monitor-interval-60s)
              Resource: f4 (class=stonith type=fence_xvm)
-              Meta Attrs: provides=something 
+              Meta Attrs: provides=something
               Operations: monitor interval=60s (f4-monitor-interval-60s)
             """
         ))
@@ -415,7 +413,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
-                  Attributes: ipaddr=i login=l action=a
+                  Attributes: action=a ipaddr=i login=l
                   Operations: monitor interval=60s (test-monitor-interval-60s)
                 """
             )

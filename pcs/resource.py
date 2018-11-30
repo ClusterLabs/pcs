@@ -19,7 +19,7 @@ from pcs import (
 )
 from pcs.settings import pacemaker_wait_timeout_status as \
     PACEMAKER_WAIT_TIMEOUT_STATUS
-from pcs.cli.common.console_report import error, warn
+from pcs.cli.common.console_report import error, indent, warn
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.cli.resource.parse_args import (
@@ -155,12 +155,7 @@ def resource_cmd(argv):
                 sys.exit(1)
             op_subcmd = argv_next.pop(0)
             if op_subcmd == "defaults":
-                if len(argv_next) == 0:
-                    show_defaults("op_defaults")
-                else:
-                    lib.cib_options.set_operations_defaults(
-                        prepare_options(argv_next)
-                    )
+                resource_op_defaults_cmd(lib, argv_next, modifiers)
             elif op_subcmd == "add":
                 if len(argv_next) == 0:
                     usage.resource(["op"])
@@ -180,12 +175,7 @@ def resource_cmd(argv):
                     res_id = argv_next.pop(0)
                     resource_operation_remove(res_id, argv_next)
         elif sub_cmd == "defaults":
-            if len(argv_next) == 0:
-                show_defaults("rsc_defaults")
-            else:
-                lib.cib_options.set_resources_defaults(
-                    prepare_options(argv_next)
-                )
+            resource_defaults_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "cleanup":
             resource_cleanup(argv_next)
         elif sub_cmd == "refresh":
@@ -212,6 +202,18 @@ def resource_cmd(argv):
         utils.process_library_reports(e.args)
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "resource", sub_cmd)
+
+def resource_defaults_cmd(lib, argv, modifiers):
+    if not argv:
+        print("\n".join(show_defaults(utils.get_cib_dom(), "rsc_defaults")))
+    else:
+        lib.cib_options.set_resources_defaults(prepare_options(argv))
+
+def resource_op_defaults_cmd(lib, argv, modifiers):
+    if not argv:
+        print("\n".join(show_defaults(utils.get_cib_dom(), "op_defaults")))
+    else:
+        lib.cib_options.set_operations_defaults(prepare_options(argv))
 
 def parse_resource_options(argv):
     ra_values = []
@@ -354,13 +356,13 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
 
 
 # Return the string formatted with a line length of terminal width  and indented
-def _format_desc(indent, desc):
+def _format_desc(indentation, desc):
     desc = " ".join(desc.split())
     dummy_rows, columns = utils.getTerminalSize()
     columns = int(columns)
     if columns < 40:
         columns = 40
-    afterindent = columns - indent
+    afterindent = columns - indentation
     if afterindent < 1:
         afterindent = columns
 
@@ -368,7 +370,7 @@ def _format_desc(indent, desc):
     first = True
     for line in textwrap.wrap(desc, afterindent):
         if not first:
-            output += " " * indent
+            output += " " * indentation
         output += line
         output += "\n"
         first = False
@@ -1927,6 +1929,16 @@ def resource_group_list(argv):
             line_parts.append(resource.getAttribute("id"))
         print(" ".join(line_parts))
 
+def _resource_stonith_lines(resource_el, stonith):
+    is_stonith = (
+        "class" in resource_el.attrib
+        and
+        resource_el.attrib["class"] == "stonith"
+    )
+    if (stonith and is_stonith) or (not stonith and not is_stonith):
+        return resource_node_lines(resource_el)
+    return []
+
 def resource_show(argv, stonith=False):
     mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
     modifiers = [
@@ -1947,11 +1959,9 @@ def resource_show(argv, stonith=False):
         root = utils.get_cib_etree()
         resources = root.find(".//resources")
         for child in resources:
-            if stonith and "class" in child.attrib and child.attrib["class"] == "stonith":
-                print_node(child,1)
-            elif not stonith and \
-                    ((not "class" in child.attrib) or (child.attrib["class"] != "stonith")):
-                print_node(child,1)
+            lines = _resource_stonith_lines(child, stonith=stonith)
+            if lines:
+                print("\n".join(indent(lines, indent_step=1)))
         return
 
     if len(argv) == 0:
@@ -2002,10 +2012,12 @@ def resource_show(argv, stonith=False):
     resource_found = False
     for arg in argv:
         for child in resources.findall(str(".//*")):
-            if "id" in child.attrib and child.attrib["id"] == arg and ((stonith and utils.is_stonith_resource(arg)) or (not stonith and not utils.is_stonith_resource(arg))):
-                print_node(child,1)
-                resource_found = True
-                break
+            if "id" in child.attrib and child.attrib["id"] == arg:
+                lines = _resource_stonith_lines(child, stonith=stonith)
+                if lines:
+                    print("\n".join(indent(lines, indent_step=1)))
+                    resource_found = True
+                    break
         if not resource_found:
             utils.err("unable to find resource '"+arg+"'")
         resource_found = False
@@ -2358,155 +2370,158 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
                 )
     return "\n".join(result_lines)
 
-def show_defaults(def_type, indent=""):
-    dom = utils.get_cib_dom()
-    defs = dom.getElementsByTagName(def_type)
-    if len(defs) > 0:
-        defs = defs[0]
-    else:
-        print(indent + "No defaults set")
-        return
+def show_defaults(cib_dom, def_type):
+    defs = cib_dom.getElementsByTagName(def_type)
+    if not defs:
+        return ["No defaults set"]
+    defs = defs[0]
+    # TODO duplicite to _nvpairs_strings
+    key_val = {
+        nvpair.getAttribute("name"): nvpair.getAttribute("value")
+        for nvpair in defs.getElementsByTagName("nvpair")
+    }
+    if not key_val:
+        return ["No defaults set"]
+    strings = []
+    for name, value in sorted(key_val.items()):
+        if " " in value:
+            value = '"{0}"'.format(value)
+        strings.append("{0}={1}".format(name, value))
+    return strings
 
-    foundDefault = False
-    for d in defs.getElementsByTagName("nvpair"):
-        print(indent + d.getAttribute("name") + ": " + d.getAttribute("value"))
-        foundDefault = True
-
-    if not foundDefault:
-        print(indent + "No defaults set")
-
-def print_node(node, tab = 0):
-    spaces = " " * tab
-    if node.tag == "group":
-        print(spaces + "Group: " + node.attrib["id"] + get_attrs(node,' (',')'))
-        print_instance_vars_string(node, spaces)
-        print_meta_vars_string(node, spaces)
-        print_operations(node, spaces)
+def resource_node_lines(node):
+    simple_types = {
+        "clone": "Clone",
+        "group": "Group",
+        "master": "Master",
+        "primitive": "Resource",
+    }
+    lines = []
+    if node.tag in simple_types.keys():
+        lines.append(
+            "{0}: {1}".format(simple_types[node.tag], node.attrib["id"])
+            +
+            _get_attrs(node, " (", ")")
+        )
+        lines.extend(indent(
+            _instance_vars_lines(node)
+            +
+            _meta_vars_lines(node)
+            +
+            _operations_lines(node)
+            ,
+            indent_step=1
+        ))
         for child in node:
-            print_node(child, tab + 1)
-        return
-    if node.tag == "clone":
-        print(spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')'))
-        print_instance_vars_string(node, spaces)
-        print_meta_vars_string(node, spaces)
-        print_operations(node, spaces)
-        for child in node:
-            print_node(child, tab + 1)
-        return
-    if node.tag == "primitive":
-        print(spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')'))
-        print_instance_vars_string(node, spaces)
-        print_meta_vars_string(node, spaces)
-        print_utilization_string(node, spaces)
-        print_operations(node, spaces)
-        return
-    if node.tag == "master":
-        print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
-        print_instance_vars_string(node, spaces)
-        print_meta_vars_string(node, spaces)
-        print_operations(node, spaces)
-        for child in node:
-            print_node(child, tab + 1)
-        return
+            lines.extend(indent(resource_node_lines(child), indent_step=1))
+        return lines
     if node.tag == "bundle":
-        print(spaces + "Bundle: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
-        print_bundle_container(node, spaces + " ")
-        print_bundle_network(node, spaces + " ")
-        print_bundle_mapping(
-            "Port Mapping:",
-            node.findall("network/port-mapping"),
-            spaces + " "
+        lines.append(
+            "Bundle: {0}".format(node.attrib["id"])
+            +
+            _get_attrs(node, " (", ")")
         )
-        print_bundle_mapping(
-            "Storage Mapping:",
-            node.findall("storage/storage-mapping"),
-            spaces + " "
-        )
-        print_meta_vars_string(node, spaces)
+        lines.extend(indent(
+            _bundle_container_lines(node)
+            +
+            _bundle_network_lines(node)
+            +
+            _bundle_mapping_strings(
+                "Port Mapping:",
+                node.findall("network/port-mapping"),
+            )
+            +
+            _bundle_mapping_strings(
+                "Storage Mapping:",
+                node.findall("storage/storage-mapping"),
+            )
+            +
+            _meta_vars_lines(node)
+            ,
+            indent_step=1
+        ))
         for child in node:
-            print_node(child, tab + 1)
-        return
+            lines.extend(indent(resource_node_lines(child), indent_step=1))
+        return lines
+    return lines
 
-def print_bundle_container(bundle_el, spaces):
+def _bundle_container_lines(bundle_el):
     # TODO support other types of container once supported by pacemaker
+    lines = []
     container_list = bundle_el.findall("docker")
     for container_el in container_list:
-        print(
-            spaces
-            +
+        lines.append(
             container_el.tag.capitalize()
             +
-            get_attrs(container_el, ": ", "")
+            _get_attrs(container_el, ": ", "")
         )
+    return lines
 
-def print_bundle_network(bundle_el, spaces):
+def _bundle_network_lines(bundle_el):
+    lines = []
     network_list = bundle_el.findall("network")
     for network_el in network_list:
-        attrs_string = get_attrs(network_el)
+        attrs_string = _get_attrs(network_el)
         if attrs_string:
-            print(spaces + "Network: " + attrs_string)
+            lines.append("Network: " + attrs_string)
+    return lines
 
-def print_bundle_mapping(first_line, map_items, spaces):
+def _bundle_mapping_strings(first_line, map_items):
     map_lines = [
-        spaces + " " + get_attrs(item, "", " ") + "(" + item.attrib["id"] + ")"
+        _get_attrs(item, "", " ") + "(" + item.attrib["id"] + ")"
         for item in map_items
     ]
     if map_lines:
-        print(spaces + first_line)
-        print("\n".join(map_lines))
+        return [first_line] + indent(map_lines, indent_step=1)
+    return []
 
-def print_utilization_string(element, spaces):
-    output = []
-    mvars = element.findall("utilization/nvpair")
-    for mvar in mvars:
-        output.append(mvar.attrib["name"] + "=" + mvar.attrib["value"])
-    if output:
-        print(spaces + " Utilization: " + " ".join(output))
-
-def print_instance_vars_string(node, spaces):
-    output = []
-    ivars = node.findall(str("instance_attributes/nvpair"))
-    for ivar in ivars:
-        name = ivar.attrib["name"]
-        value = ivar.attrib["value"]
+def _nvpairs_strings(node, parent_tag):
+    key_val = {
+        nvpair.attrib["name"]: nvpair.attrib["value"]
+        for nvpair in node.findall("{0}/nvpair".format(parent_tag))
+    }
+    strings = []
+    for name, value in sorted(key_val.items()):
         if " " in value:
-            value = '"' + value + '"'
-        output.append(name + "=" + value)
-    if output:
-        print(spaces + " Attributes: " + " ".join(output))
+            value = '"{0}"'.format(value)
+        strings.append("{0}={1}".format(name, value))
+    return strings
 
-def print_meta_vars_string(node, spaces):
-    output = ""
-    mvars = node.findall(str("meta_attributes/nvpair"))
-    for mvar in mvars:
-        output += mvar.attrib["name"] + "=" + mvar.attrib["value"] + " "
-    if output != "":
-        print(spaces + " Meta Attrs: " + output)
+def _instance_vars_lines(node):
+    nvpairs = _nvpairs_strings(node, "instance_attributes")
+    return (
+        ["Attributes: " + " ".join(nvpairs)] if nvpairs
+        else []
+    )
 
-def print_operations(node, spaces):
-    indent = len(spaces) + len(" Operations: ")
-    output = ""
-    ops = node.findall(str("operations/op"))
-    first = True
-    for op in ops:
-        if not first:
-            output += ' ' * indent
-        else:
-            first = False
-        output += op.attrib["name"] + " "
-        for attr,val in sorted(op.attrib.items()):
-            if attr in ["id","name"] :
-                continue
-            output += attr + "=" + val + " "
-        for child in op.findall(str(".//nvpair")):
-            output += child.get("name") + "=" + child.get("value") + " "
+def _meta_vars_lines(node):
+    nvpairs = _nvpairs_strings(node, "meta_attributes")
+    return (
+        ["Meta Attrs: " + " ".join(nvpairs)] if nvpairs
+        else []
+    )
 
-        output += "(" + op.attrib["id"] + ")"
-        output += "\n"
-
-    output = output.rstrip()
-    if output != "":
-        print(spaces + " Operations: " + output)
+def _operations_lines(node):
+    op_lines = []
+    for op in node.findall("operations/op"):
+        parts = []
+        parts.append(op.attrib["name"])
+        parts.extend([
+            "{0}={1}".format(name, value)
+            for name, value in sorted(op.attrib.items())
+            if name not in {"id", "name"}
+        ])
+        parts.extend(_nvpairs_strings(op, "./"))
+        parts.append("({0})".format(op.attrib['id']))
+        op_lines.append(" ".join(parts))
+    if not op_lines:
+        return op_lines
+    label = "Operations: "
+    return (
+        [label + op_lines[0]]
+        +
+        indent(op_lines[1:], indent_step=len(label))
+    )
 
 def operation_to_string(op_el):
     parts = []
@@ -2522,7 +2537,7 @@ def operation_to_string(op_el):
     parts.append("(" + op_el.getAttribute("id") + ")")
     return " ".join(parts)
 
-def get_attrs(node, prepend_string = "", append_string = ""):
+def _get_attrs(node, prepend_string="", append_string=""):
     output = ""
     for attr,val in sorted(node.attrib.items()):
         if attr in ["id"]:

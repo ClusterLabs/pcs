@@ -11,6 +11,8 @@
 - Allow non-root users to read quorum status (commands `pcs status corosync`,
   `pcs status quorum`, `pcs quorum device status`, `pcs quorum status`)
   ([rhbz#1594738])
+- Command `pcs config checkpoint diff` for displaying differences between two
+  specified checkpoints ([rhbz#1515021])
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
@@ -19,6 +21,7 @@
   a cluster ([rhbz#1474747])
 
 [rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
+[rhbz#1515021]: https://bugzilla.redhat.com/show_bug.cgi?id=1515021
 [rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
 [rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376

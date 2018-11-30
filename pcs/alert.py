@@ -224,15 +224,17 @@ def _recipient_to_str(recipient):
 def print_alert_config(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
+    print("\n".join(alert_config_lines(lib)))
 
-    print("Alerts:")
+def alert_config_lines(lib):
+    lines = ["Alerts:"]
     alert_list = lib.alert.get_all_alerts()
     if alert_list:
         for alert in alert_list:
-            print("\n".join(indent(_alert_to_str(alert), 1)))
+            lines.extend(indent(_alert_to_str(alert), 1))
     else:
-        print(" No alerts defined")
-
+        lines.append(" No alerts defined")
+    return lines
 
 def print_alerts_in_json(lib, argv, dummy_modifiers):
     # This is used only by pcsd, will be removed in new architecture
