@@ -666,7 +666,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
 
 def config_checkpoint_view(argv):
     if len(argv) != 1:
-        usage.config(["checkpoint", "view"])
+        usage.config(["checkpoint view"])
         sys.exit(1)
 
     lib = utils.get_library_wrapper()
@@ -719,7 +719,7 @@ def config_checkpoint_diff(argv):
 
 def config_checkpoint_restore(argv):
     if len(argv) != 1:
-        usage.config(["checkpoint", "restore"])
+        usage.config(["checkpoint restore"])
         sys.exit(1)
 
     cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
@@ -961,7 +961,7 @@ def config_export_pcs_commands(argv, verbose=False):
             invalid_args = True
     # check options
     if invalid_args:
-        usage.config(["export", "pcs-commands"])
+        usage.config(["export pcs-commands"])
         sys.exit(1)
     # complete optional options
     if dist is None:
