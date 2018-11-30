@@ -126,16 +126,16 @@ def append_new(
         # Do not add options with empty values. When updating, an empty value
         # means remove the option.
         update_attributes_remove_empty(network_element, network_options)
-    for port_map_options in port_map:
-        _append_port_map(
-            network_element, id_provider, bundle_id, port_map_options
-        )
+        for port_map_options in port_map:
+            _append_port_map(
+                network_element, id_provider, bundle_id, port_map_options
+            )
     if storage_map:
         storage_element = etree.SubElement(bundle_element, "storage")
-    for storage_map_options in storage_map:
-        _append_storage_map(
-            storage_element, id_provider, bundle_id, storage_map_options
-        )
+        for storage_map_options in storage_map:
+            _append_storage_map(
+                storage_element, id_provider, bundle_id, storage_map_options
+            )
     if meta_attributes:
         append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
     return bundle_element
