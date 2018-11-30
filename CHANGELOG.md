@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Command `pcs config checkpoint diff` for displaying differences between two
+  specified checkpoints ([rhbz#1655055])
+
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
   corosync
@@ -10,6 +14,7 @@
   ([rhbz#1653316])
 
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
+[rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 
 
 ## [0.10.1] - 2018-11-23
