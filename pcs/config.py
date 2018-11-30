@@ -20,6 +20,7 @@ import tempfile
 import time
 import platform
 import shutil
+import difflib
 
 try:
     import clufter.facts
@@ -74,6 +75,8 @@ def config_cmd(argv):
             config_checkpoint_view(argv[1:])
         elif argv[0] == "restore":
             config_checkpoint_restore(argv[1:])
+        elif argv[0] == "diff":
+            config_checkpoint_diff(argv[1:])
         else:
             usage.config(["checkpoint"])
             sys.exit(1)
@@ -95,10 +98,11 @@ def config_cmd(argv):
         sys.exit(1)
 
 def config_show(argv):
+    lib = utils.get_library_wrapper()
     print("Cluster Name: %s" % utils.getClusterName())
     status.nodes_status(["config"])
     print()
-    print("\n".join(_config_show_cib_lines()))
+    print("\n".join(_config_show_cib_lines(lib)))
     if (
         utils.hasCorosyncConf()
         and
@@ -124,14 +128,13 @@ def config_show(argv):
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
-def _config_show_cib_lines():
+def _config_show_cib_lines(lib):
     # update of pcs_options will change output of constraint show
     utils.pcs_options["--all"] = 1
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_modifiers()
 
-    lib = utils.get_library_wrapper()
     cib_xml = utils.get_cib()
     cib_etree = utils.get_cib_etree(cib_xml=cib_xml)
     cib_dom = utils.get_cib_dom(cib_xml=cib_xml)
@@ -644,16 +647,75 @@ def config_checkpoint_list():
             % (cib_info[1], datetime.datetime.fromtimestamp(round(cib_info[0])))
         )
 
+def _checkpoint_to_lines(lib, checkpoint_number):
+    orig_usefile = utils.usefile
+    orig_filename = utils.filename
+
+    utils.usefile = True
+    utils.filename = os.path.join(
+        settings.cib_dir,
+        "cib-%s.raw" % checkpoint_number
+    )
+    result = False, []
+    if os.path.isfile(utils.filename):
+        result = True, _config_show_cib_lines(lib)
+
+    utils.usefile = orig_usefile
+    utils.filename = orig_filename
+    return result
+
 def config_checkpoint_view(argv):
     if len(argv) != 1:
         usage.config(["checkpoint", "view"])
         sys.exit(1)
 
-    utils.usefile = True
-    utils.filename = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
-    if not os.path.isfile(utils.filename):
+    lib = utils.get_library_wrapper()
+    loaded, lines = _checkpoint_to_lines(lib, argv[0])
+    if not loaded:
         utils.err("unable to read the checkpoint")
-    print("\n".join(_config_show_cib_lines()))
+    print("\n".join(lines))
+
+def config_checkpoint_diff(argv):
+    if len(argv) != 2:
+        usage.config(["checkpoint diff"])
+        sys.exit(1)
+
+    if argv[0] == argv[1]:
+        utils.err("cannot diff a checkpoint against itself")
+
+    lib = utils.get_library_wrapper()
+    errors = []
+    checkpoints_lines = []
+    for checkpoint in argv:
+        if checkpoint == "live":
+            lines = _config_show_cib_lines(lib)
+            if not lines:
+                errors.append("unable to read live configuration")
+            else:
+                checkpoints_lines.append(lines)
+        else:
+            loaded, lines = _checkpoint_to_lines(lib, checkpoint)
+            if not loaded:
+                errors.append(
+                    "unable to read checkpoint '{0}'".format(checkpoint)
+                )
+            else:
+                checkpoints_lines.append(lines)
+
+    if errors:
+        utils.err("\n".join(errors))
+
+    print("Differences between {0} (-) and {1} (+):".format(*[
+        "live configuration" if label == "live"
+            else "checkpoint {0}".format(label)
+        for label in argv
+    ]))
+    print("\n".join([
+        line.rstrip() for line in difflib.Differ().compare(
+            checkpoints_lines[0],
+            checkpoints_lines[1]
+        )]
+    ))
 
 def config_checkpoint_restore(argv):
     if len(argv) != 1:
