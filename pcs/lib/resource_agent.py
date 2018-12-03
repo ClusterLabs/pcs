@@ -464,6 +464,7 @@ class Agent(object):
             "advanced": False,
             "deprecated": is_true(parameter_element.get("deprecated", "0")),
             "obsoletes": parameter_element.get("obsoletes", None),
+            "unique": is_true(parameter_element.get("unique", "0")),
         })
 
     def _get_always_allowed_parameters(self):
@@ -641,6 +642,7 @@ class Agent(object):
             "deprecated": False,
             "obsoletes": None,
             "pcs_deprecated_warning": "",
+            "unique": False,
         }
         new_param.update(properties)
         return new_param

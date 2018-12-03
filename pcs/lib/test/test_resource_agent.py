@@ -791,6 +791,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -799,7 +800,7 @@ class AgentMetadataGetParametersTest(TestCase):
         xml = """
             <resource-agent>
                 <parameters>
-                    <parameter name="test_param" required="1">
+                    <parameter name="test_param" required="1" unique="1">
                         <longdesc>
                             Long description
                         </longdesc>
@@ -825,6 +826,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": True,
                 },
                 {
                     "name": "another parameter",
@@ -837,6 +839,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -865,6 +868,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated": True,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
             ]
         )
@@ -1138,6 +1142,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "deprecated": False,
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
+                        "unique": False,
                     },
                     {
                         "name": "another parameter",
@@ -1150,6 +1155,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "deprecated": False,
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
+                        "unique": False,
                     }
                 ],
                 "actions": [
@@ -1577,6 +1583,7 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "another parameter",
@@ -1589,6 +1596,7 @@ class StonithdMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -1802,6 +1810,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "valid_param",
@@ -1814,6 +1823,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "verbose",
@@ -1826,6 +1836,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "action",
@@ -1842,6 +1853,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                         " versions. Use 'pcmk_off_action',"
                         " 'pcmk_reboot_action' instead."
                     ,
+                    "unique": False,
                 },
                 {
                     "name": "another_param",
@@ -1854,6 +1866,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "stonithd_param",
@@ -1866,6 +1879,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated": False,
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
             ]
         )
