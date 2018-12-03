@@ -413,6 +413,7 @@ class DescribeAgentUtf8(TestCase):
                         "required": False,
                         "shortdesc": u"State file: ®",
                         "type": "string",
+                        "unique": True,
                     },
                     {
                         "advanced": True,
@@ -432,6 +433,7 @@ class DescribeAgentUtf8(TestCase):
                         "shortdesc": "Set to 1 to turn on resource agent "
                             "tracing (expect large output)",
                         "type": "integer",
+                        "unique": False,
                     },
                     {
                         "advanced": True,
@@ -447,6 +449,7 @@ class DescribeAgentUtf8(TestCase):
                         "shortdesc": "Path to a file to store resource agent "
                             "tracing log",
                         "type": "string",
+                        "unique": False,
                     }
                 ],
                 "actions": [
