@@ -30,11 +30,36 @@ def update_node_instance_attrs(cib, node_name, attrs, state_nodes=None):
     dict attrs -- attrs to update, e.g. {'A': 'a', 'B': ''}
     iterable state_nodes -- optional list of node state objects
     """
+    # Do not ever remove the nvset element or the node element, even if they
+    # are empty. There may be ACLs set in pacemaker which allow "write" for
+    # nvpairs (adding, changing and removing) but not nvsets. In such a case,
+    # removing the nvset would cause the whole change to be rejected by
+    # pacemaker with a "permission denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
+    if not attrs:
+        return
+    only_removing = True
+    for value in attrs.values():
+        if value != "":
+            only_removing = False
+            break
+
+    nodes_section = get_nodes(cib)
+    node_el = _get_node_by_uname(nodes_section, node_name)
+
+    # Do not create new node if we are only removing values from it.
+    if node_el is None and only_removing:
+        return
+
     node_el = _ensure_node_exists(get_nodes(cib), node_name, state_nodes)
     # If no instance_attributes id is specified, crm_attribute modifies the
     # first one found. So we just mimic this behavior here.
     attrs_el = node_el.find("./instance_attributes")
     if attrs_el is None:
+        # Do not create new nvset if we are only removing values from it.
+        if only_removing:
+            return
         attrs_el = etree.SubElement(
             node_el,
             "instance_attributes",
