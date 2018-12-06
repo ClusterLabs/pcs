@@ -760,6 +760,15 @@ class Meta(TestCase):
         </resources>
     """
 
+    fixture_empty_meta = """
+        <resources>
+            <bundle id="B1">
+                <meta_attributes id="B1-meta_attributes" />
+                <docker image="pcs:test" masters="3" replicas="6"/>
+            </bundle>
+        </resources>
+    """
+
     fixture_meta_stopped = """
         <resources>
             <bundle id="B1">
@@ -788,10 +797,10 @@ class Meta(TestCase):
             }
         )
 
-    def test_remove_meta_element(self):
+    def test_keep_meta_element(self):
         (self.config
             .runner.cib.load(resources=self.fixture_meta_stopped)
-            .env.push_cib(resources=self.fixture_no_meta)
+            .env.push_cib(resources=self.fixture_empty_meta)
         )
         resource.bundle_update(
             self.env_assist.get_env(),

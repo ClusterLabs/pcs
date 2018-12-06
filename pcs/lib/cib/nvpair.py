@@ -8,10 +8,7 @@ from lxml import etree
 from functools import partial
 
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.xml_tools import(
-    get_sub_element,
-    remove_when_pointless,
-)
+from pcs.lib.xml_tools import get_sub_element
 
 def _append_new_nvpair(nvset_element, name, value, id_provider=None):
     """
@@ -67,13 +64,22 @@ def arrange_first_nvset(tag_name, context_element, nvpair_dict, new_id=None):
     if not nvpair_dict:
         return
 
+    # Do not create new nvset if we are only removing values from it.
+    nvset_element = context_element.find("./{0}".format(tag_name))
+    only_removing = True
+    for value in nvpair_dict.values():
+        if value != "":
+            only_removing = False
+            break
+    if only_removing and nvset_element is None:
+        return
+
     nvset_element = get_sub_element(
         context_element,
         tag_name,
         new_id if new_id else create_subelement_id(context_element, tag_name),
         new_index=0
     )
-
     update_nvset(nvset_element, nvpair_dict)
 
 def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider=None):
@@ -106,14 +112,18 @@ def update_nvset(nvset_element, nvpair_dict):
     """
     Add, remove or update nvpairs according to nvpair_dict into nvset_element
 
-    If the resulting nvset is empty, it will be removed.
-
-    etree nvset_element -- container where nvpairs are set
-    dict nvpair_dict -- contains source for nvpair children
+    etree nvset_element -- a container where nvpairs are set
+    dict nvpair_dict -- names and values for nvpairs
     """
+    # Do not ever remove the nvset element, even if it is empty. There may be
+    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
+    # and removing) but not nvsets. In such a case, removing the nvset would
+    # cause the whole change to be rejected by pacemaker with a "permission
+    # denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
     for name, value in sorted(nvpair_dict.items()):
         set_nvpair_in_nvset(nvset_element, name, value)
-    remove_when_pointless(nvset_element)
 
 def get_nvset(nvset):
     """

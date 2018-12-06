@@ -2571,13 +2571,13 @@ def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
     return votes_after_stop < quorum_info["quorum"]
 
 def dom_prepare_child_element(dom_element, tag_name, id):
-    dom = dom_element.ownerDocument
     child_elements = []
     for child in dom_element.childNodes:
         if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name:
             child_elements.append(child)
 
     if len(child_elements) == 0:
+        dom = dom_element.ownerDocument
         child_element = dom.createElement(tag_name)
         child_element.setAttribute("id", find_unique_id(dom, id))
         dom_element.appendChild(child_element)
@@ -2585,7 +2585,56 @@ def dom_prepare_child_element(dom_element, tag_name, id):
         child_element = child_elements[0]
     return child_element
 
+def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
+    # Do not ever remove the nvset element, even if it is empty. There may be
+    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
+    # and removing) but not nvsets. In such a case, removing the nvset would
+    # cause the whole change to be rejected by pacemaker with a "permission
+    # denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+    if not nvpair_tuples:
+        return
+
+    only_removing = True
+    for name, value in nvpair_tuples:
+        if value != "":
+            only_removing = False
+            break
+
+    nvset_element_list = [
+        child
+        for child in dom_element.childNodes
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name
+    ]
+
+    # Do not create new nvset if we are only removing values from it.
+    if not nvset_element_list and only_removing:
+        return
+
+    if not nvset_element_list:
+        dom = dom_element.ownerDocument
+        nvset_element = dom.createElement(tag_name)
+        nvset_element.setAttribute("id", find_unique_id(dom, id_candidate))
+        dom_element.appendChild(nvset_element)
+    else:
+        nvset_element = nvset_element_list[0]
+
+    for name, value in nvpair_tuples:
+        dom_update_nv_pair(
+            nvset_element,
+            name,
+            value,
+            nvset_element.getAttribute("id") + "-"
+        )
+
 def dom_update_nv_pair(dom_element, name, value, id_prefix=""):
+    # Do not ever remove the nvset element, even if it is empty. There may be
+    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
+    # and removing) but not nvsets. In such a case, removing the nvset would
+    # cause the whole change to be rejected by pacemaker with a "permission
+    # denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
     dom = dom_element.ownerDocument
     element_found = False
     for el in dom_element.getElementsByTagName("nvpair"):
@@ -2642,22 +2691,12 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
         )
 
 def dom_update_meta_attr(dom_element, attributes):
-    if not attributes:
-        return
-
-    meta_attributes = dom_prepare_child_element(
+    dom_update_nvset(
         dom_element,
+        attributes,
         "meta_attributes",
         dom_element.getAttribute("id") + "-meta_attributes"
     )
-
-    for name, value in attributes:
-        dom_update_nv_pair(
-            meta_attributes,
-            name,
-            value,
-            meta_attributes.getAttribute("id") + "-"
-        )
 
 def get_utilization(element, filter_name=None):
     utilization = {}

@@ -28,6 +28,13 @@ fixture_primitive_cib_enabled = """
         </primitive>
     </resources>
 """
+fixture_primitive_cib_enabled_with_meta = """
+    <resources>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+            <meta_attributes id="A-meta_attributes" />
+        </primitive>
+    </resources>
+"""
 fixture_primitive_cib_disabled = """
     <resources>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -38,53 +45,64 @@ fixture_primitive_cib_disabled = """
         </primitive>
     </resources>
 """
-fixture_primitive_status_managed = """
+fixture_primitive_status_template = """
     <resources>
-        <resource id="A" managed="true" />
+        <resource id="A" managed="{managed}" />
     </resources>
 """
-fixture_primitive_status_unmanaged = """
-    <resources>
-        <resource id="A" managed="false" />
-    </resources>
-"""
+fixture_primitive_status_managed = fixture_primitive_status_template.format(
+    managed="true"
+)
+fixture_primitive_status_unmanaged = fixture_primitive_status_template.format(
+    managed="false"
+)
 
-fixture_two_primitives_cib_enabled = """
-    <resources>
+def get_fixture_two_primitives_cib(
+    primitive1_disabled=False, primitive1_meta=False,
+    primitive2_disabled=False, primitive2_meta=False
+):
+    parts = ["""
+        <resources>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-        </primitive>
-        <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
-        </primitive>
-    </resources>
-"""
-fixture_two_primitives_cib_disabled = """
-    <resources>
-        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+    """]
+    if primitive1_disabled:
+        parts.append("""
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
+        """)
+    elif primitive1_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append("""
         </primitive>
         <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
-        </primitive>
-    </resources>
-"""
-fixture_two_primitives_cib_disabled_both = """
-    <resources>
-        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <meta_attributes id="A-meta_attributes">
-                <nvpair id="A-meta_attributes-target-role"
-                    name="target-role" value="Stopped" />
-            </meta_attributes>
-        </primitive>
-        <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+    """)
+    if primitive2_disabled:
+        parts.append("""
             <meta_attributes id="B-meta_attributes">
                 <nvpair id="B-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        </primitive>
-    </resources>
-"""
+        """)
+    elif primitive2_meta:
+        parts.append("""<meta_attributes id="B-meta_attributes" />""")
+    parts.append("""</primitive></resources>""")
+    return "".join(parts)
+fixture_two_primitives_cib_enabled = get_fixture_two_primitives_cib()
+fixture_two_primitives_cib_enabled_with_meta_both = \
+    get_fixture_two_primitives_cib(
+        primitive1_meta=True, primitive2_meta=True
+    )
+fixture_two_primitives_cib_disabled = get_fixture_two_primitives_cib(
+    primitive1_disabled=True
+)
+fixture_two_primitives_cib_disabled_with_meta = get_fixture_two_primitives_cib(
+    primitive1_disabled=True, primitive2_meta=True
+)
+fixture_two_primitives_cib_disabled_both = get_fixture_two_primitives_cib(
+    primitive1_disabled=True, primitive2_disabled=True
+)
 fixture_two_primitives_status_managed = """
     <resources>
         <resource id="A" managed="true" />
@@ -92,421 +110,366 @@ fixture_two_primitives_status_managed = """
     </resources>
 """
 
-fixture_group_cib_enabled = """
-    <resources>
-        <group id="A">
-            <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-            <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </group>
-    </resources>
-"""
-fixture_group_cib_disabled_group = """
-    <resources>
-        <group id="A">
+def get_fixture_group_cib(
+    group_disabled=False, group_meta=False,
+    primitive1_disabled=False, primitive1_meta=False,
+    primitive2_disabled=False, primitive2_meta=False
+):
+    parts = ["""<resources><group id="A">"""]
+    if group_disabled:
+        parts.append("""
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-            <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
+        """)
+    elif group_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append("""
+        <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
+    """)
+    if primitive1_disabled:
+        parts.append("""
+            <meta_attributes id="A1-meta_attributes">
+                <nvpair id="A1-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+        """)
+    elif primitive1_meta:
+        parts.append("""<meta_attributes id="A1-meta_attributes" />""")
+    parts.append("""
+        </primitive>
+        <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
+    """)
+    if primitive2_disabled:
+        parts.append("""
+            <meta_attributes id="A2-meta_attributes">
+                <nvpair id="A2-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+        """)
+    elif primitive2_meta:
+        parts.append("""<meta_attributes id="A2-meta_attributes" />""")
+    parts.append("""</primitive></group></resources>""")
+    return "".join(parts)
+fixture_group_cib_enabled = get_fixture_group_cib()
+fixture_group_cib_enabled_with_meta_group = get_fixture_group_cib(
+    group_meta=True
+)
+fixture_group_cib_enabled_with_meta_primitive = get_fixture_group_cib(
+    primitive1_meta=True
+)
+fixture_group_cib_disabled_group = get_fixture_group_cib(group_disabled=True)
+fixture_group_cib_disabled_group_with_meta_primitive = \
+    get_fixture_group_cib(group_disabled=True, primitive1_meta=True)
+fixture_group_cib_disabled_primitive = get_fixture_group_cib(
+    primitive1_disabled=True
+)
+fixture_group_cib_disabled_primitive_with_meta_group = get_fixture_group_cib(
+    group_meta=True, primitive1_disabled=True
+)
+fixture_group_cib_disabled_both = get_fixture_group_cib(
+    group_disabled=True, primitive1_disabled=True
+)
+fixture_group_status_template = """
+    <resources>
+        <group id="A" number_resources="2">
+            <resource id="A1" managed="{managed}" />
+            <resource id="A2" managed="{managed}" />
         </group>
     </resources>
 """
-fixture_group_cib_disabled_primitive = """
-    <resources>
-        <group id="A">
-            <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A1-meta_attributes">
-                    <nvpair id="A1-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-            <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </group>
-    </resources>
-"""
-fixture_group_cib_disabled_both = """
-    <resources>
-        <group id="A">
+fixture_group_status_managed = fixture_group_status_template.format(
+    managed="true"
+)
+fixture_group_status_unmanaged = fixture_group_status_template.format(
+    managed="false"
+)
+
+def get_fixture_clone_cib(
+    clone_disabled=False, clone_meta=False,
+    primitive_disabled=False, primitive_meta=False
+):
+    parts = ["""<resources><clone id="A-clone">"""]
+    if clone_disabled:
+        parts.append("""
+            <meta_attributes id="A-clone-meta_attributes">
+                <nvpair id="A-clone-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+        """)
+    elif clone_meta:
+        parts.append("""<meta_attributes id="A-clone-meta_attributes" />""")
+    parts.append(
+        """<primitive id="A" class="ocf" provider="heartbeat" type="Dummy">"""
+    )
+    if primitive_disabled:
+        parts.append("""
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A1-meta_attributes">
-                    <nvpair id="A1-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-            <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </group>
-    </resources>
-"""
-fixture_group_status_managed = """
+        """)
+    elif primitive_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append("""</primitive></clone></resources>""")
+    return "".join(parts)
+fixture_clone_cib_enabled = get_fixture_clone_cib()
+fixture_clone_cib_enabled_with_meta_both = get_fixture_clone_cib(
+    clone_meta=True, primitive_meta=True
+)
+fixture_clone_cib_enabled_with_meta_clone = get_fixture_clone_cib(
+    clone_meta=True
+)
+fixture_clone_cib_enabled_with_meta_primitive = get_fixture_clone_cib(
+    primitive_meta=True
+)
+fixture_clone_cib_disabled_clone = get_fixture_clone_cib(clone_disabled=True)
+fixture_clone_cib_disabled_primitive = get_fixture_clone_cib(
+    primitive_disabled=True
+)
+fixture_clone_cib_disabled_both = get_fixture_clone_cib(
+    clone_disabled=True, primitive_disabled=True
+)
+fixture_clone_status_template = """
     <resources>
-        <group id="A" number_resources="2">
-            <resource id="A1" managed="true" />
-            <resource id="A2" managed="true" />
-        </group>
+        <clone id="A-clone" managed="{managed}" multi_state="false"
+            unique="false"
+        >
+            <resource id="A" managed="{managed}" />
+            <resource id="A" managed="{managed}" />
+        </clone>
     </resources>
 """
-fixture_group_status_unmanaged = """
-    <resources>
-        <group id="A" number_resources="2">
-            <resource id="A1" managed="false" />
-            <resource id="A2" managed="false" />
-        </group>
-    </resources>
-"""
+fixture_clone_status_managed = fixture_clone_status_template.format(
+    managed="true"
+)
+fixture_clone_status_unmanaged = fixture_clone_status_template.format(
+    managed="false"
+)
 
-fixture_clone_cib_enabled = """
-    <resources>
-        <clone id="A-clone">
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </clone>
-    </resources>
-"""
-fixture_clone_cib_disabled_clone = """
-    <resources>
-        <clone id="A-clone">
-            <meta_attributes id="A-clone-meta_attributes">
-                <nvpair id="A-clone-meta_attributes-target-role"
-                    name="target-role" value="Stopped" />
-            </meta_attributes>
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </clone>
-    </resources>
-"""
-fixture_clone_cib_disabled_primitive = """
-    <resources>
-        <clone id="A-clone">
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </clone>
-    </resources>
-"""
-fixture_clone_cib_disabled_both = """
-    <resources>
-        <clone id="A-clone">
-            <meta_attributes id="A-clone-meta_attributes">
-                <nvpair id="A-clone-meta_attributes-target-role"
-                    name="target-role" value="Stopped" />
-            </meta_attributes>
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </clone>
-    </resources>
-"""
-fixture_clone_status_managed = """
-    <resources>
-        <clone id="A-clone" managed="true" multi_state="false" unique="false">
-            <resource id="A" managed="true" />
-            <resource id="A" managed="true" />
-        </clone>
-    </resources>
-"""
-fixture_clone_status_unmanaged = """
-    <resources>
-        <clone id="A-clone" managed="false" multi_state="false" unique="false">
-            <resource id="A" managed="false" />
-            <resource id="A" managed="false" />
-        </clone>
-    </resources>
-"""
-
-fixture_master_cib_enabled = """
-    <resources>
-        <master id="A-master">
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </master>
-    </resources>
-"""
-fixture_master_cib_disabled_master = """
-    <resources>
-        <master id="A-master">
+def get_fixture_master_cib(
+    master_disabled=False, master_meta=False,
+    primitive_disabled=False, primitive_meta=False
+):
+    parts = ["""<resources><master id="A-master">"""]
+    if master_disabled:
+        parts.append("""
             <meta_attributes id="A-master-meta_attributes">
                 <nvpair id="A-master-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </master>
-    </resources>
-"""
-fixture_master_cib_disabled_primitive = """
-    <resources>
-        <master id="A-master">
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </master>
-    </resources>
-"""
-fixture_master_cib_disabled_both = """
-    <resources>
-        <master id="A-master">
-            <meta_attributes id="A-master-meta_attributes">
-                <nvpair id="A-master-meta_attributes-target-role"
+        """)
+    elif master_meta:
+        parts.append("""<meta_attributes id="A-master-meta_attributes" />""")
+    parts.append(
+        """<primitive id="A" class="ocf" provider="heartbeat" type="Dummy">"""
+    )
+    if primitive_disabled:
+        parts.append("""
+            <meta_attributes id="A-meta_attributes">
+                <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </master>
-    </resources>
-"""
-fixture_master_status_managed = """
+        """)
+    elif primitive_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append("""</primitive></master></resources>""")
+    return"".join(parts)
+fixture_master_cib_enabled = get_fixture_master_cib()
+fixture_master_cib_enabled_with_meta_both = get_fixture_master_cib(
+    master_meta=True, primitive_meta=True
+)
+fixture_master_cib_enabled_with_meta_master = get_fixture_master_cib(
+    master_meta=True
+)
+fixture_master_cib_enabled_with_meta_primitive = get_fixture_master_cib(
+    primitive_meta=True
+)
+fixture_master_cib_disabled_master = get_fixture_master_cib(
+    master_disabled=True
+)
+fixture_master_cib_disabled_primitive = get_fixture_master_cib(
+    primitive_disabled=True
+)
+fixture_master_cib_disabled_both = get_fixture_master_cib(
+    master_disabled=True, primitive_disabled=True
+)
+fixture_master_status_template = """
     <resources>
-        <clone id="A-master" managed="true" multi_state="true" unique="false">
-            <resource id="A" managed="true" />
-            <resource id="A" managed="true" />
+        <clone id="A-master" managed="{managed}" multi_state="true"
+            unique="false"
+        >
+            <resource id="A" managed="{managed}" />
+            <resource id="A" managed="{managed}" />
         </clone>
     </resources>
 """
-fixture_master_status_unmanaged = """
-    <resources>
-        <clone id="A-master" managed="false" multi_state="true" unique="false">
-            <resource id="A" managed="false" />
-            <resource id="A" managed="false" />
-        </clone>
-    </resources>
-"""
+fixture_master_status_managed = fixture_master_status_template.format(
+    managed="true"
+)
+fixture_master_status_unmanaged = fixture_master_status_template.format(
+    managed="false"
+)
 
-fixture_clone_group_cib_enabled = """
-    <resources>
-        <clone id="A-clone">
-            <group id="A">
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_cib_disabled_clone = """
-    <resources>
-        <clone id="A-clone">
+def get_fixture_clone_group_cib(
+    clone_disabled=False, clone_meta=False,
+    group_disabled=False, group_meta=False,
+    primitive1_disabled=False, primitive1_meta=False,
+    primitive2_disabled=False, primitive2_meta=False,
+    all_meta=False
+):
+    # pylint: disable=too-many-arguments
+    parts = ["""<resources><clone id="A-clone">"""]
+    if clone_disabled:
+        parts.append("""
             <meta_attributes id="A-clone-meta_attributes">
                 <nvpair id="A-clone-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <group id="A">
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_cib_disabled_group = """
-    <resources>
-        <clone id="A-clone">
-            <group id="A">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_cib_disabled_primitive = """
-    <resources>
-        <clone id="A-clone">
-            <group id="A">
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                    <meta_attributes id="A1-meta_attributes">
-                        <nvpair id="A1-meta_attributes-target-role"
-                            name="target-role" value="Stopped" />
-                    </meta_attributes>
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_cib_disabled_clone_group = """
-    <resources>
-        <clone id="A-clone">
-            <meta_attributes id="A-clone-meta_attributes">
-                <nvpair id="A-clone-meta_attributes-target-role"
+        """)
+    elif clone_meta or all_meta:
+        parts.append("""<meta_attributes id="A-clone-meta_attributes" />""")
+    parts.append("""<group id="A">""")
+    if group_disabled:
+        parts.append("""
+            <meta_attributes id="A-meta_attributes">
+                <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <group id="A">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_cib_disabled_all = """
-    <resources>
-        <clone id="A-clone">
-            <meta_attributes id="A-clone-meta_attributes">
-                <nvpair id="A-clone-meta_attributes-target-role"
+        """)
+    elif group_meta or all_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append(
+        """<primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">"""
+    )
+    if primitive1_disabled:
+        parts.append("""
+            <meta_attributes id="A1-meta_attributes">
+                <nvpair id="A1-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <group id="A">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-                <primitive id="A1" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                    <meta_attributes id="A1-meta_attributes">
-                        <nvpair id="A1-meta_attributes-target-role"
-                            name="target-role" value="Stopped" />
-                    </meta_attributes>
-                </primitive>
-                <primitive id="A2" class="ocf" provider="heartbeat"
-                    type="Dummy"
-                >
-                </primitive>
-            </group>
-        </clone>
-    </resources>
-"""
-fixture_clone_group_status_managed = """
+        """)
+    elif primitive1_meta or all_meta:
+        parts.append("""<meta_attributes id="A1-meta_attributes" />""")
+    parts.append("""
+        </primitive>
+        <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
+    """)
+    if primitive2_disabled:
+        parts.append("""
+            <meta_attributes id="A2-meta_attributes">
+                <nvpair id="A2-meta_attributes-target-role"
+                    name="target-role" value="Stopped" />
+            </meta_attributes>
+        """)
+    elif primitive2_meta or all_meta:
+        parts.append("""<meta_attributes id="A2-meta_attributes" />""")
+    parts.append("""</primitive></group></clone></resources>""")
+    return "".join(parts)
+fixture_clone_group_cib_enabled = get_fixture_clone_group_cib()
+fixture_clone_group_cib_enabled_with_meta_clone = get_fixture_clone_group_cib(
+    clone_meta=True
+)
+fixture_clone_group_cib_enabled_with_meta_group = get_fixture_clone_group_cib(
+    group_meta=True
+)
+fixture_clone_group_cib_enabled_with_meta_primitive = \
+    get_fixture_clone_group_cib(primitive1_meta=True)
+fixture_clone_group_cib_disabled_clone = get_fixture_clone_group_cib(
+    clone_disabled=True
+)
+fixture_clone_group_cib_disabled_group = get_fixture_clone_group_cib(
+    group_disabled=True
+)
+fixture_clone_group_cib_disabled_primitive = get_fixture_clone_group_cib(
+    primitive1_disabled=True
+)
+fixture_clone_group_cib_disabled_primitive_with_meta_clone_group = \
+    get_fixture_clone_group_cib(
+        clone_meta=True, group_meta=True, primitive1_disabled=True
+    )
+fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = \
+    get_fixture_clone_group_cib(
+        clone_disabled=True, group_disabled=True, primitive1_meta=True
+    )
+fixture_clone_group_cib_disabled_all = get_fixture_clone_group_cib(
+    clone_disabled=True, group_disabled=True, primitive1_disabled=True
+)
+fixture_clone_group_status_template = """
     <resources>
-        <clone id="A-clone" managed="true" multi_state="false" unique="false">
+        <clone id="A-clone" managed="{managed}" multi_state="false"
+            unique="false"
+        >
             <group id="A:0" number_resources="2">
-                <resource id="A1" managed="true" />
-                <resource id="A2" managed="true" />
+                <resource id="A1" managed="{managed}" />
+                <resource id="A2" managed="{managed}" />
             </group>
             <group id="A:1" number_resources="2">
-                <resource id="A1" managed="true" />
-                <resource id="A2" managed="true" />
+                <resource id="A1" managed="{managed}" />
+                <resource id="A2" managed="{managed}" />
             </group>
         </clone>
     </resources>
 """
-fixture_clone_group_status_unmanaged = """
-    <resources>
-        <clone id="A-clone" managed="false" multi_state="false" unique="false">
-            <group id="A:0" number_resources="2">
-                <resource id="A1" managed="false" />
-                <resource id="A2" managed="false" />
-            </group>
-            <group id="A:1" number_resources="2">
-                <resource id="A1" managed="false" />
-                <resource id="A2" managed="false" />
-            </group>
-        </clone>
-    </resources>
-"""
+fixture_clone_group_status_managed = fixture_clone_group_status_template.format(
+    managed="true"
+)
+fixture_clone_group_status_unmanaged = \
+    fixture_clone_group_status_template.format(managed="false")
 
-fixture_bundle_cib_enabled = """
-    <resources>
-        <bundle id="A-bundle">
-            <docker image="pcs:test" />
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-            </primitive>
-        </bundle>
-    </resources>
-"""
-fixture_bundle_cib_disabled_primitive = """
-    <resources>
-        <bundle id="A-bundle">
-            <docker image="pcs:test" />
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </bundle>
-    </resources>
-"""
-fixture_bundle_cib_disabled_bundle = """
-    <resources>
-        <bundle id="A-bundle">
+def get_fixture_bundle_cib(
+    bundle_disabled=False, bundle_meta=False,
+    primitive_disabled=False, primitive_meta=False
+):
+    parts = ["""<resources><bundle id="A-bundle">"""]
+    if bundle_disabled:
+        parts.append("""
             <meta_attributes id="A-bundle-meta_attributes">
                 <nvpair id="A-bundle-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <docker image="pcs:test" />
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy" />
-        </bundle>
-    </resources>
-"""
-fixture_bundle_cib_disabled_both = """
-    <resources>
-        <bundle id="A-bundle">
-            <meta_attributes id="A-bundle-meta_attributes">
-                <nvpair id="A-bundle-meta_attributes-target-role"
+        """)
+    elif bundle_meta:
+        parts.append("""<meta_attributes id="A-bundle-meta_attributes" />""")
+    parts.append("""
+        <docker image="pcs:test" />
+        <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+    """)
+    if primitive_disabled:
+        parts.append("""
+            <meta_attributes id="A-meta_attributes">
+                <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-            <docker image="pcs:test" />
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-target-role"
-                        name="target-role" value="Stopped" />
-                </meta_attributes>
-            </primitive>
-        </bundle>
-    </resources>
-"""
-fixture_bundle_status_managed = """
+        """)
+    elif primitive_meta:
+        parts.append("""<meta_attributes id="A-meta_attributes" />""")
+    parts.append("""</primitive></bundle></resources>""")
+    return "".join(parts)
+fixture_bundle_cib_enabled = get_fixture_bundle_cib()
+fixture_bundle_cib_enabled_with_meta_both = get_fixture_bundle_cib(
+    bundle_meta=True, primitive_meta=True
+)
+fixture_bundle_cib_enabled_with_meta_bundle = get_fixture_bundle_cib(
+    bundle_meta=True
+)
+fixture_bundle_cib_enabled_with_meta_primitive = get_fixture_bundle_cib(
+    primitive_meta=True
+)
+fixture_bundle_cib_disabled_primitive = get_fixture_bundle_cib(
+    primitive_disabled=True
+)
+fixture_bundle_cib_disabled_bundle = get_fixture_bundle_cib(
+    bundle_disabled=True
+)
+fixture_bundle_cib_disabled_both = get_fixture_bundle_cib(
+    bundle_disabled=True, primitive_disabled=True
+)
+fixture_bundle_status_template = """
     <resources>
         <bundle id="A-bundle" type="docker" image="pcmktest:http"
-            unique="false" managed="true" failed="false"
+            unique="false" managed="{managed}" failed="false"
         >
             <replica id="0">
                 <resource id="A" />
@@ -517,20 +480,12 @@ fixture_bundle_status_managed = """
         </bundle>
     </resources>
 """
-fixture_bundle_status_unmanaged = """
-    <resources>
-        <bundle id="A-bundle" type="docker" image="pcmktest:http"
-            unique="false" managed="false" failed="false"
-        >
-            <replica id="0">
-                <resource id="A" managed="false" />
-            </replica>
-            <replica id="1">
-                <resource id="A" managed="false" />
-            </replica>
-        </bundle>
-    </resources>
-"""
+fixture_bundle_status_managed = fixture_bundle_status_template.format(
+    managed="true"
+)
+fixture_bundle_status_unmanaged = fixture_bundle_status_template.format(
+    managed="false"
+)
 
 def fixture_report_unmanaged(resource):
     return (
@@ -633,7 +588,9 @@ class EnablePrimitive(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
             )
-            .env.push_cib(resources=fixture_two_primitives_cib_disabled)
+            .env.push_cib(
+                resources=fixture_two_primitives_cib_disabled_with_meta
+            )
         )
         resource.enable(self.env_assist.get_env(), ["B"], False)
 
@@ -646,7 +603,7 @@ class EnablePrimitive(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_primitive_status_unmanaged
             )
-            .env.push_cib(resources=fixture_primitive_cib_enabled)
+            .env.push_cib(resources=fixture_primitive_cib_enabled_with_meta)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
@@ -709,8 +666,10 @@ class MoreResources(TestCase):
         fixture_enabled = """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes" />
                 </primitive>
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="B-meta_attributes" />
                 </primitive>
                 <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
                     <meta_attributes id="C-meta_attributes">
@@ -719,6 +678,7 @@ class MoreResources(TestCase):
                     </meta_attributes>
                 </primitive>
                 <primitive class="ocf" id="D" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="D-meta_attributes" />
                 </primitive>
             </resources>
         """
@@ -875,7 +835,7 @@ class Wait(TestCase):
             .runner.cib.load(resources=fixture_two_primitives_cib_disabled_both)
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
-                resources=fixture_two_primitives_cib_enabled,
+                resources=fixture_two_primitives_cib_enabled_with_meta_both,
                 wait=TIMEOUT
             )
             .runner.pcmk.load_state(
@@ -919,7 +879,7 @@ class Wait(TestCase):
             .runner.cib.load(resources=fixture_two_primitives_cib_disabled_both)
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
-                resources=fixture_two_primitives_cib_enabled,
+                resources=fixture_two_primitives_cib_enabled_with_meta_both,
                 wait=TIMEOUT
             )
             .runner.pcmk.load_state(
@@ -968,7 +928,7 @@ class Wait(TestCase):
             .runner.cib.load(resources=fixture_primitive_cib_disabled)
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
-                resources=fixture_primitive_cib_enabled,
+                resources=fixture_primitive_cib_enabled_with_meta,
                 wait=TIMEOUT,
                 exception=LibraryError(
                     reports.wait_for_idle_timed_out(
@@ -1073,7 +1033,7 @@ class WaitClone(TestCase):
             .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
-                resources=fixture_clone_cib_enabled,
+                resources=fixture_clone_cib_enabled_with_meta_clone,
                 wait=TIMEOUT
             )
             .runner.pcmk.load_state(
@@ -1142,7 +1102,9 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_group_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
 
@@ -1150,7 +1112,9 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_disabled_group)
+            .env.push_cib(
+                resources=fixture_group_cib_disabled_group_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
 
@@ -1158,7 +1122,7 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_group)
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_enabled)
+            .env.push_cib(resources=fixture_group_cib_enabled_with_meta_group)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
@@ -1166,7 +1130,9 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_disabled_primitive)
+            .env.push_cib(
+                resources=fixture_group_cib_disabled_primitive_with_meta_group
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
@@ -1174,7 +1140,9 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
-            .env.push_cib(resources=fixture_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_group_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
         self.env_assist.assert_reports([
@@ -1185,7 +1153,7 @@ class EnableGroup(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_group_cib_disabled_group)
             .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
-            .env.push_cib(resources=fixture_group_cib_enabled)
+            .env.push_cib(resources=fixture_group_cib_enabled_with_meta_group)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
         self.env_assist.assert_reports([
@@ -1240,7 +1208,9 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
@@ -1248,7 +1218,7 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
@@ -1256,7 +1226,7 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_clone)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
 
@@ -1264,7 +1234,7 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
 
@@ -1272,7 +1242,9 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
         self.env_assist.assert_reports([
@@ -1284,7 +1256,7 @@ class EnableClone(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
             .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
-            .env.push_cib(resources=fixture_clone_cib_enabled)
+            .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_clone)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
         self.env_assist.assert_reports([
@@ -1322,7 +1294,9 @@ class EnableMaster(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_master_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled)
+            .env.push_cib(
+                resources=fixture_master_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
@@ -1330,7 +1304,7 @@ class EnableMaster(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_master_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled)
+            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
@@ -1338,7 +1312,7 @@ class EnableMaster(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_master_cib_disabled_master)
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled)
+            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_master)
         )
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
 
@@ -1346,7 +1320,7 @@ class EnableMaster(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_master_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled)
+            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
 
@@ -1438,7 +1412,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled,)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_clone
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
 
@@ -1449,7 +1425,9 @@ class EnableClonedGroup(TestCase):
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources=fixture_clone_group_cib_disabled_primitive
+                resources
+                =
+                fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
             )
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
@@ -1460,7 +1438,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_group
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
@@ -1471,7 +1451,9 @@ class EnableClonedGroup(TestCase):
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources=fixture_clone_group_cib_disabled_primitive
+                resources
+                =
+                fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
@@ -1484,7 +1466,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
 
@@ -1495,7 +1479,9 @@ class EnableClonedGroup(TestCase):
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources=fixture_clone_group_cib_disabled_clone_group
+                resources
+                =
+                fixture_clone_group_cib_disabled_clone_group_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
@@ -1506,7 +1492,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_clone
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
         self.env_assist.assert_reports([
@@ -1520,7 +1508,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_group
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports([
@@ -1536,7 +1526,9 @@ class EnableClonedGroup(TestCase):
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
-            .env.push_cib(resources=fixture_clone_group_cib_enabled)
+            .env.push_cib(
+                resources=fixture_clone_group_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
         self.env_assist.assert_reports([
@@ -1597,7 +1589,9 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(
+                resources=fixture_bundle_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
@@ -1605,7 +1599,7 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
@@ -1613,7 +1607,7 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_bundle)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_bundle)
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
 
@@ -1621,7 +1615,7 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_both)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
 
@@ -1629,7 +1623,9 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(
+                resources=fixture_bundle_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports([
@@ -1641,7 +1637,9 @@ class EnableBundle(TestCase):
         (self.config
             .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
-            .env.push_cib(resources=fixture_bundle_cib_enabled)
+            .env.push_cib(
+                resources=fixture_bundle_cib_enabled_with_meta_primitive
+            )
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
         self.env_assist.assert_reports([

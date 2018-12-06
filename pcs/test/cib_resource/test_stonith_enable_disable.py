@@ -31,6 +31,7 @@ class Enable(ResourceTest):
             "stonith enable S",
             """<resources>
                 <primitive class="stonith" id="S" type="fence_xvm">
+                    <meta_attributes id="S-meta_attributes"/>
                     <operations>
                         <op id="S-monitor-interval-60s" interval="60s"
                             name="monitor"
