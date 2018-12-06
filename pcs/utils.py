@@ -2273,11 +2273,10 @@ def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
             only_removing = False
             break
 
-    nvset_element_list = [
-        child
-        for child in dom_element.childNodes
-        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name
-    ]
+    # Do not use dom.getElementsByTagName, that would get elements we do not
+    # want to. For example if dom_element is a clone, we would get the clones's
+    # as well as clone's primitive's attributes.
+    nvset_element_list = dom_get_children_by_tag_name(dom_element, tag_name)
 
     # Do not create new nvset if we are only removing values from it.
     if not nvset_element_list and only_removing:
@@ -2380,6 +2379,17 @@ def dom_update_meta_attr(dom_element, attributes):
         attributes,
         "meta_attributes",
         dom_element.getAttribute("id") + "-meta_attributes"
+    )
+
+def dom_update_instance_attr(dom_element, attributes):
+    """
+    Commandline options: no options
+    """
+    dom_update_nvset(
+        dom_element,
+        attributes,
+        "instance_attributes",
+        dom_element.getAttribute("id") + "-instance_attributes"
     )
 
 def get_utilization(element, filter_name=None):
