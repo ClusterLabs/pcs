@@ -1962,60 +1962,6 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
-    def testMetaAttrs(self):
-        # see also BundleMiscCommands
-        self.assert_pcs_success(
-             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30 meta"
-                " test5=test5a test6=test6a"
-            ,
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30"
-            ,
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_success(
-            "resource update --force D0 test=testC test2=test2a op monitor "
-                "interval=35 meta test7=test7a test6="
-        )
-
-        output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource group add TestRG D1")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2"
-        )
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource config")
-        ac(output, """\
- Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-  Attributes: test=testC test2=test2a
-  Meta Attrs: test5=test5a test7=test7a
-  Operations: monitor interval=35 (D0-monitor-interval-35)
- Group: TestRG
-  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Attributes: test=testA test2=test2a
-   Meta Attrs: d1meta=superd1meta
-   Operations: monitor interval=30 (D1-monitor-interval-30)
-""")
-        assert returnVal == 0
-
     def testMSGroup(self):
         output, returnVal  = pcs(
             temp_cib,
@@ -5198,6 +5144,163 @@ Error: Value of utilization attribute must be integer: 'test=int'
 """
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
+
+class MetaAttrs(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    @staticmethod
+    def fixture_xml_resource_no_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_empty_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <meta_attributes id="R-meta_attributes" />
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_with_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-a" name="a" value="b"/>
+                    </meta_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_resource_no_meta()
+        )
+
+    def fixture_resource_meta(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy meta a=b",
+            self.fixture_xml_resource_with_meta()
+        )
+
+    def testMetaAttrs(self):
+        # see also BundleMiscCommands
+        self.assert_pcs_success(
+             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30 meta"
+                " test5=test5a test6=test6a"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_success(
+            "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_success(
+            "resource update --force D0 test=testC test2=test2a op monitor "
+                "interval=35 meta test7=test7a test6="
+        )
+
+        output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource group add TestRG D1")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2"
+        )
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource config")
+        ac(output, """\
+ Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+  Attributes: test=testC test2=test2a
+  Meta Attrs: test5=test5a test7=test7a
+  Operations: monitor interval=35 (D0-monitor-interval-35)
+ Group: TestRG
+  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Attributes: test=testA test2=test2a
+   Meta Attrs: d1meta=superd1meta
+   Operations: monitor interval=30 (D1-monitor-interval-30)
+""")
+        assert returnVal == 0
+
+    def test_resource_meta_keep_empty_meta(self):
+        self.fixture_resource_meta()
+        self.assert_effect(
+            "resource meta R a=",
+            self.fixture_xml_resource_empty_meta()
+        )
+
+    def test_resource_update_keep_empty_meta(self):
+        self.fixture_resource_meta()
+        self.assert_effect(
+            "resource update R meta a=",
+            self.fixture_xml_resource_empty_meta()
+        )
+
+    def test_resource_meta_dont_create_meta_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource meta R a=",
+            self.fixture_xml_resource_no_meta()
+        )
+
+    def test_resource_update_dont_create_meta_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource update R meta a=",
+            self.fixture_xml_resource_no_meta()
+        )
+
 
 class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
     def setUp(self):

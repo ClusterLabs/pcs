@@ -91,9 +91,9 @@ class SetResourcesDefaults(TestCase):
             {"a": "b"},
         )
 
-    def test_remove_section_when_empty(self):
+    def test_keep_section_when_empty(self):
         (self.config
-            .env.push_cib(remove="./configuration/rsc_defaults")
+            .env.push_cib(remove="./configuration/rsc_defaults//nvpair")
         )
         cib_options.set_resources_defaults(
             self.env_assist.get_env(),

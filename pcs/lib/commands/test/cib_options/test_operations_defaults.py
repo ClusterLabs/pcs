@@ -89,8 +89,8 @@ class SetOperationsDefaults(TestCase):
             {"a": "b"},
         )
 
-    def test_remove_section_when_empty(self):
-        self.config.env.push_cib(remove="./configuration/op_defaults")
+    def test_keep_section_when_empty(self):
+        self.config.env.push_cib(remove="./configuration/op_defaults//nvpair")
         cib_options.set_operations_defaults(
             self.env_assist.get_env(),
             {

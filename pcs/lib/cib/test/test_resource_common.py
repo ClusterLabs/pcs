@@ -221,6 +221,7 @@ class Enable(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes />
                 </resource>
             """
         )
@@ -254,6 +255,7 @@ class Enable(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes id="meta1" />
                     <meta_attributes id="meta2">
                         <nvpair name="target-role" value="something" />
                     </meta_attributes>
@@ -466,6 +468,7 @@ class Manage(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes />
                 </resource>
             """
         )
@@ -499,6 +502,7 @@ class Manage(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes id="meta1" />
                     <meta_attributes id="meta2">
                         <nvpair name="is-managed" value="something" />
                     </meta_attributes>

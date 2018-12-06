@@ -76,7 +76,7 @@ class UpdateNvsetTest(TestCase):
         nvpair.update_nvset(nvset_element, {})
         assert_xml_equal(xml, etree_to_str(nvset_element))
 
-    def test_remove_empty_nvset(self):
+    def test_keep_empty_nvset(self):
         xml_pre = """
             <resource>
                 <instance_attributes id="iattrs">
@@ -86,6 +86,7 @@ class UpdateNvsetTest(TestCase):
         """
         xml_post = """
             <resource>
+                <instance_attributes id="iattrs" />
             </resource>
         """
         xml = etree.fromstring(xml_pre)
