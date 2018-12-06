@@ -6,11 +6,14 @@ from __future__ import (
 
 import shutil
 
+from lxml import etree
+
 from pcs import node
 from pcs.test.tools.assertions import (
     ac,
     AssertPcsMixin,
 )
+from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -26,9 +29,58 @@ from pcs import utils
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
 
-class NodeTest(TestCase):
+class NodeUtilizationSet(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//nodes")[0]
+        )
+    )
+):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    @staticmethod
+    def fixture_xml_no_utilization():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1" />
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
+
+    @staticmethod
+    def fixture_xml_empty_utilization():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1">
+                    <utilization id="nodes-1-utilization" />
+                </node>
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
+
+    @staticmethod
+    def fixture_xml_with_utilization():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1">
+                    <utilization id="nodes-1-utilization">
+                        <nvpair id="nodes-1-utilization-test" name="test"
+                            value="100"
+                        />
+                    </utilization>
+                </node>
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
 
     def test_node_utilization_set(self):
         output, returnVal = pcs(temp_cib, "node utilization rh7-1 test1=10")
@@ -111,36 +163,72 @@ Node Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-    def test_node_utilization_set_invalid(self):
-        output, returnVal = pcs(temp_cib, "node utilization rh7-1 test")
-        expected_out = """\
-Error: missing value of 'test' option
-"""
-        ac(expected_out, output)
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "node utilization rh7-1 =10")
-        expected_out = """\
-Error: missing key in '=10' option
-"""
-        ac(expected_out, output)
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "node utilization rh7-0 test=10")
-        expected_out = """\
-Error: Unable to find a node: rh7-0
-"""
-        ac(expected_out, output)
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib, "node utilization rh7-1 test1=10 test=int"
+    def test_refuse_non_option_attribute_parameter_among_options(self):
+        self.assert_pcs_fail(
+            "node utilization rh7-1 net",
+            "Error: missing value of 'net' option\n"
         )
-        expected_out = """\
-Error: Value of utilization attribute must be integer: 'test=int'
-"""
-        ac(expected_out, output)
-        self.assertEqual(1, returnVal)
+
+    def test_refuse_option_without_key(self):
+        self.assert_pcs_fail(
+            "node utilization rh7-1 =1",
+            "Error: missing key in '=1' option\n",
+        )
+
+    def test_refuse_unknown_node(self):
+        self.assert_pcs_fail(
+            "node utilization rh7-0 test=10",
+            "Error: Unable to find a node: rh7-0\n",
+        )
+
+    def test_refuse_value_not_int(self):
+        self.assert_pcs_fail(
+            "node utilization rh7-1 test1=10 test=int",
+            "Error: Value of utilization attribute must be integer: "
+                "'test=int'\n"
+        )
+
+    def test_keep_empty_nvset(self):
+        self.assert_effect(
+            "node utilization rh7-1 test=100",
+            self.fixture_xml_with_utilization()
+        )
+        self.assert_effect(
+            "node utilization rh7-1 test=",
+            self.fixture_xml_empty_utilization()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        self.assert_effect(
+            "node utilization rh7-1 test=",
+            self.fixture_xml_no_utilization()
+        )
+
+
+class NodeUtilizationPrint(TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    @mock.patch("pcs.node.utils")
+    def test_refuse_when_node_not_in_cib_and_is_not_remote(self, mock_utils):
+        mock_cib = mock.MagicMock()
+        mock_cib.getElementsByTagName = mock.Mock(return_value=[])
+
+        mock_utils.get_cib_dom = mock.Mock(return_value=mock_cib)
+        mock_utils.usefile = False
+        mock_utils.getNodeAttributesFromPacemaker = mock.Mock(return_value=[])
+        mock_utils.err = mock.Mock(side_effect=SystemExit)
+
+        self.assertRaises(
+            SystemExit,
+            lambda: node.print_node_utilization("some")
+        )
+
+    def test_refuse_when_node_not_in_mocked_cib(self):
+        self.assert_pcs_fail("node utilization some_nonexistent_node", [
+            "Error: Unable to find a node: some_nonexistent_node",
+        ])
 
 
 class NodeStandby(TestCase, AssertPcsMixin):
@@ -718,43 +806,3 @@ Node Attributes:
             "node attribute rh7-1 missing= --force",
             ""
         )
-
-class SetNodeUtilizationTest(TestCase, AssertPcsMixin):
-    def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
-
-    def test_refuse_non_option_attribute_parameter_among_options(self):
-        self.assert_pcs_fail("node utilization rh7-1 net", [
-            "Error: missing value of 'net' option",
-        ])
-
-    def test_refuse_option_without_key(self):
-        self.assert_pcs_fail("node utilization rh7-1 =1", [
-            "Error: missing key in '=1' option",
-        ])
-
-class PrintNodeUtilizationTest(TestCase, AssertPcsMixin):
-    def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
-
-    @mock.patch("pcs.node.utils")
-    def test_refuse_when_node_not_in_cib_and_is_not_remote(self, mock_utils):
-        mock_cib = mock.MagicMock()
-        mock_cib.getElementsByTagName = mock.Mock(return_value=[])
-
-        mock_utils.get_cib_dom = mock.Mock(return_value=mock_cib)
-        mock_utils.usefile = False
-        mock_utils.getNodeAttributesFromPacemaker = mock.Mock(return_value=[])
-        mock_utils.err = mock.Mock(side_effect=SystemExit)
-
-        self.assertRaises(
-            SystemExit,
-            lambda: node.print_node_utilization("some")
-        )
-
-    def test_refuse_when_node_not_in_mocked_cib(self):
-        self.assert_pcs_fail("node utilization some_nonexistent_node", [
-            "Error: Unable to find a node: some_nonexistent_node",
-        ])

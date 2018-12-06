@@ -4656,7 +4656,85 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         ))
 
-    def testResrourceUtilizationSet(self):
+class Utilization(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    @staticmethod
+    def fixture_xml_resource_no_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_empty_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                    <utilization id="R-utilization" />
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_with_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                    <utilization id="R-utilization">
+                        <nvpair id="R-utilization-test" name="test"
+                            value="100"
+                        />
+                    </utilization>
+                </primitive>
+            </resources>
+            """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_resource_no_utilization()
+        )
+
+    def fixture_resource_utilization(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource utilization R test=100",
+            self.fixture_xml_resource_with_utilization()
+        )
+
+    def testResourceUtilizationSet(self):
         # see also BundleMiscCommands
         output, returnVal = pcs(
             temp_large_cib, "resource utilization dummy test1=10"
@@ -4757,6 +4835,20 @@ Error: Value of utilization attribute must be integer: 'test=int'
 """
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
+
+    def test_keep_empty_nvset(self):
+        self.fixture_resource_utilization()
+        self.assert_effect(
+            "resource utilization R test=",
+            self.fixture_xml_resource_empty_utilization()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource utilization R test=",
+            self.fixture_xml_resource_no_utilization()
+        )
 
 
 class MetaAttrs(
@@ -5089,7 +5181,7 @@ class UpdateInstanceAttrs(
             self.fixture_xml_resource_empty_attrs()
         )
 
-    def test_dont_create_attrs_on_removal(self):
+    def test_dont_create_nvset_on_removal(self):
         self.fixture_resource()
         self.assert_effect(
             "resource update R fake=",

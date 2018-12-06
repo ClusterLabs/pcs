@@ -2671,24 +2671,20 @@ def is_int(val):
         return False
 
 def dom_update_utilization(dom_element, attributes, id_prefix=""):
-    utilization = dom_prepare_child_element(
-        dom_element,
-        "utilization",
-        id_prefix + dom_element.getAttribute("id") + "-utilization"
-    )
-
+    attr_tuples = []
     for name, value in sorted(attributes.items()):
         if value != "" and not is_int(value):
             err(
                 "Value of utilization attribute must be integer: "
                 "'{0}={1}'".format(name, value)
             )
-        dom_update_nv_pair(
-            utilization,
-            name,
-            value.strip(),
-            utilization.getAttribute("id") + "-"
-        )
+        attr_tuples.append((name, value))
+    dom_update_nvset(
+        dom_element,
+        attr_tuples,
+        "utilization",
+        id_prefix + dom_element.getAttribute("id") + "-utilization"
+    )
 
 def dom_update_meta_attr(dom_element, attributes):
     dom_update_nvset(

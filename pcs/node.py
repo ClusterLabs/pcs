@@ -93,6 +93,15 @@ def node_standby_cmd(lib, argv, modifiers, enable):
         lib.node.standby_unstandby_local(enable, modifiers["wait"])
 
 def set_node_utilization(node, argv):
+    nvpair_dict = prepare_options(argv)
+    if not nvpair_dict:
+        return
+    only_removing = True
+    for value in nvpair_dict.values():
+        if value != "":
+            only_removing = False
+            break
+
     cib = utils.get_cib_dom()
     node_el = utils.dom_get_node(cib, node)
     if node_el is None:
@@ -110,6 +119,10 @@ def set_node_utilization(node, argv):
         if len(nodes_section_list) == 0:
             utils.err("Unable to get nodes section of cib")
 
+        if only_removing:
+            # Do not create new node if we are only removing values from it.
+            return
+
         dom = nodes_section_list[0].ownerDocument
         node_el = dom.createElement("node")
         node_el.setAttribute("id", node_attrs.id)
@@ -117,7 +130,7 @@ def set_node_utilization(node, argv):
         node_el.setAttribute("uname", node_attrs.name)
         nodes_section_list[0].appendChild(node_el)
 
-    utils.dom_update_utilization(node_el, prepare_options(argv), "nodes-")
+    utils.dom_update_utilization(node_el, nvpair_dict, "nodes-")
     utils.replace_cib_configuration(cib)
 
 def print_node_utilization(filter_node=None, filter_name=None):
@@ -179,4 +192,3 @@ def attribute_print(node_attributes):
         for name, value in sorted(node_attributes[node].items()):
             line_parts.append("{0}={1}".format(name, value))
         print(" ".join(line_parts))
-
