@@ -117,16 +117,27 @@ def _xml_to_element(xml):
         )
     return new_element
 
-def _find_in(cib_tree, element_xpath):
-    element = cib_tree.find(element_xpath)
-    if element is None:
+def _find_all_in(cib_tree, element_xpath):
+    element_list = cib_tree.xpath(element_xpath)
+    if not element_list:
         raise AssertionError(
             "Cannot find '{0}' in given cib:\n{1}".format(
                 element_xpath,
                 etree_to_str(cib_tree)
             )
         )
-    return element
+    return element_list
+
+def _find_in(cib_tree, element_xpath):
+    element_list = _find_all_in(cib_tree, element_xpath)
+    if len(element_list) > 1:
+        raise AssertionError(
+            "Found more than one '{0}' in given cib:\n{1}".format(
+                element_xpath,
+                etree_to_str(cib_tree)
+            )
+        )
+    return element_list[0]
 
 def remove(element_xpath):
     def _remove(cib_tree):
@@ -134,8 +145,8 @@ def remove(element_xpath):
             [element_xpath] if isinstance(element_xpath, str) else element_xpath
         )
         for xpath in xpath_list:
-            element_to_remove = _find_in(cib_tree, xpath)
-            element_to_remove.getparent().remove(element_to_remove)
+            for element_to_remove in _find_all_in(cib_tree, xpath):
+                element_to_remove.getparent().remove(element_to_remove)
     return _remove
 
 def put_or_replace(parent_xpath, new_content):
