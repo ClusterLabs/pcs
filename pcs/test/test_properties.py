@@ -1,9 +1,15 @@
 import shutil
 from unittest import TestCase
 
+from lxml import etree
+
 from pcs.test.tools.assertions import ac
+from pcs.test.tools.cib import get_assert_pcs_effect_mixin
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_runner import pcs
+from pcs.test.tools.pcs_runner import (
+    pcs,
+    PcsRunner,
+)
 
 # pylint: disable=invalid-name, no-self-use, bad-whitespace, line-too-long
 
@@ -263,4 +269,67 @@ class PropertyTest(TestCase):
         ac(o, """Cluster Properties:
  migration-limit: 0.1
 """
+        )
+
+class PropertyUnset(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//crm_config")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+
+    @staticmethod
+    def fixture_xml_no_props():
+        # must match empty_cib
+        return """
+            <crm_config />
+        """
+
+    @staticmethod
+    def fixture_xml_empty_props():
+        # must match empty_cib
+        return """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options" />
+            </crm_config>
+        """
+
+    @staticmethod
+    def fixture_xml_with_props():
+        # must match empty_cib
+        return """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair id="cib-bootstrap-options-batch-limit"
+                        name="batch-limit" value="100"
+                    />
+                </cluster_property_set>
+            </crm_config>
+        """
+
+    def test_keep_empty_nvset(self):
+        self.assert_effect(
+            "property set batch-limit=100",
+            self.fixture_xml_with_props()
+        )
+        self.assert_effect(
+            "property unset batch-limit",
+            self.fixture_xml_empty_props()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        # pcs mimics crm_attribute. So this behaves differently than the rest
+        # of pcs - instead of doing nothing it returns an error.
+        # Should be changed to be consistent with the rest of pcs.
+        self.assert_pcs_fail(
+            "property unset batch-limit",
+            "Error: can't remove property: 'batch-limit' that doesn't exist\n"
         )
