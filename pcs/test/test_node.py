@@ -563,10 +563,20 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
         )
 
 
-class NodeAttributeTest(TestCase, AssertPcsMixin):
+class NodeAttributeTest(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//nodes")[0]
+        )
+    )
+):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
 
     def fixture_attrs(self, nodes, attrs=None):
         attrs = dict() if attrs is None else attrs
@@ -596,6 +606,42 @@ class NodeAttributeTest(TestCase, AssertPcsMixin):
         utils.filename = utils_filename_original
         assert output == ""
         assert retval == 0
+
+    @staticmethod
+    def fixture_xml_no_attrs():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1" />
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
+
+    @staticmethod
+    def fixture_xml_empty_attrs():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1">
+                    <instance_attributes id="nodes-1" />
+                </node>
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
+
+    @staticmethod
+    def fixture_xml_with_attrs():
+        # must match empty_cib
+        return """
+            <nodes>
+                <node id="1" uname="rh7-1">
+                    <instance_attributes id="nodes-1">
+                        <nvpair id="nodes-1-test" name="test" value="100" />
+                    </instance_attributes>
+                </node>
+                <node id="2" uname="rh7-2" />
+            </nodes>
+        """
 
     def test_show_empty(self):
         self.fixture_attrs(["rh7-1", "rh7-2"])
@@ -806,3 +852,25 @@ Node Attributes:
             "node attribute rh7-1 missing= --force",
             ""
         )
+
+    def test_keep_empty_nvset(self):
+        self.assert_effect(
+            "node attribute rh7-1 test=100",
+            self.fixture_xml_with_attrs()
+        )
+        self.assert_effect(
+            "node attribute rh7-1 test=",
+            self.fixture_xml_empty_attrs()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        # pcs does not actually do cib editing, it passes it to crm_node. So
+        # this behaves differently than the rest of pcs - instead of doing
+        # nothing it returns an error.
+        # Should be changed to be consistent with the rest of pcs.
+        output, retval = pcs(self.temp_cib, "node attribute rh7-1 test=")
+        self.assertEqual(
+            output,
+            "Error: attribute: 'test' doesn't exist for node: 'rh7-1'\n"
+        )
+        self.assertEqual(retval, 2)
