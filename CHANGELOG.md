@@ -7,6 +7,8 @@
   specified checkpoints ([rhbz#1655055])
 - Support for resource instance attributes uniqueness check according to
   resource agent metadata ([rhbz#1665404])
+- Command `pcs resource bundle reset` for a bundle configuration reseting
+  ([rhbz#1657166])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
@@ -27,6 +29,7 @@
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953
+[rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1659051]: https://bugzilla.redhat.com/show_bug.cgi?id=1659051
 [rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057

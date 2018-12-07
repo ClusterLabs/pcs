@@ -473,6 +473,18 @@ Commands:
         to start and then return 0 on success or 1 on error. If 'n' is not
         specified it defaults to 60 minutes.
 
+    bundle reset <bundle id> container <container type> [<container options>]
+            [network <network options>] [port-map <port options>]...
+            [storage-map <storage options>]... [meta <meta options>]
+            [--disabled] [--wait[=n]]
+        Configure specified bundle with given options. Unlike bundle update,
+        this command resets the bundle according given options - no previous
+        options are kept. Resources inside bundle are kept as they are.
+        If --disabled is specified, the bundle is not started automatically.
+        If --wait is specified, pcs will wait up to 'n' seconds for the bundle
+        to start and then return 0 on success or 1 on error. If 'n' is not
+        specified it defaults to 60 minutes.
+
     bundle update <bundle id> [container <container options>]
             [network <network options>]
             [port-map (add <port options>) | (delete | remove <id>...)]...
