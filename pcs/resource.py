@@ -2849,6 +2849,8 @@ def resource_bundle_cmd(lib, argv, modifiers):
 
         if sub_cmd == "create":
             resource_bundle_create_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "reset":
+            resource_bundle_reset_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             resource_bundle_update_cmd(lib, argv_next, modifiers)
         else:
@@ -2860,12 +2862,18 @@ def resource_bundle_cmd(lib, argv, modifiers):
         )
 
 def resource_bundle_create_cmd(lib, argv, modifiers):
+    _resource_bundle_configure(lib.resource.bundle_create, argv, modifiers)
+
+def resource_bundle_reset_cmd(lib, argv, modifiers):
+    _resource_bundle_configure(lib.resource.bundle_reset, argv, modifiers)
+
+def _resource_bundle_configure(call_lib, argv, modifiers):
     if len(argv) < 1:
         raise CmdLineInputError()
 
     bundle_id = argv[0]
     parts = parse_bundle_create_options(argv[1:])
-    lib.resource.bundle_create(
+    call_lib(
         bundle_id,
         parts["container_type"],
         container_options=parts["container"],
