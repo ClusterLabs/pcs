@@ -519,6 +519,7 @@ class NodeRemoveGuest(ResourceTest):
                 <primitive class="ocf" id="NODE-ID" provider="heartbeat"
                     type="Dummy"
                 >
+                    <meta_attributes id="NODE-ID-meta_attributes" />
                     <operations>
                         <op id="NODE-ID-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"

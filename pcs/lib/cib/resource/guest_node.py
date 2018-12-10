@@ -16,7 +16,6 @@ from pcs.lib.node import (
     node_addresses_contain_host,
     node_addresses_contain_name,
 )
-from pcs.lib.xml_tools import remove_when_pointless
 
 
 #TODO pcs currently does not care about multiple meta_attributes and here
@@ -133,6 +132,12 @@ def unset_guest(resource_element):
 
     etree.Element resource_element
     """
+    # Do not ever remove the nvset element, even if it is empty. There may be
+    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
+    # and removing) but not nvsets. In such a case, removing the nvset would
+    # cause the whole change to be rejected by pacemaker with a "permission
+    # denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     guest_nvpair_list = resource_element.xpath(
         "./meta_attributes/nvpair[{0}]".format(
             " or ".join([
@@ -144,7 +149,6 @@ def unset_guest(resource_element):
     for nvpair in guest_nvpair_list:
         meta_attributes = nvpair.getparent()
         meta_attributes.remove(nvpair)
-        remove_when_pointless(meta_attributes)
 
 def get_node(meta_attributes):
     """

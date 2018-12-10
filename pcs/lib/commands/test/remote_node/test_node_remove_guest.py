@@ -76,6 +76,11 @@ FIXTURE_RESOURCES = """
     </resources>
 """.format(VIRTUAL_MACHINE_ID, REMOTE_HOST, NODE_NAME)
 
+GUEST_NVPAIR_XPATHS = [
+    ".//primitive/meta_attributes/nvpair[@name='remote-addr']",
+    ".//primitive/meta_attributes/nvpair[@name='remote-node']",
+]
+
 get_env_tools = partial(get_env_tools, local_extensions={
     "local": EnvConfigMixin
 })
@@ -96,7 +101,7 @@ class RemoveGuest(TestCase):
                     dict(label=NODE_NAME, address_list=[REMOTE_HOST])
                 ],
             )
-            .env.push_cib(remove=".//primitive/meta_attributes")
+            .env.push_cib(remove=GUEST_NVPAIR_XPATHS)
             .runner.pcmk.remove_node(NODE_NAME)
         )
         node_remove_guest(self.env_assist.get_env(), node_identifier=identifier)
@@ -130,7 +135,7 @@ class RemoveGuestOthers(TestCase):
                     dict(label=NODE_NAME, address_list=[REMOTE_HOST])
                 ],
             )
-            .env.push_cib(remove=".//primitive/meta_attributes", wait=wait)
+            .env.push_cib(remove=GUEST_NVPAIR_XPATHS, wait=wait)
             .runner.pcmk.remove_node(NODE_NAME)
         )
         node_remove_guest(self.env_assist.get_env(), wait=wait)
@@ -150,7 +155,7 @@ class RemoveGuestOthers(TestCase):
                 ],
                 **FAIL_HTTP_KWARGS
             )
-            .env.push_cib(remove=".//primitive/meta_attributes")
+            .env.push_cib(remove=GUEST_NVPAIR_XPATHS)
             .runner.pcmk.remove_node(NODE_NAME)
         )
         node_remove_guest(self.env_assist.get_env(), skip_offline_nodes=True)
@@ -266,9 +271,12 @@ class MultipleResults(TestCase):
                 ],
             )
             .env.push_cib(remove=[
-                ".//meta_attributes[@id='A-M']",
-                ".//meta_attributes[@id='B-M']",
-                ".//meta_attributes[@id='C-M']",
+                ".//meta_attributes[@id='A-M']/nvpair[@name='remote-addr']",
+                ".//meta_attributes[@id='A-M']/nvpair[@name='remote-node']",
+                ".//meta_attributes[@id='B-M']/nvpair[@name='remote-addr']",
+                ".//meta_attributes[@id='B-M']/nvpair[@name='remote-node']",
+                ".//meta_attributes[@id='C-M']/nvpair[@name='remote-addr']",
+                ".//meta_attributes[@id='C-M']/nvpair[@name='remote-node']",
             ])
             .runner.pcmk.remove_node("B-NAME", name="runner.pcmk.remove_node3")
             .runner.pcmk.remove_node(REMOTE_HOST)
@@ -381,7 +389,7 @@ class AuthkeyRemove(TestCase):
                     "message": "Access denied",
                 }
             )
-            .env.push_cib(remove=".//primitive/meta_attributes")
+            .env.push_cib(remove=GUEST_NVPAIR_XPATHS)
             .runner.pcmk.remove_node(NODE_NAME)
         )
         node_remove_guest(
@@ -454,7 +462,7 @@ class PcmkRemoteServiceDestroy(TestCase):
                     dict(label=NODE_NAME, address_list=[REMOTE_HOST])
                 ],
             )
-            .env.push_cib(remove=".//primitive/meta_attributes")
+            .env.push_cib(remove=GUEST_NVPAIR_XPATHS)
             .runner.pcmk.remove_node(NODE_NAME)
         )
         node_remove_guest(
