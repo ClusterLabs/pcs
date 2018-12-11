@@ -3340,9 +3340,23 @@ def resource_bundle_cmd(lib, argv, modifiers):
         )
 
 def resource_bundle_create_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown options
+      * --disabled - create as a stopped bundle
+      * --wait
+      * -f - CIB file
+    """
     _resource_bundle_configure(lib.resource.bundle_create, argv, modifiers)
 
 def resource_bundle_reset_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown options
+      * --disabled - create as a stopped bundle
+      * --wait
+      * -f - CIB file
+    """
     _resource_bundle_configure(lib.resource.bundle_reset, argv, modifiers)
 
 def _resource_bundle_configure(call_lib, argv, modifiers):

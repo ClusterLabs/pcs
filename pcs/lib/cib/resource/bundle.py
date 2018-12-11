@@ -172,10 +172,10 @@ def reset(
 
     # Old bundle configuration is removed and re-created. We aren't trying
     # to keep ids:
-    # * It doesn't make sense to reference this ids.
-    # * There is VERY HIGHT probablity that the newly created ids will have
-    #   the same value since they are based on id of bundle element which is
-    #   kept.
+    # * It doesn't make sense to reference these ids.
+    # * Newly created ids are based on (are prefixed by) the bundle element id,
+    #   which does not change. Therefore, it is VERY HIGHLY probable the newly
+    #   created ids will be the same as the original ones.
     elements_without_reset_impact = []
     for child in list(bundle_element):
         if child.tag not in (
@@ -183,8 +183,8 @@ def reset(
             +
             ["network", "storage", "meta_attributes"]
         ):
-            # Only primitive shoulud be found here, currently.
-            # The order of different element tags has no practical impact so we
+            # Only primitive should be found here, currently.
+            # The order of various element tags has no practical impact so we
             # don't care about it here.
             elements_without_reset_impact.append(child)
         bundle_element.remove(child)
@@ -720,7 +720,6 @@ def _configure(
             )
     if meta_attributes:
         append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
-
 
 def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     if "id" not in port_map_options:
