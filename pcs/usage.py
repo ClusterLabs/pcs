@@ -558,10 +558,10 @@ Commands:
 
 Examples:
 
-    pcs resource show
+    pcs resource config
       Show all resources.
 
-    pcs resource show VirtualIP
+    pcs resource config VirtualIP
       Show options specific to the 'VirtualIP' resource.
 
 

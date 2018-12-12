@@ -964,10 +964,10 @@ Authenticate current user to local pcsd. This is requiered to run some pcs comma
 .SH EXAMPLES
 .TP
 Show all resources
-.B # pcs resource show
+.B # pcs resource config
 .TP
 Show options specific to the 'VirtualIP' resource
-.B # pcs resource show VirtualIP
+.B # pcs resource config VirtualIP
 .TP
 Create a new resource called 'VirtualIP' with options
 .B # pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
