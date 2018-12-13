@@ -3,6 +3,7 @@ from functools import partial
 from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.cib.nvpair import arrange_first_meta_attributes
+from pcs.lib.cib.tools import IdProvider
 
 
 def _set_any_defaults(section_name, env, options):
@@ -38,7 +39,8 @@ def _set_any_defaults(section_name, env, options):
     arrange_first_meta_attributes(
         defaults_section,
         options,
-        new_id="{0}-options".format(section_name)
+        IdProvider(cib),
+        new_id="{0}-options".format(section_name),
     )
 
     env.push_cib()

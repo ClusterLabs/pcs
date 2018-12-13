@@ -5,6 +5,7 @@ from lxml import etree
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.lib.resource_agent import CrmAgent
 from pcs.lib.cib.resource import primitive
+from pcs.lib.cib.tools import IdProvider
 
 
 class FindPrimitivesByAgent(TestCase):
@@ -100,10 +101,12 @@ class AppendNew(TestCase):
         self.instance_attributes = {"a": "b"}
         self.meta_attributes = {"c": "d"}
         self.operation_list = [{"name": "monitoring"}]
+        self.id_provider = IdProvider(self.resources_section)
 
         self.run = partial(
             primitive.append_new,
             self.resources_section,
+            self.id_provider,
             instance_attributes=self.instance_attributes,
             meta_attributes=self.meta_attributes,
             operation_list=self.operation_list,
@@ -118,15 +121,18 @@ class AppendNew(TestCase):
     ):
         create_operations.assert_called_once_with(
             primitive_element,
+            self.id_provider,
             self.operation_list
         )
         append_new_meta_attributes.assert_called_once_with(
             primitive_element,
-            self.meta_attributes
+            self.meta_attributes,
+            self.id_provider
         )
         append_new_instance_attributes.assert_called_once_with(
             primitive_element,
-            self.instance_attributes
+            self.instance_attributes,
+            self.id_provider
         )
 
     def test_append_without_provider(

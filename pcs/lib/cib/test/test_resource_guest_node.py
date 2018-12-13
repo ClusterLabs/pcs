@@ -4,6 +4,7 @@ from lxml import etree
 from pcs.common import report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import guest_node
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
     assert_xml_equal,
@@ -212,7 +213,12 @@ class ValidateIsNotGuest(TestCase):
 class SetAsGuest(TestCase):
     def test_set_guest_meta_correctly(self):
         resource_element = etree.fromstring('<primitive id="A"/>')
-        guest_node.set_as_guest(resource_element, "node1", connect_timeout="10")
+        guest_node.set_as_guest(
+            resource_element,
+            IdProvider(resource_element),
+            "node1",
+            connect_timeout="10"
+        )
         assert_xml_equal(
             etree.tostring(resource_element).decode(),
             """

@@ -15,6 +15,7 @@ from pcs.lib.errors import (
 )
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
+    append_when_useful,
     get_sub_element,
     update_attributes_remove_empty,
 )
@@ -250,49 +251,54 @@ def update(
         container_options
     )
 
-    network_element = bundle_el.find("./network")
+    network_element = get_sub_element(
+        bundle_el,
+        "network",
+        append_if_missing=False
+    )
     if network_options:
-        only_remove_network_options = True
-        for value in network_options.values():
-            if value != "":
-                only_remove_network_options = False
-                break
-        if not (only_remove_network_options and network_element is None):
-            network_element = get_sub_element(bundle_el, "network")
-            update_attributes_remove_empty(network_element, network_options)
+        update_attributes_remove_empty(network_element, network_options)
     # It's crucial to remove port maps prior to appending new ones: If we are
     # adding a port map which in any way conflicts with another one and that
     # another one is being removed in the very same command, the removal must
     # be done first, otherwise the conflict would manifest itself (and then
     # possibly the old mapping would be removed)
-    if port_map_remove and network_options is not None:
+    if port_map_remove:
         _remove_map_elements(
             network_element.findall("port-mapping"),
             port_map_remove
         )
     if port_map_add:
-        network_element = get_sub_element(bundle_el, "network")
         for port_map_options in port_map_add:
             _append_port_map(
                 network_element, id_provider, bundle_id, port_map_options
             )
+    append_when_useful(bundle_el, network_element)
 
-    storage_element = bundle_el.find("./storage")
+    storage_element = get_sub_element(
+        bundle_el,
+        "storage",
+        append_if_missing=False
+    )
     # See the comment above about removing port maps prior to adding new ones.
-    if storage_map_remove and storage_element is not None:
+    if storage_map_remove:
         _remove_map_elements(
             storage_element.findall("storage-mapping"),
             storage_map_remove
         )
     if storage_map_add:
-        storage_element = get_sub_element(bundle_el, "storage")
         for storage_map_options in storage_map_add:
             _append_storage_map(
                 storage_element, id_provider, bundle_id, storage_map_options
             )
+    append_when_useful(bundle_el, storage_element)
 
     if meta_attributes:
-        arrange_first_meta_attributes(bundle_el, meta_attributes)
+        arrange_first_meta_attributes(
+            bundle_el,
+            meta_attributes,
+            id_provider
+        )
 
 def is_pcmk_remote_accessible(bundle_element):
     """

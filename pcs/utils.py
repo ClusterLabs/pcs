@@ -2258,6 +2258,8 @@ def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
     """
     Commandline options: no options
     """
+    # Already ported to pcs.libcib.nvpair
+
     # Do not ever remove the nvset element, even if it is empty. There may be
     # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
     # and removing) but not nvsets. In such a case, removing the nvset would

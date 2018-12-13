@@ -250,7 +250,9 @@ class CreateNvsetIdTest(TestCase):
         context = etree.fromstring('<cib><a id="b"/></cib>')
         self.assertEqual(
             "b-name",
-            lib.create_subelement_id(context.find(".//a"), "name")
+            lib.create_subelement_id(
+                context.find(".//a"), "name", lib.IdProvider(context)
+            )
         )
 
     def test_create_decorated_id_when_conflicting_id_there(self):
@@ -259,7 +261,9 @@ class CreateNvsetIdTest(TestCase):
         )
         self.assertEqual(
             "b-name-1",
-            lib.create_subelement_id(context.find(".//a"), "name")
+            lib.create_subelement_id(
+                context.find(".//a"), "name", lib.IdProvider(context)
+            )
         )
 
 class GetConfigurationTest(CibToolsTest):

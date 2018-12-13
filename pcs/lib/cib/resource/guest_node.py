@@ -105,7 +105,8 @@ def validate_is_not_guest(resource_element):
     ]
 
 def set_as_guest(
-    resource_element, node, addr=None, port=None, connect_timeout=None
+    resource_element, id_provider, node, addr=None, port=None,
+    connect_timeout=None
 ):
     """
     Set resource as guest node.
@@ -121,7 +122,7 @@ def set_as_guest(
     if connect_timeout:
         meta_options["remote-connect-timeout"] = str(connect_timeout)
 
-    arrange_first_meta_attributes(resource_element, meta_options)
+    arrange_first_meta_attributes(resource_element, meta_options, id_provider)
 
 def unset_guest(resource_element):
     """

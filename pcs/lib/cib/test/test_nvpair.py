@@ -1,4 +1,4 @@
-from unittest import mock, TestCase
+from unittest import TestCase
 from lxml import etree
 
 from pcs.lib.cib import nvpair
@@ -11,7 +11,8 @@ from pcs.test.tools.xml import etree_to_str
 class AppendNewNvpair(TestCase):
     def test_append_new_nvpair_to_given_element(self):
         nvset_element = etree.fromstring('<nvset id="a"/>')
-        nvpair._append_new_nvpair(nvset_element, "b", "c")
+        id_provider = IdProvider(nvset_element)
+        nvpair._append_new_nvpair(nvset_element, "b", "c", id_provider)
         assert_xml_equal(
             etree_to_str(nvset_element),
             """
@@ -37,50 +38,53 @@ class AppendNewNvpair(TestCase):
 
 
 class UpdateNvsetTest(TestCase):
-    @mock.patch(
-        "pcs.lib.cib.nvpair.create_subelement_id",
-        mock.Mock(return_value="4")
-    )
     def test_updates_nvset(self):
         nvset_element = etree.fromstring("""
             <instance_attributes id="iattrs">
-                <nvpair id="1" name="a" value="b"/>
-                <nvpair id="2" name="c" value="d"/>
-                <nvpair id="3" name="e" value="f"/>
+                <nvpair id="iattrs-a" name="a" value="b"/>
+                <nvpair id="iattrs-c" name="c" value="d"/>
+                <nvpair id="iattrs-e" name="e" value="f"/>
             </instance_attributes>
         """)
-        nvpair.update_nvset(nvset_element, {
-            "a": "B",
-            "c": "",
-            "g": "h",
-        })
+        id_provider = IdProvider(nvset_element)
+        nvpair.update_nvset(
+            nvset_element,
+            {
+                "a": "B",
+                "c": "",
+                "g": "h",
+            },
+            id_provider
+        )
         assert_xml_equal(
             """
             <instance_attributes id="iattrs">
-                <nvpair id="1" name="a" value="B"/>
-                <nvpair id="3" name="e" value="f"/>
-                <nvpair id="4" name="g" value="h"/>
+                <nvpair id="iattrs-a" name="a" value="B"/>
+                <nvpair id="iattrs-e" name="e" value="f"/>
+                <nvpair id="iattrs-g" name="g" value="h"/>
             </instance_attributes>
             """,
             etree_to_str(nvset_element)
         )
+
     def test_empty_value_has_no_effect(self):
         xml = """
             <instance_attributes id="iattrs">
-                <nvpair id="1" name="a" value="b"/>
-                <nvpair id="2" name="c" value="d"/>
-                <nvpair id="3" name="e" value="f"/>
+                <nvpair id="iattrs-b" name="a" value="b"/>
+                <nvpair id="iattrs-d" name="c" value="d"/>
+                <nvpair id="iattrs-f" name="e" value="f"/>
             </instance_attributes>
         """
         nvset_element = etree.fromstring(xml)
-        nvpair.update_nvset(nvset_element, {})
+        id_provider = IdProvider(nvset_element)
+        nvpair.update_nvset(nvset_element, {}, id_provider)
         assert_xml_equal(xml, etree_to_str(nvset_element))
 
     def test_keep_empty_nvset(self):
         xml_pre = """
             <resource>
                 <instance_attributes id="iattrs">
-                    <nvpair id="1" name="a" value="b"/>
+                    <nvpair id="iattrs-a" name="a" value="b"/>
                 </instance_attributes>
             </resource>
         """
@@ -91,7 +95,8 @@ class UpdateNvsetTest(TestCase):
         """
         xml = etree.fromstring(xml_pre)
         nvset_element = xml.find("instance_attributes")
-        nvpair.update_nvset(nvset_element, {"a": ""})
+        id_provider = IdProvider(nvset_element)
+        nvpair.update_nvset(nvset_element, {"a": ""}, id_provider)
         assert_xml_equal(xml_post, etree_to_str(xml))
 
 
@@ -107,9 +112,10 @@ class SetNvpairInNvsetTest(TestCase):
         etree.SubElement(
             self.nvset, "notnvpair", id="nvset-test", name="test", value="0"
         )
+        self.id_provider = IdProvider(self.nvset)
 
     def test_update(self):
-        nvpair.set_nvpair_in_nvset(self.nvset, "attr", "10")
+        nvpair.set_nvpair_in_nvset(self.nvset, "attr", "10", self.id_provider)
         assert_xml_equal(
             """
             <nvset id="nvset">
@@ -122,7 +128,7 @@ class SetNvpairInNvsetTest(TestCase):
         )
 
     def test_add(self):
-        nvpair.set_nvpair_in_nvset(self.nvset, "test", "0")
+        nvpair.set_nvpair_in_nvset(self.nvset, "test", "0", self.id_provider)
         assert_xml_equal(
             """
             <nvset id="nvset">
@@ -136,7 +142,7 @@ class SetNvpairInNvsetTest(TestCase):
         )
 
     def test_remove(self):
-        nvpair.set_nvpair_in_nvset(self.nvset, "attr2", "")
+        nvpair.set_nvpair_in_nvset(self.nvset, "attr2", "", self.id_provider)
         assert_xml_equal(
             """
             <nvset id="nvset">
@@ -148,7 +154,7 @@ class SetNvpairInNvsetTest(TestCase):
         )
 
     def test_remove_not_existing(self):
-        nvpair.set_nvpair_in_nvset(self.nvset, "attr3", "")
+        nvpair.set_nvpair_in_nvset(self.nvset, "attr3", "", self.id_provider)
         assert_xml_equal(
             """
             <nvset id="nvset">
@@ -163,10 +169,16 @@ class SetNvpairInNvsetTest(TestCase):
 class AppendNewNvsetTest(TestCase):
     def test_append_new_nvset_to_given_element(self):
         context_element = etree.fromstring('<context id="a"/>')
-        nvpair.append_new_nvset("instance_attributes", context_element, {
-            "a": "b",
-            "c": "d",
-        })
+        id_provider = IdProvider(context_element)
+        nvpair.append_new_nvset(
+            "instance_attributes",
+            context_element,
+            {
+                "a": "b",
+                "c": "d",
+            },
+            id_provider
+        )
         assert_xml_equal(
             """
                 <context id="a">
@@ -183,7 +195,7 @@ class AppendNewNvsetTest(TestCase):
             etree_to_str(context_element)
         )
 
-    def test_with_id_provider(self):
+    def test_with_id_provider_booked_ids(self):
         context_element = etree.fromstring('<context id="a"/>')
         provider = IdProvider(context_element)
         provider.book_ids("a-instance_attributes", "a-instance_attributes-1-a")
@@ -226,9 +238,10 @@ class ArrangeFirstNvsetTest(TestCase):
         etree.SubElement(
             self.nvset, "notnvpair", id="nvset-test", name="test", value="0"
         )
+        self.id_provider = IdProvider(self.nvset)
 
     def test_empty_value_has_no_effect(self):
-        nvpair.arrange_first_nvset("nvset", self.root, {})
+        nvpair.arrange_first_nvset("nvset", self.root, {}, self.id_provider)
         assert_xml_equal(
             """
                 <nvset id="nvset">
@@ -241,12 +254,17 @@ class ArrangeFirstNvsetTest(TestCase):
         )
 
     def test_update_existing_nvset(self):
-        nvpair.arrange_first_nvset("nvset", self.root, {
-            "attr": "10",
-            "new_one": "20",
-            "test": "0",
-            "attr2": ""
-        })
+        nvpair.arrange_first_nvset(
+            "nvset",
+            self.root,
+            {
+                "attr": "10",
+                "new_one": "20",
+                "test": "0",
+                "attr2": ""
+            },
+            self.id_provider
+        )
         assert_xml_equal(
             """
                 <nvset id="nvset">
@@ -261,12 +279,17 @@ class ArrangeFirstNvsetTest(TestCase):
 
     def test_create_new_nvset_if_does_not_exist(self):
         root = etree.Element("root", id="root")
-        nvpair.arrange_first_nvset("nvset", root, {
-            "attr": "10",
-            "new_one": "20",
-            "test": "0",
-            "attr2": ""
-        })
+        nvpair.arrange_first_nvset(
+            "nvset",
+            root,
+            {
+                "attr": "10",
+                "new_one": "20",
+                "test": "0",
+                "attr2": ""
+            },
+            self.id_provider
+        )
 
         assert_xml_equal(
             """

@@ -264,7 +264,7 @@ def validate_different_intervals(operation_list):
         )]
     return []
 
-def create_id(context_element, name, interval):
+def create_id(context_element, id_provider, name, interval):
     """
     Create id for op element.
     etree context_element is used for the name building
@@ -273,23 +273,28 @@ def create_id(context_element, name, interval):
     """
     return create_subelement_id(
         context_element,
-        "{0}-interval-{1}".format(name, interval)
+        "{0}-interval-{1}".format(name, interval),
+        id_provider
     )
 
-def create_operations(primitive_element, operation_list):
+def create_operations(primitive_element, id_provider, operation_list):
     """
     Create operation element containing operations from operation_list
+
     list operation_list contains dictionaries with attributes of operation
+    IdProvider id_provider -- elements' ids generator
     etree primitive_element is context element
     """
     operations_element = etree.SubElement(primitive_element, "operations")
     for operation in sorted(operation_list, key=lambda op: op["name"]):
-        append_new_operation(operations_element, operation)
+        append_new_operation(operations_element, id_provider, operation)
 
-def append_new_operation(operations_element, options):
+def append_new_operation(operations_element, id_provider, options):
     """
     Create op element and apend it to operations_element.
+
     etree operations_element is the context element
+    IdProvider id_provider -- elements' ids generator
     dict options are attributes of operation
     """
     attribute_map = dict(
@@ -303,6 +308,7 @@ def append_new_operation(operations_element, options):
         attribute_map.update({
             "id": create_id(
                 operations_element.getparent(),
+                id_provider,
                 options["name"],
                 options["interval"]
             )
@@ -318,7 +324,9 @@ def append_new_operation(operations_element, options):
     )
 
     if nvpair_attribute_map:
-        append_new_instance_attributes(op_element, nvpair_attribute_map)
+        append_new_instance_attributes(
+            op_element, nvpair_attribute_map, id_provider
+        )
 
     return op_element
 
