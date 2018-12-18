@@ -62,10 +62,10 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
             Systhem health agent that measures the CPU idling and updates the #health-cpu attribute.
 
             Resource options:
-              state: Location to store the resource state in.
-              yellow_limit: Lower (!) limit of idle percentage to switch the health
-                            attribute to yellow. I.e. the #health-cpu will go yellow if the
-                            %idle of the CPU falls below 50%.
+              state (unique): Location to store the resource state in.
+              yellow_limit (unique): Lower (!) limit of idle percentage to switch the health
+                                     attribute to yellow. I.e. the #health-cpu will go
+                                     yellow if the %idle of the CPU falls below 50%.
               red_limit: Lower (!) limit of idle percentage to switch the health attribute
                          to red. I.e. the #health-cpu will go red if the %idle of the CPU
                          falls below 10%.
@@ -154,23 +154,23 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.92 op monitor interval=30s"
         )
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.93 op monitor interval=30s"
         )
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP4 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.94 op monitor interval=30s"
         )
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s"
         )
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP6 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.96 op monitor interval=30s"
         )
         self.assert_pcs_success("resource group add TestGroup1 ClusterIP")
         self.assert_pcs_success(
@@ -1625,7 +1625,7 @@ Ticket Constraints:
 
             Resources:
              Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Attributes: cidr_netmask=32 ip=192.168.0.96
               Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
              Group: TestGroup1
               Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
@@ -1633,18 +1633,18 @@ Ticket Constraints:
                Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
              Group: TestGroup2
               Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.92
                Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
               Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.93
                Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
              Clone: ClusterIP4-clone
               Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.94
                Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
              Master: Master
               Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.95
                Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
 
             Stonith Devices:
@@ -1797,7 +1797,7 @@ Ticket Constraints:
 
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s"
         )
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
@@ -1817,7 +1817,7 @@ Ticket Constraints:
 
             Resources:
              Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Attributes: cidr_netmask=32 ip=192.168.0.96
               Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
              Group: TestGroup1
               Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
@@ -1825,17 +1825,17 @@ Ticket Constraints:
                Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
              Group: TestGroup2
               Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.92
                Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
               Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.93
                Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
              Clone: ClusterIP4-clone
               Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Attributes: cidr_netmask=32 ip=192.168.0.94
                Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
              Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Attributes: cidr_netmask=32 ip=192.168.0.95
               Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
 
             Stonith Devices:
@@ -5393,6 +5393,124 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             "resource meta R remote-node= --force",
             "Warning: this command is not sufficient for removing a guest node,"
             " use 'pcs cluster node remove-guest'\n"
+        )
+
+    def test_unique_err(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1"
+        )
+        self.assert_pcs_success("resource create R2 ocf:pacemaker:Dummy")
+        self.assert_pcs_fail(
+            "resource update R2 state=1",
+            "Error: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "use --force to override\n"
+        )
+
+    def test_unique_setting_same_value(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops"
+        )
+        self.assert_pcs_success(
+            "resource create R2 ocf:pacemaker:Dummy --no-default-ops"
+        )
+        self.assert_pcs_success(
+            "resource update R2 state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1'\n"
+        )
+        res_config = outdent(
+            """\
+             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R1-monitor-interval-10)
+             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R2-monitor-interval-10)
+            """
+        )
+        self.assert_pcs_success("resource show --full", res_config)
+        # make sure that it doesn't check against resource itself
+        self.assert_pcs_success(
+            "resource update R2 state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1'\n"
+        )
+        self.assert_pcs_success("resource show --full", res_config)
+        res_config = outdent(
+            """\
+             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R1-monitor-interval-10)
+             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=2
+              Operations: monitor interval=10 timeout=20 (R2-monitor-interval-10)
+            """
+        )
+        self.assert_pcs_success("resource update R2 state=2")
+        self.assert_pcs_success("resource show --full", res_config)
+        self.assert_pcs_success("resource update R2 state=2")
+        self.assert_pcs_success("resource show --full", res_config)
+
+    def test_unique_warn(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops"
+        )
+        self.assert_pcs_success(
+            "resource create R2 ocf:pacemaker:Dummy --no-default-ops"
+        )
+        self.assert_pcs_success(
+            "resource create R3 ocf:pacemaker:Dummy --no-default-ops"
+        )
+        self.assert_pcs_success(
+            "resource update R2 state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1'\n"
+        )
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+            """\
+             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R1-monitor-interval-10)
+             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R2-monitor-interval-10)
+             Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+              Operations: monitor interval=10 timeout=20 (R3-monitor-interval-10)
+            """
+            )
+        )
+        self.assert_pcs_success(
+            "resource update R3 state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "'R2'\n"
+        )
+        self.assert_pcs_success(
+            "resource show --full",
+            outdent(
+            """\
+             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R1-monitor-interval-10)
+             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R2-monitor-interval-10)
+             Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: state=1
+              Operations: monitor interval=10 timeout=20 (R3-monitor-interval-10)
+            """
+            )
         )
 
 class FailcountShow(TestCase):

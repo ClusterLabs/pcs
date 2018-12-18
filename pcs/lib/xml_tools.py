@@ -24,7 +24,9 @@ def find_parent(element, tag_names):
             return candidate
         candidate = candidate.getparent()
 
-def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
+def get_sub_element(
+    element, sub_element_tag, new_id=None, new_index=None, insert=True
+):
     """
     Returns the FIRST sub-element sub_element_tag of element. It will create new
     element if such doesn't exist yet.
@@ -33,16 +35,19 @@ def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
     sub_element_tag -- tag of the wanted new element
     new_id -- id of the new element, None means no id will be set
     new_index -- where the new element will be added, None means at the end
+    insert bool -- if True and sub-element doesn't exist, newly created
+        sub-element will be placed into element
     """
     sub_element = element.find("./{0}".format(sub_element_tag))
     if sub_element is None:
         sub_element = etree.Element(sub_element_tag)
         if new_id:
             sub_element.set("id", new_id)
-        if new_index is None:
-            element.append(sub_element)
-        else:
-            element.insert(new_index, sub_element)
+        if insert:
+            if new_index is None:
+                element.append(sub_element)
+            else:
+                element.insert(new_index, sub_element)
     return sub_element
 
 def export_attributes(element):

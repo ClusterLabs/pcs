@@ -6,10 +6,12 @@ from __future__ import (
 
 from lxml import etree
 
+from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
     append_new_meta_attributes,
+    get_value,
 )
 from pcs.lib.cib.resource.operations import(
     prepare as prepare_operations,
@@ -24,6 +26,26 @@ TAG = "primitive"
 
 def is_primitive(resource_el):
     return resource_el.tag == TAG
+
+
+def find_primitives_by_agent(resources_section, resource_agent_obj):
+    """
+    Returns list of primitive resource elements which are using same resource
+    agent as specified by resource_agent_obj.
+
+    resources_section etree.Element -- element <resources/> from CIB
+    resource_agent_obj pcs.lib.resource_agent.CrmAgent -- agent of which
+        resources should be returned
+    """
+    provider = resource_agent_obj.get_provider()
+    return resources_section.xpath(
+        ".//primitive[@class='{_class}' and @type='{_type}'{_provider}]".format(
+            _class=resource_agent_obj.get_standard(),
+            _type=resource_agent_obj.get_type(),
+            _provider=" and @provider='{}'".format(provider) if provider else "",
+        )
+    )
+
 
 def create(
     report_processor, resources_section, resource_id, resource_agent,
@@ -72,10 +94,11 @@ def create(
     )
 
     report_processor.process_list(
-        resource_agent.validate_parameters(
+        validate_resource_instance_attributes_create(
+            resource_agent,
             instance_attributes,
-            parameters_type=resource_type,
-            allow_invalid=allow_invalid_instance_attributes,
+            resources_section,
+            force=allow_invalid_instance_attributes,
         )
     )
 
@@ -133,3 +156,76 @@ def append_new(
     )
 
     return primitive_element
+
+
+def validate_unique_instance_attributes(
+    resource_agent, instance_attributes, resources_section,
+    resource_id=None, force=False
+):
+    report_list = []
+    report_creator = reports.get_problem_creator(
+        report_codes.FORCE_OPTIONS, force
+    )
+    ra_unique_attributes = [
+        param["name"]
+        for param in resource_agent.get_parameters()
+        if param["unique"]
+    ]
+    same_agent_resources = find_primitives_by_agent(
+        resources_section, resource_agent
+    )
+    for attr in ra_unique_attributes:
+        if attr not in instance_attributes:
+            continue
+        conflicting_resources = {
+            primitive.get("id")
+            for primitive in same_agent_resources
+            if (
+                primitive.get("id") != resource_id
+                and
+                instance_attributes[attr] == get_value(
+                    "instance_attributes", primitive, attr
+                )
+            )
+        }
+        if conflicting_resources:
+            report_list.append(
+                report_creator(
+                    reports.resource_instance_attr_value_not_unique,
+                    attr,
+                    instance_attributes[attr],
+                    resource_agent.get_name(),
+                    conflicting_resources,
+                )
+            )
+    return report_list
+
+
+def validate_resource_instance_attributes_create(
+    resource_agent, instance_attributes, resources_section, force=False
+):
+    return (
+        resource_agent.validate_parameters(
+            instance_attributes, allow_invalid=force, update=False,
+        )
+        +
+        validate_unique_instance_attributes(
+            resource_agent, instance_attributes, resources_section, force=force
+        )
+    )
+
+
+def validate_resource_instance_attributes_update(
+    resource_agent, instance_attributes, resource_id, resources_section,
+    force=False
+):
+    return (
+        resource_agent.validate_parameters(
+            instance_attributes, allow_invalid=force, update=True,
+        )
+        +
+        validate_unique_instance_attributes(
+            resource_agent, instance_attributes, resources_section,
+            resource_id=resource_id, force=force,
+        )
+    )

@@ -1271,6 +1271,71 @@ class FailOrWarn(ResourceTestLocal):
         )
 
 class FailOrWarnOp(ResourceTestLocal):
+    def test_unique_err(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1"
+        )
+        self.assert_pcs_fail(
+            "resource create R2 ocf:pacemaker:Dummy state=1",
+            "Error: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "use --force to override\n"
+        )
+
+    def test_unique_err_multiple(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1"
+        )
+        self.assert_pcs_success(
+            "resource create R2 ocf:pacemaker:Dummy state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1'\n"
+        )
+        self.assert_pcs_success(
+            "resource create R3 ocf:pacemaker:Dummy state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "'R2'\n"
+        )
+        self.assert_pcs_fail(
+            "resource create R4 ocf:pacemaker:Dummy state=1",
+            "Error: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "'R2', 'R3', use --force to override\n"
+        )
+
+    def test_unique_warn(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.assert_pcs_success(
+            "resource create R1 ocf:pacemaker:Dummy state=1"
+        )
+        self.assert_pcs_success(
+            "resource create R2 ocf:pacemaker:Dummy state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1'\n"
+        )
+        self.assert_pcs_success(
+            "resource create R3 ocf:pacemaker:Dummy state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "'R2'\n"
+        )
+        self.assert_pcs_success(
+            "resource create R4 ocf:pacemaker:Dummy state=1 --force",
+            "Warning: Value '1' of option 'state' is not unique across "
+            "'ocf:pacemaker:Dummy' resources. Following resources are "
+            "configured with the same value of the instance attribute: 'R1', "
+            "'R2', 'R3'\n"
+        )
+
     def test_fail_empty(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"

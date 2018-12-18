@@ -28,7 +28,11 @@ from pcs.cli.resource.parse_args import (
     parse_create as parse_create_args,
 )
 import pcs.lib.cib.acl as lib_acl
-from pcs.lib.cib.resource import guest_node
+from pcs.lib.cib.resource import (
+    guest_node,
+    primitive,
+)
+from pcs.lib.cib.tools import get_resources
 from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
@@ -316,7 +320,8 @@ def _format_agent_description(description, stonith=False, show_advanced=False):
                 continue
             param_title = " ".join(filter(None, [
                 param.get("name"),
-                "(required)" if param.get("required", False) else None
+                "(required)" if param.get("required", False) else None,
+                "(unique)" if param.get("unique", False) else None,
             ]))
             param_desc = param.get("longdesc", "").replace("\n", " ")
             if not param_desc:
@@ -719,7 +724,8 @@ def resource_agents(lib, argv, modifiers):
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
 def resource_update(res_id,args, deal_with_guest_change=True):
-    dom = utils.get_cib_dom()
+    cib_xml = utils.get_cib()
+    dom = utils.get_cib_dom(cib_xml=cib_xml)
 
 # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
@@ -747,14 +753,6 @@ def resource_update(res_id,args, deal_with_guest_change=True):
             )
         utils.err("Unable to find resource: %s" % res_id)
 
-    instance_attributes = resource.getElementsByTagName("instance_attributes")
-    if len(instance_attributes) == 0:
-        instance_attributes = dom.createElement("instance_attributes")
-        instance_attributes.setAttribute("id", res_id + "-instance_attributes")
-        resource.appendChild(instance_attributes)
-    else:
-        instance_attributes = instance_attributes[0]
-
     params = utils.convert_args_to_tuples(ra_values)
 
     resClass = resource.getAttribute("class")
@@ -770,10 +768,12 @@ def resource_update(res_id,args, deal_with_guest_change=True):
                     resClass, resProvider, resType
                 ).full_name
             )
-        report_list = metadata.validate_parameters(
+        report_list = primitive.validate_resource_instance_attributes_update(
+            metadata,
             dict(params),
-            allow_invalid=("--force" in utils.pcs_options),
-            update=True
+            res_id,
+            get_resources(lib_pacemaker.get_cib(cib_xml)),
+            force="--force" in utils.pcs_options,
         )
         if report_list:
             utils.process_library_reports(report_list)
@@ -788,7 +788,15 @@ def resource_update(res_id,args, deal_with_guest_change=True):
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-    for (key,val) in params:
+    instance_attributes = resource.getElementsByTagName("instance_attributes")
+    if not instance_attributes:
+        instance_attributes = dom.createElement("instance_attributes")
+        instance_attributes.setAttribute("id", res_id + "-instance_attributes")
+        resource.appendChild(instance_attributes)
+    else:
+        instance_attributes = instance_attributes[0]
+
+    for key, val in params:
         ia_found = False
         for ia in instance_attributes.getElementsByTagName("nvpair"):
             if ia.getAttribute("name") == key:

@@ -31,6 +31,7 @@ class CibShortcuts(object):
         before=None,
         returncode=0,
         stderr=None,
+        instead=None,
         **modifier_shortcuts
     ):
         """
@@ -41,6 +42,10 @@ class CibShortcuts(object):
             returns new etree.Element with desired modification.
         string filename -- points to file with cib in the content
         string before -- key of call before which this new call is to be placed
+        int returncode
+        string stderr
+        string instead -- key of call instead of which this new call is to be
+            placed
         dict modifier_shortcuts -- a new modifier is generated from each
             modifier shortcut.
             As key there can be keys of MODIFIER_GENERATORS.
@@ -72,7 +77,7 @@ class CibShortcuts(object):
             )
             call = RunnerCall(command, stdout=cib)
 
-        self.__calls.place(name, call, before=before)
+        self.__calls.place(name, call, before=before, instead=instead)
 
     def load_content(
         self,

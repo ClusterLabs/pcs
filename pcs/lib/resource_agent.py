@@ -429,6 +429,8 @@ class Agent(object):
             type: data type od parameter,
             default: default value,
             required: True if is required parameter, False otherwise
+            unique: True if the parameter's value should be unique across same
+                agent resources, False otherwise
         }
         """
         params_element = self._get_metadata().find("parameters")
