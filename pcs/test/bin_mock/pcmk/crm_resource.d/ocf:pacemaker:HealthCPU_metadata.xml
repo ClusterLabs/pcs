@@ -26,7 +26,7 @@ the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
 <content type="string" default="50"/>
 </parameter>
 
-<parameter name="red_limit" unique="1">
+<parameter name="red_limit">
 <longdesc lang="en">
 Lower (!) limit of idle percentage to switch the health attribute to red. I.e.
 the #health-cpu will go red if the %idle of the CPU falls below 10%.

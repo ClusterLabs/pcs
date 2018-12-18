@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common import report_codes
@@ -371,6 +372,184 @@ class Create(TestCase):
                     "migrate_to", "migrate_from", "meta-data", "validate-all"]
             ),
         ])
+
+    def test_unique_option(self):
+        self.config.runner.cib.load(
+            instead="runner.cib.load",
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="X" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="X-instance_attributes">
+                            <nvpair
+                                id="X-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="A" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="A-instance_attributes">
+                            <nvpair
+                                id="A-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="B" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="B-instance_attributes">
+                            <nvpair
+                                id="B-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                </resources>
+            """
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.create(
+                self.env_assist.get_env(),
+                "C", "ocf:heartbeat:Dummy",
+                operation_list=[],
+                meta_attributes={},
+                instance_attributes={"state": "1"},
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                    instance_attr_name="state",
+                    instance_attr_value="1",
+                    agent_name="ocf:heartbeat:Dummy",
+                    resource_id_list={"B", "X"},
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ],
+        )
+
+    def test_unique_option_forced(self):
+        self.config.runner.cib.load(
+            instead="runner.cib.load",
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="X" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="X-instance_attributes">
+                            <nvpair
+                                id="X-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="A" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="A-instance_attributes">
+                            <nvpair
+                                id="A-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="B" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="B-instance_attributes">
+                            <nvpair
+                                id="B-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                </resources>
+            """
+        )
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="X" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="X-instance_attributes">
+                            <nvpair
+                                id="X-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="A" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="A-instance_attributes">
+                            <nvpair
+                                id="A-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="B" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="B-instance_attributes">
+                            <nvpair
+                                id="B-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                    <primitive class="ocf" id="C" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="C-instance_attributes">
+                            <nvpair
+                                id="C-instance_attributes-state"
+                                name="state"
+                                value="1"
+                            />
+                        </instance_attributes>
+                        <operations>
+                            <op id="C-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+        resource.create(
+            self.env_assist.get_env(),
+            "C", "ocf:heartbeat:Dummy",
+            operation_list=[],
+            meta_attributes={},
+            instance_attributes={"state": "1"},
+            use_default_operations=False,
+            allow_invalid_instance_attributes=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                    instance_attr_name="state",
+                    instance_attr_value="1",
+                    agent_name="ocf:heartbeat:Dummy",
+                    resource_id_list={"B", "X"},
+                )
+            ]
+        )
 
 
 class CreateWait(TestCase):

@@ -432,6 +432,8 @@ class Agent():
             deprecated: True if it is a deprecated parameter, False otherwise
             deprecated_by: list of parameters deprecating this one
             obsoletes: name of a deprecated parameter obsoleted by this one
+            unique: True if the parameter's value should be unique across same
+                agent resources, False otherwise
             pcs_deprecated_warning: pcs originated warning
         }
         """

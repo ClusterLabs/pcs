@@ -3625,3 +3625,31 @@ def fence_history_not_supported():
     return ReportItem.error(
         report_codes.FENCE_HISTORY_NOT_SUPPORTED
     )
+
+def resource_instance_attr_value_not_unique(
+    instance_attr_name, instance_attr_value, agent_name, resource_id_list,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Value of a resource instance attribute is not unique in the configuration
+    when creating/updating a resource
+
+    instance_attr_name string -- name of attr which should be unique
+    instance_attr_value string -- value which is already used by some resources
+    agent_name string -- resource agent name of resource
+    resource_id_list list of string -- resource ids which already have the
+        instance_attr_name set to instance_attr_value
+    severity string -- report item severity
+    forceable mixed
+    """
+    return ReportItem(
+        report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+        severity,
+        info=dict(
+            instance_attr_name=instance_attr_name,
+            instance_attr_value=instance_attr_value,
+            agent_name=agent_name,
+            resource_id_list=resource_id_list,
+        ),
+        forceable=forceable,
+    )

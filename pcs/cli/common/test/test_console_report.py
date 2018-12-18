@@ -3114,3 +3114,30 @@ class FenceHistoryNotSupported(NameBuildTest):
             "Fence history is not supported, please upgrade pacemaker",
             reports.fence_history_not_supported()
         )
+
+
+class ResourceInstanceAttrValueNotUnique(NameBuildTest):
+    code = codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE
+    def test_one_resource(self):
+        self.assert_message_from_report(
+            (
+                "Value 'val' of option 'attr' is not unique across 'agent' "
+                "resources. Following resources are configured with the same "
+                "value of the instance attribute: 'A'"
+            ),
+            reports.resource_instance_attr_value_not_unique(
+                "attr", "val", "agent", ["A"]
+            )
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message_from_report(
+            (
+                "Value 'val' of option 'attr' is not unique across 'agent' "
+                "resources. Following resources are configured with the same "
+                "value of the instance attribute: 'A', 'B', 'C'"
+            ),
+            reports.resource_instance_attr_value_not_unique(
+                "attr", "val", "agent", ["B", "C", "A"]
+            )
+        )

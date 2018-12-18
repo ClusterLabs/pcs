@@ -5,6 +5,8 @@
 ### Added
 - Command `pcs config checkpoint diff` for displaying differences between two
   specified checkpoints ([rhbz#1655055])
+- Support for resource instance attributes uniqueness check according to
+  resource agent metadata ([rhbz#1389140])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
@@ -18,6 +20,7 @@
 - Fixed issuses in configuring links in the 'create cluster' form in web UI
   ([rhbz#1664057])
 
+[rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953
