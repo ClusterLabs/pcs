@@ -95,10 +95,10 @@ def add_key_prefix(prefix, options):
     options = options or {}
     return {f"{prefix}{key}": value for key, value in options.items()}
 
-def options_fixture(options):
+def options_fixture(options, template=OPTION_TEMPLATE):
     options = options or {}
     return "".join([
-        OPTION_TEMPLATE.format(option=o, value=v)
+        template.format(option=o, value=v)
         for o, v in sorted(options.items())
     ])
 
@@ -107,7 +107,7 @@ def corosync_conf_fixture(
     links_numbers=None, quorum_options=None, totem_options=None,
     transport_options=None, compression_options=None, crypto_options=None,
 ):
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-locals
     if transport_type == "knet" and not crypto_options:
         crypto_options = {
             "cipher": "aes256",
@@ -115,18 +115,31 @@ def corosync_conf_fixture(
         }
     interface_list = ""
     if link_list:
+        knet_options = {
+            "link_priority",
+            "ping_interval",
+            "ping_precision",
+            "ping_timeout",
+            "pong_count",
+            "transport",
+        }
+
         link_list = [dict(link) for link in link_list]
         links_numbers = links_numbers if links_numbers else list(
             range(constants.LINKS_KNET_MAX)
         )
         for i, link in enumerate(link_list):
             link["linknumber"] = links_numbers[i]
+            link_translated = {}
+            for name, value in link.items():
+                if name in knet_options:
+                    name = f"knet_{name}"
+                link_translated[name] = value
+            link_list[i] = link_translated
+
         interface_list = "".join([
             INTERFACE_TEMPLATE.format(
-                option_list="".join([
-                    INTERFACE_OPTION_TEMPLATE.format(option=o, value=v)
-                    for o, v in sorted(link.items())
-                ])
+                option_list=options_fixture(link, INTERFACE_OPTION_TEMPLATE)
             ) for link in sorted(
                 link_list, key=lambda item: item["linknumber"]
             )

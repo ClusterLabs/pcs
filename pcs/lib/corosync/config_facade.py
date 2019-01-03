@@ -280,6 +280,14 @@ class ConfigFacade:
 
         dict options -- link options
         """
+        options_translate = {
+            "link_priority": "knet_link_priority",
+            "ping_interval": "knet_ping_interval",
+            "ping_precision": "knet_ping_precision",
+            "ping_timeout": "knet_ping_timeout",
+            "pong_count": "knet_pong_count",
+            "transport": "knet_transport",
+        }
         totem_section = self.__ensure_section(self.config, "totem")[-1]
         new_link_section = config_parser.Section("interface")
         options_to_set = {}
@@ -288,9 +296,10 @@ class ConfigFacade:
                 # If broadcast == 1, transform it to broadcast == yes. Else do
                 # not put the option to the config at all.
                 if value in ("1", 1):
-                    options_to_set[name] = "yes"
-                continue
-            options_to_set[name] = value
+                    value = "yes"
+                else:
+                    continue
+            options_to_set[options_translate.get(name, name)] = value
         self.__set_section_options([new_link_section], options_to_set)
         totem_section.add_section(new_link_section)
         self.__remove_empty_sections(self.config)
