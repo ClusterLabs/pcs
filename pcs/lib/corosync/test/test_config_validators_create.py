@@ -825,7 +825,7 @@ class CreateLinkListKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="ipv5",
                     option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6")
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1145,7 +1145,7 @@ class CreateTransportUdp(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="ipv5",
                     option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6")
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1252,7 +1252,7 @@ class CreateTransportKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="ipv5",
                     option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6")
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,

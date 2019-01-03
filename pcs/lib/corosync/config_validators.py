@@ -476,7 +476,7 @@ def create_link_list_knet(link_list, max_link_number):
         "transport",
     ]
     validators = [
-        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
         validate.value_integer_in_range("linknumber", 0, max_link_number),
         validate.value_integer_in_range("link_priority", 0, 255),
         validate.value_port_number("mcastport"),
@@ -541,7 +541,7 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
         "netmtu",
     ]
     validators = [
-        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
         validate.value_positive_integer("netmtu"),
     ]
     report_items = (
@@ -594,7 +594,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         "link_mode",
     ]
     generic_validators = [
-        validate.value_in("ip_version", ("ipv4", "ipv6")),
+        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
         validate.value_nonnegative_integer("knet_pmtud_interval"),
         validate.value_in("link_mode", ("active", "passive", "rr")),
     ]

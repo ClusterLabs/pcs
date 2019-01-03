@@ -16,6 +16,8 @@ NODE_OPTIONS = (
     [f"ring{i}_addr" for i in range(LINKS_MAX)]
 )
 
+IP_VERSION_VALUES = ("ipv4", "ipv6", "ipv4-6", "ipv6-4")
+
 QUORUM_OPTIONS = (
     "auto_tie_breaker",
     "last_man_standing",

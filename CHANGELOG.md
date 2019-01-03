@@ -25,6 +25,8 @@
   nvsets and similar elements from CIB. Such behavior was causing problems when
   pacemaker ACLs were in effect, leading to inability of pushing modified CIBs
   to pacemaker. ([rhbz#1659144])
+- `ipv4-6` and `ipv6-4` are now valid values of `ip_version` in cluster setup
+  ([rhbz#1667040])
 
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
@@ -34,6 +36,7 @@
 [rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
+[rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
 
 
 ## [0.10.1] - 2018-11-23
