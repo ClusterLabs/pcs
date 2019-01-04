@@ -721,6 +721,7 @@ clusterSetup.submit.run = function(useAdvancedOptions){
     );
 
   }).then(function(){
+    clusterSetup.dialog.resetMessages([]);
     return api.rememberCluster(formData.clusterName, formData.nodesNames);
 
   }).then(function(){

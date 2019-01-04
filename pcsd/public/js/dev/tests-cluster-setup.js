@@ -16,15 +16,16 @@ dev.utils.clusterSetupDialog.prefill = function(url, nodesNames){
     clusterSetup.submit.run(true);
 
     setTimeout(function(){
-      // dev.utils.clusterSetupDialog.prefillKnet();
+      dev.utils.clusterSetupDialog.prefillKnet();
+      dev.utils.clusterSetupDialog.prefillTransportOptionsKnet();
       dev.utils.clusterSetupDialog.prefillCompression();
       dev.utils.clusterSetupDialog.prefillCrypto();
       dev.utils.clusterSetupDialog.prefillTotem();
       dev.utils.clusterSetupDialog.prefillQuorum();
-      dev.utils.clusterSetupDialog.prefillTransportOptionsUdp("udp");
-      $("[href='#csetup-transport-options']").trigger("click");
+      // dev.utils.clusterSetupDialog.prefillTransportOptionsUdp("udp");
+      // $("[href='#csetup-transport-options']").trigger("click");
       // $("[href='#csetup-quorum']").trigger("click");
-      dev.utils.clusterSetupDialog.prefillUdp("udpu");
+      // dev.utils.clusterSetupDialog.prefillUdp("udpu");
       $(".ui-dialog:has('#csetup') button:contains('Create cluster')")
         // .trigger("click")
       ;
@@ -390,6 +391,21 @@ testClusterSetup.clusterSetupUnforcible = function(url, data, success, fail){
   }
 };
 
+testClusterSetup.clusterSetupUnforcibleFirstTime =
+function(url, data, success, fail){
+  switch(url){
+    case "/manage/cluster-setup":
+      if (dev.flags.cluster_setup_test_setup_first_time_was_run === undefined) {
+        dev.flags.cluster_setup_test_setup_first_time_was_run = true;
+        return success(
+          JSON.stringify(dev.fixture.libErrorUnforcibleLarge)
+        );
+      }
+    default:
+      return testClusterSetup.successPath(url, data, success, fail);
+  }
+};
+
 testClusterSetup.clusterSetupException = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup":
@@ -467,6 +483,7 @@ dev.runScenario(
   // testClusterSetup.clusterSetup403
   // testClusterSetup.clusterSetup500
   // testClusterSetup.clusterSetupUnforcible
+  // testClusterSetup.clusterSetupUnforcibleFirstTime
   // testClusterSetup.clusterSetupException
   // testClusterSetup.clusterSetupForceFail
   // testClusterSetup.clusterSetupForceFailForcible
