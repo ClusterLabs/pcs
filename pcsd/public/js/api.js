@@ -214,7 +214,7 @@ api.clusterSetup = function(submitData, processOptions){
     nodes: setupData.nodeList.map(function(node){
       return {
         name: node.name,
-        addrs: node.addrs,
+        addrs: node.addrs.filter(function(addr){return addr.length > 0}),
       };
     }),
     transport_type: setupData.transportType,

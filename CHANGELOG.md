@@ -15,11 +15,14 @@
 - Removed command `pcs resource show` dropped from usage and man page
   ([rhbz#1656953])
 - Put proper link options' names to corosync.conf ([rhbz#1659051])
+- Fixed issuses in configuring links in the 'create cluster' form in web UI
+  ([rhbz#1664057])
 
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953
 [rhbz#1659051]: https://bugzilla.redhat.com/show_bug.cgi?id=1659051
+[rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 
 
 ## [0.10.1] - 2018-11-23

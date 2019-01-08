@@ -50,12 +50,7 @@ clusterSetup.link.detail.create = function(transportType, nodesNames){
   var addrList = detail.find(".transport-addresses");
 
   $(nodesNames).each(function(j, nodeName){
-    var address = tools.snippet.take("transport-addr").find("tr");
-    $(".node-name", address).text(nodeName+":");
-    $(".address", address)
-      .attr("name", clusterSetup.link.detail.addressName(nodeName))
-    ;
-    $(addrList).append(address);
+    $(addrList).append(clusterSetup.link.detail.createAddress(nodeName));
   });
 
   detail.find(".options").append(
@@ -65,6 +60,34 @@ clusterSetup.link.detail.create = function(transportType, nodesNames){
   );
 
   return detail;
+};
+
+clusterSetup.link.detail.createAddress = function(nodeName){
+  var address = tools.snippet.take("transport-addr").find("tr");
+  address.attr("data-transport-addr-host", nodeName)
+  $(".node-name", address).text(nodeName+":");
+  $(".address", address)
+    .attr("name", clusterSetup.link.detail.addressName(nodeName))
+  ;
+  return address;
+};
+
+clusterSetup.link.detail.refreshNodesNames = function(linkDetail, nodesNames){
+  // Is fast enough. No cache required.
+  var previousNodesNames = $.makeArray(
+    linkDetail
+      .find(".transport-addresses [data-transport-addr-host]")
+      .map(function(){return $(this).attr("data-transport-addr-host")})
+  );
+
+  var newAddresses = nodesNames.map(function(nodeName){
+    return previousNodesNames.contains(nodeName)
+      ? linkDetail.find("[data-transport-addr-host="+nodeName+"]")
+      : clusterSetup.link.detail.createAddress(nodeName)
+    ;
+  });
+
+  linkDetail.find(".transport-addresses").empty().append(newAddresses);
 };
 
 //------------------------------------------------------------------------------
@@ -108,8 +131,14 @@ clusterSetup.netmap.current.get = function(){
   return $(clusterSetup.netmap.current.selector());
 };
 
-clusterSetup.netmap.current.detailList = function(){
+clusterSetup.netmap.current.detailsContainer = function(){
   return $(clusterSetup.netmap.current.selector() +" .link-detail-list");
+};
+
+clusterSetup.netmap.current.detailList = function(){
+  return $(
+    clusterSetup.netmap.current.selector() +" .link-detail-list .detail"
+  );
 };
 
 clusterSetup.netmap.current.linksContainer = function(){
@@ -143,7 +172,7 @@ clusterSetup.netmap.current.createLink = function(id, nodesNames){
       .attr(clusterSetup.link.pairAttr, id)
   );
 
-  clusterSetup.netmap.current.detailList().append(
+  clusterSetup.netmap.current.detailsContainer().append(
     clusterSetup.link.detail
       .create(clusterSetup.transportType.current(), nodesNames)
       .attr(clusterSetup.link.pairAttr, id)
@@ -171,8 +200,8 @@ clusterSetup.netmap.current.setCurrentLink = function(id){
   linkList.children().each(function(){ $(this).removeClass("current") });
   linkList.children(pairSelector).addClass("current");
 
-  clusterSetup.netmap.current.detailList().find(".detail").hide();
-  clusterSetup.netmap.current.detailList().find(pairSelector).show()
+  clusterSetup.netmap.current.detailList().hide();
+  clusterSetup.netmap.current.detailsContainer().find(pairSelector).show()
   ;
 };
 
@@ -320,7 +349,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
     {
       clusterName: clusterName,
       nodeList: clusterSetup.data.nodes(nodesNames, function(nodeName){
-        return clusterSetup.netmap.current.detailList()
+        return clusterSetup.netmap.current.detailsContainer()
           .find("[name='"+clusterSetup.link.detail.addressName(nodeName)+"']")
           .map(function(){ return $(this).val().trim() })
           .toArray()
@@ -371,7 +400,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
     clusterSetup.transportType.current() === "knet"
 
     ? {
-      linkList: clusterSetup.netmap.current.detailList().find(".detail")
+      linkList: clusterSetup.netmap.current.detailList()
         .map(function(linknumber, form){
           return $.extend({linknumber: linknumber}, fromForm(form, [
             "ip_version",
@@ -414,7 +443,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
       ),
       compression: {},
       crypto: {},
-      linkList: clusterSetup.netmap.current.detailList().find(".detail")
+      linkList: clusterSetup.netmap.current.detailList()
         .map(function(linknumber, form){
           return fromForm(
             form,
@@ -480,6 +509,10 @@ clusterSetup.step.clusterSettings = function(clusterName, nodesNames, actions){
   });
 
   $("#csetup .cluster-settings").tabs();
+
+  clusterSetup.netmap.current.detailList().each(function(){
+    clusterSetup.link.detail.refreshNodesNames($(this), nodesNames);
+  });
 
   $("#csetup-transport-netmaps .add-link").unbind("click").click(function(){
     clusterSetup.netmap.current.createLink(
@@ -688,6 +721,7 @@ clusterSetup.submit.run = function(useAdvancedOptions){
     );
 
   }).then(function(){
+    clusterSetup.dialog.resetMessages([]);
     return api.rememberCluster(formData.clusterName, formData.nodesNames);
 
   }).then(function(){
