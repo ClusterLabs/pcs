@@ -217,6 +217,7 @@ def create(
             resource.common.are_meta_disabled(meta_attributes)
         )
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
             resource_agent,
@@ -228,7 +229,7 @@ def create(
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section,
+            env.report_processor, resources_section, id_provider,
             resource_id, resource_agent,
             operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
@@ -236,7 +237,7 @@ def create(
             use_default_operations,
         )
         if ensure_disabled:
-            resource.common.disable(primitive_element)
+            resource.common.disable(primitive_element, id_provider)
 
 def create_as_clone(
     env, resource_id, resource_agent_name,
@@ -293,6 +294,7 @@ def create_as_clone(
             resource.common.is_clone_deactivated_by_meta(clone_meta_options)
         )
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
             resource_agent,
@@ -304,7 +306,7 @@ def create_as_clone(
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section,
+            env.report_processor, resources_section, id_provider,
             resource_id, resource_agent,
             operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
@@ -313,11 +315,12 @@ def create_as_clone(
         )
         clone_element = resource.clone.append_new(
             resources_section,
+            id_provider,
             primitive_element,
             clone_meta_options,
         )
         if ensure_disabled:
-            resource.common.disable(clone_element)
+            resource.common.disable(clone_element, id_provider)
 
 def create_in_group(
     env, resource_id, resource_agent_name, group_id,
@@ -375,6 +378,7 @@ def create_in_group(
             resource.common.are_meta_disabled(meta_attributes)
         )
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
             resource_agent,
@@ -386,7 +390,7 @@ def create_in_group(
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section,
+            env.report_processor, resources_section, id_provider,
             resource_id, resource_agent,
             operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
@@ -394,7 +398,7 @@ def create_in_group(
             use_default_operations,
         )
         if ensure_disabled:
-            resource.common.disable(primitive_element)
+            resource.common.disable(primitive_element, id_provider)
         validate_id(group_id, "group name")
         resource.group.place_resource(
             resource.group.provide_group(resources_section, group_id),
@@ -461,6 +465,7 @@ def create_into_bundle(
         ),
         required_cib_version=Version(2, 8, 0)
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
             resource_agent,
@@ -472,7 +477,7 @@ def create_into_bundle(
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section,
+            env.report_processor, resources_section, id_provider,
             resource_id, resource_agent,
             operation_list, meta_attributes, instance_attributes,
             allow_invalid_operation,
@@ -480,7 +485,7 @@ def create_into_bundle(
             use_default_operations,
         )
         if ensure_disabled:
-            resource.common.disable(primitive_element)
+            resource.common.disable(primitive_element, id_provider)
 
         bundle_el = find_element_by_tag_and_id(
             resource.bundle.TAG,
@@ -575,7 +580,7 @@ def bundle_create(
             meta_attributes
         )
         if ensure_disabled:
-            resource.common.disable(bundle_element)
+            resource.common.disable(bundle_element, id_provider)
 
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,
@@ -661,6 +666,7 @@ def disable(env, resource_ids, wait):
     with resource_environment(
         env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids
@@ -669,6 +675,7 @@ def disable(env, resource_ids, wait):
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.disable,
+                id_provider,
                 env.get_cluster_state()
             )
         )
@@ -683,6 +690,7 @@ def enable(env, resource_ids, wait):
     with resource_environment(
         env, wait, resource_ids, _ensure_disabled_after_wait(False)
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
@@ -692,18 +700,21 @@ def enable(env, resource_ids, wait):
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.enable,
+                id_provider,
                 env.get_cluster_state()
             )
         )
 
-def _resource_list_enable_disable(resource_el_list, func, cluster_state):
+def _resource_list_enable_disable(
+    resource_el_list, func, id_provider, cluster_state
+):
     report_list = []
     for resource_el in resource_el_list:
         res_id = resource_el.attrib["id"]
         try:
             if not is_resource_managed(cluster_state, res_id):
                 report_list.append(reports.resource_is_unmanaged(res_id))
-            func(resource_el)
+            func(resource_el, id_provider)
         except ResourceNotFound:
             report_list.append(
                 reports.id_not_found(
@@ -721,6 +732,7 @@ def unmanage(env, resource_ids, with_monitor=False):
     bool with_monitor -- disable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
+        id_provider = IdProvider(resources_section)
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
@@ -729,7 +741,7 @@ def unmanage(env, resource_ids, with_monitor=False):
         primitives = []
 
         for resource_el in resource_el_list:
-            resource.common.unmanage(resource_el)
+            resource.common.unmanage(resource_el, id_provider)
             if with_monitor:
                 primitives.extend(
                     resource.common.find_primitives(resource_el)
@@ -750,6 +762,7 @@ def manage(env, resource_ids, with_monitor=False):
     bool with_monitor -- enable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
+        id_provider = IdProvider(resources_section)
         report_list = []
         resource_el_list = _find_resources_or_raise(
             resources_section,
@@ -759,7 +772,7 @@ def manage(env, resource_ids, with_monitor=False):
         primitives = []
 
         for resource_el in resource_el_list:
-            resource.common.manage(resource_el)
+            resource.common.manage(resource_el, id_provider)
             primitives.extend(
                 resource.common.find_primitives(resource_el)
             )

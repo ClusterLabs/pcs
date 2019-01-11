@@ -1,6 +1,11 @@
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import alert
+from pcs.lib.cib.nvpair import (
+    arrange_first_instance_attributes,
+    arrange_first_meta_attributes,
+)
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import LibraryError
 
 
@@ -29,15 +34,15 @@ def create_alert(
     if not path:
         raise LibraryError(reports.required_option_is_missing(["path"]))
 
-
-    alert_el = alert.create_alert(
-        lib_env.get_cib(REQUIRED_CIB_VERSION),
-        alert_id,
-        path,
-        description
+    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    id_provider = IdProvider(cib)
+    alert_el = alert.create_alert(cib, alert_id, path, description)
+    arrange_first_instance_attributes(
+        alert_el, instance_attribute_dict, id_provider
     )
-    alert.update_instance_attributes(alert_el, instance_attribute_dict)
-    alert.update_meta_attributes(alert_el, meta_attribute_dict)
+    arrange_first_meta_attributes(
+        alert_el, meta_attribute_dict, id_provider
+    )
 
     lib_env.push_cib()
 
@@ -62,14 +67,15 @@ def update_alert(
         deleted, if None old value will stay unchanged
     """
 
-    alert_el = alert.update_alert(
-        lib_env.get_cib(REQUIRED_CIB_VERSION),
-        alert_id,
-        path,
-        description
+    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    id_provider = IdProvider(cib)
+    alert_el = alert.update_alert(cib, alert_id, path, description)
+    arrange_first_instance_attributes(
+        alert_el, instance_attribute_dict, id_provider
     )
-    alert.update_instance_attributes(alert_el, instance_attribute_dict)
-    alert.update_meta_attributes(alert_el, meta_attribute_dict)
+    arrange_first_meta_attributes(
+        alert_el, meta_attribute_dict, id_provider
+    )
 
     lib_env.push_cib()
 
@@ -120,17 +126,23 @@ def add_recipient(
             reports.required_option_is_missing(["value"])
         )
 
+    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    id_provider = IdProvider(cib)
     recipient = alert.add_recipient(
         lib_env.report_processor,
-        lib_env.get_cib(REQUIRED_CIB_VERSION),
+        cib,
         alert_id,
         recipient_value,
         recipient_id=recipient_id,
         description=description,
         allow_same_value=allow_same_value
     )
-    alert.update_instance_attributes(recipient, instance_attribute_dict)
-    alert.update_meta_attributes(recipient, meta_attribute_dict)
+    arrange_first_instance_attributes(
+        recipient, instance_attribute_dict, id_provider
+    )
+    arrange_first_meta_attributes(
+        recipient, meta_attribute_dict, id_provider
+    )
 
     lib_env.push_cib()
 
@@ -161,16 +173,22 @@ def update_recipient(
         raise LibraryError(
             reports.cib_alert_recipient_invalid_value(recipient_value)
         )
+    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    id_provider = IdProvider(cib)
     recipient = alert.update_recipient(
         lib_env.report_processor,
-        lib_env.get_cib(REQUIRED_CIB_VERSION),
+        cib,
         recipient_id,
         recipient_value=recipient_value,
         description=description,
         allow_same_value=allow_same_value
     )
-    alert.update_instance_attributes(recipient, instance_attribute_dict)
-    alert.update_meta_attributes(recipient, meta_attribute_dict)
+    arrange_first_instance_attributes(
+        recipient, instance_attribute_dict, id_provider
+    )
+    arrange_first_meta_attributes(
+        recipient, meta_attribute_dict, id_provider
+    )
 
     lib_env.push_cib()
 

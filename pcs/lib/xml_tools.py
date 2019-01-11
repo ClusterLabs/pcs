@@ -19,7 +19,8 @@ def find_parent(element, tag_names):
         candidate = candidate.getparent()
 
 def get_sub_element(
-    element, sub_element_tag, new_id=None, new_index=None, insert=True
+    element, sub_element_tag, new_id=None, new_index=None,
+    append_if_missing=True
 ):
     """
     Returns the FIRST sub-element sub_element_tag of element. It will create new
@@ -29,15 +30,15 @@ def get_sub_element(
     sub_element_tag -- tag of the wanted new element
     new_id -- id of the new element, None means no id will be set
     new_index -- where the new element will be added, None means at the end
-    insert bool -- if True and sub-element doesn't exist, newly created
-        sub-element will be placed into element
+    append_if_missing -- if the searched element does not exist, append it to
+        the parent element
     """
     sub_element = element.find("./{0}".format(sub_element_tag))
     if sub_element is None:
         sub_element = etree.Element(sub_element_tag)
         if new_id:
             sub_element.set("id", new_id)
-        if insert:
+        if append_if_missing:
             if new_index is None:
                 element.append(sub_element)
             else:
@@ -94,26 +95,27 @@ def etree_to_str(tree):
     #so there is bytes to str conversion
     return etree.tostring(tree).decode()
 
-def remove_when_pointless(element, attribs_important=True):
+def is_element_useful(element, attribs_important=True):
     """
-    Remove element when is not worth to keep it.
+    Is an element worth keeping?
 
     Some elements serve as a container for sub-elements. When all sub-elements
-    are removed is time to consider if such element is still meaningfull.
+    are removed it is time to consider if such element is still meaningful.
 
-    Some of these elements can be meaningfull standalone when it contains some
-    attributes (e.g. "network" or "storage" in "bundle"). Some of these elements
-    are not meaningfull without sub-elements even if they have attributes (e.g.
-    rsc_ticket - after last sub-element 'resource_set' removal there can be
-    attributes but the element is pointless - more details at the approrpriate
-    place of use). Element is meaningfull when contain attributes (except id) by
-    default. It can be switched by parameter attribs_important.
+    Some of these elements can be meaningful standalone when they contain
+    attributes (e.g. "network" or "storage" in "bundle"). Some of these
+    elements are not meaningful without sub-elements even if they have
+    attributes (e.g. rsc_ticket - after last sub-element 'resource_set' removal
+    there can be attributes but the element is pointless - more details at the
+    approrpriate place of use). By default, an element is meaningful when it
+    contains attributes (except id) even if it has no sub-elements. This can be
+    switched by attribs_important parameter.
 
-    lxml.etree.element element -- element to remove
-    bool attribs_important -- prevents deletion when its value is True and
-        the element contains attributes
+    lxml.etree.element element -- element to analyze
+    bool attribs_important -- if True, the element is useful if it contains
+        attributes even if it has no sub-elements
     """
-    is_element_useful = len(element) or (
+    return len(element) or (
         attribs_important
         and
         element.attrib
@@ -121,5 +123,34 @@ def remove_when_pointless(element, attribs_important=True):
         element.attrib.keys() != ["id"]
     )
 
-    if not is_element_useful:
+def append_when_useful(parent, element, attribs_important=True, index=None):
+    """
+    Append an element to a parent if the element is useful (see
+        is_element_useful for details)
+
+    lxml.etree.element parent -- where to append the element
+    lxml.etree.element element -- the element to append
+    bool attribs_important -- if True, append even if the element has no
+        children if it has attributes
+    int or None index -- postion to append the element, None means at the end
+    """
+    if element.getparent() == parent:
+        return element
+    if is_element_useful(element, attribs_important):
+        if index is None:
+            parent.append(element)
+        else:
+            parent.insert(index, element)
+    return element
+
+def remove_when_pointless(element, attribs_important=True):
+    """
+    Remove an element when it is not worth keeping (see is_element_useful for
+        details).
+
+    lxml.etree.element element -- element to remove
+    bool attribs_important -- if True, do not delete the element if it contains
+        attributes
+    """
+    if not is_element_useful(element, attribs_important):
         element.getparent().remove(element)

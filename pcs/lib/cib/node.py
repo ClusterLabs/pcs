@@ -3,8 +3,9 @@ from lxml import etree
 
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import update_nvset
-from pcs.lib.cib.tools import get_nodes, find_unique_id
+from pcs.lib.cib.tools import get_nodes
 from pcs.lib.errors import LibraryError
+from pcs.lib.xml_tools import append_when_useful
 
 
 class PacemakerNode(
@@ -16,7 +17,9 @@ class PacemakerNode(
     """
 
 
-def update_node_instance_attrs(cib, node_name, attrs, state_nodes=None):
+def update_node_instance_attrs(
+    cib, id_provider, node_name, attrs, state_nodes=None
+):
     """
     Update nvpairs in instance_attributes for a node specified by its name.
 
@@ -26,29 +29,42 @@ def update_node_instance_attrs(cib, node_name, attrs, state_nodes=None):
     provided in state_nodes.
 
     etree cib -- cib
+    IdProvider id_provider -- elements' ids generator
     string node_name -- name of the node to be updated
     dict attrs -- attrs to update, e.g. {'A': 'a', 'B': ''}
     iterable state_nodes -- optional list of node state objects
     """
-    node_el = _ensure_node_exists(get_nodes(cib), node_name, state_nodes)
+    # Do not ever remove the nvset element or the node element, even if they
+    # are empty. There may be ACLs set in pacemaker which allow "write" for
+    # nvpairs (adding, changing and removing) but not nvsets. In such a case,
+    # removing the nvset would cause the whole change to be rejected by
+    # pacemaker with a "permission denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
+    if not attrs:
+        return
+
+    cib_nodes = get_nodes(cib)
+    node_el = _ensure_node_exists(cib_nodes, node_name, state_nodes)
     # If no instance_attributes id is specified, crm_attribute modifies the
     # first one found. So we just mimic this behavior here.
     attrs_el = node_el.find("./instance_attributes")
     if attrs_el is None:
-        attrs_el = etree.SubElement(
-            node_el,
+        attrs_el = etree.Element(
             "instance_attributes",
-            id=find_unique_id(cib, "nodes-{0}".format(node_el.get("id")))
+            id=id_provider.allocate_id("nodes-{0}".format(node_el.get("id"))),
         )
-    update_nvset(attrs_el, attrs)
+    update_nvset(attrs_el, attrs, id_provider)
+    append_when_useful(node_el, attrs_el)
+    append_when_useful(cib_nodes, node_el)
 
 def _ensure_node_exists(tree, node_name, state_nodes=None):
     """
-    Make sure node with specified name exists in the tree.
+    Make sure node with specified name exists
 
     If the node doesn't exist, raise LibraryError. If state_nodes is provided
-    and contains state of a node with the specified name, create the node in
-    the tree. Return existing or created node element.
+    and contains state of a node with the specified name, create the node.
+    Return existing or created node element.
 
     etree tree -- node parent element
     string name -- node name
@@ -59,7 +75,6 @@ def _ensure_node_exists(tree, node_name, state_nodes=None):
         for node_state in state_nodes:
             if node_state.attrs.name == node_name:
                 node_el = _create_node(
-                    tree,
                     node_state.attrs.id,
                     node_state.attrs.name,
                     node_state.attrs.type
@@ -78,16 +93,15 @@ def _get_node_by_uname(tree, uname):
     """
     return tree.find("./node[@uname='{0}']".format(uname))
 
-def _create_node(tree, node_id, uname, node_type=None):
+def _create_node(node_id, uname, node_type=None):
     """
-    Create new node element as a direct child of the tree element
+    Create new node element
 
-    etree tree -- node parent element
     string node_id -- node id
     string uname -- node name
     string node_type -- optional node type (member, ping, remote)
     """
-    node = etree.SubElement(tree, "node", id=node_id, uname=uname)
+    node = etree.Element("node", id=node_id, uname=uname)
     if node_type:
         node.set("type", node_type)
     return node

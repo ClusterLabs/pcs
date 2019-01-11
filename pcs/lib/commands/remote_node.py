@@ -4,7 +4,11 @@ from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
-from pcs.lib.cib.tools import get_resources, find_element_by_tag_and_id
+from pcs.lib.cib.tools import (
+    IdProvider,
+    find_element_by_tag_and_id,
+    get_resources,
+)
 from pcs.lib.communication.nodes import (
     DistributeFiles,
     GetHostInfo,
@@ -209,6 +213,7 @@ def node_add_remote(
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
     cib = env.get_cib()
+    id_provider = IdProvider(cib)
     if env.is_cib_live:
         corosync_conf = env.get_corosync_conf()
     else:
@@ -263,6 +268,7 @@ def node_add_remote(
             env.report_processor,
             resource_agent,
             get_resources(cib),
+            id_provider,
             node_addr,
             node_name,
             operations,
@@ -347,6 +353,7 @@ def node_add_guest(
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
     cib = env.get_cib()
+    id_provider = IdProvider(cib)
     if env.is_cib_live:
         corosync_conf = env.get_corosync_conf()
     else:
@@ -408,6 +415,7 @@ def node_add_guest(
     # everything validated, let's set it up
     guest_node.set_as_guest(
         resource_element,
+        id_provider,
         node_name,
         options.get("remote-addr", None),
         options.get("remote-port", None),

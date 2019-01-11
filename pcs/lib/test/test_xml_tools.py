@@ -3,6 +3,7 @@ from lxml import etree
 
 from pcs.lib import xml_tools as lib
 from pcs.test.tools.assertions import assert_xml_equal
+from pcs.test.tools.xml import etree_to_str
 
 class GetSubElementTest(TestCase):
     def setUp(self):
@@ -17,9 +18,9 @@ class GetSubElementTest(TestCase):
     def test_new_no_id(self):
         assert_xml_equal(
             '<new_element/>',
-            etree.tostring(
+            etree_to_str(
                 lib.get_sub_element(self.root, "new_element")
-            ).decode()
+            )
         )
         assert_xml_equal(
             """
@@ -28,15 +29,15 @@ class GetSubElementTest(TestCase):
                 <new_element/>
             </root>
             """,
-            etree.tostring(self.root).decode()
+            etree_to_str(self.root)
         )
 
     def test_new_with_id(self):
         assert_xml_equal(
             '<new_element id="new_id"/>',
-            etree.tostring(
+            etree_to_str(
                 lib.get_sub_element(self.root, "new_element", "new_id")
-            ).decode()
+            )
         )
         assert_xml_equal(
             """
@@ -45,7 +46,7 @@ class GetSubElementTest(TestCase):
                 <new_element id="new_id"/>
             </root>
             """,
-            etree.tostring(self.root).decode()
+            etree_to_str(self.root)
         )
 
     def test_new_first(self):
@@ -57,7 +58,7 @@ class GetSubElementTest(TestCase):
                 <sub_element/>
             </root>
             """,
-            etree.tostring(self.root).decode()
+            etree_to_str(self.root)
         )
 
     def test_new_last(self):
@@ -69,12 +70,12 @@ class GetSubElementTest(TestCase):
                 <new_element id="new_id"/>
             </root>
             """,
-            etree.tostring(self.root).decode()
+            etree_to_str(self.root)
         )
 
-    def test_no_insert(self):
-        new_element = lib.get_sub_element(
-            self.root, "new_element", insert=False
+    def test_new_not_append(self):
+        subelement = lib.get_sub_element(
+            self.root, "new_element", "new_id", append_if_missing=False
         )
         assert_xml_equal(
             """
@@ -82,10 +83,12 @@ class GetSubElementTest(TestCase):
                 <sub_element/>
             </root>
             """,
-            etree.tostring(self.root).decode()
+            etree_to_str(self.root)
         )
-        assert_xml_equal("<new_element/>", etree.tostring(new_element).decode())
-
+        assert_xml_equal(
+            """<new_element id="new_id" />""",
+            etree_to_str(subelement)
+        )
 
 class UpdateAttributeRemoveEmpty(TestCase):
     def setUp(self):
@@ -98,7 +101,7 @@ class UpdateAttributeRemoveEmpty(TestCase):
         )
 
     def assert_xml_equal(self, expected):
-        assert_xml_equal(expected, etree.tostring(self.el).decode())
+        assert_xml_equal(expected, etree_to_str(self.el))
 
     def test_set_new_attr(self):
         lib.update_attribute_remove_empty(self.el, "c", "C")
@@ -211,3 +214,92 @@ class RemoveWhenPointless(TestCase):
 
     def test_remove_when_only_id(self):
         self.assert_remove("with-only-id")
+
+
+class AppendWhenUseful(TestCase):
+    def setUp(self):
+        self.tree_str = """
+            <root>
+                <parent-A>
+                    <element-A1 />
+                    <element-A2 attr="test" />
+                </parent-A>
+                <parent-B>
+                    <element-B1 attr="test"/>
+                    <element-B2 />
+                </parent-B>
+            </root>
+        """
+        self.tree = etree.fromstring(self.tree_str)
+        self.parent = self.tree.find(".//parent-A")
+
+    def test_already_appended(self):
+        element = self.tree.find(".//element-A2")
+        lib.append_when_useful(self.parent, element)
+        assert_xml_equal(
+            self.tree_str,
+            etree_to_str(self.tree)
+        )
+
+    def test_different_parent_useful(self):
+        element = self.tree.find(".//element-B1")
+        lib.append_when_useful(self.parent, element)
+        assert_xml_equal(
+            """
+                <root>
+                    <parent-A>
+                        <element-A1 />
+                        <element-A2 attr="test" />
+                        <element-B1 attr="test"/>
+                    </parent-A>
+                    <parent-B>
+                        <element-B2 />
+                    </parent-B>
+                </root>
+            """,
+            etree_to_str(self.tree)
+        )
+
+    def test_different_parent_not_useful(self):
+        element = self.tree.find(".//element-B2")
+        lib.append_when_useful(self.parent, element)
+        assert_xml_equal(
+            self.tree_str,
+            etree_to_str(self.tree)
+        )
+
+    def test_index(self):
+        element = etree.Element("new", attr="test")
+        lib.append_when_useful(self.parent, element, index=1)
+        assert_xml_equal(
+            """
+                <root>
+                    <parent-A>
+                        <element-A1 />
+                        <new attr="test" />
+                        <element-A2 attr="test" />
+                    </parent-A>
+                    <parent-B>
+                        <element-B1 attr="test"/>
+                        <element-B2 />
+                    </parent-B>
+                </root>
+            """,
+            etree_to_str(self.tree)
+        )
+
+    def test_not_useful(self):
+        element = etree.Element("new")
+        lib.append_when_useful(self.parent, element)
+        assert_xml_equal(
+            self.tree_str,
+            etree_to_str(self.tree)
+        )
+
+    def test_not_useful_with_attributes(self):
+        element = etree.Element("new", attr="test")
+        lib.append_when_useful(self.parent, element, attribs_important=False)
+        assert_xml_equal(
+            self.tree_str,
+            etree_to_str(self.tree)
+        )

@@ -2,6 +2,7 @@ from contextlib import contextmanager
 
 from pcs.lib import reports
 from pcs.lib.cib.node import update_node_instance_attrs
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import (
     get_cluster_status_xml,
@@ -134,9 +135,10 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
     with cib_runner_nodes(lib_env, wait) as (cib, runner, state_nodes):
         update_node_instance_attrs(
             cib,
+            IdProvider(cib),
             get_local_node_name(runner),
             attrs,
-            state_nodes
+            state_nodes=state_nodes
         )
 
 def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
@@ -150,9 +152,21 @@ def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
             raise LibraryError(*report)
 
         for node in node_names:
-            update_node_instance_attrs(cib, node, attrs, state_nodes)
+            update_node_instance_attrs(
+                cib,
+                IdProvider(cib),
+                node,
+                attrs,
+                state_nodes=state_nodes
+            )
 
 def _set_instance_attrs_all_nodes(lib_env, attrs, wait):
     with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         for node in [node.attrs.name for node in state_nodes]:
-            update_node_instance_attrs(cib, node, attrs, state_nodes)
+            update_node_instance_attrs(
+                cib,
+                IdProvider(cib),
+                node,
+                attrs,
+                state_nodes=state_nodes
+            )

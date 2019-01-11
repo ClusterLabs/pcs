@@ -15,9 +15,9 @@ from pcs.lib.errors import (
 )
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
+    append_when_useful,
     get_sub_element,
     update_attributes_remove_empty,
-    remove_when_pointless,
 )
 
 TAG = "bundle"
@@ -224,7 +224,7 @@ def update(
     port_map_add, port_map_remove, storage_map_add, storage_map_remove,
     meta_attributes
 ):
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-locals
     """
     Modify an existing bundle (does not touch encapsulated resources)
 
@@ -238,13 +238,24 @@ def update(
     list of string storage_map_remove -- list of storage mapping ids to remove
     dict meta_attributes -- meta attributes to update
     """
+    # Do not ever remove meta_attributes, network and storage elements, even if
+    # they are empty. There may be ACLs set in pacemaker which allow "write"
+    # for their children (adding, changing and removing) but not themselves. In
+    # such a case, removing those elements would cause the whole change to be
+    # rejected by pacemaker with a "permission denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
     bundle_id = bundle_el.get("id")
     update_attributes_remove_empty(
         _get_container_element(bundle_el),
         container_options
     )
 
-    network_element = get_sub_element(bundle_el, "network")
+    network_element = get_sub_element(
+        bundle_el,
+        "network",
+        append_if_missing=False
+    )
     if network_options:
         update_attributes_remove_empty(network_element, network_options)
     # It's crucial to remove port maps prior to appending new ones: If we are
@@ -257,30 +268,37 @@ def update(
             network_element.findall("port-mapping"),
             port_map_remove
         )
-    for port_map_options in port_map_add:
-        _append_port_map(
-            network_element, id_provider, bundle_id, port_map_options
-        )
+    if port_map_add:
+        for port_map_options in port_map_add:
+            _append_port_map(
+                network_element, id_provider, bundle_id, port_map_options
+            )
+    append_when_useful(bundle_el, network_element)
 
-    storage_element = get_sub_element(bundle_el, "storage")
+    storage_element = get_sub_element(
+        bundle_el,
+        "storage",
+        append_if_missing=False
+    )
     # See the comment above about removing port maps prior to adding new ones.
     if storage_map_remove:
         _remove_map_elements(
             storage_element.findall("storage-mapping"),
             storage_map_remove
         )
-    for storage_map_options in storage_map_add:
-        _append_storage_map(
-            storage_element, id_provider, bundle_id, storage_map_options
-        )
+    if storage_map_add:
+        for storage_map_options in storage_map_add:
+            _append_storage_map(
+                storage_element, id_provider, bundle_id, storage_map_options
+            )
+    append_when_useful(bundle_el, storage_element)
 
     if meta_attributes:
-        arrange_first_meta_attributes(bundle_el, meta_attributes)
-
-    # remove empty elements with no attributes
-    # meta attributes are handled in their own function
-    remove_when_pointless(network_element)
-    remove_when_pointless(storage_element)
+        arrange_first_meta_attributes(
+            bundle_el,
+            meta_attributes,
+            id_provider
+        )
 
 def is_pcmk_remote_accessible(bundle_element):
     """

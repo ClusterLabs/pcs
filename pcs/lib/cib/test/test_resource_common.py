@@ -2,6 +2,7 @@ from unittest import TestCase
 from lxml import etree
 
 from pcs.lib.cib.resource import common
+from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.xml import etree_to_str
 
@@ -207,7 +208,7 @@ class Enable(TestCase):
     @staticmethod
     def assert_enabled(pre, post):
         resource = etree.fromstring(pre)
-        common.enable(resource)
+        common.enable(resource, IdProvider(resource))
         assert_xml_equal(post, etree_to_str(resource))
 
     def test_disabled(self):
@@ -221,6 +222,7 @@ class Enable(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes />
                 </resource>
             """
         )
@@ -254,6 +256,7 @@ class Enable(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes id="meta1" />
                     <meta_attributes id="meta2">
                         <nvpair name="target-role" value="something" />
                     </meta_attributes>
@@ -266,7 +269,7 @@ class Disable(TestCase):
     @staticmethod
     def assert_disabled(pre, post):
         resource = etree.fromstring(pre)
-        common.disable(resource)
+        common.disable(resource, IdProvider(resource))
         assert_xml_equal(post, etree_to_str(resource))
 
     def test_disabled(self):
@@ -452,7 +455,7 @@ class Manage(TestCase):
     @staticmethod
     def assert_managed(pre, post):
         resource = etree.fromstring(pre)
-        common.manage(resource)
+        common.manage(resource, IdProvider(resource))
         assert_xml_equal(post, etree_to_str(resource))
 
     def test_unmanaged(self):
@@ -466,6 +469,7 @@ class Manage(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes />
                 </resource>
             """
         )
@@ -499,6 +503,7 @@ class Manage(TestCase):
             """,
             """
                 <resource>
+                    <meta_attributes id="meta1" />
                     <meta_attributes id="meta2">
                         <nvpair name="is-managed" value="something" />
                     </meta_attributes>
@@ -511,7 +516,7 @@ class Unmanage(TestCase):
     @staticmethod
     def assert_unmanaged(pre, post):
         resource = etree.fromstring(pre)
-        common.unmanage(resource)
+        common.unmanage(resource, IdProvider(resource))
         assert_xml_equal(post, etree_to_str(resource))
 
     def test_unmanaged(self):

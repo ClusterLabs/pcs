@@ -65,30 +65,30 @@ def find_resources_to_enable(resource_el):
         to_enable.append(parent)
     return to_enable
 
-def enable(resource_el):
+def enable(resource_el, id_provider):
     """
     Enable specified resource
     etree resource_el -- resource element
     """
-    nvpair.arrange_first_nvset(
-        "meta_attributes",
+    nvpair.arrange_first_meta_attributes(
         resource_el,
         {
             "target-role": "",
-        }
+        },
+        id_provider
     )
 
-def disable(resource_el):
+def disable(resource_el, id_provider):
     """
     Disable specified resource
     etree resource_el -- resource element
     """
-    nvpair.arrange_first_nvset(
-        "meta_attributes",
+    nvpair.arrange_first_meta_attributes(
         resource_el,
         {
             "target-role": "Stopped",
-        }
+        },
+        id_provider
     )
 
 def find_resources_to_manage(resource_el):
@@ -184,28 +184,28 @@ def find_resources_to_unmanage(resource_el):
         return [resource_el]
     return []
 
-def manage(resource_el):
+def manage(resource_el, id_provider):
     """
     Set the resource to be managed by the cluster
     etree resource_el -- resource element
     """
-    nvpair.arrange_first_nvset(
-        "meta_attributes",
+    nvpair.arrange_first_meta_attributes(
         resource_el,
         {
             "is-managed": "",
-        }
+        },
+        id_provider
     )
 
-def unmanage(resource_el):
+def unmanage(resource_el, id_provider):
     """
     Set the resource not to be managed by the cluster
     etree resource_el -- resource element
     """
-    nvpair.arrange_first_nvset(
-        "meta_attributes",
+    nvpair.arrange_first_meta_attributes(
         resource_el,
         {
             "is-managed": "false",
-        }
+        },
+        id_provider
     )

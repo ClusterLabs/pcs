@@ -43,7 +43,8 @@ def find_primitives_by_agent(resources_section, resource_agent_obj):
 
 
 def create(
-    report_processor, resources_section, resource_id, resource_agent,
+    report_processor, resources_section, id_provider, resource_id,
+    resource_agent,
     raw_operation_list=None, meta_attributes=None, instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -56,6 +57,7 @@ def create(
 
     report_processor is a tool for warning/info/error reporting
     etree.Element resources_section is place where new element will be appended
+    IdProvider id_provider -- elements' ids generator
     string resource_id is id of new resource
     lib.resource_agent.CrmAgent resource_agent
     list of dict raw_operation_list specifies operations of resource
@@ -100,6 +102,7 @@ def create(
 
     return append_new(
         resources_section,
+        id_provider,
         resource_id,
         resource_agent.get_standard(),
         resource_agent.get_provider(),
@@ -110,15 +113,17 @@ def create(
     )
 
 def append_new(
-    resources_section, resource_id, standard, provider, agent_type,
+    resources_section, id_provider, resource_id, standard, provider, agent_type,
     instance_attributes=None,
     meta_attributes=None,
     operation_list=None
 ):
+    # pylint:disable=too-many-arguments
     """
     Append a new primitive element to the resources_section.
 
     etree.Element resources_section is place where new element will be appended
+    IdProvider id_provider -- elements' ids generator
     string resource_id is id of new resource
     string standard is a standard of resource agent (e.g. ocf)
     string agent_type is a type of resource agent (e.g. IPaddr2)
@@ -140,14 +145,20 @@ def append_new(
     if instance_attributes:
         append_new_instance_attributes(
             primitive_element,
-            instance_attributes
+            instance_attributes,
+            id_provider
         )
 
     if meta_attributes:
-        append_new_meta_attributes(primitive_element, meta_attributes)
+        append_new_meta_attributes(
+            primitive_element,
+            meta_attributes,
+            id_provider
+        )
 
     create_operations(
         primitive_element,
+        id_provider,
         operation_list if operation_list else []
     )
 

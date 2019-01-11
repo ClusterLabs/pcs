@@ -1,6 +1,7 @@
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import are_meta_disabled
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment
@@ -67,9 +68,11 @@ def create(
             ensure_disabled or are_meta_disabled(meta_attributes),
         )
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         stonith_element = resource.primitive.create(
             env.report_processor,
             resources_section,
+            id_provider,
             stonith_id,
             stonith_agent,
             raw_operation_list=operations,
@@ -81,7 +84,7 @@ def create(
             resource_type="stonith"
         )
         if ensure_disabled:
-            resource.common.disable(stonith_element)
+            resource.common.disable(stonith_element, id_provider)
 
 def create_in_group(
     env, stonith_id, stonith_agent_name, group_id,
@@ -140,8 +143,9 @@ def create_in_group(
             ensure_disabled or are_meta_disabled(meta_attributes),
         )
     ) as resources_section:
+        id_provider = IdProvider(resources_section)
         stonith_element = resource.primitive.create(
-            env.report_processor, resources_section,
+            env.report_processor, resources_section, id_provider,
             stonith_id, stonith_agent,
             operations, meta_attributes, instance_attributes,
             allow_invalid_operation,
@@ -149,7 +153,7 @@ def create_in_group(
             use_default_operations,
         )
         if ensure_disabled:
-            resource.common.disable(stonith_element)
+            resource.common.disable(stonith_element, id_provider)
         validate_id(group_id, "group name")
         resource.group.place_resource(
             resource.group.provide_group(resources_section, group_id),

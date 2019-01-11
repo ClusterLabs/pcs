@@ -2,6 +2,7 @@ from unittest import mock, TestCase
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.test.tools.assertions import (
@@ -39,21 +40,30 @@ class UpdateNodeInstanceAttrs(TestCase):
                 </instance_attributes>
             </node>
         """)
-        self.cib = etree.fromstring("""
-            <cib>
-                <configuration>
-                    <nodes>{0}{1}{2}</nodes>
-                </configuration>
-            </cib>
-        """.format(*[
-            etree_to_str(el) for el in [self.node1, self.node2, self.node3]
-        ]))
+        self.cib = etree.fromstring(
+            self.compile_cib(self.node1, self.node2, self.node3)
+        )
         self.state = "node state list"
+        self.id_provider = IdProvider(self.cib)
+
+    @staticmethod
+    def compile_cib(*node_list):
+        parts = ["<cib><configuration><nodes>"]
+        parts += [
+            node if isinstance(node, str) else etree_to_str(node)
+            for node in node_list
+        ]
+        parts.append("</nodes></configuration></cib>")
+        return "".join(parts)
 
     def test_empty_node(self, mock_get_node):
         mock_get_node.return_value = self.node1
         node.update_node_instance_attrs(
-            self.cib, "rh73-node1", {"x": "X"}, self.state
+            self.cib,
+            self.id_provider,
+            "rh73-node1",
+            {"x": "X"},
+            state_nodes=self.state
         )
         assert_xml_equal(
             etree_to_str(self.node1),
@@ -66,10 +76,14 @@ class UpdateNodeInstanceAttrs(TestCase):
             """
         )
 
-    def test_exisitng_attrs(self, mock_get_node):
+    def test_existing_attrs(self, mock_get_node):
         mock_get_node.return_value = self.node2
         node.update_node_instance_attrs(
-            self.cib, "rh73-node2", {"a": "", "b": "b", "x": "X"}, self.state
+            self.cib,
+            self.id_provider,
+            "rh73-node2",
+            {"a": "", "b": "b", "x": "X"},
+            state_nodes=self.state
         )
         assert_xml_equal(
             etree_to_str(self.node2),
@@ -87,7 +101,11 @@ class UpdateNodeInstanceAttrs(TestCase):
     def test_multiple_attrs_sets(self, mock_get_node):
         mock_get_node.return_value = self.node3
         node.update_node_instance_attrs(
-            self.cib, "rh73-node3", {"x": "X"}, self.state
+            self.cib,
+            self.id_provider,
+            "rh73-node3",
+            {"x": "X"},
+            state_nodes=self.state
         )
         assert_xml_equal(
             etree_to_str(self.node3),
@@ -103,6 +121,72 @@ class UpdateNodeInstanceAttrs(TestCase):
                 </node>
             """
         )
+
+    def test_keep_empty_nvset_and_node(self, mock_get_node):
+        mock_get_node.return_value = self.node2
+        node.update_node_instance_attrs(
+            self.cib,
+            self.id_provider,
+            "rh73-node2",
+            {"a": "", "b": "", "c": ""},
+            state_nodes=self.state
+        )
+        assert_xml_equal(
+            self.compile_cib(
+                self.node1,
+                """
+                    <node id="2" uname="rh73-node2">
+                        <instance_attributes id="nodes-2" />
+                    </node>
+                """,
+                self.node3
+            ),
+            self.compile_cib(self.node1, self.node2, self.node3)
+        )
+
+    def test_dont_create_empty_nvset_if_deleting(self, mock_get_node):
+        mock_get_node.return_value = self.node1
+        node.update_node_instance_attrs(
+            self.cib,
+            self.id_provider,
+            "rh73-node1",
+            {"x": ""},
+            state_nodes=self.state
+        )
+        assert_xml_equal(
+            etree_to_str(self.node1),
+            """<node id="1" uname="rh73-node1" />"""
+        )
+
+    def test_dont_create_empty_nvset_if_no_attrs(self, mock_get_node):
+        mock_get_node.return_value = self.node1
+        node.update_node_instance_attrs(
+            self.cib,
+            self.id_provider,
+            "rh73-node1",
+            {},
+            state_nodes=self.state
+        )
+        assert_xml_equal(
+            etree_to_str(self.node1),
+            """<node id="1" uname="rh73-node1" />"""
+        )
+
+    def test_dont_create_empty_node_if_deleting(self, mock_get_node):
+        node4 = etree.fromstring("""<node id="4" />""")
+        mock_get_node.return_value = node4
+        node.update_node_instance_attrs(
+            self.cib,
+            self.id_provider,
+            "rh73-node4",
+            {"x": ""},
+            state_nodes=self.state
+        )
+        assert_xml_equal(
+            etree_to_str(self.cib),
+            self.compile_cib(self.node1, self.node2, self.node3)
+        )
+
 
 class EnsureNodeExists(TestCase):
     def setUp(self):
@@ -205,7 +289,8 @@ class CreateNode(TestCase):
         self.nodes = etree.Element("nodes")
 
     def test_minimal(self):
-        node._create_node(self.nodes, "id-test", "name-test")
+        new_node = node._create_node("id-test", "name-test")
+        self.nodes.append(new_node)
         assert_xml_equal(
             """
             <nodes>
@@ -216,7 +301,8 @@ class CreateNode(TestCase):
         )
 
     def test_with_type(self):
-        node._create_node(self.nodes, "id-test", "name-test", "type-test")
+        new_node = node._create_node("id-test", "name-test", "type-test")
+        self.nodes.append(new_node)
         assert_xml_equal(
             """
             <nodes>

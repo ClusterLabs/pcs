@@ -19,11 +19,16 @@
 - Put proper link options' names to corosync.conf ([rhbz#1659051])
 - Fixed issuses in configuring links in the 'create cluster' form in web UI
   ([rhbz#1664057])
+- Pcs no longer removes empty `meta_attributes`, `instance_attributes` and other
+  nvsets and similar elements from CIB. Such behavior was causing problems when
+  pacemaker ACLs were in effect, leading to inability of pushing modified CIBs
+  to pacemaker. ([rhbz#1659144])
 
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953
 [rhbz#1659051]: https://bugzilla.redhat.com/show_bug.cgi?id=1659051
+[rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 

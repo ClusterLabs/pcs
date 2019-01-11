@@ -16,7 +16,7 @@ from pcs.lib.booth import (
 )
 from pcs.lib.booth.config_parser import parse, build
 from pcs.lib.booth.env import get_config_file_name
-from pcs.lib.cib.tools import get_resources
+from pcs.lib.cib.tools import get_resources, IdProvider
 from pcs.lib.communication.booth import (
     BoothGetConfig,
     BoothSendConfig,
@@ -162,6 +162,7 @@ def create_in_cluster(env, ip, allow_absent_resource_agent=False):
         if its agent is not installed
     """
     resources_section = get_resources(env.get_cib())
+    id_provider = IdProvider(resources_section)
     name = env.booth.name
 
     booth_config_file_path = get_config_file_name(name)
@@ -183,6 +184,7 @@ def create_in_cluster(env, ip, allow_absent_resource_agent=False):
         primitive.create,
         env.report_processor,
         resources_section,
+        id_provider
     )
     into_booth_group = partial(
         group.place_resource,

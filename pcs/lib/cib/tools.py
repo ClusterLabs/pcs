@@ -180,13 +180,11 @@ def find_element_by_tag_and_id(
         )
     )
 
-def create_subelement_id(context_element, suffix, id_provider=None):
+def create_subelement_id(context_element, suffix, id_provider):
     proposed_id = sanitize_id(
         "{0}-{1}".format(context_element.get("id"), suffix)
     )
-    if id_provider:
-        return id_provider.allocate_id(proposed_id)
-    return find_unique_id(context_element, proposed_id)
+    return id_provider.allocate_id(proposed_id)
 
 def check_new_id_applicable(tree, description, _id):
     validate_id(_id, description)

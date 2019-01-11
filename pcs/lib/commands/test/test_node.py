@@ -9,6 +9,7 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 
@@ -156,13 +157,14 @@ class SetInstaceAttrsBase(TestCase):
     node_count = 2
     def setUp(self):
         self.cluster_nodes = [fixture_node(i) for i in range(self.node_count)]
+        self.cib = etree.fromstring("<cib />")
 
         self.launch = {"pre": False, "post": False}
         @contextmanager
         def cib_runner_nodes_contextmanager(env, wait):
             # pylint: disable=unused-argument
             self.launch["pre"] = True
-            yield ("cib", "mock_runner", self.cluster_nodes)
+            yield (self.cib, "mock_runner", self.cluster_nodes)
             self.launch["post"] = True
 
         patcher = patch_command('cib_runner_nodes')
@@ -171,6 +173,13 @@ class SetInstaceAttrsBase(TestCase):
 
     def assert_context_manager_launched(self, pre=False, post=False):
         self.assertEqual(self.launch, {"pre": pre, "post": post})
+
+    def assert_call_with_provider(self, call, cib, node, attrs, nodes):
+        self.assertEqual(call[0][0], cib)
+        self.assertTrue(isinstance(call[0][1], IdProvider))
+        self.assertEqual(call[0][2], node)
+        self.assertEqual(call[0][3], attrs)
+        self.assertEqual(call[1]["state_nodes"], nodes)
 
 @patch_command("update_node_instance_attrs")
 @patch_command("get_local_node_name")
@@ -201,8 +210,10 @@ class SetInstaceAttrsLocal(SetInstaceAttrsBase):
 
         self.assert_context_manager_launched(pre=True, post=True)
         mock_name.assert_called_once_with("mock_runner")
-        mock_attrs.assert_called_once_with(
-            "cib", "node-1", "attrs", self.cluster_nodes
+        mock_attrs_calls = mock_attrs.call_args_list
+        self.assertEqual(len(mock_attrs_calls), 1)
+        self.assert_call_with_provider(
+            mock_attrs_calls[0], self.cib, "node-1", "attrs", self.cluster_nodes
         )
 
 @patch_command("update_node_instance_attrs")
@@ -212,11 +223,14 @@ class SetInstaceAttrsAll(SetInstaceAttrsBase):
     def test_success(self, mock_attrs):
         lib._set_instance_attrs_all_nodes(create_env(), "attrs", False)
 
-        self.assertEqual(2, len(mock_attrs.mock_calls))
-        mock_attrs.assert_has_calls([
-            mock.call("cib", "node-0", "attrs", self.cluster_nodes),
-            mock.call("cib", "node-1", "attrs", self.cluster_nodes),
-        ])
+        mock_attrs_calls = mock_attrs.call_args_list
+        self.assertEqual(2, len(mock_attrs_calls))
+        self.assert_call_with_provider(
+            mock_attrs_calls[0], self.cib, "node-0", "attrs", self.cluster_nodes
+        )
+        self.assert_call_with_provider(
+            mock_attrs_calls[1], self.cib, "node-1", "attrs", self.cluster_nodes
+        )
 
 @patch_command("update_node_instance_attrs")
 class SetInstaceAttrsList(SetInstaceAttrsBase):
@@ -228,11 +242,14 @@ class SetInstaceAttrsList(SetInstaceAttrsBase):
         )
 
         self.assert_context_manager_launched(pre=True, post=True)
-        self.assertEqual(2, len(mock_attrs.mock_calls))
-        mock_attrs.assert_has_calls([
-            mock.call("cib", "node-1", "attrs", self.cluster_nodes),
-            mock.call("cib", "node-2", "attrs", self.cluster_nodes),
-        ])
+        mock_attrs_calls = mock_attrs.call_args_list
+        self.assertEqual(2, len(mock_attrs_calls))
+        self.assert_call_with_provider(
+            mock_attrs_calls[0], self.cib, "node-1", "attrs", self.cluster_nodes
+        )
+        self.assert_call_with_provider(
+            mock_attrs_calls[1], self.cib, "node-2", "attrs", self.cluster_nodes
+        )
 
     def test_bad_node(self, mock_attrs):
         # pylint: disable=no-self-use

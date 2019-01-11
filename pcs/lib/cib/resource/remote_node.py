@@ -160,9 +160,9 @@ def prepare_instance_atributes(instance_attributes, host):
     return enriched_instance_attributes
 
 def create(
-    report_processor, resource_agent, resources_section, host, node_name,
-    raw_operation_list=None, meta_attributes=None,
-    instance_attributes=None,
+    report_processor, resource_agent, resources_section, id_provider,
+    host, node_name,
+    raw_operation_list=None, meta_attributes=None, instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
@@ -190,6 +190,7 @@ def create(
         return primitive.create(
             report_processor,
             resources_section,
+            id_provider,
             node_name,
             resource_agent,
             raw_operation_list,

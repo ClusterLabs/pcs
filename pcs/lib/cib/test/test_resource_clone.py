@@ -2,6 +2,7 @@ from unittest import TestCase
 from lxml import etree
 
 from pcs.lib.cib.resource import clone
+from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools.assertions import assert_xml_equal
 
 class AppendNewCommon(TestCase):
@@ -19,6 +20,7 @@ class AppendNewCommon(TestCase):
     def assert_clone_effect(self, options, xml):
         clone.append_new(
             self.resources,
+            IdProvider(self.resources),
             self.primitive,
             options
         )

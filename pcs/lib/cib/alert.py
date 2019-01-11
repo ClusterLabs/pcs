@@ -4,7 +4,7 @@ from lxml import etree
 from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.errors import ReportItemSeverity as Severities
-from pcs.lib.cib.nvpair import arrange_first_nvset, get_nvset
+from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
     find_unique_id,
@@ -19,12 +19,6 @@ TAG_RECIPIENT = "recipient"
 
 find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
 find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
-
-update_instance_attributes = partial(
-    arrange_first_nvset,
-    "instance_attributes"
-)
-update_meta_attributes = partial(arrange_first_nvset, "meta_attributes")
 
 def _update_optional_attribute(element, attribute, value):
     """
