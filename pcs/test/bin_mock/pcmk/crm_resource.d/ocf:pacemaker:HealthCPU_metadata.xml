@@ -26,6 +26,17 @@ the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
 <content type="string" default="50"/>
 </parameter>
 
+<!--
+     The original agent defines red_limit with unique=1.
+     However, we use this agent to test the 'pcs resource describe' command and
+     its ability to mark unique attributes as such. In order to have at least
+     one unique and one non-unique attribute for the test, red_limit has been
+     made non-unique.
+     If this is needed to be set to unique for whatever reason, create a new
+     agent XML to use in the describe test. Perhaps it would be better if it
+     wasn't based on any existing agent and would be named e.g.
+     ocf:pacemaker:pcs-test-describe.
+-->
 <parameter name="red_limit">
 <longdesc lang="en">
 Lower (!) limit of idle percentage to switch the health attribute to red. I.e.

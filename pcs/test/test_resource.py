@@ -5296,7 +5296,7 @@ class BundleMiscCommands(BundleCommon):
         )
 
 
-class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
+class ResourceUpdateRemoteAndGuestChecks(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -5395,8 +5395,13 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
             " use 'pcs cluster node remove-guest'\n"
         )
 
-    def test_unique_err(self):
+class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def test_unique_err(self):
         self.assert_pcs_success(
             "resource create R1 ocf:pacemaker:Dummy state=1"
         )
@@ -5410,7 +5415,6 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         )
 
     def test_unique_setting_same_value(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
             "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops"
         )
@@ -5458,7 +5462,6 @@ class ResourceUpdateSpcialChecks(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource show --full", res_config)
 
     def test_unique_warn(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
             "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops"
         )
