@@ -279,9 +279,16 @@ def node_add_remote(
         already_exists = []
         unified_report_list = []
         for report in report_list + list(e.args):
-            if report.code != report_codes.ID_ALREADY_EXISTS:
+            if report.code not in (
+                report_codes.ID_ALREADY_EXISTS,
+                report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+            ):
                 unified_report_list.append(report)
-            elif report.info["id"] not in already_exists:
+            elif (
+                "id" in report.info
+                and
+                report.info["id"] not in already_exists
+            ):
                 unified_report_list.append(report)
                 already_exists.append(report.info["id"])
         report_list = unified_report_list

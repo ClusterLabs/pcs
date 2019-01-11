@@ -432,6 +432,8 @@ class Agent():
             deprecated: True if it is a deprecated parameter, False otherwise
             deprecated_by: list of parameters deprecating this one
             obsoletes: name of a deprecated parameter obsoleted by this one
+            unique: True if the parameter's value should be unique across same
+                agent resources, False otherwise
             pcs_deprecated_warning: pcs originated warning
         }
         """
@@ -480,6 +482,7 @@ class Agent():
             "required": is_true(parameter_element.get("required", "0")),
             "deprecated": is_true(parameter_element.get("deprecated", "0")),
             "obsoletes": parameter_element.get("obsoletes", None),
+            "unique": is_true(parameter_element.get("unique", "0")),
         })
 
     def _get_parameter_obsoleting_chains(self):
@@ -760,6 +763,7 @@ class Agent():
             "deprecated_by": [],
             "obsoletes": None,
             "pcs_deprecated_warning": "",
+            "unique": False,
         }
         new_param.update(properties)
         return new_param

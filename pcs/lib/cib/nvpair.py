@@ -154,6 +154,21 @@ def get_value(tag_name, context_element, name, default=None):
     """.format(tag_name, name))
     return value_list[0] if value_list else default
 
+def get_nvset_as_dict(tag_name, context_element):
+    """
+    Returns nvset with specified tag_name in context_element as dictionary
+
+    tag_name string -- tag of nvset element which values shold be returned
+    context_element etree.Element -- element in which required nvset is
+        specified
+    """
+    return {
+        nvpair["name"]: nvpair["value"]
+        for nvpair in get_nvset(
+            get_sub_element(context_element, tag_name, insert=False)
+        )
+    }
+
 def has_meta_attribute(resource_el, name):
     """
     Return if the element contains meta attribute 'name'

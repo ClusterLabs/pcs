@@ -367,7 +367,11 @@ class DeleteRemoveTest(AssertPcsMixin, TestCase):
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
             "resource create some-id ocf:pacemaker:booth-site"
-            " config=/etc/booth/booth.conf"
+            " config=/etc/booth/booth.conf --force",
+            "Warning: Value '/etc/booth/booth.conf' of option 'config' is "
+            "not unique across 'ocf:pacemaker:booth-site' resources. "
+            "Following resources are configured with the same value of the "
+            "instance attribute: 'booth-booth-service'\n"
         )
         self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",
@@ -413,8 +417,16 @@ class DeleteRemoveTest(AssertPcsMixin, TestCase):
         self.assert_pcs_success("resource status", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_success(
-            "resource create some-id ocf:pacemaker:booth-site"
-            " config=/etc/booth/booth.conf"
+            (
+                "resource create some-id ocf:pacemaker:booth-site"
+                " config=/etc/booth/booth.conf --force"
+            ),
+            (
+                "Warning: Value '/etc/booth/booth.conf' of option 'config' is "
+                "not unique across 'ocf:pacemaker:booth-site' resources. "
+                "Following resources are configured with the same value of the "
+                "instance attribute: 'booth-booth-service'\n"
+            )
         )
         self.assert_pcs_success("resource status", [
              " Resource Group: booth-booth-group",

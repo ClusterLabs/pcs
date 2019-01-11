@@ -1843,4 +1843,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.FENCE_HISTORY_NOT_SUPPORTED:
         "Fence history is not supported, please upgrade pacemaker"
     ,
+    codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE: lambda info:
+        (
+            "Value '{_val}' of option '{_attr}' is not unique across "
+            "'{_agent}' resources. Following resources are configured "
+            "with the same value of the instance attribute: {_res_id_list}"
+        ).format(
+            _val=info["instance_attr_value"],
+            _attr=info["instance_attr_name"],
+            _agent=info["agent_name"],
+            _res_id_list=format_list(info["resource_id_list"]),
+        )
+    ,
 }

@@ -72,6 +72,20 @@ class GetSubElementTest(TestCase):
             etree.tostring(self.root).decode()
         )
 
+    def test_no_insert(self):
+        new_element = lib.get_sub_element(
+            self.root, "new_element", insert=False
+        )
+        assert_xml_equal(
+            """
+            <root>
+                <sub_element/>
+            </root>
+            """,
+            etree.tostring(self.root).decode()
+        )
+        assert_xml_equal("<new_element/>", etree.tostring(new_element).decode())
+
 
 class UpdateAttributeRemoveEmpty(TestCase):
     def setUp(self):

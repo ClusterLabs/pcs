@@ -790,6 +790,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -798,7 +799,7 @@ class AgentMetadataGetParametersTest(TestCase):
         xml = """
             <resource-agent>
                 <parameters>
-                    <parameter name="test_param" required="1">
+                    <parameter name="test_param" required="1" unique="1">
                         <longdesc>
                             Long description
                         </longdesc>
@@ -825,6 +826,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": True,
                 },
                 {
                     "name": "another parameter",
@@ -838,6 +840,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -870,6 +873,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "obsoleted",
@@ -883,6 +887,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": ["obsoleting1", "obsoleting2"],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "obsoleting1",
@@ -896,6 +901,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": "obsoleted",
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "obsoleting2",
@@ -909,6 +915,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": ["double-obsoleting"],
                     "obsoletes": "obsoleted",
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "double-obsoleting",
@@ -922,6 +929,7 @@ class AgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": "obsoleting2",
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
             ]
         )
@@ -1197,6 +1205,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "deprecated_by": [],
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
+                        "unique": False,
                     },
                     {
                         "name": "another parameter",
@@ -1210,6 +1219,7 @@ class AgentMetadataGetInfoTest(TestCase):
                         "deprecated_by": [],
                         "obsoletes": None,
                         "pcs_deprecated_warning": "",
+                        "unique": False,
                     }
                 ],
                 "actions": [
@@ -1747,6 +1757,7 @@ class FencedMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "another parameter",
@@ -1760,6 +1771,7 @@ class FencedMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 }
             ]
         )
@@ -1974,6 +1986,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "valid_param",
@@ -1987,6 +2000,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "verbose",
@@ -2000,6 +2014,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "action",
@@ -2017,6 +2032,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                         " versions. Use 'pcmk_off_action',"
                         " 'pcmk_reboot_action' instead."
                     ,
+                    "unique": False,
                 },
                 {
                     "name": "another_param",
@@ -2030,6 +2046,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
                 {
                     "name": "fenced_param",
@@ -2043,6 +2060,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                     "deprecated_by": [],
                     "obsoletes": None,
                     "pcs_deprecated_warning": "",
+                    "unique": False,
                 },
             ]
         )

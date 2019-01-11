@@ -387,6 +387,63 @@ class GetValue(TestCase):
             """,
         )
 
+class GetNvsetAsDictTest(TestCase):
+    def test_no_element(self):
+        resource_element = etree.fromstring("<primitive/>")
+        self.assertEqual(
+            dict(),
+            nvpair.get_nvset_as_dict("meta_attributes", resource_element),
+        )
+
+    def test_empty(self):
+        resource_element = etree.fromstring("""
+            <primitive>
+                <meta_attributes/>
+            </primitive>
+        """)
+        self.assertEqual(
+            dict(),
+            nvpair.get_nvset_as_dict("meta_attributes", resource_element),
+        )
+
+    def test_non_empty(self):
+        resource_element = etree.fromstring("""
+            <primitive>
+                <meta_attributes>
+                    <nvpair id="a" name="attr_name" value="value"/>
+                    <nvpair id="b" name="other_name" value="other-value"/>
+                </meta_attributes>
+            </primitive>
+        """)
+        self.assertEqual(
+            dict(
+                attr_name="value",
+                other_name="other-value",
+            ),
+            nvpair.get_nvset_as_dict("meta_attributes", resource_element),
+        )
+
+    def test_multiple_nvsets(self):
+        resource_element = etree.fromstring("""
+            <primitive>
+                <meta_attributes>
+                    <nvpair id="a" name="attr_name" value="value"/>
+                    <nvpair id="b" name="other_name" value="other-value"/>
+                </meta_attributes>
+                <meta_attributes>
+                    <nvpair id="a" name="attr_name2" value="value2"/>
+                    <nvpair id="b" name="other_name2" value="other-value2"/>
+                </meta_attributes>
+            </primitive>
+        """)
+        self.assertEqual(
+            dict(
+                attr_name="value",
+                other_name="other-value",
+            ),
+            nvpair.get_nvset_as_dict("meta_attributes", resource_element),
+        )
+
 class HasMetaAttribute(TestCase):
     def test_return_false_if_does_not_have_such_attribute(self):
         resource_element = etree.fromstring("""<primitive/>""")
