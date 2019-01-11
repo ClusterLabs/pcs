@@ -212,10 +212,12 @@ api.clusterSetup = function(submitData, processOptions){
   var data = {
     cluster_name: setupData.clusterName,
     nodes: setupData.nodeList.map(function(node){
-      return {
-        name: node.name,
-        addrs: node.addrs.filter(function(addr){return addr.length > 0}),
-      };
+      apiNode = { name: node.name };
+      var addrs = node.addrs.filter(function(addr){return addr.length > 0});
+      if (addrs.length > 0) {
+        apiNode["addrs"] = addrs;
+      }
+      return apiNode;
     }),
     transport_type: setupData.transportType,
     transport_options: setupData.transportType == "knet"
