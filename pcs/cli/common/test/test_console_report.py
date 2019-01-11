@@ -16,6 +16,8 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.lib import reports
+from pcs.lib.errors import ReportItem
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -43,6 +45,11 @@ class NameBuildTest(TestCase):
             message,
             build(info) if callable(build) else build
         )
+
+    def assert_message_from_report(self, message, report):
+        if not isinstance(report, ReportItem):
+            raise AssertionError("report is not instance of ReportItem")
+        self.assert_message_from_info(message, report.info)
 
 
 class BuildInvalidOptionsMessageTest(NameBuildTest):
@@ -2223,4 +2230,31 @@ class FileIoError(NameBuildTest):
                 "reason": "Failed",
                 "operation": "write",
             }
+        )
+
+
+class ResourceInstanceAttrValueNotUnique(NameBuildTest):
+    code = codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE
+    def test_one_resource(self):
+        self.assert_message_from_report(
+            (
+                "Value 'val' of option 'attr' is not unique across 'agent' "
+                "resources. Following resources are configured with the same "
+                "value of the instance attribute: 'A'"
+            ),
+            reports.resource_instance_attr_value_not_unique(
+                "attr", "val", "agent", ["A"]
+            )
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message_from_report(
+            (
+                "Value 'val' of option 'attr' is not unique across 'agent' "
+                "resources. Following resources are configured with the same "
+                "value of the instance attribute: 'A', 'B', 'C'"
+            ),
+            reports.resource_instance_attr_value_not_unique(
+                "attr", "val", "agent", ["B", "C", "A"]
+            )
         )

@@ -1438,4 +1438,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "cluster inside bundle '{bundle_id}', at least one of bundle "
             "options 'control-port' or 'ip-range-start' has to be specified"
         ).format(**info)
+    ,
+    codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE: lambda info:
+        (
+            "Value '{_val}' of option '{_attr}' is not unique across "
+            "'{_agent}' resources. Following resources are configured "
+            "with the same value of the instance attribute: {_res_id_list}"
+        ).format(
+            _val=info["instance_attr_value"],
+            _attr=info["instance_attr_name"],
+            _agent=info["agent_name"],
+            _res_id_list=joined_list(info["resource_id_list"]),
+        )
+    ,
 }

@@ -13,6 +13,8 @@
   ([rhbz#1594738])
 - Command `pcs config checkpoint diff` for displaying differences between two
   specified checkpoints ([rhbz#1515021])
+- Support for resource instance attributes uniqueness check according to
+  resource agent metadata ([rhbz#1389140])
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
@@ -20,6 +22,7 @@
   the nodes when trying to create new cluster from nodes which are already in
   a cluster ([rhbz#1474747])
 
+[rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
 [rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
 [rhbz#1515021]: https://bugzilla.redhat.com/show_bug.cgi?id=1515021
 [rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
