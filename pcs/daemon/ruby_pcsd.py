@@ -130,13 +130,14 @@ class Wrapper:
         return await multi([
             Task(pcsd_ruby.stdout.read_until_close),
             Task(pcsd_ruby.stderr.read_until_close),
+            pcsd_ruby.wait_for_exit(raise_error=False),
         ])
 
     async def run_ruby(self, request_type, request=None):
         request = request or {}
         request.update({"type": request_type})
         request_json = json.dumps(request)
-        stdout, stderr = await self.send_to_ruby(request_json)
+        stdout, stderr, dummy_status = await self.send_to_ruby(request_json)
         try:
             response = json.loads(stdout)
         except json.JSONDecodeError as e:

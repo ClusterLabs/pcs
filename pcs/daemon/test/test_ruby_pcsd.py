@@ -64,6 +64,7 @@ class RunRuby(AsyncTestCase):
     def setUp(self):
         self.stdout = ""
         self.stderr = ""
+        self.exit_status = 0
         self.request = self.create_request()
         self.wrapper = create_wrapper()
         patcher = mock.patch.object(
@@ -77,7 +78,7 @@ class RunRuby(AsyncTestCase):
 
     async def send_to_ruby(self, request_json):
         self.assertEqual(json.loads(request_json), self.request)
-        return self.stdout, self.stderr
+        return self.stdout, self.stderr, self.exit_status
 
     @staticmethod
     def create_request(_type=ruby_pcsd.SYNC_CONFIGS):
