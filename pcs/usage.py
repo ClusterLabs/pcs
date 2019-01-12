@@ -1922,7 +1922,7 @@ Manage pcsd client configuration.
 
 Commands:
     local-auth [<pcsd-port>] [-u <username>] [-p <password>]
-        Authenticate current user to local pcsd. This is requiered to run some
+        Authenticate current user to local pcsd. This is required to run some
         pcs commands which may require permissions of root user such as 'pcs
         cluster start'.
 """
