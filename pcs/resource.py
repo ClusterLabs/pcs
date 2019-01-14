@@ -788,30 +788,7 @@ def resource_update(res_id,args, deal_with_guest_change=True):
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-    instance_attributes = resource.getElementsByTagName("instance_attributes")
-    if not instance_attributes:
-        instance_attributes = dom.createElement("instance_attributes")
-        instance_attributes.setAttribute("id", res_id + "-instance_attributes")
-        resource.appendChild(instance_attributes)
-    else:
-        instance_attributes = instance_attributes[0]
-
-    for key, val in params:
-        ia_found = False
-        for ia in instance_attributes.getElementsByTagName("nvpair"):
-            if ia.getAttribute("name") == key:
-                ia_found = True
-                if val == "":
-                    instance_attributes.removeChild(ia)
-                else:
-                    ia.setAttribute("value", val)
-                break
-        if not ia_found:
-            ia = dom.createElement("nvpair")
-            ia.setAttribute("id", res_id + "-instance_attributes-" + key)
-            ia.setAttribute("name", key)
-            ia.setAttribute("value", val)
-            instance_attributes.appendChild(ia)
+    utils.dom_update_instance_attr(resource, params)
 
     remote_node_name = utils.dom_get_resource_remote_node_name(resource)
 
@@ -884,9 +861,6 @@ def resource_update(res_id,args, deal_with_guest_change=True):
             dom, res_id, element, validate_strict=False,
             before_op=updating_op_before
         )
-
-    if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
-        instance_attributes.parentNode.removeChild(instance_attributes)
 
     utils.replace_cib_configuration(dom)
 

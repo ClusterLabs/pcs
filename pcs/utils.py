@@ -2698,6 +2698,14 @@ def dom_update_meta_attr(dom_element, attributes):
         dom_element.getAttribute("id") + "-meta_attributes"
     )
 
+def dom_update_instance_attr(dom_element, attributes):
+    dom_update_nvset(
+        dom_element,
+        attributes,
+        "instance_attributes",
+        dom_element.getAttribute("id") + "-instance_attributes"
+    )
+
 def get_utilization(element, filter_name=None):
     utilization = {}
     for e in element.getElementsByTagName("utilization"):
