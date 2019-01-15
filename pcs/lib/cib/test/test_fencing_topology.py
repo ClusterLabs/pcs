@@ -32,6 +32,7 @@ class CibMixin:
     @staticmethod
     def get_cib():
         return etree.fromstring("""
+            <cib><configuration>
             <fencing-topology>
                 <fencing-level
                     id="fl1" index="1" devices="d1,d2" target="nodeA"
@@ -67,6 +68,7 @@ class CibMixin:
                     target-attribute="fencing" target-value="remote-special"
                 />
             </fencing-topology>
+            </configuration></cib>
         """)
 
 
@@ -223,7 +225,8 @@ class AddLevel(TestCase):
 
 class RemoveAllLevels(TestCase, CibMixin):
     def setUp(self):
-        self.tree = self.get_cib()
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
 
     def test_success(self):
         lib.remove_all_levels(self.tree)
@@ -235,10 +238,14 @@ class RemoveAllLevels(TestCase, CibMixin):
 
 class RemoveLevelsByParams(TestCase, CibMixin):
     def setUp(self):
-        self.tree = self.get_cib()
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
         self.reporter = MockLibraryReportProcessor()
 
     def get_remaining_ids(self):
+        self.assertTrue(
+            self.cib.find("configuration/fencing-topology") is not None
+        )
         return [el.get("id") for el in self.tree.findall("fencing-level")]
 
     def test_level(self):
@@ -381,7 +388,8 @@ class RemoveLevelsByParams(TestCase, CibMixin):
 
 class RemoveDeviceFromAllLevels(TestCase, CibMixin):
     def setUp(self):
-        self.tree = self.get_cib()
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
 
     def test_success(self):
         lib.remove_device_from_all_levels(self.tree, "d3")
@@ -427,6 +435,10 @@ class RemoveDeviceFromAllLevels(TestCase, CibMixin):
 
 
 class Export(TestCase, CibMixin):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
+
     def test_empty(self):
         self.assertEqual(
             lib.export(etree.fromstring("<fencing-topology />")),
@@ -435,7 +447,7 @@ class Export(TestCase, CibMixin):
 
     def test_success(self):
         self.assertEqual(
-            lib.export(self.get_cib()),
+            lib.export(self.tree),
             [
                 {
                     "level": "1",
@@ -502,6 +514,10 @@ class Export(TestCase, CibMixin):
 
 
 class Verify(TestCase, CibMixin, StatusNodesMixin):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
+
     def fixture_resource(self, tree, name):
         el = etree.SubElement(tree, "primitive", id=name, type="fence_dummy")
         el.set("class", "stonith")
@@ -521,7 +537,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
             self.fixture_resource(resources, name)
         reporter = MockLibraryReportProcessor()
 
-        lib.verify(reporter, self.get_cib(), resources, self.get_status())
+        lib.verify(reporter, self.tree, resources, self.get_status())
 
         assert_report_item_list_equal(reporter.report_item_list, [])
 
@@ -529,7 +545,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         resources = etree.fromstring("<resources />")
         reporter = MockLibraryReportProcessor()
 
-        lib.verify(reporter, self.get_cib(), resources, [])
+        lib.verify(reporter, self.tree, resources, [])
 
         report = [
             (
@@ -900,7 +916,8 @@ class AppendLevelElement(TestCase):
 
 class FindLevelElements(TestCase, CibMixin):
     def setUp(self):
-        self.tree = self.get_cib()
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
 
     def get_ids(self, elements):
         return [el.get("id") for el in elements]
