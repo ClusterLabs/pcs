@@ -575,97 +575,6 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             """
         ))
 
-    def testRemoveOperation(self):
-        # see also BundleMiscCommands
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
-        )
-
-        line = 'resource op add ClusterIP monitor interval=31s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP-monitor-interval-32s-xxxxx'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == "Error: unable to find operation id: ClusterIP-monitor-interval-32s-xxxxx\n"
-
-        line = 'resource op remove ClusterIP-monitor-interval-32s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)
-            """
-        ))
-
-        self.assert_pcs_success(
-            'resource op remove ClusterIP monitor interval=31s'
-        )
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-            """
-        ))
-
-        line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP stop timeout=34s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP start timeout=33s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor'
-        output, returnVal = pcs(temp_cib, line)
-        ac(output,"")
-        assert returnVal == 0
-        assert output == ""
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)
-                          start interval=0s timeout=33s (ClusterIP-start-interval-0s)
-            """
-        ))
-
     def testUpdateOperation(self):
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
@@ -4655,6 +4564,142 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
                 Operations: monitor interval=10 timeout=20 (DGC2-monitor-interval-10)
             """
         ))
+
+
+class OperationRemove(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    # see also BundleMiscCommands
+
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    fixture_xml_1_monitor = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                    <op id="R-monitor-interval-10" interval="10"
+                        name="monitor" timeout="20"
+                    />
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    fixture_xml_empty_operations = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_1_monitor
+        )
+
+    def fixture_monitor_20(self):
+        self.assert_effect(
+            "resource op add R monitor interval=20 timeout=20 --force",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-monitor-interval-20" interval="20"
+                                name="monitor" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def fixture_start(self):
+        self.assert_effect(
+            "resource op add R start timeout=20",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-monitor-interval-20" interval="20"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def test_remove_missing_op(self):
+        self.fixture_resource()
+        self.assert_pcs_fail(
+            "resource op remove R-monitor-interval-30",
+            "Error: unable to find operation id: R-monitor-interval-30\n"
+        )
+
+    def test_keep_empty_operations(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource op remove R-monitor-interval-10",
+            self.fixture_xml_empty_operations
+        )
+
+    def test_remove_by_id_success(self):
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.assert_effect(
+            "resource op remove R-monitor-interval-20",
+            self.fixture_xml_1_monitor
+        )
+
+    def test_remove_all_monitors(self):
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.fixture_start()
+        self.assert_effect(
+            "resource op remove R monitor",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
 
 class Utilization(
     TestCase,

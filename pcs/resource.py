@@ -1046,14 +1046,20 @@ def resource_operation_add(
 
 def resource_operation_remove(res_id, argv):
 # if no args, then we're removing an operation id
+
+    # Do not ever remove an operations element, even if it is empty. There may
+    # be ACLs set in pacemaker which allow "write" for op elements (adding,
+    # changing and removing) but not operations elements. In such a case,
+    # removing an operations element would cause the whole change to be
+    # rejected by pacemaker with a "permission denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
     dom = utils.get_cib_dom()
     if len(argv) == 0:
         for operation in dom.getElementsByTagName("op"):
             if operation.getAttribute("id") == res_id:
                 parent = operation.parentNode
                 parent.removeChild(operation)
-                if len(parent.getElementsByTagName("op")) == 0:
-                    parent.parentNode.removeChild(parent)
                 utils.replace_cib_configuration(dom)
                 return
         utils.err("unable to find operation id: %s" % res_id)
@@ -1089,14 +1095,10 @@ def resource_operation_remove(res_id, argv):
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
-            if len(parent.getElementsByTagName("op")) == 0:
-                parent.parentNode.removeChild(parent)
         elif len(set(op_properties) ^ set(temp_properties)) == 0:
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
-            if len(parent.getElementsByTagName("op")) == 0:
-                parent.parentNode.removeChild(parent)
             break
 
     if not found_match:
