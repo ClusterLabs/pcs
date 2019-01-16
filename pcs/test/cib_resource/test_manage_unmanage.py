@@ -26,29 +26,32 @@ class ManageUnmanage(
     empty_cib = rc("cib-empty.xml")
     temp_cib = rc("temp-cib.xml")
 
-    cib_unmanaged_a = """
-        <resources>
-            <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes">
-                    <nvpair id="A-meta_attributes-is-managed"
-                        name="is-managed" value="false"
-                    />
-                </meta_attributes>
-                <operations>
-                    <op id="A-monitor-interval-10s" interval="10s"
-                        name="monitor" timeout="20s"
-                    />
-                </operations>
-            </primitive>
-            <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
-                <operations>
-                    <op id="B-monitor-interval-10s" interval="10s"
-                        name="monitor" timeout="20s"
-                    />
-                </operations>
-            </primitive>
-        </resources>
-    """
+    @staticmethod
+    def fixture_cib_unmanaged_a(add_empty_meta_b=False):
+        empty_meta_b = '<meta_attributes id="B-meta_attributes" />'
+        return """
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    {empty_meta_b}<operations>
+                        <op id="B-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+        """.format(empty_meta_b=(empty_meta_b if add_empty_meta_b else ""))
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
@@ -86,12 +89,18 @@ class ManageUnmanage(
     def test_unmanage_one(self):
         self.fixture_resource("A")
         self.fixture_resource("B")
-        self.assert_effect("resource unmanage A", self.cib_unmanaged_a)
+        self.assert_effect(
+            "resource unmanage A",
+            self.fixture_cib_unmanaged_a()
+        )
 
     def test_manage_one(self):
         self.fixture_resource("A", managed=False)
         self.fixture_resource("B", managed=False)
-        self.assert_effect("resource manage B", self.cib_unmanaged_a)
+        self.assert_effect(
+            "resource manage B",
+            self.fixture_cib_unmanaged_a(add_empty_meta_b=True)
+        )
 
     def test_unmanage_monitor(self):
         self.fixture_resource("A")
@@ -161,6 +170,7 @@ class ManageUnmanage(
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes" />
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s" enabled="false"
@@ -216,6 +226,7 @@ class ManageUnmanage(
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes" />
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -223,6 +234,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="B-meta_attributes" />
                     <operations>
                         <op id="B-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"

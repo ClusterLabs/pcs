@@ -290,26 +290,6 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
             """
         ))
 
-    def testResourceUpdate(self):
-        # The idempotency with remote-node is tested in
-        # pcs/test/test_cluster_pcmk_remote.py in
-        #NodeAddGuest.test_success_when_guest_node_matches_with_existing_guest
-
-        # see also BundleMiscCommands
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
-        )
-
-        line = 'resource update'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output.startswith("\nUsage: pcs resource")
-
-        output, returnVal = pcs(temp_cib, "resource update ClusterIP ip=192.168.0.100")
-        assert returnVal == 0
-        assert output == ""
-
     def testAddOperation(self):
         # see also BundleMiscCommands
         self.assert_pcs_success(
@@ -592,97 +572,6 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
               Operations: monitor interval=10 role=Master timeout=20 (state-monitor-interval-10)
                           monitor interval=11 role=Slave timeout=20 (state-monitor-interval-11)
                           monitor interval=15 role=Master (state-monitor-interval-15)
-            """
-        ))
-
-    def testRemoveOperation(self):
-        # see also BundleMiscCommands
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
-        )
-
-        line = 'resource op add ClusterIP monitor interval=31s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP-monitor-interval-32s-xxxxx'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == "Error: unable to find operation id: ClusterIP-monitor-interval-32s-xxxxx\n"
-
-        line = 'resource op remove ClusterIP-monitor-interval-32s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)
-            """
-        ))
-
-        self.assert_pcs_success(
-            'resource op remove ClusterIP monitor interval=31s'
-        )
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-            """
-        ))
-
-        line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP stop timeout=34s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op add ClusterIP start timeout=33s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = 'resource op remove ClusterIP monitor'
-        output, returnVal = pcs(temp_cib, line)
-        ac(output,"")
-        assert returnVal == 0
-        assert output == ""
-
-        self.assert_pcs_success("resource show ClusterIP", outdent(
-            """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)
-                          start interval=0s timeout=33s (ClusterIP-start-interval-0s)
             """
         ))
 
@@ -1891,90 +1780,6 @@ Ticket Constraints:
             Deleting Resource (and group and M/S) - dummylarge
             """
         ))
-        assert returnVal == 0
-
-    def testBadInstanceVariables(self):
-        self.assert_pcs_success(
-            "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
-                " test=testC test2=test2a test4=test4A op monitor interval=35"
-                " meta test7=test7a test6="
-            ,
-            "Warning: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_fail(
-            "resource update D0 test=testA test2=testB",
-            "Error: invalid resource options: 'test', 'test2', allowed options"
-                " are: fake, state, trace_file, trace_ra, use --force to"
-                " override\n"
-        )
-
-        self.assert_pcs_success(
-            "resource update D0 test=testB test2=testC test3=testD --force",
-            "Warning: invalid resource options: 'test', 'test2', 'test3',"
-                " allowed options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_success("resource show D0", outdent(
-            """\
-             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Attributes: test=testB test2=testC test3=testD test4=test4A
-              Meta Attrs: test6= test7=test7a
-              Operations: monitor interval=35 (D0-monitor-interval-35)
-            """
-        ))
-
-    def testMetaAttrs(self):
-        # see also BundleMiscCommands
-        self.assert_pcs_success(
-             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30 meta"
-                " test5=test5a test6=test6a"
-            ,
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30"
-            ,
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        self.assert_pcs_success(
-            "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=",
-            "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
-        )
-
-        output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource group add TestRG D1")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource show --full")
-        ac(output, """\
- Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-  Attributes: test=testC test2=test2a
-  Meta Attrs: test5=test5a test7=test7a
-  Operations: monitor interval=35 (D0-monitor-interval-35)
- Group: TestRG
-  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Attributes: test=testA test2=test2a
-   Meta Attrs: d1meta=superd1meta
-   Operations: monitor interval=30 (D1-monitor-interval-30)
-""")
         assert returnVal == 0
 
     def testMSGroup(self):
@@ -4760,7 +4565,221 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         ))
 
-    def testResrourceUtilizationSet(self):
+
+class OperationRemove(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    # see also BundleMiscCommands
+
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    fixture_xml_1_monitor = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                    <op id="R-monitor-interval-10" interval="10"
+                        name="monitor" timeout="20"
+                    />
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    fixture_xml_empty_operations = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_1_monitor
+        )
+
+    def fixture_monitor_20(self):
+        self.assert_effect(
+            "resource op add R monitor interval=20 timeout=20 --force",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-monitor-interval-20" interval="20"
+                                name="monitor" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def fixture_start(self):
+        self.assert_effect(
+            "resource op add R start timeout=20",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-monitor-interval-20" interval="20"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def test_remove_missing_op(self):
+        self.fixture_resource()
+        self.assert_pcs_fail(
+            "resource op remove R-monitor-interval-30",
+            "Error: unable to find operation id: R-monitor-interval-30\n"
+        )
+
+    def test_keep_empty_operations(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource op remove R-monitor-interval-10",
+            self.fixture_xml_empty_operations
+        )
+
+    def test_remove_by_id_success(self):
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.assert_effect(
+            "resource op remove R-monitor-interval-20",
+            self.fixture_xml_1_monitor
+        )
+
+    def test_remove_all_monitors(self):
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.fixture_start()
+        self.assert_effect(
+            "resource op remove R monitor",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+
+class Utilization(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    @staticmethod
+    def fixture_xml_resource_no_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_empty_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                    <utilization id="R-utilization" />
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_with_utilization():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                    <utilization id="R-utilization">
+                        <nvpair id="R-utilization-test" name="test"
+                            value="100"
+                        />
+                    </utilization>
+                </primitive>
+            </resources>
+            """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_resource_no_utilization()
+        )
+
+    def fixture_resource_utilization(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource utilization R test=100",
+            self.fixture_xml_resource_with_utilization()
+        )
+
+    def testResourceUtilizationSet(self):
         # see also BundleMiscCommands
         output, returnVal = pcs(
             temp_large_cib, "resource utilization dummy test1=10"
@@ -4861,6 +4880,359 @@ Error: Value of utilization attribute must be integer: 'test=int'
 """
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
+
+    def test_keep_empty_nvset(self):
+        self.fixture_resource_utilization()
+        self.assert_effect(
+            "resource utilization R test=",
+            self.fixture_xml_resource_empty_utilization()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource utilization R test=",
+            self.fixture_xml_resource_no_utilization()
+        )
+
+
+class MetaAttrs(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    @staticmethod
+    def fixture_xml_resource_no_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_empty_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <meta_attributes id="R-meta_attributes" />
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_with_meta():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-a" name="a" value="b"/>
+                    </meta_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_resource_no_meta()
+        )
+
+    def fixture_resource_meta(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy meta a=b",
+            self.fixture_xml_resource_with_meta()
+        )
+
+    def testMetaAttrs(self):
+        # see also BundleMiscCommands
+        self.assert_pcs_success(
+             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30 meta"
+                " test5=test5a test6=test6a"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_success(
+            "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_success(
+            "resource update --force D0 test=testC test2=test2a op monitor "
+                "interval=35 meta test7=test7a test6=",
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource group add TestRG D1")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2"
+        )
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+  Attributes: test=testC test2=test2a
+  Meta Attrs: test5=test5a test7=test7a
+  Operations: monitor interval=35 (D0-monitor-interval-35)
+ Group: TestRG
+  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Attributes: test=testA test2=test2a
+   Meta Attrs: d1meta=superd1meta
+   Operations: monitor interval=30 (D1-monitor-interval-30)
+""")
+        assert returnVal == 0
+
+    def test_resource_meta_keep_empty_meta(self):
+        self.fixture_resource_meta()
+        self.assert_effect(
+            "resource meta R a=",
+            self.fixture_xml_resource_empty_meta()
+        )
+
+    def test_resource_update_keep_empty_meta(self):
+        self.fixture_resource_meta()
+        self.assert_effect(
+            "resource update R meta a=",
+            self.fixture_xml_resource_empty_meta()
+        )
+
+    def test_resource_meta_dont_create_meta_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource meta R a=",
+            self.fixture_xml_resource_no_meta()
+        )
+
+    def test_resource_update_dont_create_meta_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource update R meta a=",
+            self.fixture_xml_resource_no_meta()
+        )
+
+
+class UpdateInstanceAttrs(
+    TestCase,
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    # The idempotency with remote-node is tested in
+    # pcs/test/test_cluster_pcmk_remote.py in
+    #NodeAddGuest.test_success_when_guest_node_matches_with_existing_guest
+
+    # see also BundleMiscCommands
+
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    @staticmethod
+    def fixture_xml_resource_no_attrs():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_empty_attrs():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <instance_attributes id="R-instance_attributes" />
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    @staticmethod
+    def fixture_xml_resource_with_attrs():
+        return """
+            <resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <instance_attributes id="R-instance_attributes">
+                        <nvpair id="R-instance_attributes-fake" name="fake"
+                            value="F"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+            """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_resource_no_attrs()
+        )
+
+    def fixture_resource_attrs(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy fake=F",
+            self.fixture_xml_resource_with_attrs()
+        )
+
+    def test_usage(self):
+        self.assert_pcs_fail(
+            "resource update",
+            stdout_start="\nUsage: pcs resource update...\n"
+        )
+
+    def testBadInstanceVariables(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+                " test=testC test2=test2a test4=test4A op monitor interval=35"
+                " meta test7=test7a test6="
+            ,
+            "Error: invalid resource options: 'test', 'test2', 'test4',"
+                " allowed options are: fake, state, trace_file, trace_ra, "
+                "use --force to override\n"
+        )
+
+        self.assert_pcs_success(
+            "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                " test=testC test2=test2a test4=test4A op monitor interval=35"
+                " meta test7=test7a test6="
+            ,
+            "Warning: invalid resource options: 'test', 'test2', 'test4',"
+                " allowed options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_fail(
+            "resource update D0 test=testA test2=testB test3=testD",
+            "Error: invalid resource options: 'test', 'test2', 'test3', allowed"
+                " options are: fake, state, trace_file, trace_ra, use --force"
+                " to override\n"
+        )
+
+        self.assert_pcs_success(
+            "resource update D0 test=testB test2=testC test3=testD --force",
+            "Warning: invalid resource options: 'test', 'test2', 'test3',"
+                " allowed options are: fake, state, trace_file, trace_ra\n"
+        )
+
+        self.assert_pcs_success("resource show D0", outdent(
+            """\
+             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+              Attributes: test=testB test2=testC test3=testD test4=test4A
+              Meta Attrs: test6= test7=test7a
+              Operations: monitor interval=35 (D0-monitor-interval-35)
+            """
+        ))
+
+    def test_update_existing(self):
+        xml = """
+            <resources>
+                <primitive class="ocf" id="ClusterIP" provider="heartbeat"
+                    type="IPaddr2"
+                >
+                    <instance_attributes id="ClusterIP-instance_attributes">
+                        <nvpair id="ClusterIP-instance_attributes-cidr_netmask"
+                            name="cidr_netmask" value="32"
+                        />
+                        <nvpair id="ClusterIP-instance_attributes-ip" name="ip"
+                            value="{ip}"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op id="ClusterIP-monitor-interval-30s" interval="30s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>
+        """
+        self.assert_effect(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+            ,
+            xml.format(ip="192.168.0.99")
+        )
+
+        self.assert_effect(
+            "resource update ClusterIP ip=192.168.0.100",
+            xml.format(ip="192.168.0.100")
+        )
+
+    def test_keep_empty_nvset(self):
+        self.fixture_resource_attrs()
+        self.assert_effect(
+            "resource update R fake=",
+            self.fixture_xml_resource_empty_attrs()
+        )
+
+    def test_dont_create_nvset_on_removal(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "resource update R fake=",
+            self.fixture_xml_resource_no_attrs()
+        )
+
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):

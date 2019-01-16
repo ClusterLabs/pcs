@@ -287,6 +287,15 @@ class Network(TestCase):
         "ip-range-start",
     ]
 
+    fixture_cib_network_empty = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" />
+                <network />
+            </bundle>
+        </resources>
+    """
+
     fixture_cib_interface = """
         <resources>
             <bundle id="B1">
@@ -321,10 +330,10 @@ class Network(TestCase):
             }
         )
 
-    def test_remove_network(self):
+    def test_remove_network_keep_empty(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_interface)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=self.fixture_cib_network_empty)
         )
 
         resource.bundle_update(
@@ -477,6 +486,15 @@ class PortMap(TestCase):
         "range",
     ]
 
+    fixture_cib_network_empty = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" />
+                <network />
+            </bundle>
+        </resources>
+    """
+
     fixture_cib_port_80 = """
         <resources>
             <bundle id="B1">
@@ -518,10 +536,10 @@ class PortMap(TestCase):
             ]
         )
 
-    def test_remove_network(self):
+    def test_remove_network_keep_empty(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_port_80)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=self.fixture_cib_network_empty)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -628,6 +646,15 @@ class StorageMap(TestCase):
         "target-dir",
     ]
 
+    fixture_cib_storage_empty = """
+        <resources>
+            <bundle id="B1">
+                <docker image="pcs:test" />
+                <storage />
+            </bundle>
+        </resources>
+    """
+
     fixture_cib_storage_1 = """
         <resources>
             <bundle id="B1">
@@ -682,10 +709,10 @@ class StorageMap(TestCase):
             ]
         )
 
-    def test_remove_storage(self):
+    def test_remove_storage_keep_empty(self):
         (self.config
             .runner.cib.load(resources=self.fixture_cib_storage_1)
-            .env.push_cib(resources=fixture_resources_minimal)
+            .env.push_cib(resources=self.fixture_cib_storage_empty)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -760,6 +787,15 @@ class Meta(TestCase):
         </resources>
     """
 
+    fixture_empty_meta = """
+        <resources>
+            <bundle id="B1">
+                <meta_attributes id="B1-meta_attributes" />
+                <docker image="pcs:test" masters="3" replicas="6"/>
+            </bundle>
+        </resources>
+    """
+
     fixture_meta_stopped = """
         <resources>
             <bundle id="B1">
@@ -788,10 +824,10 @@ class Meta(TestCase):
             }
         )
 
-    def test_remove_meta_element(self):
+    def test_keep_meta_element(self):
         (self.config
             .runner.cib.load(resources=self.fixture_meta_stopped)
-            .env.push_cib(resources=self.fixture_no_meta)
+            .env.push_cib(resources=self.fixture_empty_meta)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
@@ -1068,7 +1104,7 @@ class WithPrimitive(TestCase):
                 )
             )
             .env.push_cib(resources=self.fixture_resources_pre.format(
-                network=''
+                network='<network />'
             ))
         )
         resource.bundle_update(
@@ -1172,7 +1208,7 @@ class WithPrimitive(TestCase):
                 )
             )
             .env.push_cib(resources=self.fixture_resources_pre.format(
-                network=''
+                network='<network />'
             ))
         )
         resource.bundle_update(
@@ -1227,7 +1263,7 @@ class WithPrimitive(TestCase):
                 )
             )
             .env.push_cib(resources=self.fixture_resources_pre.format(
-                network=''
+                network='<network />'
             ))
         )
         resource.bundle_update(

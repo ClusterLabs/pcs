@@ -788,30 +788,7 @@ def resource_update(res_id,args, deal_with_guest_change=True):
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-    instance_attributes = resource.getElementsByTagName("instance_attributes")
-    if not instance_attributes:
-        instance_attributes = dom.createElement("instance_attributes")
-        instance_attributes.setAttribute("id", res_id + "-instance_attributes")
-        resource.appendChild(instance_attributes)
-    else:
-        instance_attributes = instance_attributes[0]
-
-    for key, val in params:
-        ia_found = False
-        for ia in instance_attributes.getElementsByTagName("nvpair"):
-            if ia.getAttribute("name") == key:
-                ia_found = True
-                if val == "":
-                    instance_attributes.removeChild(ia)
-                else:
-                    ia.setAttribute("value", val)
-                break
-        if not ia_found:
-            ia = dom.createElement("nvpair")
-            ia.setAttribute("id", res_id + "-instance_attributes-" + key)
-            ia.setAttribute("name", key)
-            ia.setAttribute("value", val)
-            instance_attributes.appendChild(ia)
+    utils.dom_update_instance_attr(resource, params)
 
     remote_node_name = utils.dom_get_resource_remote_node_name(resource)
 
@@ -884,9 +861,6 @@ def resource_update(res_id,args, deal_with_guest_change=True):
             dom, res_id, element, validate_strict=False,
             before_op=updating_op_before
         )
-
-    if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
-        instance_attributes.parentNode.removeChild(instance_attributes)
 
     utils.replace_cib_configuration(dom)
 
@@ -1072,14 +1046,20 @@ def resource_operation_add(
 
 def resource_operation_remove(res_id, argv):
 # if no args, then we're removing an operation id
+
+    # Do not ever remove an operations element, even if it is empty. There may
+    # be ACLs set in pacemaker which allow "write" for op elements (adding,
+    # changing and removing) but not operations elements. In such a case,
+    # removing an operations element would cause the whole change to be
+    # rejected by pacemaker with a "permission denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+
     dom = utils.get_cib_dom()
     if len(argv) == 0:
         for operation in dom.getElementsByTagName("op"):
             if operation.getAttribute("id") == res_id:
                 parent = operation.parentNode
                 parent.removeChild(operation)
-                if len(parent.getElementsByTagName("op")) == 0:
-                    parent.parentNode.removeChild(parent)
                 utils.replace_cib_configuration(dom)
                 return
         utils.err("unable to find operation id: %s" % res_id)
@@ -1115,14 +1095,10 @@ def resource_operation_remove(res_id, argv):
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
-            if len(parent.getElementsByTagName("op")) == 0:
-                parent.parentNode.removeChild(parent)
         elif len(set(op_properties) ^ set(temp_properties)) == 0:
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
-            if len(parent.getElementsByTagName("op")) == 0:
-                parent.parentNode.removeChild(parent)
             break
 
     if not found_match:
