@@ -4981,6 +4981,170 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         ))
 
+
+class OperationDeleteRemoveMixin(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    )
+):
+    # see also BundleMiscCommands
+
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.command = "to-be-overriden"
+
+    fixture_xml_1_monitor = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                    <op id="R-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
+                    />
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    fixture_xml_empty_operations = """
+        <resources>
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <operations>
+                </operations>
+            </primitive>
+        </resources>
+    """
+
+    def fixture_resource(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy",
+            self.fixture_xml_1_monitor
+        )
+
+    def fixture_monitor_20(self):
+        self.assert_effect(
+            "resource op add R monitor interval=20s timeout=20s --force",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                            <op id="R-monitor-interval-20s" interval="20s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def fixture_start(self):
+        self.assert_effect(
+            "resource op add R start timeout=20s",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                            <op id="R-monitor-interval-20s" interval="20s"
+                                name="monitor" timeout="20s"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+    def test_remove_missing_op(self):
+        assert self.command in {"delete", "remove"}
+        self.fixture_resource()
+        self.assert_pcs_fail(
+            f"resource op {self.command} R-monitor-interval-30s",
+            "Error: unable to find operation id: R-monitor-interval-30s\n"
+        )
+
+    def test_keep_empty_operations(self):
+        assert self.command in {"delete", "remove"}
+        self.fixture_resource()
+        self.assert_effect(
+            f"resource op {self.command} R-monitor-interval-10s",
+            self.fixture_xml_empty_operations
+        )
+
+    def test_remove_by_id_success(self):
+        assert self.command in {"delete", "remove"}
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.assert_effect(
+            f"resource op {self.command} R-monitor-interval-20s",
+            self.fixture_xml_1_monitor
+        )
+
+    def test_remove_all_monitors(self):
+        assert self.command in {"delete", "remove"}
+        self.fixture_resource()
+        self.fixture_monitor_20()
+        self.fixture_start()
+        self.assert_effect(
+            f"resource op {self.command} R monitor",
+            """
+                <resources>
+                    <primitive class="ocf" id="R" provider="pacemaker"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+
+class OperationDelete(OperationDeleteRemoveMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.command = "delete"
+
+    def test_usage(self):
+        self.assert_pcs_fail(
+            "resource op delete",
+            stdout_start="\nUsage: pcs resource op delete..."
+        )
+
+
+class OperationRemove(OperationDeleteRemoveMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.command = "remove"
+
+    def test_usage(self):
+        self.assert_pcs_fail(
+            "resource op remove",
+            stdout_start="\nUsage: pcs resource op remove..."
+        )
+
+
 class Utilization(
     TestCase,
     get_assert_pcs_effect_mixin(
