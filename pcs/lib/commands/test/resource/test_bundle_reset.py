@@ -159,11 +159,16 @@ class FullMixin(SetUpMixin, BaseMixin):
     def test_success_minimal(self):
         new_image = "{0}:new".format(self.image)
 
+        # Garbage (empty tags network, storage and meta_attributes) are kept.
+        # See https://bugzilla.redhat.com/show_bug.cgi?id=1642514
         self.config.env.push_cib(replace={
             ".//resources/bundle":
                 """
                     <bundle id="{bundle_id}">
                         <{container_type} image="{image}" />
+                        <network/>
+                        <storage/>
+                        <meta_attributes id="{bundle_id}-meta_attributes"/>
                         {fixture_primitive}
                     </bundle>
                 """

@@ -5,6 +5,7 @@ from pcs.lib import reports, validate
 from pcs.lib.cib.nvpair import (
     append_new_meta_attributes,
     arrange_first_meta_attributes,
+    META_ATTRIBUTES_TAG,
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
@@ -115,15 +116,18 @@ def append_new(
     """
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
     _append_container(bundle_element, container_type, container_options)
-    _configure(
-        bundle_element,
-        id_provider,
-        bundle_id,
-        network_options,
-        port_map,
-        storage_map,
-        meta_attributes,
-    )
+    if network_options or port_map:
+        _append_network(
+            bundle_element,
+            id_provider,
+            bundle_id,
+            network_options,
+            port_map,
+        )
+    if storage_map:
+        _append_storage(bundle_element, id_provider, bundle_id, storage_map)
+    if meta_attributes:
+        append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
     return bundle_element
 
 def validate_reset(
@@ -177,12 +181,20 @@ def reset(
     #   which does not change. Therefore, it is VERY HIGHLY probable the newly
     #   created ids will be the same as the original ones.
     elements_without_reset_impact = []
+
+    # Elements network, storage and meta_attributes must be kept even if they
+    # are without children.
+    # See https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+    #
+    # The only scenario that makes sense is that these elements are empty
+    # and no attributes or children are requested for them. So we collect only
+    # deleted tags and we will ensure creation minimal relevant elements at
+    # least.
+    indelible_tags = []
     for child in list(bundle_element):
-        if child.tag not in (
-            list(GENERIC_CONTAINER_TYPES)
-            +
-            ["network", "storage", "meta_attributes"]
-        ):
+        if child.tag in ["network", "storage", META_ATTRIBUTES_TAG]:
+            indelible_tags.append(child.tag)
+        elif child.tag not in list(GENERIC_CONTAINER_TYPES):
             # Only primitive should be found here, currently.
             # The order of various element tags has no practical impact so we
             # don't care about it here.
@@ -190,16 +202,23 @@ def reset(
         bundle_element.remove(child)
 
     _append_container(bundle_element, container_type, container_options)
-    _configure(
-        bundle_element,
-        id_provider,
-        bundle_id,
-        network_options,
-        port_map,
-        storage_map,
-        meta_attributes,
-    )
-
+    if network_options or port_map or "network" in indelible_tags:
+        _append_network(
+            bundle_element,
+            id_provider,
+            bundle_id,
+            network_options,
+            port_map,
+        )
+    if storage_map or "storage" in indelible_tags:
+        _append_storage(bundle_element, id_provider, bundle_id, storage_map)
+    if meta_attributes or META_ATTRIBUTES_TAG in indelible_tags:
+        append_new_meta_attributes(
+            bundle_element,
+            meta_attributes,
+            id_provider,
+            enforce_append=True,
+        )
     for element in elements_without_reset_impact:
         bundle_element.append(element)
 
@@ -699,27 +718,17 @@ def _append_container(bundle_element, container_type, container_options):
         container_options,
     )
 
-def _configure(
-    bundle_element, id_provider, id_base,
-    network_options, port_map, storage_map, meta_attributes
+def _append_network(
+    bundle_element, id_provider, id_base, network_options, port_map
 ):
-    if network_options or port_map:
-        network_element = etree.SubElement(bundle_element, "network")
-        # Do not add options with empty values. When updating, an empty value
-        # means remove the option.
-        update_attributes_remove_empty(network_element, network_options)
-        for port_map_options in port_map:
-            _append_port_map(
-                network_element, id_provider, id_base, port_map_options
-            )
-    if storage_map:
-        storage_element = etree.SubElement(bundle_element, "storage")
-        for storage_map_options in storage_map:
-            _append_storage_map(
-                storage_element, id_provider, id_base, storage_map_options
-            )
-    if meta_attributes:
-        append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
+    network_element = etree.SubElement(bundle_element, "network")
+    # Do not add options with empty values. When updating, an empty value means
+    # remove the option.
+    update_attributes_remove_empty(network_element, network_options)
+    for port_map_options in port_map:
+        _append_port_map(
+            network_element, id_provider, id_base, port_map_options
+        )
 
 def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     if "id" not in port_map_options:
@@ -737,6 +746,16 @@ def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     # remove the option.
     update_attributes_remove_empty(port_map_element, port_map_options)
     return port_map_element
+
+def _append_storage(bundle_element, id_provider, id_base, storage_map):
+    storage_element = etree.SubElement(bundle_element, "storage")
+    for storage_map_options in storage_map:
+        _append_storage_map(
+            storage_element,
+            id_provider,
+            id_base,
+            storage_map_options,
+        )
 
 def _append_storage_map(
     parent_element, id_provider, id_base, storage_map_options

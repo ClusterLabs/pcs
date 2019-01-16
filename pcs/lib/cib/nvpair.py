@@ -7,6 +7,9 @@ from pcs.lib.xml_tools import (
     append_when_useful
 )
 
+META_ATTRIBUTES_TAG = "meta_attributes"
+INSTANCE_ATTRIBUTES_TAG = "instance_attributes"
+
 def _append_new_nvpair(nvset_element, name, value, id_provider):
     """
     Create nvpair with name and value as subelement of nvset_element.
@@ -76,7 +79,10 @@ def arrange_first_nvset(
     update_nvset(nvset_element, nvpair_dict, id_provider)
     append_when_useful(context_element, nvset_element, index=0)
 
-def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider):
+def append_new_nvset(
+        tag_name, context_element, nvpair_dict, id_provider,
+        enforce_append=False
+    ):
     """
     Append new nvset_element comprising nvpairs children (corresponding
     nvpair_dict) to the context_element
@@ -85,6 +91,7 @@ def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider):
     etree.Element context_element is element where new nvset will be appended
     dict nvpair_dict contains source for nvpair children
     IdProvider id_provider -- elements' ids generator
+    bool enforce_append -- append element wo usefulness check if flag is True
     """
     nvset_element = etree.Element(
         tag_name,
@@ -94,16 +101,19 @@ def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider):
     )
     for name, value in sorted(nvpair_dict.items()):
         _append_new_nvpair(nvset_element, name, value, id_provider)
-    append_when_useful(context_element, nvset_element)
+    if enforce_append:
+        context_element.append(nvset_element)
+    else:
+        append_when_useful(context_element, nvset_element)
 
 append_new_instance_attributes = partial(
     append_new_nvset,
-    "instance_attributes"
+    INSTANCE_ATTRIBUTES_TAG,
 )
 
 append_new_meta_attributes = partial(
     append_new_nvset,
-    "meta_attributes"
+    META_ATTRIBUTES_TAG,
 )
 
 def update_nvset(nvset_element, nvpair_dict, id_provider):
@@ -191,17 +201,17 @@ def has_meta_attribute(resource_el, name):
     string name specifies attribute
     """
     return len(resource_el.xpath(
-        './meta_attributes/nvpair[@name="{0}"]'.format(name)
+        './{0}/nvpair[@name="{1}"]'.format(META_ATTRIBUTES_TAG, name)
     )) > 0
 
 arrange_first_meta_attributes = partial(
     arrange_first_nvset,
-    "meta_attributes"
+    META_ATTRIBUTES_TAG,
 )
 
 arrange_first_instance_attributes = partial(
     arrange_first_nvset,
-    "instance_attributes"
+    INSTANCE_ATTRIBUTES_TAG,
 )
 
-get_meta_attribute_value = partial(get_value, "meta_attributes")
+get_meta_attribute_value = partial(get_value, META_ATTRIBUTES_TAG)
