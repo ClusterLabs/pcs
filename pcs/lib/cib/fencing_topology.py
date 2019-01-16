@@ -50,6 +50,13 @@ def remove_all_levels(topology_el):
     Remove all fencing levels.
     etree topology_el -- etree element to remove the levels from
     """
+    # Do not ever remove a fencing-topology element, even if it is empty. There
+    # may be ACLs set in pacemaker which allow "write" for fencing-level
+    # elements (adding, changing and removing) but not fencing-topology
+    # elements. In such a case, removing a fencing-topology element would cause
+    # the whole change to be rejected by pacemaker with a "permission denied"
+    # message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     for level_el in topology_el.findall("fencing-level"):
         level_el.getparent().remove(level_el)
 
@@ -68,6 +75,13 @@ def remove_levels_by_params(
     Iterable devices -- list of stonith devices of the removed fencing level
     bool ignore_if_missing -- when True, do not raise if level not found
     """
+    # Do not ever remove a fencing-topology element, even if it is empty. There
+    # may be ACLs set in pacemaker which allow "write" for fencing-level
+    # elements (adding, changing and removing) but not fencing-topology
+    # elements. In such a case, removing a fencing-topology element would cause
+    # the whole change to be rejected by pacemaker with a "permission denied"
+    # message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     if target_type:
         _validate_target_typewise(reporter, target_type)
         reporter.send()
@@ -92,6 +106,13 @@ def remove_device_from_all_levels(topology_el, device_id):
     etree topology_el -- etree element with levels to remove the device from
     string device_id -- stonith device to remove
     """
+    # Do not ever remove a fencing-topology element, even if it is empty. There
+    # may be ACLs set in pacemaker which allow "write" for fencing-level
+    # elements (adding, changing and removing) but not fencing-topology
+    # elements. In such a case, removing a fencing-topology element would cause
+    # the whole change to be rejected by pacemaker with a "permission denied"
+    # message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     for level_el in topology_el.findall("fencing-level"):
         new_devices = [
             dev
