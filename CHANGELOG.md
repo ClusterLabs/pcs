@@ -21,6 +21,10 @@
 - Propose removing nodes from their clusters instead of destroying cluster on
   the nodes when trying to create new cluster from nodes which are already in
   a cluster ([rhbz#1474747])
+- Pcs no longer removes empty `meta_attributes`, `instance_attributes` and other
+  nvsets and similar elements from CIB. Such behavior was causing problems when
+  pacemaker ACLs were in effect, leading to inability of pushing modified CIBs
+  to pacemaker. ([rhbz#1642514])
 
 [rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
 [rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
@@ -28,6 +32,7 @@
 [rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
 [rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
+[rhbz#1642514]: https://bugzilla.redhat.com/show_bug.cgi?id=1642514
 
 
 ## [0.9.166] - 2018-09-30
