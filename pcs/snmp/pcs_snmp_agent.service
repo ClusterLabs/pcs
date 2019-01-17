@@ -1,5 +1,6 @@
 [Unit]
 Description=SNMP agent for pacemaker cluster
+Documentation=man:pcs_snmp_agent(8)
 Requires=snmpd.service
 
 [Service]
