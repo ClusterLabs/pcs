@@ -69,6 +69,30 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
 
 
 @skip_unless_pacemaker_supports_bundle
+class BundleReset(BundleCreateCommon):
+    empty_cib = rc("cib-empty.xml")
+    def test_minimal(self):
+        self.assert_pcs_success(
+            "resource bundle create B1 container docker image=pcs:test"
+        )
+        self.assert_pcs_success(
+            "resource bundle create B2 container docker image=pcs:test"
+        )
+        self.assert_effect(
+            "resource bundle reset B1 container docker image=pcs:new",
+            """
+                <resources>
+                    <bundle id="B1">
+                        <docker image="pcs:new" />
+                    </bundle>
+                    <bundle id="B2">
+                        <docker image="pcs:test" />
+                    </bundle>
+                </resources>
+            """
+        )
+
+@skip_unless_pacemaker_supports_bundle
 class BundleCreate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 

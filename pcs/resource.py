@@ -3327,6 +3327,8 @@ def resource_bundle_cmd(lib, argv, modifiers):
 
         if sub_cmd == "create":
             resource_bundle_create_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "reset":
+            resource_bundle_reset_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "update":
             resource_bundle_update_cmd(lib, argv_next, modifiers)
         else:
@@ -3345,13 +3347,33 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
       * --wait
       * -f - CIB file
     """
+    _resource_bundle_configure(lib.resource.bundle_create, argv, modifiers)
+
+def resource_bundle_reset_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown options
+      * --disabled - create as a stopped bundle
+      * --wait
+      * -f - CIB file
+    """
+    _resource_bundle_configure(lib.resource.bundle_reset, argv, modifiers)
+
+def _resource_bundle_configure(call_lib, argv, modifiers):
+    """
+    Options:
+      * --force - allow unknown options
+      * --disabled - create as a stopped bundle
+      * --wait
+      * -f - CIB file
+    """
     modifiers.ensure_only_supported("--force", "--disabled", "--wait", "-f")
     if not argv:
         raise CmdLineInputError()
 
     bundle_id = argv[0]
     parts = parse_bundle_create_options(argv[1:])
-    lib.resource.bundle_create(
+    call_lib(
         bundle_id,
         parts["container_type"],
         container_options=parts["container"],
