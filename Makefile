@@ -222,6 +222,7 @@ install_python_part: install_bundled_libs
 	install -D -m644 pcs/bash_completion ${DEST_BASH_COMPLETION}/pcs
 	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
 	# pcs_internal
+	mkdir -p ${DEST_LIB}/pcs/
 	mv ${DEST_PREFIX}/bin/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
 	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
@@ -243,7 +244,7 @@ ifeq ($(BUILD_GEMS),true)
 	make -C pcsd build_gems
 endif
 	install -d -m 700 ${DESTDIR}/var/log/pcsd
-	mkdir -p ${DEST_LIB}
+	mkdir -p ${DEST_LIB}/pcsd/
 	cp -r pcsd ${DEST_LIB}
 	install -m 644 -D pcsd/pcsd.conf ${DEST_CONF}/pcsd
 	install -d ${DESTDIR}/etc/pam.d
