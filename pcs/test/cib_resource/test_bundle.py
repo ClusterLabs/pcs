@@ -54,11 +54,11 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleReset(BundleCreateCommon):
-    empty_cib = rc("cib-empty.xml")
+    empty_cib = rc("cib-empty-2.8.xml")
+
     def test_minimal(self):
         self.assert_pcs_success(
-            "resource bundle create B1 container docker image=pcs:test",
-            "CIB has been upgraded to the latest schema version.\n",
+            "resource bundle create B1 container docker image=pcs:test"
         )
         self.assert_pcs_success(
             "resource bundle create B2 container docker image=pcs:test"

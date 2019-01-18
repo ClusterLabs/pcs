@@ -94,7 +94,6 @@ def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider=None):
     etree.Element context_element is element where new nvset will be appended
     dict nvpair_dict contains source for nvpair children
     IdProvider id_provider -- elements' ids generator
-    bool enforce_append -- append element wo usefulness check if flag is True
     """
     nvset_element = etree.SubElement(context_element, tag_name, {
         "id": create_subelement_id(context_element, tag_name, id_provider)
