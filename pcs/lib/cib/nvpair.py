@@ -10,6 +10,9 @@ from functools import partial
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.xml_tools import get_sub_element
 
+META_ATTRIBUTES_TAG = "meta_attributes"
+INSTANCE_ATTRIBUTES_TAG = "instance_attributes"
+
 def _append_new_nvpair(nvset_element, name, value, id_provider=None):
     """
     Create nvpair with name and value as subelement of nvset_element.
@@ -91,6 +94,7 @@ def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider=None):
     etree.Element context_element is element where new nvset will be appended
     dict nvpair_dict contains source for nvpair children
     IdProvider id_provider -- elements' ids generator
+    bool enforce_append -- append element wo usefulness check if flag is True
     """
     nvset_element = etree.SubElement(context_element, tag_name, {
         "id": create_subelement_id(context_element, tag_name, id_provider)
@@ -100,12 +104,12 @@ def append_new_nvset(tag_name, context_element, nvpair_dict, id_provider=None):
 
 append_new_instance_attributes = partial(
     append_new_nvset,
-    "instance_attributes"
+    INSTANCE_ATTRIBUTES_TAG,
 )
 
 append_new_meta_attributes = partial(
     append_new_nvset,
-    "meta_attributes"
+    META_ATTRIBUTES_TAG,
 )
 
 def update_nvset(nvset_element, nvpair_dict):
@@ -178,12 +182,12 @@ def has_meta_attribute(resource_el, name):
     string name specifies attribute
     """
     return 0 < len(resource_el.xpath(
-        './meta_attributes/nvpair[@name="{0}"]'.format(name)
+        './{0}/nvpair[@name="{1}"]'.format(META_ATTRIBUTES_TAG, name)
     ))
 
 arrange_first_meta_attributes = partial(
     arrange_first_nvset,
-    "meta_attributes"
+    META_ATTRIBUTES_TAG,
 )
 
-get_meta_attribute_value = partial(get_value, "meta_attributes")
+get_meta_attribute_value = partial(get_value, META_ATTRIBUTES_TAG)
