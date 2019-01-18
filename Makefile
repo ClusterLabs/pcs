@@ -124,6 +124,7 @@ install: install_bundled_libs
 	install -D -m644 pcs/bash_completion ${BASH_COMPLETION_DIR}/pcs
 	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
 	# pcs SNMP install
+	mkdir -p ${PCS_PARENT_DIR}
 	mv ${DESTDIR}${PREFIX}/bin/pcs_snmp_agent ${PCS_PARENT_DIR}/pcs_snmp_agent
 	install -d ${DESTDIR}/var/log/pcs
 	install -d ${SNMP_MIB_DIR_FULL}
