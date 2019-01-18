@@ -40,6 +40,11 @@ def stonith_cmd(lib, argv, modifiers):
             resource.resource_update(lib, argv_next, modifiers)
         elif sub_cmd in {"delete", "remove"}:
             resource.resource_remove_cmd(lib, argv_next, modifiers)
+        # TODO remove, deprecated command
+        # replaced with 'stonith status' and 'stonith config'
+        elif sub_cmd == "show":
+            resource.resource_show(lib, argv_next, modifiers, stonith=True)
+            print_stonith_levels(lib)
         elif sub_cmd == "status":
             resource.resource_status(lib, argv_next, modifiers, stonith=True)
             print_stonith_levels(lib)

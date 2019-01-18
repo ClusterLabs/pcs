@@ -22,6 +22,9 @@ PCS_LONG_OPTIONS = [
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
     "monitor",
+    # TODO remove
+    # used only in deprecated 'pcs resource|stonith show'
+    "groups",
 ]
 
 def split_list(arg_list, separator):
@@ -319,6 +322,9 @@ class InputModifiers():
             "--enable": "--enable" in options,
             "--force": "--force" in options,
             "--full": "--full" in options,
+            # TODO remove
+            # used only in deprecated 'pcs resource|stonith show'
+            "--groups": "--groups" in options,
             "--hide-inactive": "--hide-inactive" in options,
             "--interactive": "--interactive" in options,
             "--local": "--local" in options,

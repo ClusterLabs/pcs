@@ -496,6 +496,9 @@ class InputModifiersTest(TestCase):
             "--enable",
             "--force",
             "--full",
+            # TODO remove
+            # used only in deprecated 'pcs resource|stonith show'
+            "--groups",
             "--hide-inactive",
             "--interactive",
             "--local",

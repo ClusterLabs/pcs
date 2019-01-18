@@ -28,12 +28,18 @@
 - `ipv4-6` and `ipv6-4` are now valid values of `ip_version` in cluster setup
   ([rhbz#1667040])
 
+### Deprecated
+- Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
+  deprecated to ease transition to its replacements. It will be removed again in
+  future. [rhbz#1661059]
+
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1659051]: https://bugzilla.redhat.com/show_bug.cgi?id=1659051
 [rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
+[rhbz#1661059]: https://bugzilla.redhat.com/show_bug.cgi?id=1661059
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040

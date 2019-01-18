@@ -113,6 +113,10 @@ def resource_cmd(lib, argv, modifiers):
             resource_meta(lib, argv_next, modifiers)
         elif sub_cmd in {"delete", "remove"}:
             resource_remove_cmd(lib, argv_next, modifiers)
+        # TODO remove, deprecated command
+        # replaced with 'resource status' and 'resource config'
+        elif sub_cmd == "show":
+            resource_show(lib, argv_next, modifiers)
         elif sub_cmd == "status":
             resource_status(lib, argv_next, modifiers)
         elif sub_cmd == "config":
@@ -2202,6 +2206,65 @@ def resource_group_list(lib, argv, modifiers):
             line_parts.append(resource.getAttribute("id"))
         print(" ".join(line_parts))
 
+def resource_show(lib, argv, modifiers, stonith=False):
+    # TODO remove, deprecated command
+    # replaced with 'resource status' and 'resource config'
+    """
+    Options:
+      * -f - CIB file
+      * --full - print all configured options
+      * --groups - print resource groups
+      * --hide-inactive - print only active resources
+    """
+    modifiers.ensure_only_supported(
+        "-f", "--full", "--groups", "--hide-inactive"
+    )
+    mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
+    specified_modifiers = [
+        opt for opt in mutually_exclusive_opts if modifiers.is_specified(opt)
+    ]
+    if (len(specified_modifiers) > 1) or (argv and specified_modifiers):
+        utils.err(
+            "you can specify only one of resource id, {0}".format(
+                ", ".join(mutually_exclusive_opts)
+            )
+        )
+
+    if modifiers.get("--groups"):
+        warn(
+            "This command is deprecated and will be removed. "
+            "Please use 'pcs resource group list' instead."
+        )
+        resource_group_list(lib, argv, modifiers.get_subset("-f"))
+        return
+
+    if modifiers.get("--full") or argv:
+        warn(
+            "This command is deprecated and will be removed. "
+            "Please use 'pcs {} config' instead.".format(
+                "stonith" if stonith else "resource"
+            )
+        )
+        resource_config(
+            lib,
+            argv,
+            modifiers.get_subset("-f"),
+            stonith=stonith
+        )
+        return
+
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs {} status' instead.".format(
+            "stonith" if stonith else "resource"
+        )
+    )
+    resource_status(
+        lib,
+        argv,
+        modifiers.get_subset("-f", "--hide-inactive"),
+        stonith=stonith
+    )
 
 def resource_status(lib, argv, modifiers, stonith=False):
     """
