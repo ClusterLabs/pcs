@@ -17,7 +17,7 @@ CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
 SBD_CONFIG = '/etc/sysconfig/sbd'
-CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
+CIB_PATH = '/var/lib/pacemaker/cib/cib.xml'
 BOOTH_CONFIG_DIR='/etc/booth'
 PACEMAKER_AUTHKEY='/etc/pacemaker/authkey'
 
