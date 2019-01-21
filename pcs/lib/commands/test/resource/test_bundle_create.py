@@ -9,7 +9,6 @@ from unittest import TestCase
 from pcs.lib.commands import resource
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.lib.cib.resource.bundle import GENERIC_CONTAINER_TYPES
 from pcs.lib.commands.test.resource.bundle_common import(
     FixturesMixin,
     SetUpMixin,
@@ -70,7 +69,7 @@ class MinimalCreate(CreateCommandMixin, FixturesMixin, SetUpMixin, TestCase):
                     {
                         "option_name": "container type",
                         "option_value": "nonsense",
-                        "allowed_values": GENERIC_CONTAINER_TYPES,
+                        "allowed_values": ["docker"],
                     },
                     None
                 ),

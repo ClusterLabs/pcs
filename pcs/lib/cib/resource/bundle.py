@@ -15,10 +15,7 @@ from pcs.lib.cib.nvpair import (
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import find_element_by_tag_and_id
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
     get_sub_element,
@@ -26,8 +23,6 @@ from pcs.lib.xml_tools import (
 )
 
 TAG = "bundle"
-
-GENERIC_CONTAINER_TYPES = {"docker"}
 
 GENERIC_CONTAINER_OPTIONS = frozenset((
     "image",
@@ -197,7 +192,7 @@ def reset(
     for child in list(bundle_element):
         if child.tag in ["network", "storage", META_ATTRIBUTES_TAG]:
             indelible_tags.append(child.tag)
-        elif child.tag not in list(GENERIC_CONTAINER_TYPES):
+        elif child.tag != "docker":
             # Only primitive should be found here, currently.
             # The order of various element tags has no practical impact so we
             # don't care about it here.
@@ -245,7 +240,7 @@ def validate_update(
     report_list = []
 
     container_el = _get_container_element(bundle_el)
-    if container_el.tag == "docker":
+    if container_el is not None and container_el.tag == "docker":
         # TODO call the proper function once more container types are
         # supported by pacemaker
         report_list.extend(
@@ -408,12 +403,12 @@ def get_inner_resource(bundle_el):
     return None
 
 def _validate_container(container_type, container_options, force_options=False):
-    if not container_type in GENERIC_CONTAINER_TYPES:
+    if container_type != "docker":
         return [
             reports.invalid_option_value(
                 "container type",
                 container_type,
-                GENERIC_CONTAINER_TYPES,
+                ["docker"],
             )
         ]
 
