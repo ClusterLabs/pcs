@@ -15,6 +15,8 @@
   specified checkpoints ([rhbz#1515021])
 - Support for resource instance attributes uniqueness check according to
   resource agent metadata ([rhbz#1389140])
+- Command `pcs resource bundle reset` for a bundle configuration reseting
+  ([rhbz#1598197])
 
 ### Fixed
 - pcsd.service now depends on network-online.target ([rhbz#1638376])
@@ -31,6 +33,7 @@
 [rhbz#1515021]: https://bugzilla.redhat.com/show_bug.cgi?id=1515021
 [rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
 [rhbz#1554302]: https://bugzilla.redhat.com/show_bug.cgi?id=1554302
+[rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 [rhbz#1642514]: https://bugzilla.redhat.com/show_bug.cgi?id=1642514
 

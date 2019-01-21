@@ -170,6 +170,8 @@ def _check_special_cases(
 
     env.report_processor.process_list(report_list)
 
+_find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
+
 def create(
     env, resource_id, resource_agent_name,
     operations, meta_attributes, instance_attributes,
@@ -492,11 +494,7 @@ def create_into_bundle(
         if ensure_disabled:
             resource.common.disable(primitive_element)
 
-        bundle_el = find_element_by_tag_and_id(
-            resource.bundle.TAG,
-            resources_section,
-            bundle_id
-        )
+        bundle_el = _find_bundle(resources_section, bundle_id)
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
             env.report_processor.process(
                 reports.get_problem_creator(
@@ -579,6 +577,77 @@ def bundle_create(
         if ensure_disabled:
             resource.common.disable(bundle_element)
 
+def bundle_reset(
+    env, bundle_id, container_type, container_options=None,
+    network_options=None, port_map=None, storage_map=None, meta_attributes=None,
+    force_options=False,
+    ensure_disabled=False,
+    wait=False,
+):
+    # pylint: disable=too-many-arguments
+    """
+    Remove configuration of bundle bundle_id and create new one into it.
+
+    LibraryEnvironment env -- provides communication with externals
+    string bundle_id -- id of the bundle to reset
+    string container_type -- container engine name (docker, lxc...)
+    dict container_options -- container options
+    dict network_options -- network options
+    list of dict port_map -- a list of port mapping options
+    list of dict storage_map -- a list of storage mapping options
+    dict meta_attributes -- bundle's meta attributes
+    bool force_options -- return warnings instead of forceable errors
+    bool ensure_disabled -- set the bundle's target-role to "Stopped"
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    container_options = container_options or {}
+    network_options = network_options or {}
+    port_map = port_map or []
+    storage_map = storage_map or []
+    meta_attributes = meta_attributes or {}
+
+    with resource_environment(
+        env,
+        wait,
+        [bundle_id],
+        _ensure_disabled_after_wait(
+            ensure_disabled
+            or
+            resource.common.are_meta_disabled(meta_attributes)
+        ),
+        required_cib_version=Version(2, 8, 0),
+    ) as resources_section:
+        id_provider = IdProvider(resources_section)
+        env.report_processor.process_list(
+            resource.bundle.validate_reset(
+                id_provider,
+                container_type,
+                container_options,
+                network_options,
+                port_map,
+                storage_map,
+                # TODO meta attributes - there is no validation for now
+                force_options
+            )
+        )
+
+        bundle_element = _find_bundle(resources_section, bundle_id)
+        resource.bundle.reset(
+            bundle_element,
+            id_provider,
+            bundle_id,
+            container_type,
+            container_options,
+            network_options,
+            port_map,
+            storage_map,
+            meta_attributes,
+        )
+
+        if ensure_disabled:
+            resource.common.disable(bundle_element)
+
+
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,
     port_map_add=None, port_map_remove=None, storage_map_add=None,
@@ -618,11 +687,7 @@ def bundle_update(
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)
-        bundle_element = find_element_by_tag_and_id(
-            resource.bundle.TAG,
-            resources_section,
-            bundle_id
-        )
+        bundle_element = _find_bundle(resources_section, bundle_id)
         env.report_processor.process_list(
             resource.bundle.validate_update(
                 id_provider,

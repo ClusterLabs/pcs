@@ -336,6 +336,7 @@ def load_module(env, middleware_factory, name):
             ),
             {
                 "bundle_create": resource.bundle_create,
+                "bundle_reset": resource.bundle_reset,
                 "bundle_update": resource.bundle_update,
                 "create": resource.create,
                 "create_as_master": resource.create_as_master,
