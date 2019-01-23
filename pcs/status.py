@@ -11,6 +11,7 @@ from pcs.quorum import quorum_status_cmd
 from pcs.cli.booth.command import status as booth_status_cmd
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.routing import create_router
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import is_fence_history_supported
 from pcs.lib.pacemaker.state import ClusterState
@@ -21,38 +22,23 @@ from pcs.lib.sbd import get_sbd_service_name
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
 def status_cmd(lib, argv, modifiers):
-    try:
-        if not argv:
-            full_status(lib, argv, modifiers)
-            sys.exit(0)
-
-        sub_cmd, argv_next = argv[0], argv[1:]
-        if sub_cmd == "help":
-            usage.status(argv_next)
-        elif sub_cmd == "booth":
-            booth_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "corosync":
-            corosync_status(lib, argv_next, modifiers)
-        elif sub_cmd == "cluster":
-            cluster_status(lib, argv_next, modifiers)
-        elif sub_cmd == "nodes":
-            nodes_status(lib, argv_next, modifiers)
-        elif sub_cmd == "pcsd":
-            cluster_pcsd_status(lib, argv_next, modifiers)
-        elif sub_cmd == "qdevice":
-            qdevice_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "quorum":
-            quorum_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "resources":
-            resource.resource_status(lib, argv_next, modifiers)
-        elif sub_cmd == "xml":
-            xml_status(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
+    create_router(
+        {
+            "help": lambda _lib, _argv, _modifiers: usage.status(_argv),
+            "booth": booth_status_cmd,
+            "corosync": corosync_status,
+            "cluster": cluster_status,
+            "nodes": nodes_status,
+            "pcsd": cluster_pcsd_status,
+            "qdevice": qdevice_status_cmd,
+            "quorum": quorum_status_cmd,
+            "resources": resource.resource_status,
+            "xml": xml_status,
+            "status": full_status,
+        },
+        ["status"],
+        default_cmd="status",
+    )(lib, argv, modifiers)
 
 def full_status(lib, argv, modifiers):
     """

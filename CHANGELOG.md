@@ -27,6 +27,8 @@
   to pacemaker. ([rhbz#1659144])
 - `ipv4-6` and `ipv6-4` are now valid values of `ip_version` in cluster setup
   ([rhbz#1667040])
+- Crash when using unsupported options in commands `pcs status` and
+  `pcs config` ([rhbz#1668422])
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -43,6 +45,7 @@
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
+[rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
 
 
 ## [0.10.1] - 2018-11-23

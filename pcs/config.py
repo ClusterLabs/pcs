@@ -40,6 +40,7 @@ from pcs import (
 from pcs.cli.common import middleware
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.routing import create_router
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.constraint_colocation import (
     console_report as colocation_console_report,
@@ -52,50 +53,37 @@ from pcs.lib.commands import quorum as lib_quorum
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
 def config_cmd(lib, argv, modifiers):
-    if not argv:
-        config_show(lib, argv, modifiers)
-        return
-
-    try:
-        sub_cmd = argv.pop(0)
-        if sub_cmd == "help":
-            usage.config(argv)
-        elif sub_cmd == "show":
-            config_show(lib, argv, modifiers)
-        elif sub_cmd == "backup":
-            config_backup(lib, argv, modifiers)
-        elif sub_cmd == "restore":
-            config_restore(lib, argv, modifiers)
-        elif sub_cmd == "checkpoint":
-            if not argv:
-                config_checkpoint_list(lib, argv, modifiers)
-            elif argv[0] == "view":
-                config_checkpoint_view(lib, argv[1:], modifiers)
-            elif argv[0] == "restore":
-                config_checkpoint_restore(lib, argv[1:], modifiers)
-            elif argv[0] == "diff":
-                config_checkpoint_diff(lib, argv[1:], modifiers)
-            else:
-                raise CmdLineInputError()
-        elif sub_cmd == "import-cman":
-            config_import_cman(lib, argv, modifiers)
-        elif sub_cmd == "export":
-            if not argv:
-                raise CmdLineInputError()
-            elif argv[0] == "pcs-commands":
-                config_export_pcs_commands(lib, argv[1:], modifiers)
-            elif argv[0] == "pcs-commands-verbose":
-                config_export_pcs_commands(
-                    lib, argv[1:], modifiers, verbose=True
-                )
-            else:
-                raise CmdLineInputError()
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "config", sub_cmd)
+    create_router(
+        {
+            "help": lambda _lib, _argv, _modifiers: usage.config(_argv),
+            "show": config_show,
+            "backup": config_backup,
+            "restore": config_restore,
+            "checkpoint": create_router(
+                {
+                    "list": config_checkpoint_list,
+                    "view": config_checkpoint_view,
+                    "restore": config_checkpoint_restore,
+                    "diff": config_checkpoint_diff,
+                },
+                ["config", "checkpoint"],
+                default_cmd="list"
+            ),
+            "import-cman": config_import_cman,
+            "export": create_router(
+                {
+                    "pcs-commands": config_export_pcs_commands,
+                    "pcs-commands-verbose": lambda _lib, _argv, _modifiers:
+                        config_export_pcs_commands(
+                            _lib, _argv, _modifiers, verbose=True
+                        )
+                },
+                ["config", "export"]
+            )
+        },
+        ["config"],
+        default_cmd="show",
+    )(lib, argv, modifiers)
 
 def config_show(lib, argv, modifiers):
     """
