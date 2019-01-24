@@ -10,6 +10,7 @@ from pcs.lib.cib import (
 )
 from pcs.lib.cib.resource import operations, remote_node, guest_node
 from pcs.lib.cib.tools import (
+    ElementSearcher,
     find_element_by_tag_and_id,
     get_resources,
     get_status,
@@ -934,28 +935,22 @@ def _find_resources_or_raise(
         +
         [resource.group.TAG, resource.primitive.TAG, resource.bundle.TAG]
     )
+    # pacemaker-2.0 deprecated masters. We treat masters as clones. Do not
+    # report we were looking for a master, say we were looking for a clone
+    # instead. Since we look for all resource types including clones, just drop
+    # the master.
+    element_type_desc = [
+        tag for tag in resource_tags if tag != resource.clone.TAG_MASTER
+    ]
     for res_id in resource_ids:
-        try:
-            resource_el_list.extend(
-                additional_search(
-                    find_element_by_tag_and_id(
-                        resource_tags,
-                        resources_section,
-                        res_id,
-                        # pacemaker-2.0 deprecated masters. We treat masters as
-                        # clones. Do not report we were looking for a master,
-                        # say we were looking for a clone instead. Since we
-                        # look for all resource types including clones, just
-                        # drop the master.
-                        id_types=[
-                            tag for tag in resource_tags
-                            if tag != resource.clone.TAG_MASTER
-                        ]
-                    )
-                )
-            )
-        except LibraryError as e:
-            report_list.extend(e.args)
+        searcher = ElementSearcher(
+            resource_tags, res_id, resources_section,
+            element_type_desc=element_type_desc
+        )
+        if searcher.element_found():
+            resource_el_list.extend(additional_search(searcher.get_element()))
+        else:
+            report_list.extend(searcher.get_errors())
     if report_list:
         raise LibraryError(*report_list)
     return resource_el_list

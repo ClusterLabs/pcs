@@ -8,7 +8,7 @@ from pcs.lib.cib.nvpair import (
     META_ATTRIBUTES_TAG,
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
-from pcs.lib.cib.tools import find_element_by_tag_and_id
+from pcs.lib.cib.tools import ElementSearcher
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
@@ -691,12 +691,11 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
 def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
     report_list = []
     for _id in id_list:
-        try:
-            find_element_by_tag_and_id(
-                map_type, bundle_el, _id, id_types=[map_label]
-            )
-        except LibraryError as e:
-            report_list.extend(e.args)
+        searcher = ElementSearcher(
+            map_type, _id, bundle_el, element_type_desc=map_label
+        )
+        if not searcher.element_found():
+            report_list.extend(searcher.get_errors())
     return report_list
 
 def _value_host_netmask(option_name, force_options):

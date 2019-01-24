@@ -650,3 +650,182 @@ class FindTagWithId(TestCase):
             "a",
             none_if_id_unused=True
         ))
+
+class ElementSearcher(TestCase):
+    def assert_get_errors_raises(self, searcher):
+        with self.assertRaises(AssertionError) as cm:
+            searcher.get_errors()
+        self.assertEqual(
+            str(cm.exception),
+            "Improper usage: cannot report errors when there are none"
+        )
+
+    def test_element_exists(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="a"/></resources></cib>'
+        )
+        searcher = lib.ElementSearcher("group", "a", tree.find(".//resources"))
+        self.assertTrue(searcher.element_found())
+        self.assertEqual("a", searcher.get_element().attrib["id"])
+        self.assert_get_errors_raises(searcher)
+
+    def test_element_exists_multiple_tags(self):
+        tree = etree.fromstring("""
+            <cib>
+                <resources>
+                    <group id="a"/>
+                    <primitive id="b"/>
+                </resources>
+            </cib>
+        """)
+        searcher = lib.ElementSearcher(
+            ["primitive", "group"], "a", tree.find(".//resources")
+        )
+        self.assertTrue(searcher.element_found())
+        self.assertEqual("a", searcher.get_element().attrib["id"])
+        self.assert_get_errors_raises(searcher)
+
+    def test_id_found_for_another_tag(self):
+        tree = etree.fromstring(
+            '<cib><resources><primitive id="a"/></resources></cib>'
+        )
+        searcher = lib.ElementSearcher("group", "a", tree.find(".//resources"))
+        self.assertFalse(searcher.element_found())
+        self.assertIsNone(searcher.get_element())
+        assert_report_item_list_equal(
+            searcher.get_errors(),
+            [
+                fixture.error(
+                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="a",
+                    expected_types=["group"],
+                    current_type="primitive",
+                ),
+            ]
+        )
+
+    def test_element_exists_in_another_context(self):
+        tree = etree.fromstring("""
+            <cib>
+                <resources>
+                    <group id="g1"><primitive id="a"/></group>
+                    <group id="g2"><primitive id="b"/></group>
+                </resources>
+            </cib>
+        """)
+        searcher = lib.ElementSearcher(
+            "primitive",
+            "a",
+            tree.find('.//resources/group[@id="g2"]'),
+        )
+        self.assertFalse(searcher.element_found())
+        self.assertIsNone(searcher.get_element())
+        assert_report_item_list_equal(
+            searcher.get_errors(),
+            [
+                fixture.error(
+                    report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
+                    id="a",
+                    type="primitive",
+                    expected_context_type="group",
+                    expected_context_id="g2",
+                ),
+            ]
+        )
+
+    def assert_id_does_not_exists(self, element_type_desc, expected_types):
+        tree = etree.fromstring('<cib><resources/></cib>')
+        searcher = lib.ElementSearcher(
+            "group",
+            "a",
+            tree.find(".//resources"),
+            element_type_desc=element_type_desc,
+        )
+        self.assertFalse(searcher.element_found())
+        self.assertIsNone(searcher.get_element())
+        assert_report_item_list_equal(
+            searcher.get_errors(),
+            [
+                fixture.error(
+                    report_codes.ID_NOT_FOUND,
+                    id="a",
+                    expected_types=expected_types,
+                    context_type="resources",
+                    context_id="",
+                ),
+            ]
+        )
+
+    def test_id_does_not_exists(self):
+        self.assert_id_does_not_exists(None, ["group"])
+
+    def test_id_does_not_exists_custom_description_string(self):
+        self.assert_id_does_not_exists("resource group", ["resource group"])
+
+    def test_id_does_not_exists_custom_description_list(self):
+        self.assert_id_does_not_exists(
+            ["resource", "group"],
+            ["group", "resource"]
+        )
+
+    def test_book_available_valid_id(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="b"/></resources></cib>'
+        )
+        id_provider = lib.IdProvider(tree)
+        searcher = lib.ElementSearcher("group", "a", tree.find(".//resources"))
+        self.assertFalse(searcher.element_found())
+        self.assertTrue(searcher.validate_book_id(id_provider))
+        self.assert_get_errors_raises(searcher)
+
+    def test_book_valid_id_used_in_cib(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="a"/></resources></cib>'
+        )
+        id_provider = lib.IdProvider(tree)
+        searcher = lib.ElementSearcher("group", "a", tree.find(".//resources"))
+        self.assertTrue(searcher.element_found())
+        self.assertFalse(searcher.validate_book_id(id_provider))
+        # does not report book errors  - the element has been found,
+        # validate_book_id should have not been called
+        self.assert_get_errors_raises(searcher)
+
+    def test_book_valid_id_used_in_id_provider(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="b"/></resources></cib>'
+        )
+        id_provider = lib.IdProvider(tree)
+        self.assertEqual([], id_provider.book_ids("a"))
+        searcher = lib.ElementSearcher("group", "a", tree.find(".//resources"))
+        self.assertFalse(searcher.element_found())
+        self.assertFalse(searcher.validate_book_id(id_provider))
+        assert_report_item_list_equal(
+            searcher.get_errors(),
+            [
+                fixture.error(
+                    report_codes.ID_ALREADY_EXISTS,
+                    id="a",
+                ),
+            ]
+        )
+
+    def test_book_not_valid_id(self):
+        tree = etree.fromstring(
+            '<cib><resources><group id="b"/></resources></cib>'
+        )
+        id_provider = lib.IdProvider(tree)
+        searcher = lib.ElementSearcher("group", "1a", tree.find(".//resources"))
+        self.assertFalse(searcher.element_found())
+        self.assertFalse(searcher.validate_book_id(id_provider, "group name"))
+        assert_report_item_list_equal(
+            searcher.get_errors(),
+            [
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="1a",
+                    id_description="group name",
+                    is_first_char=True,
+                    invalid_character="1",
+                ),
+            ]
+        )

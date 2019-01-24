@@ -1,5 +1,6 @@
 import re
 
+from pcs.common import report_codes
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import sections
@@ -50,6 +51,127 @@ class IdProvider:
         return report_list
 
 
+class ElementSearcher():
+    """
+    Search for an element, allow to book its id if not found, provide reports
+
+    Usage:
+    es = ElementSearcher(element_tag, element_id, context_element)
+    if es.element_found():
+        # the element has been found
+        element = es.get_element()
+    # if you want to create the element when it does not exist
+    elif es.validate_book_id(id_provider)
+        element = Element(element_id)
+    else:
+        raise LibraryError(es.get_errors())
+    """
+    def __init__(
+        self, tags, element_id, context_element, element_type_desc=None
+    ):
+        """
+        string|iterable tags -- a tag (string) or tags (iterable) to look for
+        string element_id -- an id to look for
+        etree.Element context_element -- an element to look in
+        string|iterable element_type_desc -- element types for reports, tags
+            if not specified
+        """
+        self._executed = False
+        self._element = None
+        self._element_id = element_id
+        self._context_element = context_element
+        self._tag_list = [tags] if isinstance(tags, str) else tags
+        self._expected_types = self._prepare_expected_types(element_type_desc)
+        self._book_errors = None
+
+    def _prepare_expected_types(self, element_type_desc):
+        if element_type_desc is None:
+            return self._tag_list
+        if isinstance(element_type_desc, str):
+            return [element_type_desc]
+        return element_type_desc
+
+    def element_found(self):
+        if not self._executed:
+            self._execute()
+        return self._element is not None
+
+    def get_element(self):
+        if not self._executed:
+            self._execute()
+        return self._element
+
+    def validate_book_id(self, id_provider, id_description="id"):
+        """
+        Book element_id in the id_provider, return True if success
+        """
+        self._book_errors = []
+        validate_id(
+            self._element_id,
+            description=id_description,
+            reporter=self._book_errors
+        )
+        if not self._book_errors:
+            self._book_errors += id_provider.book_ids(self._element_id)
+        return len(self._book_errors) < 1
+
+    def get_errors(self):
+        """
+        Report why the element has not been found or booking its id failed
+        """
+        if (
+            self.element_found()
+            or
+            (self._book_errors is not None and not self._book_errors)
+        ):
+            raise AssertionError(
+                "Improper usage: cannot report errors when there are none"
+            )
+
+        element = get_root(self._context_element).find(
+            f'.//*[@id="{self._element_id}"]'
+        )
+
+        if element is not None:
+            if element.tag in self._tag_list:
+                return [
+                    reports.object_with_id_in_unexpected_context(
+                        element.tag,
+                        self._element_id,
+                        self._context_element.tag,
+                        self._context_element.attrib.get("id", "")
+                    )
+                ]
+            return [
+                reports.id_belongs_to_unexpected_type(
+                    self._element_id,
+                    expected_types=self._expected_types,
+                    current_type=element.tag
+                )
+            ]
+        if self._book_errors is None:
+            return [
+                reports.id_not_found(
+                    self._element_id,
+                    self._expected_types,
+                    self._context_element.tag,
+                    self._context_element.attrib.get("id", "")
+                )
+            ]
+        return self._book_errors
+
+    def _execute(self):
+        self._executed = True
+        for tag in self._tag_list:
+            element_list = self._context_element.xpath(
+                f'.//{tag}[@id="{self._element_id}"]'
+            )
+            if element_list:
+                self._element = element_list[0]
+                return
+
+
+# DEPRECATED, use IdProvider instead
 def does_id_exist(tree, check_id):
     """
     Checks to see if id exists in the xml dom passed
@@ -92,6 +214,7 @@ def does_id_exist(tree, check_id):
     """.format(check_id))
     return len(existing) > 0
 
+# DEPRECATED, use IdProvider instead
 def validate_id_does_not_exist(tree, _id):
     """
     tree cib etree node
@@ -99,6 +222,7 @@ def validate_id_does_not_exist(tree, _id):
     if does_id_exist(tree, _id):
         raise LibraryError(reports.id_already_exists(_id))
 
+# DEPRECATED, use IdProvider instead
 def find_unique_id(tree, check_id, reserved_ids=None):
     """
     Returns check_id if it doesn't exist in the dom, otherwise it adds
@@ -116,6 +240,7 @@ def find_unique_id(tree, check_id, reserved_ids=None):
         counter += 1
     return temp_id
 
+# DEPRECATED, use ElementSearcher instead
 def find_element_by_tag_and_id(
     tag, context_element, element_id, none_if_id_unused=False, id_types=None
 ):
@@ -131,54 +256,21 @@ def find_element_by_tag_and_id(
         or raise a LibraryError if False
     list id_types optional list of descriptions for id / expected types of id
     """
-    tag_list = [tag] if isinstance(tag, str) else tag
-    if id_types is None:
-        id_type_list = tag_list
-    elif isinstance(id_types, str):
-        id_type_list = [id_types]
-    else:
-        id_type_list = id_types
-
-    element_list = context_element.xpath(
-        './/*[({0}) and @id="{1}"]'.format(
-            " or ".join(["self::{0}".format(one_tag) for one_tag in tag_list]),
-            element_id
-        )
+    searcher = ElementSearcher(
+        tag, element_id, context_element, element_type_desc=id_types
     )
-
-    if element_list:
-        return element_list[0]
-
-    element = get_root(context_element).find(
-        './/*[@id="{0}"]'.format(element_id)
-    )
-
-    if element is not None:
-        raise LibraryError(
-            reports.id_belongs_to_unexpected_type(
-                element_id,
-                expected_types=id_type_list,
-                current_type=element.tag
-            ) if element.tag not in tag_list
-            else reports.object_with_id_in_unexpected_context(
-                element.tag,
-                element_id,
-                context_element.tag,
-                context_element.attrib.get("id", "")
-            )
-        )
-
-    if none_if_id_unused:
-        return None
-
-    raise LibraryError(
-        reports.id_not_found(
-            element_id,
-            id_type_list,
-            context_element.tag,
-            context_element.attrib.get("id", "")
-        )
-    )
+    if searcher.element_found():
+        return searcher.get_element()
+    report_list = searcher.get_errors()
+    if not none_if_id_unused:
+        raise LibraryError(*report_list)
+    filtered_reports = [
+        report_item for report_item in report_list
+        if report_item.code != report_codes.ID_NOT_FOUND
+    ]
+    if filtered_reports:
+        raise LibraryError(*filtered_reports)
+    return None
 
 def create_subelement_id(context_element, suffix, id_provider):
     proposed_id = sanitize_id(
@@ -186,6 +278,8 @@ def create_subelement_id(context_element, suffix, id_provider):
     )
     return id_provider.allocate_id(proposed_id)
 
+# DEPRECATED
+# use ElementSearcher, IdProvider or pcs.lib.validate.value_id instead
 def check_new_id_applicable(tree, description, _id):
     validate_id(_id, description)
     validate_id_does_not_exist(tree, _id)

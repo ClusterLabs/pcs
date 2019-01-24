@@ -6,7 +6,7 @@ from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import (
     IdProvider,
-    find_element_by_tag_and_id,
+    ElementSearcher,
     get_resources,
 )
 from pcs.lib.communication.nodes import (
@@ -398,15 +398,12 @@ def node_add_guest(
         node_name,
         options
     )
-    try:
-        resource_element = find_element_by_tag_and_id(
-            primitive.TAG,
-            get_resources(cib),
-            resource_id
-        )
+    searcher = ElementSearcher(primitive.TAG, resource_id, get_resources(cib))
+    if searcher.element_found():
+        resource_element = searcher.get_element()
         report_list.extend(guest_node.validate_is_not_guest(resource_element))
-    except LibraryError as e:
-        report_list.extend(e.args)
+    else:
+        report_list.extend(searcher.get_errors())
 
     report_processor.report_list(report_list)
     if report_processor.has_errors:
