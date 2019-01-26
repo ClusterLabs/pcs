@@ -6,76 +6,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-def quorum_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd, argv_next = "config", []
-    else:
-        sub_cmd, argv_next = argv[0], argv[1:]
-
-    try:
-        if sub_cmd == "help":
-            usage.quorum([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "config":
-            quorum_config_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "expected-votes":
-            quorum_expected_votes_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "status":
-            quorum_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "device":
-            quorum_device_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "unblock":
-            # TODO switch to new architecture
-            quorum_unblock_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            quorum_update_cmd(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
-
-def quorum_device_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "add":
-            quorum_device_add_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "heuristics":
-            quorum_device_heuristics_cmd(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            quorum_device_remove_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "status":
-            quorum_device_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            quorum_device_update_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "quorum", "device {0}".format(sub_cmd)
-        )
-
-def quorum_device_heuristics_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd in {"delete", "remove"}:
-            quorum_device_heuristics_remove_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "quorum", "device heuristics {0}".format(sub_cmd)
-        )
+from pcs.cli.common.routing import create_router
 
 
 def quorum_config_cmd(lib, argv, modifiers):
@@ -364,3 +295,35 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes canceled")
+
+
+quorum_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.quorum(argv),
+        "config": quorum_config_cmd,
+        "expected-votes": quorum_expected_votes_cmd,
+        "status": quorum_status_cmd,
+        "device": create_router(
+            {
+                "add": quorum_device_add_cmd,
+                "heuristics": create_router(
+                    {
+                        "delete": quorum_device_heuristics_remove_cmd,
+                        "remove": quorum_device_heuristics_remove_cmd,
+                    },
+                    ["quorum", "device", "heuristics"]
+                ),
+                "delete": quorum_device_remove_cmd,
+                "remove": quorum_device_remove_cmd,
+                "status": quorum_device_status_cmd,
+                "update": quorum_device_update_cmd,
+            },
+            ["quorum", "device"]
+        ),
+        # TODO switch to new architecture
+        "unblock": quorum_unblock_cmd,
+        "update": quorum_update_cmd,
+    },
+    ["quorum"],
+    default_cmd="config",
+)

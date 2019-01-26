@@ -21,25 +21,6 @@ from pcs.lib.sbd import get_sbd_service_name
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
-def status_cmd(lib, argv, modifiers):
-    create_router(
-        {
-            "help": lambda _lib, _argv, _modifiers: usage.status(_argv),
-            "booth": booth_status_cmd,
-            "corosync": corosync_status,
-            "cluster": cluster_status,
-            "nodes": nodes_status,
-            "pcsd": cluster_pcsd_status,
-            "qdevice": qdevice_status_cmd,
-            "quorum": quorum_status_cmd,
-            "resources": resource.resource_status,
-            "xml": xml_status,
-            "status": full_status,
-        },
-        ["status"],
-        default_cmd="status",
-    )(lib, argv, modifiers)
-
 def full_status(lib, argv, modifiers):
     """
     Options:
@@ -452,3 +433,22 @@ def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
         bad_nodes = check_nodes(argv, "  ")
     if bad_nodes and not dont_exit:
         sys.exit(2)
+
+
+status_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.status(argv),
+        "booth": booth_status_cmd,
+        "corosync": corosync_status,
+        "cluster": cluster_status,
+        "nodes": nodes_status,
+        "pcsd": cluster_pcsd_status,
+        "qdevice": qdevice_status_cmd,
+        "quorum": quorum_status_cmd,
+        "resources": resource.resource_status,
+        "xml": xml_status,
+        "status": full_status,
+    },
+    ["status"],
+    default_cmd="status",
+)

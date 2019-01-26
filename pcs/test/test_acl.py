@@ -990,7 +990,7 @@ Role: role4
     def test_fail_on_unknown_role_method(self):
         self.assert_pcs_fail(
             'acl role unknown whatever',
-            stdout_start="\nUsage: pcs acl role..."
+            stdout_start="\nUsage: pcs acl role ..."
         )
 
     def test_assign_unassign_role_to_user(self):

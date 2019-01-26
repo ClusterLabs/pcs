@@ -7,30 +7,7 @@ from pcs import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-def property_cmd(lib, argv, modifiers):
-    if not argv:
-        argv = ["list"]
-
-    try:
-        sub_cmd = argv.pop(0)
-        if sub_cmd == "help":
-            usage.property(argv)
-        elif sub_cmd == "set":
-            set_property(lib, argv, modifiers)
-        elif sub_cmd == "unset":
-            unset_property(lib, argv, modifiers)
-        elif sub_cmd in ("list", "show"):
-            list_property(lib, argv, modifiers)
-        elif sub_cmd == "get_cluster_properties_definition":
-            print_cluster_properties_definition(lib, argv, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "property", sub_cmd)
+from pcs.cli.common.routing import create_router
 
 
 def set_property(lib, argv, modifiers):
@@ -163,3 +140,18 @@ def print_cluster_properties_definition(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     print(json.dumps(utils.get_cluster_properties_definition()))
+
+
+property_cmd = create_router(
+    {
+        "help": lambda _lib, _argv, _modifiers: usage.property(_argv),
+        "set": set_property,
+        "unset": unset_property,
+        "list": list_property,
+        "show": list_property,
+        "get_cluster_properties_definition":
+            print_cluster_properties_definition,
+    },
+    ["property"],
+    default_cmd="list"
+)

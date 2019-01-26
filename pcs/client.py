@@ -1,32 +1,16 @@
 from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-
-def client_cmd(lib, argv, modifiers):
-    if not argv:
-        utils.exit_on_cmdline_input_errror(None, "client", "")
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "local-auth":
-            local_auth_cmd(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "client", sub_cmd)
+from pcs.cli.common.routing import create_router
 
 
 def local_auth_cmd(lib, argv, modifiers):
-    # pylint: disable=unused-argument
     """
     Options:
       * -u - username
       * -p - password
       * --request-timeout - timeout for HTTP requests
     """
+    del lib
     modifiers.ensure_only_supported("-u", "-p", "--request-timeout")
     if len(argv) > 1:
         raise CmdLineInputError()
@@ -41,3 +25,11 @@ def local_auth_cmd(lib, argv, modifiers):
             }
         }
     )
+
+
+client_cmd = create_router(
+    {
+        "local-auth": local_auth_cmd,
+    },
+    ["client"],
+)

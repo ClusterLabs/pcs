@@ -8,6 +8,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent, error
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.routing import create_router
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import report_codes
@@ -21,108 +22,23 @@ import pcs.lib.resource_agent as lib_ra
 
 # pylint: disable=too-many-branches, too-many-statements, protected-access
 
-def stonith_cmd(lib, argv, modifiers):
-    if argv:
-        sub_cmd, argv_next = argv[0], argv[1:]
-    else:
-        sub_cmd, argv_next = "status", []
 
-    try:
-        if sub_cmd == "help":
-            usage.stonith([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "list":
-            stonith_list_available(lib, argv_next, modifiers)
-        elif sub_cmd == "describe":
-            stonith_list_options(lib, argv_next, modifiers)
-        elif sub_cmd == "create":
-            stonith_create(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            resource.resource_update(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            resource.resource_remove_cmd(lib, argv_next, modifiers)
-        # TODO remove, deprecated command
-        # replaced with 'stonith status' and 'stonith config'
-        elif sub_cmd == "show":
-            resource.resource_show(lib, argv_next, modifiers, stonith=True)
-            print_stonith_levels(lib)
-        elif sub_cmd == "status":
-            resource.resource_status(lib, argv_next, modifiers, stonith=True)
-            print_stonith_levels(lib)
-        elif sub_cmd == "config":
-            resource.resource_config(lib, argv_next, modifiers, stonith=True)
-            print_stonith_levels(lib)
-        elif sub_cmd == "level":
-            stonith_level_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "fence":
-            stonith_fence(lib, argv_next, modifiers)
-        elif sub_cmd == "cleanup":
-            resource.resource_cleanup(lib, argv_next, modifiers)
-        elif sub_cmd == "refresh":
-            resource.resource_refresh(lib, argv_next, modifiers)
-        elif sub_cmd == "confirm":
-            stonith_confirm(lib, argv_next, modifiers)
-        elif sub_cmd == "get_fence_agent_info":
-            get_fence_agent_info(lib, argv_next, modifiers)
-        elif sub_cmd == "sbd":
-            sbd_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "enable":
-            resource.resource_enable_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "disable":
-            resource.resource_disable_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "history":
-            stonith_history_cmd(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "stonith", sub_cmd)
+def stonith_show_cmd(lib, argv, modifiers):
+    # TODO remove, deprecated command
+    # replaced with 'stonith status' and 'stonith config'
+    resource.resource_show(lib, argv, modifiers, stonith=True)
+    print_stonith_levels(lib)
 
-def stonith_level_cmd(lib, argv, modifiers):
-    if argv:
-        sub_cmd, argv_next = argv[0], argv[1:]
-    else:
-        sub_cmd, argv_next = "config", []
 
-    try:
-        if sub_cmd == "add":
-            stonith_level_add_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "clear":
-            stonith_level_clear_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "config":
-            stonith_level_config_cmd(lib, argv_next, modifiers)
-        elif sub_cmd in ["remove", "delete"]:
-            stonith_level_remove_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "verify":
-            stonith_level_verify_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "stonith", "level {0}".format(sub_cmd)
-        )
+def stonith_status_cmd(lib, argv, modifiers):
+    resource.resource_status(lib, argv, modifiers, stonith=True)
+    print_stonith_levels(lib)
 
-def stonith_history_cmd(lib, argv, modifiers):
-    if argv:
-        sub_cmd, argv_next = argv[0], argv[1:]
-    else:
-        sub_cmd, argv_next = "show", []
 
-    try:
-        if sub_cmd == "show":
-            stonith_history_show_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "cleanup":
-            stonith_history_cleanup_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            stonith_history_update_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "stonith", "history {0}".format(sub_cmd)
-        )
+def stonith_config_cmd(lib, argv, modifiers):
+    resource.resource_config(lib, argv, modifiers, stonith=True)
+    print_stonith_levels(lib)
+
 
 def print_stonith_levels(lib):
     levels = stonith_level_config_to_str(
@@ -552,54 +468,6 @@ def get_fence_agent_info(lib, argv, modifiers):
         utils.process_library_reports(e.args)
 
 
-def sbd_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-    cmd = argv.pop(0)
-    try:
-        if cmd == "enable":
-            sbd_enable(lib, argv, modifiers)
-        elif cmd == "disable":
-            sbd_disable(lib, argv, modifiers)
-        elif cmd == "status":
-            sbd_status(lib, argv, modifiers)
-        elif cmd == "config":
-            sbd_config(lib, argv, modifiers)
-        elif cmd == "local_config_in_json":
-            local_sbd_config(lib, argv, modifiers)
-        elif cmd == "device":
-            sbd_device_cmd(lib, argv, modifiers)
-        elif cmd == "watchdog":
-            sbd_watchdog_cmd(lib, argv, modifiers)
-        else:
-            cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "stonith", "sbd {0}".format(cmd)
-        )
-
-
-def sbd_watchdog_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-    cmd = argv.pop(0)
-    try:
-        if cmd == "list":
-            sbd_watchdog_list(lib, argv, modifiers)
-        elif cmd == "list_json":
-            sbd_watchdog_list_json(lib, argv, modifiers)
-        elif cmd == "test":
-            sbd_watchdog_test(lib, argv, modifiers)
-        else:
-            cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "stonith", "sbd watchdog {0}".format(cmd)
-        )
-
-
 def sbd_watchdog_list(lib, argv, modifiers):
     """
     Options: no options
@@ -644,23 +512,6 @@ def sbd_watchdog_test(lib, argv, modifiers):
     if len(argv) == 1:
         watchdog = argv[0]
     lib.sbd.test_local_watchdog(watchdog)
-
-
-def sbd_device_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-    cmd = argv.pop(0)
-    try:
-        if cmd == "setup":
-            sbd_setup_block_device(lib, argv, modifiers)
-        elif cmd == "message":
-            sbd_message(lib, argv, modifiers)
-        else:
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "stonith", "sbd device {0}".format(cmd)
-        )
 
 
 def sbd_enable(lib, argv, modifiers):
@@ -938,3 +789,79 @@ def stonith_history_update_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
 
     print(lib.stonith.history_update())
+
+
+stonith_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.stonith(argv),
+        "list": stonith_list_available,
+        "describe": stonith_list_options,
+        "create": stonith_create,
+        "update": resource.resource_update,
+        "delete": resource.resource_remove_cmd,
+        "remove": resource.resource_remove_cmd,
+        # TODO remove, deprecated command
+        # replaced with 'stonith status' and 'stonith config'
+        "show": stonith_show_cmd,
+        "status": stonith_status_cmd,
+        "config": stonith_config_cmd,
+        "level": create_router(
+            {
+                "add": stonith_level_add_cmd,
+                "clear": stonith_level_clear_cmd,
+                "config": stonith_level_config_cmd,
+                "remove": stonith_level_remove_cmd,
+                "delete": stonith_level_remove_cmd,
+                "verify": stonith_level_verify_cmd,
+            },
+            ["stonith", "level"],
+            default_cmd="config"
+        ),
+        "fence": stonith_fence,
+        "cleanup": resource.resource_cleanup,
+        "refresh": resource.resource_refresh,
+        "confirm": stonith_confirm,
+        "sbd": create_router(
+            {
+                "enable": sbd_enable,
+                "disable": sbd_disable,
+                "status": sbd_status,
+                "config": sbd_config,
+                "device": create_router(
+                    {
+                        "setup": sbd_setup_block_device,
+                        "message": sbd_message,
+                    },
+                    ["stonith", "sbd", "device"]
+                ),
+                "watchdog": create_router(
+                    {
+                        "list": sbd_watchdog_list,
+                        "test": sbd_watchdog_test,
+                        # internal use only
+                        "list_json": sbd_watchdog_list_json,
+                    },
+                    ["stonith", "sbd", "watchdog"]
+                ),
+                # internal use only
+                "local_config_in_json": local_sbd_config,
+            },
+            ["stonith", "sbd"]
+        ),
+        "enable": resource.resource_enable_cmd,
+        "disable": resource.resource_disable_cmd,
+        "history": create_router(
+            {
+                "show": stonith_history_show_cmd,
+                "cleanup": stonith_history_cleanup_cmd,
+                "update": stonith_history_update_cmd,
+            },
+            ["stonith", "history"],
+            default_cmd="show"
+        ),
+        # internal use only
+        "get_fence_agent_info": get_fence_agent_info,
+    },
+    ["stonith"],
+    default_cmd="status"
+)

@@ -6,29 +6,7 @@ from pcs import settings
 from pcs import usage
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-def pcsd_cmd(lib, argv, modifiers):
-    if not argv:
-        usage.pcsd()
-        sys.exit(1)
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "help":
-            usage.pcsd(argv_next)
-        elif sub_cmd == "deauth":
-            pcsd_deauth(lib, argv_next, modifiers)
-        elif sub_cmd == "certkey":
-            pcsd_certkey(lib, argv_next, modifiers)
-        elif sub_cmd == "sync-certificates":
-            pcsd_sync_certs(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "pcsd", sub_cmd)
+from pcs.cli.common.routing import create_router
 
 def pcsd_certkey(lib, argv, modifiers):
     """
@@ -176,3 +154,14 @@ def pcsd_deauth(lib, argv, modifiers):
         utils.err(
             "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
         )
+
+
+pcsd_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.pcsd(argv),
+        "deauth": pcsd_deauth,
+        "certkey": pcsd_certkey,
+        "sync-certificates": pcsd_sync_certs,
+    },
+    ["pcsd"]
+)

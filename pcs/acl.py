@@ -1,5 +1,3 @@
-import sys
-
 from pcs import (
     prop,
     usage,
@@ -7,40 +5,8 @@ from pcs import (
 )
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
+from pcs.cli.common.routing import create_router
 from pcs.lib.pacemaker.values import is_true
-
-
-def acl_cmd(lib, argv, modifiers):
-    # pylint: disable=too-many-branches
-    if argv:
-        sub_cmd, argv_next = argv[0], argv[1:]
-    else:
-        sub_cmd, argv_next = "show", []
-
-    try:
-        if sub_cmd == "help":
-            usage.acl(argv_next)
-        elif sub_cmd == "show":
-            show_acl_config(lib, argv_next, modifiers)
-        elif sub_cmd == "enable":
-            acl_enable(lib, argv_next, modifiers)
-        elif sub_cmd == "disable":
-            acl_disable(lib, argv_next, modifiers)
-        elif sub_cmd == "role":
-            acl_role(lib, argv_next, modifiers)
-        elif sub_cmd == "user":
-            acl_user(lib, argv_next, modifiers)
-        elif sub_cmd == "group":
-            acl_group(lib, argv_next, modifiers)
-        elif sub_cmd == "permission":
-            acl_permission(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "acl", sub_cmd)
 
 
 def _print_list_of_objects(obj_list, transformation_fn):
@@ -101,44 +67,6 @@ def acl_disable(lib, argv, modifiers):
     prop.set_property(lib, ["enable-acl=false"], modifiers.get_subset("-f"))
 
 
-def acl_role(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "create":
-            role_create(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            role_delete(lib, argv_next, modifiers)
-        elif sub_cmd == "assign":
-            role_assign(lib, argv_next, modifiers)
-        elif sub_cmd == "unassign":
-            role_unassign(lib, argv_next, modifiers)
-        else:
-            usage.show("acl", ["role"])
-            sys.exit(1)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "acl", "role {0}".format(sub_cmd))
-
-
-def acl_user(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "create":
-            user_create(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            user_delete(lib, argv_next, modifiers)
-        else:
-            usage.show("acl", ["user"])
-            sys.exit(1)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "acl", "user {0}".format(sub_cmd))
-
-
 def user_create(lib, argv, modifiers):
     """
     Options:
@@ -162,25 +90,6 @@ def user_delete(lib, argv, modifiers):
     lib.acl.remove_target(argv[0])
 
 
-def acl_group(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "create":
-            group_create(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            group_delete(lib, argv_next, modifiers)
-        else:
-            usage.show("acl", ["group"])
-            sys.exit(1)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "acl", "group {0}".format(sub_cmd)
-        )
-
-
 def group_create(lib, argv, modifiers):
     """
     Options:
@@ -202,25 +111,6 @@ def group_delete(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.acl.remove_group(argv[0])
-
-
-def acl_permission(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "add":
-            permission_add(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            run_permission_delete(lib, argv_next, modifiers)
-        else:
-            usage.show("acl", ["permission"])
-            sys.exit(1)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "acl", "permission {0}".format(sub_cmd)
-        )
 
 
 def argv_to_permission_info_list(argv):
@@ -404,3 +294,49 @@ def _permission_to_str(permission):
         out += ["id", permission.get("reference")]
     out.append("({0})".format(permission.get("id")))
     return " ".join(out)
+
+
+acl_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.acl(argv),
+        "show": show_acl_config,
+        "enable": acl_enable,
+        "disable": acl_disable,
+        "role": create_router(
+            {
+                "create": role_create,
+                "delete": role_delete,
+                "remove": role_delete,
+                "assign": role_assign,
+                "unassign": role_unassign,
+            },
+            ["acl", "role"],
+        ),
+        "user": create_router(
+            {
+                "create": user_create,
+                "delete": user_delete,
+                "remove": user_delete,
+            },
+            ["acl", "user"]
+        ),
+        "group": create_router(
+            {
+                "create": group_create,
+                "delete": group_delete,
+                "remove": group_delete,
+            },
+            ["acl", "group"]
+        ),
+        "permission": create_router(
+            {
+                "add": permission_add,
+                "delete": run_permission_delete,
+                "remove": run_permission_delete,
+            },
+            ["acl", "permission"]
+        ),
+    },
+    ["acl"],
+    default_cmd="show"
+)

@@ -52,39 +52,6 @@ from pcs.lib.commands import quorum as lib_quorum
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
-def config_cmd(lib, argv, modifiers):
-    create_router(
-        {
-            "help": lambda _lib, _argv, _modifiers: usage.config(_argv),
-            "show": config_show,
-            "backup": config_backup,
-            "restore": config_restore,
-            "checkpoint": create_router(
-                {
-                    "list": config_checkpoint_list,
-                    "view": config_checkpoint_view,
-                    "restore": config_checkpoint_restore,
-                    "diff": config_checkpoint_diff,
-                },
-                ["config", "checkpoint"],
-                default_cmd="list"
-            ),
-            "import-cman": config_import_cman,
-            "export": create_router(
-                {
-                    "pcs-commands": config_export_pcs_commands,
-                    "pcs-commands-verbose": lambda _lib, _argv, _modifiers:
-                        config_export_pcs_commands(
-                            _lib, _argv, _modifiers, verbose=True
-                        )
-                },
-                ["config", "export"]
-            )
-        },
-        ["config"],
-        default_cmd="show",
-    )(lib, argv, modifiers)
-
 def config_show(lib, argv, modifiers):
     """
     Options:
@@ -1118,3 +1085,36 @@ def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
             + "\n"
         )
         sys.exit(1 if result is None else result)
+
+
+config_cmd = create_router(
+    {
+        "help": lambda lib, argv, modifiers: usage.config(argv),
+        "show": config_show,
+        "backup": config_backup,
+        "restore": config_restore,
+        "checkpoint": create_router(
+            {
+                "list": config_checkpoint_list,
+                "view": config_checkpoint_view,
+                "restore": config_checkpoint_restore,
+                "diff": config_checkpoint_diff,
+            },
+            ["config", "checkpoint"],
+            default_cmd="list"
+        ),
+        "import-cman": config_import_cman,
+        "export": create_router(
+            {
+                "pcs-commands": config_export_pcs_commands,
+                "pcs-commands-verbose": lambda lib, argv, modifiers:
+                    config_export_pcs_commands(
+                        lib, argv, modifiers, verbose=True
+                    )
+            },
+            ["config", "export"]
+        )
+    },
+    ["config"],
+    default_cmd="show",
+)
