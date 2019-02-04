@@ -1296,6 +1296,17 @@ Ticket Constraints:
         assert returnVal == 1
         ac(output, "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n")
 
+    def test_group_add_fail_on_conflict(self):
+        # it creates <op id="R-stop-interval-0s" ...
+        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy")
+
+        self.assert_pcs_fail(
+            "resource group add R-stop-interval-0s R",
+            "Error: Group 'R-stop-interval-0s' does not exists and cannot be"
+                " created since the id 'R-stop-interval-0s' already exists in"
+                " the cib\n"
+        )
+
     def testGroupLargeResourceRemove(self):
         output, returnVal = pcs(
             temp_large_cib, "resource group add dummies dummylarge"

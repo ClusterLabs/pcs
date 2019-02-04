@@ -1813,6 +1813,14 @@ def resource_group_add(cib_dom, group_name, resource_ids):
             utils.err("'%s' is already a clone resource" % group_name)
         if utils.dom_get_master(resources_element, group_name):
             utils.err("'%s' is already a master/slave resource" % group_name)
+        if utils.does_id_exist(cib_dom, group_name):
+            utils.err(
+                (
+                    "Group '{0}' does not exists and cannot be created since"
+                    " the id '{0}' already exists in the cib"
+                ).format(group_name)
+            )
+
         mygroup = cib_dom.createElement("group")
         mygroup.setAttribute("id", group_name)
         resources_element.appendChild(mygroup)

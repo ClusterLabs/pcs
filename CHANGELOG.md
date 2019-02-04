@@ -27,8 +27,11 @@
   nvsets and similar elements from CIB. Such behavior was causing problems when
   pacemaker ACLs were in effect, leading to inability of pushing modified CIBs
   to pacemaker. ([rhbz#1642514])
+- `pcs resource group add` no longer produces an invalid CIB when group id is
+  already occupied with non-resource element ([rhbz#1447349])
 
 [rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
+[rhbz#1447349]: https://bugzilla.redhat.com/show_bug.cgi?id=1447349
 [rhbz#1474747]: https://bugzilla.redhat.com/show_bug.cgi?id=1474747
 [rhbz#1515021]: https://bugzilla.redhat.com/show_bug.cgi?id=1515021
 [rhbz#1522858]: https://bugzilla.redhat.com/show_bug.cgi?id=1522858
