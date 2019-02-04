@@ -3,10 +3,8 @@ import os
 import sys
 
 from pcs import settings
-from pcs import usage
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 
 def pcsd_certkey(lib, argv, modifiers):
     """
@@ -154,14 +152,3 @@ def pcsd_deauth(lib, argv, modifiers):
         utils.err(
             "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
         )
-
-
-pcsd_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.pcsd(argv),
-        "deauth": pcsd_deauth,
-        "certkey": pcsd_certkey,
-        "sync-certificates": pcsd_sync_certs,
-    },
-    ["pcsd"]
-)

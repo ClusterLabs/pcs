@@ -2,13 +2,11 @@ import json
 
 from pcs import (
     resource,
-    usage,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent, error
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import report_codes
@@ -789,79 +787,3 @@ def stonith_history_update_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
 
     print(lib.stonith.history_update())
-
-
-stonith_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.stonith(argv),
-        "list": stonith_list_available,
-        "describe": stonith_list_options,
-        "create": stonith_create,
-        "update": resource.resource_update,
-        "delete": resource.resource_remove_cmd,
-        "remove": resource.resource_remove_cmd,
-        # TODO remove, deprecated command
-        # replaced with 'stonith status' and 'stonith config'
-        "show": stonith_show_cmd,
-        "status": stonith_status_cmd,
-        "config": stonith_config_cmd,
-        "level": create_router(
-            {
-                "add": stonith_level_add_cmd,
-                "clear": stonith_level_clear_cmd,
-                "config": stonith_level_config_cmd,
-                "remove": stonith_level_remove_cmd,
-                "delete": stonith_level_remove_cmd,
-                "verify": stonith_level_verify_cmd,
-            },
-            ["stonith", "level"],
-            default_cmd="config"
-        ),
-        "fence": stonith_fence,
-        "cleanup": resource.resource_cleanup,
-        "refresh": resource.resource_refresh,
-        "confirm": stonith_confirm,
-        "sbd": create_router(
-            {
-                "enable": sbd_enable,
-                "disable": sbd_disable,
-                "status": sbd_status,
-                "config": sbd_config,
-                "device": create_router(
-                    {
-                        "setup": sbd_setup_block_device,
-                        "message": sbd_message,
-                    },
-                    ["stonith", "sbd", "device"]
-                ),
-                "watchdog": create_router(
-                    {
-                        "list": sbd_watchdog_list,
-                        "test": sbd_watchdog_test,
-                        # internal use only
-                        "list_json": sbd_watchdog_list_json,
-                    },
-                    ["stonith", "sbd", "watchdog"]
-                ),
-                # internal use only
-                "local_config_in_json": local_sbd_config,
-            },
-            ["stonith", "sbd"]
-        ),
-        "enable": resource.resource_enable_cmd,
-        "disable": resource.resource_disable_cmd,
-        "history": create_router(
-            {
-                "show": stonith_history_show_cmd,
-                "cleanup": stonith_history_cleanup_cmd,
-                "update": stonith_history_update_cmd,
-            },
-            ["stonith", "history"],
-            default_cmd="show"
-        ),
-        # internal use only
-        "get_fence_agent_info": get_fence_agent_info,
-    },
-    ["stonith"],
-    default_cmd="status"
-)

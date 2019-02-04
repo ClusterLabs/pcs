@@ -15,7 +15,6 @@ from pcs.cli import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import error, warn
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
@@ -1436,42 +1435,3 @@ def constraint_rule(lib, argv, modifiers):
             utils.err("unable to find rule with id: %s" % temp_id)
     else:
         raise CmdLineInputError()
-
-
-constraint_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.constraint(argv),
-        "location": constraint_location_cmd,
-        "order": constraint_order_cmd,
-        "ticket": create_router(
-            {
-                "set": ticket_command.create_with_set,
-                "add": ticket_command.add,
-                "delete": ticket_command.remove,
-                "remove": ticket_command.remove,
-                "show": ticket_command.show,
-            },
-            ["constraint", "ticket"],
-            default_cmd="show"
-        ),
-        "colocation": create_router(
-            {
-                "add": colocation_add,
-                "remove": colocation_rm,
-                "delete":colocation_rm,
-                "set": colocation_command.create_with_set,
-                "show": colocation_command.show,
-            },
-            ["constraint", "colocation"],
-            default_cmd="show"
-        ),
-        "remove": constraint_rm,
-        "delete": constraint_rm,
-        "show": constraint_show,
-        "list": constraint_show,
-        "ref": constraint_ref,
-        "rule": constraint_rule,
-    },
-    ["constraint"],
-    default_cmd="list"
-)

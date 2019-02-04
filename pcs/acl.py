@@ -1,11 +1,9 @@
 from pcs import (
     prop,
-    usage,
     utils,
 )
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 from pcs.lib.pacemaker.values import is_true
 
 
@@ -294,49 +292,3 @@ def _permission_to_str(permission):
         out += ["id", permission.get("reference")]
     out.append("({0})".format(permission.get("id")))
     return " ".join(out)
-
-
-acl_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.acl(argv),
-        "show": show_acl_config,
-        "enable": acl_enable,
-        "disable": acl_disable,
-        "role": create_router(
-            {
-                "create": role_create,
-                "delete": role_delete,
-                "remove": role_delete,
-                "assign": role_assign,
-                "unassign": role_unassign,
-            },
-            ["acl", "role"],
-        ),
-        "user": create_router(
-            {
-                "create": user_create,
-                "delete": user_delete,
-                "remove": user_delete,
-            },
-            ["acl", "user"]
-        ),
-        "group": create_router(
-            {
-                "create": group_create,
-                "delete": group_delete,
-                "remove": group_delete,
-            },
-            ["acl", "group"]
-        ),
-        "permission": create_router(
-            {
-                "add": permission_add,
-                "delete": run_permission_delete,
-                "remove": run_permission_delete,
-            },
-            ["acl", "permission"]
-        ),
-    },
-    ["acl"],
-    default_cmd="show"
-)

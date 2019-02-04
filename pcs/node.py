@@ -1,16 +1,11 @@
 import json
-from functools import partial
 
-from pcs import (
-    usage,
-    utils,
-)
+from pcs import utils
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.parse_args import prepare_options
-from pcs.cli.common.routing import create_router
 import pcs.lib.pacemaker.live as lib_pacemaker
 
 def node_attribute_cmd(lib, argv, modifiers):
@@ -213,19 +208,3 @@ def attribute_print(node_attributes):
         for name, value in sorted(node_attributes[node].items()):
             line_parts.append("{0}={1}".format(name, value))
         print(" ".join(line_parts))
-
-
-node_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.node(argv),
-        "maintenance": partial(node_maintenance_cmd, enable=True),
-        "unmaintenance": partial(node_maintenance_cmd, enable=False),
-        "standby": partial(node_standby_cmd, enable=True),
-        "unstandby": partial(node_standby_cmd, enable=False),
-        "attribute": node_attribute_cmd,
-        "utilization": node_utilization_cmd,
-        # pcs-to-pcsd use only
-        "pacemaker-status": node_pacemaker_status,
-    },
-    ["node"]
-)

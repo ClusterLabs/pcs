@@ -2,12 +2,10 @@ from urllib.parse import urlparse
 
 from pcs import (
     settings,
-    usage,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 
 
 def _parse_host_options(host, options):
@@ -104,13 +102,3 @@ def deauth_cmd(lib, argv, modifiers):
             utils.err('Unable to communicate with pcsd')
         return
     utils.err('Unable to communicate with pcsd')
-
-
-host_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.host(argv),
-        "auth": auth_cmd,
-        "deauth": deauth_cmd,
-    },
-    ["host"]
-)

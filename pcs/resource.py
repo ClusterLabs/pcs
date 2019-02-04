@@ -5,7 +5,6 @@ import re
 import textwrap
 import time
 import json
-from functools import partial
 
 from pcs import (
     usage,
@@ -18,7 +17,6 @@ from pcs.settings import (
 from pcs.cli.common.console_report import error, indent, warn
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
-from pcs.cli.common.routing import create_router
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_update_options,
@@ -3207,86 +3205,3 @@ def resource_bundle_update_cmd(lib, argv, modifiers):
         force_options=modifiers.get("--force"),
         wait=modifiers.get("--wait"),
     )
-
-
-resource_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.resource(argv),
-        "list": resource_list_available,
-        "describe": resource_list_options,
-        "create": resource_create,
-        "move": resource_move,
-        "ban": partial(resource_move, ban=True),
-        "clear": partial(resource_move, clear=True),
-        "standards": resource_standards,
-        "providers": resource_providers,
-        "agents": resource_agents,
-        "update": resource_update,
-        "meta": resource_meta,
-        "delete": resource_remove_cmd,
-        "remove": resource_remove_cmd,
-        # TODO remove, deprecated command
-        # replaced with 'resource status' and 'resource config'
-        "show": resource_show,
-        "status": resource_status,
-        "config": resource_config,
-        "group": create_router(
-            {
-                "add": resource_group_add_cmd,
-                "list": resource_group_list,
-                "remove": resource_group_rm_cmd,
-                "delete": resource_group_rm_cmd,
-            },
-            ["resource", "group"],
-        ),
-        "ungroup": resource_group_rm_cmd,
-        "clone": resource_clone,
-        "promotable": partial(resource_clone, promotable=True),
-        "unclone": resource_clone_master_remove,
-        "enable": resource_enable_cmd,
-        "disable": resource_disable_cmd,
-        "restart": resource_restart,
-        "debug-start": partial(resource_force_action, action="debug-start"),
-        "debug-stop": partial(resource_force_action, action="debug-stop"),
-        "debug-promote": partial(resource_force_action, action="debug-promote"),
-        "debug-demote": partial(resource_force_action, action="debug-demote"),
-        "debug-monitor": partial(resource_force_action, action="debug-monitor"),
-        "manage": resource_manage_cmd,
-        "unmanage": resource_unmanage_cmd,
-        "failcount": resource_failcount,
-        "op": create_router(
-            {
-                "defaults": resource_op_defaults_cmd,
-                "add": resource_op_add_cmd,
-                "remove": resource_op_delete_cmd,
-                "delete": resource_op_delete_cmd,
-            },
-            ["resource", "op"]
-        ),
-        "defaults": resource_defaults_cmd,
-        "cleanup": resource_cleanup,
-        "refresh": resource_refresh,
-        "relocate": create_router(
-            {
-                "show": resource_relocate_show_cmd,
-                "dry-run": resource_relocate_dry_run_cmd,
-                "run": resource_relocate_run_cmd,
-                "clear": resource_relocate_clear_cmd,
-            },
-            ["resource", "relocate"]
-        ),
-        "utilization": resource_utilization_cmd,
-        "bundle": create_router(
-            {
-                "create": resource_bundle_create_cmd,
-                "reset": resource_bundle_reset_cmd,
-                "update": resource_bundle_update_cmd,
-            },
-            ["resource", "bundle"]
-        ),
-        # internal use only
-        "get_resource_agent_info": get_resource_agent_info
-    },
-    ["resource"],
-    default_cmd="status"
-)

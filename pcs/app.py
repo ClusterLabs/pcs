@@ -4,6 +4,19 @@ import sys
 import logging
 
 from pcs import (
+    settings,
+    usage,
+    utils,
+)
+
+from pcs.cli.common import (
+    capabilities,
+    completion,
+    errors,
+    parse_args,
+    routing,
+)
+from pcs.cli.routing import (
     acl,
     alert,
     booth,
@@ -18,19 +31,8 @@ from pcs import (
     qdevice,
     quorum,
     resource,
-    settings,
     status,
     stonith,
-    usage,
-    utils,
-)
-
-from pcs.cli.common import (
-    capabilities,
-    completion,
-    errors,
-    parse_args,
-    routing,
 )
 from pcs.lib.errors import LibraryError
 

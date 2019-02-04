@@ -1,13 +1,9 @@
 import sys
 import json
 
-from pcs import (
-    usage,
-    utils,
-)
+from pcs import utils
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 
 
 def set_property(lib, argv, modifiers):
@@ -140,18 +136,3 @@ def print_cluster_properties_definition(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     print(json.dumps(utils.get_cluster_properties_definition()))
-
-
-property_cmd = create_router(
-    {
-        "help": lambda _lib, _argv, _modifiers: usage.property(_argv),
-        "set": set_property,
-        "unset": unset_property,
-        "list": list_property,
-        "show": list_property,
-        "get_cluster_properties_definition":
-            print_cluster_properties_definition,
-    },
-    ["property"],
-    default_cmd="list"
-)

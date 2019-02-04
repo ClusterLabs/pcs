@@ -11,11 +11,7 @@ import time
 import xml.dom.minidom
 
 from pcs import (
-    pcsd,
-    resource,
     settings,
-    status,
-    usage,
     utils,
 )
 from pcs.utils import parallel_for_nodes
@@ -25,8 +21,6 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
-from pcs.cli.common.routing import create_router
-import pcs.cli.cluster.command as cluster_command
 from pcs.common import report_codes
 from pcs.common.node_communicator import (
     HostNotFound,
@@ -1550,59 +1544,3 @@ def remove_nodes_from_cib(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("No nodes specified")
     lib.cluster.remove_nodes_from_cib(argv)
-
-
-cluster_cmd = create_router(
-    {
-        "help": lambda lib, argv, modifiers: usage.cluster(argv),
-        "setup": cluster_setup,
-        "sync": create_router(
-            {
-                "corosync": sync_nodes,
-            },
-            ["cluster", "sync"],
-            default_cmd="corosync",
-        ),
-        "status": status.cluster_status,
-        "pcsd-status": status.cluster_pcsd_status,
-        "certkey": pcsd.pcsd_certkey,
-        "auth": cluster_auth_cmd,
-        "start": cluster_start_cmd,
-        "stop": cluster_stop_cmd,
-        "kill": kill_cluster,
-        "enable": cluster_enable_cmd,
-        "disable": cluster_disable_cmd,
-        "cib": get_cib,
-        "cib-push": cluster_push,
-        "cib-upgrade": cluster_cib_upgrade_cmd,
-        "edit": cluster_edit,
-        "node": create_router(
-            {
-                "add": node_add,
-                "add-guest": cluster_command.node_add_guest,
-                "add-outside": node_add_outside_cluster,
-                "add-remote": cluster_command.node_add_remote,
-                "clear": cluster_command.node_clear,
-                "delete": node_remove,
-                "delete-guest": cluster_command.node_remove_guest,
-                "delete-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),
-                "remove": node_remove,
-                "remove-guest": cluster_command.node_remove_guest,
-                "remove-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),
-            },
-            ["cluster", "node"]
-        ),
-        "uidgid": cluster_uidgid,
-        "corosync": cluster_get_corosync_conf,
-        "reload": cluster_reload,
-        "destroy": cluster_destroy,
-        "verify": cluster_verify,
-        "report": cluster_report,
-        "remove_nodes_from_cib": remove_nodes_from_cib,
-    },
-    ["cluster"]
-)

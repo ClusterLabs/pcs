@@ -1,6 +1,5 @@
 from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 
 
 def local_auth_cmd(lib, argv, modifiers):
@@ -25,11 +24,3 @@ def local_auth_cmd(lib, argv, modifiers):
             }
         }
     )
-
-
-client_cmd = create_router(
-    {
-        "local-auth": local_auth_cmd,
-    },
-    ["client"],
-)
