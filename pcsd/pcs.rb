@@ -1728,6 +1728,67 @@ def is_service_running?(service)
   return (retcode == 0)
 end
 
+class ServiceInstalledChecker
+  def initialize()
+    @list_unit_files_output = self.load_unit_files_list()
+  end
+
+  def load_unit_files_list()
+    stdout, _, retcode = self.run_command()
+    if retcode != 0
+      return nil
+    end
+    return stdout
+  end
+
+  def is_installed?(service)
+    if @list_unit_files_output.nil?
+      return nil
+    end
+
+    @list_unit_files_output.each { |line|
+      if self.contains_line_service?(line, service)
+        return true
+      end
+    }
+    return false
+  end
+end
+
+class ServiceInstalledCheckerSystemctl < ServiceInstalledChecker
+  def run_command
+    # currently we are not using systemd instances (service_name@instance) in pcsd
+    # for proper implementation of is_service_installed see
+    # pcs/lib/external.py:is_service_installed
+    return run_cmd(
+      PCSAuth.getSuperuserAuth(), 'systemctl', 'list-unit-files', '--full'
+    )
+  end
+
+  def contains_line_service?(line, service)
+    return line.strip().start_with?("#{service}.service")
+  end
+end
+
+class ServiceInstalledCheckerChkconfig < ServiceInstalledChecker
+  def run_command
+    return run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
+  end
+
+  def contains_line_service?(line, service)
+    return line.split(' ')[0] == service
+  end
+end
+
+def get_service_installed_checker
+  if ISSYSTEMCTL
+    return ServiceInstalledCheckerSystemctl.new
+  else
+    return ServiceInstalledCheckerChkconfig.new
+  end
+end
+
+
 def is_service_installed?(service)
   unless ISSYSTEMCTL
     stdout, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
@@ -1888,9 +1949,9 @@ def get_alerts(auth_user)
   end
 end
 
-def get_service_info(service_name)
+def get_service_info(service_name, service_checker)
   return {
-    :installed => is_service_installed?(service_name),
+    :installed => service_checker.is_installed?(service_name),
     :enabled => is_service_enabled?(service_name),
     :running => is_service_running?(service_name),
     :version => nil,

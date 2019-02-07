@@ -2911,8 +2911,10 @@ def check_host(params, request, auth_user)
       File.exist?(Cfgsync::CorosyncConf.file_path) or File.exist?(CIB_PATH)
     )
   }
+
+  service_checker = get_service_installed_checker
   service_list.each do |service|
-    output[:services][service] = get_service_info(service.to_s)
+    output[:services][service] = get_service_info(service.to_s, service_checker)
   end
   service_version_getter.each do |service, version_getter|
     version = version_getter.call()
