@@ -2475,6 +2475,13 @@ Ticket Constraints:
         )
 
     def testResourceMoveBanClear(self):
+        def replace_date(output):
+            return re.sub(
+                "\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( [+-]?\d\d:\d\d))",
+                "{datetime}",
+                output
+            )
+
         # Load nodes into cib so move will work
         utils.usefile = True
         utils.filename = temp_cib
@@ -2573,7 +2580,7 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        output = replace_date(output)
         ac(output, """\
 Location Constraints:
   Resource: dummy
@@ -2609,7 +2616,7 @@ This will prevent dummy from running on rh7-1 until the constraint is removed. T
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        output = replace_date(output)
         ac(output, """\
 Location Constraints:
   Resource: dummy
@@ -2755,14 +2762,23 @@ Ticket Constraints:
         self.assert_pcs_fail(
             "resource move D2-master --master",
             # pacemaker 1.1.18 changes --host to --node
+            # pacemkaer 1.1.20 changes:
+            #   1) " with: --ban --(host|node) <name>"
+            #       to
+            #       ", specify a node."
+            #   2) " with: --ban --master --(host|node) <name>"
+            #       to
+            #       ", specify a node and the master option."
             stdout_regexp=re.compile("^"
                 "Error: error moving/banning/clearing resource\n"
                 "Resource 'D2-master' not moved: active in 0 locations "
                     "\(promoted in 0\).\n"
                 "You can prevent 'D2-master' from running on a specific "
-                    "location with: --ban --(host|node) <name>\n"
+                    "location( with: --ban --(host|node) <name>)"
+                    "|(, specify a node\.)\n"
                 "You can prevent 'D2-master' from being promoted at a specific "
-                    "location with: --ban --master --(host|node) <name>\n"
+                    "location( with: --ban --master --(host|node) <name>)"
+                    "|(, specify a node and the master option\.)\n"
                 "Error performing operation: Invalid argument\n\n"
                 "$", re.MULTILINE
             )
@@ -2800,15 +2816,23 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assert_pcs_fail(
             "resource move group1-master --master",
             # pacemaker 1.1.18 changes --host to --node
+            # pacemkaer 1.1.20 changes:
+            #   1) " with: --ban --(host|node) <name>"
+            #       to
+            #       ", specify a node."
+            #   2) " with: --ban --master --(host|node) <name>"
+            #       to
+            #       ", specify a node and the master option."
             stdout_regexp=re.compile("^"
                 "Error: error moving/banning/clearing resource\n"
                 "Resource 'group1-master' not moved: active in 0 locations "
                     "\(promoted in 0\).\n"
                 "You can prevent 'group1-master' from running on a specific "
-                    "location with: --ban --(host|node) <name>\n"
-                "You can prevent 'group1-master' from being promoted at a "
-                    "specific location with: --ban --master --(host|node) "
-                    "<name>\n"
+                    "location( with: --ban --(host|node) <name>)"
+                    "|(, specify a node\.)\n"
+                "You can prevent 'group1-master' from being promoted at a specific "
+                    "location( with: --ban --master --(host|node) <name>)"
+                    "|(, specify a node and the master option\.)\n"
                 "Error performing operation: Invalid argument\n\n"
                 "$", re.MULTILINE
             )
