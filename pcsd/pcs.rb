@@ -1733,14 +1733,6 @@ class ServiceInstalledChecker
     @list_unit_files_output = self.load_unit_files_list()
   end
 
-  def load_unit_files_list()
-    stdout, _, retcode = self.run_command()
-    if retcode != 0
-      return nil
-    end
-    return stdout
-  end
-
   def is_installed?(service)
     if @list_unit_files_output.nil?
       return nil
@@ -1753,9 +1745,19 @@ class ServiceInstalledChecker
     }
     return false
   end
+
+  protected
+  def load_unit_files_list()
+    stdout, _, retcode = self.run_command()
+    if retcode != 0
+      return nil
+    end
+    return stdout
+  end
 end
 
 class ServiceInstalledCheckerSystemctl < ServiceInstalledChecker
+  protected
   def run_command
     # currently we are not using systemd instances (service_name@instance) in pcsd
     # for proper implementation of is_service_installed see
@@ -1771,6 +1773,7 @@ class ServiceInstalledCheckerSystemctl < ServiceInstalledChecker
 end
 
 class ServiceInstalledCheckerChkconfig < ServiceInstalledChecker
+  protected
   def run_command
     return run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
   end
@@ -1790,34 +1793,7 @@ end
 
 
 def is_service_installed?(service)
-  unless ISSYSTEMCTL
-    stdout, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
-    if retcode != 0
-      return nil
-    end
-    stdout.each { |line|
-      if line.split(' ')[0] == service
-        return true
-      end
-    }
-    return false
-  end
-
-  # currently we are not using systemd instances (service_name@instance) in pcsd
-  # for proper implementation of is_service_installed see
-  # pcs/lib/external.py:is_service_installed
-  stdout, _, retcode = run_cmd(
-    PCSAuth.getSuperuserAuth(), 'systemctl', 'list-unit-files', '--full'
-  )
-  if retcode != 0
-    return nil
-  end
-  stdout.each { |line|
-    if line.strip().start_with?("#{service}.service")
-      return true
-    end
-  }
-  return false
+  return get_service_installed_checker().is_installed?(service)
 end
 
 def enable_service(service)
