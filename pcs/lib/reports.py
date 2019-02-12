@@ -1214,13 +1214,13 @@ def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
         }
     )
 
-def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
+def cannot_group_resource_next_to_itself(resource_id, group_id):
     """
     Cannot put resource(id=resource_id) into group(id=group_id) next to itself:
         resource(id=resource_id).
     """
     return ReportItem.error(
-        report_codes.RESOURCE_CANNOT_BE_NEXT_TO_ITSELF_IN_GROUP,
+        report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
         info={
             "resource_id": resource_id,
             "group_id": group_id,

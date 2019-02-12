@@ -704,6 +704,24 @@ class IdBelongsToUnexpectedType(NameBuildTest):
             }
         )
 
+class ObjectWithIdInUnexpectedContext(NameBuildTest):
+    code = codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT
+    def test_with_context_id(self):
+        self.assert_message_from_report(
+            "resource 'R' exists but does not belong to group 'G'",
+            reports.object_with_id_in_unexpected_context(
+                "primitive", "R", "group", "G"
+            )
+        )
+
+    def test_without_context_id(self):
+        self.assert_message_from_report(
+            "group 'G' exists but does not belong to 'resource'",
+            reports.object_with_id_in_unexpected_context(
+                "group", "G", "primitive", ""
+            )
+        )
+
 class ResourceRunOnNodes(NameBuildTest):
     code = codes.RESOURCE_RUNNING_ON_NODES
     def test_one_node(self):
@@ -2257,4 +2275,12 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
             reports.resource_instance_attr_value_not_unique(
                 "attr", "val", "agent", ["B", "C", "A"]
             )
+        )
+
+class CannotGroupResourceNextToItself(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF
+    def test_success(self):
+        self.assert_message_from_report(
+            "Cannot put resource 'R' next to itself",
+            reports.cannot_group_resource_next_to_itself("R", "G")
         )
