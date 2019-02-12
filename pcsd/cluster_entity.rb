@@ -1177,10 +1177,11 @@ module ClusterEntity
 
     def self.load_current_node(crm_dom=nil)
       node = ClusterEntity::Node.new
+      service_checker = get_service_installed_checker()
       node.services.each do |service, info|
         info[:running] = is_service_running?(service.to_s)
         info[:enabled] = is_service_enabled?(service.to_s)
-        info[:installed] = is_service_installed?(service.to_s)
+        info[:installed] = service_checker.is_installed?(service.to_s)
       end
       node.corosync = node.services[:corosync][:running]
       node.corosync_enabled = node.services[:corosync][:enabled]
