@@ -47,7 +47,7 @@ def place_resource(
         Note that it make sense only if adjacent_resource_id is specified
     """
     if primitive_element.attrib["id"] == adjacent_resource_id:
-        raise LibraryError(reports.resource_cannot_be_next_to_itself_in_group(
+        raise LibraryError(reports.cannot_group_resource_next_to_itself(
             adjacent_resource_id,
             group_element.attrib["id"],
         ))

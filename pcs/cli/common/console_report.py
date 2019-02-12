@@ -140,6 +140,28 @@ def id_belongs_to_unexpected_type(info):
         expected_type=typelist_to_string(info["expected_types"], article=True)
     )
 
+def object_with_id_in_unexpected_context(info):
+    # get a translation or make a type_name a string
+    context_type = _type_translation.get(
+        info["expected_context_type"],
+        "{0}".format(info["expected_context_type"])
+    )
+    if info.get("expected_context_id", ""):
+        context = "{_expected_context_type} '{expected_context_id}'".format(
+            _expected_context_type=context_type,
+            **info
+        )
+    else:
+        context = "'{_expected_context_type}'".format(
+            _expected_context_type=context_type,
+        )
+    return "{_type} '{id}' exists but does not belong to {_context}".format(
+        _context=context,
+        # get a translation or make a type_name a string
+        _type=_type_translation.get(info["type"], "{0}".format(info["type"])),
+        **info
+    )
+
 def id_not_found(info):
     desc = format_optional(typelist_to_string(info["expected_types"]), "{0} ")
     if not info["context_type"] or not info["context_id"]:
@@ -898,6 +920,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.ID_BELONGS_TO_UNEXPECTED_TYPE: id_belongs_to_unexpected_type,
+
+    codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT:
+        object_with_id_in_unexpected_context
+    ,
 
     codes.ID_NOT_FOUND: id_not_found,
 
@@ -1854,5 +1880,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _agent=info["agent_name"],
             _res_id_list=format_list(info["resource_id_list"]),
         )
+    ,
+    codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF: lambda info:
+        "Cannot put resource '{resource_id}' next to itself".format(**info)
     ,
 }
