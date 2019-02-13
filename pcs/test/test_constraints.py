@@ -2273,7 +2273,7 @@ class CommonCreateWithSet(ConstraintBaseTest):
     def test_refuse_when_resource_does_not_exist(self):
         self.assert_pcs_fail(
             'constraint ticket set A C setoptions ticket=T',
-            ["Error: bundle/clone/group/master/resource 'C' does not exist"]
+            ["Error: bundle/clone/group/resource 'C' does not exist"]
         )
 
 class TicketCreateWithSet(ConstraintBaseTest):
@@ -2321,7 +2321,7 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
             'constraint ticket add T master AA loss-policy=fence',
-            ["Error: bundle/clone/group/master/resource 'AA' does not exist"]
+            ["Error: bundle/clone/group/resource 'AA' does not exist"]
         )
 
     def test_refuse_invalid_role(self):

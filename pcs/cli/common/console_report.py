@@ -18,6 +18,10 @@ _type_translation = {
     "acl_permission": "ACL permission",
     "acl_role": "ACL role",
     "acl_target": "ACL user",
+    # Pacemaker-2.0 deprecated masters. Masters are now called promotable
+    # clones. We treat masters as clones. Do not report we were doing something
+    # with a master, say we were doing it with a clone instead.
+    "master": "clone",
     "primitive": "resource",
 }
 _type_articles = {
@@ -109,14 +113,30 @@ def service_operation_skipped(operation, info):
         **info
     )
 
+def type_to_string(type_name, article=False):
+    if not type_name:
+        return ""
+    # get a translation or make a type_name a string
+    translated = _type_translation.get(type_name, "{0}".format(type_name))
+    if not article:
+        return translated
+    return "{article} {type}".format(
+        article=_type_articles.get(translated, "a"),
+        type=translated
+    )
+
 def typelist_to_string(type_list, article=False):
     if not type_list:
         return ""
-    new_list = sorted([
+    # use set to drop duplicate items:
+    # * master is translated to clone
+    # * i.e. "clone, master" is translated to "clone, clone"
+    # * so we want to drop the second clone
+    new_list = sorted({
         # get a translation or make a type_name a string
         _type_translation.get(type_name, "{0}".format(type_name))
         for type_name in type_list
-    ])
+    })
     types = "/".join(new_list)
     if not article:
         return types
@@ -141,11 +161,7 @@ def id_belongs_to_unexpected_type(info):
     )
 
 def object_with_id_in_unexpected_context(info):
-    # get a translation or make a type_name a string
-    context_type = _type_translation.get(
-        info["expected_context_type"],
-        "{0}".format(info["expected_context_type"])
-    )
+    context_type = type_to_string(info["expected_context_type"])
     if info.get("expected_context_id", ""):
         context = "{_expected_context_type} '{expected_context_id}'".format(
             _expected_context_type=context_type,
@@ -157,8 +173,7 @@ def object_with_id_in_unexpected_context(info):
         )
     return "{_type} '{id}' exists but does not belong to {_context}".format(
         _context=context,
-        # get a translation or make a type_name a string
-        _type=_type_translation.get(info["type"], "{0}".format(info["type"])),
+        _type=type_to_string(info["type"]),
         **info
     )
 

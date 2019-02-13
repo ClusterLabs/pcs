@@ -797,7 +797,7 @@ def _resource_list_enable_disable(
             report_list.append(
                 reports.id_not_found(
                     res_id,
-                    ["primitive", "clone", "group", "bundle"]
+                    ["primitive", "clone", "group", "bundle", "master"]
                )
             )
     return report_list
@@ -935,17 +935,9 @@ def _find_resources_or_raise(
         +
         [resource.group.TAG, resource.primitive.TAG, resource.bundle.TAG]
     )
-    # pacemaker-2.0 deprecated masters. We treat masters as clones. Do not
-    # report we were looking for a master, say we were looking for a clone
-    # instead. Since we look for all resource types including clones, just drop
-    # the master.
-    element_type_desc = [
-        tag for tag in resource_tags if tag != resource.clone.TAG_MASTER
-    ]
     for res_id in resource_ids:
         searcher = ElementSearcher(
             resource_tags, res_id, resources_section,
-            element_type_desc=element_type_desc
         )
         if searcher.element_found():
             resource_el_list.extend(additional_search(searcher.get_element()))
