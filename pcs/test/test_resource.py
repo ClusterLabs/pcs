@@ -1154,7 +1154,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource group add MyGroup A1 B1")
         assert r == 1
-        ac(o,'Error: Unable to find resource: B1\n')
+        ac(o, "Error: bundle/clone/group/resource 'B1' does not exist\n")
 
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
@@ -1181,7 +1181,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
         assert r == 1
-        ac(o,'Error: A1 already exists in MyGroup\n')
+        ac(o, "Error: 'A1', 'A2', 'A3' already exist in 'MyGroup'\n")
 
         o,r = pcs(temp_cib, "resource group add MyGroup2 A3 A4 A5")
         assert r == 0
@@ -1362,14 +1362,14 @@ monitor interval=20 (A-monitor-interval-20)
 
         o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --after A3")
         self.assertEqual(1, r)
-        ac(o, "Error: cannot put resource after itself\n")
+        ac(o, "Error: Cannot put resource 'A3' next to itself\n")
 
         o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --before A3")
         self.assertEqual(1, r)
-        ac(o, "Error: cannot put resource before itself\n")
+        ac(o, "Error: Cannot put resource 'A3' next to itself\n")
 
         o, r = pcs(temp_cib, "resource group add A7 A6")
-        ac(o, "Error: 'A7' is already a resource\n")
+        ac(o, "Error: 'A7' is not a group\n")
         self.assertEqual(1, r)
 
         o, r = pcs(
@@ -1380,7 +1380,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
 
         o, r = pcs(temp_cib, "resource group add A0-clone A6")
-        ac(o, "Error: 'A0-clone' is already a clone resource\n")
+        ac(o, "Error: 'A0-clone' is not a group\n")
         self.assertEqual(1, r)
 
         o, r = pcs(temp_cib, "resource unclone A0-clone")
@@ -1393,7 +1393,7 @@ monitor interval=20 (A-monitor-interval-20)
         wrap_element_by_master(temp_cib, "A0")
 
         o, r = pcs(temp_cib, "resource group add A0-master A6")
-        ac(o, "Error: 'A0-master' is already a clone resource\n")
+        ac(o, "Error: 'A0-master' is not a group\n")
         self.assertEqual(1, r)
 
         output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
@@ -1402,7 +1402,13 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(temp_cib, "resource group add group:dummy dummy1")
         assert returnVal == 1
-        ac(output, "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n")
+        ac(
+            output,
+            (
+                "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n"
+                "Error: bundle/clone/group/resource 'dummy1' does not exist\n"
+            )
+        )
 
     def testGroupLargeResourceRemove(self):
         output, returnVal = pcs(
@@ -4514,11 +4520,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
 
         o,r = pcs(temp_cib, "resource group add DG D1")
-        ac(o,"Error: cannot group clone resources\n")
+        ac(o,"Error: 'D1' is a clone resource, clone resources cannot be put into a group\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource group add DG D2")
-        ac(o,"Error: cannot group clone resources\n")
+        ac(o, "Error: 'D2' is a clone resource, clone resources cannot be put into a group\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone")
@@ -6091,7 +6097,10 @@ class BundleGroup(BundleCommon):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
             "resource group add bundles B",
-            "Error: Unable to find resource: B\n"
+            (
+                "Error: 'B' is a bundle resource, bundle resources cannot be "
+                "put into a group\n"
+            )
         )
 
     def test_group_add_primitive(self):
@@ -6099,7 +6108,8 @@ class BundleGroup(BundleCommon):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
             "resource group add group R",
-            "Error: cannot group bundle resources\n"
+            "Error: 'R' is a bundle resource, bundle resources cannot be put "
+                "into a group\n"
         )
 
     def test_group_delete_primitive(self):

@@ -1472,12 +1472,34 @@ def resource_group_add_cmd(lib, argv, modifiers):
       * --before - place a resource in a group before the specified resource in
         the group
     """
-    del lib
     modifiers.ensure_only_supported("--wait", "-f", "--after", "--before")
     if len(argv) < 2:
         raise CmdLineInputError()
+
     group_name = argv.pop(0)
-    resource_ids = argv
+    resource_names = argv
+    adjacent_name = None
+    after_adjacent = True
+    if modifiers.is_specified("--after") and modifiers.is_specified("--before"):
+        raise CmdLineInputError("you cannot specify both --before and --after")
+    if modifiers.is_specified("--after"):
+        adjacent_name = modifiers.get("--after")
+        after_adjacent = True
+    elif modifiers.is_specified("--before"):
+        adjacent_name = modifiers.get("--before")
+        after_adjacent = False
+
+    lib.resource.group_add(
+        group_name,
+        resource_names,
+        adjacent_resource_id=adjacent_name,
+        put_after_adjacent=after_adjacent,
+        wait=modifiers.get("--wait")
+    )
+
+    # TODO remove
+    return
+
     cib = resource_group_add(utils.get_cib_dom(), group_name, resource_ids)
 
     if modifiers.is_specified("--wait"):
@@ -2076,6 +2098,7 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
 
     return cib_dom
 
+# TODO remove
 def resource_group_add(cib_dom, group_name, resource_ids):
     """
     Commandline options:

@@ -1896,7 +1896,35 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _res_id_list=format_list(info["resource_id_list"]),
         )
     ,
+    codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP: lambda info:
+        (
+            "There is no resource '{adjacent_resource_id}' in the group "
+            "'{group_id}', cannot put resources next to it in the group"
+        )
+        .format(**info)
+    ,
+    codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP: lambda info:
+        "{_resources} already exist{_s} in '{group_id}'"
+        .format(
+            _resources=format_list(info["resource_list"]),
+            _s="" if len(info["resource_list"]) > 1 else "s",
+            **info
+        )
+    ,
     codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF: lambda info:
         "Cannot put resource '{resource_id}' next to itself".format(**info)
+    ,
+    codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES: lambda info:
+        "No resources to add"
+    ,
+    codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE: lambda info:
+        (
+            "'{resource_id}' is {_type_article} resource, {_type} resources "
+            "cannot be put into a group"
+        ).format(
+            _type_article=type_to_string(info["resource_type"], article=True),
+            _type=type_to_string(info["resource_type"], article=False),
+            **info
+        )
     ,
 }
