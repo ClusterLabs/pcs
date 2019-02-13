@@ -8,7 +8,6 @@ from pcs.lib.cib import (
     resource,
     status as cib_status,
 )
-from pcs.lib.cib.resource import operations, remote_node, guest_node
 from pcs.lib.cib.tools import (
     ElementSearcher,
     find_element_by_tag_and_id,
@@ -64,7 +63,7 @@ def _validate_remote_connection(
     resource_agent, existing_nodes_addrs, resource_id, instance_attributes,
     allow_not_suitable_command
 ):
-    if resource_agent.get_name() != remote_node.AGENT_NAME.full_name:
+    if resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name:
         return []
 
     report_list = []
@@ -76,7 +75,7 @@ def _validate_remote_connection(
     )
 
     report_list.extend(
-        remote_node.validate_host_not_conflicts(
+        resource.remote_node.validate_host_not_conflicts(
             existing_nodes_addrs,
             resource_id,
             instance_attributes
@@ -88,14 +87,18 @@ def _validate_guest_change(
     tree, existing_nodes_names, existing_nodes_addrs, meta_attributes,
     allow_not_suitable_command, detect_remove=False
 ):
-    if not guest_node.is_node_name_in_options(meta_attributes):
+    if not resource.guest_node.is_node_name_in_options(meta_attributes):
         return []
 
-    node_name = guest_node.get_node_name_from_options(meta_attributes)
+    node_name = resource.guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
     create_report = reports.use_command_node_add_guest
-    if detect_remove and not guest_node.get_guest_option_value(meta_attributes):
+    if (
+        detect_remove
+        and
+        not resource.guest_node.get_guest_option_value(meta_attributes)
+    ):
         create_report = reports.use_command_node_remove_guest
 
     report_list.append(
@@ -106,7 +109,7 @@ def _validate_guest_change(
     )
 
     report_list.extend(
-        guest_node.validate_conflicts(
+        resource.guest_node.validate_conflicts(
             tree,
             existing_nodes_names,
             existing_nodes_addrs,
@@ -136,9 +139,9 @@ def _check_special_cases(
     instance_attributes, allow_not_suitable_command
 ):
     if(
-        resource_agent.get_name() != remote_node.AGENT_NAME.full_name
+        resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name
         and
-        not guest_node.is_node_name_in_options(meta_attributes)
+        not resource.guest_node.is_node_name_in_options(meta_attributes)
     ):
         #if no special case happens we won't take care about corosync.conf that
         #is needed for getting nodes to validate against
@@ -826,11 +829,11 @@ def unmanage(env, resource_ids, with_monitor=False):
                 )
 
         for resource_el in set(primitives):
-            for op in operations.get_resource_operations(
+            for op in resource.operations.get_resource_operations(
                 resource_el,
                 ["monitor"]
             ):
-                operations.disable(op)
+                resource.operations.disable(op)
 
 def manage(env, resource_ids, with_monitor=False):
     """
@@ -859,17 +862,17 @@ def manage(env, resource_ids, with_monitor=False):
             set(primitives),
             key=lambda element: element.get("id", "")
         ):
-            op_list = operations.get_resource_operations(
+            op_list = resource.operations.get_resource_operations(
                 resource_el,
                 ["monitor"]
             )
             if with_monitor:
                 for op in op_list:
-                    operations.enable(op)
+                    resource.operations.enable(op)
             else:
                 monitor_enabled = False
                 for op in op_list:
-                    if operations.is_enabled(op):
+                    if resource.operations.is_enabled(op):
                         monitor_enabled = True
                         break
                 if op_list and not monitor_enabled:
