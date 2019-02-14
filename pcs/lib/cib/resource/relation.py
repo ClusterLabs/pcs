@@ -6,7 +6,8 @@ from pcs.lib.cib.resource import (
 )
 
 def validate_move_resources_to_group(
-    group_element, primitives_to_place, adjacent_resource=None
+    group_element, primitives_to_place, adjacent_resource=None,
+    missing_adjacent_resource_specified=False
 ):
     """
     Validate putting resources into a group or moving them within their group
@@ -14,40 +15,56 @@ def validate_move_resources_to_group(
     etree.Element group_element -- the group to put resources into
     iterable primitives_to_place -- resource elements to put into the group
     etree.Element adjacent_resource -- put resources beside this one if set
+    bool missing_adjacent_resource_specified -- an adjacent resource has been
+        specified but it does not exist
     """
-    if not primitives_to_place:
-        return [reports.cannot_group_resource_no_resources()]
-
+    # pylint: disable=too-many-branches
     report_list = []
 
+    if not group.is_group(group_element):
+        report_list.append(
+            reports.id_belongs_to_unexpected_type(
+                group_element.attrib.get("id"),
+                expected_types=[group.TAG],
+                current_type=group_element.tag
+            )
+        )
+
+    if not primitives_to_place:
+        report_list.append(reports.cannot_group_resource_no_resources())
+        return report_list
+
     resources_already_in_the_group = set()
+    resources_count = dict()
     for resource in primitives_to_place:
+        resource_id = resource.attrib.get("id")
         if not primitive.is_primitive(resource):
             report_list.append(
                 reports.cannot_group_resource_wrong_type(
-                    resource.attrib.get("id"),
+                    resource_id,
                     resource.tag
                 )
             )
             continue
+        resources_count[resource_id] = resources_count.get(resource_id, 0) + 1
         parent = resource.getparent()
         if parent is not None:
             if group.is_group(parent):
                 if (
                     adjacent_resource is None
                     and
+                    not missing_adjacent_resource_specified
+                    and
                     parent.attrib.get("id") == group_element.attrib.get("id")
                 ):
-                    resources_already_in_the_group.add(
-                        resource.attrib.get("id")
-                    )
+                    resources_already_in_the_group.add(resource_id)
             elif parent.tag != "resources":
                 # if the primitive is not in a 'group' or 'resources' tag, it
                 # is either in a clone, master, bundle or similar tag and
                 # cannot be put into a group
                 report_list.append(
                     reports.cannot_group_resource_wrong_type(
-                        resource.attrib.get("id"),
+                        resource_id,
                         parent.tag
                     )
                 )
@@ -56,6 +73,16 @@ def validate_move_resources_to_group(
             reports.cannot_group_resource_already_in_the_group(
                 resources_already_in_the_group,
                 group_element.attrib.get("id")
+            )
+        )
+    more_than_once_resources = [
+        resource for resource, count in resources_count.items()
+        if count > 1
+    ]
+    if more_than_once_resources:
+        report_list.append(
+            reports.cannot_group_resource_more_than_once(
+                more_than_once_resources
             )
         )
 
@@ -119,6 +146,7 @@ def move_resources_to_group(
             adjacent_resource.addprevious(resource)
         else:
             group_element.append(resource)
+            adjacent_resource = resource
 
         # If the resource was the last resource in another group, that group is
         # now empty and must be deleted. If the group is in a clone element,

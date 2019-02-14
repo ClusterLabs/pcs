@@ -1515,6 +1515,19 @@ def cannot_group_resource_already_in_the_group(resource_list, group_id):
         }
     )
 
+def cannot_group_resource_more_than_once(resource_list):
+    """
+    Cannot put the same resources into a group more than once
+
+    iterable resource_list -- ids of resources specified more than once
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE,
+        info={
+            "resource_list": sorted(resource_list),
+        }
+    )
+
 def cannot_group_resource_no_resources():
     """
     Cannot put resources into a group, no resources were specified

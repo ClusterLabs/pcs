@@ -7,6 +7,7 @@ from textwrap import dedent
 from unittest import mock, skip, TestCase
 from lxml import etree
 
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.test.bin_mock import get_mock_settings
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
@@ -20,6 +21,7 @@ from pcs.test.tools.fixture_cib import (
     wrap_element_by_master,
 )
 from pcs.test.tools.misc import (
+    dict_to_modifiers,
     get_test_resource as rc,
     outdent,
     skip_unless_pacemaker_supports_bundle,
@@ -1109,6 +1111,7 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
+    # TODO remove
     def testGroupAdd(self):
         # see also BundleGroup
         o,r = pcs(
@@ -1428,6 +1431,9 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
 
     def testGroupOrder(self):
+        # This was cosidered for removing during 'resource group add' command
+        # and tests overhaul. However, this is the only test where "resource
+        # group list" is called. Due to that this test was not deleted.
         output, returnVal = pcs(
             temp_cib,
             "resource create --no-default-ops A ocf:heartbeat:Dummy"
@@ -1501,6 +1507,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "RGA: A B C E D K J I\n")
         assert returnVal == 0
 
+    # TODO remove
     def testRemoveLastResourceFromGroup(self):
         output, returnVal = pcs(
             temp_cib,
@@ -1537,6 +1544,7 @@ monitor interval=20 (A-monitor-interval-20)
 """)
         self.assertEqual(0, returnVal)
 
+    # TODO remove
     def testRemoveLastResourceFromClonedGroup(self):
         output, returnVal = pcs(
             temp_cib,
@@ -1576,6 +1584,7 @@ monitor interval=20 (A-monitor-interval-20)
 """)
         self.assertEqual(0, returnVal)
 
+    # TODO remove
     def testRemoveLastResourceFromMasteredGroup(self):
         output, returnVal = pcs(
             temp_cib,
@@ -4508,6 +4517,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
     def testGroupMSAndClone(self):
+        # TODO remove
         o,r = pcs(
             temp_cib,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
@@ -4515,14 +4525,17 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"")
         assert r == 0
 
+        # TODO remove
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
 
+        # TODO remove
         o,r = pcs(temp_cib, "resource group add DG D1")
         ac(o,"Error: 'D1' is a clone resource, clone resources cannot be put into a group\n")
         assert r == 1
 
+        # TODO remove
         o,r = pcs(temp_cib, "resource group add DG D2")
         ac(o, "Error: 'D2' is a clone resource, clone resources cannot be put into a group\n")
         assert r == 1
@@ -6093,6 +6106,7 @@ class BundleDelete(BundleCommon):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleGroup(BundleCommon):
+    # TODO remove
     def test_group_add_bundle(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
@@ -6103,6 +6117,7 @@ class BundleGroup(BundleCommon):
             )
         )
 
+    # TODO remove
     def test_group_add_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -6819,4 +6834,100 @@ class FailcountShow(TestCase):
             ),
             operation="monitor",
             full=True
+        )
+
+
+class GroupAdd(TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["group_add"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.group_add.assert_not_called()
+
+    def test_no_resources(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                ["G"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.group_add.assert_not_called()
+
+    def test_both_after_and_before(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                ["G", "R1", "R2"],
+                dict_to_modifiers(dict(after="A", before="B"))
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "you cannot specify both --before and --after"
+        )
+        self.resource.group_add.assert_not_called()
+
+    def test_success(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id=None,
+            put_after_adjacent=True,
+            wait=False,
+        )
+
+    def test_success_before(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(before="X"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id="X",
+            put_after_adjacent=False,
+            wait=False,
+        )
+
+    def test_success_after(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(after="X"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id="X",
+            put_after_adjacent=True,
+            wait=False,
+        )
+
+    def test_success_wait(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(wait="10"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id=None,
+            put_after_adjacent=True,
+            wait="10",
         )

@@ -3187,6 +3187,14 @@ class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
             reports.cannot_group_resource_already_in_the_group(["B", "A"], "G")
         )
 
+class CannotGroupResourceMoreThanOnce(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE
+    def test_success(self):
+        self.assert_message_from_report(
+            "Resources specified more than once: 'A', 'B'",
+            reports.cannot_group_resource_more_than_once(["B", "A"])
+        )
+
 class CannotGroupResourceNextToItself(NameBuildTest):
     code = codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF
     def test_success(self):

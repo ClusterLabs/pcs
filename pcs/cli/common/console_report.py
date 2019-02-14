@@ -1914,6 +1914,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF: lambda info:
         "Cannot put resource '{resource_id}' next to itself".format(**info)
     ,
+    codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE: lambda info:
+        "Resources specified more than once: {_resources}"
+        .format(
+            _resources=format_list(info["resource_list"]),
+        )
+    ,
     codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES: lambda info:
         "No resources to add"
     ,

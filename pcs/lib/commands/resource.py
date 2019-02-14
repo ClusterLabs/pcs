@@ -940,6 +940,9 @@ def group_add(
                     group_element,
                     primitive_list,
                     adjacent_resource=adjacent_primitive,
+                    missing_adjacent_resource_specified=(
+                        adjacent_resource_id and adjacent_primitive is None
+                    )
                 )
             )
         # Send reports and exit on error.

@@ -9,6 +9,7 @@ from pcs.test.tools.assertions import (
     AssertPcsMixin,
 )
 from pcs.test.tools.misc import (
+    dict_to_modifiers,
     get_test_resource as rc,
     skip_unless_pacemaker_version,
     skip_unless_root,
@@ -20,7 +21,6 @@ from pcs.test.tools.pcs_runner import (
 
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import report_codes
 
 # pylint: disable=invalid-name, too-many-statements, bad-whitespace, line-too-long, too-many-public-methods
@@ -28,18 +28,6 @@ from pcs.common import report_codes
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
 
-def _dict_to_modifiers(options):
-    def _convert_val(val):
-        if val is True:
-            return ""
-        return val
-    return InputModifiers(
-        {
-            f"--{opt}": _convert_val(val)
-            for opt, val in options.items()
-            if val is not False
-        }
-    )
 
 
 class UidGidTest(unittest.TestCase):
@@ -232,7 +220,7 @@ class ClusterSetup(unittest.TestCase):
 
     def call_cmd_without_cluster_name(self, argv, modifiers=None):
         cluster.cluster_setup(
-            self.lib, argv, _dict_to_modifiers(modifiers or {})
+            self.lib, argv, dict_to_modifiers(modifiers or {})
         )
 
     def call_cmd(self, argv, modifiers=None):
@@ -570,7 +558,7 @@ class NodeAdd(unittest.TestCase):
         )
 
     def call_cmd(self, argv, modifiers=None):
-        cluster.node_add(self.lib, argv, _dict_to_modifiers(modifiers or {}))
+        cluster.node_add(self.lib, argv, dict_to_modifiers(modifiers or {}))
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
