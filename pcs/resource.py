@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 import sys
-import xml.dom.minidom
 from xml.dom.minidom import parseString
 import re
 import textwrap
@@ -1497,32 +1496,6 @@ def resource_group_add_cmd(lib, argv, modifiers):
         wait=modifiers.get("--wait")
     )
 
-    # TODO remove
-    return
-
-    cib = resource_group_add(utils.get_cib_dom(), group_name, resource_ids)
-
-    if modifiers.is_specified("--wait"):
-        wait_timeout = utils.validate_wait_get_timeout()
-
-    utils.replace_cib_configuration(cib)
-
-    if modifiers.is_specified("--wait"):
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(group_name)
-        if retval == 0:
-            print(running_on["message"])
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            if output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
-
 def resource_clone(lib, argv, modifiers, promotable=False):
     """
     Options:
@@ -2097,107 +2070,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         remove_resource_references(dom, group_name, output=True)
 
     return cib_dom
-
-# TODO remove
-def resource_group_add(cib_dom, group_name, resource_ids):
-    """
-    Commandline options:
-      * --after - place a resource in a group after the specified resource in
-        the group
-      * --before - place a resource in a group before the specified resource in
-        the group
-    """
-    resources_element = cib_dom.getElementsByTagName("resources")[0]
-
-    name_valid, name_error = utils.validate_xml_id(group_name, 'group name')
-    if not name_valid:
-        utils.err(name_error)
-
-    mygroup = utils.dom_get_group(resources_element, group_name)
-    if not mygroup:
-        if utils.dom_get_resource(resources_element, group_name):
-            utils.err("'%s' is already a resource" % group_name)
-        if (
-            utils.dom_get_clone(resources_element, group_name)
-            or
-            utils.dom_get_master(resources_element, group_name)
-        ):
-            utils.err("'%s' is already a clone resource" % group_name)
-        mygroup = cib_dom.createElement("group")
-        mygroup.setAttribute("id", group_name)
-        resources_element.appendChild(mygroup)
-
-    after = before = None
-    if "--after" in utils.pcs_options and "--before" in utils.pcs_options:
-        utils.err("you cannot specify both --before and --after")
-    if "--after" in utils.pcs_options:
-        after = utils.dom_get_resource(mygroup, utils.pcs_options["--after"])
-        if not after:
-            utils.err(
-                "there is no resource '%s' in the group '%s'"
-                % (utils.pcs_options["--after"], group_name)
-            )
-    if "--before" in utils.pcs_options:
-        before = utils.dom_get_resource(mygroup, utils.pcs_options["--before"])
-        if not before:
-            utils.err(
-                "there is no resource '%s' in the group '%s'"
-                % (utils.pcs_options["--before"], group_name)
-            )
-
-    resources_to_move = []
-    for resource_id in resource_ids:
-        if (
-            utils.dom_get_resource(mygroup, resource_id)
-            and not after and not before
-        ):
-            utils.err(resource_id + " already exists in " + group_name)
-        if after and after.getAttribute("id") == resource_id:
-            utils.err("cannot put resource after itself")
-        if before and before.getAttribute("id") == resource_id:
-            utils.err("cannot put resource before itself")
-
-        resource_found = False
-        for resource in resources_element.getElementsByTagName("primitive"):
-            if resource.nodeType == xml.dom.minidom.Node.TEXT_NODE:
-                continue
-            if resource.getAttribute("id") == resource_id:
-                if resource.parentNode.tagName in ["clone", "master"]:
-                    utils.err("cannot group clone resources")
-                if resource.parentNode.tagName == "bundle":
-                    utils.err("cannot group bundle resources")
-                resources_to_move.append(resource)
-                resource_found = True
-                break
-
-        if not resource_found:
-            utils.err("Unable to find resource: " + resource_id)
-            continue
-
-    if resources_to_move:
-        for resource in resources_to_move:
-            oldParent = resource.parentNode
-            if after and after.nextSibling:
-                mygroup.insertBefore(resource, after.nextSibling)
-                after = resource
-            elif before:
-                mygroup.insertBefore(resource, before)
-            else:
-                mygroup.appendChild(resource)
-            if (
-                oldParent.tagName == "group"
-                and
-                not oldParent.getElementsByTagName("primitive")
-            ):
-                if oldParent.parentNode.tagName in ["clone", "master"]:
-                    oldParent.parentNode.parentNode.removeChild(
-                        oldParent.parentNode
-                    )
-                else:
-                    oldParent.parentNode.removeChild(oldParent)
-        return cib_dom
-    utils.err("No resources to add.")
-    return None # pylint does not know utils.err raises
 
 def resource_group_list(lib, argv, modifiers):
     """
