@@ -29,6 +29,9 @@
   ([rhbz#1667040])
 - Crash when using unsupported options in commands `pcs status` and
   `pcs config` ([rhbz#1668422])
+- `pcs resource group add` now fails gracefully instead of dumping an invalid
+  CIB when a group ID is already occupied by a non-resource element
+  ([rhbz#1668223])
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -45,6 +48,7 @@
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
+[rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
 
 
