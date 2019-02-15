@@ -4,6 +4,7 @@ from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import relation
+from pcs.lib.cib.tools import IdProvider
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
@@ -18,13 +19,18 @@ def _resource(cib, id_):
 def _resources(cib, *ids):
     return [_resource(cib, id_) for id_ in ids]
 
-class ValidateMoveResourcesToGroup(TestCase):
+class ValidateMoveResourcesToGroupMixin():
     def setUp(self):
+        # pylint does not know this mixin goes to TestCase
+        # pylint: disable=invalid-name
         self.cib = etree.fromstring("""
             <resources>
                 <group id="G">
                     <primitive id="RG1" />
                     <primitive id="RG2" />
+                </group>
+                <group id="GX">
+                    <primitive id="RGX" />
                 </group>
                 <primitive id="R1" />
                 <primitive id="R2" />
@@ -33,53 +39,37 @@ class ValidateMoveResourcesToGroup(TestCase):
                     <primitive id="RC1" />
                 </clone>
                 <bundle id="RB1-bundle">
-                    <primitive id="RB1" />
+                    <primitive id="RB1">
+                        <meta_attributes id="RB1-meta_attributes" />
+                    </primitive>
                 </bundle>
             </resources>
         """)
-        self.group = self.cib.find(".//group")
-
-    def _resource(self, id_):
-        return _resource(self.cib, id_)
-
-    def _resources(self, *ids):
-        return _resources(self.cib, *ids)
 
     def test_no_resources_specified(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                []
-            ),
+            self._validate("G", []),
             [
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
-                ),
+                fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),
             ]
         )
 
     def test_group_is_not_group(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self._resource("RC1-clone"),
-                self._resources("R1")
-            ),
+            self._validate("RB1-meta_attributes", ["R1"]),
             [
                 fixture.error(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="RC1-clone",
+                    id="RB1-meta_attributes",
                     expected_types=["group"],
-                    current_type="clone",
+                    current_type="meta_attributes",
                 ),
             ]
         )
 
     def test_resources_are_not_primitives(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("RC1-clone", "R1", "RB1-bundle")
-            ),
+            self._validate("G", ["RC1-clone", "R1", "RB1-bundle"]),
             [
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
@@ -96,10 +86,7 @@ class ValidateMoveResourcesToGroup(TestCase):
 
     def test_resources_are_in_clones_etc(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("RC1", "R1", "RB1")
-            ),
+            self._validate("G", ["RC1", "R1", "RB1"]),
             [
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
@@ -116,10 +103,7 @@ class ValidateMoveResourcesToGroup(TestCase):
 
     def test_resources_already_in_the_group(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("RG2", "R1", "RG1")
-            ),
+            self._validate("G", ["RG2", "R1", "RG1"]),
             [
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP,
@@ -131,22 +115,14 @@ class ValidateMoveResourcesToGroup(TestCase):
 
     def test_allow_moving_resources_in_a_group_if_adjacent(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("RG2", "R1"),
-                adjacent_resource=self._resource("RG1")
-            ),
+            self._validate("G", ["RG2", "R1"], "RG1"),
             [
             ]
         )
 
     def test_adjacent_resource_not_in_the_group(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("R1"),
-                adjacent_resource=self._resource("R2")
-            ),
+            self._validate("G", ["R1"], "R2"),
             [
                 fixture.error(
                     report_codes
@@ -158,28 +134,34 @@ class ValidateMoveResourcesToGroup(TestCase):
             ]
         )
 
+    def test_adjacent_resource_in_another_group(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["R1"], "RGX"),
+            [
+                fixture.error(
+                    report_codes
+                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
+                    ,
+                    adjacent_resource_id="RGX",
+                    group_id="G",
+                ),
+            ]
+        )
+
     def test_adjacent_resource_to_be_grouped(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("RG1"),
-                adjacent_resource=self._resource("RG1")
-            ),
+            self._validate("G", ["RG1"], "RG1"),
             [
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
                     resource_id="RG1",
-                    group_id="G",
                 ),
             ]
         )
 
     def test_resources_specified_twice(self):
         assert_report_item_list_equal(
-            relation.validate_move_resources_to_group(
-                self.group,
-                self._resources("R3", "R2", "R1", "R2", "R1"),
-            ),
+            self._validate("G", ["R3", "R2", "R1", "R2", "R1"]),
             [
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE,
@@ -187,6 +169,137 @@ class ValidateMoveResourcesToGroup(TestCase):
                 ),
             ]
         )
+
+
+class ValidateMoveResourcesToGroupByElements(
+    ValidateMoveResourcesToGroupMixin, TestCase
+):
+    def _resource(self, id_):
+        return _resource(self.cib, id_)
+
+    def _resources(self, ids):
+        return _resources(self.cib, *ids)
+
+    def _validate(self, group, resources, adjacent=None):
+        return relation.ValidateMoveResourcesToGroupByElements(
+            self._resource(group),
+            self._resources(resources),
+            self._resource(adjacent) if adjacent else None,
+        ).validate()
+
+    def test_resources_are_not_resources(self):
+        # The validator expects to get resource elements. So this report is
+        # not the best, but at least the validator detects the problem.
+        # Validation using IDs provides better reporting in this case.
+        assert_report_item_list_equal(
+            self._validate("G", ["RB1-meta_attributes"]),
+            [
+                fixture.error(
+                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="RB1-meta_attributes",
+                    resource_type="meta_attributes",
+                ),
+            ]
+        )
+
+
+class ValidateMoveResourcesToGroupByIds(
+    ValidateMoveResourcesToGroupMixin, TestCase
+):
+    def _resource(self, id_):
+        # this is for inheritance
+        # pylint: disable=no-self-use
+        return id_
+
+    def _resources(self, ids):
+        # this is for inheritance
+        # pylint: disable=no-self-use
+        return ids
+
+    def _validate(self, group, resources, adjacent=None):
+        return relation.ValidateMoveResourcesToGroupByIds(
+            self._resource(group),
+            self._resources(resources),
+            self._resource(adjacent) if adjacent else None,
+        ).validate(
+            self.cib,
+            IdProvider(self.cib),
+        )
+
+    def test_new_group_not_valid_id(self):
+        assert_report_item_list_equal(
+            self._validate("1Gr:oup", ["R1"]),
+            [
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="1Gr:oup",
+                    id_description="group name",
+                    is_first_char=True,
+                    invalid_character="1",
+                ),
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="1Gr:oup",
+                    id_description="group name",
+                    is_first_char=False,
+                    invalid_character=":",
+                ),
+            ]
+        )
+
+    def test_missing_resources_specified(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["RX1", "RX2"]),
+            [
+                fixture.report_not_found("RX1", context_type="resources"),
+                fixture.report_not_found("RX2", context_type="resources"),
+            ]
+        )
+
+    def test_resources_are_not_resources(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["RB1-meta_attributes"]),
+            [
+                fixture.error(
+                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="RB1-meta_attributes",
+                    expected_types=[
+                        "clone", "master", "group", "primitive", "bundle"
+                    ],
+                    current_type="meta_attributes",
+                ),
+            ]
+        )
+
+    def test_adjacent_resource_new_group(self):
+        assert_report_item_list_equal(
+            self._validate("G-new", ["R1"], "R2"),
+            [
+                fixture.error(
+                    report_codes
+                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
+                    ,
+                    adjacent_resource_id="R2",
+                    group_id="G-new",
+                ),
+            ]
+        )
+
+    def test_adjacent_resource_doesnt_exist(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["R1"], "RX"),
+            [
+                fixture.error(
+                    report_codes
+                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
+                    ,
+                    adjacent_resource_id="RX",
+                    group_id="G",
+                ),
+            ]
+        )
+
+
 
 
 class MoveResourcesToGroup(TestCase):

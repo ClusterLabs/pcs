@@ -1896,6 +1896,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _res_id_list=format_list(info["resource_id_list"]),
         )
     ,
+    codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP: lambda info:
+        (
+            "Group '{group_id}' does not exist and therefore does not contain "
+            "'{adjacent_resource_id}' resource to put resources next to"
+        )
+        .format(**info)
+    ,
     codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP: lambda info:
         (
             "There is no resource '{adjacent_resource_id}' in the group "

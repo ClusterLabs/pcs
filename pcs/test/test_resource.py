@@ -1295,11 +1295,23 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, r)
 
         o, r = pcs(temp_cib, "resource group add MyGroup A6 --before A0")
-        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
+        ac(
+            o,
+            (
+                "Error: There is no resource 'A0' in the group 'MyGroup', "
+                "cannot put resources next to it in the group\n"
+            )
+        )
         self.assertEqual(1, r)
 
         o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A0")
-        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
+        ac(
+            o,
+            (
+                "Error: There is no resource 'A0' in the group 'MyGroup', "
+                "cannot put resources next to it in the group\n"
+            )
+        )
         self.assertEqual(1, r)
 
         o, r = pcs(

@@ -1,17 +1,24 @@
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
+    TAG as TAG_BUNDLE,
     is_bundle,
     get_inner_resource as get_bundle_inner_resource,
 )
 from pcs.lib.cib.resource.clone import (
+    ALL_TAGS as TAG_CLONE_ALL,
     is_any_clone,
     get_inner_resource as get_clone_inner_resource,
 )
 from pcs.lib.cib.resource.group import (
+    TAG as TAG_GROUP,
     is_group,
     get_inner_resources as get_group_inner_resources,
 )
-from pcs.lib.cib.resource.primitive import is_primitive
+from pcs.lib.cib.resource.primitive import (
+    TAG as TAG_PRIMITIVE,
+    is_primitive,
+)
+from pcs.lib.cib.tools import ElementSearcher
 from pcs.lib.xml_tools import find_parent
 
 
@@ -27,6 +34,55 @@ def is_clone_deactivated_by_meta(meta_attributes):
         not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
         for key in ["clone-max", "clone-node-max"]
     ])
+
+def find_one_resource_and_report(
+    context_element, resource_id, report_list, additional_search=None,
+    resource_tags=None
+):
+    """
+    Find a single resource or return None if not found, report errors
+
+    etree context_element -- an element to be searched in
+    string resource_id -- id of an element to find
+    list report_list -- report items will be put in here
+    function additional_search -- None of a func to find resources
+    iterable resource_tags -- types of resources to look for, default all types
+    """
+    resource_el_list = find_resources_and_report(
+        context_element,
+        [resource_id],
+        report_list,
+        additional_search=additional_search,
+        resource_tags=resource_tags,
+    )
+    return resource_el_list[0] if resource_el_list else None
+
+def find_resources_and_report(
+    context_element, resource_ids, report_list, additional_search=None,
+    resource_tags=None
+):
+    """
+    Find a list of resource, report errors
+
+    etree context_element -- an element to be searched in
+    string resource_id -- id of an element to find
+    list report_list -- report items will be put in here
+    function additional_search -- None of a func to find resources
+    iterable resource_tags -- types of resources to look for, default all types
+    """
+    if not additional_search:
+        additional_search = lambda x: [x]
+    if resource_tags is None:
+        resource_tags = TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+
+    resource_el_list = []
+    for res_id in resource_ids:
+        searcher = ElementSearcher(resource_tags, res_id, context_element)
+        if searcher.element_found():
+            resource_el_list.extend(additional_search(searcher.get_element()))
+        else:
+            report_list.extend(searcher.get_errors())
+    return resource_el_list
 
 def find_primitives(resource_el):
     """

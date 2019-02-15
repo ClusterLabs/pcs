@@ -3160,6 +3160,19 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
             )
         )
 
+class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Group 'G' does not exist and therefore does not contain 'AR' "
+                "resource to put resources next to"
+            ),
+            reports.cannot_group_resource_adjacent_resource_for_new_group(
+                "AR", "G"
+            )
+        )
+
 class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
     code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
     def test_success(self):
@@ -3200,7 +3213,7 @@ class CannotGroupResourceNextToItself(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Cannot put resource 'R' next to itself",
-            reports.cannot_group_resource_next_to_itself("R", "G")
+            reports.cannot_group_resource_next_to_itself("R")
         )
 
 class CannotGroupResourceNoResources(NameBuildTest):

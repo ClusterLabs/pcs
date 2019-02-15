@@ -1482,6 +1482,24 @@ def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
         }
     )
 
+def cannot_group_resource_adjacent_resource_for_new_group(
+    adjacent_resource_id, group_id
+):
+    """
+    Cannot put resources next to an adjacent resource in a group, because the
+    group does not exist yet and therefore cannot contain the adjacent resource
+
+    string adjacent_resource_id -- id of an adjacent resource
+    string group_id -- id of the group resources cannot be put into
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP,
+        info={
+            "adjacent_resource_id": adjacent_resource_id,
+            "group_id": group_id,
+        }
+    )
+
 def cannot_group_resource_adjacent_resource_not_in_group(
     adjacent_resource_id, group_id
 ):
@@ -1536,18 +1554,16 @@ def cannot_group_resource_no_resources():
         report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
     )
 
-def cannot_group_resource_next_to_itself(resource_id, group_id):
+def cannot_group_resource_next_to_itself(resource_id):
     """
     Cannot put a resource into a group next to itself
 
     string resource_id -- id of the resource which cannot be put into a group
-    string group_id -- id of the group the resource cannot be put into
     """
     return ReportItem.error(
         report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
         info={
             "resource_id": resource_id,
-            "group_id": group_id,
         }
     )
 

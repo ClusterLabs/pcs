@@ -8,6 +8,8 @@ from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.xml import etree_to_str
 
+# This class does not focusing on validation testing, there are validator tests
+# for that in pcs.lib.cib.test.test_resource_relation
 class GroupAdd(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -43,37 +45,6 @@ class GroupAdd(TestCase):
             ["R3", "R1"]
         )
 
-    def test_group_id_belongs_to_another_element(self):
-        resources_before = """
-            <resources>
-                <group id="G">
-                    <primitive id="RG1" />
-                </group>
-                <primitive id="R1">
-                    <meta_attributes id="R1-meta_attributes" />
-                </primitive>
-                <primitive id="R2" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "R1-meta_attributes",
-                ["R2"]
-            ),
-            [
-                fixture.error(
-                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="R1-meta_attributes",
-                    expected_types=["group"],
-                    current_type="meta_attributes",
-                ),
-            ],
-        )
-
     def test_new_group(self):
         resources_before = """
             <resources>
@@ -99,252 +70,6 @@ class GroupAdd(TestCase):
             self.env_assist.get_env(),
             "G",
             ["R3", "R1"]
-        )
-
-    def test_new_group_not_valid_id(self):
-        resources_before = """
-            <resources>
-                <primitive id="R1" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "1Gr:oup",
-                ["R1"]
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_ID,
-                    id="1Gr:oup",
-                    id_description="group name",
-                    is_first_char=True,
-                    invalid_character="1",
-                ),
-                fixture.error(
-                    report_codes.INVALID_ID,
-                    id="1Gr:oup",
-                    id_description="group name",
-                    is_first_char=False,
-                    invalid_character=":",
-                ),
-            ],
-        )
-
-    def test_add_missing_resources(self):
-        resources_before = """
-            <resources>
-                <primitive id="R1" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R3", "R2"]
-            ),
-            [
-                fixture.report_not_found("R3", context_type="resources"),
-                fixture.report_not_found("R2", context_type="resources"),
-            ],
-        )
-
-    def test_add_wrong_resources(self):
-        resources_before = """
-            <resources>
-                <primitive id="R1" />
-                <clone id="RC1-clone">
-                    <primitive id="RC1" />
-                </clone>
-                <bundle id="RB1-bundle">
-                    <primitive id="RB1" />
-                </bundle>
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R1", "RC1-clone", "RC1", "RB1-bundle", "RB1"]
-            ),
-            [
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
-                    resource_id="RC1-clone",
-                    resource_type="clone",
-                ),
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
-                    resource_id="RC1",
-                    resource_type="clone",
-                ),
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
-                    resource_id="RB1-bundle",
-                    resource_type="bundle",
-                ),
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
-                    resource_id="RB1",
-                    resource_type="bundle",
-                ),
-            ],
-        )
-
-    def test_add_not_resource_elements(self):
-        resources_before = """
-            <resources>
-                <primitive id="R1">
-                    <meta_attributes id="R1-meta_attributes" />
-                </primitive>
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R1", "R1-meta_attributes"]
-            ),
-            [
-                fixture.error(
-                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="R1-meta_attributes",
-                    expected_types=[
-                        "clone", "master", "group", "primitive", "bundle"
-                    ],
-                    current_type="meta_attributes",
-                ),
-            ],
-        )
-
-    def test_adjacent_resource_in_another_group(self):
-        resources_before = """
-            <resources>
-                <group id="G">
-                    <primitive id="RG1" />
-                </group>
-                <group id="X">
-                    <primitive id="RX1" />
-                </group>
-                <primitive id="R1" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R1"],
-                adjacent_resource_id="RX1"
-            ),
-            [
-                fixture.error(
-                    report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
-                    type="primitive",
-                    id="RX1",
-                    expected_context_type="group",
-                    expected_context_id="G",
-                ),
-            ],
-        )
-
-    def test_adjacent_resource_not_in_group(self):
-        resources_before = """
-            <resources>
-                <primitive id="R1" />
-                <primitive id="R2" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R1"],
-                adjacent_resource_id="R2"
-            ),
-            [
-                fixture.error(
-                    report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
-                    type="primitive",
-                    id="R2",
-                    expected_context_type="group",
-                    expected_context_id="G",
-                ),
-            ],
-        )
-
-    def test_adjacent_resource_doesnt_exist(self):
-        resources_before = """
-            <resources>
-                <group id="G">
-                    <primitive id="RG1" />
-                </group>
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["RG1"],
-                adjacent_resource_id="R2"
-            ),
-            [
-                fixture.error(
-                    report_codes.ID_NOT_FOUND,
-                    id="R2",
-                    expected_types=["primitive"],
-                    context_type="group",
-                    context_id="G",
-                ),
-            ],
-        )
-
-    def test_resources_already_in_the_group(self):
-        resources_before = """
-            <resources>
-                <group id="G">
-                    <primitive id="R1" />
-                    <primitive id="R2" />
-                </group>
-                <primitive id="R3" />
-            </resources>
-        """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.group_add(
-                self.env_assist.get_env(),
-                "G",
-                ["R3", "R2", "R1"],
-            ),
-            [
-                fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP,
-                    resource_list=["R1", "R2"],
-                    group_id="G",
-                ),
-            ],
         )
 
     def _assert_with_adjacent(self, adjacent_id, after_adjacent):
@@ -433,6 +158,95 @@ class GroupAdd(TestCase):
             self.env_assist.get_env(),
             "G",
             ["RX1", "RY2", "RC1", "RM1"]
+        )
+
+    def test_validation(self):
+        resources_before = """
+            <resources>
+                <group id="G">
+                    <primitive id="RG1" />
+                </group>
+                <primitive id="R1">
+                    <meta_attributes id="R1-meta_attributes" />
+                </primitive>
+                <primitive id="R2">
+                    <meta_attributes id="R2-meta_attributes" />
+                </primitive>
+                <clone id="RC1-clone">
+                    <primitive id="RC1" />
+                </clone>
+            </resources>
+        """
+        (self.config
+            .runner.cib.load(resources=resources_before)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.group_add(
+                self.env_assist.get_env(),
+                "R1-meta_attributes",
+                ["R2", "R4", "R3", "R2-meta_attributes", "RC1-clone", "RC1"]
+            ),
+            [
+                fixture.error(
+                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R1-meta_attributes",
+                    expected_types=["group"],
+                    current_type="meta_attributes",
+                ),
+                fixture.report_not_found("R4", context_type="resources"),
+                fixture.report_not_found("R3", context_type="resources"),
+                fixture.error(
+                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R2-meta_attributes",
+                    expected_types=[
+                        "clone", "master", "group", "primitive", "bundle"
+                    ],
+                    current_type="meta_attributes",
+                ),
+                fixture.error(
+                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="RC1-clone",
+                    resource_type="clone",
+                ),
+                fixture.error(
+                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="RC1",
+                    resource_type="clone",
+                ),
+            ],
+        )
+
+    def test_validation_adjacent(self):
+        resources_before = """
+            <resources>
+                <group id="G">
+                    <primitive id="RG1" />
+                </group>
+                <group id="X">
+                    <primitive id="RX1" />
+                </group>
+                <primitive id="R1" />
+            </resources>
+        """
+        (self.config
+            .runner.cib.load(resources=resources_before)
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.group_add(
+                self.env_assist.get_env(),
+                "G",
+                ["R1"],
+                adjacent_resource_id="RX1"
+            ),
+            [
+                fixture.error(
+                    report_codes
+                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
+                    ,
+                    adjacent_resource_id="RX1",
+                    group_id="G",
+                ),
+            ],
         )
 
 

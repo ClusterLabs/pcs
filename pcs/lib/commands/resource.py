@@ -9,7 +9,6 @@ from pcs.lib.cib import (
     status as cib_status,
 )
 from pcs.lib.cib.tools import (
-    ElementSearcher,
     find_element_by_tag_and_id,
     get_resources,
     get_status,
@@ -886,7 +885,7 @@ def manage(env, resource_ids, with_monitor=False):
         env.report_processor.process_list(report_list)
 
 def group_add(
-    env, group_id, resource_list, adjacent_resource_id=None,
+    env, group_id, resource_id_list, adjacent_resource_id=None,
     put_after_adjacent=True, wait=False
 ):
     """
@@ -894,64 +893,36 @@ def group_add(
 
     LibraryEnvironment env provides all for communication with externals
     string group_id -- id of the target group
-    iterable resource_list -- ids of resources to put into the group
+    iterable resource_id_list -- ids of resources to put into the group
     string adjacent_resource_id -- put resources beside this one if specified
     bool put_after_adjacent -- put resources after or before the adjacent one
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     with resource_environment(env, wait, [group_id]) as resources_section:
-        report_list = []
         id_provider = IdProvider(resources_section)
-        # Look for or create the group element.
-        group_element = None
-        group_searcher = ElementSearcher(
-            resource.group.TAG, group_id, resources_section
+
+        validator = resource.relation.ValidateMoveResourcesToGroupByIds(
+            group_id,
+            resource_id_list,
+            adjacent_resource_id=adjacent_resource_id
         )
-        if group_searcher.element_found():
-            group_element = group_searcher.get_element()
-        elif group_searcher.validate_book_id(
-            id_provider, id_description="group name"
-        ):
+        # raise on error
+        env.report_processor.process_list(
+            validator.validate(resources_section, id_provider)
+        )
+
+        # If we get no group element from the validator and there were no
+        # errors, then the element does not exist and we can create it.
+        group_element = validator.group_element()
+        if group_element is None:
             group_element = resource.group.append_new(
                 resources_section, group_id
             )
-        else:
-            report_list.extend(group_searcher.get_errors())
-        # Get resource elements to move to the group.
-        # Get all types of resources, so that validation can later tell for
-        # example: 'C' is a clone, clones cannot be put into a group. If we only
-        # searched for primitives here, we would get 'C' is not a resource.
-        primitive_list = _find_resources_and_report(
-            resources_section, resource_list, report_list
-        )
-        # Get an adjacent resource element.
-        adjacent_primitive = None
-        if group_element is not None and adjacent_resource_id is not None:
-            adjacent_primitive = _find_one_resource_and_report(
-                group_element,
-                adjacent_resource_id,
-                report_list,
-                resource_tags=[resource.primitive.TAG],
-            )
-        # Validate
-        if group_element is not None and primitive_list:
-            report_list.extend(
-                resource.relation.validate_move_resources_to_group(
-                    group_element,
-                    primitive_list,
-                    adjacent_resource=adjacent_primitive,
-                    missing_adjacent_resource_specified=(
-                        adjacent_resource_id and adjacent_primitive is None
-                    )
-                )
-            )
-        # Send reports and exit on error.
-        env.report_processor.process_list(report_list)
-        # Move resources to the group.
+
         resource.relation.move_resources_to_group(
             group_element,
-            primitive_list,
-            adjacent_resource=adjacent_primitive,
+            validator.resource_element_list(),
+            adjacent_resource=validator.adjacent_resource_element(),
             put_after_adjacent=put_after_adjacent,
         )
 
@@ -996,47 +967,11 @@ def get_failcounts(
         interval=interval_ms
     )
 
-def _find_one_resource_and_report(
-    context_element, resource_id, report_list, additional_search=None,
-    resource_tags=None
-):
-    resource_el_list = _find_resources_and_report(
-        context_element,
-        [resource_id],
-        report_list,
-        additional_search=additional_search,
-        resource_tags=resource_tags,
-    )
-    if resource_el_list:
-        return resource_el_list[0]
-    return None
-
-def _find_resources_and_report(
-    context_element, resource_ids, report_list, additional_search=None,
-    resource_tags=None
-):
-    if not additional_search:
-        additional_search = lambda x: [x]
-    resource_el_list = []
-    if resource_tags is None:
-        resource_tags = (
-            resource.clone.ALL_TAGS
-            +
-            [resource.group.TAG, resource.primitive.TAG, resource.bundle.TAG]
-        )
-    for res_id in resource_ids:
-        searcher = ElementSearcher(resource_tags, res_id, context_element)
-        if searcher.element_found():
-            resource_el_list.extend(additional_search(searcher.get_element()))
-        else:
-            report_list.extend(searcher.get_errors())
-    return resource_el_list
-
 def _find_resources_or_raise(
     context_element, resource_ids, additional_search=None, resource_tags=None
 ):
     report_list = []
-    resource_el_list = _find_resources_and_report(
+    resource_el_list = resource.common.find_resources_and_report(
         context_element,
         resource_ids,
         report_list,
