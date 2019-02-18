@@ -3160,10 +3160,77 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
             )
         )
 
+class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Group 'G' does not exist and therefore does not contain 'AR' "
+                "resource to put resources next to"
+            ),
+            reports.cannot_group_resource_adjacent_resource_for_new_group(
+                "AR", "G"
+            )
+        )
+
+class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "There is no resource 'AR' in the group 'G', cannot put "
+                "resources next to it in the group"
+            ),
+            reports.cannot_group_resource_adjacent_resource_not_in_group(
+                "AR", "G"
+            )
+        )
+
+class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP
+    def test_single_resource(self):
+        self.assert_message_from_report(
+            "'R' already exists in 'G'",
+            reports.cannot_group_resource_already_in_the_group(["R"], "G")
+        )
+
+    def test_several_resources(self):
+        self.assert_message_from_report(
+            "'A', 'B' already exist in 'G'",
+            reports.cannot_group_resource_already_in_the_group(["B", "A"], "G")
+        )
+
+class CannotGroupResourceMoreThanOnce(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE
+    def test_success(self):
+        self.assert_message_from_report(
+            "Resources specified more than once: 'A', 'B'",
+            reports.cannot_group_resource_more_than_once(["B", "A"])
+        )
+
 class CannotGroupResourceNextToItself(NameBuildTest):
     code = codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF
     def test_success(self):
         self.assert_message_from_report(
             "Cannot put resource 'R' next to itself",
-            reports.cannot_group_resource_next_to_itself("R", "G")
+            reports.cannot_group_resource_next_to_itself("R")
+        )
+
+class CannotGroupResourceNoResources(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
+    def test_success(self):
+        self.assert_message_from_report(
+            "No resources to add",
+            reports.cannot_group_resource_no_resources()
+        )
+
+class CannotGroupResourceWrongType(NameBuildTest):
+    code = codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "'R' is a clone resource, clone resources cannot be put into "
+                "a group"
+            ),
+            reports.cannot_group_resource_wrong_type("R", "master")
         )

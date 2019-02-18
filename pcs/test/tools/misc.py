@@ -3,6 +3,7 @@ import os
 import re
 from unittest import mock, skipUnless
 
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
@@ -50,6 +51,19 @@ class ParametrizedTestMetaClass(type):
 
         super().__init__(classname, bases, class_dict)
 
+
+def dict_to_modifiers(options):
+    def _convert_val(val):
+        if val is True:
+            return ""
+        return val
+    return InputModifiers(
+        {
+            f"--{opt}": _convert_val(val)
+            for opt, val in options.items()
+            if val is not False
+        }
+    )
 
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""

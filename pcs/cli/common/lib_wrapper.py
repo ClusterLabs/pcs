@@ -345,6 +345,7 @@ def load_module(env, middleware_factory, name):
                 "disable": resource.disable,
                 "enable": resource.enable,
                 "get_failcounts": resource.get_failcounts,
+                "group_add": resource.group_add,
                 "manage": resource.manage,
                 "unmanage": resource.unmanage,
             }

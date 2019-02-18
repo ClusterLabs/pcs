@@ -7,6 +7,7 @@ from textwrap import dedent
 from unittest import mock, skip, TestCase
 from lxml import etree
 
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.test.bin_mock import get_mock_settings
 from pcs.test.cib_resource.common import ResourceTest
 from pcs.test.tools.assertions import (
@@ -20,6 +21,7 @@ from pcs.test.tools.fixture_cib import (
     wrap_element_by_master,
 )
 from pcs.test.tools.misc import (
+    dict_to_modifiers,
     get_test_resource as rc,
     outdent,
     skip_unless_pacemaker_supports_bundle,
@@ -1109,301 +1111,6 @@ monitor interval=20 (A-monitor-interval-20)
             """
         ))
 
-    def testGroupAdd(self):
-        # see also BundleGroup
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A1 ocf:heartbeat:Dummy"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A2 ocf:heartbeat:Dummy"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A3 ocf:heartbeat:Dummy"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A4 ocf:heartbeat:Dummy"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A5 ocf:heartbeat:Dummy"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A6 ocf:heartbeat:Dummy --group"
-        )
-        assert r == 1
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A6 ocf:heartbeat:Dummy --group Dgroup"
-        )
-        assert r == 0
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A7 ocf:heartbeat:Dummy --group Dgroup"
-        )
-        assert r == 0
-
-        o,r = pcs(temp_cib, "resource group add MyGroup A1 B1")
-        assert r == 1
-        ac(o,'Error: Unable to find resource: B1\n')
-
-        o,r = pcs(temp_cib, "resource status")
-        assert r == 0
-        ac(o,"""\
- A1\t(ocf::heartbeat:Dummy):\tStopped
- A2\t(ocf::heartbeat:Dummy):\tStopped
- A3\t(ocf::heartbeat:Dummy):\tStopped
- A4\t(ocf::heartbeat:Dummy):\tStopped
- A5\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: Dgroup
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-""")
-
-        o,r = pcs(temp_cib, "resource delete A6")
-        assert r == 0
-
-        o,r = pcs(temp_cib, "resource delete A7")
-        assert r == 0
-
-        o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
-        assert r == 0
-        ac(o,'')
-
-        o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
-        assert r == 1
-        ac(o,'Error: A1 already exists in MyGroup\n')
-
-        o,r = pcs(temp_cib, "resource group add MyGroup2 A3 A4 A5")
-        assert r == 0
-        ac(o,'')
-
-        o,r = pcs(temp_cib, "resource status")
-        assert r == 0
-        ac(o,"""\
- Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-
-        o, r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A6 ocf:heartbeat:Dummy"
-        )
-        self.assertEqual(0, r)
-
-        o, r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A7 ocf:heartbeat:Dummy"
-        )
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A1")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A7 --before A1")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A6 --before A5")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A7 --after A5")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A6 A7 --before A2")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A6 A7 --after A4")
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A6 --before A0")
-        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A0")
-        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
-        self.assertEqual(1, r)
-
-        o, r = pcs(
-            temp_cib,
-            "resource group add MyGroup A6 --after A1 --before A2"
-        )
-        ac(o, "Error: you cannot specify both --before and --after\n")
-        self.assertEqual(1, r)
-
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A8 ocf:heartbeat:Dummy --group MyGroup --before A1"
-        )
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A9 ocf:heartbeat:Dummy --group MyGroup --after A1"
-        )
-        ac(o, "")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A8\t(ocf::heartbeat:Dummy):\tStopped
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A9\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup A1 --before A8")
-        self.assertEqual(0, r)
-        ac(o, "")
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --after A6")
-        self.assertEqual(0, r)
-        ac(o, "")
-
-        o, r = pcs(temp_cib, "resource status")
-        ac(o, """\
- Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A8\t(ocf::heartbeat:Dummy):\tStopped
-     A9\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: MyGroup2
-     A4\t(ocf::heartbeat:Dummy):\tStopped
-     A6\t(ocf::heartbeat:Dummy):\tStopped
-     A3\t(ocf::heartbeat:Dummy):\tStopped
-     A7\t(ocf::heartbeat:Dummy):\tStopped
-     A5\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, r)
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --after A3")
-        self.assertEqual(1, r)
-        ac(o, "Error: cannot put resource after itself\n")
-
-        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --before A3")
-        self.assertEqual(1, r)
-        ac(o, "Error: cannot put resource before itself\n")
-
-        o, r = pcs(temp_cib, "resource group add A7 A6")
-        ac(o, "Error: 'A7' is already a resource\n")
-        self.assertEqual(1, r)
-
-        o, r = pcs(
-            temp_cib,
-            "resource create --no-default-ops A0 ocf:heartbeat:Dummy clone"
-        )
-        self.assertEqual(0, r)
-        ac(o, "")
-
-        o, r = pcs(temp_cib, "resource group add A0-clone A6")
-        ac(o, "Error: 'A0-clone' is already a clone resource\n")
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "resource unclone A0-clone")
-        self.assertEqual(0, r)
-        ac(o, "")
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(temp_cib, "A0")
-
-        o, r = pcs(temp_cib, "resource group add A0-master A6")
-        ac(o, "Error: 'A0-master' is already a clone resource\n")
-        self.assertEqual(1, r)
-
-        output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
-        assert returnVal == 0
-        ac(output, '')
-
-        output, returnVal = pcs(temp_cib, "resource group add group:dummy dummy1")
-        assert returnVal == 1
-        ac(output, "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n")
-
     def testGroupLargeResourceRemove(self):
         output, returnVal = pcs(
             temp_large_cib, "resource group add dummies dummylarge"
@@ -1422,6 +1129,9 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
 
     def testGroupOrder(self):
+        # This was cosidered for removing during 'resource group add' command
+        # and tests overhaul. However, this is the only test where "resource
+        # group list" is called. Due to that this test was not deleted.
         output, returnVal = pcs(
             temp_cib,
             "resource create --no-default-ops A ocf:heartbeat:Dummy"
@@ -1494,130 +1204,6 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(temp_cib, "resource group list")
         ac(output, "RGA: A B C E D K J I\n")
         assert returnVal == 0
-
-    def testRemoveLastResourceFromGroup(self):
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource status")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
- Resource Group: gr2
-     d2\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource status")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
-     d2\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, returnVal)
-
-    def testRemoveLastResourceFromClonedGroup(self):
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clone gr2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource status")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
- Clone Set: gr2-clone [gr2]
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource status")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
-     d2\t(ocf::heartbeat:Dummy):\tStopped
-""")
-        self.assertEqual(0, returnVal)
-
-    def testRemoveLastResourceFromMasteredGroup(self):
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(temp_cib, "gr2")
-
-        output, returnVal = pcs(temp_cib, "resource config")
-        ac(output, outdent("""\
-             Group: gr1
-              Resource: d1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (d1-monitor-interval-10s)
-             Clone: gr2-master
-              Meta Attrs: promotable=true
-              Group: gr2
-               Resource: d2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (d2-monitor-interval-10s)
-            """
-        ))
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource config")
-        ac(output, outdent("""\
-             Group: gr1
-              Resource: d1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (d1-monitor-interval-10s)
-              Resource: d2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (d2-monitor-interval-10s)
-            """
-        ))
-        self.assertEqual(0, returnVal)
 
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
@@ -4502,25 +4088,6 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
     def testGroupMSAndClone(self):
-        o,r = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
-        )
-        ac(o,"")
-        assert r == 0
-
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(temp_cib, fixture_master_xml("D2", all_ops=False))
-
-        o,r = pcs(temp_cib, "resource group add DG D1")
-        ac(o,"Error: cannot group clone resources\n")
-        assert r == 1
-
-        o,r = pcs(temp_cib, "resource group add DG D2")
-        ac(o,"Error: cannot group clone resources\n")
-        assert r == 1
-
         o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone")
         ac(o,"Error: you can specify only one of clone, promotable, bundle or --group\n")
         assert r == 1
@@ -6087,21 +5654,6 @@ class BundleDelete(BundleCommon):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleGroup(BundleCommon):
-    def test_group_add_bundle(self):
-        self.fixture_bundle("B")
-        self.assert_pcs_fail(
-            "resource group add bundles B",
-            "Error: Unable to find resource: B\n"
-        )
-
-    def test_group_add_primitive(self):
-        self.fixture_bundle("B")
-        self.fixture_primitive("R", "B")
-        self.assert_pcs_fail(
-            "resource group add group R",
-            "Error: cannot group bundle resources\n"
-        )
-
     def test_group_delete_primitive(self):
         self.fixture_bundle("B")
         self.fixture_primitive("R", "B")
@@ -6809,4 +6361,100 @@ class FailcountShow(TestCase):
             ),
             operation="monitor",
             full=True
+        )
+
+
+class GroupAdd(TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["group_add"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.group_add.assert_not_called()
+
+    def test_no_resources(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                ["G"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.group_add.assert_not_called()
+
+    def test_both_after_and_before(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_group_add_cmd(
+                self.lib,
+                ["G", "R1", "R2"],
+                dict_to_modifiers(dict(after="A", before="B"))
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "you cannot specify both --before and --after"
+        )
+        self.resource.group_add.assert_not_called()
+
+    def test_success(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id=None,
+            put_after_adjacent=True,
+            wait=False,
+        )
+
+    def test_success_before(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(before="X"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id="X",
+            put_after_adjacent=False,
+            wait=False,
+        )
+
+    def test_success_after(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(after="X"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id="X",
+            put_after_adjacent=True,
+            wait=False,
+        )
+
+    def test_success_wait(self):
+        resource.resource_group_add_cmd(
+            self.lib,
+            ["G", "R1", "R2"],
+            dict_to_modifiers(dict(wait="10"))
+        )
+        self.resource.group_add.assert_called_once_with(
+            "G",
+            ["R1", "R2"],
+            adjacent_resource_id=None,
+            put_after_adjacent=True,
+            wait="10",
         )

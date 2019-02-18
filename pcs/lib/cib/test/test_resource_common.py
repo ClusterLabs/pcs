@@ -3,7 +3,11 @@ from lxml import etree
 
 from pcs.lib.cib.resource import common
 from pcs.lib.cib.tools import IdProvider
-from pcs.test.tools.assertions import assert_xml_equal
+from pcs.test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs.test.tools import fixture
 from pcs.test.tools.xml import etree_to_str
 
 
@@ -76,6 +80,121 @@ class IsCloneDeactivatedByMeta(TestCase):
         self.assert_is_not_disabled({"clone-node-max": 1})
         self.assert_is_not_disabled({"clone-node-max": "1abc"})
         self.assert_is_not_disabled({"clone-node-max": "1.1"})
+
+
+class FindOneOrMoreResources(TestCase):
+    def setUp(self):
+        self.cib = etree.fromstring("""
+            <resources>
+                <primitive id="R1" />
+                <primitive id="R2" />
+                <primitive id="R3" />
+                <primitive id="R1x" />
+                <primitive id="R2x" />
+            </resources>
+        """)
+
+        def searcher(resource_element):
+            return [
+                resource_element.getparent().find(
+                    ".//*[@id='{0}x']".format(resource_element.get("id"))
+                )
+            ]
+        self.additional_search = searcher
+
+    def test_one_existing(self):
+        report_list = []
+        resource = common.find_one_resource_and_report(
+            self.cib,
+            "R1",
+            report_list
+        )
+        self.assertEqual("R1", resource.attrib.get("id"))
+        assert_report_item_list_equal(
+            report_list,
+            []
+        )
+
+    def test_one_nonexistant(self):
+        report_list = []
+        resource = common.find_one_resource_and_report(
+            self.cib,
+            "R-missing",
+            report_list
+        )
+        self.assertIsNone(resource)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.report_not_found("R-missing", context_type="resources"),
+            ]
+        )
+
+    def test_one_additional_search(self):
+        report_list = []
+        resource = common.find_one_resource_and_report(
+            self.cib,
+            "R1",
+            report_list,
+            additional_search=self.additional_search,
+        )
+        self.assertEqual("R1x", resource.attrib.get("id"))
+        assert_report_item_list_equal(
+            report_list,
+            []
+        )
+
+    def test_more_existing(self):
+        report_list = []
+        resource_list = common.find_resources_and_report(
+            self.cib,
+            ["R1", "R2"],
+            report_list
+        )
+        self.assertEqual(
+            ["R1", "R2"],
+            [resource.attrib.get("id") for resource in resource_list]
+        )
+        assert_report_item_list_equal(
+            report_list,
+            []
+        )
+
+    def test_more_some_missing(self):
+        report_list = []
+        resource_list = common.find_resources_and_report(
+            self.cib,
+            ["R1", "R2", "RY1", "RY2"],
+            report_list
+        )
+        self.assertEqual(
+            ["R1", "R2"],
+            [resource.attrib.get("id") for resource in resource_list]
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.report_not_found("RY1", context_type="resources"),
+                fixture.report_not_found("RY2", context_type="resources"),
+            ]
+        )
+
+    def test_more_additional_search(self):
+        report_list = []
+        resource_list = common.find_resources_and_report(
+            self.cib,
+            ["R1", "R2"],
+            report_list,
+            additional_search=self.additional_search,
+        )
+        self.assertEqual(
+            ["R1x", "R2x"],
+            [resource.attrib.get("id") for resource in resource_list]
+        )
+        assert_report_item_list_equal(
+            report_list,
+            []
+        )
 
 
 class FindPrimitives(TestCase):

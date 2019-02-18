@@ -1482,16 +1482,103 @@ def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
         }
     )
 
-def cannot_group_resource_next_to_itself(resource_id, group_id):
+def cannot_group_resource_adjacent_resource_for_new_group(
+    adjacent_resource_id, group_id
+):
     """
-    Cannot put resource(id=resource_id) into group(id=group_id) next to itself:
-        resource(id=resource_id).
+    Cannot put resources next to an adjacent resource in a group, because the
+    group does not exist yet and therefore cannot contain the adjacent resource
+
+    string adjacent_resource_id -- id of an adjacent resource
+    string group_id -- id of the group resources cannot be put into
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP,
+        info={
+            "adjacent_resource_id": adjacent_resource_id,
+            "group_id": group_id,
+        }
+    )
+
+def cannot_group_resource_adjacent_resource_not_in_group(
+    adjacent_resource_id, group_id
+):
+    """
+    Cannot put resources next to an adjacent resource in a group, because the
+    adjacent resource does not belong to the group
+
+    string adjacent_resource_id -- id of an adjacent resource
+    string group_id -- id of the group resources cannot be put into
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
+        info={
+            "adjacent_resource_id": adjacent_resource_id,
+            "group_id": group_id,
+        }
+    )
+
+def cannot_group_resource_already_in_the_group(resource_list, group_id):
+    """
+    Cannot put resources into a group, they are already there
+
+    iterable resource_list -- ids of resources which cannot be put into a group
+    string group_id -- id of the group the resource cannot be put into
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP,
+        info={
+            "resource_list": sorted(resource_list),
+            "group_id": group_id,
+        }
+    )
+
+def cannot_group_resource_more_than_once(resource_list):
+    """
+    Cannot put the same resources into a group more than once
+
+    iterable resource_list -- ids of resources specified more than once
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE,
+        info={
+            "resource_list": sorted(resource_list),
+        }
+    )
+
+def cannot_group_resource_no_resources():
+    """
+    Cannot put resources into a group, no resources were specified
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
+    )
+
+def cannot_group_resource_next_to_itself(resource_id):
+    """
+    Cannot put a resource into a group next to itself
+
+    string resource_id -- id of the resource which cannot be put into a group
     """
     return ReportItem.error(
         report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
         info={
             "resource_id": resource_id,
-            "group_id": group_id,
+        }
+    )
+
+def cannot_group_resource_wrong_type(resource_id, resource_type):
+    """
+    Cannot put a resource into a group as the resource is not a primitive
+
+    string resource_id -- id of the element which cannot be put into a group
+    string resource_type -- tag of the element which cannot be put into a group
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+        info={
+            "resource_id": resource_id,
+            "resource_type": resource_type,
         }
     )
 

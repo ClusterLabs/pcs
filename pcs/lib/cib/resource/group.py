@@ -10,6 +10,12 @@ TAG = "group"
 def is_group(resource_el):
     return resource_el.tag == TAG
 
+def append_new(resources_section, group_id):
+    return etree.SubElement(resources_section, TAG, id=group_id)
+
+# DEPRECATED: combines validation + searching for an existing group
+# (find_element_by_tag_and_id) with group creation; use
+# pcs.lib.cib.tools.ElementSearcher + append_new instead
 def provide_group(resources_section, group_id):
     """
     Provide group with id=group_id. Create new group if group with id=group_id
@@ -48,8 +54,7 @@ def place_resource(
     """
     if primitive_element.attrib["id"] == adjacent_resource_id:
         raise LibraryError(reports.cannot_group_resource_next_to_itself(
-            adjacent_resource_id,
-            group_element.attrib["id"],
+            adjacent_resource_id
         ))
 
     if not adjacent_resource_id:
