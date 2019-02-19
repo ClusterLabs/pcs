@@ -327,6 +327,7 @@ def start_cluster_nodes(nodes):
     timeout = int(
         settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
     )
+    utils.read_known_hosts_file() # cache known hosts
     node_errors = parallel_for_nodes(
         utils.startCluster, nodes, quiet=True, timeout=timeout
     )
@@ -404,6 +405,7 @@ def wait_for_nodes_started(node_list, timeout=None):
         else:
             print(output)
     else:
+        utils.read_known_hosts_file() # cache known hosts
         node_errors = parallel_for_nodes(
             wait_for_remote_node_started, node_list, stop_at, interval
         )
@@ -432,6 +434,7 @@ def stop_cluster_nodes(nodes):
             % "', '".join(unknown_nodes)
         )
 
+    utils.read_known_hosts_file() # cache known hosts
     stopping_all = set(nodes) >= set(all_nodes)
     if "--force" not in utils.pcs_options and not stopping_all:
         error_list = []
@@ -567,6 +570,7 @@ def destroy_cluster(argv):
       * --request-timeout - timeout for HTTP requests
     """
     if argv:
+        utils.read_known_hosts_file() # cache known hosts
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
         node_errors = parallel_for_nodes(

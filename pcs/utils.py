@@ -274,6 +274,7 @@ def remove_uid_gid_file(uid, gid):
 
     return file_removed
 
+@lru_cache()
 def read_known_hosts_file():
     """
     Commandline options: no options

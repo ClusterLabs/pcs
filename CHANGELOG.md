@@ -32,6 +32,8 @@
 - `pcs resource group add` now fails gracefully instead of dumping an invalid
   CIB when a group ID is already occupied by a non-resource element
   ([rhbz#1668223])
+- pcs no longer spawns unnecessary processes for reading known hosts
+  ([rhbz#1676945])
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -50,6 +52,7 @@
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
+[rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
 
 
 ## [0.10.1] - 2018-11-23
