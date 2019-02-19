@@ -79,6 +79,7 @@ end
 
 def run_cfgsync
   $logger.debug('Config files sync started')
+  node_connected = true
   if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
     begin
       # do not sync if this host is not in a cluster
@@ -92,7 +93,7 @@ def run_cfgsync
           cluster_nodes,
           cluster_name
         )
-        cfgs_to_save, _ = fetcher.fetch()
+        cfgs_to_save, _, node_connected = fetcher.fetch()
         cfgs_to_save.each { |cfg_to_save|
           cfg_to_save.save()
         }
@@ -102,7 +103,11 @@ def run_cfgsync
     end
   end
   $logger.debug('Config files sync finished')
-  return Cfgsync::ConfigSyncControl.sync_thread_interval()
+  if node_connected
+    return Cfgsync::ConfigSyncControl.sync_thread_interval()
+  else
+    return Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+  end
 end
 
 helpers do

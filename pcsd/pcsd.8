@@ -60,9 +60,11 @@ Example:
 .br
   "thread_disabled": false,
 .br
-  "thread_interval": 60,
+  "thread_interval": 600,
 .br
-  "thread_paused_until": 1487780453,
+  "thread_interval_previous_not_connected": 60,
+.br
+  "thread_paused_until": 1487780453
 .br
 }
 
@@ -75,6 +77,9 @@ Set this to \fBtrue\fR to completely disable the synchronization.
 .TP
 .B thread_interval
 How often in seconds should pcsd ask other nodes if the synchronized files have changed.
+.TP
+.B thread_interval_previous_not_connected
+How often in seconds should pcsd ask other nodes if the synchronized files have changed if during the previous attempt pcsd was unable to connect to at least two nodes.
 .TP
 .B thread_paused_until
 Disable the synchronization until the set unix timestamp.
