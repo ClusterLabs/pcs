@@ -259,6 +259,7 @@ def remove_uid_gid_file(uid,gid):
 def readTokens():
     return read_token_file()["tokens"]
 
+@simple_cache
 def read_token_file():
     data = {
         "tokens": {},

@@ -29,6 +29,8 @@
   to pacemaker. ([rhbz#1642514])
 - `pcs resource group add` no longer produces an invalid CIB when group id is
   already occupied with non-resource element ([rhbz#1447349])
+- pcs no longer spawns unnecessary processes for reading node tokens
+  ([rhbz#1676944])
 
 [rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
 [rhbz#1447349]: https://bugzilla.redhat.com/show_bug.cgi?id=1447349
@@ -39,6 +41,7 @@
 [rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 [rhbz#1642514]: https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+[rhbz#1676944]: https://bugzilla.redhat.com/show_bug.cgi?id=1676944
 
 
 ## [0.9.166] - 2018-09-30

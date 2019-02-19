@@ -401,6 +401,7 @@ def check_nodes(node_list, prefix=""):
         ))
         status_list.append(returncode)
 
+    utils.read_token_file() # cache node tokens
     utils.run_parallel(
         utils.create_task_list(report, utils.checkAuthorization, node_list)
     )

@@ -1161,6 +1161,7 @@ def start_cluster_nodes(nodes):
     )
     was_error = False
 
+    utils.read_token_file() # cache node tokens
     task_list = [
         IsComponentStartSupported(node) for node in nodes
     ]
@@ -1272,6 +1273,7 @@ def wait_for_nodes_started(node_list, timeout=None):
         else:
             print(output)
     else:
+        utils.read_token_file() # cache node tokens
         node_errors = parallel_for_nodes(
             wait_for_remote_node_started, node_list, stop_at, interval
         )
@@ -1290,6 +1292,7 @@ def stop_cluster_nodes(nodes):
             % "', '".join(unknown_nodes)
         )
 
+    utils.read_token_file() # cache node tokens
     stopping_all = set(nodes) >= set(all_nodes)
     if "--force" not in utils.pcs_options and not stopping_all:
         error_list = []
@@ -1400,6 +1403,7 @@ def destroy_cluster(argv, keep_going=False):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
+        utils.read_token_file() # cache node tokens
         node_errors = parallel_for_nodes(
             utils.repeat_if_timeout(utils.stopPacemaker),
             nodes,
