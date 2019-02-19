@@ -132,8 +132,8 @@ set :run, false
 
 $thread_cfgsync = Thread.new {
   while true
+    node_connected = true
     $semaphore_cfgsync.synchronize {
-      $logger.debug('Config files sync thread started')
       if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
         begin
           # do not sync if this host is not in a cluster
@@ -147,7 +147,7 @@ $thread_cfgsync = Thread.new {
               cluster_nodes,
               cluster_name
             )
-            cfgs_to_save, _ = fetcher.fetch()
+            cfgs_to_save, _, node_connected = fetcher.fetch()
             cfgs_to_save.each { |cfg_to_save|
               cfg_to_save.save()
             }
@@ -158,7 +158,13 @@ $thread_cfgsync = Thread.new {
       end
       $logger.debug('Config files sync thread finished')
     }
-    sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+    if node_connected
+      sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+    else
+      sleep(
+        Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+      )
+    end
   end
 }
 
