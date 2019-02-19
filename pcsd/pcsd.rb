@@ -78,9 +78,9 @@ configure do
 end
 
 def run_cfgsync
-  $logger.debug('Config files sync started')
   node_connected = true
   if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
+    $logger.info('Config files sync started')
     begin
       # do not sync if this host is not in a cluster
       cluster_name = get_cluster_name()
@@ -97,12 +97,18 @@ def run_cfgsync
         cfgs_to_save.each { |cfg_to_save|
           cfg_to_save.save()
         }
+        $logger.info('Config files sync finished')
+      else
+        $logger.info(
+          'Config files sync skipped, this host does not seem to be in a cluster'
+        )
       end
     rescue => e
       $logger.warn("Config files sync exception: #{e}")
     end
+  else
+    $logger.info('Config files sync is disabled or paused, skipping')
   end
-  $logger.debug('Config files sync finished')
   if node_connected
     return Cfgsync::ConfigSyncControl.sync_thread_interval()
   else
