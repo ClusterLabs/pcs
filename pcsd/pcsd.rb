@@ -135,6 +135,7 @@ $thread_cfgsync = Thread.new {
     node_connected = true
     $semaphore_cfgsync.synchronize {
       if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
+        $logger.info('Config files sync thread started')
         begin
           # do not sync if this host is not in a cluster
           cluster_name = get_cluster_name()
@@ -151,12 +152,19 @@ $thread_cfgsync = Thread.new {
             cfgs_to_save.each { |cfg_to_save|
               cfg_to_save.save()
             }
+            $logger.info('Config files sync thread finished')
+          else
+            $logger.info(
+              'Config files sync skipped, this host does not seem to be in ' +
+              'a cluster'
+            )
           end
         rescue => e
           $logger.warn("Config files sync thread exception: #{e}")
         end
+      else
+        $logger.info('Config files sync is disabled or paused, skipping')
       end
-      $logger.debug('Config files sync thread finished')
     }
     if node_connected
       sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
