@@ -140,7 +140,7 @@ $thread_cfgsync = Thread.new {
           # do not sync if this host is not in a cluster
           cluster_name = get_cluster_name()
           cluster_nodes = get_corosync_nodes()
-          if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
+          if cluster_name and !cluster_name.empty?() and cluster_nodes and cluster_nodes.count > 1
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
               PCSAuth.getSuperuserAuth(),
@@ -156,7 +156,7 @@ $thread_cfgsync = Thread.new {
           else
             $logger.info(
               'Config files sync skipped, this host does not seem to be in ' +
-              'a cluster'
+              'a cluster of at least 2 nodes'
             )
           end
         rescue => e
