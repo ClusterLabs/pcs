@@ -33,6 +33,9 @@
   ([rhbz#1676944])
 - Fixed a bug causing most of the messages not being logged into pcsd.log
   ([rhbz#1679534])
+- Lower load caused by periodical config files syncing in pcsd by making it
+  sync less frequently ([rhbz#1676956])
+- Improve logging of periodical config files syncing in pcsd
 
 [rhbz#1389140]: https://bugzilla.redhat.com/show_bug.cgi?id=1389140
 [rhbz#1447349]: https://bugzilla.redhat.com/show_bug.cgi?id=1447349
@@ -44,6 +47,7 @@
 [rhbz#1638376]: https://bugzilla.redhat.com/show_bug.cgi?id=1638376
 [rhbz#1642514]: https://bugzilla.redhat.com/show_bug.cgi?id=1642514
 [rhbz#1676944]: https://bugzilla.redhat.com/show_bug.cgi?id=1676944
+[rhbz#1676956]: https://bugzilla.redhat.com/show_bug.cgi?id=1676956
 [rhbz#1679534]: https://bugzilla.redhat.com/show_bug.cgi?id=1679534
 
 
