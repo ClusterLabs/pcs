@@ -67,11 +67,15 @@ if not defined? $cur_node_name
 end
 
 def configure_logger(log_device)
+  # Open the file ourselves so we can set its permissions for the case the file
+  # does not exist. Logger is able to create and open the file for us but it
+  # does not allow specifying file permissions.
   if log_device.is_a?(String)
     # File.open(path, mode, options)
     # File.open(path, mode, perm, options)
     # In order to set permissions, the method must be called with 4 arguments.
     log_device = File.open(log_device, "a+", 0600, {})
+    log_device.sync = true
   end
   logger = Logger.new(log_device)
   if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
