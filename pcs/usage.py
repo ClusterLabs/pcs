@@ -222,7 +222,7 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [clone [<clone options>] | promotable <promotable options> |
+           [clone [<clone options>] | promotable [<promotable options>] |
            --group <group id> [--before <resource id> | --after <resource id>] |
            bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
         Create specified resource. If clone is used a clone resource is
