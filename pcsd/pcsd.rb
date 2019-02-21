@@ -132,14 +132,15 @@ set :run, false
 
 $thread_cfgsync = Thread.new {
   while true
+    node_connected = true
     $semaphore_cfgsync.synchronize {
-      $logger.debug('Config files sync thread started')
       if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
+        $logger.info('Config files sync thread started')
         begin
           # do not sync if this host is not in a cluster
           cluster_name = get_cluster_name()
           cluster_nodes = get_corosync_nodes()
-          if cluster_name and !cluster_name.empty?() and cluster_nodes and !cluster_nodes.empty?
+          if cluster_name and !cluster_name.empty?() and cluster_nodes and cluster_nodes.count > 1
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
               PCSAuth.getSuperuserAuth(),
@@ -147,18 +148,31 @@ $thread_cfgsync = Thread.new {
               cluster_nodes,
               cluster_name
             )
-            cfgs_to_save, _ = fetcher.fetch()
+            cfgs_to_save, _, node_connected = fetcher.fetch()
             cfgs_to_save.each { |cfg_to_save|
               cfg_to_save.save()
             }
+            $logger.info('Config files sync thread finished')
+          else
+            $logger.info(
+              'Config files sync skipped, this host does not seem to be in ' +
+              'a cluster of at least 2 nodes'
+            )
           end
         rescue => e
           $logger.warn("Config files sync thread exception: #{e}")
         end
+      else
+        $logger.info('Config files sync is disabled or paused, skipping')
       end
-      $logger.debug('Config files sync thread finished')
     }
-    sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+    if node_connected
+      sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+    else
+      sleep(
+        Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+      )
+    end
   end
 }
 
