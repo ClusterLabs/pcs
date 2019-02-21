@@ -247,8 +247,10 @@ class TestConfigSyncControll < Test::Unit::TestCase
     file = File.open(CFG_SYNC_CONTROL, 'w')
     file.write(JSON.pretty_generate({}))
     file.close()
-    @thread_interval_default = 60
-    @thread_interval_minimum = 20
+    @thread_interval_default = 600
+    @thread_interval_minimum = 60
+    @thread_interval_previous_not_connected_default = 60
+    @thread_interval_previous_not_connected_minimum = 20
     @file_backup_count_default = 50
     @file_backup_count_minimum = 0
   end
@@ -397,6 +399,65 @@ class TestConfigSyncControll < Test::Unit::TestCase
     )
   end
 
+  def test_interval_previous_not_connected()
+    assert_equal(
+      @thread_interval_previous_not_connected_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+
+    interval = (
+      @thread_interval_previous_not_connected_default +
+      @thread_interval_previous_not_connected_minimum
+    )
+    assert(
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected=(
+        interval
+      )
+    )
+    assert_equal(
+      interval,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+
+    assert(
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected=(
+        @thread_interval_previous_not_connected_minimum / 2
+      )
+    )
+    assert_equal(
+      @thread_interval_previous_not_connected_minimum,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+
+    assert(
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected=(0)
+    )
+    assert_equal(
+      @thread_interval_previous_not_connected_minimum,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+
+    assert(
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected=(
+        -100
+      )
+    )
+    assert_equal(
+      @thread_interval_previous_not_connected_minimum,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+
+    assert(
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected=(
+        'abcd'
+      )
+    )
+    assert_equal(
+      @thread_interval_previous_not_connected_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
+    )
+  end
+
   def test_file_backup_count()
     assert_equal(
       @file_backup_count_default,
@@ -451,11 +512,12 @@ class TestConfigFetcher < Test::Unit::TestCase
     end
 
     def get_configs_cluster(nodes, cluster_name)
-      return @configs_cluster
+      return @configs_cluster, @node_connected
     end
 
-    def set_configs_cluster(configs)
+    def set_configs_cluster(configs, node_connected=true)
       @configs_cluster = configs
+      @node_connected = node_connected
       return self
     end
 
@@ -525,31 +587,37 @@ class TestConfigFetcher < Test::Unit::TestCase
     cfg_name = Cfgsync::PcsdSettings.name
     fetcher = ConfigFetcherMock.new({}, [Cfgsync::PcsdSettings], nil, nil)
 
+    # unable to connect to any nodes
+    fetcher.set_configs_local({cfg_name => cfg1})
+
+    fetcher.set_configs_cluster({}, false)
+    assert_equal([[], [], false], fetcher.fetch())
+
     # local config is synced
     fetcher.set_configs_local({cfg_name => cfg1})
 
     fetcher.set_configs_cluster({
       'node1' => {'configs' => {cfg_name => cfg1}},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {'configs' => {cfg_name => cfg2}},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {'configs' => {cfg_name => cfg1}},
       'node2' => {'configs' => {cfg_name => cfg2}},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {'configs' => {cfg_name => cfg1}},
       'node2' => {'configs' => {cfg_name => cfg2}},
       'node3' => {'configs' => {cfg_name => cfg2}},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     # local config is older
     fetcher.set_configs_local({cfg_name => cfg1})
@@ -557,20 +625,20 @@ class TestConfigFetcher < Test::Unit::TestCase
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
     })
-    assert_equal([[cfg3], []], fetcher.fetch())
+    assert_equal([[cfg3], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
     })
-    assert_equal([[cfg4], []], fetcher.fetch())
+    assert_equal([[cfg4], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
       'node3' => {cfg_name => cfg3},
     })
-    assert_equal([[cfg3], []], fetcher.fetch())
+    assert_equal([[cfg3], [], true], fetcher.fetch())
 
     # local config is newer
     fetcher.set_configs_local({cfg_name => cfg3})
@@ -578,13 +646,13 @@ class TestConfigFetcher < Test::Unit::TestCase
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg1},
     })
-    assert_equal([[], [cfg3]], fetcher.fetch())
+    assert_equal([[], [cfg3], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg1},
       'node2' => {cfg_name => cfg1},
     })
-    assert_equal([[], [cfg3]], fetcher.fetch())
+    assert_equal([[], [cfg3], true], fetcher.fetch())
 
     # local config is the same version
     fetcher.set_configs_local({cfg_name => cfg3})
@@ -592,32 +660,32 @@ class TestConfigFetcher < Test::Unit::TestCase
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg4},
     })
-    assert_equal([[cfg4], []], fetcher.fetch())
+    assert_equal([[cfg4], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
     })
-    assert_equal([[cfg4], []], fetcher.fetch())
+    assert_equal([[cfg4], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
       'node3' => {cfg_name => cfg3},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
       'node3' => {cfg_name => cfg4},
     })
-    assert_equal([[cfg4], []], fetcher.fetch())
+    assert_equal([[cfg4], [], true], fetcher.fetch())
 
     # local config is the same version
     fetcher.set_configs_local({cfg_name => cfg4})
@@ -625,32 +693,32 @@ class TestConfigFetcher < Test::Unit::TestCase
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
     })
-    assert_equal([[cfg3], []], fetcher.fetch())
+    assert_equal([[cfg3], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg4},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
       'node3' => {cfg_name => cfg3},
     })
-    assert_equal([[cfg3], []], fetcher.fetch())
+    assert_equal([[cfg3], [], true], fetcher.fetch())
 
     fetcher.set_configs_cluster({
       'node1' => {cfg_name => cfg3},
       'node2' => {cfg_name => cfg4},
       'node3' => {cfg_name => cfg4},
     })
-    assert_equal([[], []], fetcher.fetch())
+    assert_equal([[], [], true], fetcher.fetch())
   end
 end
 

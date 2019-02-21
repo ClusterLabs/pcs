@@ -279,8 +279,11 @@ module Cfgsync
 
 
   class ConfigSyncControl
-    @thread_interval_default = 60
-    @thread_interval_minimum = 20
+    # intervals in seconds
+    @thread_interval_default = 600
+    @thread_interval_minimum = 60
+    @thread_interval_previous_not_connected_default = 60
+    @thread_interval_previous_not_connected_minimum = 20
     @file_backup_count_default = 50
     @file_backup_count_minimum = 0
 
@@ -312,6 +315,20 @@ module Cfgsync
     def self.sync_thread_interval=(seconds)
       data = self.load()
       data['thread_interval'] = seconds
+      return self.save(data)
+    end
+
+    def self.sync_thread_interval_previous_not_connected()
+      return self.get_integer_value(
+        self.load()['thread_interval_previous_not_connected'],
+        @thread_interval_previous_not_connected_default,
+        @thread_interval_previous_not_connected_minimum
+      )
+    end
+
+    def self.sync_thread_interval_previous_not_connected=(seconds)
+      data = self.load()
+      data['thread_interval_previous_not_connected'] = seconds
       return self.save(data)
     end
 
@@ -549,14 +566,17 @@ module Cfgsync
     end
 
     def fetch_all()
-      return self.filter_configs_cluster(
-        self.get_configs_cluster(@nodes, @cluster_name),
-        @config_classes
+      node_configs, node_connected = self.get_configs_cluster(
+        @nodes, @cluster_name
       )
+      filtered_configs = self.filter_configs_cluster(
+        node_configs, @config_classes
+      )
+      return filtered_configs, node_connected
     end
 
     def fetch()
-      configs_cluster = self.fetch_all()
+      configs_cluster, node_connected = self.fetch_all()
 
       newest_configs_cluster = {}
       configs_cluster.each { |name, cfgs|
@@ -577,7 +597,7 @@ module Cfgsync
           end
         end
       }
-      return to_update_locally, to_update_in_cluster
+      return to_update_locally, to_update_in_cluster, node_connected
     end
 
     protected
@@ -594,13 +614,16 @@ module Cfgsync
       $logger.debug 'Fetching configs from the cluster'
       threads = []
       node_configs = {}
+      connected_to = {}
       nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
             @auth_user, node, 'get_configs', false, data, true, nil, nil,
             @additional_known_hosts
           )
+          connected_to[node] = false
           if 200 == code
+            connected_to[node] = true
             begin
               parsed = JSON::parse(out)
               if 'ok' == parsed['status'] and cluster_name == parsed['cluster_name']
@@ -612,7 +635,24 @@ module Cfgsync
         }
       }
       threads.each { |t| t.join }
-      return node_configs
+
+      node_connected = false
+      if connected_to.empty?()
+        node_connected = true # no nodes to connect to => no connection errors
+      else
+        connected_count = 0
+        connected_to.each { |node, connected|
+          if connected
+            connected_count += 1
+          end
+        }
+        # If we only connected to one node, consider it a fail and continue as
+        # if we could not connect anywhere. The one node is probably the local
+        # node.
+        node_connected = connected_count > 1
+      end
+
+      return node_configs, node_connected
     end
 
     def filter_configs_cluster(node_configs, wanted_configs_classes)
@@ -717,7 +757,7 @@ module Cfgsync
           fetcher = ConfigFetcher.new(
             PCSAuth.getSuperuserAuth(), [config.class], nodes, cluster_name
           )
-          cfgs_to_save, _ = fetcher.fetch()
+          cfgs_to_save, _, _ = fetcher.fetch()
           cfgs_to_save.each { |cfg_to_save|
             cfg_to_save.save() if cfg_to_save.class == config.class
           }
@@ -786,7 +826,7 @@ module Cfgsync
       PCSAuth.getSuperuserAuth(), [config_new.class], target_nodes,
       cluster_name, new_hosts
     )
-    fetched_hosts = fetcher.fetch_all()[config_new.class.name]
+    fetched_hosts, _ = fetcher.fetch_all()[config_new.class.name]
     config_new = Cfgsync::merge_known_host_files(
       config_old, fetched_hosts, new_hosts, remove_hosts_names
     )

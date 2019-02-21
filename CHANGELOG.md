@@ -34,6 +34,9 @@
   ([rhbz#1668223])
 - pcs no longer spawns unnecessary processes for reading known hosts
   ([rhbz#1676945])
+- Lower load caused by periodical config files syncing in pcsd by making it
+  sync less frequently ([rhbz#1676957])
+- Improve logging of periodical config files syncing in pcsd
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -53,6 +56,7 @@
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
+[rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 
 
 ## [0.10.1] - 2018-11-23
