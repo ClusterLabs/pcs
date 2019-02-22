@@ -109,7 +109,7 @@ Alerts:
     def test_create_with_options(self):
         self.assert_pcs_success(
             "alert create id=alert1 description=desc path=test "
-            "options opt1=val1 opt2=val2 meta m1=v1 m2=v2"
+            "options opt2=val2 opt1=val1 meta m2=v2 m1=v1"
         )
         self.assert_pcs_success(
             "alert config",
@@ -155,7 +155,7 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert create id=alert1 description=desc path=test "
-            "options opt1=val1 opt2=val2 meta m1=v1 m2=v2"
+            "options opt1=val1 opt3=val3 meta m1=v1 m3=v3"
         )
         self.assert_pcs_success(
             "alert config",
@@ -163,8 +163,8 @@ Alerts:
 Alerts:
  Alert: alert1 (path=test)
   Description: desc
-  Options: opt1=val1 opt2=val2
-  Meta options: m1=v1 m2=v2
+  Options: opt1=val1 opt3=val3
+  Meta options: m1=v1 m3=v3
 """
         )
         self.assert_pcs_success(
@@ -299,7 +299,7 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value2 id=my-recipient "
-            "description=description options o1=1 o2=2 meta m1=v1 m2=v2"
+            "description=description options o2=2 o1=1 meta m2=v2 m1=v1"
         )
         self.assert_pcs_success(
             "alert config",
@@ -378,7 +378,7 @@ class UpdateRecipientAlert(PcsAlertTest):
         self.assert_pcs_success("alert create path=test")
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value description=description "
-            "options o1=1 o2=2 meta m1=v1 m2=v2"
+            "options o1=1 o3=3 meta m1=v1 m3=v3"
         )
         self.assert_pcs_success(
             "alert config",
@@ -388,8 +388,8 @@ Alerts:
   Recipients:
    Recipient: alert-recipient (value=rec_value)
     Description: description
-    Options: o1=1 o2=2
-    Meta options: m1=v1 m2=v2
+    Options: o1=1 o3=3
+    Meta options: m1=v1 m3=v3
 """
         )
         self.assert_pcs_success(

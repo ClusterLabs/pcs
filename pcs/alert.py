@@ -170,11 +170,16 @@ def recipient_remove(lib, argv, modifiers):
 
 
 def _nvset_to_str(nvset_obj):
+    # TODO duplicite to pcs.resource._nvpairs_strings
+    key_val = {
+        nvpair_obj["name"]: nvpair_obj["value"]
+        for nvpair_obj in nvset_obj
+    }
     output = []
-    for nvpair_obj in nvset_obj:
-        output.append("{key}={value}".format(
-            key=nvpair_obj["name"], value=nvpair_obj["value"]
-        ))
+    for name, value in sorted(key_val.items()):
+        if " " in value:
+            value = f'"{value}"'
+        output.append(f"{name}={value}")
     return " ".join(output)
 
 
