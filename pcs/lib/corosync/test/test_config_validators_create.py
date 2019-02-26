@@ -772,7 +772,6 @@ class CreateLinkListKnet(TestCase):
             config_validators.create_link_list_knet(
                 [
                     {
-                        "ip_version": "ipv4",
                         "linknumber": "0",
                         "link_priority": "20",
                         "mcastport": "5405",
@@ -783,7 +782,6 @@ class CreateLinkListKnet(TestCase):
                         "transport": "sctp",
                     },
                     {
-                        "ip_version": "ipv6",
                         "linknumber": "1",
                         "link_priority": "10",
                         "mcastport": "5415",
@@ -804,7 +802,6 @@ class CreateLinkListKnet(TestCase):
             config_validators.create_link_list_knet(
                 [
                     {
-                        "ip_version": "ipv5",
                         "linknumber": "-1",
                         "link_priority": "256",
                         "mcastport": "65536",
@@ -821,12 +818,6 @@ class CreateLinkListKnet(TestCase):
                 3
             ),
             [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="ipv5",
-                    option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
-                ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-1",
@@ -886,7 +877,6 @@ class CreateLinkListKnet(TestCase):
 
     def test_invalid_options(self):
         allowed_options = [
-            "ip_version",
             "link_priority",
             "linknumber",
             "mcastport",
@@ -920,6 +910,37 @@ class CreateLinkListKnet(TestCase):
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["nonsense3"],
+                    option_type="link",
+                    allowed=allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_invalid_option_ip_version(self):
+        allowed_options = [
+            "link_priority",
+            "linknumber",
+            "mcastport",
+            "ping_interval",
+            "ping_precision",
+            "ping_timeout",
+            "pong_count",
+            "transport",
+        ]
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "ip_version": "ipv4",
+                    },
+                ],
+                2
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["ip_version"],
                     option_type="link",
                     allowed=allowed_options,
                     allowed_patterns=[],
@@ -1011,8 +1032,8 @@ class CreateLinkListKnet(TestCase):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
                 ],
                 1
             ),
@@ -1024,9 +1045,9 @@ class CreateLinkListKnet(TestCase):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
                 ],
                 1
             ),
@@ -1065,7 +1086,7 @@ class CreateLinkListKnet(TestCase):
             config_validators.create_link_list_knet(
                 [
                     {
-                        "ip_version": "ipv4",
+                        "transport": "udp",
                         "linknumber": "0",
                     },
                 ],
@@ -1079,17 +1100,17 @@ class CreateLinkListKnet(TestCase):
             config_validators.create_link_list_knet(
                 [
                     {
-                        "ip_version": "ipv4",
+                        "transport": "udp",
                         "linknumber": "8",
                     },
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
-                    {"ip_version": "ipv4"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
+                    {"transport": "udp"},
                 ],
                 8
             ),

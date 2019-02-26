@@ -633,7 +633,7 @@ Commands:
         Transport options are:
             ip_version, knet_pmtud_interval, link_mode
         Link options are:
-            ip_version, link_priority, linknumber, mcastport, ping_interval,
+            link_priority, linknumber, mcastport, ping_interval,
             ping_precision, ping_timeout, pong_count, transport (udp or sctp)
         Compression options are:
             level, model, threshold

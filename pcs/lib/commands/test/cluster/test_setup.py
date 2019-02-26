@@ -1058,7 +1058,6 @@ class Validation(TestCase):
                     option_names=["b"],
                     option_type="link",
                     allowed=[
-                        "ip_version",
                         "link_priority",
                         "linknumber",
                         "mcastport",
@@ -1621,7 +1620,6 @@ class TransportKnetSuccess(TestCase):
         link_list = [
             dict(
                 linknumber="1",
-                ip_version="ipv4",
                 link_priority="100",
                 mcastport="12345",
                 ping_interval="1",
@@ -1630,7 +1628,7 @@ class TransportKnetSuccess(TestCase):
                 pong_count="4",
                 transport="sctp",
             ),
-            dict(ip_version="ipv6"),
+            dict(mcastport="23456"),
             dict(
                 linknumber="7",
                 transport="udp",
@@ -1639,7 +1637,7 @@ class TransportKnetSuccess(TestCase):
                 linknumber="3",
                 link_priority="20",
             ),
-            dict(ip_version="ipv4"),
+            dict(mcastport="34567"),
             dict(transport="sctp"),
         ]
         links_linknumber = [1, 0, 7, 3, 2, 4]

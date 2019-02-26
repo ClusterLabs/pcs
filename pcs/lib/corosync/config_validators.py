@@ -465,7 +465,6 @@ def create_link_list_knet(link_list, max_link_number):
     max_link_number = max(0, min(constants.LINKS_KNET_MAX - 1, max_link_number))
     max_link_count = max_link_number + 1
     allowed_options = [
-        "ip_version", # It tells knet which IP to prefer.
         "linknumber",
         "link_priority",
         "mcastport",
@@ -476,7 +475,6 @@ def create_link_list_knet(link_list, max_link_number):
         "transport",
     ]
     validators = [
-        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
         validate.value_integer_in_range("linknumber", 0, max_link_number),
         validate.value_integer_in_range("link_priority", 0, 255),
         validate.value_port_number("mcastport"),

@@ -37,6 +37,8 @@
 - Lower load caused by periodical config files syncing in pcsd by making it
   sync less frequently ([rhbz#1676957])
 - Improve logging of periodical config files syncing in pcsd
+- Knet link option `ip_version` has been removed, it was never supported by
+  corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -55,6 +57,7 @@
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
+[rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 
