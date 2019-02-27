@@ -39,6 +39,7 @@
 - Improve logging of periodical config files syncing in pcsd
 - Knet link option `ip_version` has been removed, it was never supported by
   corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
+- Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
 
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
@@ -55,6 +56,7 @@
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
+[rhbz#1667090]: https://bugzilla.redhat.com/show_bug.cgi?id=1667090
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
 [rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005

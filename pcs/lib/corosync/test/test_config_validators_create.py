@@ -583,18 +583,101 @@ class Create(TestCase):
         )
 
 
-class CreateLinkListUdp(TestCase):
+class CreateLinkListCommonMixin():
     def test_no_links(self):
         assert_report_item_list_equal(
-            config_validators.create_link_list_udp([]),
+            self._validate([], self.default_addr_count),
             []
         )
 
     def test_no_options(self):
         assert_report_item_list_equal(
-            config_validators.create_link_list_udp([{}]),
+            self._validate([{}], self.default_addr_count),
             []
         )
+
+    def test_less_link_options_than_links(self):
+        # If number of links options <= number of addresses, then everything is
+        # ok. Number of addresses is checked in another validator.
+        assert_report_item_list_equal(
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                    {"mcastport": "5405"},
+                ],
+                3
+            ),
+            [
+            ]
+        )
+
+    def test_link_options_count_equals_links_count(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                ],
+                1
+            ),
+            [
+            ]
+        )
+
+    def test_more_link_options_than_links(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                    {"mcastport": "5405"},
+                ],
+                1
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_TOO_MANY_LINKS_OPTIONS,
+                    links_options_count=2,
+                    links_count=1,
+                )
+            ]
+        )
+
+    def test_max_links_count_too_low(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                ],
+                -1
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_TOO_MANY_LINKS_OPTIONS,
+                    links_options_count=1,
+                    links_count=0,
+                )
+            ]
+        )
+
+    def test_max_links_count_too_high(self):
+        # If number of links options <= number of addresses, then everything is
+        # ok. Number of addresses is checked in another validator.
+        assert_report_item_list_equal(
+            self._validate(
+                [
+                    {"mcastport": "5405"} for _ in range(10)
+                ],
+                10
+            ),
+            [
+            ]
+        )
+
+
+class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
+    default_addr_count = 1
+
+    def _validate(self, *args, **kwargs):
+        return config_validators.create_link_list_udp(*args, **kwargs)
 
     def test_all_valid(self):
         assert_report_item_list_equal(
@@ -607,7 +690,8 @@ class CreateLinkListUdp(TestCase):
                         "mcastport": "5405",
                         "ttl": "12",
                     }
-                ]
+                ],
+                1
             ),
             []
         )
@@ -623,7 +707,8 @@ class CreateLinkListUdp(TestCase):
                         "mcastport": "0",
                         "ttl": "256",
                     }
-                ]
+                ],
+                1
             ),
             [
                 fixture.error(
@@ -674,7 +759,8 @@ class CreateLinkListUdp(TestCase):
                         "linknumber": "0",
                         "nonsense": "doesnt matter",
                     }
-                ]
+                ],
+                1
             ),
             [
                 fixture.error(
@@ -687,24 +773,6 @@ class CreateLinkListUdp(TestCase):
             ]
         )
 
-    def test_more_links(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [
-                    {"ttl": "64"},
-                    {"ttl": "64"},
-                ]
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_TOO_MANY_LINKS,
-                    actual_count=2,
-                    max_count=1,
-                    transport="udp/udpu"
-                )
-            ]
-        )
-
     def test_broadcast_default_mcastaddr_set(self):
         assert_report_item_list_equal(
             config_validators.create_link_list_udp(
@@ -712,7 +780,8 @@ class CreateLinkListUdp(TestCase):
                     {
                         "mcastaddr": "225.0.0.1"
                     }
-                ]
+                ],
+                1
             ),
             [
             ]
@@ -726,7 +795,8 @@ class CreateLinkListUdp(TestCase):
                         "broadcast": "0",
                         "mcastaddr": "225.0.0.1"
                     }
-                ]
+                ],
+                1
             ),
             [
             ]
@@ -740,7 +810,8 @@ class CreateLinkListUdp(TestCase):
                         "broadcast": "1",
                         "mcastaddr": "225.0.0.1"
                     }
-                ]
+                ],
+                1
             ),
             [
                 fixture.error(
@@ -754,18 +825,11 @@ class CreateLinkListUdp(TestCase):
         )
 
 
-class CreateLinkListKnet(TestCase):
-    def test_no_links(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet([], 8),
-            []
-        )
+class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
+    default_addr_count = 8
 
-    def test_no_options(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet([{}], 8),
-            []
-        )
+    def _validate(self, *args, **kwargs):
+        return config_validators.create_link_list_knet(*args, **kwargs)
 
     def test_all_valid(self):
         assert_report_item_list_equal(
@@ -822,7 +886,7 @@ class CreateLinkListKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-1",
                     option_name="linknumber",
-                    allowed_values="0..3"
+                    allowed_values="0..7"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1003,16 +1067,7 @@ class CreateLinkListKnet(TestCase):
             ]
         )
 
-    def test_linknumber_within_range(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet(
-                [{"linknumber": "2"}],
-                2
-            ),
-            []
-        )
-
-    def test_linknumber_to_high(self):
+    def test_linknumber_higher_than_link_count(self):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [{"linknumber": "3"}],
@@ -1020,44 +1075,36 @@ class CreateLinkListKnet(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="3",
-                    option_name="linknumber",
-                    allowed_values="0..2"
+                    report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
+                    link_number="3",
+                    link_count=2,
                 ),
             ]
         )
 
-    def test_link_count_in_range(self):
+    def test_linknumber_equals_link_count(self):
+        # This must report because link numbers start with 0.
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
-                [
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                ],
-                1
-            ),
-            [
-            ]
-        )
-
-    def test_link_count_too_high(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet(
-                [
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                ],
-                1
+                [{"linknumber": "2"}],
+                2
             ),
             [
                 fixture.error(
-                    report_codes.COROSYNC_TOO_MANY_LINKS,
-                    actual_count=3,
-                    max_count=2,
-                    transport="knet"
-                )
+                    report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
+                    link_number="2",
+                    link_count=2,
+                ),
+            ]
+        )
+
+    def test_linknumber_lower_than_link_count(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [{"linknumber": "1"}],
+                2
+            ),
+            [
             ]
         )
 
@@ -1071,61 +1118,12 @@ class CreateLinkListKnet(TestCase):
                     {"linknumber": "1"},
                     {"linknumber": "2"},
                 ],
-                4
+                5
             ),
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
                     link_number_list=["0", "2"]
-                )
-            ]
-        )
-
-    def test_max_link_number_too_low(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet(
-                [
-                    {
-                        "transport": "udp",
-                        "linknumber": "0",
-                    },
-                ],
-                -1
-            ),
-            []
-        )
-
-    def test_max_link_number_too_high(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_knet(
-                [
-                    {
-                        "transport": "udp",
-                        "linknumber": "8",
-                    },
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                    {"transport": "udp"},
-                ],
-                8
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="8",
-                    option_name="linknumber",
-                    allowed_values="0..7"
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_TOO_MANY_LINKS,
-                    actual_count=9,
-                    max_count=8,
-                    transport="knet"
                 )
             ]
         )

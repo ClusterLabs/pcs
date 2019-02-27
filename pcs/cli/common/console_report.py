@@ -288,6 +288,22 @@ def corosync_node_address_count_mismatch(info):
         ))
     return "; ".join(parts)
 
+def corosync_link_does_not_exist_cannot_update(info):
+    template = "Cannot set options for non-existent link '{link_number}'"
+    if info.get("existing_link_list"):
+        template += ", existing links: {_link_list}"
+        return template.format(
+            _link_list=format_list(info["existing_link_list"]),
+            **info
+        )
+    if info.get("link_count"):
+        template += ", {link_count} link{_s_are} defined starting with link 0"
+        return template.format(
+            _s_are=("s are" if info["link_count"] > 1 else " is"),
+            **info
+        )
+    return template.format(**info)
+
 def service_version_mismatch(info):
     version_host = defaultdict(list)
     for host_name, version in info["hosts_version"].items():
@@ -819,14 +835,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(", ".join(sorted(info["options_names"])))
     ,
 
-    codes.COROSYNC_TOO_MANY_LINKS: lambda info:
+    codes.COROSYNC_TOO_MANY_LINKS_OPTIONS: lambda info:
         (
-            "Cannot set {actual_count} links, {transport} transport supports "
-            "up to {max_count} link{_s}"
-        ).format(
-            _s=("s" if info["max_count"] > 1 else ""),
-            **info
-        )
+            "Cannot specify options for more links ({links_options_count}) "
+            "than how many is defined by number of addresses per node "
+            "({links_count})"
+        ).format(**info)
+    ,
+
+    codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE:
+        corosync_link_does_not_exist_cannot_update
     ,
 
     codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS: lambda info:

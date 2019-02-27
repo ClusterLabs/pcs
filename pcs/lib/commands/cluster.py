@@ -242,11 +242,11 @@ def setup(
         cluster_name, nodes, transport_type,
         force_unresolvable=force
     ))
+    max_node_addr_count = max(
+        [len(node["addrs"]) for node in nodes],
+        default=0
+    )
     if transport_type in corosync_constants.TRANSPORTS_KNET:
-        max_link_number = max(
-            [len(node["addrs"]) for node in nodes],
-            default=0
-        )
         report_processor.report_list(
             config_validators.create_transport_knet(
                 transport_options,
@@ -256,7 +256,7 @@ def setup(
             +
             config_validators.create_link_list_knet(
                 link_list,
-                max_link_number
+                max_node_addr_count
             )
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
@@ -267,7 +267,10 @@ def setup(
                 crypto_options
             )
             +
-            config_validators.create_link_list_udp(link_list)
+            config_validators.create_link_list_udp(
+                link_list,
+                max_node_addr_count
+            )
         )
     report_processor.report_list(
         config_validators.create_totem(totem_options)

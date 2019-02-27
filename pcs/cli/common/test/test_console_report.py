@@ -2332,26 +2332,72 @@ class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
         )
 
 
-class CorosyncTooManyLinks(NameBuildTest):
-    code = codes.COROSYNC_TOO_MANY_LINKS
-    def test_udp(self):
-        self.assert_message_from_info(
-            "Cannot set 2 links, udp/udpu transport supports up to 1 link",
-            {
-                "actual_count": 2,
-                "max_count": 1,
-                "transport": "udp/udpu",
-            }
+class CorosyncTooManyLinksOptions(NameBuildTest):
+    code = codes.COROSYNC_TOO_MANY_LINKS_OPTIONS
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Cannot specify options for more links (7) than how many is "
+                "defined by number of addresses per node (3)"
+            ),
+            reports.corosync_too_many_links_options(7, 3),
         )
 
-    def test_knet(self):
-        self.assert_message_from_info(
-            "Cannot set 9 links, knet transport supports up to 8 links",
-            {
-                "actual_count": 9,
-                "max_count": 8,
-                "transport": "knet",
-            }
+
+class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
+    code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
+    def test_no_optional_info(self):
+        self.assert_message_from_report(
+            "Cannot set options for non-existent link '3'",
+            reports.corosync_link_does_not_exist_cannot_update(3)
+        )
+
+    def test_link_count_several(self):
+        self.assert_message_from_report(
+            (
+                "Cannot set options for non-existent link '5'"
+                ", 3 links are defined starting with link 0"
+            ),
+            reports.corosync_link_does_not_exist_cannot_update(
+                5,
+                link_count=3
+            )
+        )
+
+    def test_link_count_one(self):
+        self.assert_message_from_report(
+            (
+                "Cannot set options for non-existent link '5'"
+                ", 1 link is defined starting with link 0"
+            ),
+            reports.corosync_link_does_not_exist_cannot_update(
+                5,
+                link_count=1
+            )
+        )
+
+    def test_link_list_several(self):
+        self.assert_message_from_report(
+            (
+                "Cannot set options for non-existent link '3'"
+                ", existing links: '0', '1', '2', '6', '7'"
+            ),
+            reports.corosync_link_does_not_exist_cannot_update(
+                3,
+                existing_link_list=[6, 7, 0, 1, 2]
+            )
+        )
+
+    def test_link_list_one(self):
+        self.assert_message_from_report(
+            (
+                "Cannot set options for non-existent link '3'"
+                ", existing links: '0'"
+            ),
+            reports.corosync_link_does_not_exist_cannot_update(
+                3,
+                existing_link_list=[0]
+            )
         )
 
 
