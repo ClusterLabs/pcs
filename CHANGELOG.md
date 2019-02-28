@@ -43,6 +43,11 @@
   corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
 - Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
 
+### Changed
+- Do not check whether watchdog is defined as an absolute path when enabling
+  SBD. This check is not needed anymore as we are validating watchdog against
+  list provided by SBD itself.
+
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
   deprecated to ease transition to its replacements. It will be removed again in

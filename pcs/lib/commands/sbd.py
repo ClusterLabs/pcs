@@ -1,5 +1,3 @@
-import os
-
 from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.communication.sbd import (
@@ -88,7 +86,7 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
 
 def _validate_watchdog_dict(watchdog_dict):
     """
-    Validates if all watchdogs are specified by absolute path.
+    Validates if all watchdogs are not empty strings.
     Returns list of ReportItem.
 
     watchdog_dict -- dictionary with node names as keys and value as watchdog
@@ -96,7 +94,7 @@ def _validate_watchdog_dict(watchdog_dict):
     return [
         reports.invalid_watchdog_path(watchdog)
         for watchdog in watchdog_dict.values()
-        if not watchdog or not os.path.isabs(watchdog)
+        if not watchdog
     ]
 
 

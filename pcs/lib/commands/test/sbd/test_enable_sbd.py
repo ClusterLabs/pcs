@@ -731,23 +731,6 @@ class Validations(TestCase):
         )
         self.env_assist.assert_reports([])
 
-    def test_watchdog_not_abs_path(self):
-        self.env_assist.assert_raise_library_error(
-            lambda: enable_sbd(
-                self.env_assist.get_env(),
-                default_watchdog="wd1",
-                watchdog_dict={self.node_list[0]: "wd2"},
-                sbd_options={},
-            ),
-            [
-                fixture.error(
-                    report_codes.WATCHDOG_INVALID,
-                    watchdog=w,
-                ) for w in ["wd1", "wd2"]
-            ],
-        )
-        self.env_assist.assert_reports([])
-
     def test_device_not_abs_path(self):
         self.env_assist.assert_raise_library_error(
             lambda: enable_sbd(
@@ -1069,9 +1052,10 @@ class Validations(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: enable_sbd(
                 self.env_assist.get_env(),
-                default_watchdog="watchdog0",
+                default_watchdog="/dev/watchdog1",
                 watchdog_dict={
                     unknown_node_list[0]: "/dev/watchdog",
+                    self.node_list[0]: ""
                 },
                 sbd_options={
                     "UNKNOWN_OPT1": 1,
@@ -1096,10 +1080,7 @@ class Validations(TestCase):
             +
             [
                 fixture.error(
-                    report_codes.WATCHDOG_INVALID, watchdog="watchdog0"
-                ),
-                fixture.error(
-                    report_codes.WATCHDOG_INVALID, watchdog="watchdog0"
+                    report_codes.WATCHDOG_INVALID, watchdog=""
                 ),
                 fixture.error(
                     report_codes.SBD_NO_DEVICE_FOR_NODE, node=self.node_list[1],

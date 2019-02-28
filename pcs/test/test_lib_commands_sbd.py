@@ -366,7 +366,6 @@ class ValidateWatchdogDictTest(TestCase):
             "node1": "",
             "node2": None,
             "node3": "/dev/watchdog",
-            "node4": "../dev/watchdog",
         }
         assert_report_item_list_equal(
             cmd_sbd._validate_watchdog_dict(watchdog_dict),
@@ -375,7 +374,7 @@ class ValidateWatchdogDictTest(TestCase):
                     Severities.ERROR,
                     report_codes.WATCHDOG_INVALID,
                     {"watchdog": watchdog}
-                ) for watchdog in ["", None, "../dev/watchdog"]
+                ) for watchdog in ["", None]
             ]
         )
 
