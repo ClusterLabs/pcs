@@ -244,6 +244,8 @@ Transport options are: ip_version, knet_pmtud_interval, link_mode
 .br
 Link options are: link_priority, linknumber, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport (udp or sctp)
 .br
+You can set link options for a subset of links using a linknumber.
+.br
 Compression options are: level, model, threshold
 .br
 Crypto options are: cipher, hash, model
@@ -275,6 +277,9 @@ Create a cluster with default settings:
 .br
 Create a cluster using two links:
     pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12
+.br
+Set link options for the second link only (first link is link 0):
+    pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12 transport knet link linknumber=1 transport=sctp
 .br
 Create a cluster using udp transport with a non-default port:
     pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
