@@ -30,7 +30,9 @@ class _LinkAddrType(
     pass
 
 
-def create(cluster_name, node_list, transport, force_unresolvable=False):
+def create(
+    cluster_name, node_list, transport, ip_version, force_unresolvable=False
+):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
@@ -38,6 +40,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     string cluster_name -- the name of the new cluster
     list node_list -- nodes of the new cluster; dict: name, addrs
     string transport -- corosync transport used in the new cluster
+    string ip_version -- which IP version node addresses should be
     bool force_unresolvable -- if True, report unresolvable addresses as
         warnings instead of errors
     """
@@ -105,11 +108,31 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         addr_types = []
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
-        for addr in (node.get("addrs") or []):
+        for link_index, addr in enumerate(node.get("addrs") or []):
             all_addrs_count[addr] += 1
             addr_types.append(get_addr_type(addr))
             if get_addr_type(addr) == ADDR_UNRESOLVABLE:
                 unresolvable_addresses.add(addr)
+            elif (
+                get_addr_type(addr) == ADDR_IPV4
+                and
+                ip_version == constants.IP_VERSION_6
+            ):
+                report_items.append(
+                    reports.corosync_address_ip_version_wrong_for_link(
+                        addr, ADDR_IPV6, link_index
+                    )
+                )
+            elif (
+                get_addr_type(addr) == ADDR_IPV6
+                and
+                ip_version == constants.IP_VERSION_4
+            ):
+                report_items.append(
+                    reports.corosync_address_ip_version_wrong_for_link(
+                        addr, ADDR_IPV4, link_index
+                    )
+                )
         addr_types_per_node.append(addr_types)
     # Report all unresolvable addresses at once instead on each own.
     if unresolvable_addresses:

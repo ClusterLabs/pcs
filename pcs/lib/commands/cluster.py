@@ -173,10 +173,10 @@ def setup(
     transport_type string -- transport type of a cluster
     transport_options dict -- transport specific options
     link_list list of dict -- list of links, depends of transport_type
-    compression_options dict -- only available for transport_type == 'knet'. In
+    compression_options dict -- only available for knet transport. In
         corosync.conf they are prefixed 'knet_compression_'
-    crypto_options dict -- only available for transport_type == 'knet'. In
-        corosync.conf they are prefixed 'crypto_'
+    crypto_options dict -- only available for knet transport'. In corosync.conf
+        they are prefixed 'crypto_'
     totem_options dict -- options of section 'totem' in corosync.conf
     quorum_options dict -- options of section 'quorum' in corosync.conf
     wait -- specifies if command should try to wait for cluster to start up.
@@ -204,11 +204,27 @@ def setup(
     nodes = [
         _normalize_dict(node, {"addrs"}) for node in nodes
     ]
-    if transport_type == "knet" and not crypto_options:
+    if (
+        transport_type in corosync_constants.TRANSPORTS_KNET
+        and
+        not crypto_options
+    ):
         crypto_options = {
             "cipher": "aes256",
             "hash": "sha256",
         }
+    # Get IP version for node addresses validation. Defaults taken from man
+    # corosync.conf
+    ip_version = (
+        corosync_constants.IP_VERSION_4 if transport_type == "udp"
+        else corosync_constants.IP_VERSION_64
+    )
+    if (
+        transport_options.get("ip_version")
+        in
+        corosync_constants.IP_VERSION_VALUES
+    ):
+        ip_version = transport_options["ip_version"]
 
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
@@ -239,7 +255,7 @@ def setup(
 
     # Validate inputs.
     report_processor.report_list(config_validators.create(
-        cluster_name, nodes, transport_type,
+        cluster_name, nodes, transport_type, ip_version,
         force_unresolvable=force
     ))
     max_node_addr_count = max(

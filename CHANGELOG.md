@@ -9,6 +9,8 @@
   resource agent metadata ([rhbz#1665404])
 - Command `pcs resource bundle reset` for a bundle configuration reseting
   ([rhbz#1657166])
+- `pcs cluster setup` now checks if nodes' addresses match value of `ip_version`
+  ([rhbz#1667053])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
@@ -56,6 +58,7 @@
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
+[rhbz#1667053]: https://bugzilla.redhat.com/show_bug.cgi?id=1667053
 [rhbz#1667090]: https://bugzilla.redhat.com/show_bug.cgi?id=1667090
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422

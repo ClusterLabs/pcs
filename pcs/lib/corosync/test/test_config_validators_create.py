@@ -28,7 +28,8 @@ class Create(TestCase):
                 [
                     {"name": "node1", "addrs": ["addr01"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             []
         )
@@ -41,7 +42,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {"name": "node2", "addrs": ["addr02"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             []
         )
@@ -60,7 +62,8 @@ class Create(TestCase):
                         "addrs": ["addr02", "10.0.0.2", "::ffff:10:0:0:2"]
                     },
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             []
         )
@@ -73,7 +76,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {"name": "node2", "addrs": ["addr02"]},
                 ],
-                "tcp"
+                "tcp",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -93,7 +97,7 @@ class Create(TestCase):
 
     def test_nodelist_empty(self):
         assert_report_item_list_equal(
-            config_validators.create("test-cluster", [], "udp"),
+            config_validators.create("test-cluster", [], "udp", "ipv4"),
             [
                 fixture.error(
                     report_codes.COROSYNC_NODES_MISSING
@@ -109,7 +113,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -136,7 +141,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {"name": "node2", "addrs": ["addr02"], "nonsense": "abc"},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -157,7 +163,8 @@ class Create(TestCase):
                     {"name": "", "addrs": ["addr01"]},
                     {"addrs": ["addr02"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -188,7 +195,8 @@ class Create(TestCase):
                     {"name": "", "addrs": ["addr06"]},
                     {"name": "", "addrs": ["addr07"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -219,7 +227,8 @@ class Create(TestCase):
                     {"name": "node2", "addrs": []},
                     {"name": "node3", "addrs": None},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -243,7 +252,8 @@ class Create(TestCase):
                     {"name": "node2", "addrs": []},
                     {"name": "node3", "addrs": None},
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -266,7 +276,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01", "addr03"]},
                     {"name": "node2", "addrs": ["addr02", "addr04"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -302,7 +313,8 @@ class Create(TestCase):
                         "addrs": [f"addr{i:02d}" for i in range(11, 20)]
                     },
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -335,7 +347,8 @@ class Create(TestCase):
                     {"name": "node2", "addrs": ["addrX2", "addr05"]},
                     {"name": "node3", "addrs": ["addr03", "addrX1"]},
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -362,6 +375,7 @@ class Create(TestCase):
                     {"name": "node3", "addrs": ["addr03", "addrX1"]},
                 ],
                 "knet",
+                "ipv6-4",
                 force_unresolvable=True
             ),
             [
@@ -375,6 +389,85 @@ class Create(TestCase):
                 ),
             ]
         )
+
+    def test_node_addrs_matching_ip_version_ipv4(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["::ffff:10:0:0:1"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                    {"name": "node3", "addrs": ["10.0.0.3"]},
+                ],
+                "udp",
+                "ipv4"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    link_numbers=[0]
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    address="::ffff:10:0:0:1",
+                    expected_address_type="IPv4",
+                    link_number=0
+                ),
+            ]
+        )
+
+    def test_node_addrs_matching_ip_version_ipv6(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["::ffff:10:0:0:1"]},
+                    {"name": "node2", "addrs": ["addr02"]},
+                    {"name": "node3", "addrs": ["10.0.0.3"]},
+                ],
+                "udp",
+                "ipv6"
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    link_numbers=[0]
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    address="10.0.0.3",
+                    expected_address_type="IPv6",
+                    link_number=0
+                ),
+            ]
+        )
+
+    def _assert_node_addrs_matching_ip_version_64_46(self, ip_version):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {
+                        "name": "node1",
+                        "addrs": ["addr01", "10.0.0.1", "::ffff:10:0:0:1"]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": ["addr02", "10.0.0.2", "::ffff:10:0:0:2"]
+                    },
+                ],
+                "knet",
+                ip_version
+            ),
+            [
+            ]
+        )
+
+    def test_node_addrs_matching_ip_version_ipv46(self):
+        self._assert_node_addrs_matching_ip_version_64_46("ipv4-6")
+
+    def test_node_addrs_matching_ip_version_ipv64(self):
+        self._assert_node_addrs_matching_ip_version_64_46("ipv6-4")
 
     def test_node_addrs_not_unique(self):
         assert_report_item_list_equal(
@@ -398,7 +491,8 @@ class Create(TestCase):
                         "addrs": ["addr04", "10.0.0.1", "::ffff:10:0:0:4"]
                     },
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -419,7 +513,8 @@ class Create(TestCase):
                     {"name": "node4", "addrs": ["addr04"]},
                     {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
                 ],
-                "udp"
+                "udp",
+                "ipv4"
             ),
             [
                 fixture.error(
@@ -460,7 +555,8 @@ class Create(TestCase):
                     {"name": "node4", "addrs": ["addr04"]},
                     {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -484,7 +580,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01", "addr11"]},
                     {"name": "", "addrs": ["addr02"]},
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -504,7 +601,8 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01", "addr11"]},
                     {"name": "node1", "addrs": ["addr02"]},
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(
@@ -564,7 +662,8 @@ class Create(TestCase):
                         ]
                     },
                 ],
-                "knet"
+                "knet",
+                "ipv6-4"
             ),
             [
                 fixture.error(

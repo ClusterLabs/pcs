@@ -921,7 +921,115 @@ class Validation(TestCase):
             reports_success_minimal_fixture(using_known_hosts_addresses=False)
         )
 
-    def assert_corosync_validators_udp_udpu(self, transport):
+    def test_pass_default_ip_version_to_knet(self):
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    # by default names, IPv4 and IPv6 are allowed for knet
+                    {
+                        "name": "node1",
+                        "addrs": ["node1", "10.0.0.1", "::ffff:10:0:0:1"]
+                    },
+                    {
+                        "name": "node2",
+                        "addrs": ["node2", "10.0.0.2", "::ffff:10:0:0:2"]
+                    },
+                    {
+                        "name": "node3",
+                        "addrs": ["node3", "10.0.0.3", "::ffff:10:0:0:3"]
+                    },
+                ],
+                # Make the test shorter by not setting up a cluster
+                quorum_options={"stop": "the command"}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["stop"],
+                    option_type="quorum",
+                    allowed=self.quorum_allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_pass_default_ip_version_to_udpu(self):
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    # by default names, IPv4 and IPv6 are allowed for udpu
+                    {"name": "node1", "addrs": ["node1"]},
+                    {"name": "node2", "addrs": ["::ffff:10:0:0:2"]},
+                    {"name": "node3", "addrs": ["10.0.0.3"]},
+                ],
+                transport_type="udpu",
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    link_numbers=[0]
+                )
+            ]
+        )
+
+    def test_pass_default_ip_version_to_udp(self):
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+        )
+        self.resolvable_hosts.extend(NODE_LIST)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    # by default names and IPv4 are allowed for udp
+                    {"name": "node1", "addrs": ["node1"]},
+                    {"name": "node2", "addrs": ["node2"]},
+                    {"name": "node3", "addrs": ["::ffff:10:0:0:3"]},
+                ],
+                transport_type="udp",
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    address="::ffff:10:0:0:3",
+                    expected_address_type="IPv4",
+                    link_number=0
+                ),
+            ]
+        )
+
+    def _assert_corosync_validators_udp_udpu(self, transport):
         # The validators have their own tests. In here, we are only concerned
         # about calling the validators so we test that all provided options
         # have been validated.
@@ -999,10 +1107,10 @@ class Validation(TestCase):
         )
 
     def test_corosync_validators_udp(self):
-        self.assert_corosync_validators_udp_udpu("udp")
+        self._assert_corosync_validators_udp_udpu("udp")
 
     def test_corosync_validators_udpu(self):
-        self.assert_corosync_validators_udp_udpu("udpu")
+        self._assert_corosync_validators_udp_udpu("udpu")
 
     def test_corosync_validators_knet(self):
         # The validators have their own tests. In here, we are only concerned
