@@ -6,6 +6,7 @@ from pcs.common import report_codes
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_report_item_list_equal
 
 # pylint: disable=no-self-use
@@ -909,6 +910,98 @@ class NamesIn(TestCase):
                     },
                     None
                 )
+            ]
+        )
+
+    def test_return_error_on_banned_names(self):
+        assert_report_item_list_equal(
+            validate.names_in(
+                ["a", "b"],
+                ["x", "a", "z"],
+                banned_name_list=["x", "y", "z"],
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["x", "z"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                )
+            ]
+        )
+
+    def test_return_error_on_not_allowed_and_banned_names(self):
+        assert_report_item_list_equal(
+            validate.names_in(
+                ["a", "b"],
+                ["x", "a", "z", "c"],
+                banned_name_list=["x", "y", "z"],
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["c", "x", "z"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                )
+            ]
+        )
+
+    def test_return_error_on_not_allowed_and_banned_names_forceable(self):
+        code = "force_code"
+        assert_report_item_list_equal(
+            validate.names_in(
+                ["a", "b"],
+                ["x", "a", "z", "c", "d"],
+                banned_name_list=["x", "y", "z"],
+                code_to_allow_extra_names=code
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["c", "d"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                    force_code=code,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["x", "z"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_return_error_on_not_allowed_and_banned_names_forced(self):
+        code = "force_code"
+        assert_report_item_list_equal(
+            validate.names_in(
+                ["a", "b"],
+                ["x", "a", "z", "c", "d"],
+                banned_name_list=["x", "y", "z"],
+                code_to_allow_extra_names=code,
+                extra_names_allowed=True,
+            ),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["c", "d"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["x", "z"],
+                    allowed=["a", "b"],
+                    option_type="option",
+                    allowed_patterns=[],
+                ),
             ]
         )
 

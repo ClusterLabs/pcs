@@ -195,7 +195,7 @@ def mutually_exclusive(mutually_exclusive_names, option_type="option"):
 def names_in(
     allowed_name_list, name_list, option_type="option",
     code_to_allow_extra_names=None, extra_names_allowed=False,
-    allowed_option_patterns=None
+    allowed_option_patterns=None, banned_name_list=None,
 ):
     """
     Return a list with report INVALID_OPTIONS when in name_list is a name that
@@ -211,22 +211,36 @@ def names_in(
         and determines wheter is report INVALID_OPTIONS forceable error or
         warning.
     mixed allowed_option_patterns -- option patterns to be added to a report
+    list banned_name_list -- list of options which cannot be forced
     """
-    invalid_names = set(name_list) - set(allowed_name_list)
-    if not invalid_names:
-        return []
+    name_set = set(name_list)
+    banned_set = set(banned_name_list or [])
+    banned_names = set()
+    if not (code_to_allow_extra_names is None and not extra_names_allowed):
+        banned_names = name_set & banned_set
+    invalid_names = name_set - set(allowed_name_list) - banned_names
+
+    report_list = []
 
     create_report = reports.get_problem_creator(
         code_to_allow_extra_names,
         extra_names_allowed
     )
-    return [create_report(
-        reports.invalid_options,
-        sorted(invalid_names),
-        sorted(allowed_name_list),
-        option_type,
-        allowed_option_patterns=sorted(allowed_option_patterns or [])
-    )]
+    if invalid_names:
+        report_list.append(create_report(
+            reports.invalid_options,
+            sorted(invalid_names),
+            sorted(allowed_name_list),
+            option_type,
+            allowed_option_patterns=sorted(allowed_option_patterns or [])
+        ))
+    if banned_names:
+        report_list.append(reports.invalid_options(
+            sorted(banned_names),
+            sorted(allowed_name_list),
+            option_type,
+        ))
+    return report_list
 
 ### values validators
 
