@@ -39,16 +39,59 @@ def _assert_equal_list_of_dictionaries_without_order(expected, actual):
 class ValidateSbdOptionsTest(TestCase):
     def setUp(self):
         self.allowed_sbd_options = sorted([
-            "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
+            "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT",
+            "SBD_TIMEOUT_ACTION",
+        ])
+        self.timeout_action_allowed_values = sorted([
+            "flush", "noflush", "off", "reboot", "crashdump", "flush,off",
+            "flush,reboot", "flush,crashdump", "noflush,off", "noflush,reboot",
+            "noflush,crashdump", "off,flush", "off,noflush", "reboot,flush",
+            "reboot,noflush", "crashdump,flush", "crashdump,noflush",
         ])
 
     def test_all_ok(self):
         config = {
             "SBD_DELAY_START": "yes",
             "SBD_WATCHDOG_TIMEOUT": "5",
-            "SBD_STARTMODE": "clean"
+            "SBD_STARTMODE": "clean",
+            "SBD_TIMEOUT_ACTION": "flush,reboot",
         }
         self.assertEqual([], cmd_sbd._validate_sbd_options(config))
+
+    def test_invalid_value(self):
+        config = {
+            "SBD_TIMEOUT_ACTION": "flush,noflush",
+        }
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_TIMEOUT_ACTION",
+                    option_value="flush,noflush",
+                    allowed_values=self.timeout_action_allowed_values,
+                    force_code=report_codes.FORCE_OPTIONS
+                ),
+            ]
+        )
+
+    def test_invalid_value_forced(self):
+        config = {
+            "SBD_TIMEOUT_ACTION": "flush,noflush",
+        }
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(
+                config, allow_invalid_option_values=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_TIMEOUT_ACTION",
+                    option_value="flush,noflush",
+                    allowed_values=self.timeout_action_allowed_values,
+                ),
+            ]
+        )
 
     def test_unknown_options(self):
         config = {
