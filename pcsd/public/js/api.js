@@ -235,7 +235,6 @@ api.clusterSetup = function(submitData, processOptions){
       return setupData.transportType == "knet"
         ? {
           linknumber: link.linknumber,
-          ip_version: link.ip_version,
           link_priority: link.link_priority,
           mcastport: link.mcastport,
           ping_interval: link.ping_interval,

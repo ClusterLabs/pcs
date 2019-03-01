@@ -30,7 +30,9 @@ class _LinkAddrType(
     pass
 
 
-def create(cluster_name, node_list, transport, force_unresolvable=False):
+def create(
+    cluster_name, node_list, transport, ip_version, force_unresolvable=False
+):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
@@ -38,6 +40,7 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
     string cluster_name -- the name of the new cluster
     list node_list -- nodes of the new cluster; dict: name, addrs
     string transport -- corosync transport used in the new cluster
+    string ip_version -- which IP version node addresses should be
     bool force_unresolvable -- if True, report unresolvable addresses as
         warnings instead of errors
     """
@@ -105,11 +108,31 @@ def create(cluster_name, node_list, transport, force_unresolvable=False):
         addr_types = []
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
-        for addr in (node.get("addrs") or []):
+        for link_index, addr in enumerate(node.get("addrs") or []):
             all_addrs_count[addr] += 1
             addr_types.append(get_addr_type(addr))
             if get_addr_type(addr) == ADDR_UNRESOLVABLE:
                 unresolvable_addresses.add(addr)
+            elif (
+                get_addr_type(addr) == ADDR_IPV4
+                and
+                ip_version == constants.IP_VERSION_6
+            ):
+                report_items.append(
+                    reports.corosync_address_ip_version_wrong_for_link(
+                        addr, ADDR_IPV6, link_index
+                    )
+                )
+            elif (
+                get_addr_type(addr) == ADDR_IPV6
+                and
+                ip_version == constants.IP_VERSION_4
+            ):
+                report_items.append(
+                    reports.corosync_address_ip_version_wrong_for_link(
+                        addr, ADDR_IPV4, link_index
+                    )
+                )
         addr_types_per_node.append(addr_types)
     # Report all unresolvable addresses at once instead on each own.
     if unresolvable_addresses:
@@ -398,11 +421,27 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
 
     return report_items
 
-def create_link_list_udp(link_list):
+def _check_link_options_count(link_count, max_allowed_link_count):
+    report_items = []
+    # make sure we don't report negative counts
+    link_count = max(link_count, 0)
+    max_allowed_link_count = max(max_allowed_link_count, 0)
+    if link_count > max_allowed_link_count:
+        # link_count < max_allowed_link_count is a valid scenario - for some
+        # links no options have been specified
+        report_items.append(
+            reports.corosync_too_many_links_options(
+                link_count, max_allowed_link_count
+            )
+        )
+    return report_items
+
+def create_link_list_udp(link_list, max_allowed_link_count):
     """
     Validate creating udp/udpu link (interface) list options
 
     iterable link_list -- list of link options
+    integer max_allowed_link_count -- how many links is defined by addresses
     """
     if not link_list:
         # It is not mandatory to set link options. If an empty link list is
@@ -439,33 +478,25 @@ def create_link_list_udp(link_list):
                 prerequisite_type="link"
             )
         )
-    link_count = len(link_list)
-    if link_count > constants.LINKS_UDP_MAX:
-        report_items.append(
-            reports.corosync_too_many_links(
-                link_count,
-                constants.LINKS_UDP_MAX,
-                "udp/udpu"
-            )
-        )
+    report_items.extend(
+        _check_link_options_count(len(link_list), max_allowed_link_count)
+    )
     return report_items
 
-def create_link_list_knet(link_list, max_link_number):
+def create_link_list_knet(link_list, max_allowed_link_count):
     """
     Validate creating knet link (interface) list options
 
     iterable link_list -- list of link options
-    integer max_link_number -- highest allowed linknumber
+    integer max_allowed_link_count -- how many links is defined by addresses
     """
     if not link_list:
         # It is not mandatory to set link options. If an empty link list is
         # provided, everything is fine and we have nothing to validate. It is
         # also possible to set link options for only some of the links.
         return []
-    max_link_number = max(0, min(constants.LINKS_KNET_MAX - 1, max_link_number))
-    max_link_count = max_link_number + 1
+
     allowed_options = [
-        "ip_version", # It tells knet which IP to prefer.
         "linknumber",
         "link_priority",
         "mcastport",
@@ -476,8 +507,6 @@ def create_link_list_knet(link_list, max_link_number):
         "transport",
     ]
     validators = [
-        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
-        validate.value_integer_in_range("linknumber", 0, max_link_number),
         validate.value_integer_in_range("link_priority", 0, 255),
         validate.value_port_number("mcastport"),
         validate.value_nonnegative_integer("ping_interval"),
@@ -503,6 +532,25 @@ def create_link_list_knet(link_list, max_link_number):
     for options in link_list:
         if "linknumber" in options:
             used_link_number[options["linknumber"]] += 1
+            if validate.is_integer(
+                options["linknumber"], 0, constants.LINKS_KNET_MAX - 1
+            ):
+                if int(options["linknumber"]) >= max_allowed_link_count:
+                    # first link is link0, hence >=
+                    report_items.append(
+                        reports.corosync_link_does_not_exist_cannot_update(
+                            options["linknumber"],
+                            link_count=max_allowed_link_count
+                        )
+                    )
+            else:
+                report_items.append(
+                    reports.invalid_option_value(
+                        "linknumber",
+                        options["linknumber"],
+                        f"0..{constants.LINKS_KNET_MAX - 1}"
+                    )
+                )
         report_items += (
             validate.run_collection_of_option_validators(options, validators)
             +
@@ -515,11 +563,9 @@ def create_link_list_knet(link_list, max_link_number):
         report_items.append(
             reports.corosync_link_number_duplication(non_unique_linknumbers)
         )
-    link_count = len(link_list)
-    if link_count > max_link_count:
-        report_items.append(
-            reports.corosync_too_many_links(link_count, max_link_count, "knet")
-        )
+    report_items.extend(
+        _check_link_options_count(len(link_list), max_allowed_link_count)
+    )
     return report_items
 
 def create_transport_udp(generic_options, compression_options, crypto_options):

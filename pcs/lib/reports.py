@@ -1158,20 +1158,41 @@ def corosync_nodes_missing():
         }
     )
 
-def corosync_too_many_links(actual_count, max_count, transport):
+def corosync_too_many_links_options(links_options_count, links_count):
     """
-    Trying to set more links than the selected transport supports
+    Options for more links than defined by nodes' addresses have been specified
 
-    int actual_count -- how many links user wants to set
-    int max_count -- maximal allowed number of links
-    string transport -- selected transport
+    int links_options_count -- options for how many links have been specified
+    int links_count -- for how many links is defined
     """
     return ReportItem.error(
-        report_codes.COROSYNC_TOO_MANY_LINKS,
+        report_codes.COROSYNC_TOO_MANY_LINKS_OPTIONS,
         info={
-            "actual_count": actual_count,
-            "max_count": max_count,
-            "transport": transport,
+            "links_options_count": links_options_count,
+            "links_count": links_count,
+        }
+    )
+
+def corosync_link_does_not_exist_cannot_update(
+    link_number, link_count=None, existing_link_list=None
+):
+    """
+    Cannot set options for the defined link because the link does not exist
+
+    integer link_number -- number of the link to be updated
+    integer link_count -- how many links exists
+    iterable existing_link_list -- linknumbers of existing links
+    """
+    assert link_count is None or existing_link_list is None
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
+        info={
+            "link_number": link_number,
+            "link_count": link_count,
+            "existing_link_list": (
+                sorted(existing_link_list) if existing_link_list
+                else existing_link_list
+            )
         }
     )
 

@@ -403,7 +403,6 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
       linkList: clusterSetup.netmap.current.detailList()
         .map(function(linknumber, form){
           return $.extend({linknumber: linknumber}, fromForm(form, [
-            "ip_version",
             "link_priority",
             "mcastport",
             "ping_interval",
