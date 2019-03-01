@@ -16,8 +16,9 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib import (
-    sbd,
     reports,
+    sbd,
+    validate,
 )
 from pcs.lib.tools import environment_file_to_dict
 from pcs.lib.errors import (
@@ -47,41 +48,23 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     sbd_config -- dictionary in format: <SBD config option>: <value>
     allow_unknown_opts -- if True, accept also unknown options.
     """
+    validators = [
+        validate.value_nonnegative_integer("SBD_WATCHDOG_TIMEOUT"),
+    ]
 
-    report_item_list = []
-    for sbd_opt in sbd_config:
-        if sbd_opt in UNSUPPORTED_SBD_OPTION_LIST:
-            report_item_list.append(reports.invalid_options(
-                [sbd_opt], ALLOWED_SBD_OPTION_LIST, None
-            ))
-
-        elif sbd_opt not in ALLOWED_SBD_OPTION_LIST:
-            report_item_list.append(reports.invalid_options(
-                [sbd_opt],
-                ALLOWED_SBD_OPTION_LIST,
-                None,
-                severity=(
-                    Severities.WARNING if allow_unknown_opts
-                    else Severities.ERROR
-                ),
-                forceable=(
-                    None if allow_unknown_opts
-                    else report_codes.FORCE_OPTIONS
-                )
-            ))
-    if "SBD_WATCHDOG_TIMEOUT" in sbd_config:
-        report_item = reports.invalid_option_value(
-            "SBD_WATCHDOG_TIMEOUT",
-            sbd_config["SBD_WATCHDOG_TIMEOUT"],
-            "a non-negative integer"
+    return (
+        validate.names_in(
+            ALLOWED_SBD_OPTION_LIST,
+            sbd_config.keys(),
+            option_type=None,
+            banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
+            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+            extra_names_allowed=allow_unknown_opts,
         )
-        try:
-            if int(sbd_config["SBD_WATCHDOG_TIMEOUT"]) < 0:
-                report_item_list.append(report_item)
-        except (ValueError, TypeError):
-            report_item_list.append(report_item)
+        +
+        validate.run_collection_of_option_validators(sbd_config, validators)
 
-    return report_item_list
+    )
 
 
 def _validate_watchdog_dict(watchdog_dict):

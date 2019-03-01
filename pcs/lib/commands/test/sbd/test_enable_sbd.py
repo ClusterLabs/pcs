@@ -812,15 +812,12 @@ class Validations(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    option_names=[opt],
+                    option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
                     allowed=sorted(ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                     force_code=report_codes.FORCE_OPTIONS,
-                ) for opt in ["UNKNOWN_OPT1", "UNKNOWN_OPT2"]
-            ]
-            +
-            [
+                ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["SBD_WATCHDOG_DEV"],
@@ -860,11 +857,11 @@ class Validations(TestCase):
             [
                 fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    option_names=[opt],
+                    option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
                     allowed=sorted(ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
-                ) for opt in ["UNKNOWN_OPT1", "UNKNOWN_OPT2"]
+                )
             ]
         )
 
@@ -1103,17 +1100,14 @@ class Validations(TestCase):
                     allowed=sorted(ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                 ),
-            ]
-            +
-            [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    option_names=[opt],
+                    option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
                     allowed=sorted(ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                     force_code=report_codes.FORCE_OPTIONS,
-                ) for opt in ["UNKNOWN_OPT1", "UNKNOWN_OPT2"]
+                )
             ]
         )
         self.env_assist.assert_reports([])

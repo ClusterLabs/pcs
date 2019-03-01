@@ -548,7 +548,7 @@ def is_integer(value, at_least=None, at_most=None):
     mixed value -- string, int or float, value to check
     """
     try:
-        if isinstance(value, float):
+        if value is None or isinstance(value, float):
             return False
         value_int = int(value)
         if at_least is not None and value_int < at_least:

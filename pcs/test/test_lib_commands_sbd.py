@@ -1,6 +1,7 @@
 import logging
 from unittest import mock, TestCase
 
+from pcs.test.tools import fixture
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
@@ -60,28 +61,16 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_UNKNOWN"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    option_names=sorted(
+                        ["SBD_UNKNOWN", "another_unknown_option"]
+                    ),
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
+                    force_code=report_codes.FORCE_OPTIONS
                 ),
-                (
-                    Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["another_unknown_option"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
-                )
             ]
         )
 
@@ -97,28 +86,15 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config, allow_unknown_opts=True),
             [
-                (
-                    Severities.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_UNKNOWN"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=sorted(
+                        ["SBD_UNKNOWN", "another_unknown_option"]
+                    ),
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
                 ),
-                (
-                    Severities.WARNING,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["another_unknown_option"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
-                )
             ]
         )
 
@@ -136,39 +112,15 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_WATCHDOG_DEV"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=sorted(
+                        ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_DEVICE"]
+                    ),
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
                 ),
-                (
-                    Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_OPTS"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
-                ),
-                (
-                    Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_DEVICE"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
-                )
             ]
         )
 
@@ -185,39 +137,21 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_WATCHDOG_DEV"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=sorted(["SBD_WATCHDOG_DEV", "SBD_OPTS"]),
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
                 ),
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_OPTS"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=["SBD_UNKNOWN"],
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
+                    force_code=report_codes.FORCE_OPTIONS,
                 ),
-                (
-                    Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_UNKNOWN"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
-                )
             ]
         )
 
@@ -235,50 +169,22 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config, allow_unknown_opts=True),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_WATCHDOG_DEV"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=sorted(
+                        ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"]
+                    ),
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
                 ),
-                (
-                    Severities.ERROR,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_OPTS"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=["SBD_UNKNOWN"],
+                    option_type=None,
+                    allowed=self.allowed_sbd_options,
+                    allowed_patterns=[],
                 ),
-                (
-                    Severities.WARNING,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_UNKNOWN"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
-                ),
-                (
-                    Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["SBD_PACEMAKER"],
-                        "option_type": None,
-                        "allowed": self.allowed_sbd_options,
-                        "allowed_patterns": [],
-                    },
-                    None
-                )
             ]
         )
 
