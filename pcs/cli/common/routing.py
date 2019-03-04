@@ -21,7 +21,7 @@ def create_router(cmd_map, usage_sub_cmd, default_cmd=None):
             utils.exit_on_cmdline_input_errror(
                 e,
                 usage_sub_cmd[0],
-                " ".join(usage_sub_cmd[1:] + [sub_cmd])
+                (usage_sub_cmd[1:] + [sub_cmd])
             )
 
     return _router

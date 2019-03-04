@@ -235,7 +235,7 @@ def main(argv=None):
         utils.process_library_reports(e.args)
     except errors.CmdLineInputError:
         if argv and argv[0] in cmd_map:
-            usage.show(argv[0], "")
+            usage.show(argv[0], [])
         else:
             usage.main()
         sys.exit(1)
