@@ -119,6 +119,9 @@ def config_text(env, node_name=None):
     com_cmd.set_targets([
         env.get_node_target_factory().get_target_from_hostname(node_name)
     ])
+    # pylint: disable=unsubscriptable-object
+    # In general, pylint is right. And it cannot know in this case code is OK.
+    # It is covered by tests.
     remote_data = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         return remote_data["config"]["data"]
@@ -380,6 +383,9 @@ def pull_config(env, node_name):
     com_cmd.set_targets([
         env.get_node_target_factory().get_target_from_hostname(node_name)
     ])
+    # pylint: disable=unsubscriptable-object
+    # In general, pylint is right. And it cannot know in this case code is OK.
+    # It is covered by tests.
     output = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         env.booth.create_config(output["config"]["data"], True)

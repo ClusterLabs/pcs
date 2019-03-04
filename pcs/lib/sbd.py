@@ -349,5 +349,4 @@ def test_watchdog(cmd_runner, watchdog=None):
         if "Multiple watchdog devices discovered" in std_out:
             raise LibraryError(reports.sbd_watchdog_test_multiple_devices())
         raise LibraryError(reports.sbd_watchdog_test_error(std_out))
-    else:
-        raise LibraryError(reports.sbd_watchdog_test_failed())
+    raise LibraryError(reports.sbd_watchdog_test_failed())

@@ -250,7 +250,7 @@ def colocation_add(lib, argv, modifiers):
 
     if not argv:
         raise CmdLineInputError()
-    elif len(argv) == 1:
+    if len(argv) == 1:
         resource2 = argv.pop(0)
     else:
         if utils.is_score_or_opt(argv[1]):

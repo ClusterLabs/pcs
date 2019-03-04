@@ -212,7 +212,7 @@ def stonith_create(lib, argv, modifiers):
     if not modifiers.is_specified("--group"):
         if modifiers.is_specified("--before"):
             raise error("you cannot use --before without --group")
-        elif modifiers.is_specified("--after"):
+        if modifiers.is_specified("--after"):
             raise error("you cannot use --after without --group")
 
     if len(argv) < 2:

@@ -122,10 +122,9 @@ class ReadConfigsTest(TestCase):
         def _mock_read_cfg(file):
             if file in ["name1.conf", "name3.conf"]:
                 raise EnvironmentError()
-            elif file == "name2.conf":
+            if file == "name2.conf":
                 return "config2"
-            else:
-                raise AssertionError("unexpected input: {0}".format(file))
+            raise AssertionError("unexpected input: {0}".format(file))
 
         mock_get_configs.return_value = [
             "name1.conf", "name2.conf", "name3.conf"
@@ -163,10 +162,9 @@ class ReadConfigsTest(TestCase):
         def _mock_read_cfg(file):
             if file in ["name1.conf", "name3.conf"]:
                 raise EnvironmentError()
-            elif file == "name2.conf":
+            if file == "name2.conf":
                 return "config2"
-            else:
-                raise AssertionError("unexpected input: {0}".format(file))
+            raise AssertionError("unexpected input: {0}".format(file))
 
         mock_get_configs.return_value = [
             "name1.conf", "name2.conf", "name3.conf"

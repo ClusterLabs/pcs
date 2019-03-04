@@ -112,7 +112,7 @@ class AssertPcsMixin:
         ]
         if not specified_stdout:
             raise Exception(msg + ", none specified")
-        elif len(specified_stdout) > 1:
+        if len(specified_stdout) > 1:
             raise Exception(msg + ", both specified")
 
         stdout, pcs_returncode = self.pcs_runner.run(command)

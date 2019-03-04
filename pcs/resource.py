@@ -234,13 +234,12 @@ def resource_op_add_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--force")
     if not argv:
         raise CmdLineInputError()
-    else:
-        res_id = argv.pop(0)
-        utils.replace_cib_configuration(
-            resource_operation_add(
-                utils.get_cib_dom(), res_id, argv
-            )
+    res_id = argv.pop(0)
+    utils.replace_cib_configuration(
+        resource_operation_add(
+            utils.get_cib_dom(), res_id, argv
         )
+    )
 
 def resource_op_delete_cmd(lib, argv, modifiers):
     """
@@ -251,9 +250,8 @@ def resource_op_delete_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
-    else:
-        res_id = argv.pop(0)
-        resource_operation_remove(res_id, argv)
+    res_id = argv.pop(0)
+    resource_operation_remove(res_id, argv)
 
 def parse_resource_options(argv):
     """
@@ -507,7 +505,7 @@ def resource_create(lib, argv, modifiers):
     if not modifiers.is_specified("--group"):
         if modifiers.is_specified("--before"):
             raise error("you cannot use --before without --group")
-        elif modifiers.is_specified("--after"):
+        if modifiers.is_specified("--after"):
             raise error("you cannot use --after without --group")
 
     if "promotable" in parts and "promotable" in parts["promotable"]:
@@ -1707,7 +1705,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 expected_running=True
             )
         )
-        return True if roles_with_nodes else False
+        return bool(roles_with_nodes)
 
     dom = utils.get_cib_dom()
     # if resource is a clone or a master, work with its child instead

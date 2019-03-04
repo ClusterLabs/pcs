@@ -54,10 +54,9 @@ def get_cib_xml(runner, scope=None):
                     join_multilines([stderr, stdout])
                 )
             )
-        else:
-            raise LibraryError(
-                reports.cib_load_error(join_multilines([stderr, stdout]))
-            )
+        raise LibraryError(
+            reports.cib_load_error(join_multilines([stderr, stdout]))
+        )
     return stdout
 
 def parse_cib_xml(xml):
@@ -235,12 +234,11 @@ def wait_for_idle(runner, timeout=None):
                     join_multilines([stderr, stdout])
                 )
             )
-        else:
-            raise LibraryError(
-                reports.wait_for_idle_error(
-                    join_multilines([stderr, stdout])
-                )
+        raise LibraryError(
+            reports.wait_for_idle_error(
+                join_multilines([stderr, stdout])
             )
+        )
 
 ### nodes
 

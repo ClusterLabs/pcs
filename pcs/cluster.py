@@ -859,16 +859,15 @@ def cluster_edit(lib, argv, modifiers):
         for arg in argv:
             if "=" not in arg:
                 raise CmdLineInputError()
-            else:
-                arg_name, arg_value = arg.split("=", 1)
-                if arg_name == "scope" and not modifiers.get("--config"):
-                    if not utils.is_valid_cib_scope(arg_value):
-                        utils.err("invalid CIB scope '%s'" % arg_value)
-                    else:
-                        scope_arg = arg
-                        scope = arg_value
+            arg_name, arg_value = arg.split("=", 1)
+            if arg_name == "scope" and not modifiers.get("--config"):
+                if not utils.is_valid_cib_scope(arg_value):
+                    utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
-                    raise CmdLineInputError()
+                    scope_arg = arg
+                    scope = arg_value
+            else:
+                raise CmdLineInputError()
         if modifiers.get("--config"):
             scope = "configuration"
             # Leave scope_arg empty as cluster_push will pick up a --config
