@@ -1,49 +1,12 @@
-import sys
 import json
 
-from pcs import (
-    usage,
-    utils,
-)
+from pcs import utils
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.parse_args import prepare_options
-from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
-
-def node_cmd(lib, argv, modifiers):
-    if not argv:
-        usage.node()
-        sys.exit(1)
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-
-    try:
-        if sub_cmd == "help":
-            usage.node([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "maintenance":
-            node_maintenance_cmd(lib, argv_next, modifiers, True)
-        elif sub_cmd == "unmaintenance":
-            node_maintenance_cmd(lib, argv_next, modifiers, False)
-        elif sub_cmd == "standby":
-            node_standby_cmd(lib, argv_next, modifiers, True)
-        elif sub_cmd == "unstandby":
-            node_standby_cmd(lib, argv_next, modifiers, False)
-        elif sub_cmd == "attribute":
-            node_attribute_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "utilization":
-            node_utilization_cmd(lib, argv_next, modifiers)
-        # pcs-to-pcsd use only
-        elif sub_cmd == "pacemaker-status":
-            node_pacemaker_status(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "node", sub_cmd)
 
 def node_attribute_cmd(lib, argv, modifiers):
     """

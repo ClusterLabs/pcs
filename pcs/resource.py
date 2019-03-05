@@ -79,123 +79,21 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
         )
     )
 
-def resource_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd, argv_next = "status", []
-    else:
-        sub_cmd, argv_next = argv[0], argv[1:]
 
-    try:
-        if sub_cmd == "help":
-            usage.resource([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "list":
-            resource_list_available(lib, argv_next, modifiers)
-        elif sub_cmd == "describe":
-            resource_list_options(lib, argv_next, modifiers)
-        elif sub_cmd == "create":
-            resource_create(lib, argv_next, modifiers)
-        elif sub_cmd == "move":
-            resource_move(lib, argv_next, modifiers)
-        elif sub_cmd == "ban":
-            resource_move(lib, argv_next, modifiers, ban=True)
-        elif sub_cmd == "clear":
-            resource_move(lib, argv_next, modifiers, clear=True)
-        elif sub_cmd == "standards":
-            resource_standards(lib, argv_next, modifiers)
-        elif sub_cmd == "providers":
-            resource_providers(lib, argv_next, modifiers)
-        elif sub_cmd == "agents":
-            resource_agents(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            resource_update(lib, argv_next, modifiers)
-        elif sub_cmd == "meta":
-            resource_meta(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            resource_remove_cmd(lib, argv_next, modifiers)
-        # TODO remove, deprecated command
-        # replaced with 'resource status' and 'resource config'
-        elif sub_cmd == "show":
-            resource_show(lib, argv_next, modifiers)
-        elif sub_cmd == "status":
-            resource_status(lib, argv_next, modifiers)
-        elif sub_cmd == "config":
-            resource_config(lib, argv_next, modifiers)
-        elif sub_cmd == "group":
-            resource_group(lib, argv_next, modifiers)
-        elif sub_cmd == "ungroup":
-            resource_group(lib, ["remove"] + argv_next, modifiers)
-        elif sub_cmd == "clone":
-            resource_clone(lib, argv_next, modifiers)
-        elif sub_cmd == "promotable":
-            resource_clone(lib, argv_next, modifiers, promotable=True)
-        elif sub_cmd == "unclone":
-            resource_clone_master_remove(lib, argv_next, modifiers)
-        elif sub_cmd == "enable":
-            resource_enable_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "disable":
-            resource_disable_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "restart":
-            resource_restart(lib, argv_next, modifiers)
-        elif sub_cmd in (
-            "debug-start", "debug-stop", "debug-promote", "debug-demote",
-            "debug-monitor",
-        ):
-            resource_force_action(lib, [sub_cmd] + argv_next, modifiers)
-        elif sub_cmd == "manage":
-            resource_manage_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "unmanage":
-            resource_unmanage_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "failcount":
-            resource_failcount(lib, argv_next, modifiers)
-        elif sub_cmd == "op":
-            if not argv_next:
-                raise CmdLineInputError()
-            op_subcmd = argv_next.pop(0)
-            try:
-                if op_subcmd == "defaults":
-                    resource_op_defaults_cmd(lib, argv_next, modifiers)
-                elif op_subcmd == "add":
-                    resource_op_add_cmd(lib, argv_next, modifiers)
-                elif op_subcmd in ["remove", "delete"]:
-                    resource_op_delete_cmd(lib, argv_next, modifiers)
-                else:
-                    raise CmdLineInputError()
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(
-                    e, "resource", f"op {op_subcmd}"
-                )
-        elif sub_cmd == "defaults":
-            resource_defaults_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "cleanup":
-            resource_cleanup(lib, argv_next, modifiers)
-        elif sub_cmd == "refresh":
-            resource_refresh(lib, argv_next, modifiers)
-        elif sub_cmd == "relocate":
-            resource_relocate(lib, argv_next, modifiers)
-        elif sub_cmd == "utilization":
-            # pylint: disable=pointless-string-statement
-            """
-            Options:
-              * -f - CIB file
-            """
-            modifiers.ensure_only_supported("-f")
-            if not argv_next:
-                print_resources_utilization()
-            elif len(argv_next) == 1:
-                print_resource_utilization(argv_next.pop(0))
-            else:
-                set_resource_utilization(argv_next.pop(0), argv_next)
-        elif sub_cmd == "get_resource_agent_info":
-            get_resource_agent_info(lib, argv_next, modifiers)
-        elif sub_cmd == "bundle":
-            resource_bundle_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "resource", sub_cmd)
+def resource_utilization_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+    """
+    del lib
+    modifiers.ensure_only_supported("-f")
+    if not argv:
+        print_resources_utilization()
+    elif len(argv) == 1:
+        print_resource_utilization(argv.pop(0))
+    else:
+        set_resource_utilization(argv.pop(0), argv)
+
 
 def resource_defaults_cmd(lib, argv, modifiers):
     """
@@ -1407,23 +1305,6 @@ def resource_meta(lib, argv, modifiers):
             utils.err("\n".join(msg).strip())
 
 
-def resource_group(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    group_cmd = argv.pop(0)
-    try:
-        if group_cmd == "add":
-            resource_group_add_cmd(lib, argv, modifiers)
-        elif group_cmd == "list":
-            resource_group_list(lib, argv, modifiers)
-        elif group_cmd in ["remove", "delete"]:
-            resource_group_rm_cmd(lib, argv, modifiers)
-        else:
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "resource", f"group {group_cmd}")
-
 def resource_group_rm_cmd(lib, argv, modifiers):
     """
     Options:
@@ -2385,7 +2266,7 @@ def resource_restart(lib, argv, modifiers):
 
     print("%s successfully restarted" % resource)
 
-def resource_force_action(lib, argv, modifiers):
+def resource_force_action(lib, argv, modifiers, action=None):
     """
     Options:
       * --force
@@ -2393,9 +2274,8 @@ def resource_force_action(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported("--force", "--full")
-    if not argv:
+    if action is None:
         raise CmdLineInputError()
-    action = argv.pop(0)
     if not argv:
         utils.err("You must specify a resource to {0}".format(action))
     if len(argv) != 1:
@@ -2948,27 +2828,6 @@ def resource_refresh(lib, argv, modifiers):
         force=modifiers.get("--force"),
     ))
 
-def resource_relocate(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-    cmd = argv.pop(0)
-    try:
-        if cmd == "show":
-            resource_relocate_show_cmd(lib, argv, modifiers)
-        elif cmd == "dry-run":
-            resource_relocate_dry_run_cmd(lib, argv, modifiers)
-        elif cmd == "run":
-            resource_relocate_run_cmd(lib, argv, modifiers)
-        elif cmd == "clear":
-            resource_relocate_clear_cmd(lib, argv, modifiers)
-        else:
-            cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "resource", "relocate {0}".format(cmd)
-        )
-
 def resource_relocate_show_cmd(lib, argv, modifiers):
     """
     Options: no options
@@ -3272,27 +3131,6 @@ def get_resource_agent_info(lib, argv, modifiers):
     except lib_ra.ResourceAgentError as e:
         utils.process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e)]
-        )
-
-def resource_bundle_cmd(lib, argv, modifiers):
-    try:
-        if not argv:
-            sub_cmd = ""
-            raise CmdLineInputError()
-        sub_cmd, argv_next = argv[0], argv[1:]
-
-        if sub_cmd == "create":
-            resource_bundle_create_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "reset":
-            resource_bundle_reset_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            resource_bundle_update_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "resource", "bundle {0}".format(sub_cmd)
         )
 
 def resource_bundle_create_cmd(lib, argv, modifiers):

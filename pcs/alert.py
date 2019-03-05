@@ -1,41 +1,11 @@
 import json
 from functools import partial
 
-from pcs import usage
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options, group_by_keywords
 from pcs.cli.common.console_report import indent
-from pcs.cli.common.routing import create_router
 
 parse_cmd_sections = partial(group_by_keywords, implicit_first_group_key="main")
-
-def alert_cmd(lib, argv, modifiers):
-    create_router(
-        {
-            "help": lambda _lib, _argv, _modifiers: usage.alert(_argv),
-            "create": alert_add,
-            "update": alert_update,
-            "delete": alert_remove,
-            "remove": alert_remove,
-            "config": print_alert_config,
-            "show": print_alert_config,
-            "recipient": create_router(
-                {
-                    "help": lambda _lib, _argv, _modifiers: usage.alert(
-                        ["recipient"]
-                    ),
-                    "add": recipient_add,
-                    "update": recipient_update,
-                    "delete": recipient_remove,
-                    "remove": recipient_remove,
-                },
-                ["alert", "recipient"],
-            ),
-            "get_all_alerts": print_alerts_in_json,
-        },
-        ["alert"],
-        default_cmd="config",
-    )(lib, argv, modifiers)
 
 
 def ensure_only_allowed_options(parameter_dict, allowed_list):

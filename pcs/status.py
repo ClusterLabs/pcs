@@ -1,17 +1,9 @@
 import sys
 import os
 
-from pcs import (
-    resource,
-    usage,
-    utils,
-)
-from pcs.qdevice import qdevice_status_cmd
-from pcs.quorum import quorum_status_cmd
-from pcs.cli.booth.command import status as booth_status_cmd
+from pcs import utils
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.routing import create_router
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import is_fence_history_supported
 from pcs.lib.pacemaker.state import ClusterState
@@ -20,25 +12,6 @@ from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-
-def status_cmd(lib, argv, modifiers):
-    create_router(
-        {
-            "help": lambda _lib, _argv, _modifiers: usage.status(_argv),
-            "booth": booth_status_cmd,
-            "corosync": corosync_status,
-            "cluster": cluster_status,
-            "nodes": nodes_status,
-            "pcsd": cluster_pcsd_status,
-            "qdevice": qdevice_status_cmd,
-            "quorum": quorum_status_cmd,
-            "resources": resource.resource_status,
-            "xml": xml_status,
-            "status": full_status,
-        },
-        ["status"],
-        default_cmd="status",
-    )(lib, argv, modifiers)
 
 def full_status(lib, argv, modifiers):
     """

@@ -4,6 +4,19 @@ import sys
 import logging
 
 from pcs import (
+    settings,
+    usage,
+    utils,
+)
+
+from pcs.cli.common import (
+    capabilities,
+    completion,
+    errors,
+    parse_args,
+    routing,
+)
+from pcs.cli.routing import (
     acl,
     alert,
     booth,
@@ -18,19 +31,75 @@ from pcs import (
     qdevice,
     quorum,
     resource,
-    settings,
     status,
     stonith,
-    usage,
-    utils,
 )
+from pcs.lib.errors import LibraryError
 
-from pcs.cli.common import (
-    capabilities,
-    completion,
-    parse_args,
-)
 
+def non_root_run(argv_cmd):
+    """
+    This function will run commands which has to be run as root for users which
+    are not root. If it required to run such command as root it will do that by
+    sending it to the local pcsd and then it will exit.
+    """
+    # specific commands need to be run under root account, pass them to pcsd
+    # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
+    root_command_list = [
+        ['cluster', 'auth', '...'],
+        ['cluster', 'corosync', '...'],
+        ['cluster', 'destroy', '...'],
+        ['cluster', 'disable', '...'],
+        ['cluster', 'enable', '...'],
+        ['cluster', 'node', '...'],
+        ['cluster', 'pcsd-status', '...'],
+        ['cluster', 'start', '...'],
+        ['cluster', 'stop', '...'],
+        ['cluster', 'sync', '...'],
+        # ['config', 'restore', '...'], # handled in config.config_restore
+        ['host', 'auth', '...'],
+        ['host', 'deauth', '...'],
+        ['pcsd', 'deauth', '...'],
+        ['pcsd', 'sync-certificates'],
+        ["quorum", "device", "status", "..."],
+        ["quorum", "status", "..."],
+        ['status', 'corosync', '...'],
+        ['status', 'quorum', '...'],
+        ['status', 'pcsd', '...'],
+    ]
+    orig_argv = argv_cmd[:]
+    for root_cmd in root_command_list:
+        if (
+            (argv_cmd == root_cmd)
+            or
+            (
+                root_cmd[-1] == "..."
+                and
+                argv_cmd[:len(root_cmd)-1] == root_cmd[:-1]
+            )
+        ):
+            # handle interactivity of 'pcs cluster auth'
+            if argv_cmd[0:2] in [["cluster", "auth"], ["host", "auth"]]:
+                if "-u" not in utils.pcs_options:
+                    username = utils.get_terminal_input('Username: ')
+                    orig_argv.extend(["-u", username])
+                if "-p" not in utils.pcs_options:
+                    password = utils.get_terminal_password()
+                    orig_argv.extend(["-p", password])
+
+            # call the local pcsd
+            err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
+                orig_argv
+            )
+            if err_msgs:
+                for msg in err_msgs:
+                    utils.err(msg, False)
+                sys.exit(1)
+            if std_out.strip():
+                print(std_out)
+            if std_err.strip():
+                sys.stderr.write(std_err)
+            sys.exit(exitcode)
 
 logging.basicConfig()
 usefile = False
@@ -47,7 +116,6 @@ def main(argv=None):
     argv = argv if argv else sys.argv[1:]
     utils.subprocess_setup()
     global filename, usefile
-    orig_argv = argv[:]
     utils.pcs_options = {}
 
     # we want to support optional arguments for --wait, so if an argument
@@ -134,20 +202,12 @@ def main(argv=None):
                     ).format(val)
                 )
 
-    if not argv:
-        usage.main()
-        sys.exit(1)
-
-    # create a dummy logger
-    # we do not have a log file for cli (yet), but library requires a logger
     logger = logging.getLogger("pcs")
     logger.propagate = 0
     logger.handlers = []
 
-    command = argv.pop(0)
-    if command in ("-h", "help"):
-        usage.main()
-        return
+    if (os.getuid() != 0) and (argv and argv[0] != "help") and not usefile:
+        non_root_run(argv)
     cmd_map = {
         "resource": resource.resource_cmd,
         "cluster": cluster.cluster_cmd,
@@ -165,80 +225,17 @@ def main(argv=None):
         "booth": booth.booth_cmd,
         "host": host.host_cmd,
         "client": client.client_cmd,
+        "help": lambda lib, argv, modifiers: usage.main(),
     }
-    if command not in cmd_map:
-        usage.main()
-        sys.exit(1)
-    # root can run everything directly, also help can be displayed,
-    # working on a local file also do not need to run under root
-    if (os.getuid() == 0) or (argv and argv[0] == "help") or usefile:
-        cmd_map[command](
-            utils.get_library_wrapper(),
-            argv,
-            utils.get_input_modifiers(),
+    try:
+        routing.create_router(cmd_map, [])(
+            utils.get_library_wrapper(), argv, utils.get_input_modifiers()
         )
-        return
-    # specific commands need to be run under root account, pass them to pcsd
-    # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
-    root_command_list = [
-        ['cluster', 'auth', '...'],
-        ['cluster', 'corosync', '...'],
-        ['cluster', 'destroy', '...'],
-        ['cluster', 'disable', '...'],
-        ['cluster', 'enable', '...'],
-        ['cluster', 'node', '...'],
-        ['cluster', 'pcsd-status', '...'],
-        ['cluster', 'start', '...'],
-        ['cluster', 'stop', '...'],
-        ['cluster', 'sync', '...'],
-        # ['config', 'restore', '...'], # handled in config.config_restore
-        ['host', 'auth', '...'],
-        ['host', 'deauth', '...'],
-        ['pcsd', 'deauth', '...'],
-        ['pcsd', 'sync-certificates'],
-        ["quorum", "device", "status", "..."],
-        ["quorum", "status", "..."],
-        ['status', 'corosync', '...'],
-        ['status', 'quorum', '...'],
-        ['status', 'pcsd', '...'],
-    ]
-    argv_cmd = argv[:]
-    argv_cmd.insert(0, command)
-    for root_cmd in root_command_list:
-        if (
-            (argv_cmd == root_cmd)
-            or
-            (
-                root_cmd[-1] == "..."
-                and
-                argv_cmd[:len(root_cmd)-1] == root_cmd[:-1]
-            )
-        ):
-            # handle interactivity of 'pcs cluster auth'
-            if argv_cmd[0:2] in [["cluster", "auth"], ["host", "auth"]]:
-                if "-u" not in utils.pcs_options:
-                    username = utils.get_terminal_input('Username: ')
-                    orig_argv.extend(["-u", username])
-                if "-p" not in utils.pcs_options:
-                    password = utils.get_terminal_password()
-                    orig_argv.extend(["-p", password])
-
-            # call the local pcsd
-            err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-                orig_argv
-            )
-            if err_msgs:
-                for msg in err_msgs:
-                    utils.err(msg, False)
-                sys.exit(1)
-            if std_out.strip():
-                print(std_out)
-            if std_err.strip():
-                sys.stderr.write(std_err)
-            sys.exit(exitcode)
-            return
-    cmd_map[command](
-        utils.get_library_wrapper(),
-        argv,
-        utils.get_input_modifiers(),
-    )
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except errors.CmdLineInputError:
+        if argv and argv[0] in cmd_map:
+            usage.show(argv[0], [])
+        else:
+            usage.main()
+        sys.exit(1)

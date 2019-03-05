@@ -73,23 +73,24 @@ def strip_extras(text):
 def sub_usage(args, output):
     if not args:
         return output
+    args_str = " ".join(args)
 
     ret = ""
     lines = output.split('\n')
     begin_printing = False
-    usage = re.sub(r"\[commands\]", args[0], lines[1])
+    usage = re.sub(r"\[commands\]", args_str, lines[1])
     for line in lines:
         if (
             begin_printing
             and
             re.match("^    [^ ]", line)
             and
-            not re.match("^    " + args[0], line)
+            not re.match("^    " + args_str, line)
         ):
             begin_printing = False
         if not re.match("^ ", line) and not re.match("^$", line):
             begin_printing = False
-        if re.match("^    " + args[0], line):
+        if re.match("^    " + args_str, line):
             begin_printing = True
 
         if begin_printing:
@@ -97,7 +98,7 @@ def sub_usage(args, output):
 
     if ret.strip() != "":
         return "\n" + usage + "\n" + ret.rstrip() + "\n"
-    return sub_usage([" ".join(args[0].split()[:-1])], output)
+    return sub_usage([" ".join(args_str.split()[:-1])], output)
 
 def dict_depth(d, depth=0):
     # pylint: disable=invalid-name

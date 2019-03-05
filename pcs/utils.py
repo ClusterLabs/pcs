@@ -2663,7 +2663,7 @@ def exit_on_cmdline_input_errror(error, main_name, usage_name):
     if error and error.message:
         err(error.message)
     else:
-        usage.show(main_name, [usage_name])
+        usage.show(main_name, usage_name)
     sys.exit(1)
 
 def get_report_processor():

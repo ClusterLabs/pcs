@@ -21,7 +21,6 @@ from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.env_tools import get_existing_nodes_names
-from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 
 # pylint: disable=too-many-branches, too-many-statements
@@ -43,117 +42,64 @@ LOCATION_NODE_VALIDATION_SKIP_MSG = (
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
 
-def constraint_cmd(lib, argv, modifiers):
+
+def constraint_location_cmd(lib, argv, modifiers):
     if not argv:
-        argv = ["list"]
-    sub_cmd = argv.pop(0)
+        sub_cmd = "show"
+    else:
+        sub_cmd = argv.pop(0)
 
     try:
-        if sub_cmd == "help":
-            usage.constraint(argv)
-        elif sub_cmd == "location":
-            try:
-                if not argv:
-                    sub_cmd2 = "show"
-                else:
-                    sub_cmd2 = argv.pop(0)
-
-                if sub_cmd2 == "add":
-                    location_add(lib, argv, modifiers)
-                elif sub_cmd2 in ["remove", "delete"]:
-                    location_remove(lib, argv, modifiers)
-                elif sub_cmd2 == "show":
-                    location_show(lib, argv, modifiers)
-                elif len(argv) >= 2:
-                    if argv[0] == "rule":
-                        location_rule(lib, [sub_cmd2] + argv, modifiers)
-                    else:
-                        location_prefer(lib, [sub_cmd2] + argv, modifiers)
-                else:
-                    raise CmdLineInputError()
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(
-                    e, "constraint", f"location {sub_cmd2}"
-                )
-        elif sub_cmd == "order":
-            if not argv:
-                sub_cmd2 = "show"
-            else:
-                sub_cmd2 = argv.pop(0)
-
-            try:
-                if sub_cmd2 == "set":
-                    order_command.create_with_set(lib, argv, modifiers)
-                elif sub_cmd2 in ["remove", "delete"]:
-                    order_rm(lib, argv, modifiers)
-                elif sub_cmd2 == "show":
-                    order_command.show(lib, argv, modifiers)
-                else:
-                    order_start(lib, [sub_cmd2] + argv, modifiers)
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(
-                    e, "constraint", f"order {sub_cmd2}"
-                )
-        elif sub_cmd == "ticket":
-            usage_name = "ticket"
-            try:
-                command_map = {
-                    "set": ticket_command.create_with_set,
-                    "add": ticket_command.add,
-                    "delete": ticket_command.remove,
-                    "remove": ticket_command.remove,
-                    "show": ticket_command.show,
-                }
-                sub_command = argv[0] if argv else "show"
-                if sub_command not in command_map:
-                    raise CmdLineInputError()
-                usage_name = "ticket "+sub_command
-
-                command_map[sub_command](lib, argv[1:], modifiers)
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
-
-        elif sub_cmd == "colocation":
-            if not argv:
-                sub_cmd2 = "show"
-            else:
-                sub_cmd2 = argv.pop(0)
-
-            try:
-                if sub_cmd2 == "add":
-                    colocation_add(lib, argv, modifiers)
-                elif sub_cmd2 in ["remove", "delete"]:
-                    colocation_rm(lib, argv, modifiers)
-                elif sub_cmd2 == "set":
-                    colocation_command.create_with_set(lib, argv, modifiers)
-                elif sub_cmd2 == "show":
-                    colocation_command.show(lib, argv, modifiers)
-                else:
-                    raise CmdLineInputError()
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(
-                    e, "constraint", f"colocation {sub_cmd2}"
-                )
+        if sub_cmd == "add":
+            location_add(lib, argv, modifiers)
         elif sub_cmd in ["remove", "delete"]:
-            constraint_rm(lib, argv, modifiers)
-        elif sub_cmd in ("show", "list"):
-            # all these commands accept -f and --full therefore there is no
-            # need to change something here
+            location_remove(lib, argv, modifiers)
+        elif sub_cmd == "show":
             location_show(lib, argv, modifiers)
-            order_command.show(lib, argv, modifiers)
-            colocation_command.show(lib, argv, modifiers)
-            ticket_command.show(lib, argv, modifiers)
-        elif sub_cmd == "ref":
-            constraint_ref(lib, argv, modifiers)
-        elif sub_cmd == "rule":
-            constraint_rule(lib, argv, modifiers)
+        elif len(argv) >= 2:
+            if argv[0] == "rule":
+                location_rule(lib, [sub_cmd] + argv, modifiers)
+            else:
+                location_prefer(lib, [sub_cmd] + argv, modifiers)
         else:
             raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
     except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "constraint", sub_cmd)
+        utils.exit_on_cmdline_input_errror(
+            e, "constraint", ["location", sub_cmd]
+        )
 
+
+def constraint_order_cmd(lib, argv, modifiers):
+    if not argv:
+        sub_cmd = "show"
+    else:
+        sub_cmd = argv.pop(0)
+
+    try:
+        if sub_cmd == "set":
+            order_command.create_with_set(lib, argv, modifiers)
+        elif sub_cmd in ["remove", "delete"]:
+            order_rm(lib, argv, modifiers)
+        elif sub_cmd == "show":
+            order_command.show(lib, argv, modifiers)
+        else:
+            order_start(lib, [sub_cmd] + argv, modifiers)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "constraint", ["order", sub_cmd]
+        )
+
+
+def constraint_show(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --full
+    """
+    location_show(lib, argv, modifiers)
+    order_command.show(lib, argv, modifiers)
+    colocation_command.show(lib, argv, modifiers)
+    ticket_command.show(lib, argv, modifiers)
 
 
 def colocation_rm(lib, argv, modifiers):

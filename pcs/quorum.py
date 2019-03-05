@@ -1,81 +1,10 @@
 from pcs import (
     stonith,
-    usage,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-def quorum_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd, argv_next = "config", []
-    else:
-        sub_cmd, argv_next = argv[0], argv[1:]
-
-    try:
-        if sub_cmd == "help":
-            usage.quorum([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "config":
-            quorum_config_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "expected-votes":
-            quorum_expected_votes_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "status":
-            quorum_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "device":
-            quorum_device_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "unblock":
-            # TODO switch to new architecture
-            quorum_unblock_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            quorum_update_cmd(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
-
-def quorum_device_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd == "add":
-            quorum_device_add_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "heuristics":
-            quorum_device_heuristics_cmd(lib, argv_next, modifiers)
-        elif sub_cmd in {"delete", "remove"}:
-            quorum_device_remove_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "status":
-            quorum_device_status_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "update":
-            quorum_device_update_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "quorum", "device {0}".format(sub_cmd)
-        )
-
-def quorum_device_heuristics_cmd(lib, argv, modifiers):
-    if not argv:
-        raise CmdLineInputError()
-
-    sub_cmd, argv_next = argv[0], argv[1:]
-    try:
-        if sub_cmd in {"delete", "remove"}:
-            quorum_device_heuristics_remove_cmd(lib, argv_next, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "quorum", "device heuristics {0}".format(sub_cmd)
-        )
 
 
 def quorum_config_cmd(lib, argv, modifiers):

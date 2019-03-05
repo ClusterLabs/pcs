@@ -2,32 +2,10 @@ from urllib.parse import urlparse
 
 from pcs import (
     settings,
-    usage,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
-
-def host_cmd(lib, argv, modifiers):
-    if not argv:
-        utils.exit_on_cmdline_input_errror(None, "host", "")
-    else:
-        sub_cmd, argv_next = argv[0], argv[1:]
-
-    try:
-        if sub_cmd == "help":
-            usage.host([" ".join(argv_next)] if argv_next else [])
-        elif sub_cmd == "auth":
-            auth_cmd(lib, argv_next, modifiers)
-        elif sub_cmd == "deauth":
-            deauth_cmd(lib, argv_next, modifiers)
-        else:
-            raise CmdLineInputError()
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "host", sub_cmd)
 
 
 def _parse_host_options(host, options):

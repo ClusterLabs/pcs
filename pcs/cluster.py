@@ -11,11 +11,7 @@ import time
 import xml.dom.minidom
 
 from pcs import (
-    pcsd,
-    resource,
     settings,
-    status,
-    usage,
     utils,
 )
 from pcs.utils import parallel_for_nodes
@@ -25,8 +21,6 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
-from pcs.cli.common.routing import create_router
-import pcs.cli.cluster.command as cluster_command
 from pcs.common import report_codes
 from pcs.common.node_communicator import (
     HostNotFound,
@@ -64,100 +58,6 @@ import pcs.lib.pacemaker.live as lib_pacemaker
 
 # pylint: disable=too-many-branches, too-many-statements
 
-def cluster_cmd(lib, argv, modifiers):
-    # pylint: disable=superfluous-parens
-    if not argv:
-        usage.cluster()
-        exit(1)
-
-    sub_cmd = argv.pop(0)
-    try:
-        if (sub_cmd == "help"):
-            usage.cluster([" ".join(argv)] if argv else [])
-        elif (sub_cmd == "setup"):
-            cluster_setup(lib, argv, modifiers)
-        elif (sub_cmd == "sync"):
-            create_router(
-                dict(
-                    corosync=sync_nodes,
-                ),
-                ["cluster", "sync"],
-                default_cmd="corosync",
-            )(lib, argv, modifiers)
-        elif (sub_cmd == "status"):
-            status.cluster_status(lib, argv, modifiers)
-        elif (sub_cmd == "pcsd-status"):
-            status.cluster_pcsd_status(lib, argv, modifiers)
-        elif (sub_cmd == "certkey"):
-            pcsd.pcsd_certkey(lib, argv, modifiers)
-        elif (sub_cmd == "auth"):
-            cluster_auth_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "start"):
-            cluster_start_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "stop"):
-            cluster_stop_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "kill"):
-            kill_cluster(lib, argv, modifiers)
-        elif (sub_cmd == "enable"):
-            cluster_enable_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "disable"):
-            cluster_disable_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "cib"):
-            get_cib(lib, argv, modifiers)
-        elif (sub_cmd == "cib-push"):
-            cluster_push(lib, argv, modifiers)
-        elif (sub_cmd == "cib-upgrade"):
-            cluster_cib_upgrade_cmd(lib, argv, modifiers)
-        elif (sub_cmd == "edit"):
-            cluster_edit(lib, argv, modifiers)
-        elif (sub_cmd == "node"):
-            node_command_map = {
-                "add": node_add,
-                "add-guest": cluster_command.node_add_guest,
-                "add-outside": node_add_outside_cluster,
-                "add-remote": cluster_command.node_add_remote,
-                "clear": cluster_command.node_clear,
-                "delete": node_remove,
-                "delete-guest": cluster_command.node_remove_guest,
-                "delete-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),
-                "remove": node_remove,
-                "remove-guest": cluster_command.node_remove_guest,
-                "remove-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),
-            }
-            if argv and argv[0] in node_command_map:
-                try:
-                    node_command_map[argv[0]](lib, argv[1:], modifiers)
-                except CmdLineInputError as e:
-                    utils.exit_on_cmdline_input_errror(
-                        e, "cluster", "node " + argv[0]
-                    )
-            else:
-                raise CmdLineInputError()
-        elif (sub_cmd == "uidgid"):
-            cluster_uidgid(lib, argv, modifiers)
-        elif (sub_cmd == "corosync"):
-            cluster_get_corosync_conf(lib, argv, modifiers)
-        elif (sub_cmd == "reload"):
-            cluster_reload(lib, argv, modifiers)
-        elif (sub_cmd == "destroy"):
-            cluster_destroy(lib, argv, modifiers)
-        elif (sub_cmd == "verify"):
-            cluster_verify(lib, argv, modifiers)
-        elif (sub_cmd == "report"):
-            cluster_report(lib, argv, modifiers)
-        elif (sub_cmd == "remove_nodes_from_cib"):
-            remove_nodes_from_cib(lib, argv, modifiers)
-        else:
-            sub_cmd = ""
-            raise CmdLineInputError()
-    except LibraryError as e:
-        process_library_reports(e.args)
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "cluster", sub_cmd)
 
 def cluster_cib_upgrade_cmd(lib, argv, modifiers):
     """

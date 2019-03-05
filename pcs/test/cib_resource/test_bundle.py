@@ -231,7 +231,7 @@ class BundleCreate(BundleCreateCommon):
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle",
-            stdout_start="\nUsage: pcs resource bundle ...\n"
+            stdout_start="\nUsage: pcs resource bundle...\n"
         )
 
     def test_fail_when_missing_args_2(self):
