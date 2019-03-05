@@ -1,5 +1,3 @@
-import os
-
 from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.communication.sbd import (
@@ -18,8 +16,9 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib import (
-    sbd,
     reports,
+    sbd,
+    validate,
 )
 from pcs.lib.tools import environment_file_to_dict
 from pcs.lib.errors import (
@@ -37,11 +36,28 @@ UNSUPPORTED_SBD_OPTION_LIST = [
     "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
 ]
 ALLOWED_SBD_OPTION_LIST = [
-    "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
+    "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT",
+    "SBD_TIMEOUT_ACTION",
 ]
+_TIMEOUT_ACTION_ALLOWED_VALUES = (
+    {"flush", "noflush"}, {"reboot", "off", "crashdump"}
+)
+_tuple = lambda set1, set2: {f"{v1},{v2}" for v1 in set1 for v2 in set2}
+TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
+    _TIMEOUT_ACTION_ALLOWED_VALUES[0] |
+    _TIMEOUT_ACTION_ALLOWED_VALUES[1] |
+    _tuple(
+        _TIMEOUT_ACTION_ALLOWED_VALUES[0], _TIMEOUT_ACTION_ALLOWED_VALUES[1]
+    ) |
+    _tuple(
+        _TIMEOUT_ACTION_ALLOWED_VALUES[1], _TIMEOUT_ACTION_ALLOWED_VALUES[0]
+    )
+)
 
 
-def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
+def _validate_sbd_options(
+    sbd_config, allow_unknown_opts=False, allow_invalid_option_values=False
+):
     """
     Validate user SBD configuration. Options 'SBD_WATCHDOG_DEV' and 'SBD_OPTS'
     are restricted. Returns list of ReportItem
@@ -49,46 +65,34 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     sbd_config -- dictionary in format: <SBD config option>: <value>
     allow_unknown_opts -- if True, accept also unknown options.
     """
+    validators = [
+        validate.value_nonnegative_integer("SBD_WATCHDOG_TIMEOUT"),
+        validate.value_in(
+            "SBD_TIMEOUT_ACTION",
+            TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
+            extra_values_allowed=allow_invalid_option_values,
+        ),
+    ]
 
-    report_item_list = []
-    for sbd_opt in sbd_config:
-        if sbd_opt in UNSUPPORTED_SBD_OPTION_LIST:
-            report_item_list.append(reports.invalid_options(
-                [sbd_opt], ALLOWED_SBD_OPTION_LIST, None
-            ))
-
-        elif sbd_opt not in ALLOWED_SBD_OPTION_LIST:
-            report_item_list.append(reports.invalid_options(
-                [sbd_opt],
-                ALLOWED_SBD_OPTION_LIST,
-                None,
-                severity=(
-                    Severities.WARNING if allow_unknown_opts
-                    else Severities.ERROR
-                ),
-                forceable=(
-                    None if allow_unknown_opts
-                    else report_codes.FORCE_OPTIONS
-                )
-            ))
-    if "SBD_WATCHDOG_TIMEOUT" in sbd_config:
-        report_item = reports.invalid_option_value(
-            "SBD_WATCHDOG_TIMEOUT",
-            sbd_config["SBD_WATCHDOG_TIMEOUT"],
-            "a non-negative integer"
+    return (
+        validate.names_in(
+            ALLOWED_SBD_OPTION_LIST,
+            sbd_config.keys(),
+            option_type=None,
+            banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
+            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+            extra_names_allowed=allow_unknown_opts,
         )
-        try:
-            if int(sbd_config["SBD_WATCHDOG_TIMEOUT"]) < 0:
-                report_item_list.append(report_item)
-        except (ValueError, TypeError):
-            report_item_list.append(report_item)
+        +
+        validate.run_collection_of_option_validators(sbd_config, validators)
 
-    return report_item_list
+    )
 
 
 def _validate_watchdog_dict(watchdog_dict):
     """
-    Validates if all watchdogs are specified by absolute path.
+    Validates if all watchdogs are not empty strings.
     Returns list of ReportItem.
 
     watchdog_dict -- dictionary with node names as keys and value as watchdog
@@ -96,7 +100,7 @@ def _validate_watchdog_dict(watchdog_dict):
     return [
         reports.invalid_watchdog_path(watchdog)
         for watchdog in watchdog_dict.values()
-        if not watchdog or not os.path.isabs(watchdog)
+        if not watchdog
     ]
 
 
@@ -120,6 +124,7 @@ def enable_sbd(
     lib_env, default_watchdog, watchdog_dict, sbd_options,
     default_device_list=None, node_device_dict=None, allow_unknown_opts=False,
     ignore_offline_nodes=False, no_watchdog_validation=False,
+    allow_invalid_option_values=False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -138,6 +143,8 @@ def enable_sbd(
     ignore_offline_nodes -- if True, omit offline nodes
     no_watchdog_validation -- it True, do not validate existance of a watchdog
         on the nodes
+    allow_invalid_option_values -- if True, invalid values of some options will
+        be treated as warning instead of errors
     """
     corosync_conf = lib_env.get_corosync_conf()
     node_list = corosync_conf.get_nodes_names()
@@ -176,7 +183,9 @@ def enable_sbd(
         +
         (sbd.validate_nodes_devices(full_device_dict) if using_devices else [])
         +
-        _validate_sbd_options(sbd_options, allow_unknown_opts)
+        _validate_sbd_options(
+            sbd_options, allow_unknown_opts, allow_invalid_option_values
+        )
     )
 
     com_cmd = GetOnlineTargets(

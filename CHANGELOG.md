@@ -11,6 +11,7 @@
   ([rhbz#1657166])
 - `pcs cluster setup` now checks if nodes' addresses match value of `ip_version`
   ([rhbz#1667053])
+- Support for sbd option SBD\_TIMEOUT\_ACTION ([rhbz#1664828])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
@@ -43,6 +44,11 @@
   corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
 - Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
 
+### Changed
+- Do not check whether watchdog is defined as an absolute path when enabling
+  SBD. This check is not needed anymore as we are validating watchdog against
+  list provided by SBD itself.
+
 ### Deprecated
 - Command `pcs resource show`, removed in pcs-0.10.1, has been readded as
   deprecated to ease transition to its replacements. It will be removed again in
@@ -56,6 +62,7 @@
 [rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
 [rhbz#1661059]: https://bugzilla.redhat.com/show_bug.cgi?id=1661059
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
+[rhbz#1664828]: https://bugzilla.redhat.com/show_bug.cgi?id=1664828
 [rhbz#1665404]: https://bugzilla.redhat.com/show_bug.cgi?id=1665404
 [rhbz#1667040]: https://bugzilla.redhat.com/show_bug.cgi?id=1667040
 [rhbz#1667053]: https://bugzilla.redhat.com/show_bug.cgi?id=1667053
