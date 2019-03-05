@@ -8,10 +8,6 @@ ifeq ($(UNAME_OS_GNU),true)
   ifeq ($(DISTRO_DEBIAN),true)
     IS_DEBIAN=true
     DISTRO_DEBIAN_VER_8 := $(shell if grep -q -i "^8\|jessie" /etc/debian_version ; then echo true; else echo false; fi)
-    # dpkg-architecture is in the optional dpkg-dev package, unfortunately.
-    #DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-    # TODO: Use lsb_architecture to get the multiarch tuple if/when it becomes available in distributions.
-    DEB_HOST_MULTIARCH := $(shell dpkg -L libc6 | sed -nr 's|^/etc/ld\.so\.conf\.d/(.*)\.conf$$|\1|p')
   endif
 endif
 
@@ -160,14 +156,11 @@ pcsd_fonts = \
 	Overpass-Regular.ttf;Overpass:style=Regular \
 	Overpass-Bold.ttf;Overpass:style=Bold
 
-# 1 - debian alternative file
-# 2 - file which will be replaced by debian alternative file
-define use-debian-alternative
+# 1 - an alternative file
+# 2 - a file which will be replaced by the alternative file
+define use-alternative-file
 	rm -f  $(2)
-	tmp_alternative=`mktemp`; \
-	sed s/DEB_HOST_MULTIARCH/${DEB_HOST_MULTIARCH}/g $(1) > $$tmp_alternative; \
-	install -m644 $$tmp_alternative $(2)
-	rm -f $$tmp_alternative
+	install -m644 $(1) $(2)
 endef
 
 # 1 - sources directory - with python package sources
@@ -231,7 +224,7 @@ install_python_part: install_bundled_libs
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DEST_MAN}/pcs_snmp_agent.8
 ifeq ($(IS_DEBIAN),true)
-	$(call use-debian-alternative,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
+	$(call use-alternative-file,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
 endif
 	$(PYTHON) -m compileall -fl ${DEST_PYTHON_SITELIB}/pcs/settings.py
 ifeq ($(IS_SYSTEMCTL),true)
@@ -250,7 +243,7 @@ endif
 	install -d ${DESTDIR}/etc/pam.d
 	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 ifeq ($(IS_DEBIAN),true)
-	$(call use-debian-alternative,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
+	$(call use-alternative-file,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
 ifeq ($(IS_DEBIAN)$(IS_SYSTEMCTL),truefalse)
 	install -m 755 -D pcsd/pcsd.debian ${DEST_INIT}/pcsd
