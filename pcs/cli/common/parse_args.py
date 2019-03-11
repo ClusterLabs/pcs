@@ -83,7 +83,10 @@ def split_option(arg):
 
 def prepare_options(cmdline_args, allowed_repeatable_options=()):
     """
-    return dictionary of options from commandline key=value args
+    Get a dict of options from cmdline key=value args
+
+    iterable cmdline_args -- command line arguments
+    iterable allowed_repeatable_options -- options that can be set several times
 
     Commandline options: no options
     """
@@ -103,6 +106,33 @@ def prepare_options(cmdline_args, allowed_repeatable_options=()):
                 .format(name, options[name], value)
             )
     return options
+
+def prepare_options_allowed(
+    cmdline_args, allowed_options, allowed_repeatable_options=()
+):
+    """
+    Get a dict of options from cmdline key=value args, raise on unallowed key
+
+    iterable cmdline_args -- command line arguments
+    iterable allowed_options -- list of allowed options
+    iterable allowed_repeatable_options -- options that can be set several times
+
+    Commandline options: no options
+    """
+    parsed_options = prepare_options(
+        cmdline_args, allowed_repeatable_options=allowed_repeatable_options
+    )
+    unknown_options = (
+        frozenset(parsed_options.keys()) - frozenset(allowed_options)
+    )
+    if unknown_options:
+        raise CmdLineInputError(
+            "Unknown option{s} '{options}'".format(
+                s=("s" if len(unknown_options) > 1 else ""),
+                options="', '".join(sorted(unknown_options))
+            )
+        )
+    return parsed_options
 
 def group_by_keywords(
     arg_list, keyword_set,

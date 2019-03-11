@@ -16,7 +16,10 @@ from pcs.settings import (
 )
 from pcs.cli.common.console_report import error, indent, warn
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.common.parse_args import (
+    prepare_options,
+    prepare_options_allowed,
+)
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_update_options,
@@ -2419,14 +2422,9 @@ def resource_failcount(lib, argv, modifiers):
     command = argv.pop(0)
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
-    parsed_options = prepare_options(argv)
-    unknown_options = (
-        set(parsed_options.keys()) - {"node", "operation", "interval"}
+    parsed_options = prepare_options_allowed(
+        argv, {"node", "operation", "interval"}
     )
-    if unknown_options:
-        raise CmdLineInputError(
-            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
-        )
     node = parsed_options.get("node")
     operation = parsed_options.get("operation")
     interval = parsed_options.get("interval")
@@ -2789,14 +2787,9 @@ def resource_cleanup(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported()
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
-    parsed_options = prepare_options(argv)
-    unknown_options = (
-        set(parsed_options.keys()) - {"node", "operation", "interval"}
+    parsed_options = prepare_options_allowed(
+        argv, {"node", "operation", "interval"}
     )
-    if unknown_options:
-        raise CmdLineInputError(
-            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
-        )
     print(lib_pacemaker.resource_cleanup(
         utils.cmd_runner(),
         resource=resource,
@@ -2814,12 +2807,7 @@ def resource_refresh(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("--force", "--full")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
-    parsed_options = prepare_options(argv)
-    unknown_options = (set(parsed_options.keys()) - {"node"})
-    if unknown_options:
-        raise CmdLineInputError(
-            "Unknown options '{}'".format("', '".join(sorted(unknown_options)))
-        )
+    parsed_options = prepare_options_allowed(argv, {"node"})
     print(lib_pacemaker.resource_refresh(
         utils.cmd_runner(),
         resource=resource,

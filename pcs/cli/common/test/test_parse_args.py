@@ -4,6 +4,7 @@ from pcs.cli.common.parse_args import(
     group_by_keywords,
     parse_typed_arg,
     prepare_options,
+    prepare_options_allowed,
     split_list,
     filter_out_non_option_negative_numbers,
     filter_out_options,
@@ -60,6 +61,83 @@ class PrepareOptionsTest(TestCase):
             prepare_options(
                 ["a=1", "a=3", "a=2", "a=4"], allowed_repeatable_options=("a")
             )
+        )
+
+
+class PrepareOptionsAllowedTest(TestCase):
+    def test_refuse_option_without_value(self):
+        self.assertRaises(
+            CmdLineInputError, lambda: prepare_options_allowed(['abc'], ["abc"])
+        )
+
+    def test_prepare_option_dict_form_args(self):
+        self.assertEqual(
+            {'a': 'b', 'c': 'd'},
+            prepare_options_allowed(['a=b', 'c=d'], ["a", "c"]))
+
+    def test_prepare_option_dict_with_empty_value(self):
+        self.assertEqual({'a': ''}, prepare_options_allowed(['a='], "a"))
+
+    def test_refuse_option_without_key(self):
+        self.assertRaises(
+            CmdLineInputError, lambda: prepare_options_allowed(['=a'], ["a"])
+        )
+
+    def test_refuse_options_with_same_key_and_differend_value(self):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: prepare_options_allowed(['a=a', "a=b"], ["a"])
+        )
+
+    def test_accept_options_with_same_key_and_same_value(self):
+        self.assertEqual(
+            {'a': '1'},
+            prepare_options_allowed(["a=1", "a=1"], ["a"]))
+
+    def test_allow_repeatable(self):
+        self.assertEqual(
+            {'a': ['1', '2']},
+            prepare_options_allowed(
+                ["a=1", "a=2"],
+                ["a"],
+                allowed_repeatable_options=("a")
+            )
+        )
+
+    def test_allow_repeatable_only_once(self):
+        self.assertEqual(
+            {'a': ['1']},
+            prepare_options_allowed(
+                ["a=1"],
+                ["a"],
+                allowed_repeatable_options=("a")
+            )
+        )
+
+    def test_allow_repeatable_multiple(self):
+        self.assertEqual(
+            {'a': ['1', '3', '2', '4']},
+            prepare_options_allowed(
+                ["a=1", "a=3", "a=2", "a=4"],
+                ["a"],
+                allowed_repeatable_options=("a")
+            )
+        )
+
+    def test_option_not_allowed(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            prepare_options_allowed(["a=1"], [])
+        self.assertEqual(
+            str(cm.exception),
+            "Unknown option 'a'"
+        )
+
+    def test_options_not_allowed(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            prepare_options_allowed(["d=1", "a=2", "c=3", "b=4"], ["a", "b"])
+        self.assertEqual(
+            str(cm.exception),
+            "Unknown options 'c', 'd'"
         )
 
 
