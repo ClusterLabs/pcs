@@ -106,7 +106,9 @@ class LibraryReportProcessorToConsole(SimpleReportProcessorInterface):
             elif report_item.severity == ReportItemSeverity.WARNING:
                 warn(build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
-                print(build_report_message(report_item))
+                msg = build_report_message(report_item)
+                if msg:
+                    print(msg)
         return errors
 
     def send(self):
