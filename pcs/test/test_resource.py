@@ -37,7 +37,12 @@ from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 # pylint: disable=invalid-name, no-self-use, bad-whitespace, line-too-long, too-many-public-methods, redefined-outer-name, too-many-statements, anomalous-backslash-in-string
 
-LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+LOCATION_NODE_VALIDATION_SKIP_WARNING = (
+    f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+)
+MOVE_BAN_DATETIME_RE = re.compile(
+    r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))"
+)
 
 RESOURCES_TMP = rc("test_resource")
 if not os.path.exists(RESOURCES_TMP):
@@ -2244,8 +2249,9 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
-This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1
+\tThis will prevent dummy from running on rh7-1 until the constraint is removed
+\tThis will be the case even if rh7-1 is the last node in the cluster
 """)
         self.assertEqual(0, returnVal)
 
@@ -2275,11 +2281,12 @@ Ticket Constraints:
         output, returnVal = pcs(
             temp_cib, "resource move dummy rh7-1 lifetime=1H"
         )
-        ac(output, "")
+        output = re.sub(MOVE_BAN_DATETIME_RE, "{datetime}", output)
+        ac(output, "Migration will take effect until: {datetime}\n")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
+        output = re.sub(MOVE_BAN_DATETIME_RE, "{datetime}", output)
         ac(output, """\
 Location Constraints:
   Resource: dummy
@@ -2308,14 +2315,17 @@ Ticket Constraints:
         output, returnVal = pcs(
             temp_cib, "resource ban dummy rh7-1 lifetime=P1H"
         )
+        output = re.sub(MOVE_BAN_DATETIME_RE, "{datetime}", output)
         ac(output, """\
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
-This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+Migration will take effect until: {datetime}
+Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1
+\tThis will prevent dummy from running on rh7-1 until the constraint is removed
+\tThis will be the case even if rh7-1 is the last node in the cluster
 """)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
+        output = re.sub(MOVE_BAN_DATETIME_RE, "{datetime}", output)
         ac(output, """\
 Location Constraints:
   Resource: dummy
@@ -2392,23 +2402,23 @@ Error: when specifying --master you must use the promotable clone id
 
         # move --master
         output, returnVal = pcs(temp_cib, "resource move D1 --master")
-        ac(output, "Error: cannot move cloned resources\n")
+        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
-        ac(output, "Error: cannot move cloned resources\n")
+        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D2 --master")
-        ac(output, "Error: cannot move cloned resources\n")
+        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG --master")
-        ac(output, "Error: cannot move cloned resources\n")
+        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
-        ac(output, "Error: cannot move cloned resources\n")
+        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
         self.assertEqual(1, returnVal)
 
         # ban
@@ -2498,8 +2508,9 @@ Error: when specifying --master you must use the promotable clone id
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+\tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
+\tThis will be the case even if rh7-1 is the last node in the cluster
 """)
         self.assertEqual(0, returnVal)
 
@@ -2555,23 +2566,23 @@ Ticket Constraints:
 
         # move
         output, returnVal = pcs(temp_cib, "resource move D1")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (D1-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D1-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (D1-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D2")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         # move --master
@@ -2682,8 +2693,9 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+\tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
+\tThis will be the case even if rh7-1 is the last node in the cluster
 """)
         self.assertEqual(0, returnVal)
 
@@ -2745,23 +2757,23 @@ Ticket Constraints:
 
         # move
         output, returnVal = pcs(temp_cib, "resource move D1")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (D1-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D1-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (D1-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D2")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
+        ac(output, "Error: to move promotable clone resources you must use --master and the promotable clone id (DG-clone)\n")
         self.assertEqual(1, returnVal)
 
         # move --master
@@ -2872,8 +2884,9 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+\tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
+\tThis will be the case even if rh7-1 is the last node in the cluster
 """)
         self.assertEqual(0, returnVal)
 

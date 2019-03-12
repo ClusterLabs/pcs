@@ -3761,3 +3761,224 @@ def resource_instance_attr_value_not_unique(
         ),
         forceable=forceable,
     )
+
+def cannot_move_resource_bundle(resource_id):
+    """
+    User is trying to move a bundle resource which is not possible
+
+    string resource_id -- id of the resource to be moved
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_MOVE_RESOURCE_BUNDLE,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
+def cannot_move_resource_clone(resource_id):
+    """
+    User is trying to move a clone resource which is not possible
+
+    string resource_id -- id of the resource to be moved
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
+def cannot_move_resource_promotable_not_master(resource_id, promotable_id):
+    """
+    User is trying to move a promotable clone without limiting it to master role
+
+    string resource_id -- id of the resource to be moved
+    string promotable_id -- id of relevant parent promotable resource
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER,
+        info={
+            "resource_id": resource_id,
+            "promotable_id": promotable_id,
+        }
+    )
+
+def cannot_move_resource_master_resource_not_promotable(
+    resource_id, promotable_id=None
+):
+    """
+    User is trying to move a non-promotable resource and limit it to master role
+
+    string resource_id -- id of the resource to be moved
+    string promotable_id -- id of relevant parent promotable resource
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE,
+        info={
+            "resource_id": resource_id,
+            "promotable_id": promotable_id,
+        }
+    )
+
+def cannot_move_resource_stopped_no_node_specified(resource_id):
+    """
+    When moving a stopped resource, a node to move it to must be specified
+
+    string resource_id -- id of the resource to be moved
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
+def resource_move_pcmk_error(resource_id, stdout, stderr):
+    """
+    crm_resource exited with an error when moving a resource
+
+    string resource_id -- id of the resource to be moved
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_MOVE_PCMK_ERROR,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )
+
+def resource_move_pcmk_success(resource_id, stdout, stderr):
+    """
+    crm_resource exited successfully when moving a resource
+
+    string resource_id -- id of the resource to be moved
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.info(
+        report_codes.RESOURCE_MOVE_PCMK_SUCCESS,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )
+
+def cannot_ban_resource_master_resource_not_promotable(
+    resource_id, promotable_id=None
+):
+    """
+    User is trying to ban a non-promotable resource and limit it to master role
+
+    string resource_id -- id of the resource to be banned
+    string promotable_id -- id of relevant parent promotable resource
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE,
+        info={
+            "resource_id": resource_id,
+            "promotable_id": promotable_id,
+        }
+    )
+
+def cannot_ban_resource_stopped_no_node_specified(resource_id):
+    """
+    When banning a stopped resource, a node to ban it on must be specified
+
+    string resource_id -- id of the resource to be banned
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED,
+        info={
+            "resource_id": resource_id,
+        }
+    )
+
+def resource_ban_pcmk_error(resource_id, stdout, stderr):
+    """
+    crm_resource exited with an error when banning a resource
+
+    string resource_id -- id of the resource to be banned
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_BAN_PCMK_ERROR,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )
+
+def resource_ban_pcmk_success(resource_id, stdout, stderr):
+    """
+    crm_resource exited successfully when banning a resource
+
+    string resource_id -- id of the resource to be banned
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.info(
+        report_codes.RESOURCE_BAN_PCMK_SUCCESS,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )
+
+def cannot_unmove_unban_resource_master_resource_not_promotable(
+    resource_id, promotable_id=None
+):
+    """
+    User is trying to unmove/unban master of a non-promotable resource
+
+    string resource_id -- id of the resource to be unmoved/unbanned
+    string promotable_id -- id of relevant parent promotable resource
+    """
+    return ReportItem.error(
+        report_codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
+        ,
+        info={
+            "resource_id": resource_id,
+            "promotable_id": promotable_id,
+        }
+    )
+
+def resource_unmove_unban_pcmk_error(resource_id, stdout, stderr):
+    """
+    crm_resource exited with an error when unmoving/unbanning a resource
+
+    string resource_id -- id of the resource to be unmoved/unbanned
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )
+
+def resource_unmove_unban_pcmk_success(resource_id, stdout, stderr):
+    """
+    crm_resource exited successfully when clearing unmoving/unbanning a resource
+
+    string resource_id -- id of the resource to be unmoved/unbanned
+    string stdout -- stdout of crm_resource
+    string stderr -- stderr of crm_resource
+    """
+    return ReportItem.info(
+        report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS,
+        info={
+            "resource_id": resource_id,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    )

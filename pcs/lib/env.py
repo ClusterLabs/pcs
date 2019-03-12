@@ -147,7 +147,7 @@ class LibraryEnvironment:
     def get_cluster_state(self):
         return get_cluster_state_dom(get_cluster_status_xml(self.cmd_runner()))
 
-    def _get_wait_timeout(self, wait):
+    def get_wait_timeout(self, wait):
         if wait is False:
             return False
 
@@ -165,7 +165,7 @@ class LibraryEnvironment:
 
         mixed wait can be False when waiting is not required or valid timeout
         """
-        self._get_wait_timeout(wait)
+        self.get_wait_timeout(wait)
 
     def push_cib(self, custom_cib=None, wait=False):
         """
@@ -231,7 +231,7 @@ class LibraryEnvironment:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
     def __do_push_cib(self, cmd_runner, push_strategy, wait):
-        timeout = self._get_wait_timeout(wait)
+        timeout = self.get_wait_timeout(wait)
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None

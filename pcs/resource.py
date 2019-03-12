@@ -40,8 +40,7 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
-    _get_primitive_roles_with_nodes,
-    _get_primitives_for_state_check,
+    get_resource_state,
 )
 from pcs.lib.pacemaker.values import (
     is_true as is_pacemaker_true,
@@ -476,7 +475,94 @@ def resource_create(lib, argv, modifiers):
             **settings
         )
 
-def resource_move(lib, argv, modifiers, clear=False, ban=False):
+def _parse_resource_move_ban(argv):
+    resource_id = argv.pop(0)
+    node = None
+    lifetime = None
+    while argv:
+        arg = argv.pop(0)
+        if arg.startswith("lifetime="):
+            if lifetime:
+                raise CmdLineInputError()
+            lifetime = arg.split("=")[1]
+            if lifetime and lifetime[0].isdigit():
+                lifetime = "P" + lifetime
+        elif not node:
+            node = arg
+        else:
+            raise CmdLineInputError()
+    return resource_id, node, lifetime
+
+def resource_move(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
+
+    if not argv:
+        raise CmdLineInputError("must specify a resource to move")
+    if len(argv) > 3:
+        raise CmdLineInputError()
+    resource_id, node, lifetime = _parse_resource_move_ban(argv)
+
+    lib.resource.move(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        lifetime=lifetime,
+        wait=modifiers.get("--wait"),
+    )
+
+def resource_ban(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
+
+    if not argv:
+        raise CmdLineInputError("must specify a resource to ban")
+    if len(argv) > 3:
+        raise CmdLineInputError()
+    resource_id, node, lifetime = _parse_resource_move_ban(argv)
+
+    lib.resource.ban(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        lifetime=lifetime,
+        wait=modifiers.get("--wait"),
+    )
+
+def resource_unmove_unban(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
+
+    if not argv:
+        raise CmdLineInputError("must specify a resource to clear")
+    if len(argv) > 2:
+        raise CmdLineInputError()
+    resource_id = argv.pop(0)
+    node = argv.pop(0) if argv else None
+
+    lib.resource.unmove_unban(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        wait=modifiers.get("--wait"),
+    )
+
+def resource_move_old(lib, argv, modifiers, clear=False, ban=False):
     """
     Options:
       * -f - CIB file
@@ -1580,14 +1666,11 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         stop is handled also in this function
     """
     def is_bundle_running(bundle_id):
-        roles_with_nodes = _get_primitive_roles_with_nodes(
-            _get_primitives_for_state_check(
-                get_cluster_state_dom(
-                    lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
-                ),
-                bundle_id,
-                expected_running=True
-            )
+        roles_with_nodes = get_resource_state(
+            get_cluster_state_dom(
+                lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
+            ),
+            bundle_id
         )
         return bool(roles_with_nodes)
 

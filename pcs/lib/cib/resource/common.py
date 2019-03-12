@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+from pcs.lib import reports
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
     TAG as TAG_BUNDLE,
@@ -6,8 +9,11 @@ from pcs.lib.cib.resource.bundle import (
 )
 from pcs.lib.cib.resource.clone import (
     ALL_TAGS as TAG_CLONE_ALL,
-    is_any_clone,
     get_inner_resource as get_clone_inner_resource,
+    get_parent_any_clone,
+    is_any_clone,
+    is_master,
+    is_promotable_clone,
 )
 from pcs.lib.cib.resource.group import (
     TAG as TAG_GROUP,
@@ -264,4 +270,140 @@ def unmanage(resource_el, id_provider):
             "is-managed": "false",
         },
         id_provider
+    )
+
+def validate_move(resource_element, master):
+    """
+    Validate moving a resource to a node
+
+    etree resource_element -- the resource to be moved
+    bool master -- limit moving to the master role
+    """
+    report_list = []
+    analysis = _validate_move_ban_clear_analyzer(resource_element)
+
+    if analysis.is_bundle:
+        report_list.append(
+            reports.cannot_move_resource_bundle(resource_element.get("id"))
+        )
+    if (
+        (analysis.is_clone or analysis.is_in_clone)
+        and not
+        (analysis.is_promotable_clone or analysis.is_in_promotable_clone)
+    ):
+        report_list.append(
+            reports.cannot_move_resource_clone(resource_element.get("id"))
+        )
+    if (
+        not master
+        and
+        (analysis.is_promotable_clone or analysis.is_in_promotable_clone)
+    ):
+        # We assume users want to move master role. Still we require them to
+        # actually specify that. 1) To be consistent with command for bannig
+        # resources. 2) To prevent users from accidentally move slave role.
+        # This check can be removed if someone requests it.
+        report_list.append(
+            reports.cannot_move_resource_promotable_not_master(
+                resource_element.get("id"),
+                analysis.promotable_clone_id
+            )
+        )
+    if master and not analysis.is_promotable_clone:
+        report_list.append(
+            reports.cannot_move_resource_master_resource_not_promotable(
+                resource_element.get("id"),
+                promotable_id=analysis.promotable_clone_id
+            )
+        )
+
+    return report_list
+
+def validate_ban(resource_element, master):
+    """
+    Validate banning a resource on a node
+
+    etree resource_element -- the resource to be banned
+    bool master -- limit banning to the master role
+    """
+    report_list = []
+    analysis = _validate_move_ban_clear_analyzer(resource_element)
+
+    if master and not analysis.is_promotable_clone:
+        report_list.append(
+            reports.cannot_ban_resource_master_resource_not_promotable(
+                resource_element.get("id"),
+                promotable_id=analysis.promotable_clone_id
+            )
+        )
+
+    return report_list
+
+def validate_unmove_unban(resource_element, master):
+    """
+    Validate unmoving/unbanning a resource to/on nodes
+
+    etree resource_element -- the resource to be unmoved/unbanned
+    bool master -- limit unmoving/unbanning to the master role
+    """
+    report_list = []
+    analysis = _validate_move_ban_clear_analyzer(resource_element)
+
+    if master and not analysis.is_promotable_clone:
+        report_list.append(
+            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
+                resource_element.get("id"),
+                promotable_id=analysis.promotable_clone_id
+            )
+        )
+
+    return report_list
+
+class _MoveBanClearAnalysis(
+    namedtuple(
+        "_MoveBanClearAnalysis",
+        [
+            "is_bundle",
+            "is_clone",
+            "is_in_clone",
+            "is_promotable_clone",
+            "is_in_promotable_clone",
+            "promotable_clone_id",
+        ]
+    )
+):
+    pass
+
+def _validate_move_ban_clear_analyzer(resource_element):
+    resource_is_bundle = False
+    resource_is_clone = False
+    resource_is_in_clone = False
+    resource_is_promotable_clone = False
+    resource_is_in_promotable_clone = False
+    promotable_clone_element = None
+
+    if is_bundle(resource_element):
+        resource_is_bundle = True
+    elif is_any_clone(resource_element):
+        resource_is_clone = True
+        if is_master(resource_element) or is_promotable_clone(resource_element):
+            resource_is_promotable_clone = True
+            promotable_clone_element = resource_element
+    elif get_parent_any_clone(resource_element) is not None:
+        parent_clone = get_parent_any_clone(resource_element)
+        resource_is_in_clone = True
+        if is_master(parent_clone) or is_promotable_clone(parent_clone):
+            resource_is_in_promotable_clone = True
+            promotable_clone_element = parent_clone
+    return _MoveBanClearAnalysis(
+        resource_is_bundle,
+        resource_is_clone,
+        resource_is_in_clone,
+        resource_is_promotable_clone,
+        resource_is_in_promotable_clone,
+        (
+            promotable_clone_element.get("id")
+            if promotable_clone_element is not None
+            else None
+        )
     )

@@ -5,6 +5,7 @@
 
 from collections import defaultdict, Iterable
 from functools import partial
+import re
 import sys
 
 from pcs.common import report_codes as codes
@@ -325,6 +326,75 @@ def service_version_mismatch(info):
             version=version
         ))
     return "; ".join(parts)
+
+def resource_move_ban_clear_master_resource_not_promotable(info):
+    return (
+        "when specifying --master you must use the promotable clone id{_id}"
+        .format(
+            _id=format_optional(info["promotable_id"], " ({0})"),
+        )
+    )
+
+def resource_move_ban_pcmk_error(info, action):
+    new_lines = [f"error {action} resource '{info['resource_id']}'"]
+    for line in info["stdout"].splitlines() + info["stderr"].splitlines():
+        if not line.strip():
+            continue
+        line = line.replace(
+            "--ban --master --node <name>",
+            "pcs resource ban {resource_id} <node> --master".format(**info)
+        )
+        line = line.replace(
+            "--ban --node <name>",
+            "pcs resource ban {resource_id} <node>".format(**info)
+        )
+        new_lines.append(line)
+    return "\n".join(new_lines)
+
+def resource_unmove_unban_pcmk_error(info):
+    new_lines = [f"error clearing resource '{info['resource_id']}'"]
+    for line in info["stdout"].splitlines() + info["stderr"].splitlines():
+        if line.strip():
+            new_lines.append(line)
+    return "\n".join(new_lines)
+
+def resource_move_ban_pcmk_success(info):
+    warning_re = re.compile(
+        r"WARNING: Creating rsc_location constraint '([^']+)' "
+        r"with a score of -INFINITY for resource ([\S]+) on (.+)\."
+    )
+    new_lines = []
+    for line in info["stdout"].splitlines() + info["stderr"].splitlines():
+        if not line.strip():
+            continue
+        warning_match = warning_re.search(line)
+        if warning_match:
+            new_lines.append(
+                (
+                    "Warning: Creating location constraint {0} with a score "
+                    "of -INFINITY for resource {1} on node {2}"
+                ).format(*warning_match.group(1, 2, 3))
+            )
+            continue
+        if (
+            "the constraint is removed using the clear option or by editing "
+            "the CIB with an appropriate tool"
+        ) in line:
+            new_lines.append(line.replace(
+                " using the clear option or by editing the CIB with an "
+                    "appropriate tool",
+                ""
+            ))
+            continue
+        new_lines.append(line)
+    return "\n".join(new_lines)
+
+def resource_unmove_unban_pcmk_success(info):
+    new_lines = []
+    for line in info["stdout"].splitlines() + info["stderr"].splitlines():
+        if line.strip():
+            new_lines.append(line)
+    return "\n".join(new_lines)
 
 def build_node_description(node_types):
     if not node_types:
@@ -1957,5 +2027,49 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _type=type_to_string(info["resource_type"], article=False),
             **info
         )
+    ,
+
+    codes.CANNOT_MOVE_RESOURCE_BUNDLE: "cannot move bundle resources",
+    codes.CANNOT_MOVE_RESOURCE_CLONE: "cannot move cloned resources",
+    codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
+        resource_move_ban_clear_master_resource_not_promotable
+    ,
+    codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER: lambda info:
+        (
+            "to move promotable clone resources you must use --master and the "
+            "promotable clone id ({promotable_id})"
+        ).format(**info)
+    ,
+    codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED:
+        # Use both "moving" and "banning" to let user know using "ban" instead
+        # of "move" will not help
+        "You must specify a node when moving/banning a stopped resource"
+    ,
+    codes.RESOURCE_MOVE_PCMK_ERROR: lambda info:
+        resource_move_ban_pcmk_error(info, "moving")
+    ,
+    codes.RESOURCE_MOVE_PCMK_SUCCESS: resource_move_ban_pcmk_success,
+
+    codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
+        resource_move_ban_clear_master_resource_not_promotable
+    ,
+    codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED:
+        # Use both "moving" and "banning" to let user know using "move" instead
+        # of "ban" will not help
+        "You must specify a node when moving/banning a stopped resource"
+    ,
+    codes.RESOURCE_BAN_PCMK_ERROR: lambda info:
+        resource_move_ban_pcmk_error(info, "banning")
+    ,
+    codes.RESOURCE_BAN_PCMK_SUCCESS: resource_move_ban_pcmk_success,
+
+    codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
+        resource_move_ban_clear_master_resource_not_promotable
+    ,
+    codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR:
+        resource_unmove_unban_pcmk_error
+    ,
+    codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS:
+        resource_unmove_unban_pcmk_success
     ,
 }

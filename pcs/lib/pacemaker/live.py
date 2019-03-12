@@ -347,6 +347,53 @@ def resource_refresh(runner, resource=None, node=None, full=False, force=None):
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
+def resource_move(runner, resource_id, node=None, master=False, lifetime=None):
+    return _resource_move_ban_clear(
+        runner,
+        "--move",
+        resource_id,
+        node=node,
+        master=master,
+        lifetime=lifetime,
+    )
+
+def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
+    return _resource_move_ban_clear(
+        runner,
+        "--ban",
+        resource_id,
+        node=node,
+        master=master,
+        lifetime=lifetime,
+    )
+
+def resource_unmove_unban(runner, resource_id, node=None, master=False):
+    return _resource_move_ban_clear(
+        runner,
+        "--clear",
+        resource_id,
+        node=node,
+        master=master,
+    )
+
+def _resource_move_ban_clear(
+    runner, action, resource_id, node=None, master=False, lifetime=None
+):
+    command = [
+        __exec("crm_resource"),
+        action,
+        "--resource",
+        resource_id,
+    ]
+    if node:
+        command.extend(["--node", node])
+    if master:
+        command.extend(["--master"])
+    if lifetime:
+        command.extend(["--lifetime", lifetime])
+    stdout, stderr, retval = runner.run(command)
+    return stdout, stderr, retval
+
 ### fence history
 
 def is_fence_history_supported():
