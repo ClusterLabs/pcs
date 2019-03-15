@@ -2249,7 +2249,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1
+Warning: Creating location constraint 'cli-ban-dummy-on-rh7-1' with a score of -INFINITY for resource dummy on rh7-1.
 \tThis will prevent dummy from running on rh7-1 until the constraint is removed
 \tThis will be the case even if rh7-1 is the last node in the cluster
 """)
@@ -2318,7 +2318,7 @@ Ticket Constraints:
         output = re.sub(MOVE_BAN_DATETIME_RE, "{datetime}", output)
         ac(output, """\
 Migration will take effect until: {datetime}
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1
+Warning: Creating location constraint 'cli-ban-dummy-on-rh7-1' with a score of -INFINITY for resource dummy on rh7-1.
 \tThis will prevent dummy from running on rh7-1 until the constraint is removed
 \tThis will be the case even if rh7-1 is the last node in the cluster
 """)
@@ -2402,23 +2402,23 @@ Error: when specifying --master you must use the promotable clone id
 
         # move --master
         output, returnVal = pcs(temp_cib, "resource move D1 --master")
-        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
+        ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
-        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
+        ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move D2 --master")
-        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
+        ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG --master")
-        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
+        ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
-        ac(output, "Error: cannot move cloned resources\nError: when specifying --master you must use the promotable clone id\n")
+        ac(output, "Error: cannot move cloned resources\n")
         self.assertEqual(1, returnVal)
 
         # ban
@@ -2508,7 +2508,7 @@ Error: when specifying --master you must use the promotable clone id
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+Warning: Creating location constraint 'cli-ban-DG-clone-on-rh7-1' with a score of -INFINITY for resource DG-clone on rh7-1.
 \tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
 \tThis will be the case even if rh7-1 is the last node in the cluster
 """)
@@ -2693,7 +2693,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+Warning: Creating location constraint 'cli-ban-DG-clone-on-rh7-1' with a score of -INFINITY for resource DG-clone on rh7-1.
 \tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
 \tThis will be the case even if rh7-1 is the last node in the cluster
 """)
@@ -2884,7 +2884,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
         ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1
+Warning: Creating location constraint 'cli-ban-DG-clone-on-rh7-1' with a score of -INFINITY for resource DG-clone on rh7-1.
 \tThis will prevent DG-clone from running on rh7-1 until the constraint is removed
 \tThis will be the case even if rh7-1 is the last node in the cluster
 """)
@@ -6470,4 +6470,229 @@ class GroupAdd(TestCase, AssertPcsMixin):
             adjacent_resource_id=None,
             put_after_adjacent=True,
             wait="10",
+        )
+
+class ResourceMoveBanMixin():
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertEqual(cm.exception.message, self.no_args_error)
+        self.lib_command.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "arg1", "arg2", "arg3"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_node_twice(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "node1", "node2"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_lifetime_twice(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "lifetime=1h", "lifetime=2h"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_succes(self):
+        self.cli_command(
+            self.lib,
+            ["resource"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime=None,
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_success_node(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime=None,
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_lifetime(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_success_lifetime_unchanged(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=T1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="T1h",
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_succes_node_lifetime(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "node", "lifetime=1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_lifetime_node(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_all_options(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h", "node"],
+            dict_to_modifiers(dict(master=True, wait="10"))
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=True,
+            node="node",
+            wait="10"
+        )
+
+class ResourceMove(ResourceMoveBanMixin, TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["move"])
+        self.lib.resource = self.resource
+        self.lib_command = self.resource.move
+        self.cli_command = resource.resource_move
+        self.no_args_error = "must specify a resource to move"
+
+class ResourceBan(ResourceMoveBanMixin, TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["ban"])
+        self.lib.resource = self.resource
+        self.lib_command = self.resource.ban
+        self.cli_command = resource.resource_ban
+        self.no_args_error = "must specify a resource to ban"
+
+class ResourceClear(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["unmove_unban"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_unmove_unban(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "must specify a resource to clear"
+        )
+        self.resource.unmove_unban.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_unmove_unban(
+                self.lib,
+                ["resource", "arg1", "arg2"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.unmove_unban.assert_not_called()
+
+    def test_succes(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node=None,
+            master=False,
+            wait=False
+        )
+
+    def test_success_node(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node="node",
+            master=False,
+            wait=False
+        )
+
+    def test_success_all_options(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict(master=True, wait="10"))
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node="node",
+            master=True,
+            wait="10"
         )

@@ -1144,6 +1144,8 @@ class _Move(_MoveBanTemplate):
                 not running_on_nodes
                 or
                 (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
+                or
+                (resource_running_on_before == resource_running_on_after)
            )
         ):
             severity = severities.ERROR
@@ -1151,7 +1153,7 @@ class _Move(_MoveBanTemplate):
             return reports.resource_does_not_run(resource_id, severity=severity)
         return reports.resource_running_on_nodes(
             resource_id,
-            running_on_nodes,
+            resource_running_on_after,
             severity=severity
         )
 
@@ -1196,7 +1198,7 @@ class _Ban(_MoveBanTemplate):
             return reports.resource_does_not_run(resource_id, severity=severity)
         return reports.resource_running_on_nodes(
             resource_id,
-            running_on_nodes,
+            resource_running_on_after,
             severity=severity
         )
 

@@ -3280,3 +3280,222 @@ class CannotGroupResourceWrongType(NameBuildTest):
             ),
             reports.cannot_group_resource_wrong_type("R", "master")
         )
+
+class CannotMoveResourceBundle(NameBuildTest):
+    code = codes.CANNOT_MOVE_RESOURCE_BUNDLE
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move bundle resources",
+            reports.cannot_move_resource_bundle("R")
+        )
+
+class CannotMoveResourceClone(NameBuildTest):
+    code = codes.CANNOT_MOVE_RESOURCE_CLONE
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move cloned resources",
+            reports.cannot_move_resource_clone("R")
+        )
+
+class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
+    code = codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
+    def test_without_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id",
+            reports.cannot_move_resource_master_resource_not_promotable("R")
+        )
+
+    def test_with_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id (P)",
+            reports.cannot_move_resource_master_resource_not_promotable(
+                "R", promotable_id="P"
+            )
+        )
+
+class CannotMoveResourcePromotableNotMaster(NameBuildTest):
+    code = codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "to move promotable clone resources you must use --master and "
+                "the promotable clone id (P)"
+            ),
+            reports.cannot_move_resource_promotable_not_master("R", "P")
+        )
+
+class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
+    code = codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED
+    def test_success(self):
+        self.assert_message_from_report(
+            "You must specify a node when moving/banning a stopped resource",
+            reports.cannot_move_resource_stopped_no_node_specified("R")
+        )
+
+class ResourceMovePcmkEerror(NameBuildTest):
+    code = codes.RESOURCE_MOVE_PCMK_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_move_pcmk_error(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+class ResourceMovePcmkSuccess(NameBuildTest):
+    code = codes.RESOURCE_MOVE_PCMK_SUCCESS
+    def test_success(self):
+        self.assert_message_from_report(
+            "stdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_move_pcmk_success(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+    def test_translate(self):
+        self.assert_message_from_report(
+            (
+                "Warning: Creating location constraint "
+                    "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                    "for resource dummy on node1.\n"
+                "	This will prevent dummy from running on node1 until the "
+                    "constraint is removed\n"
+                "	This will be the case even if node1 is the last node in "
+                    "the cluster"
+            ),
+            reports.resource_move_pcmk_success(
+                "dummy",
+                "",
+                (
+                    "WARNING: Creating rsc_location constraint "
+                        "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                        "for resource dummy on node1.\n"
+                    "	This will prevent dummy from running on node1 until "
+                        "the constraint is removed using the clear option or "
+                        "by editing the CIB with an appropriate tool\n"
+                    "	This will be the case even if node1 is the last node "
+                        "in the cluster\n"
+                )
+            )
+        )
+
+class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
+    code = codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
+    def test_without_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id",
+            reports.cannot_ban_resource_master_resource_not_promotable("R")
+        )
+
+    def test_with_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id (P)",
+            reports.cannot_ban_resource_master_resource_not_promotable(
+                "R", promotable_id="P"
+            )
+        )
+
+class CannotBanResourceStoppedNoNodeSpecified(NameBuildTest):
+    code = codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED
+    def test_success(self):
+        self.assert_message_from_report(
+            "You must specify a node when moving/banning a stopped resource",
+            reports.cannot_ban_resource_stopped_no_node_specified("R")
+        )
+
+class ResourceBanPcmkEerror(NameBuildTest):
+    code = codes.RESOURCE_BAN_PCMK_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot ban resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_ban_pcmk_error(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+class ResourceBanPcmkSuccess(NameBuildTest):
+    code = codes.RESOURCE_BAN_PCMK_SUCCESS
+    def test_success(self):
+        self.assert_message_from_report(
+            "stdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_ban_pcmk_success(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+    def test_translate(self):
+        self.assert_message_from_report(
+            (
+                "Warning: Creating location constraint "
+                    "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                    "for resource dummy on node1.\n"
+                "	This will prevent dummy from running on node1 until the "
+                    "constraint is removed\n"
+                "	This will be the case even if node1 is the last node in "
+                    "the cluster"
+            ),
+            reports.resource_ban_pcmk_success(
+                "dummy",
+                "",
+                (
+                    "WARNING: Creating rsc_location constraint "
+                        "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                        "for resource dummy on node1.\n"
+                    "	This will prevent dummy from running on node1 until "
+                        "the constraint is removed using the clear option or "
+                        "by editing the CIB with an appropriate tool\n"
+                    "	This will be the case even if node1 is the last node "
+                        "in the cluster\n"
+                )
+            )
+        )
+
+class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
+    code = codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
+    def test_without_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id",
+            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
+                "R"
+            )
+        )
+
+    def test_with_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id (P)",
+            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
+                "R", promotable_id="P"
+            )
+        )
+
+class ResourceUnmoveUnbanPcmkEerror(NameBuildTest):
+    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot clear resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_unmove_unban_pcmk_error(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
+    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS
+    def test_success(self):
+        self.assert_message_from_report(
+            "stdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_unmove_unban_pcmk_success(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )

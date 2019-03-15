@@ -286,6 +286,8 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.cannot_move_resource_bundle(resource_element.get("id"))
         )
+        return report_list
+
     if (
         (analysis.is_clone or analysis.is_in_clone)
         and not
@@ -294,6 +296,8 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.cannot_move_resource_clone(resource_element.get("id"))
         )
+        return report_list
+
     if (
         not master
         and
@@ -309,7 +313,7 @@ def validate_move(resource_element, master):
                 analysis.promotable_clone_id
             )
         )
-    if master and not analysis.is_promotable_clone:
+    elif master and not analysis.is_promotable_clone:
         report_list.append(
             reports.cannot_move_resource_master_resource_not_promotable(
                 resource_element.get("id"),
