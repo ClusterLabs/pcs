@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.167] - 2019-03-18
 
 ### Added
 - Command `pcs client local-auth` for authentication of pcs client against local
