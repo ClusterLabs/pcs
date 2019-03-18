@@ -20,6 +20,7 @@ from pcs.lib.errors import (
     ReportItemSeverity as severities,
 )
 from pcs.lib.pacemaker.live import (
+    has_resource_unmove_unban_expired_support,
     resource_ban,
     resource_move,
     resource_unmove_unban,
@@ -1202,7 +1203,9 @@ class _Ban(_MoveBanTemplate):
             severity=severity
         )
 
-def unmove_unban(env, resource_id, node=None, master=False, wait=False):
+def unmove_unban(
+    env, resource_id, node=None, master=False, expired=False, wait=False
+):
     """
     Remove all constraints created by move and ban
 
@@ -1210,6 +1213,7 @@ def unmove_unban(env, resource_id, node=None, master=False, wait=False):
     string resource_id -- id of a resource to be unmoved/unbanned
     string node -- node to limit unmoving/unbanning to, all nodes if None
     bool master -- only remove constraints for Master role
+    bool expired -- only remove constrains which have already expired
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     # validate
@@ -1225,11 +1229,19 @@ def unmove_unban(env, resource_id, node=None, master=False, wait=False):
         report_list.extend(
             resource.common.validate_unmove_unban(resource_el, master)
         )
+    if (
+        expired
+        and
+        not has_resource_unmove_unban_expired_support(env.cmd_runner())
+    ):
+        report_list.append(
+            reports.resource_unmove_unban_pcmk_expired_not_supported()
+        )
     env.report_processor.process_list(report_list) # raises on error
 
     # run the action
     stdout, stderr, retval = resource_unmove_unban(
-        env.cmd_runner(), resource_id, node=node, master=master
+        env.cmd_runner(), resource_id, node=node, master=master, expired=expired
     )
     if retval != 0:
         raise LibraryError(

@@ -3949,6 +3949,14 @@ def cannot_unmove_unban_resource_master_resource_not_promotable(
         }
     )
 
+def resource_unmove_unban_pcmk_expired_not_supported():
+    """
+    crm_resource does not support --expired when unmoving/unbanning a resource
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED,
+    )
+
 def resource_unmove_unban_pcmk_error(resource_id, stdout, stderr):
     """
     crm_resource exited with an error when unmoving/unbanning a resource

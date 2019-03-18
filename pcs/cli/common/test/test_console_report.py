@@ -3499,3 +3499,11 @@ class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
                 "stderr1\n\n  stderr2\n"
             )
         )
+
+class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
+    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
+    def test_success(self):
+        self.assert_message_from_report(
+            "--expired is not supported, please upgrade pacemaker",
+            reports.resource_unmove_unban_pcmk_expired_not_supported()
+        )

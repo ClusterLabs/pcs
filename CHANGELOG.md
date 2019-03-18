@@ -12,6 +12,7 @@
 - `pcs cluster setup` now checks if nodes' addresses match value of `ip_version`
   ([rhbz#1667053])
 - Support for sbd option SBD\_TIMEOUT\_ACTION ([rhbz#1664828])
+- Support for clearing expired moves and bans of resources ([rhbz#1625386])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in
@@ -54,6 +55,7 @@
   deprecated to ease transition to its replacements. It will be removed again in
   future. [rhbz#1661059]
 
+[rhbz#1625386]: https://bugzilla.redhat.com/show_bug.cgi?id=1625386
 [rhbz#1653316]: https://bugzilla.redhat.com/show_bug.cgi?id=1653316
 [rhbz#1655055]: https://bugzilla.redhat.com/show_bug.cgi?id=1655055
 [rhbz#1656953]: https://bugzilla.redhat.com/show_bug.cgi?id=1656953

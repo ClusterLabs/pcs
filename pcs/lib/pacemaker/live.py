@@ -202,12 +202,7 @@ def _upgrade_cib(runner):
 ### wait for idle
 
 def has_wait_for_idle_support(runner):
-    # returns 1 on success so we don't care about retval
-    stdout, stderr, dummy_retval = runner.run(
-        [__exec("crm_resource"), "-?"]
-    )
-    # help goes to stderr but we check stdout as well if that gets changed
-    return "--wait" in stderr or "--wait" in stdout
+    return __is_in_crm_resource_help(runner, "--wait")
 
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
@@ -367,17 +362,24 @@ def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
         lifetime=lifetime,
     )
 
-def resource_unmove_unban(runner, resource_id, node=None, master=False):
+def resource_unmove_unban(
+    runner, resource_id, node=None, master=False, expired=False
+):
     return _resource_move_ban_clear(
         runner,
         "--clear",
         resource_id,
         node=node,
         master=master,
+        expired=expired,
     )
 
+def has_resource_unmove_unban_expired_support(runner):
+    return __is_in_crm_resource_help(runner, "--expired")
+
 def _resource_move_ban_clear(
-    runner, action, resource_id, node=None, master=False, lifetime=None
+    runner, action, resource_id, node=None, master=False, lifetime=None,
+    expired=False
 ):
     command = [
         __exec("crm_resource"),
@@ -391,6 +393,8 @@ def _resource_move_ban_clear(
         command.extend(["--master"])
     if lifetime:
         command.extend(["--lifetime", lifetime])
+    if expired:
+        command.extend(["--expired"])
     stdout, stderr, retval = runner.run(command)
     return stdout, stderr, retval
 
@@ -448,3 +452,11 @@ def _run_fence_history_command(runner, command, node=None):
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
+
+def __is_in_crm_resource_help(runner, text):
+    # returns 1 on success so we don't care about retval
+    stdout, stderr, dummy_retval = runner.run(
+        [__exec("crm_resource"), "-?"]
+    )
+    # help goes to stderr but we check stdout as well if that gets changed
+    return text in stderr or text in stdout

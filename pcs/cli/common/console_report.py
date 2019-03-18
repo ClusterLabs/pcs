@@ -2042,6 +2042,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
         resource_move_ban_clear_master_resource_not_promotable
     ,
+    codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED:
+        "--expired is not supported, please upgrade pacemaker"
+    ,
     codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR: lambda info:
         stdout_stderr_to_string(
             info["stdout"],

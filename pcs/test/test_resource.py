@@ -5941,6 +5941,7 @@ class ResourceClear(TestCase):
             "resource",
             node=None,
             master=False,
+            expired=False,
             wait=False
         )
 
@@ -5954,6 +5955,7 @@ class ResourceClear(TestCase):
             "resource",
             node="node",
             master=False,
+            expired=False,
             wait=False
         )
 
@@ -5961,11 +5963,12 @@ class ResourceClear(TestCase):
         resource.resource_unmove_unban(
             self.lib,
             ["resource", "node"],
-            dict_to_modifiers(dict(master=True, wait="10"))
+            dict_to_modifiers(dict(master=True, expired=True, wait="10"))
         )
         self.resource.unmove_unban.assert_called_once_with(
             "resource",
             node="node",
             master=True,
+            expired=True,
             wait="10"
         )

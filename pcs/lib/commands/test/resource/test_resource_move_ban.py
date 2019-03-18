@@ -201,12 +201,16 @@ class UnmoveUnbanMixin():
 class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
     def test_all_options(self):
         self.config.runner.cib.load(resources=resources_promotable)
-        self.config_pcmk_action(resource="A-clone", master=True, node="node")
+        self.config.runner.pcmk.can_clear_expired()
+        self.config_pcmk_action(
+            resource="A-clone", master=True, node="node", expired=True
+        )
         self.lib_action(
             self.env_assist.get_env(),
             "A-clone",
             master=True,
             node="node",
+            expired=True,
         )
         self.env_assist.assert_reports([
             fixture.info(
@@ -216,6 +220,21 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
                 stderr="pcmk std err",
             ),
         ])
+
+    def test_expired_not_supported(self):
+        self.config.runner.cib.load(resources=resources_promotable)
+        self.config.runner.pcmk.can_clear_expired(stderr="not supported")
+        self.env_assist.assert_raise_library_error(
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", expired=True
+            ),
+            [
+                fixture.error(
+                    report_codes
+                        .RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
+                ),
+            ]
+        )
 
 
 class MoveBanWaitMixin():

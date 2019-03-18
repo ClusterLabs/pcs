@@ -545,7 +545,7 @@ def resource_unmove_unban(lib, argv, modifiers):
       * --master
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--expired", "--master", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to clear")
@@ -558,6 +558,7 @@ def resource_unmove_unban(lib, argv, modifiers):
         resource_id,
         node=node,
         master=modifiers.is_specified("--master"),
+        expired=modifiers.is_specified("--expired"),
         wait=modifiers.get("--wait"),
     )
 

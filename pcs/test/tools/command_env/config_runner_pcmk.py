@@ -440,6 +440,7 @@ class PcmkShortcuts():
         resource=None,
         node=None,
         master=None,
+        expired=None,
         stdout="",
         stderr="",
         returncode=0
@@ -455,6 +456,7 @@ class PcmkShortcuts():
         string resource -- the id of a resource to be unmoved/unbanned
         string node -- the name of a destination node
         bool master -- limit clearing to master role
+        bool epired -- clear only expired moves and bans
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
@@ -474,6 +476,7 @@ class PcmkShortcuts():
         node=None,
         master=None,
         lifetime=None,
+        expired=None,
         stdout="",
         stderr="",
         returncode=0
@@ -487,6 +490,8 @@ class PcmkShortcuts():
             cmd.extend(["--master"])
         if lifetime:
             cmd.extend(["--lifetime", lifetime])
+        if expired:
+            cmd.extend(["--expired"])
         self.__calls.place(
             name,
             RunnerCall(
@@ -497,6 +502,20 @@ class PcmkShortcuts():
             ),
             before=before,
             instead=instead,
+        )
+
+    def can_clear_expired(
+        self, name="runner.pcmk.can_clear_expired", stderr="--expired"
+    ):
+        """
+        Create call which check --expired is supported by crm_resource
+
+        string name -- key of the call
+        string stderr -- crm_resource help text
+        """
+        self.__calls.place(
+            name,
+            RunnerCall("crm_resource -?", stderr=stderr),
         )
 
     def wait(

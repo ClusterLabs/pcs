@@ -340,14 +340,16 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    clear <resource id> [node] [--master] [--wait[=n]]
+    clear <resource id> [node] [--master] [--expired] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
-        If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id).
+        If --master is used the scope of the command is limited to the master
+        role and you must use the master id (instead of the resource id).
+        If --expired is specified, only constraints with expired lifetimes will
+        be removed.
         If --wait is specified, pcs will wait up to 'n' seconds for the
         operation to finish (including starting and/or moving resources if
-        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        appropriate) and then return 0 on success or 1 on error. If 'n' is not
         specified it defaults to 60 minutes.
 
     standards
