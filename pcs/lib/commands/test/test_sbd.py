@@ -21,7 +21,7 @@ from pcs.lib.errors import (
 from pcs.lib.env import LibraryEnvironment
 import pcs.lib.commands.sbd as cmd_sbd
 
-# pylint: disable=protected-access, no-self-use
+# pylint: disable=protected-access
 
 
 runner = Runner()
@@ -239,6 +239,7 @@ class ValidateSbdOptionsTest(TestCase):
         self.assertEqual([], cmd_sbd._validate_sbd_options(config))
 
     def test_watchdog_timeout_is_nonnegative_int(self):
+        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": "-1",
         }
@@ -260,6 +261,7 @@ class ValidateSbdOptionsTest(TestCase):
         )
 
     def test_watchdog_timeout_is_not_int(self):
+        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": "not int",
         }
@@ -281,6 +283,7 @@ class ValidateSbdOptionsTest(TestCase):
         )
 
     def test_watchdog_timeout_is_none(self):
+        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": None,
         }
@@ -311,6 +314,7 @@ class ValidateWatchdogDictTest(TestCase):
         self.assertEqual([], cmd_sbd._validate_watchdog_dict(watchdog_dict))
 
     def test_some_not_ok(self):
+        # pylint: disable=no-self-use
         watchdog_dict = {
             "node1": "",
             "node2": None,
@@ -425,8 +429,9 @@ class CommonTest(TestCase):
 
 
 class InitializeBlockDevicesTest(CommonTest):
+    @staticmethod
     def fixture_sbd_init(
-        self, device_list, options, stdout="", stderr="", return_code=0
+        device_list, options, stdout="", stderr="", return_code=0
     ):
         cmd = ["sbd"]
         for device in device_list:
@@ -438,7 +443,8 @@ class InitializeBlockDevicesTest(CommonTest):
         cmd.append("create")
         return [Call(" ".join(cmd), stdout, stderr, return_code)]
 
-    def fixture_invalid_value(self, option, value):
+    @staticmethod
+    def fixture_invalid_value(option, value):
         return (
             Severities.ERROR,
             report_codes.INVALID_OPTION_VALUE,
@@ -544,15 +550,18 @@ class InitializeBlockDevicesTest(CommonTest):
 @mock.patch("pcs.lib.sbd.get_local_sbd_config")
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class GetLocalDevicesInfoTest(CommonTest):
-    def fixture_sbd_enabled(self, enabled):
+    @staticmethod
+    def fixture_sbd_enabled(enabled):
         cmd = [settings.systemctl_binary, "is-enabled", "sbd.service"]
         return [Call(" ".join(cmd), returncode=0 if enabled else 1)]
 
-    def fixture_sbd_info(self, device, stdout="", return_code=0):
+    @staticmethod
+    def fixture_sbd_info(device, stdout="", return_code=0):
         cmd = ["sbd", "-d", device, "list"]
         return [Call(" ".join(cmd), stdout, returncode=return_code)]
 
-    def fixture_sbd_dump(self, device, stdout="", return_code=0):
+    @staticmethod
+    def fixture_sbd_dump(device, stdout="", return_code=0):
         cmd = ["sbd", "-d", device, "dump"]
         return [Call(" ".join(cmd), stdout, returncode=return_code)]
 
@@ -689,8 +698,9 @@ SBD_DEVICE="/dev1;/dev2;/dev3"
 
 
 class SetMessageTest(CommonTest):
+    @staticmethod
     def fixture_call_sbd_message(
-        self, device, node, message, stderr="", return_code=0
+        device, node, message, stderr="", return_code=0
     ):
         return [Call(
             "sbd -d {0} message {1} {2}".format(device, node, message),
