@@ -160,7 +160,7 @@ Login as the `hacluster` user.
 [ClusterLabs website](https://clusterlabs.org) is an excellent place to learn
 more about Pacemaker clusters.
 * [ClusterLabs quick start](https://clusterlabs.org/quickstart.html)
-* [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/index.html)
+* [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/2.0/html/Clusters_from_Scratch/index.html)
 * [ClusterLabs documentation page](https://clusterlabs.org/pacemaker/doc/)
 
 ---
