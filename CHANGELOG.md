@@ -44,6 +44,7 @@
 - Knet link option `ip_version` has been removed, it was never supported by
   corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
 - Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
+- Fixed a typo in documentation (regardles -> regardless) ([rhbz#1660702])
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
@@ -62,6 +63,7 @@
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1659051]: https://bugzilla.redhat.com/show_bug.cgi?id=1659051
 [rhbz#1659144]: https://bugzilla.redhat.com/show_bug.cgi?id=1659144
+[rhbz#1660702]: https://bugzilla.redhat.com/show_bug.cgi?id=1660702
 [rhbz#1661059]: https://bugzilla.redhat.com/show_bug.cgi?id=1661059
 [rhbz#1664057]: https://bugzilla.redhat.com/show_bug.cgi?id=1664057
 [rhbz#1664828]: https://bugzilla.redhat.com/show_bug.cgi?id=1664828

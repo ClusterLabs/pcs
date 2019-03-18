@@ -654,7 +654,7 @@ Commands:
         Link options are:
             bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
-        Totem and quorum can be configured regardles of used transport.
+        Totem and quorum can be configured regardless of used transport.
         Totem options are:
             consensus, downcheck, fail_recv_const, heartbeat_failures_allowed,
             hold, join, max_messages, max_network_delay, merge,
