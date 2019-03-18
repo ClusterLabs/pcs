@@ -40,11 +40,9 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
-    _get_primitive_roles_with_nodes,
-    _get_primitives_for_state_check,
+    get_resource_state,
 )
 from pcs.lib.pacemaker.values import (
-    is_true as is_pacemaker_true,
     timeout_to_seconds,
 )
 import pcs.lib.resource_agent as lib_ra
@@ -476,38 +474,9 @@ def resource_create(lib, argv, modifiers):
             **settings
         )
 
-def resource_move(lib, argv, modifiers, clear=False, ban=False):
-    """
-    Options:
-      * -f - CIB file
-      * --master
-      * --wait
-    """
-    del lib
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
-    move = not clear and not ban
-    other_options = []
-    if not argv:
-        if clear:
-            msg = "must specify a resource to clear"
-        elif ban:
-            msg = "must specify a resource to ban"
-        else:
-            msg = "must specify a resource to move"
-        utils.err(msg)
-
+def _parse_resource_move_ban(argv):
     resource_id = argv.pop(0)
-
-    if (clear and len(argv) > 1) or len(argv) > 2:
-        if clear:
-            usage.resource(["clear"])
-        elif ban:
-            usage.resource(["ban"])
-        else:
-            usage.resource(["move"])
-        sys.exit(1)
-
-    dest_node = None
+    node = None
     lifetime = None
     while argv:
         arg = argv.pop(0)
@@ -517,248 +486,81 @@ def resource_move(lib, argv, modifiers, clear=False, ban=False):
             lifetime = arg.split("=")[1]
             if lifetime and lifetime[0].isdigit():
                 lifetime = "P" + lifetime
-        elif not dest_node:
-            dest_node = arg
+        elif not node:
+            node = arg
         else:
             raise CmdLineInputError()
+    return resource_id, node, lifetime
 
-    if clear and lifetime:
+def resource_move(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
+
+    if not argv:
+        raise CmdLineInputError("must specify a resource to move")
+    if len(argv) > 3:
         raise CmdLineInputError()
+    resource_id, node, lifetime = _parse_resource_move_ban(argv)
 
-    dom = utils.get_cib_dom()
-    resource_element = (
-        utils.dom_get_any_resource(dom, resource_id)
-        or
-        utils.dom_get_bundle(dom, resource_id)
+    lib.resource.move(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        lifetime=lifetime,
+        wait=modifiers.get("--wait"),
     )
-    if not resource_element:
-        utils.err("%s is not a valid resource" % resource_id)
 
-    is_clone = False
-    is_in_clone = False
-    is_promotable_clone = False
-    is_in_promotable_clone = False
-    promotable_clone_id = None
-    if utils.dom_get_bundle(dom, resource_id):
-        is_clone = True
-    elif utils.dom_get_clone(dom, resource_id):
-        is_clone = True
-        meta_promotable = utils.dom_get_meta_attr_value(
-            resource_element, "promotable"
-        )
-        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
-            is_promotable_clone = True
-            promotable_clone_id = resource_id
-    elif utils.dom_get_master(dom, resource_id):
-        is_clone = True
-        is_promotable_clone = True
-        promotable_clone_id = resource_id
-    elif (
-        utils.dom_get_resource_clone(dom, resource_id)
-        or
-        utils.dom_get_group_clone(dom, resource_id)
-    ):
-        is_in_clone = True
-        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
-        meta_promotable = utils.dom_get_meta_attr_value(parent, "promotable")
-        if meta_promotable is not None and is_pacemaker_true(meta_promotable):
-            is_in_promotable_clone = True
-            promotable_clone_id = parent.getAttribute("id")
-    elif (
-        utils.dom_get_resource_masterslave(dom, resource_id)
-        or
-        utils.dom_get_group_masterslave(dom, resource_id)
-    ):
-        is_in_clone = True
-        parent = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
-        is_in_promotable_clone = True
-        promotable_clone_id = parent.getAttribute("id")
+def resource_ban(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
 
-    if (
-        move
-        and
-        (is_clone or is_in_clone)
-        and not
-        (is_promotable_clone or is_in_promotable_clone)
-    ):
-        utils.err("cannot move cloned resources")
-    if (
-        move
-        and
-        not modifiers.is_specified("--master")
-        and
-        (is_promotable_clone or is_in_promotable_clone)
-    ):
-        utils.err(
-            "to move promotable clone resources you must use --master "
-                "and the clone id (%s)"
-            % promotable_clone_id
-        )
-    if modifiers.is_specified("--master") and not is_promotable_clone:
-        if promotable_clone_id:
-            utils.err(
-                "when specifying --master "
-                "you must use the promotable clone id (%s)"
-                % promotable_clone_id
-            )
-        else:
-            utils.err(
-                "when specifying --master you must use the promotable clone id"
-            )
+    if not argv:
+        raise CmdLineInputError("must specify a resource to ban")
+    if len(argv) > 3:
+        raise CmdLineInputError()
+    resource_id, node, lifetime = _parse_resource_move_ban(argv)
 
-    if modifiers.is_specified("--wait"):
-        wait_timeout = utils.validate_wait_get_timeout()
-        allowed_nodes = set()
-        banned_nodes = set()
-        if not clear:
-            running_on = utils.resource_running_on(resource_id)
-            was_running = running_on["is_running"]
-            if dest_node and ban: # ban, node specified
-                banned_nodes = set([dest_node])
-            elif dest_node: # move, node specified
-                allowed_nodes = set([dest_node])
-            else: # move or ban, node not specified
-                banned_nodes = set(
-                    running_on["nodes_master"] + running_on["nodes_started"]
-                )
+    lib.resource.ban(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        lifetime=lifetime,
+        wait=modifiers.get("--wait"),
+    )
 
-    if modifiers.is_specified("--master"):
-        other_options.append("--master")
-    if lifetime is not None:
-        other_options.append("--lifetime=%s" % lifetime)
+def resource_unmove_unban(lib, argv, modifiers):
+    """
+    Options:
+      * -f - CIB file
+      * --master
+      * --wait
+    """
+    modifiers.ensure_only_supported("-f", "--expired", "--master", "--wait")
 
-    if clear:
-        if dest_node:
-            # both --host and --node works, but --host is deprecated
-            output, ret = utils.run(
-                [
-                    "crm_resource",
-                    "--resource", resource_id, "--clear", "--host", dest_node
-                ]
-                +
-                other_options
-            )
-        else:
-            output, ret = utils.run(
-                ["crm_resource", "--resource", resource_id, "--clear"]
-                +
-                other_options
-            )
-    else:
-        if not dest_node:
-            if ban:
-                output, ret = utils.run(
-                    ["crm_resource", "--resource", resource_id, "--ban"]
-                    +
-                    other_options
-                )
-            else:
-                output, ret = utils.run(
-                    ["crm_resource", "--resource", resource_id, "--move"]
-                    +
-                    other_options
-                )
-        else:
-            if ban:
-                output, ret = utils.run(
-                    [
-                        "crm_resource",
-                        "--resource", resource_id, "--ban", "--node", dest_node
-                    ]
-                    +
-                    other_options
-                )
-            else:
-                output, ret = utils.run(
-                    [
-                        "crm_resource",
-                        "--resource", resource_id, "--move", "--node", dest_node
-                    ]
-                    +
-                    other_options
-                )
-    if ret != 0:
-        if (
-            "Resource '" + resource_id + "' not moved: active in 0 locations"
-            in
-            output
-        ):
-            utils.err(
-                "You must specify a node when moving/banning a stopped resource"
-            )
-        new_lines = ["error moving/banning/clearing resource"]
-        for line in output.split("\n"):
-            if not line.strip():
-                continue
-            line = line.replace(
-                "--ban --master --node <name>",
-                f"pcs resource ban {resource_id} <node> --master"
-            )
-            line = line.replace(
-                "--ban --node <name>",
-                f"pcs resource ban {resource_id} <node>"
-            )
-            new_lines.append(line)
-        print("\n".join(new_lines))
-    else:
-        warning_re = re.compile(
-            r"WARNING: Creating rsc_location constraint '([^']+)' "
-            + r"with a score of -INFINITY for resource ([\S]+) on (.+)."
-        )
-        for line in output.split("\n"):
-            warning_match = warning_re.search(line)
-            if warning_match:
-                warning_constraint = warning_match.group(1)
-                warning_resource = warning_match.group(2)
-                warning_node = warning_match.group(3)
-                warning_action = "running"
-                if modifiers.is_specified("--master"):
-                    warning_action = "being promoted"
-                print(("Warning: Creating location constraint {0} with a score "
-                    + "of -INFINITY for resource {1} on node {2}.").format(
-                        warning_constraint, warning_resource, warning_node
-                    ))
-                print(("This will prevent {0} from {1} on {2} until the "
-                    + "constraint is removed. This will be the case even if {3}"
-                    + " is the last node in the cluster.").format(
-                        warning_resource, warning_action, warning_node,
-                        warning_node
-                    ))
+    if not argv:
+        raise CmdLineInputError("must specify a resource to clear")
+    if len(argv) > 2:
+        raise CmdLineInputError()
+    resource_id = argv.pop(0)
+    node = argv.pop(0) if argv else None
 
-    if modifiers.is_specified("--wait"):
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(resource_id)
-        running_nodes = running_on["nodes_started"] + running_on["nodes_master"]
-        was_error = retval != 0
-        if ban and (
-            not banned_nodes.isdisjoint(running_nodes)
-            or
-            (was_running and not running_nodes)
-        ):
-            was_error = True
-        # pylint: disable=too-many-boolean-expressions
-        if (
-            not ban and not clear and was_running # running resource moved
-            and (
-                not running_nodes
-                or
-                (allowed_nodes and allowed_nodes.isdisjoint(running_nodes))
-           )
-        ):
-            was_error = True
-        if not was_error:
-            print(running_on["message"])
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            msg.append(running_on["message"])
-            if retval != 0 and output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
+    lib.resource.unmove_unban(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        expired=modifiers.is_specified("--expired"),
+        wait=modifiers.get("--wait"),
+    )
 
 
 def resource_standards(lib, argv, modifiers):
@@ -1580,14 +1382,11 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         stop is handled also in this function
     """
     def is_bundle_running(bundle_id):
-        roles_with_nodes = _get_primitive_roles_with_nodes(
-            _get_primitives_for_state_check(
-                get_cluster_state_dom(
-                    lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
-                ),
-                bundle_id,
-                expected_running=True
-            )
+        roles_with_nodes = get_resource_state(
+            get_cluster_state_dom(
+                lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
+            ),
+            bundle_id
         )
         return bool(roles_with_nodes)
 

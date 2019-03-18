@@ -15,16 +15,27 @@ from pcs.lib.cib.tools import (
     IdProvider,
 )
 from pcs.lib.env_tools import get_existing_nodes_names_addrs
-from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    timeout_to_seconds,
-    validate_id,
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity as severities,
+)
+from pcs.lib.pacemaker.live import (
+    has_resource_unmove_unban_expired_support,
+    resource_ban,
+    resource_move,
+    resource_unmove_unban,
+    wait_for_idle,
 )
 from pcs.lib.pacemaker.state import (
     ensure_resource_state,
+    get_resource_state,
     info_resource_state,
     is_resource_managed,
     ResourceNotFound,
+)
+from pcs.lib.pacemaker.values import (
+    timeout_to_seconds,
+    validate_id,
 )
 from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name as get_agent
@@ -966,6 +977,288 @@ def get_failcounts(
         operation=operation,
         interval=interval_ms
     )
+
+def move(env, resource_id, node=None, master=False, lifetime=None, wait=False):
+    """
+    Create a constraint to move a resource
+
+    LibraryEnvironment env
+    string resource_id -- id of a resource to be moved
+    string node -- node to move the resource to, ban on the current node if None
+    bool master -- limit the constraint to the Master role
+    string lifetime -- lifespan of the constraint, forever if None
+    mixed wait -- flag for controlling waiting for pacemaker idle mechanism
+    """
+    return _Move().run(
+        env,
+        resource_id,
+        node=node,
+        master=master,
+        lifetime=lifetime,
+        wait=wait
+    )
+
+def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
+    """
+    Create a constraint to keep a resource of a node
+
+    LibraryEnvironment env
+    string resource_id -- id of a resource to be banned
+    string node -- node to ban the resource on, ban on the current node if None
+    bool master -- limit the constraint to the Master role
+    string lifetime -- lifespan of the constraint, forever if None
+    mixed wait -- flag for controlling waiting for pacemaker idle mechanism
+    """
+    return _Ban().run(
+        env,
+        resource_id,
+        node=node,
+        master=master,
+        lifetime=lifetime,
+        wait=wait
+    )
+
+class _MoveBanTemplate():
+    def _validate(self, resource_el, master):
+        raise NotImplementedError()
+
+    def _run_action(self, runner, resource_id, node, master, lifetime):
+        raise NotImplementedError()
+
+    def _report_action_stopped_resource(self, resource_id):
+        raise NotImplementedError()
+
+    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
+        raise NotImplementedError()
+
+    def _report_action_pcmk_success(self, resource_id, stdout, stderr):
+        raise NotImplementedError()
+
+    def _report_wait_result(
+        self, resource_id, node, resource_running_on_before,
+        resource_running_on_after,
+    ):
+        raise NotImplementedError()
+
+    @staticmethod
+    def _running_on_nodes(resource_state):
+        if resource_state:
+            return frozenset(
+                resource_state.get("Master", [])
+                +
+                resource_state.get("Started", [])
+            )
+        return frozenset()
+
+    def run(
+        self,
+        env, resource_id, node=None, master=False, lifetime=None, wait=False
+    ):
+        # validate
+        env.ensure_wait_satisfiable(wait) # raises on error
+
+        report_list = []
+        resource_el = resource.common.find_one_resource_and_report(
+            get_resources(env.get_cib()),
+            resource_id,
+            report_list,
+        )
+        if resource_el is not None:
+            report_list.extend(self._validate(resource_el, master))
+        env.report_processor.process_list(report_list) # raises on error
+
+        # get current status for wait processing
+        if wait is not False:
+            resource_running_on_before = get_resource_state(
+                env.get_cluster_state(),
+                resource_id
+            )
+
+        # run the action
+        stdout, stderr, retval = self._run_action(
+            env.cmd_runner(), resource_id, node=node, master=master,
+            lifetime=lifetime
+        )
+        if retval != 0:
+            if (
+                f"Resource '{resource_id}' not moved: active in 0 locations"
+                in
+                stderr
+            ):
+                raise LibraryError(
+                    self._report_action_stopped_resource(resource_id)
+                )
+            raise LibraryError(
+                self._report_action_pcmk_error(resource_id, stdout, stderr)
+            )
+        env.report_processor.process(
+            self._report_action_pcmk_success(resource_id, stdout, stderr)
+        )
+
+        # process wait
+        if wait is not False:
+            wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
+            resource_running_on_after = get_resource_state(
+                env.get_cluster_state(),
+                resource_id
+            )
+            env.report_processor.process(
+                self._report_wait_result(
+                    resource_id,
+                    node,
+                    resource_running_on_before,
+                    resource_running_on_after,
+                )
+            )
+
+class _Move(_MoveBanTemplate):
+    def _validate(self, resource_el, master):
+        return resource.common.validate_move(resource_el, master)
+
+    def _run_action(self, runner, resource_id, node, master, lifetime):
+        return resource_move(
+            runner, resource_id, node=node, master=master, lifetime=lifetime
+        )
+
+    def _report_action_stopped_resource(self, resource_id):
+        return reports.cannot_move_resource_stopped_no_node_specified(
+            resource_id
+        )
+
+    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
+        return reports.resource_move_pcmk_error(resource_id, stdout, stderr)
+
+    def _report_action_pcmk_success(self, resource_id, stdout, stderr):
+        return reports.resource_move_pcmk_success(resource_id, stdout, stderr)
+
+    def _report_wait_result(
+        self, resource_id, node, resource_running_on_before,
+        resource_running_on_after
+    ):
+        allowed_nodes = frozenset([node] if node else [])
+        running_on_nodes = self._running_on_nodes(resource_running_on_after)
+
+        severity = severities.INFO
+        if (
+            resource_running_on_before # running resource moved
+            and (
+                not running_on_nodes
+                or
+                (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
+                or
+                (resource_running_on_before == resource_running_on_after)
+           )
+        ):
+            severity = severities.ERROR
+        if not resource_running_on_after:
+            return reports.resource_does_not_run(resource_id, severity=severity)
+        return reports.resource_running_on_nodes(
+            resource_id,
+            resource_running_on_after,
+            severity=severity
+        )
+
+class _Ban(_MoveBanTemplate):
+    def _validate(self, resource_el, master):
+        return resource.common.validate_ban(resource_el, master)
+
+    def _run_action(self, runner, resource_id, node, master, lifetime):
+        return resource_ban(
+            runner, resource_id, node=node, master=master, lifetime=lifetime
+        )
+
+    def _report_action_stopped_resource(self, resource_id):
+        return reports.cannot_ban_resource_stopped_no_node_specified(
+            resource_id
+        )
+
+    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
+        return reports.resource_ban_pcmk_error(resource_id, stdout, stderr)
+
+    def _report_action_pcmk_success(self, resource_id, stdout, stderr):
+        return reports.resource_ban_pcmk_success(resource_id, stdout, stderr)
+
+    def _report_wait_result(
+        self, resource_id, node, resource_running_on_before,
+        resource_running_on_after
+    ):
+        running_on_nodes = self._running_on_nodes(resource_running_on_after)
+        if node:
+            banned_nodes = frozenset([node])
+        else:
+            banned_nodes = self._running_on_nodes(resource_running_on_before)
+
+        severity = severities.INFO
+        if (
+            not banned_nodes.isdisjoint(running_on_nodes)
+            or
+            (resource_running_on_before and not running_on_nodes)
+        ):
+            severity = severities.ERROR
+        if not resource_running_on_after:
+            return reports.resource_does_not_run(resource_id, severity=severity)
+        return reports.resource_running_on_nodes(
+            resource_id,
+            resource_running_on_after,
+            severity=severity
+        )
+
+def unmove_unban(
+    env, resource_id, node=None, master=False, expired=False, wait=False
+):
+    """
+    Remove all constraints created by move and ban
+
+    LibraryEnvironment env
+    string resource_id -- id of a resource to be unmoved/unbanned
+    string node -- node to limit unmoving/unbanning to, all nodes if None
+    bool master -- only remove constraints for Master role
+    bool expired -- only remove constrains which have already expired
+    mixed wait -- flag for controlling waiting for pacemaker idle mechanism
+    """
+    # validate
+    env.ensure_wait_satisfiable(wait) # raises on error
+
+    report_list = []
+    resource_el = resource.common.find_one_resource_and_report(
+        get_resources(env.get_cib()),
+        resource_id,
+        report_list,
+    )
+    if resource_el is not None:
+        report_list.extend(
+            resource.common.validate_unmove_unban(resource_el, master)
+        )
+    if (
+        expired
+        and
+        not has_resource_unmove_unban_expired_support(env.cmd_runner())
+    ):
+        report_list.append(
+            reports.resource_unmove_unban_pcmk_expired_not_supported()
+        )
+    env.report_processor.process_list(report_list) # raises on error
+
+    # run the action
+    stdout, stderr, retval = resource_unmove_unban(
+        env.cmd_runner(), resource_id, node=node, master=master, expired=expired
+    )
+    if retval != 0:
+        raise LibraryError(
+            reports.resource_unmove_unban_pcmk_error(
+                resource_id, stdout, stderr
+            )
+        )
+    env.report_processor.process(
+        reports.resource_unmove_unban_pcmk_success(resource_id, stdout, stderr)
+    )
+
+    # process wait
+    if wait is not False:
+        wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
+        env.report_processor.process(
+            info_resource_state(env.get_cluster_state(), resource_id)
+        )
 
 def _find_resources_or_raise(
     context_element, resource_ids, additional_search=None, resource_tags=None

@@ -9,7 +9,8 @@ support for them to be able to read, process and display CIBs containing them.
 """
 from lxml import etree
 
-from pcs.lib.cib.nvpair import append_new_meta_attributes
+from pcs.lib.cib import nvpair
+from pcs.lib.pacemaker.values import is_true
 
 
 TAG_CLONE = "clone"
@@ -24,6 +25,37 @@ def is_master(resource_el):
 
 def is_any_clone(resource_el):
     return resource_el.tag in ALL_TAGS
+
+def is_promotable_clone(resource_el):
+    """
+    Return True if resource_el is a promotable clone, False on clone and master
+    """
+    return (
+        is_clone(resource_el)
+        and
+        is_true(nvpair.get_value(
+            nvpair.META_ATTRIBUTES_TAG,
+            resource_el,
+            "promotable",
+            default="false",
+        ))
+    )
+
+def get_parent_any_clone(resource_el):
+    """
+    Get any parent clone of a primitive (may be in a group) or group
+
+    etree.Element resource_el -- the primitive or group to get its parent clone
+    """
+    element = resource_el
+    for _ in range(2):
+        parent_el = element.getparent()
+        if parent_el is None:
+            return None
+        if is_any_clone(parent_el):
+            return parent_el
+        element = parent_el
+    return None
 
 def append_new(resources_section, id_provider, primitive_element, options):
     """
@@ -45,7 +77,7 @@ def append_new(resources_section, id_provider, primitive_element, options):
     clone_element.append(primitive_element)
 
     if options:
-        append_new_meta_attributes(clone_element, options, id_provider)
+        nvpair.append_new_meta_attributes(clone_element, options, id_provider)
 
     return clone_element
 

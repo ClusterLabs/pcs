@@ -25,6 +25,8 @@ PCS_LONG_OPTIONS = [
     # TODO remove
     # used only in deprecated 'pcs resource|stonith show'
     "groups",
+    # "pcs resource clear --expired" - only clear expired moves and bans
+    "expired",
 ]
 
 def split_list(arg_list, separator):
@@ -350,6 +352,7 @@ class InputModifiers():
             "--defaults": "--defaults" in options,
             "--disabled": "--disabled" in options,
             "--enable": "--enable" in options,
+            "--expired": "--expired" in options,
             "--force": "--force" in options,
             "--full": "--full" in options,
             # TODO remove

@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 import os
-import re
 import shutil
 from random import shuffle
 from textwrap import dedent
@@ -35,9 +34,17 @@ from pcs import utils
 from pcs import resource
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
-# pylint: disable=invalid-name, no-self-use, bad-whitespace, line-too-long, too-many-public-methods, redefined-outer-name, too-many-statements, anomalous-backslash-in-string
+# pylint: disable=invalid-name
+# pylint: disable=no-self-use
+# pylint: disable=bad-whitespace
+# pylint: disable=line-too-long
+# pylint: disable=too-many-public-methods
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-statements
 
-LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+LOCATION_NODE_VALIDATION_SKIP_WARNING = (
+    f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+)
 
 RESOURCES_TMP = rc("test_resource")
 if not os.path.exists(RESOURCES_TMP):
@@ -2179,727 +2186,6 @@ monitor interval=20 (A-monitor-interval-20)
                 """
             )
         )
-
-    def testResourceMoveBanClear(self):
-        # Load nodes into cib so move will work
-        utils.usefile = True
-        utils.filename = temp_cib
-
-        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        self.assert_pcs_fail(
-            "resource move",
-            "Error: must specify a resource to move\n"
-        )
-        self.assert_pcs_fail(
-            "resource ban",
-            "Error: must specify a resource to ban\n"
-        )
-        self.assert_pcs_fail(
-            "resource clear",
-            "Error: must specify a resource to clear\n"
-        )
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move dummy")
-        ac(output, """\
-Error: You must specify a node when moving/banning a stopped resource
-""")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move dummy rh7-1")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: dummy
-    Enabled on: rh7-1 (score:INFINITY) (role: Started) (id:cli-prefer-dummy)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear dummy")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-
-        output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
-        ac(output, """\
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
-This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: dummy
-    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-dummy-on-rh7-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear dummy")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-
-        output, returnVal = pcs(
-            temp_cib, "resource move dummy rh7-1 lifetime=1H"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
-        ac(output, """\
-Location Constraints:
-  Resource: dummy
-    Constraint: cli-prefer-dummy
-      Rule: boolean-op=and score=INFINITY  (id:cli-prefer-rule-dummy)
-        Expression: #uname eq string rh7-1  (id:cli-prefer-expr-dummy)
-        Expression: date lt {datetime}  (id:cli-prefer-lifetime-end-dummy)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear dummy")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-
-        output, returnVal = pcs(
-            temp_cib, "resource ban dummy rh7-1 lifetime=P1H"
-        )
-        ac(output, """\
-Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
-This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( (\+|-)\d\d:\d\d))", "{datetime}", output)
-        ac(output, """\
-Location Constraints:
-  Resource: dummy
-    Constraint: cli-ban-dummy-on-rh7-1
-      Rule: boolean-op=and score=-INFINITY  (id:cli-ban-dummy-on-rh7-1-rule)
-        Expression: #uname eq string rh7-1  (id:cli-ban-dummy-on-rh7-1-expr)
-        Expression: date lt {datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1 rh7-1")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib, "resource ban dummy rh7-1 lifetime=1H lifetime=1H"
-        )
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move dummy rh7-1 --master")
-        ac(output, """\
-Error: when specifying --master you must use the promotable clone id
-""")
-        self.assertEqual(1, returnVal)
-
-    def testCloneMoveBanClear(self):
-        # Load nodes into cib so move will work
-        utils.usefile = True
-        utils.filename = temp_cib
-        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clone DG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # move
-        output, returnVal = pcs(temp_cib, "resource move D1")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        # move --master
-        output, returnVal = pcs(temp_cib, "resource move D1 --master")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2 --master")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG --master")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
-        ac(output, "Error: cannot move cloned resources\n")
-        self.assertEqual(1, returnVal)
-
-        # ban
-        output, returnVal = pcs(temp_cib, "resource ban D1")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # ban --master
-        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        # clear
-        output, returnVal = pcs(temp_cib, "resource clear D1")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # clear --master
-        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id\n")
-        self.assertEqual(1, returnVal)
-
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
-        ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: DG-clone
-    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-    def testPromotableCloneMoveBanClear(self):
-        # Load nodes into cib so move will work
-        utils.usefile = True
-        utils.filename = temp_cib
-        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy promotable"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource promotable DG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # move
-        output, returnVal = pcs(temp_cib, "resource move D1")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        # move --master
-        output, returnVal = pcs(temp_cib, "resource move D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # ban
-        output, returnVal = pcs(temp_cib, "resource ban D1")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # ban --master
-        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # clear
-        output, returnVal = pcs(temp_cib, "resource clear D1")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # clear --master
-        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
-        ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: DG-clone
-    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-    def testMasterMoveBanClear(self):
-        # Load nodes into cib so move will work
-        utils.usefile = True
-        utils.filename = temp_cib
-        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(temp_cib, "D1", master_id="D1-clone")
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(temp_cib, "DG", master_id="DG-clone")
-
-        # move
-        output, returnVal = pcs(temp_cib, "resource move D1")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone")
-        ac(output, "Error: to move promotable clone resources you must use --master and the clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        # move --master
-        output, returnVal = pcs(temp_cib, "resource move D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D1-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource move DG-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # ban
-        output, returnVal = pcs(temp_cib, "resource ban D1")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # ban --master
-        output, returnVal = pcs(temp_cib, "resource ban D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D1-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone --master")
-        ac(output, "Error: You must specify a node when moving/banning a stopped resource\n")
-        self.assertEqual(1, returnVal)
-
-        # clear
-        output, returnVal = pcs(temp_cib, "resource clear D1")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        # clear --master
-        output, returnVal = pcs(temp_cib, "resource clear D1 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (D1-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D1-clone --master")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear D2 --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG --master")
-        ac(output, "Error: when specifying --master you must use the promotable clone id (DG-clone)\n")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone --master")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-
-        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
-        ac(output, """\
-Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
-This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-  Resource: DG-clone
-    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "constraint --full")
-        ac(output, """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""")
-        self.assertEqual(0, returnVal)
 
     @skip(
         "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
@@ -6457,4 +5743,232 @@ class GroupAdd(TestCase, AssertPcsMixin):
             adjacent_resource_id=None,
             put_after_adjacent=True,
             wait="10",
+        )
+
+class ResourceMoveBanMixin():
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertEqual(cm.exception.message, self.no_args_error)
+        self.lib_command.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "arg1", "arg2", "arg3"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_node_twice(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "node1", "node2"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_lifetime_twice(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.cli_command(
+                self.lib,
+                ["resource", "lifetime=1h", "lifetime=2h"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_succes(self):
+        self.cli_command(
+            self.lib,
+            ["resource"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime=None,
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_success_node(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime=None,
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_lifetime(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_success_lifetime_unchanged(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=T1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="T1h",
+            master=False,
+            node=None,
+            wait=False
+        )
+
+    def test_succes_node_lifetime(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "node", "lifetime=1h"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_lifetime_node(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=False,
+            node="node",
+            wait=False
+        )
+
+    def test_success_all_options(self):
+        self.cli_command(
+            self.lib,
+            ["resource", "lifetime=1h", "node"],
+            dict_to_modifiers(dict(master=True, wait="10"))
+        )
+        self.lib_command.assert_called_once_with(
+            "resource",
+            lifetime="P1h",
+            master=True,
+            node="node",
+            wait="10"
+        )
+
+class ResourceMove(ResourceMoveBanMixin, TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["move"])
+        self.lib.resource = self.resource
+        self.lib_command = self.resource.move
+        self.cli_command = resource.resource_move
+        self.no_args_error = "must specify a resource to move"
+
+class ResourceBan(ResourceMoveBanMixin, TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["ban"])
+        self.lib.resource = self.resource
+        self.lib_command = self.resource.ban
+        self.cli_command = resource.resource_ban
+        self.no_args_error = "must specify a resource to ban"
+
+class ResourceClear(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["unmove_unban"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_unmove_unban(
+                self.lib,
+                [],
+                dict_to_modifiers(dict())
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "must specify a resource to clear"
+        )
+        self.resource.unmove_unban.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_unmove_unban(
+                self.lib,
+                ["resource", "arg1", "arg2"],
+                dict_to_modifiers(dict())
+            )
+        self.assertIsNone(cm.exception.message)
+        self.resource.unmove_unban.assert_not_called()
+
+    def test_succes(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node=None,
+            master=False,
+            expired=False,
+            wait=False
+        )
+
+    def test_success_node(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict())
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node="node",
+            master=False,
+            expired=False,
+            wait=False
+        )
+
+    def test_success_all_options(self):
+        resource.resource_unmove_unban(
+            self.lib,
+            ["resource", "node"],
+            dict_to_modifiers(dict(master=True, expired=True, wait="10"))
+        )
+        self.resource.unmove_unban.assert_called_once_with(
+            "resource",
+            node="node",
+            master=True,
+            expired=True,
+            wait="10"
         )

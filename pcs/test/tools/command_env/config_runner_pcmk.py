@@ -364,6 +364,160 @@ class PcmkShortcuts():
             instead=instead,
         )
 
+    def resource_move(
+        self,
+        name="runner.pcmk.resource_move",
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        master=None,
+        lifetime=None,
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for crm_resource --move
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string resource -- the id of a resource to be moved
+        string node -- the name of a destination node
+        bool master -- limit move to master role
+        string lifetime -- lifetime of the created moving constraint
+        string stdout -- crm_resource's stdout
+        string stderr -- crm_resource's stderr
+        int returncode -- crm_resource's returncode
+        """
+        all_args = locals()
+        del all_args["self"]
+        all_args["action"] = "--move"
+        self._resource_move_ban_clear(**all_args)
+
+    def resource_ban(
+        self,
+        name="runner.pcmk.resource_ban",
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        master=None,
+        lifetime=None,
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for crm_resource --ban
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string resource -- the id of a resource to be banned
+        string node -- the name of a destination node
+        bool master -- limit ban to master role
+        string lifetime -- lifetime of the created banning constraint
+        string stdout -- crm_resource's stdout
+        string stderr -- crm_resource's stderr
+        int returncode -- crm_resource's returncode
+        """
+        all_args = locals()
+        del all_args["self"]
+        all_args["action"] = "--ban"
+        self._resource_move_ban_clear(**all_args)
+
+    def resource_clear(
+        self,
+        name="runner.pcmk.resource_clear",
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        master=None,
+        expired=None,
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        """
+        Create a call for crm_resource --clear
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string resource -- the id of a resource to be unmoved/unbanned
+        string node -- the name of a destination node
+        bool master -- limit clearing to master role
+        bool epired -- clear only expired moves and bans
+        string stdout -- crm_resource's stdout
+        string stderr -- crm_resource's stderr
+        int returncode -- crm_resource's returncode
+        """
+        all_args = locals()
+        del all_args["self"]
+        all_args["action"] = "--clear"
+        self._resource_move_ban_clear(**all_args)
+
+    def _resource_move_ban_clear(
+        self,
+        name,
+        action,
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        master=None,
+        lifetime=None,
+        expired=None,
+        stdout="",
+        stderr="",
+        returncode=0
+    ):
+        cmd = ["crm_resource", action]
+        if resource:
+            cmd.extend(["--resource", resource])
+        if node:
+            cmd.extend(["--node", node])
+        if master:
+            cmd.extend(["--master"])
+        if lifetime:
+            cmd.extend(["--lifetime", lifetime])
+        if expired:
+            cmd.extend(["--expired"])
+        self.__calls.place(
+            name,
+            RunnerCall(
+                " ".join(cmd),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode
+            ),
+            before=before,
+            instead=instead,
+        )
+
+    def can_clear_expired(
+        self, name="runner.pcmk.can_clear_expired", stderr="--expired"
+    ):
+        """
+        Create call which check --expired is supported by crm_resource
+
+        string name -- key of the call
+        string stderr -- crm_resource help text
+        """
+        self.__calls.place(
+            name,
+            RunnerCall("crm_resource -?", stderr=stderr),
+        )
+
     def wait(
         self, name="runner.pcmk.wait", stderr="", returncode=None, timeout=None
     ):

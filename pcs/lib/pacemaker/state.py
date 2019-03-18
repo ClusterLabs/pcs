@@ -189,14 +189,17 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
             ])
     return {role: sorted(nodes) for role, nodes in roles_with_nodes.items()}
 
-def info_resource_state(cluster_state, resource_id):
-    roles_with_nodes = _get_primitive_roles_with_nodes(
+def get_resource_state(cluster_state, resource_id):
+    return _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
             cluster_state,
             resource_id,
             expected_running=True
         )
     )
+
+def info_resource_state(cluster_state, resource_id):
+    roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if not roles_with_nodes:
         return reports.resource_does_not_run(
             resource_id,

@@ -335,6 +335,7 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
+                "ban": resource.ban,
                 "bundle_create": resource.bundle_create,
                 "bundle_reset": resource.bundle_reset,
                 "bundle_update": resource.bundle_update,
@@ -347,7 +348,9 @@ def load_module(env, middleware_factory, name):
                 "get_failcounts": resource.get_failcounts,
                 "group_add": resource.group_add,
                 "manage": resource.manage,
+                "move": resource.move,
                 "unmanage": resource.unmanage,
+                "unmove_unban": resource.unmove_unban,
             }
         )
 
