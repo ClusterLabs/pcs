@@ -20,7 +20,6 @@ RUN dnf install -y --disablerepo updates-testing \
         rubygem-ffi \
         rubygem-io-console \
         rubygem-json \
-        rubygem-multi_json \
         rubygem-open4 \
         rubygem-rack \
         rubygem-rack-protection \
