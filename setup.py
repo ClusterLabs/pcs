@@ -22,14 +22,11 @@ setup(
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='https://github.com/ClusterLabs/pcs',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*.test.*", "*.test"]),
     package_data={'pcs':[
         'bash_completion',
         'pcs.8',
         'pcs',
-        'test/resources/*.xml',
-        'test/resources/*.conf',
-        'test/resources/qdevice-certs/*'
     ]},
     zip_safe=False,
     entry_points={
