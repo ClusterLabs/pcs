@@ -209,6 +209,19 @@ api.checkAuthAgainstNodes = function(nodesNames){
 
 api.clusterSetup = function(submitData, processOptions){
   var setupData = submitData.setupData;
+  var transportOptions = {};
+  if (setupData.transportType === "knet") {
+    transportOptions = {
+      ip_version: setupData.transportOptions.ip_version,
+      knet_pmtud_interval: setupData.transportOptions.knet_pmtud_interval,
+      link_mode: setupData.transportOptions.link_mode,
+    };
+  } else if(setupData.transportType !== undefined) {
+    transportOptions = {
+        ip_version: setupData.transportOptions.ip_version,
+        netmtu: setupData.transportOptions.netmtu,
+    };
+  }
   var data = {
     cluster_name: setupData.clusterName,
     nodes: setupData.nodeList.map(function(node){
@@ -236,17 +249,7 @@ api.clusterSetup = function(submitData, processOptions){
       return apiNode;
     }),
     transport_type: setupData.transportType,
-    transport_options: setupData.transportType == "knet"
-      ? {
-        ip_version: setupData.transportOptions.ip_version,
-        knet_pmtud_interval: setupData.transportOptions.knet_pmtud_interval,
-        link_mode: setupData.transportOptions.link_mode,
-      }
-      : {
-        ip_version: setupData.transportOptions.ip_version,
-        netmtu: setupData.transportOptions.netmtu,
-      }
-    ,
+    transport_options: transportOptions,
     link_list: setupData.linkList.map(function(link){
       return setupData.transportType == "knet"
         ? {
