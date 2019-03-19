@@ -82,7 +82,7 @@ clusterSetup.link.detail.refreshNodesNames = function(linkDetail, nodesNames){
 
   var newAddresses = nodesNames.map(function(nodeName){
     return previousNodesNames.contains(nodeName)
-      ? linkDetail.find("[data-transport-addr-host="+nodeName+"]")
+      ? linkDetail.find("[data-transport-addr-host='"+nodeName+"']")
       : clusterSetup.link.detail.createAddress(nodeName)
     ;
   });
