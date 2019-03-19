@@ -213,6 +213,22 @@ api.clusterSetup = function(submitData, processOptions){
     cluster_name: setupData.clusterName,
     nodes: setupData.nodeList.map(function(node){
       apiNode = { name: node.name };
+      // The backend defaults addresses. But for the defaulting addresses there
+      // must be no key "addrs".
+      // There can be following (valid) scenarios:
+      // 1 User uses no link. We omit key "addrs" for every node. The backend
+      //   defaults addresses.
+      // 2 User uses 1 link and keep all addresses fields empty. We omit key
+      //   "addrs" for every node. The backend defaults addresses.
+      // 3 User uses 1 link and keep some addresses fields empty. We omit key
+      //   "addrs" for respective nodes. The backend then refuses it because
+      //   nodes addreses are inconsistent.
+      // 4 User uses more links. We omit key "addrs" when no address for node is
+      //   filled. The backend then refuses it because nodes addresses count
+      //   is inconsistent with links count.
+      // Because we need to support scenario 2 and the backend defaults
+      // addresses only when key "addrs" is not specified we cannot simply
+      // sent empty addresses or empty address list (i.e. key "addrs").
       var addrs = node.addrs.filter(function(addr){return addr.length > 0});
       if (addrs.length > 0) {
         apiNode["addrs"] = addrs;

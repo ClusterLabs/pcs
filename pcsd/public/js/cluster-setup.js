@@ -322,11 +322,9 @@ clusterSetup.data.validateNameAndNodes = function(formData){
 
 clusterSetup.data.nodes = function(nodesNames, getAddrs){
   return nodesNames.map(function(nodeName){
-    addrs = getAddrs ? getAddrs(nodeName) : [];
-    return addrs.length > 0
-      ? { name: nodeName, addrs: addrs }
-      : { name: nodeName }
-    ;
+    // The field addrs is here always. The details of backend is solved within
+    // api.js module.
+    return { name: nodeName, addrs: getAddrs ? getAddrs(nodeName) : [] };
   });
 };
 
