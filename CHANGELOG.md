@@ -45,6 +45,7 @@
   corosync. Transport option `ip_version` is still in place. ([rhbz#1674005])
 - Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
 - Fixed a typo in documentation (regardles -> regardless) ([rhbz#1660702])
+- Fixed pcsd crashes when non-ASCII characters are present in systemd journal
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling

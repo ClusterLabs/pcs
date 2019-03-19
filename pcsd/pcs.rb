@@ -1720,7 +1720,10 @@ end
 
 def is_service_running?(service)
   if ISSYSTEMCTL
-    cmd = ['systemctl', 'status', "#{service}.service"]
+    # --lines=0 disables listing last N lines from journal related to the
+    # service. The lines may contain non-ASCII characters which cause various
+    # encoding/decoding errors. We are not interested in the lines anyway.
+    cmd = ['systemctl', 'status', '--lines=0', "#{service}.service"]
   else
     cmd = ['service', service, 'status']
   end
