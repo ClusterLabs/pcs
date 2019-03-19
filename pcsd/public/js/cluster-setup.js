@@ -391,6 +391,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
           ) {
             return value == "on" ? "1" : "0";
           }
+          return value;
         },
       ),
     },
@@ -449,6 +450,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
               if (name === "broadcast"){
                 return value == "yes" ? "1" : "0";
               }
+              return value;
             },
           );
         })
