@@ -169,7 +169,7 @@ def setup(
     env LibraryEnvironment
     cluster_name string -- name of a cluster to set up
     nodes list -- list of dicts which represents node.
-        Supported keys are: name (required), addrs
+        Supported keys are: name (required), addrs. See note bellow.
     transport_type string -- transport type of a cluster
     transport_options dict -- transport specific options
     link_list list of dict -- list of links, depends of transport_type
@@ -188,6 +188,18 @@ def setup(
     no_keys_sync bool -- if True do not crete and distribute files: pcsd ssl
         cert and key, pacemaker authkey, corosync authkey
     force_flags list -- list of flags codes
+
+    The command is defaulting node addresses if they are not specified. The
+    defaulting is done for each node individually if and only if the "addrs" key
+    is not present for the node. If the "addrs" key is present and holds an
+    empty list, no defaulting is done.
+    This will default addresses for node2 and won't modify addresses for other
+    nodes (no addresses will be defined for node3):
+    nodes=[
+        {"name": "node1", "addrs": ["node1-addr"]},
+        {"name": "node2"},
+        {"name": "node3", "addrs": []},
+    ]
     """
     _ensure_live_env(env) # raises if env is not live
     if force_flags is None:
@@ -424,7 +436,7 @@ def add_nodes(
     env LibraryEnvironment
     nodes list -- list of dicts which represents node.
         Supported keys are: name (required), addrs (list), devices (list),
-        watchdog
+        watchdog. See note below.
     wait -- specifies if command should try to wait for cluster to start up.
         Has no effect start is False. If set to False command will not wait for
         cluster to start. If None command will wait for some default timeout.
@@ -434,6 +446,18 @@ def add_nodes(
     no_watchdog_validation bool -- if True do not validate specified watchdogs
         on remote hosts
     force_flags list -- list of flags codes
+
+    The command is defaulting node addresses if they are not specified. The
+    defaulting is done for each node individually if and only if the "addrs" key
+    is not present for the node. If the "addrs" key is present and holds an
+    empty list, no defaulting is done.
+    This will default addresses for node2 and won't modify addresses for other
+    nodes (no addresses will be defined for node3):
+    nodes=[
+        {"name": "node1", "addrs": ["node1-addr"]},
+        {"name": "node2"},
+        {"name": "node3", "addrs": []},
+    ]
     """
     _ensure_live_env(env) # raises if env is not live
 
