@@ -1150,7 +1150,7 @@ def cluster_destroy(lib, argv, modifiers):
         for name in state_files:
             dummy_output, dummy_retval = utils.run([
                 "/usr/bin/find", "/var/lib/pacemaker", "-name", name,
-                "-exec", "rm", "-f", "{}", ";"
+                "-exec", "/bin/rm", "-f", "{}", ";"
             ])
         try:
             qdevice_net.client_destroy()
