@@ -82,7 +82,7 @@ clusterSetup.link.detail.refreshNodesNames = function(linkDetail, nodesNames){
 
   var newAddresses = nodesNames.map(function(nodeName){
     return previousNodesNames.contains(nodeName)
-      ? linkDetail.find("[data-transport-addr-host="+nodeName+"]")
+      ? linkDetail.find("[data-transport-addr-host='"+nodeName+"']")
       : clusterSetup.link.detail.createAddress(nodeName)
     ;
   });
@@ -322,11 +322,9 @@ clusterSetup.data.validateNameAndNodes = function(formData){
 
 clusterSetup.data.nodes = function(nodesNames, getAddrs){
   return nodesNames.map(function(nodeName){
-    addrs = getAddrs ? getAddrs(nodeName) : [];
-    return addrs.length > 0
-      ? { name: nodeName, addrs: addrs }
-      : { name: nodeName }
-    ;
+    // The field addrs is here always. The details of backend is solved within
+    // api.js module.
+    return { name: nodeName, addrs: getAddrs ? getAddrs(nodeName) : [] };
   });
 };
 
@@ -393,6 +391,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
           ) {
             return value == "on" ? "1" : "0";
           }
+          return value;
         },
       ),
     },
@@ -451,6 +450,7 @@ clusterSetup.data.settings = function(clusterName, nodesNames){
               if (name === "broadcast"){
                 return value == "yes" ? "1" : "0";
               }
+              return value;
             },
           );
         })

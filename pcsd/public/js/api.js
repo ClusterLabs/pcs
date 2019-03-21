@@ -209,10 +209,39 @@ api.checkAuthAgainstNodes = function(nodesNames){
 
 api.clusterSetup = function(submitData, processOptions){
   var setupData = submitData.setupData;
+  var transportOptions = {};
+  if (setupData.transportType === "knet") {
+    transportOptions = {
+      ip_version: setupData.transportOptions.ip_version,
+      knet_pmtud_interval: setupData.transportOptions.knet_pmtud_interval,
+      link_mode: setupData.transportOptions.link_mode,
+    };
+  } else if(setupData.transportType !== undefined) {
+    transportOptions = {
+        ip_version: setupData.transportOptions.ip_version,
+        netmtu: setupData.transportOptions.netmtu,
+    };
+  }
   var data = {
     cluster_name: setupData.clusterName,
     nodes: setupData.nodeList.map(function(node){
       apiNode = { name: node.name };
+      // The backend defaults addresses. But it only does so when there is no
+      // key "addrs" for a node.
+      // There can be following (valid) scenarios:
+      // 1 User sets no links. We omit key "addrs" for every node. The backend
+      //   defaults addresses.
+      // 2 User sets 1 link and keeps all addresses fields empty. We omit key
+      //   "addrs" for every node. The backend defaults addresses.
+      // 3 User sets 1 link and keeps some addresses fields empty. We omit key
+      //   "addrs" for respective nodes. The backend defaults addresses for
+      //   the nodes with no address set by the user.
+      // 4 User sets more links. We omit key "addrs" when no addresses for
+      //   a node are filled. The backend defaults addresses for the nodes with
+      //   no addresses set by the user.
+      // Because we need to support all the scenarios and the backend defaults
+      // addresses only when key "addrs" is not specified we cannot simply
+      // send empty addresses or empty address list (i.e. key "addrs").
       var addrs = node.addrs.filter(function(addr){return addr.length > 0});
       if (addrs.length > 0) {
         apiNode["addrs"] = addrs;
@@ -220,17 +249,7 @@ api.clusterSetup = function(submitData, processOptions){
       return apiNode;
     }),
     transport_type: setupData.transportType,
-    transport_options: setupData.transportType == "knet"
-      ? {
-        ip_version: setupData.transportOptions.ip_version,
-        knet_pmtud_interval: setupData.transportOptions.knet_pmtud_interval,
-        link_mode: setupData.transportOptions.link_mode,
-      }
-      : {
-        ip_version: setupData.transportOptions.ip_version,
-        netmtu: setupData.transportOptions.netmtu,
-      }
-    ,
+    transport_options: transportOptions,
     link_list: setupData.linkList.map(function(link){
       return setupData.transportType == "knet"
         ? {
