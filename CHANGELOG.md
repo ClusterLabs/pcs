@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Pcs works even when PATH environment variable is not set ([rhbz#1671174])
+
+[rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
+
+
 ## [0.9.167] - 2019-03-18
 
 ### Added

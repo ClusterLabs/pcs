@@ -8,7 +8,7 @@ import logging
 import os
 import re
 
-# from pcs import utils
+from pcs import settings
 from pcs.common.tools import is_string
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
@@ -43,7 +43,9 @@ def compare_version(a, b):
     return cmp3(a[0], b[0])
 
 def is_minimum_pacemaker_version(cmajor, cminor, crev):
-    output, dummy_stderr, dummy_retval = runner.run(["crm_mon", "--version"])
+    output, dummy_stderr, dummy_retval = runner.run([
+        os.path.join(settings.pacemaker_binaries, "crm_mon"), "--version"
+    ])
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)
@@ -53,9 +55,9 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
     return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
-    output, dummy_stderr, dummy_retval = runner.run(
-        ["pacemakerd", "--features"]
-    )
+    output, dummy_stderr, dummy_retval = runner.run([
+        os.path.join(settings.pacemaker_binaries, "pacemakerd"), "--features"
+    ])
     features_version = output.split("\n")[1]
     r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
     m = r.search(features_version)

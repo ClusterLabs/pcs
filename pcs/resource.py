@@ -2589,7 +2589,7 @@ def resource_history(args):
     for res in sorted(resources):
         print("Resource: %s" % res)
         for cid in sorted(resources[res]):
-            (last_date, dummy_retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
+            (last_date, dummy_retval) = utils.run(["/usr/bin/date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
             last_date = last_date.rstrip()
             rc_code = resources[res][cid][1].getAttribute("rc-code")
             operation = resources[res][cid][1].getAttribute("operation")

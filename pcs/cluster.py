@@ -1473,7 +1473,7 @@ def stop_cluster(argv):
 def stop_cluster_pacemaker():
     print("Stopping Cluster (pacemaker)...")
     if not is_systemctl():
-        command = ["service", "pacemaker", "stop"]
+        command = [settings.service_binary, "pacemaker", "stop"]
         # If --skip-cman is not specified, pacemaker init script will stop cman
         # and corosync as well. That way some of the nodes may stop cman before
         # others stop pacemaker, which leads to quorum loss. We need to keep
@@ -1482,7 +1482,7 @@ def stop_cluster_pacemaker():
         if utils.is_cman_cluster():
             command.append("--skip-cman")
     else:
-        command = ["systemctl", "stop", "pacemaker"]
+        command = [settings.systemctl_binary, "stop", "pacemaker"]
     output, retval = utils.run(command)
     if retval != 0:
         print(output)
@@ -1520,7 +1520,7 @@ def kill_cluster(argv):
         "corosync-qdevice",
         "corosync",
     ]
-    dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
+    dummy_output, dummy_retval = utils.run(["/usr/bin/killall", "-9"] + daemons)
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
 #        print output
@@ -1621,8 +1621,8 @@ def cluster_push(argv):
 
         runner = utils.cmd_runner()
         command = [
-            "crm_diff", "--original", diff_against, "--new", filename,
-            "--no-version"
+            os.path.join(settings.pacemaker_binaries, "crm_diff"),
+            "--original", diff_against, "--new", filename, "--no-version"
         ]
         patch, stderr, dummy_retval = runner.run(command)
         # dummy_retval == 1 means one of two things:
@@ -1637,7 +1637,10 @@ def cluster_push(argv):
             )
             sys.exit(0)
 
-        command = ["cibadmin", "--patch", "--xml-pipe"]
+        command = [
+            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            "--patch", "--xml-pipe"
+        ]
         output, stderr, retval = runner.run(command, patch)
         if retval != 0:
             utils.err("unable to push cib\n" + stderr + output)
@@ -2410,7 +2413,7 @@ def cluster_destroy(argv):
             # ignore it since we want it not to be running anyways.
             utils.stop_service(service)
         print("Killing any remaining services...")
-        os.system("killall -q -9 corosync corosync-qdevice aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+        utils.run(["/usr/bin/killall", "-q", "-9", "corosync", "corosync-qdevice", "aisexec", "heartbeat", "pacemakerd", "ccm", "stonithd", "ha_logd", "lrmd", "crmd", "pengine", "attrd", "pingd", "mgmtd", "cib", "fenced", "dlm_controld", "gfs_controld"])
         try:
             utils.disableServices()
         except:
@@ -2425,15 +2428,21 @@ def cluster_destroy(argv):
 
         print("Removing all cluster configuration files...")
         if utils.is_rhel6():
-            os.system("rm -f /etc/cluster/cluster.conf")
+            utils.run(["/bin/rm", "-f", "/etc/cluster/cluster.conf"])
         else:
-            os.system("rm -f /etc/corosync/corosync.conf")
-            os.system("rm -f {0}".format(settings.corosync_authkey_file))
+            utils.run([
+                "/bin/rm", "-f",
+                "/etc/corosync/corosync.conf",
+                settings.corosync_authkey_file
+            ])
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
-            os.system("find /var/lib/pacemaker -name '"+name+"' -exec rm -f \{\} \;")
-        os.system("rm -f {0}".format(settings.pacemaker_authkey_file))
+            utils.run([
+                "/usr/bin/find", "/var/lib/pacemaker", "-name", name,
+                "-exec", "/bin/rm", "-f", "{}", ";"
+            ])
+        utils.run(["/bin/rm", "-f", settings.pacemaker_authkey_file])
         try:
             qdevice_net.client_destroy()
         except:
