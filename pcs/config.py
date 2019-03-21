@@ -368,11 +368,11 @@ def config_restore_local(infile_name, infile_obj):
     Commandline options: no options
     """
     if (
-        status.is_service_running("corosync")
+        utils.is_service_running(utils.cmd_runner(), "corosync")
         or
-        status.is_service_running("pacemaker")
+        utils.is_service_running(utils.cmd_runner(), "pacemaker")
         or
-        status.is_service_running("pacemaker_remote")
+        utils.is_service_running(utils.cmd_runner(), "pacemaker_remote")
     ):
         utils.err(
             "Cluster is currently running on this node. You need to stop "

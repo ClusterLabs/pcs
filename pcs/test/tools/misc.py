@@ -3,6 +3,7 @@ import os
 import re
 from unittest import mock, skipUnless
 
+from pcs import settings
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.lib.external import CommandRunner, is_service_enabled
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
@@ -88,7 +89,10 @@ def is_minimum_pacemaker_version(major, minor, rev):
     )
 
 def get_current_pacemaker_version():
-    output, dummy_stderr, dummy_retval = runner.run(["crm_mon", "--version"])
+    output, dummy_stderr, dummy_retval = runner.run([
+        os.path.join(settings.pacemaker_binaries, "crm_mon"),
+        "--version",
+    ])
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)
@@ -104,9 +108,10 @@ def format_version(version_tuple):
     return ".".join([str(x) for x in version_tuple])
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
-    output, dummy_stderr, dummy_retval = runner.run(
-        ["pacemakerd", "--features"]
-    )
+    output, dummy_stderr, dummy_retval = runner.run([
+        os.path.join(settings.pacemaker_binaries, "pacemakerd"),
+        "--features",
+    ])
     features_version = output.split("\n")[1]
     r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
     m = r.search(features_version)

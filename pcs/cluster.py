@@ -594,7 +594,7 @@ def kill_local_cluster_services():
         "corosync-qdevice",
         "corosync",
     ]
-    return utils.run(["killall", "-9"] + all_cluster_daemons)
+    return utils.run(["/usr/bin/killall", "-9"] + all_cluster_daemons)
 
 def cluster_push(lib, argv, modifiers):
     """
@@ -697,8 +697,8 @@ def cluster_push(lib, argv, modifiers):
 
         runner = utils.cmd_runner()
         command = [
-            "crm_diff", "--original", diff_against, "--new", filename,
-            "--no-version"
+            os.path.join(settings.pacemaker_binaries, "crm_diff"),
+            "--original", diff_against, "--new", filename, "--no-version"
         ]
         patch, stderr, retval = runner.run(command)
         #  0 (CRM_EX_OK) - success with no difference
@@ -713,7 +713,10 @@ def cluster_push(lib, argv, modifiers):
             )
             sys.exit(0)
 
-        command = ["cibadmin", "--patch", "--xml-pipe"]
+        command = [
+            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            "--patch", "--xml-pipe"
+        ]
         output, stderr, retval = runner.run(command, patch)
         if retval != 0:
             utils.err("unable to push cib\n" + stderr + output)
@@ -1130,7 +1133,7 @@ def cluster_destroy(lib, argv, modifiers):
 
         print("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run([
-            "rm", "-f",
+            "/bin/rm", "-f",
             settings.corosync_conf_file,
             settings.corosync_authkey_file,
             settings.pacemaker_authkey_file,
@@ -1146,7 +1149,7 @@ def cluster_destroy(lib, argv, modifiers):
         ]
         for name in state_files:
             dummy_output, dummy_retval = utils.run([
-                "find", "/var/lib/pacemaker", "-name", name,
+                "/usr/bin/find", "/var/lib/pacemaker", "-name", name,
                 "-exec", "rm", "-f", "{}", ";"
             ])
         try:

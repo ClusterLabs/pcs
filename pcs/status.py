@@ -1,7 +1,10 @@
 import sys
 import os
 
-from pcs import utils
+from pcs import (
+    settings,
+    utils,
+)
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
@@ -35,7 +38,10 @@ def full_status(lib, argv, modifiers):
     ):
         utils.err("you cannot specify both --hide-inactive and --full")
 
-    monitor_command = ["crm_mon", "--one-shot"]
+    monitor_command = [
+        os.path.join(settings.pacemaker_binaries, "crm_mon"),
+        "--one-shot"
+    ]
     if not modifiers.get("--hide-inactive"):
         monitor_command.append('--inactive')
     if modifiers.get("--full"):
@@ -342,17 +348,6 @@ def xml_status(lib, argv, modifiers):
     if retval != 0:
         utils.err("running crm_mon, is pacemaker running?")
     print(output.rstrip())
-
-def is_service_running(service):
-    """
-    Used in module pcs.config
-    Commandline options: no options
-    """
-    if utils.is_systemctl():
-        dummy_output, retval = utils.run(["systemctl", "status", service])
-    else:
-        dummy_output, retval = utils.run(["service", service, "status"])
-    return retval == 0
 
 def print_pcsd_daemon_status(lib, modifiers):
     """

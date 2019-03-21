@@ -3,6 +3,7 @@ import os
 from unittest import mock
 from lxml import etree
 
+from pcs import settings
 from pcs.lib.external import CommandRunner
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.xml import etree_to_str
@@ -31,7 +32,8 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
         environ
     )
     stdout, stderr, retval = runner.run([
-        "cibadmin", "--replace", "--scope", "resources", "--xml-pipe",
+        os.path.join(settings.pacemaker_binaries, "cibadmin"),
+        "--replace", "--scope", "resources", "--xml-pipe",
     ], stdin_string=final_xml)
     assert retval == 0, (
         "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
@@ -92,7 +94,8 @@ def fixture_to_cib(cib_file, xml):
         environ
     )
     stdout, stderr, retval = runner.run([
-        "cibadmin", "--create", "--scope", "resources", "--xml-text", xml
+        os.path.join(settings.pacemaker_binaries, "cibadmin"),
+        "--create", "--scope", "resources", "--xml-text", xml
     ])
     assert retval == 0, (
         "Error running fixture_to_cib:\n" + stderr + "\n" + stdout

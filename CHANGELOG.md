@@ -46,6 +46,7 @@
 - Several bugs in linklist validation in `pcs cluster setup` ([rhbz#1667090])
 - Fixed a typo in documentation (regardles -> regardless) ([rhbz#1660702])
 - Fixed pcsd crashes when non-ASCII characters are present in systemd journal
+- Pcs works even when PATH environment variable is not set ([rhbz#1673825])
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
@@ -74,6 +75,7 @@
 [rhbz#1667090]: https://bugzilla.redhat.com/show_bug.cgi?id=1667090
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
+[rhbz#1673825]: https://bugzilla.redhat.com/show_bug.cgi?id=1673825
 [rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957

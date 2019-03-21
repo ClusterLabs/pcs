@@ -55,8 +55,6 @@ from pcs.lib.external import (
     is_service_enabled,
     is_service_running,
     is_systemctl,
-    _service,
-    _systemctl,
 )
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
@@ -755,12 +753,14 @@ def run(
         touch_cib_file(filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command in ["cibadmin", "iso8601"]:
+    if (
+        command[0:3] == "crm"
+        or
+        command in ["cibadmin", "iso8601", "stonith_admin"]
+    ):
         args[0] = settings.pacemaker_binaries + command
     elif command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
-    elif command == "ccs":
-        args[0] = settings.ccs_binaries + command
 
     try:
         if "--debug" in pcs_options:
@@ -2063,10 +2063,12 @@ def start_service(service):
     """
     if is_systemctl():
         stdout, stderr, retval = cmd_runner().run([
-            _systemctl, "start", service
+            settings.systemctl_binary, "start", service
         ])
     else:
-        stdout, stderr, retval = cmd_runner().run([_service, service, "start"])
+        stdout, stderr, retval = cmd_runner().run([
+            settings.service_binary, service, "start"
+        ])
     return join_multilines([stderr, stdout]), retval
 
 def stop_service(service):
@@ -2074,9 +2076,13 @@ def stop_service(service):
     Commandline options: no options
     """
     if is_systemctl():
-        stdout, stderr, retval = cmd_runner().run([_systemctl, "stop", service])
+        stdout, stderr, retval = cmd_runner().run([
+            settings.systemctl_binary, "stop", service
+        ])
     else:
-        stdout, stderr, retval = cmd_runner().run([_service, service, "stop"])
+        stdout, stderr, retval = cmd_runner().run([
+            settings.service_binary, service, "stop"
+        ])
     return join_multilines([stderr, stdout]), retval
 
 def write_file(path, data, permissions=0o644, binary=False):

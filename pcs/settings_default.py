@@ -7,7 +7,6 @@ pacemaker_binaries = "/usr/sbin/"
 crm_resource_binary = os.path.join(pacemaker_binaries, "crm_resource")
 corosync_binaries = "/usr/sbin/"
 corosync_qnet_binaries = "/usr/bin/"
-ccs_binaries = "/usr/sbin/"
 corosync_conf_dir = "/etc/corosync/"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
