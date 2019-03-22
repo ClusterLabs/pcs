@@ -67,6 +67,11 @@ def format_fencing_level_target(target_type, target_value):
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
+def format_list(a_list):
+    return ", ".join([
+        "'{0}'".format(x) for x in sorted(a_list)
+    ])
+
 def format_file_role(role):
     return _file_role_translation.get(role, role)
 
@@ -427,6 +432,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.RUN_EXTERNAL_PROCESS_ERROR: lambda info:
         "unable to run command {command}: {reason}"
         .format(**info)
+    ,
+
+    codes.NODE_COMMUNICATION_RETRYING: lambda info:
+        (
+            "Unable to connect to '{node}' via address '{failed_address}'. "
+            "Retrying request '{request}' via address '{next_address}'"
+        ).format(**info)
+    ,
+
+    codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES: lambda info:
+        "Unable to connect to '{node}' via any of its addresses".format(**info)
     ,
 
     codes.NODE_COMMUNICATION_DEBUG_INFO: lambda info:
@@ -1001,17 +1017,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.SERVICE_DISABLE_SUCCESS: partial(service_operation_success, "disabled"),
 
     codes.SERVICE_KILL_ERROR: lambda info:
-        "Unable to kill {service_list}: {reason}"
+        "Unable to kill {_service_list}: {reason}"
         .format(
-            service_list=", ".join(info["services"]),
+            _service_list=", ".join(info["services"]),
             **info
         )
     ,
 
     codes.SERVICE_KILL_SUCCESS: lambda info:
-        "{services_list} killed"
+        "{_service_list} killed"
         .format(
-            service_list=", ".join(info["services"]),
+            _service_list=", ".join(info["services"]),
             **info
         )
     ,

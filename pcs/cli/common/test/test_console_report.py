@@ -4,12 +4,11 @@ from __future__ import (
     print_function,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.common.console_report import(
     indent,
-    CODE_TO_MESSAGE_BUILDER_MAP,
     format_optional,
 )
+from pcs.cli.common.reports import CODE_BUILDER_MAP
 from pcs.common import report_codes as codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
@@ -18,6 +17,7 @@ from pcs.common.fencing_topology import (
 )
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
+from pcs.test.tools.pcs_unittest import TestCase
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -34,13 +34,13 @@ class IndentTest(TestCase):
 
 class NameBuildTest(TestCase):
     """
-    Mixin for the testing of message building.
+    Base class for the testing of message building.
     """
     code = None
 
     def assert_message_from_info(self, message, info=None):
         info = info if info else {}
-        build = CODE_TO_MESSAGE_BUILDER_MAP[self.code]
+        build = CODE_BUILDER_MAP[self.code]
         self.assertEqual(
             message,
             build(info) if callable(build) else build
@@ -48,7 +48,7 @@ class NameBuildTest(TestCase):
 
     def assert_message_from_report(self, message, report):
         if not isinstance(report, ReportItem):
-            raise AssertionError("report is not instance of ReportItem")
+            raise AssertionError("report is not an instance of ReportItem")
         self.assert_message_from_info(message, report.info)
 
 
@@ -383,7 +383,34 @@ class BuildRunExternalStartedTest(NameBuildTest):
         )
 
 
-class BuildNodeCommunicationStartedTest(NameBuildTest):
+class NodeCommunicationRetrying(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_RETRYING
+    def test_success(self):
+        self.assert_message_from_report(
+        (
+            "Unable to connect to 'node_name' via address 'failed.address'. "
+            "Retrying request 'my/request' via address 'next.address'"
+        ),
+            reports.node_communication_retrying(
+                "node_name",
+                "failed.address",
+                "next.address",
+                "my/request",
+            )
+        )
+
+class NodeCommunicationNoMoreAddresses(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to connect to 'node_name' via any of its addresses",
+            reports.node_communication_no_more_addresses(
+                "node_name",
+                "my/request",
+            )
+)
+
+class NodeCommunicationStarted(NameBuildTest):
     code = codes.NODE_COMMUNICATION_STARTED
 
     def test_build_message_with_data(self):
@@ -553,12 +580,12 @@ class FencingLevelAlreadyExists(NameBuildTest):
 
     def test_target_pattern(self):
         self.assert_message_from_info(
-            "Fencing level for 'node-\d+' at level '1' with device(s) "
+            "Fencing level for 'node-\\d+' at level '1' with device(s) "
                 "'device1,device2' already exists",
             {
                 "level": "1",
                 "target_type": TARGET_TYPE_REGEXP,
-                "target_value": "node-\d+",
+                "target_value": "node-\\d+",
                 "devices": ["device1", "device2"],
             }
         )
@@ -737,7 +764,7 @@ class ResourceRunOnNodes(NameBuildTest):
             "resource 'R' is running on nodes 'node1', 'node2'",
             {
                 "resource_id": "R",
-                "roles_with_nodes": {"Started": ["node1","node2"]},
+                "roles_with_nodes": {"Started": ["node1", "node2"]},
             }
         )
     def test_multiple_role_multiple_nodes(self):
@@ -748,7 +775,7 @@ class ResourceRunOnNodes(NameBuildTest):
             {
                 "resource_id": "R",
                 "roles_with_nodes": {
-                    "Started": ["node1","node2"],
+                    "Started": ["node1", "node2"],
                     "Master": ["node3"],
                 },
             }
@@ -1003,33 +1030,28 @@ class PrerequisiteOptionIsMissing(NameBuildTest):
 class FileDistributionStarted(NameBuildTest):
     code = codes.FILES_DISTRIBUTION_STARTED
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending 'first', 'second'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": None,
-                "description": None,
-            }
+            reports.files_distribution_started(["first", "second"])
         )
 
     def test_build_messages_with_nodes(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending 'first', 'second' to 'node1', 'node2'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": None,
-            }
+            reports.files_distribution_started(
+                ["first", "second"],
+                node_list=["node1", "node2"]
+            )
         )
 
     def test_build_messages_with_description(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending configuration files to 'node1', 'node2'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-                "description": "configuration files",
-            }
+            reports.files_distribution_started(
+                ["first", "second"],
+                node_list=["node1", "node2"],
+                description="configuration files",
+            )
         )
 
 class FileDistributionSucess(NameBuildTest):
@@ -1164,7 +1186,7 @@ class ActionOnNodesError(NameBuildTest):
             }
         )
 
-class resource_is_guest_node_already(NameBuildTest):
+class ResourceIsGuestNodeAlready(NameBuildTest):
     code = codes.RESOURCE_IS_GUEST_NODE_ALREADY
     def test_build_messages(self):
         self.assert_message_from_info(
@@ -1172,7 +1194,7 @@ class resource_is_guest_node_already(NameBuildTest):
             {"resource_id": "some-resource"}
         )
 
-class live_environment_required(NameBuildTest):
+class LiveEnvironmentRequired(NameBuildTest):
     code = codes.LIVE_ENVIRONMENT_REQUIRED
     def test_build_messages(self):
         self.assert_message_from_info(
@@ -1606,6 +1628,24 @@ class ServiceStopSuccess(NameBuildTest):
                 "node": "a_node",
                 "instance": "an_instance",
             }
+        )
+
+
+class ServiceKillError(NameBuildTest):
+    code = codes.SERVICE_KILL_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to kill A, B, C: some reason",
+            reports.service_kill_error(["B", "A", "C"], "some reason")
+        )
+
+
+class ServiceKillSuccess(NameBuildTest):
+    code = codes.SERVICE_KILL_SUCCESS
+    def test_success(self):
+        self.assert_message_from_report(
+            "A, B, C killed",
+            reports.service_kill_success(["B", "A", "C"])
         )
 
 
@@ -2107,43 +2147,19 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
             }
         )
 
-
-class SbdListWatchdogError(NameBuildTest):
-    code = codes.SBD_LIST_WATCHDOG_ERROR
-    def test_success(self):
-        self.assert_message_from_info(
-            "Unable to query available watchdogs from sbd: this is a reason",
-            {
-                "reason": "this is a reason",
-            }
-        )
-
-
-class SbdWatchdogNotSupported(NameBuildTest):
-    code = codes.SBD_WATCHDOG_NOT_SUPPORTED
+class NodeCommunicationErrorNotAuthorized(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED
     def test_success(self):
         self.assert_message_from_info(
             (
-                "node1: Watchdog '/dev/watchdog' is not supported (it may be a "
-                "software watchdog)"
+                "Unable to authenticate to node1 (some error), try running "
+                "'pcs cluster auth'"
             ),
             {
                 "node": "node1",
-                "watchdog": "/dev/watchdog"
+                "reason": "some error",
             }
         )
-
-
-class SbdWatchdogTestError(NameBuildTest):
-    code = codes.SBD_WATCHDOG_TEST_ERROR
-    def test_success(self):
-        self.assert_message_from_info(
-            "Unable to initialize test of the watchdog: some reason",
-            {
-                "reason": "some reason",
-            }
-        )
-
 
 class ResourceInBundleNotAccessible(NameBuildTest):
     code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
@@ -2248,6 +2264,63 @@ class FileIoError(NameBuildTest):
                 "reason": "Failed",
                 "operation": "write",
             }
+        )
+
+
+class CorosyncConfigReloaded(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOADED
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Corosync configuration reloaded",
+            reports.corosync_config_reloaded(),
+        )
+
+
+class CorosyncConfigReloadError(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_RELOAD_ERROR
+    def test_without_node(self):
+        self.assert_message_from_report(
+            "Unable to reload corosync configuration: different reason",
+            reports.corosync_config_reload_error("different reason"),
+        )
+
+
+class CorosyncQuorumGetStatusError(NameBuildTest):
+    code = codes.COROSYNC_QUORUM_GET_STATUS_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to get quorum status: a reason",
+            reports.corosync_quorum_get_status_error("a reason")
+        )
+
+
+class SbdListWatchdogError(NameBuildTest):
+    code = codes.SBD_LIST_WATCHDOG_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to query available watchdogs from sbd: this is a reason",
+            reports.sbd_list_watchdog_error("this is a reason"),
+        )
+
+
+class SbdWatchdogNotSupported(NameBuildTest):
+    code = codes.SBD_WATCHDOG_NOT_SUPPORTED
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "node1: Watchdog '/dev/watchdog' is not supported (it may be a "
+                "software watchdog)"
+            ),
+            reports.sbd_watchdog_not_supported("node1", "/dev/watchdog"),
+        )
+
+
+class SbdWatchdogTestError(NameBuildTest):
+    code = codes.SBD_WATCHDOG_TEST_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to initialize test of the watchdog: some reason",
+            reports.sbd_watchdog_test_error("some reason"),
         )
 
 

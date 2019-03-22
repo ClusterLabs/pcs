@@ -4,6 +4,7 @@
 
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])
+- Fixed several "Unknown report" error messages
 
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 

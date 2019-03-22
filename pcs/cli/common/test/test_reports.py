@@ -4,14 +4,59 @@ from __future__ import (
     print_function,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
-
 from collections import namedtuple
 from functools import partial
 
-from pcs.cli.common.reports import build_message_from_report
+from pcs.cli.common.reports import (
+    CODE_BUILDER_MAP,
+    build_message_from_report,
+)
+from pcs.common import report_codes
+from pcs.test.tools.pcs_unittest import TestCase
 
-ReportItem = namedtuple("ReportItem", "code info")
+ReportItemMock = namedtuple("ReportItemMock", "code info")
+
+
+class ReportsTranslated(TestCase):
+    force_codes = {
+        report_codes.FORCE_ACTIVE_RRP,
+        report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+        report_codes.FORCE_BOOTH_DESTROY,
+        report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+        report_codes.FORCE_REMOVE_MULTIPLE_NODES,
+        report_codes.FORCE_CONSTRAINT_DUPLICATE,
+        report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
+        report_codes.FORCE_FILE_OVERWRITE,
+        report_codes.FORCE_LOAD_THRESHOLD,
+        report_codes.FORCE_METADATA_ISSUE,
+        report_codes.FORCE_NODE_DOES_NOT_EXIST,
+        report_codes.FORCE_OPTIONS,
+        report_codes.FORCE_QDEVICE_MODEL,
+        report_codes.FORCE_QDEVICE_USED,
+        report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST,
+        report_codes.FORCE_NOT_SUITABLE_COMMAND,
+        report_codes.FORCE_CLEAR_CLUSTER_NODE,
+        report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+        report_codes.SKIP_OFFLINE_NODES,
+        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        report_codes.SKIP_ACTION_ON_NODES_ERRORS,
+        report_codes.SKIP_UNREADABLE_CONFIG,
+        report_codes.SKIP_WATCHDOG_VALIDATION,
+    }
+
+    def test_all_reports_translated(self):
+        all_codes = frozenset((
+            getattr(report_codes, code_const)
+            for code_const in dir(report_codes)
+            if (
+                not code_const.startswith("_") # skip python builtins
+                and
+                getattr(report_codes, code_const) not in self.force_codes
+            )
+        ))
+        untranslated = all_codes - frozenset(CODE_BUILDER_MAP.keys())
+        self.assertEqual(untranslated, frozenset())
+
 
 class BuildMessageFromReportTest(TestCase):
     def test_returns_default_message_when_code_not_in_map(self):
@@ -20,7 +65,7 @@ class BuildMessageFromReportTest(TestCase):
             "Unknown report: SOME info: {0}force text".format(str(info)) ,
             build_message_from_report(
                 {},
-                ReportItem("SOME", info),
+                ReportItemMock("SOME", info),
                 "force text"
             )
         )
@@ -34,7 +79,7 @@ class BuildMessageFromReportTest(TestCase):
                         "Message "+force_text+" is inside"
                     ,
                 },
-                ReportItem("SOME", {}),
+                ReportItemMock("SOME", {}),
                 "force text"
             )
         )
@@ -46,7 +91,7 @@ class BuildMessageFromReportTest(TestCase):
                 {
                     "SOME": lambda info: "Info: {message}".format(**info),
                 },
-                ReportItem("SOME", {"message": "MESSAGE"}),
+                ReportItemMock("SOME", {"message": "MESSAGE"}),
             )
         )
 
@@ -55,7 +100,7 @@ class BuildMessageFromReportTest(TestCase):
             "message force at the end",
             build_message_from_report(
                 {"SOME": "message"},
-                ReportItem("SOME", {}),
+                ReportItemMock("SOME", {}),
                 " force at the end",
             )
         )
@@ -70,7 +115,7 @@ class BuildMessageFromReportTest(TestCase):
                         message="ANY", **info
                     ),
                 },
-                ReportItem("SOME", info),
+                ReportItemMock("SOME", info),
             )
         )
 
@@ -82,7 +127,7 @@ class BuildMessageFromReportTest(TestCase):
                 {
                     "SOME": lambda info: "Info: {message}".format(**info),
                 },
-                ReportItem("SOME", {}),
+                ReportItemMock("SOME", {}),
             )
         )
 
@@ -99,7 +144,7 @@ class BuildMessageFromReportTest(TestCase):
             "Info: MESSAGE",
             build_message_from_report(
                 code_builder_map,
-                ReportItem("SOME", {"message": "MESSAGE"})
+                ReportItemMock("SOME", {"message": "MESSAGE"})
             )
         )
 
@@ -117,8 +162,7 @@ class BuildMessageFromReportTest(TestCase):
             "Info: MESSAGE force text",
             build_message_from_report(
                 code_builder_map,
-                ReportItem("SOME", {"message": "MESSAGE"}),
+                ReportItemMock("SOME", {"message": "MESSAGE"}),
                 "force text"
             )
         )
-

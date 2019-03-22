@@ -1813,7 +1813,7 @@ def service_kill_error(services, reason):
     return ReportItem.error(
         report_codes.SERVICE_KILL_ERROR,
         info={
-            "services": services,
+            "services": sorted(services),
             "reason": reason,
         }
     )
@@ -1826,7 +1826,7 @@ def service_kill_success(services):
     return ReportItem.info(
         report_codes.SERVICE_KILL_SUCCESS,
         info={
-            "services": services,
+            "services": sorted(services),
         }
     )
 
