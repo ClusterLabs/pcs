@@ -4,9 +4,9 @@ from unittest import TestCase
 
 from pcs.cli.common.console_report import(
     indent,
-    CODE_TO_MESSAGE_BUILDER_MAP,
     format_optional,
 )
+from pcs.cli.common.reports import CODE_BUILDER_MAP
 from pcs.common import report_codes as codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
@@ -31,13 +31,13 @@ class IndentTest(TestCase):
 
 class NameBuildTest(TestCase):
     """
-    Mixin for the testing of message building.
+    Base class for the testing of message building.
     """
     code = None
 
     def assert_message_from_info(self, message, info=None):
         info = info if info else {}
-        build = CODE_TO_MESSAGE_BUILDER_MAP[self.code]
+        build = CODE_BUILDER_MAP[self.code]
         self.assertEqual(
             message,
             build(info) if callable(build) else build
@@ -45,7 +45,7 @@ class NameBuildTest(TestCase):
 
     def assert_message_from_report(self, message, report):
         if not isinstance(report, ReportItem):
-            raise AssertionError("report is not instance of ReportItem")
+            raise AssertionError("report is not an instance of ReportItem")
         self.assert_message_from_info(message, report.info)
 
 
@@ -1771,6 +1771,24 @@ class ServiceStopSuccess(NameBuildTest):
         )
 
 
+class ServiceKillError(NameBuildTest):
+    code = codes.SERVICE_KILL_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to kill A, B, C: some reason",
+            reports.service_kill_error(["B", "A", "C"], "some reason")
+        )
+
+
+class ServiceKillSuccess(NameBuildTest):
+    code = codes.SERVICE_KILL_SUCCESS
+    def test_success(self):
+        self.assert_message_from_report(
+            "A, B, C killed",
+            reports.service_kill_success(["B", "A", "C"])
+        )
+
+
 class ServiceEnableStarted(NameBuildTest):
     code = codes.SERVICE_ENABLE_STARTED
     def test_minimal(self):
@@ -2589,20 +2607,31 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
 class NodeCommunicationRetrying(NameBuildTest):
     code = codes.NODE_COMMUNICATION_RETRYING
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Unable to connect to 'node_name' via address 'failed.address' "
                 "and port '2224'. Retrying request 'my/request' via address "
                 "'next.address' and port '2225'"
             ),
-            {
-                "node": "node_name",
-                "failed_address": "failed.address",
-                "failed_port": "2224",
-                "next_address": "next.address",
-                "next_port": "2225",
-                "request": "my/request",
-            }
+            reports.node_communication_retrying(
+                "node_name",
+                "failed.address",
+                "2224",
+                "next.address",
+                "2225",
+                "my/request",
+            )
+        )
+
+class NodeCommunicationNoMoreAddresses(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to connect to 'node_name' via any of its addresses",
+            reports.node_communication_no_more_addresses(
+                "node_name",
+                "my/request",
+            )
         )
 
 class HostNotFound(NameBuildTest):

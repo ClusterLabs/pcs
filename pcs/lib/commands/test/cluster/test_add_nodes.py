@@ -435,7 +435,7 @@ class LocalConfig():
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
-                    name_list=[config_file, authfile],
+                    name_list=[authfile, config_file],
                 ) for node in node_labels
             ]
         )
@@ -2452,7 +2452,7 @@ class FailureBoothConfigsDistribution(TestCase):
             fixture.info(
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
-                name_list=[self.config_file, self.authfile],
+                name_list=[self.authfile, self.config_file],
             ) for node in self.successful_nodes
         ]
 

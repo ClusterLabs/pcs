@@ -481,7 +481,7 @@ class ConfigSyncTest(TestCase):
         commands.config_sync(self.env_assist.get_env(), self.name)
         self.env_assist.assert_reports(
             [
-                fixture.warn(report_codes.BOOTH_UNSUPORTED_FILE_LOCATION),
+                fixture.warn(report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION),
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
             ]
             +

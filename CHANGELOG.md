@@ -47,6 +47,7 @@
 - Fixed a typo in documentation (regardles -> regardless) ([rhbz#1660702])
 - Fixed pcsd crashes when non-ASCII characters are present in systemd journal
 - Pcs works even when PATH environment variable is not set ([rhbz#1673825])
+- Fixed several "Unknown report" error messages
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling

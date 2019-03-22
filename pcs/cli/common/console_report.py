@@ -603,6 +603,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.NODE_COMMUNICATION_RETRYING: lambda info:
+        (
+            "Unable to connect to '{node}' via address '{failed_address}' and "
+            "port '{failed_port}'. Retrying request '{request}' via address "
+            "'{next_address}' and port '{next_port}'"
+        ).format(**info)
+    ,
+
+    codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES: lambda info:
+        "Unable to connect to '{node}' via any of its addresses".format(**info)
+    ,
+
     codes.NODE_COMMUNICATION_DEBUG_INFO: lambda info:
         (
             "Communication debug info for calling: {target}\n"
@@ -1273,17 +1285,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ),
 
     codes.SERVICE_KILL_ERROR: lambda info:
-        "Unable to kill {service_list}: {reason}"
+        "Unable to kill {_service_list}: {reason}"
         .format(
-            service_list=", ".join(info["services"]),
+            _service_list=", ".join(info["services"]),
             **info
         )
     ,
 
     codes.SERVICE_KILL_SUCCESS: lambda info:
-        "{services_list} killed"
+        "{_service_list} killed"
         .format(
-            service_list=", ".join(info["services"]),
+            _service_list=", ".join(info["services"]),
             **info
         )
     ,
@@ -1725,13 +1737,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE:
         "Unable to perform operation on any available node/host, therefore it "
         "is not possible to continue"
-    ,
-    codes.NODE_COMMUNICATION_RETRYING: lambda info:
-        (
-            "Unable to connect to '{node}' via address '{failed_address}' and "
-            "port '{failed_port}'. Retrying request '{request}' via address "
-            "'{next_address}' and port '{next_port}'"
-        ).format(**info)
     ,
     codes.HOST_NOT_FOUND: lambda info:
         (

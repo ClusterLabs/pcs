@@ -237,7 +237,7 @@ class ReadAuthfileTest(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 severities.WARNING,
-                report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
+                report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
                 {"file": path}
             )]
         )
@@ -251,7 +251,7 @@ class ReadAuthfileTest(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 severities.WARNING,
-                report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
+                report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
                 {"file": path}
             )]
         )

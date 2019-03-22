@@ -189,7 +189,7 @@ def booth_config_accepted_by_node(node=None, name_list=None):
         report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
         info={
             "node": node,
-            "name_list": name_list
+            "name_list": sorted(name_list)
         }
     )
 
@@ -254,7 +254,7 @@ def booth_unsupported_file_location(file):
     file -- file path
     """
     return ReportItem.warning(
-        report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
+        report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
         info={"file": file}
     )
 

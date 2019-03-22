@@ -18,10 +18,10 @@ from pcs.common.reports import SimpleReportProcessorInterface
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
-__CODE_BUILDER_MAP = {}
-__CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
-__CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
-__CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
+CODE_BUILDER_MAP = {}
+CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
+CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
+CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
 def build_default_message_from_report(report_item, force_text):
     return "Unknown report: {0} info: {1}{2}".format(
@@ -59,7 +59,7 @@ def build_message_from_report(code_builder_map, report_item, force_text=""):
 
 
 
-build_report_message = partial(build_message_from_report, __CODE_BUILDER_MAP)
+build_report_message = partial(build_message_from_report, CODE_BUILDER_MAP)
 
 
 class LibraryReportProcessorToConsole(SimpleReportProcessorInterface):
