@@ -34,8 +34,14 @@ from pcs import (
     utils,
 )
 from pcs.utils import parallel_for_nodes
-from pcs.common import report_codes
-from pcs.common.tools import Version
+from pcs.common import (
+    env_file_role_codes,
+    report_codes,
+)
+from pcs.common.tools import (
+    format_environment_error,
+    Version,
+)
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
@@ -592,10 +598,12 @@ def cluster_setup(argv):
             enable_cluster(primary_addr_list)
 
         # sync certificates as the last step because it restarts pcsd
-        print()
-        pcsd.pcsd_sync_certs(
-            [], exit_after_error=False, async_restart=modifiers["async"]
-        )
+        if _is_ssl_cert_sync_enabled():
+            print()
+            pcsd.pcsd_sync_certs(
+                [], exit_after_error=False, async_restart=modifiers["async"]
+            )
+
         if wait:
             print()
             wait_for_nodes_started(primary_addr_list, wait_timeout)
@@ -2101,7 +2109,8 @@ def node_add(lib_env, node0, node1, modifiers):
             if retval != 0:
                 print("Warning: start cluster - {0}".format(err))
 
-        pcsd.pcsd_sync_certs([node0], exit_after_error=False)
+        if _is_ssl_cert_sync_enabled():
+            pcsd.pcsd_sync_certs([node0], exit_after_error=False)
     else:
         utils.err("Unable to update any nodes")
     if utils.is_cman_with_udpu_transport():
@@ -2616,3 +2625,25 @@ def cluster_remote_node(argv):
         print(usage_remove)
         print()
         sys.exit(1)
+
+def _is_ssl_cert_sync_enabled():
+    try:
+        if os.path.isfile(settings.pcsd_config):
+            with open(settings.pcsd_config, "r") as cfg_file:
+                cfg = environment_file_to_dict(cfg_file.read())
+                return (
+                    cfg.get("PCSD_SSL_CERT_SYNC_ENABLED", "true").lower()
+                    ==
+                    "true"
+                )
+    except EnvironmentError as e:
+        process_library_reports([
+            lib_reports.file_io_error(
+                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                file_path=settings.pcsd_config,
+                reason=format_environment_error(e),
+                operation="read",
+                severity=ReportItemSeverity.WARNING
+            )
+        ])
+    return True

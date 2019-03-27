@@ -2,10 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+- It is now possible to disable pcsd SSL certificate being synced across the
+  cluster during creating new cluster and adding a node to an existing cluster
+  by setting `PCSD_SSL_CERT_SYNC_ENABLED` to `false` in pcsd config file
+  ([rhbz#1665898])
+
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])
 - Fixed several "Unknown report" error messages
 
+[rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 
 

@@ -8,7 +8,10 @@ from collections import Iterable
 from functools import partial
 import sys
 
-from pcs.common import report_codes as codes
+from pcs.common import (
+    env_file_role_codes,
+    report_codes as codes,
+)
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 from pcs.common.tools import is_string
 
@@ -29,13 +32,14 @@ _type_articles = {
     "ACL permission": "an",
 }
 _file_role_translation = {
-    "BOOTH_CONFIG": "Booth configuration",
-    "BOOTH_KEY": "Booth key",
-    "COROSYNC_AUTHKEY": "Corosync authkey",
-    "PACEMAKER_AUTHKEY": "Pacemaker authkey",
-    "PCSD_SSL_CERT": "pcsd SSL certificate",
-    "PCSD_SSL_KEY": "pcsd SSL key",
-    "PCS_SETTINGS_CONF": "pcs configuration",
+    env_file_role_codes.BOOTH_CONFIG: "Booth configuration",
+    env_file_role_codes.BOOTH_KEY: "Booth key",
+    env_file_role_codes.COROSYNC_AUTHKEY: "Corosync authkey",
+    env_file_role_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
+    env_file_role_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
+    env_file_role_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
+    env_file_role_codes.PCSD_SSL_KEY: "pcsd SSL key",
+    env_file_role_codes.PCS_SETTINGS_CONF: "pcs configuration",
 }
 
 def warn(message):
