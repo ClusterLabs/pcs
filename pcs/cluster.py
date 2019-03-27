@@ -279,7 +279,7 @@ def auth_nodes(nodes):
     nodes_dict = parse_nodes_with_ports(nodes)
     need_auth = "--force" in utils.pcs_options or (username or password)
     if not need_auth:
-        for node in nodes_dict.keys():
+        for node in nodes_dict:
             status = utils.checkAuthorization(node)
             if status[0] == 3:
                 need_auth = True
@@ -310,7 +310,7 @@ def auth_nodes(nodes):
             '--local' in utils.pcs_options
         )
     else:
-        for node in nodes_dict.keys():
+        for node in nodes_dict:
             print(node + ": Already authorized")
 
 
@@ -1168,7 +1168,6 @@ def start_cluster_nodes(nodes):
     utils.run_parallel([task.run for task in task_list])
     nodes_supported = []
     nodes_not_supported = []
-    accessible_nodes = []
     for task in task_list:
         if task.error:
             # unable to connect, unathorized

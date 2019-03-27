@@ -56,4 +56,3 @@ class GetStatusTextTest(TestCase):
         self.mock_runner.run.assert_called_once_with([
             self.qdevice_tool, "-s"
         ])
-

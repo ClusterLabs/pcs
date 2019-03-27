@@ -112,4 +112,3 @@ def _create_node(tree, node_id, uname, node_type=None):
     if node_type:
         node.set("type", node_type)
     return node
-

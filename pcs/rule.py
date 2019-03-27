@@ -1069,4 +1069,3 @@ class TokenPreprocessor(object):
         if token_parts:
             output_list.extend(token_parts)
         return output_list
-

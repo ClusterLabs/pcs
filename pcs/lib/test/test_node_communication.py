@@ -536,4 +536,3 @@ class CommunicatorLoggerTest(TestCase):
             )
         )
         self.assertEqual([logger_call], self.logger.mock_calls)
-

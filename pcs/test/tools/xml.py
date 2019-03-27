@@ -49,4 +49,3 @@ class XmlManipulation(object):
 
 def get_xml_manipulation_creator_from_file(file_name):
     return lambda: XmlManipulation.from_file(file_name)
-

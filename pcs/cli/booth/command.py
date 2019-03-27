@@ -184,4 +184,3 @@ def status(lib, arg_list, modifiers):
     if booth_status.get("status"):
         print("DAEMON STATUS:")
         print(booth_status["status"])
-

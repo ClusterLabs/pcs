@@ -96,4 +96,3 @@ def send_all_config_to_node(
         )
     except (KeyError, ValueError):
         raise LibraryError(lib_reports.invalid_response_format(target.label))
-

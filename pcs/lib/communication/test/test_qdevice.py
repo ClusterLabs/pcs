@@ -4,7 +4,6 @@ from __future__ import (
     print_function,
 )
 
-from pcs.lib.communication import qdevice
 from pcs.test.tools.pcs_unittest import TestCase
 
 class Stop(TestCase):

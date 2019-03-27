@@ -11,4 +11,3 @@ def is_stonith_resource(resources_el, name):
             "primitive[@id='{0}' and @class='stonith']".format(name)
         )
     ) > 0
-

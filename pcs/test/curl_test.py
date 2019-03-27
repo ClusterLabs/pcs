@@ -59,5 +59,3 @@ for response in communicator.start_loop():
     if len(request_list) == 8 and response.request == request_list[7]:
         r = get_request(15)
         communicator.add_requests([r])
-
-

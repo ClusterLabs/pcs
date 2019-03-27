@@ -31,4 +31,3 @@ def get_status_text(runner, verbose=False):
             )
         )
     return stdout
-

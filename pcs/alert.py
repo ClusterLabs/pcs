@@ -242,4 +242,3 @@ def print_alerts_in_json(lib, argv, dummy_modifiers):
         raise CmdLineInputError()
 
     print(json.dumps(lib.alert.get_all_alerts()))
-

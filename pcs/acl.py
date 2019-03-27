@@ -324,4 +324,3 @@ def _permission_to_str(permission):
         out += ["id", permission.get("reference")]
     out.append("({0})".format(permission.get("id")))
     return " ".join(out)
-

@@ -1151,4 +1151,3 @@ class ClientNetDestroyTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         lib.client_net_destroy(self.lib_env)
         mock_qdevice_func.assert_called_once_with()
-

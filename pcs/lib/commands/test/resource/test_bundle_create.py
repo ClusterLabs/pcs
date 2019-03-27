@@ -22,7 +22,7 @@ from pcs.lib.commands.test.resource.bundle_common import(
     WaitMixin,
 )
 
-class CreateCommandMixin:
+class CreateCommandMixin(object):
     container_type = "docker"
     bundle_id = "B1"
     image = "pcs:test"

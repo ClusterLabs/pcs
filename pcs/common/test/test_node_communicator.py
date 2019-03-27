@@ -573,4 +573,3 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
         com._multi_handle.assert_no_handle_left()
-

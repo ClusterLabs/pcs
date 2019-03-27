@@ -24,7 +24,7 @@ get_env_tools = partial(
     base_cib_filename="cib-empty-2.8.xml"
 )
 
-class FixturesMixin:
+class FixturesMixin(object):
     container_type = "docker"
     bundle_id = None
     image = None
@@ -42,7 +42,7 @@ class FixturesMixin:
             image=self.image,
         )
 
-class SetUpMixin:
+class SetUpMixin(object):
     initial_resources = "<resources/>"
     initial_cib_filename = "cib-empty-2.8.xml"
 

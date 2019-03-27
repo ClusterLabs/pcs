@@ -23,7 +23,6 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.lib import sbd
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
