@@ -7,7 +7,10 @@ from pcs.cli.common.console_report import(
     format_optional,
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
-from pcs.common import report_codes as codes
+from pcs.common import (
+    env_file_role_codes,
+    report_codes as codes,
+)
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -2951,7 +2954,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_info(
             "Unable to chown Booth key '/etc/booth/booth.key': Failed",
             {
-                "file_role": "BOOTH_KEY",
+                "file_role": env_file_role_codes.BOOTH_KEY,
                 "file_path": "/etc/booth/booth.key",
                 "reason": "Failed",
                 "operation": "chown",
@@ -2962,7 +2965,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_info(
             "Unable to chmod Booth configuration '/etc/booth/main.cfg': Failed",
             {
-                "file_role": "BOOTH_CONFIG",
+                "file_role": env_file_role_codes.BOOTH_CONFIG,
                 "file_path": "/etc/booth/main.cfg",
                 "reason": "Failed",
                 "operation": "chmod",
@@ -2973,7 +2976,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_info(
             "Unable to remove Pacemaker authkey '/etc/pacemaker/key': Failed",
             {
-                "file_role": "PACEMAKER_AUTHKEY",
+                "file_role": env_file_role_codes.PACEMAKER_AUTHKEY,
                 "file_path": "/etc/pacemaker/key",
                 "reason": "Failed",
                 "operation": "remove",
@@ -2984,7 +2987,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_info(
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
             {
-                "file_role": "PCSD_SSL_CERT",
+                "file_role": env_file_role_codes.PCSD_SSL_CERT,
                 "file_path": "/var/lib/pcsd.crt",
                 "reason": "Failed",
                 "operation": "read",
@@ -2995,10 +2998,21 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_info(
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
             {
-                "file_role": "PCSD_SSL_KEY",
+                "file_role": env_file_role_codes.PCSD_SSL_KEY,
                 "file_path": "/var/lib/pcsd.key",
                 "reason": "Failed",
                 "operation": "write",
+            }
+        )
+
+    def test_success_f(self):
+        self.assert_message_from_info(
+            "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
+            {
+                "file_role": env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                "file_path": "/etc/sysconfig/pcsd",
+                "reason": "Failed",
+                "operation": "read",
             }
         )
 

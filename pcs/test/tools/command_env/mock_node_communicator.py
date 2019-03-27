@@ -193,7 +193,8 @@ def create_communication(
     return request_list, response_list
 
 def place_multinode_call(
-    calls, name, node_labels=None, communication_list=None, **kwargs
+    calls, name, node_labels=None, communication_list=None, before=None,
+    **kwargs
 ):
     """
     Shortcut for adding a call sending the same request to one or more nodes
@@ -218,25 +219,27 @@ def place_multinode_call(
         else
         [{"label": label} for label in node_labels]
     )
-    place_communication(calls, name, communication_list, **kwargs)
+    place_communication(
+        calls, name, communication_list, before=before, **kwargs
+    )
 
 
-def place_requests(calls, name, request_list):
-    calls.place(name, AddRequestCall(request_list))
+def place_requests(calls, name, request_list, before=None):
+    calls.place(name, AddRequestCall(request_list), before=before)
 
 
-def place_responses(calls, name, response_list):
-    calls.place(name, StartLoopCall(response_list))
+def place_responses(calls, name, response_list, before=None):
+    calls.place(name, StartLoopCall(response_list), before=before)
 
 
-def place_communication(calls, name, communication_list, **kwargs):
+def place_communication(calls, name, communication_list, before=None, **kwargs):
     if not communication_list:
         # If code runs a communication command with no targets specified, the
         # whole communicator and CURL machinery gets started. It doesn't
         # actually send any HTTP requests but it adds an empty list of requests
         # to CURL and starts the CURL loop. And the mock must do the same.
-        place_requests(calls, "{0}_requests".format(name), [])
-        place_responses(calls, "{0}_responses".format(name), [])
+        place_requests(calls, f"{name}_requests", [], before=before)
+        place_responses(calls, f"{name}_responses", [], before=before)
         return
 
     if isinstance(communication_list[0], dict):
@@ -249,10 +252,10 @@ def place_communication(calls, name, communication_list, **kwargs):
         request_list.append(req_list)
         response_list.extend(res_list)
 
-    place_requests(calls, "{0}_requests".format(name), request_list[0])
-    place_responses(calls, "{0}_responses".format(name), response_list)
+    place_requests(calls, f"{name}_requests", request_list[0], before=before)
+    place_responses(calls, f"{name}_responses", response_list, before=before)
     for i, req_list in enumerate(request_list[1:], start=1):
-        place_requests(calls, "{0}_requests_{1}".format(name, i), req_list)
+        place_requests(calls, f"{name}_requests_{i}", req_list, before=before)
 
 
 class AddRequestCall:

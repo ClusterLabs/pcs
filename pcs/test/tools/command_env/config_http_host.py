@@ -121,7 +121,7 @@ class HostShortcuts:
 
     def send_pcsd_cert(
         self, cert, key, node_labels=None, communication_list=None,
-        name="http.host.send_pcsd_cert"
+        name="http.host.send_pcsd_cert", before=None
     ):
         """
         Create a call for sending pcsd SSL cert and key
@@ -139,6 +139,7 @@ class HostShortcuts:
             communication_list,
             action="remote/set_certs",
             param_list=[("ssl_cert", cert), ("ssl_key", key)],
+            before=before
         )
 
     def enable_cluster(

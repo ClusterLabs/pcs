@@ -319,6 +319,10 @@ def setup(
         )
     )
 
+    # If there is an error reading the file, this will report it and exit
+    # safely before any change is made to the nodes.
+    sync_ssl_certs = _is_ssl_cert_sync_enabled(report_processor)
+
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -371,19 +375,25 @@ def setup(
         run_and_raise(env.get_node_communicator(), com_cmd)
 
         # Distribute and reload pcsd SSL certificate
-        report_processor.report(
-            reports.pcsd_ssl_cert_and_key_distribution_started(
-                [target.label for target in target_list]
+        if sync_ssl_certs:
+            report_processor.report(
+                reports.pcsd_ssl_cert_and_key_distribution_started(
+                    [target.label for target in target_list]
+                )
             )
-        )
-        ssl_key_raw = ssl.generate_key()
-        ssl_key = ssl.dump_key(ssl_key_raw)
-        ssl_cert = ssl.dump_cert(
-            ssl.generate_cert(ssl_key_raw, target_list[0].label)
-        )
-        com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
-        com_cmd.set_targets(target_list)
-        run_and_raise(env.get_node_communicator(), com_cmd)
+            # Local certificate and key cannot be used because the local node
+            # may not be a part of the new cluter at all.
+            ssl_key_raw = ssl.generate_key()
+            ssl_key = ssl.dump_key(ssl_key_raw)
+            ssl_cert = ssl.dump_cert(
+                ssl.generate_cert(ssl_key_raw, target_list[0].label)
+            )
+            com_cmd = SendPcsdSslCertAndKey(
+                env.report_processor,
+                ssl_cert, ssl_key
+            )
+            com_cmd.set_targets(target_list)
+            run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Create and distribute corosync.conf. Once a node saves corosync.conf it
     # is considered to be in a cluster.
@@ -682,6 +692,10 @@ def add_nodes(
             )
         run_com(env.get_node_communicator(), com_cmd)
 
+    # If there is an error reading the file, this will report it and exit
+    # safely before any change is made to the nodes.
+    sync_ssl_certs = _is_ssl_cert_sync_enabled(report_processor)
+
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -824,42 +838,43 @@ def add_nodes(
         run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Distribute and reload pcsd SSL certificate
-    report_processor.report(
-        reports.pcsd_ssl_cert_and_key_distribution_started(
-            [target.label for target in new_nodes_target_list]
-        )
-    )
-
-    try:
-        with open(settings.pcsd_cert_location, "r") as file:
-            ssl_cert = file.read()
-    except EnvironmentError as e:
+    if sync_ssl_certs:
         report_processor.report(
-            reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT,
-                file_path=settings.pcsd_cert_location,
-                reason=format_environment_error(e),
-                operation="read",
+            reports.pcsd_ssl_cert_and_key_distribution_started(
+                [target.label for target in new_nodes_target_list]
             )
         )
-    try:
-        with open(settings.pcsd_key_location, "r") as file:
-            ssl_key = file.read()
-    except EnvironmentError as e:
-        report_processor.report(
-            reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY,
-                file_path=settings.pcsd_key_location,
-                reason=format_environment_error(e),
-                operation="read",
-            )
-        )
-    if report_processor.has_errors:
-        raise LibraryError()
 
-    com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
-    com_cmd.set_targets(new_nodes_target_list)
-    run_and_raise(env.get_node_communicator(), com_cmd)
+        try:
+            with open(settings.pcsd_cert_location, "r") as file:
+                ssl_cert = file.read()
+        except EnvironmentError as e:
+            report_processor.report(
+                reports.file_io_error(
+                    env_file_role_codes.PCSD_SSL_CERT,
+                    file_path=settings.pcsd_cert_location,
+                    reason=format_environment_error(e),
+                    operation="read",
+                )
+            )
+        try:
+            with open(settings.pcsd_key_location, "r") as file:
+                ssl_key = file.read()
+        except EnvironmentError as e:
+            report_processor.report(
+                reports.file_io_error(
+                    env_file_role_codes.PCSD_SSL_KEY,
+                    file_path=settings.pcsd_key_location,
+                    reason=format_environment_error(e),
+                    operation="read",
+                )
+            )
+        if report_processor.has_errors:
+            raise LibraryError()
+
+        com_cmd = SendPcsdSslCertAndKey(env.report_processor, ssl_cert, ssl_key)
+        com_cmd.set_targets(new_nodes_target_list)
+        run_and_raise(env.get_node_communicator(), com_cmd)
 
     # When corosync >= 2 is in use, the procedure for adding a node is:
     # 1. add the new node to corosync.conf on all existing nodes
@@ -1099,6 +1114,26 @@ def _get_validated_wait_timeout(report_processor, wait, start):
         report_processor.report_list(e.args)
     return None
 
+def _is_ssl_cert_sync_enabled(report_processor):
+    try:
+        if os.path.isfile(settings.pcsd_config):
+            with open(settings.pcsd_config, "r") as cfg_file:
+                cfg = environment_file_to_dict(cfg_file.read())
+                return (
+                    cfg.get("PCSD_SSL_CERT_SYNC_ENABLED", "false").lower()
+                    ==
+                    "true"
+                )
+    except EnvironmentError as e:
+        report_processor.report(
+            reports.file_io_error(
+                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                file_path=settings.pcsd_config,
+                reason=format_environment_error(e),
+                operation="read",
+            )
+        )
+    return False
 
 def remove_nodes(env, node_list, force_flags=None):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements

@@ -45,6 +45,7 @@ pcsd_settings_conf_location = "/var/lib/pcsd/pcs_settings.conf"
 pcsd_exec_location = "/usr/lib/pcsd/"
 pcsd_log_location = "/var/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
+pcsd_config = "/etc/sysconfig/pcsd"
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"

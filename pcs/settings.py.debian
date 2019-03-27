@@ -7,4 +7,5 @@ pacemaker_based = "/usr/lib/pacemaker/pacemaker-based"
 pacemaker_fenced = "/usr/lib/pacemaker/pacemaker-fenced"
 pcsd_exec_location = "/usr/share/pcsd/"
 pcsd_gem_path = None
+pcsd_config = "/etc/default/pcsd"
 sbd_config = "/etc/default/sbd"

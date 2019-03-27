@@ -48,6 +48,9 @@
 - Fixed pcsd crashes when non-ASCII characters are present in systemd journal
 - Pcs works even when PATH environment variable is not set ([rhbz#1673825])
 - Fixed several "Unknown report" error messages
+- Pcsd SSL certificates are no longer synced across cluster nodes when creating
+  new cluster or adding new node to an existing cluster. To enable the syncing,
+  set `PCSD_SSL_CERT_SYNC_ENABLED` to `true` in pcsd config. ([rhbz#1673822])
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
@@ -76,6 +79,7 @@
 [rhbz#1667090]: https://bugzilla.redhat.com/show_bug.cgi?id=1667090
 [rhbz#1668223]: https://bugzilla.redhat.com/show_bug.cgi?id=1668223
 [rhbz#1668422]: https://bugzilla.redhat.com/show_bug.cgi?id=1668422
+[rhbz#1673822]: https://bugzilla.redhat.com/show_bug.cgi?id=1673822
 [rhbz#1673825]: https://bugzilla.redhat.com/show_bug.cgi?id=1673825
 [rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945

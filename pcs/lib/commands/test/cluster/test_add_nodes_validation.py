@@ -65,6 +65,7 @@ class GetTargets(TestCase):
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self._add_nodes_with_lib_error()
@@ -87,6 +88,7 @@ class GetTargets(TestCase):
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
                 node_labels=self.new_nodes,
                 to_add_hosts=self.existing_nodes[1:] + self.new_nodes,
@@ -94,7 +96,6 @@ class GetTargets(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .local.no_file_sync()
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes + [
@@ -127,6 +128,7 @@ class GetTargets(TestCase):
             .env.set_known_nodes(self.new_nodes)
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self._add_nodes_with_lib_error()
@@ -151,6 +153,7 @@ class GetTargets(TestCase):
             .env.set_known_nodes(self.new_nodes)
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self._add_nodes_with_lib_error(skip_offline=True)
@@ -181,6 +184,7 @@ class GetTargets(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self._add_nodes_with_lib_error(skip_offline=skip_offline)
@@ -208,6 +212,7 @@ class GetTargets(TestCase):
             .http.host.check_auth(node_labels=self.existing_nodes)
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(self.new_nodes[1:])
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self._add_nodes_with_lib_error(skip_offline=skip_offline)
@@ -276,6 +281,7 @@ class Inputs(TestCase):
             )
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -376,6 +382,7 @@ class Inputs(TestCase):
             .runner.cib.load(returncode=1, stderr="an error")
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
     def test_conflict_existing_nodes_cib_load_error(self):
@@ -446,6 +453,7 @@ class Inputs(TestCase):
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -491,6 +499,7 @@ class Inputs(TestCase):
             .http.host.check_auth(node_labels=existing_nodes)
             .runner.systemctl.list_unit_files({}) # SBD not installed
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -578,6 +587,7 @@ class Inputs(TestCase):
                     ),
                 ]
             )
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -673,6 +683,7 @@ class Inputs(TestCase):
                     ),
                 ]
             )
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -754,6 +765,7 @@ class Inputs(TestCase):
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -794,6 +806,7 @@ class Inputs(TestCase):
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
             .local.get_host_info(new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -853,6 +866,7 @@ class ClusterStatus(TestCase):
             )
         if with_get_host_info:
             self.config.local.get_host_info(new_nodes)
+            self.config.local.pcsd_ssl_cert_sync_disabled()
 
     def test_all_nodes_offline_skipped(self):
         existing_nodes = ["node1", "node2"]
@@ -1070,6 +1084,7 @@ class ClusterStatus(TestCase):
                     ),
                 ]
             )
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1211,6 +1226,7 @@ class ClusterStatus(TestCase):
         self.config.http.host.get_host_info(
             communication_list=self.fixture_get_host_info_communication()
         )
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
@@ -1279,6 +1295,7 @@ class ClusterStatus(TestCase):
         self.config.http.host.get_host_info(
             communication_list=self.fixture_get_host_info_communication()
         )
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
@@ -1447,6 +1464,7 @@ class ClusterStatus(TestCase):
                     },
                 ]
             )
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1562,6 +1580,7 @@ class ClusterStatus(TestCase):
                     },
                 ]
             )
+            .local.pcsd_ssl_cert_sync_disabled()
         )
 
         self.env_assist.assert_raise_library_error(

@@ -196,6 +196,13 @@ def config_succes_minimal_fixture(
             ),
             communication_list=communication_list,
         )
+        .fs.isfile(settings.pcsd_config, name="fs.isfile.pcsd_config")
+        .fs.open(
+            settings.pcsd_config,
+            # Tests for other cases are in SslCertSync class.
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")(),
+            name="fs.open.pcsd_config"
+        )
         .http.host.cluster_destroy(
             node_labels=node_labels,
             communication_list=communication_list,
@@ -214,12 +221,6 @@ def config_succes_minimal_fixture(
             node_labels=node_labels,
             pcmk_authkey=RANDOM_KEY,
             corosync_authkey=RANDOM_KEY,
-            communication_list=communication_list,
-        )
-        .http.host.send_pcsd_cert(
-            cert=PCSD_SSL_CERT_DUMP,
-            key=PCSD_SSL_KEY_DUMP,
-            node_labels=node_labels,
             communication_list=communication_list,
         )
         .http.files.put_files(
@@ -293,20 +294,6 @@ def reports_success_minimal_fixture(
                     file_description=file,
                 ) for node in node_list for file in auth_file_list
             ]
-            +
-            [
-                fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
-                    node_name_list=node_list,
-                )
-            ]
-            +
-            [
-                fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
-                    node=node,
-                ) for node in node_list
-            ]
         )
     report_list.extend(
         [
@@ -330,6 +317,12 @@ def reports_success_minimal_fixture(
         ]
     )
     return report_list
+
+
+class RemoveCallsMixin():
+    def _remove_calls(self, count):
+        for name in self.config.calls.names[-count:]:
+            self.config.calls.remove(name)
 
 
 class CheckLive(TestCase):
@@ -531,8 +524,6 @@ class SetupSuccessMinimal(TestCase):
     def test_no_keys_sync(self):
         self.config.calls.remove("http.files.put_files_requests")
         self.config.calls.remove("http.files.put_files_responses")
-        self.config.calls.remove("http.host.send_pcsd_cert_requests")
-        self.config.calls.remove("http.host.send_pcsd_cert_responses")
         cluster.setup(
             self.env_assist.get_env(),
             CLUSTER_NAME,
@@ -643,6 +634,12 @@ class Setup2NodeSuccessMinimal(TestCase):
                     cluster_configuration_exists=False,
                 ),
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
             .http.host.cluster_destroy(self.node_list)
             .http.host.update_known_hosts(
                 self.node_list,
@@ -653,11 +650,6 @@ class Setup2NodeSuccessMinimal(TestCase):
                 self.node_list,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
-            )
-            .http.host.send_pcsd_cert(
-                cert=PCSD_SSL_CERT_DUMP,
-                key=PCSD_SSL_KEY_DUMP,
-                node_labels=self.node_list,
             )
         )
 
@@ -825,7 +817,15 @@ class Validation(TestCase):
         # The validators have their own tests. In here, we are only concerned
         # about calling the validators so we test that all provided options
         # have been validated.
-        self.config.http.host.get_host_info([])
+        (self.config
+            .http.host.get_host_info([])
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
+        )
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
@@ -863,6 +863,12 @@ class Validation(TestCase):
                 # corosync.
                 ["node1", "node2", "node3"],
                 output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
             )
         )
         self.resolvable_hosts.extend(["addr1", "addr3"])
@@ -927,6 +933,12 @@ class Validation(TestCase):
                 NODE_LIST,
                 output_data=self.get_host_info_ok
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -971,6 +983,12 @@ class Validation(TestCase):
                 NODE_LIST,
                 output_data=self.get_host_info_ok
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -1001,6 +1019,12 @@ class Validation(TestCase):
             .http.host.get_host_info(
                 NODE_LIST,
                 output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
             )
         )
         self.resolvable_hosts.extend(NODE_LIST)
@@ -1037,6 +1061,12 @@ class Validation(TestCase):
             .http.host.get_host_info(
                 NODE_LIST,
                 output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
             )
         )
         self.resolvable_hosts.extend(NODE_LIST)
@@ -1121,6 +1151,12 @@ class Validation(TestCase):
                 NODE_LIST,
                 output_data=self.get_host_info_ok
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -1200,6 +1236,12 @@ class Validation(TestCase):
                 NODE_LIST,
                 output_data=self.get_host_info_ok
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         nodelist = []
         for i, node in enumerate(NODE_LIST, 1):
@@ -1231,7 +1273,15 @@ class Validation(TestCase):
 
     def test_all_nodes_unknown(self):
         self.config.env.set_known_nodes([])
-        self.config.http.host.get_host_info([])
+        (self.config
+            .http.host.get_host_info([])
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
+        )
         self.resolvable_hosts.extend(NODE_LIST)
 
         self.env_assist.assert_raise_library_error(
@@ -1257,9 +1307,17 @@ class Validation(TestCase):
         # This also tests that corosync addresses do not matter for pcs-pcsd
         # communication.
         self.config.env.set_known_nodes(["node1"]) # pcs does not know addrX
-        self.config.http.host.get_host_info(
-            ["node1"],
-            output_data=self.get_host_info_ok
+        (self.config
+            .http.host.get_host_info(
+                ["node1"],
+                output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(["addr1", "addr2"])
 
@@ -1301,19 +1359,34 @@ class Validation(TestCase):
 
         nodelist = [f"node{i}" for i in range(10)]
         self.config.env.set_known_nodes(nodelist)
-        self.config.http.host.get_host_info(
-            communication_list=[
-                {"label": "node0", "output": "bad json"},
-                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
-                {"label": "node2", "output": json.dumps({"services": {}})},
-                {"label": "node3", "output": json.dumps(node3_response)},
-                {"label": "node4", "output": json.dumps(node4_response)},
-                {"label": "node5", "output": json.dumps(node5_response)},
-                {"label": "node6", "output": json.dumps(node6_response)},
-                {"label": "node7", "output": json.dumps(node7_response)},
-                {"label": "node8", "response_code": 400, "output": "errA"},
-                {"label": "node9", "was_connected": False, "error_msg": "errB"},
-            ]
+        (self.config
+            .http.host.get_host_info(
+                communication_list=[
+                    {"label": "node0", "output": "bad json"},
+                    {
+                        "label": "node1",
+                        "output": json.dumps(self.get_host_info_ok)
+                    },
+                    {"label": "node2", "output": json.dumps({"services": {}})},
+                    {"label": "node3", "output": json.dumps(node3_response)},
+                    {"label": "node4", "output": json.dumps(node4_response)},
+                    {"label": "node5", "output": json.dumps(node5_response)},
+                    {"label": "node6", "output": json.dumps(node6_response)},
+                    {"label": "node7", "output": json.dumps(node7_response)},
+                    {"label": "node8", "response_code": 400, "output": "errA"},
+                    {
+                        "label": "node9",
+                        "was_connected": False,
+                        "error_msg": "errB"
+                    },
+                ]
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(nodelist)
         host_version = {
@@ -1414,16 +1487,31 @@ class Validation(TestCase):
 
         nodelist = [f"node{i}" for i in range(7)]
         self.config.env.set_known_nodes(nodelist)
-        self.config.http.host.get_host_info(
-            communication_list=[
-                {"label": "node0", "output": "bad json"},
-                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
-                {"label": "node2", "output": json.dumps({"services": {}})},
-                {"label": "node3", "output": json.dumps(node3_response)},
-                {"label": "node4", "output": json.dumps(node4_response)},
-                {"label": "node5", "response_code": 400, "output": "errA"},
-                {"label": "node6", "was_connected": False, "error_msg": "errB"},
-            ]
+        (self.config
+            .http.host.get_host_info(
+                communication_list=[
+                    {"label": "node0", "output": "bad json"},
+                    {
+                        "label": "node1",
+                        "output": json.dumps(self.get_host_info_ok)
+                    },
+                    {"label": "node2", "output": json.dumps({"services": {}})},
+                    {"label": "node3", "output": json.dumps(node3_response)},
+                    {"label": "node4", "output": json.dumps(node4_response)},
+                    {"label": "node5", "response_code": 400, "output": "errA"},
+                    {
+                        "label": "node6",
+                        "was_connected": False,
+                        "error_msg": "errB"
+                    },
+                ]
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(nodelist)
         host_version = {node: "1.0" for node in ["node1", "node3"]}
@@ -1547,9 +1635,17 @@ class Validation(TestCase):
         )
 
     def test_wait_not_valid(self):
-        self.config.http.host.get_host_info(
-            NODE_LIST,
-            output_data=self.get_host_info_ok
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -1573,9 +1669,17 @@ class Validation(TestCase):
         )
 
     def test_wait_without_start(self):
-        self.config.http.host.get_host_info(
-            NODE_LIST,
-            output_data=self.get_host_info_ok
+        (self.config
+            .http.host.get_host_info(
+                NODE_LIST,
+                output_data=self.get_host_info_ok
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -1599,12 +1703,26 @@ class Validation(TestCase):
     def test_errors_from_all_validators(self):
         node3_response = deepcopy(self.get_host_info_ok)
         node3_response["cluster_configuration_exists"] = True
-        self.config.http.host.get_host_info(
-            communication_list=[
-                {"label": "node1", "output": json.dumps(self.get_host_info_ok)},
-                {"label": "node2", "output": json.dumps(self.get_host_info_ok)},
-                {"label": "node3", "output": json.dumps(node3_response)},
-            ]
+        (self.config
+            .http.host.get_host_info(
+                communication_list=[
+                    {
+                        "label": "node1",
+                        "output": json.dumps(self.get_host_info_ok)
+                    },
+                    {
+                        "label": "node2",
+                        "output": json.dumps(self.get_host_info_ok)
+                    },
+                    {"label": "node3", "output": json.dumps(node3_response)},
+                ]
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
         )
         self.resolvable_hosts.extend(NODE_LIST)
 
@@ -1962,6 +2080,12 @@ class SetupWithWait(TestCase):
                     cluster_configuration_exists=False,
                 ),
             )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")()
+            )
             .http.host.cluster_destroy(NODE_LIST)
             .http.host.update_known_hosts(NODE_LIST, to_add_hosts=NODE_LIST)
             .http.files.remove_files(NODE_LIST, pcsd_settings=True)
@@ -1969,11 +2093,6 @@ class SetupWithWait(TestCase):
                 NODE_LIST,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
-            )
-            .http.host.send_pcsd_cert(
-                cert=PCSD_SSL_CERT_DUMP,
-                key=PCSD_SSL_KEY_DUMP,
-                node_labels=NODE_LIST
             )
             .http.files.put_files(
                 NODE_LIST,
@@ -2282,7 +2401,7 @@ REASON = "error msg"
     "pcs.lib.commands.cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT
 )
-class Failures(TestCase):
+class Failures(RemoveCallsMixin, TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
@@ -2385,10 +2504,6 @@ class Failures(TestCase):
                 for node in self.nodes_success
             ]
         )
-
-    def _remove_calls(self, count):
-        for name in self.config.calls.names[-count:]:
-            self.config.calls.remove(name)
 
     def test_corosync_conf_distribution_communication_failure(self):
         self._remove_calls(2)
@@ -2516,51 +2631,9 @@ class Failures(TestCase):
             ]
         )
 
-    def test_sending_pcsd_ssl_cert_and_key_failure(self):
-        self._remove_calls(4)
-        self.config.http.host.send_pcsd_cert(
-            cert=PCSD_SSL_CERT_DUMP,
-            key=PCSD_SSL_KEY_DUMP,
-            communication_list=[
-                {
-                    "label": NODE_LIST[0],
-                    "response_code": 400,
-                    "output": REASON,
-                }
-            ] + [
-                dict(label=node) for node in NODE_LIST[1:]
-            ]
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                [dict(name=node, addrs=None) for node in NODE_LIST],
-            ),
-            []
-        )
-        self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-8]
-            +
-            [
-                fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
-                    node=node,
-                ) for node in NODE_LIST[1:]
-            ]
-            +
-            [
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    node=NODE_LIST[0],
-                    command="remote/set_certs",
-                    reason=REASON
-                )
-            ]
-        )
 
     def test_removing_files_communication_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=self.communication_list,
             pcsd_settings=True,
@@ -2576,7 +2649,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(
@@ -2590,7 +2663,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_failure(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2620,7 +2693,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(
@@ -2641,7 +2714,7 @@ class Failures(TestCase):
         )
 
     def test_removing_files_invalid_response(self):
-        self._remove_calls(8)
+        self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=[
                 dict(
@@ -2664,7 +2737,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-19]
+            reports_success_minimal_fixture()[:-15]
             +
             [
                 fixture.info(
@@ -2683,7 +2756,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_communication_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2733,7 +2806,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-11]
             +
             [
                 fixture.info(
@@ -2772,7 +2845,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_invalid_response(self):
-        self._remove_calls(6)
+        self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=[
                 dict(
@@ -2796,7 +2869,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-11]
             +
             [
                 fixture.info(
@@ -2817,7 +2890,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_of_authkey_files_failure(self):
-        self._remove_calls(6)
+        self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=self.communication_list,
             pcmk_authkey=RANDOM_KEY,
@@ -2834,7 +2907,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-15]
+            reports_success_minimal_fixture()[:-11]
             +
             [
                 fixture.info(
@@ -2850,7 +2923,7 @@ class Failures(TestCase):
         )
 
     def test_distibution_known_hosts_failure(self):
-        self._remove_calls(10)
+        self._remove_calls(8)
         self.config.http.host.update_known_hosts(
             communication_list=self.communication_list,
             to_add_hosts=NODE_LIST
@@ -2866,13 +2939,13 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-20]
+            reports_success_minimal_fixture()[:-16]
             +
             self._get_failure_reports("remote/known_hosts_change")
         )
 
     def test_cluster_destroy_failure(self):
-        self._remove_calls(12)
+        self._remove_calls(10)
         self.config.http.host.cluster_destroy(
             communication_list=self.communication_list,
         )
@@ -2887,7 +2960,7 @@ class Failures(TestCase):
             []
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture()[:-23]
+            reports_success_minimal_fixture()[:-19]
             +
             [
                 fixture.info(
@@ -2898,4 +2971,226 @@ class Failures(TestCase):
             ]
             +
             self._get_failure_reports("remote/cluster_destroy")
+        )
+
+
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class SslCertSync(RemoveCallsMixin, TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(NODE_LIST)
+        patch_getaddrinfo(self, NODE_LIST)
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
+        )
+
+    def test_sync_disabled(self):
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")(),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+    def test_sync_disabled_by_default_config_empty(self):
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="")(),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+    def test_sync_disabled_by_default_config_commented(self):
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="#PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+    def test_config_missing(self):
+        self.config.fs.isfile(
+            settings.pcsd_config,
+            return_value=False,
+            name="fs.isfile.pcsd_config",
+            instead="fs.isfile.pcsd_config",
+        )
+        self.config.calls.remove("fs.open.pcsd_config")
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+    def test_config_unreadable(self):
+        self.config.fs.open(
+            settings.pcsd_config,
+            side_effect=EnvironmentError(1, "error reading pcsd config"),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+        self._remove_calls(10)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node
+                ) for node in NODE_LIST
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_role="PCSD_ENVIRONMENT_CONFIG",
+                    file_path=settings.pcsd_config,
+                    reason="error reading pcsd config",
+                    operation="read"
+                )
+            ]
+        )
+
+    @mock.patch(
+        "pcs.lib.commands.cluster.ssl.generate_key",
+        lambda: PCSD_SSL_KEY
+    )
+    @mock.patch(
+        "pcs.lib.commands.cluster.ssl.generate_cert",
+        lambda ssl_key, server_name: PCSD_SSL_CERT
+    )
+    def test_sync_success(self):
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+        self.config.http.host.send_pcsd_cert(
+            cert=PCSD_SSL_CERT_DUMP,
+            key=PCSD_SSL_KEY_DUMP,
+            node_labels=NODE_LIST,
+            before="distribute_corosync_conf_requests"
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=NODE_LIST,
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST
+            ]
+        )
+
+    @mock.patch(
+        "pcs.lib.commands.cluster.ssl.generate_key",
+        lambda: PCSD_SSL_KEY
+    )
+    @mock.patch(
+        "pcs.lib.commands.cluster.ssl.generate_cert",
+        lambda ssl_key, server_name: PCSD_SSL_CERT
+    )
+    def test_sending_failure(self):
+        self._remove_calls(2)
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+            name="fs.open.pcsd_config",
+            instead="fs.open.pcsd_config",
+        )
+        self.config.http.host.send_pcsd_cert(
+            cert=PCSD_SSL_CERT_DUMP,
+            key=PCSD_SSL_KEY_DUMP,
+            communication_list=[
+                {
+                    "label": NODE_LIST[0],
+                    "response_code": 400,
+                    "output": REASON,
+                }
+            ] + [
+                dict(label=node) for node in NODE_LIST[1:]
+            ]
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [dict(name=node, addrs=None) for node in NODE_LIST],
+            ),
+            []
+        )
+        self.env_assist.assert_reports(
+            reports_success_minimal_fixture()[:-5]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=NODE_LIST,
+                )
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in NODE_LIST[1:]
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=NODE_LIST[0],
+                    command="remote/set_certs",
+                    reason=REASON
+                )
+            ]
         )
