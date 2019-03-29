@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<resource-agent
+  name="fence_unfencing"
+  shortdesc="Basic fence agent with unfencing for pcs tests"
+>
+  <longdesc>
+    This is a testing fence agent. Its purpose is to provide a mock of a fence
+    agent which is always available no matter what is the configuration of a
+    system pcs test suite runs on.
+  </longdesc>
+  <vendor-url>https://github.com/ClusterLabs/pcs</vendor-url>
+  <parameters>
+    <parameter name="may-set" unique="0" required="0">
+      <content type="string" />
+      <shortdesc lang="en">An example of an optional attribute</shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="on" automatic="1" on_target="1" />
+    <action name="off" />
+    <action name="reboot" />
+    <action name="status" />
+    <action name="list" />
+    <action name="list-status" />
+    <action name="monitor" />
+    <action name="metadata" />
+    <action name="validate-all" />
+  </actions>
+</resource-agent>

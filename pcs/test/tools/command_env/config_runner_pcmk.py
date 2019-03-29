@@ -213,6 +213,7 @@ class PcmkShortcuts():
         name="runner.pcmk.load_agent",
         agent_name="ocf:heartbeat:Dummy",
         agent_filename=None,
+        agent_is_missing=False,
         instead=None,
     ):
         """
@@ -230,7 +231,7 @@ class PcmkShortcuts():
             agent_metadata_filename = agent_filename
         elif agent_name in AGENT_FILENAME_MAP:
             agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
-        else:
+        elif not agent_is_missing:
             raise AssertionError((
                 "Filename with metadata of agent '{0}' not specified.\n"
                 "Please specify file with metadata for agent:\n"
@@ -241,6 +242,24 @@ class PcmkShortcuts():
                 " '{1}'\n"
                 "Place agent metadata into '{2}FILENAME_HERE.xml'"
             ).format(agent_name, os.path.realpath(__file__), rc("")))
+
+        if agent_is_missing:
+            self.__calls.place(
+                name,
+                RunnerCall(
+                    "crm_resource --show-metadata {0}".format(agent_name),
+                    stdout="",
+                    stderr=(
+                        f"Agent {agent_name} not found or does not support "
+                            "meta-data: Invalid argument (22)\n"
+                        f"Metadata query for {agent_name} failed: Input/output "
+                            "error\n"
+                    ),
+                    returncode=74
+                ),
+                instead=instead,
+            )
+            return
 
         self.__calls.place(
             name,
