@@ -1002,6 +1002,30 @@ def corosync_config_parser_other_error():
         report_codes.PARSE_ERROR_COROSYNC_CONF,
     )
 
+def corosync_config_missing_names_of_nodes(fatal=False):
+    """
+    Some nodes in corosync.conf do not have their name set, they will be omitted
+
+    bool fatal -- if True, pcs cannot continue
+    """
+    return ReportItem(
+        report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+        severity=(
+            ReportItemSeverity.ERROR if fatal else ReportItemSeverity.WARNING
+        ),
+        info={
+            "fatal": fatal,
+        }
+    )
+
+def corosync_config_no_nodes_defined():
+    """
+    No nodes found in corosync.conf
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+    )
+
 def corosync_options_incompatible_with_qdevice(options):
     """
     cannot set specified corosync options when qdevice is in use

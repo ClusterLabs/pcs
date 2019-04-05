@@ -3097,6 +3097,30 @@ class CorosyncConfigReloadError(NameBuildTest):
             reports.corosync_config_reload_error("different reason"),
         )
 
+class CorosyncConfigMissingNamesOfNodes(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES
+    def test_non_fatal(self):
+        self.assert_message_from_report(
+            "Some nodes are missing names in corosync.conf, "
+                "those nodes were omitted",
+            reports.corosync_config_missing_names_of_nodes()
+        )
+
+    def test_fatal(self):
+        self.assert_message_from_report(
+            "Some nodes are missing names in corosync.conf, "
+                "unable to continue",
+            reports.corosync_config_missing_names_of_nodes(fatal=True)
+        )
+
+class CorosyncConfigNoNodesDefined(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_NO_NODES_DEFINED
+    def test_success(self):
+        self.assert_message_from_report(
+            "No nodes found in corosync.conf",
+            reports.corosync_config_no_nodes_defined()
+        )
+
 class CannotRemoveAllClusterNodes(NameBuildTest):
     code = codes.CANNOT_REMOVE_ALL_CLUSTER_NODES
     def test_success(self):

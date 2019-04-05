@@ -112,7 +112,7 @@ class AddGuest(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
 
-    def test_success_base(self):
+    def _config_success_base(self):
         (self.config
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -126,6 +126,9 @@ class AddGuest(TestCase):
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib()
         )
+
+    def test_success_base(self):
+        self._config_success_base()
         node_add_guest(self.env_assist.get_env())
         self.env_assist.assert_reports(REPORTS)
 
@@ -543,6 +546,44 @@ class AddGuest(TestCase):
                 node=NODE_2,
             ),
         ])
+
+    def test_some_node_names_missing(self):
+        self._config_success_base()
+        (self.config
+            .env.set_known_hosts_dests({
+                "rh7-1": [Destination("rh7-1", 2224)],
+                "rh7-2": [Destination("rh7-2", 2224)],
+                NODE_NAME: NODE_DEST_LIST,
+            })
+            .corosync_conf.load(
+                filename="corosync-some-node-names.conf",
+                instead="corosync_conf.load"
+            )
+        )
+
+        node_add_guest(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            REPORTS.warn(
+                "missing_node_names_in_corosync",
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False
+            )
+        )
+
+    def test_all_node_names_missing(self):
+        self._config_success_base()
+        self.config.corosync_conf.load(
+            filename="corosync-no-node-names.conf",
+            instead="corosync_conf.load"
+        )
+        node_add_guest(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            REPORTS.warn(
+                "missing_node_names_in_corosync",
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False
+            )
+        )
 
 
 class NotLive(TestCase):

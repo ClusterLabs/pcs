@@ -48,6 +48,7 @@ from pcs.cli.constraint_order import console_report as order_console_report
 from pcs.cli.constraint_ticket import console_report as ticket_console_report
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
+from pcs.lib.node import get_existing_nodes_names
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
@@ -305,9 +306,13 @@ def config_restore_remote(infile_name, infile_obj):
 
     config_backup_check_version(extracted["version.txt"])
 
-    node_list = utils.get_corosync_conf_facade(
-        conf_text=extracted["corosync.conf"].decode("utf-8")
-    ).get_nodes_names()
+    node_list, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade(
+            conf_text=extracted["corosync.conf"].decode("utf-8")
+        )
+    )
+    if report_list:
+        utils.process_library_reports(report_list)
     if not node_list:
         utils.err("no nodes found in the tarball")
 

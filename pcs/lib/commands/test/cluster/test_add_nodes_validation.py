@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines
-import json
 from functools import partial
+import json
+import re
 from unittest import TestCase
 
 from pcs import settings
@@ -233,6 +234,67 @@ class GetTargets(TestCase):
 
     def test_new_nodes_unknown_skipped(self):
         self._assert_new_nodes_unknown(True)
+
+
+class NoneNamesMissing(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        existing_nodes_num = 3
+        self.existing_nodes, self.new_nodes = generate_nodes(
+            existing_nodes_num, 3
+        )
+        patch_getaddrinfo(self, self.new_nodes)
+        existing_corosync_nodes = [
+            node_fixture(node, i)
+            for i, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.corosync_conf = corosync_conf_fixture(existing_corosync_nodes)
+        self.existing_nodes_with_name = self.existing_nodes
+
+    def _add_nodes_with_lib_error(self, corosync_conf):
+        (self.config
+            .env.set_known_nodes(self.existing_nodes + self.new_nodes)
+            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .corosync_conf.load_content(corosync_conf)
+            .runner.cib.load()
+        )
+        if self.existing_nodes_with_name:
+            self.config.http.host.check_auth(
+                node_labels=self.existing_nodes_with_name
+            )
+        (self.config
+            .runner.systemctl.list_unit_files({}) # SBD not installed
+            .local.get_host_info(self.new_nodes)
+            .local.pcsd_ssl_cert_sync_disabled()
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node, "addrs": [node]} for node in self.new_nodes]
+            )
+        )
+
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
+
+    def test_some_node_names_missing(self):
+        corosync_conf = re.sub(r"\s+name: node1\n", "\n", self.corosync_conf)
+        # make sure the name was removed
+        self.assertNotEqual(corosync_conf, self.corosync_conf)
+        self.existing_nodes_with_name = self.existing_nodes[1:]
+        self._add_nodes_with_lib_error(corosync_conf)
+
+    def test_all_node_names_missing(self):
+        corosync_conf = re.sub(r"\s+name: .*\n", "\n", self.corosync_conf)
+        # make sure the names were removed
+        self.assertNotEqual(corosync_conf, self.corosync_conf)
+        self.existing_nodes_with_name = []
+        self._add_nodes_with_lib_error(corosync_conf)
 
 
 class Inputs(TestCase):

@@ -57,7 +57,7 @@ from pcs.lib.corosync import (
     constants as corosync_constants,
     qdevice_net,
 )
-from pcs.lib.env_tools import get_existing_nodes_names
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
@@ -97,10 +97,12 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
     if mocked_envs:
         raise LibraryError(reports.live_environment_required(mocked_envs))
 
-    current_nodes = get_existing_nodes_names(
+    current_nodes, report_list = get_existing_nodes_names(
         env.get_corosync_conf(),
         env.get_cib()
     )
+    env.report_processor.process_list(report_list)
+
     if node_name in current_nodes:
         env.report_processor.process(
             reports.get_problem_creator(
@@ -480,7 +482,6 @@ def add_nodes(
     target_factory = env.get_node_target_factory()
     is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
     corosync_conf = env.get_corosync_conf()
-    cluster_nodes_names = corosync_conf.get_nodes_names()
     corosync_node_options = {"name", "addrs"}
     sbd_node_options = {"devices", "watchdog"}
 
@@ -490,6 +491,14 @@ def add_nodes(
     new_nodes = [_normalize_dict(node, keys_to_normalize) for node in nodes]
 
     # get targets for existing nodes
+    cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
+        corosync_conf,
+        # Pcs is unable to communicate with nodes missing names. It cannot send
+        # new corosync.conf to them. That might break the cluster. Hence we
+        # error out.
+        error_on_missing_name=True
+    )
+    report_processor.report_list(nodes_report_list)
     target_report_list, cluster_nodes_target_list = (
         target_factory.get_target_list_with_reports(
             cluster_nodes_names,
@@ -1154,9 +1163,17 @@ def remove_nodes(env, node_list, force_flags=None):
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
     corosync_conf = env.get_corosync_conf()
-    cluster_nodes_names = corosync_conf.get_nodes_names()
 
     # validations
+
+    cluster_nodes_names, report_list = get_existing_nodes_names(
+        corosync_conf,
+        # Pcs is unable to communicate with nodes missing names. It cannot send
+        # new corosync.conf to them. That might break the cluster. Hence we
+        # error out.
+        error_on_missing_name=True
+    )
+    report_processor.report_list(report_list)
 
     report_processor.report_list(config_validators.remove_nodes(
         node_list,

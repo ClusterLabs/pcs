@@ -1,12 +1,17 @@
 from functools import partial
 import logging
+import re
 from unittest import mock, TestCase
 
 from pcs.test.tools import fixture
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc, create_patcher
+from pcs.test.tools.misc import (
+    create_patcher,
+    get_test_resource as rc,
+    outdent,
+)
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes
@@ -167,23 +172,72 @@ class EnsureValidWait(TestCase):
 class PushCorosyncConfLiveBase(TestCase):
     def setUp(self):
         self.env_assistant, self.config = get_env_tools(self)
-        self.corosync_conf_facade = mock.MagicMock(CorosyncConfigFacade)
-        self.corosync_conf_text = "corosync conf"
-        self.corosync_conf_facade.config.export.return_value = (
-            self.corosync_conf_text
-        )
-        self.corosync_conf_facade.get_nodes_names.return_value = [
-            "node-1",
-            "node-2",
-        ]
-        self.corosync_conf_facade.need_stopped_cluster = False
-        self.corosync_conf_facade.need_qdevice_reload = False
+        self.corosync_conf_facade = None
         self.node_labels = ["node-1", "node-2"]
         self.config.env.set_known_nodes(self.node_labels)
+        self.corosync_conf_text = "corosync conf"
+        self.fixture_corosync_conf()
+
+    def fixture_corosync_conf(self, node1_name=True, node2_name=True):
+        # nodelist is enough, nothing else matters for the tests
+        config = outdent("""\
+            nodelist {
+                node {
+                    ring0_addr: node-1-addr
+                    nodeid: 1
+                    name: node-1
+                }
+
+                node {
+                    ring0_addr: node-2-addr
+                    nodeid: 2
+                    name: node-2
+                }
+            }
+            """
+        )
+        if not node1_name:
+            config = re.sub(r"\s+name: node-1\n", "\n", config)
+        if not node2_name:
+            config = re.sub(r"\s+name: node-2\n", "\n", config)
+        self.corosync_conf_text = config
+        self.corosync_conf_facade = CorosyncConfigFacade.from_string(config)
+        CorosyncConfigFacade.need_stopped_cluster = False
+        CorosyncConfigFacade.need_qdevice_reload = False
 
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
+    def test_some_node_names_missing(self):
+        self.fixture_corosync_conf(node1_name=False)
+
+        self.env_assistant.assert_raise_library_error(
+            lambda: self.env_assistant.get_env().push_corosync_conf(
+                self.corosync_conf_facade
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
+
+    def test_all_node_names_missing(self):
+        self.fixture_corosync_conf(node1_name=False, node2_name=False)
+
+        self.env_assistant.assert_raise_library_error(
+            lambda: self.env_assistant.get_env().push_corosync_conf(
+                self.corosync_conf_facade
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
+
     def test_dont_need_stopped_cluster(self):
         (self.config
             .http.corosync.set_corosync_conf(
@@ -540,6 +594,38 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
+    def test_some_node_names_missing(self):
+        self.fixture_corosync_conf(node1_name=False)
+        self.corosync_conf_facade.need_qdevice_reload = True
+
+        self.env_assistant.assert_raise_library_error(
+            lambda: self.env_assistant.get_env().push_corosync_conf(
+                self.corosync_conf_facade
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
+
+    def test_all_node_names_missing(self):
+        self.fixture_corosync_conf(node1_name=False, node2_name=False)
+        self.corosync_conf_facade.need_qdevice_reload = True
+
+        self.env_assistant.assert_raise_library_error(
+            lambda: self.env_assistant.get_env().push_corosync_conf(
+                self.corosync_conf_facade
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
+
     def test_qdevice_reload(self):
         self.corosync_conf_facade.need_qdevice_reload = True
         (self.config

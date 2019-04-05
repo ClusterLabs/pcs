@@ -5,6 +5,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.lib.node import get_existing_nodes_names
 
 
 def quorum_config_cmd(lib, argv, modifiers):
@@ -254,11 +255,13 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     if output.split("=")[-1].strip() != "1":
         utils.err("cluster is not waiting for nodes to establish quorum")
 
-    unjoined_nodes = (
-        set(utils.get_corosync_conf_facade().get_nodes_names())
-        -
-        set(utils.getCorosyncActiveNodes())
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
     )
+    if report_list:
+        utils.process_library_reports(report_list)
+
+    unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
     if modifiers.get("--force"):

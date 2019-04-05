@@ -53,7 +53,7 @@ from pcs.lib.errors import (
 )
 from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
-from pcs.lib.env_tools import get_existing_nodes_names
+from pcs.lib.node import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
 
 # pylint: disable=too-many-branches, too-many-statements
@@ -154,8 +154,16 @@ def sync_nodes(lib, argv, modifiers):
     modifiers.ensure_only_supported("--request-timeout")
     if argv:
         raise CmdLineInputError()
+
     config = utils.getCorosyncConf()
-    nodes = utils.get_corosync_conf_facade(conf_text=config).get_nodes_names()
+    nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade(conf_text=config)
+    )
+    if not nodes:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    if report_list:
+        utils.process_library_reports(report_list)
+
     for node in nodes:
         utils.setCorosyncConfig(node, config)
 
@@ -205,9 +213,15 @@ def start_cluster_all():
         wait_timeout = utils.validate_wait_get_timeout(False)
         wait = True
 
-    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
-    start_cluster_nodes(all_nodes)
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    if report_list:
+        utils.process_library_reports(report_list)
 
+    start_cluster_nodes(all_nodes)
     if wait:
         wait_for_nodes_started(all_nodes, wait_timeout)
 
@@ -318,7 +332,15 @@ def stop_cluster_all():
       * --force - no error when possible quorum loss
       * --request-timeout - timeout for HTTP requests
     """
-    stop_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    if report_list:
+        utils.process_library_reports(report_list)
+
+    stop_cluster_nodes(all_nodes)
 
 def stop_cluster_nodes(nodes):
     """
@@ -326,12 +348,16 @@ def stop_cluster_nodes(nodes):
       * --force - no error when possible quorum loss
       * --request-timeout - timeout for HTTP requests
     """
-    all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
+        if report_list:
+            utils.process_library_reports(report_list)
         utils.err(
             "nodes '%s' do not appear to exist in configuration"
-            % "', '".join(unknown_nodes)
+            % "', '".join(sorted(unknown_nodes))
         )
 
     utils.read_known_hosts_file() # cache known hosts
@@ -437,14 +463,30 @@ def enable_cluster_all():
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    enable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    if report_list:
+        utils.process_library_reports(report_list)
+
+    enable_cluster_nodes(all_nodes)
 
 def disable_cluster_all():
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    disable_cluster_nodes(utils.get_corosync_conf_facade().get_nodes_names())
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    if report_list:
+        utils.process_library_reports(report_list)
+
+    disable_cluster_nodes(all_nodes)
 
 def enable_cluster_nodes(nodes):
     """
@@ -1086,7 +1128,7 @@ def cluster_destroy(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     if modifiers.get("--all"):
-        # destroy remote and guest nodes
+        # load data
         cib = None
         lib_env = utils.get_lib_env()
         try:
@@ -1096,9 +1138,22 @@ def cluster_destroy(lib, argv, modifiers):
                 "Unable to load CIB to get guest and remote nodes from it, "
                 "those nodes will not be deconfigured."
             )
+        corosync_nodes, report_list = get_existing_nodes_names(
+            utils.get_corosync_conf_facade()
+        )
+        if not corosync_nodes:
+            report_list.append(reports.corosync_config_no_nodes_defined())
+        if report_list:
+            utils.process_library_reports(report_list)
+
+        # destroy remote and guest nodes
         if cib is not None:
             try:
-                all_remote_nodes = get_existing_nodes_names(cib=cib)
+                all_remote_nodes, report_list = get_existing_nodes_names(
+                    cib=cib
+                )
+                if report_list:
+                    utils.process_library_reports(report_list)
                 if all_remote_nodes:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -1110,7 +1165,7 @@ def cluster_destroy(lib, argv, modifiers):
                 utils.process_library_reports(e.args)
 
         # destroy full-stack nodes
-        destroy_cluster(utils.get_corosync_conf_facade().get_nodes_names())
+        destroy_cluster(corosync_nodes)
     else:
         print("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:

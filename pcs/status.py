@@ -7,6 +7,8 @@ from pcs import (
 )
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.lib import reports
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import is_fence_history_supported
 from pcs.lib.pacemaker.state import ClusterState
@@ -198,7 +200,11 @@ def nodes_status(lib, argv, modifiers):
     if len(argv) == 1 and (argv[0] == "config"):
         modifiers.ensure_only_supported("-f", "--corosync_conf")
         if utils.hasCorosyncConf():
-            corosync_nodes = utils.get_corosync_conf_facade().get_nodes_names()
+            corosync_nodes, report_list = get_existing_nodes_names(
+                utils.get_corosync_conf_facade()
+            )
+            if report_list:
+                utils.process_library_reports(report_list)
         else:
             corosync_nodes = []
         try:
@@ -220,7 +226,11 @@ def nodes_status(lib, argv, modifiers):
 
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
         modifiers.ensure_only_supported()
-        all_nodes = utils.get_corosync_conf_facade().get_nodes_names()
+        all_nodes, report_list = get_existing_nodes_names(
+            utils.get_corosync_conf_facade()
+        )
+        if report_list:
+            utils.process_library_reports(report_list)
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:
@@ -412,9 +422,13 @@ def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
     modifiers.ensure_only_supported("--request-timeout")
     bad_nodes = False
     if not argv:
-        nodes = utils.get_corosync_conf_facade().get_nodes_names()
-        if not nodes:
-            utils.err("no nodes found in corosync.conf")
+        nodes, report_list = get_existing_nodes_names(
+            utils.get_corosync_conf_facade()
+        )
+        if not nodes and not dont_exit:
+            report_list.append(reports.corosync_config_no_nodes_defined())
+        if report_list:
+            utils.process_library_reports(report_list)
         bad_nodes = check_nodes(nodes, "  ")
     else:
         bad_nodes = check_nodes(argv, "  ")

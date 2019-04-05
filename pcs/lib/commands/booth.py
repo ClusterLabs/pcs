@@ -23,6 +23,7 @@ from pcs.lib.communication.booth import (
 )
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 
@@ -269,6 +270,14 @@ def config_sync(env, skip_offline_nodes=False):
     authfile_content = config_files.read_authfile(
         env.report_processor, authfile_path
     )
+
+    cluster_nodes_names, report_list = get_existing_nodes_names(
+        env.get_corosync_conf()
+    )
+    if not cluster_nodes_names:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    env.report_processor.process_list(report_list)
+
     com_cmd = BoothSendConfig(
         env.report_processor,
         env.booth.name,
@@ -279,7 +288,7 @@ def config_sync(env, skip_offline_nodes=False):
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            env.get_corosync_conf().get_nodes_names(),
+            cluster_nodes_names,
             skip_non_existing=skip_offline_nodes,
         )
     )

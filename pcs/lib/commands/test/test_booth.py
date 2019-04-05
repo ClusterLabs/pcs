@@ -197,6 +197,87 @@ class ConfigSyncTest(TestCase):
             ]
         )
 
+    def test_some_node_names_missing(self):
+        auth_file = "auth.file"
+        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
+        config_content = "authfile={}".format(auth_file_path)
+        auth_file_content = b"auth"
+        nodes = ["rh7-2"]
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data=config_content)(),
+                name="open.conf"
+            )
+            .fs.open(
+                auth_file_path,
+                mock.mock_open(read_data=auth_file_content)(),
+                mode="rb",
+                name="open.authfile",
+            )
+            .corosync_conf.load(filename="corosync-some-node-names.conf")
+            .http.booth.send_config(
+                self.name, config_content,
+                authfile=auth_file,
+                authfile_data=auth_file_content,
+                node_labels=nodes,
+            )
+        )
+
+        commands.config_sync(self.env_assist.get_env(), self.name)
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=False,
+                ),
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=[self.name]
+                ) for node in nodes
+            ]
+        )
+
+    def test_all_node_names_missing(self):
+        auth_file = "auth.file"
+        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
+        config_content = "authfile={}".format(auth_file_path)
+        auth_file_content = b"auth"
+        (self.config
+            .fs.open(
+                self.config_path,
+                mock.mock_open(read_data=config_content)(),
+                name="open.conf"
+            )
+            .fs.open(
+                auth_file_path,
+                mock.mock_open(read_data=auth_file_content)(),
+                mode="rb",
+                name="open.authfile",
+            )
+            .corosync_conf.load(filename="corosync-no-node-names.conf")
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
+            ]
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False,
+            ),
+        ])
+
     def test_node_failure(self):
         (self.config
             .fs.open(

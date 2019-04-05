@@ -14,7 +14,7 @@ from pcs.lib.cib.tools import (
     get_status,
     IdProvider,
 )
-from pcs.lib.env_tools import get_existing_nodes_names_addrs
+from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as severities,
@@ -157,12 +157,10 @@ def _check_special_cases(
         #is needed for getting nodes to validate against
         return
 
-    existing_nodes_names, existing_nodes_addrs = _get_nodes_to_validate_against(
-        env,
-        resources_section
+    existing_nodes_names, existing_nodes_addrs, report_list = (
+        _get_nodes_to_validate_against(env, resources_section)
     )
 
-    report_list = []
     report_list.extend(_validate_remote_connection(
         resource_agent,
         existing_nodes_addrs,

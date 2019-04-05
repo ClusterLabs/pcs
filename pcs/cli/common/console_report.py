@@ -811,6 +811,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to parse corosync config"
     ,
 
+    codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES: lambda info:
+        "Some nodes are missing names in corosync.conf, "
+        +
+        ("unable to continue" if info["fatal"] else "those nodes were omitted")
+    ,
+
+    codes.COROSYNC_CONFIG_NO_NODES_DEFINED: "No nodes found in corosync.conf",
+
     codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK: lambda info:
         (
             "Address '{address}' cannot be used in link '{link_number}' "

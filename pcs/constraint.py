@@ -13,14 +13,16 @@ from pcs.cli import (
     constraint_order,
 )
 from pcs.cli.common import parse_args
-from pcs.cli.common.console_report import error, warn
+from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
+from pcs.common import report_codes
+from pcs.lib import reports
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
-from pcs.lib.env_tools import get_existing_nodes_names
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import sanitize_id
 
 # pylint: disable=too-many-branches, too-many-statements
@@ -883,15 +885,17 @@ def location_add(lib, argv, modifiers):
     # Verify that specified node exists in the cluster
     if not (modifiers.is_specified("-f") or modifiers.get("--force")):
         lib_env = utils.get_lib_env()
-        existing_nodes = get_existing_nodes_names(
+        existing_nodes, report_list = get_existing_nodes_names(
             corosync_conf=lib_env.get_corosync_conf(),
             cib=lib_env.get_cib(),
         )
         if node not in existing_nodes:
-            raise error(
-                f"Node '{node}' does not seem to be in the cluster"
-                ", use --force to override"
-            )
+            report_list.append(reports.node_not_found(
+                node,
+                forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
+            ))
+        if report_list:
+            utils.process_library_reports(report_list)
     else:
         warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
 

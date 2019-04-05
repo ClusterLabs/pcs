@@ -20,7 +20,7 @@ from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
 )
-from pcs.lib.env_tools import get_existing_nodes_names_addrs
+from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
@@ -221,10 +221,14 @@ def node_add_remote(
         report_processor.report(
             reports.corosync_node_conflict_check_skipped("not_live_cib")
         )
-    existing_nodes_names, existing_nodes_addrs = get_existing_nodes_names_addrs(
-       corosync_conf,
-       cib
+    existing_nodes_names, existing_nodes_addrs, report_list = (
+        get_existing_nodes_names_addrs(corosync_conf, cib)
     )
+    if env.is_cib_live:
+        # We just reported corosync checks are going to be skipped so we
+        # shouldn't complain about errors related to corosync nodes
+        report_processor.report_list(report_list)
+
     resource_agent = remote_node.get_agent(
         env.report_processor,
         env.cmd_runner()
@@ -361,10 +365,13 @@ def node_add_guest(
         report_processor.report(
             reports.corosync_node_conflict_check_skipped("not_live_cib")
         )
-    existing_nodes_names, existing_nodes_addrs = get_existing_nodes_names_addrs(
-       corosync_conf,
-       cib
+    existing_nodes_names, existing_nodes_addrs, report_list = (
+        get_existing_nodes_names_addrs(corosync_conf, cib)
     )
+    if env.is_cib_live:
+        # We just reported corosync checks are going to be skipped so we
+        # shouldn't complain about errors related to corosync nodes
+        report_processor.report_list(report_list)
 
     existing_target_list = []
     if env.is_cib_live:

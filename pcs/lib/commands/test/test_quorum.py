@@ -672,7 +672,40 @@ class AddDeviceNetTest(TestCase):
             ]
         self.env_assist.assert_reports(expected_reports)
 
-    def test_not_live(self):
+    def test_not_live_success(self):
+        original_config = open(rc("corosync-3nodes.conf")).read()
+        expected_corosync_conf = original_config.replace(
+            "    provider: corosync_votequorum\n",
+            outdent("""\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+                    }
+                """
+            )
+        )
+
+        (self.config
+            .env.set_corosync_conf_data(original_config)
+            .env.push_corosync_conf(corosync_conf_text=expected_corosync_conf)
+        )
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            {}
+        )
+
+    def test_not_live_error(self):
         (self.config
             .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
         )
@@ -684,16 +717,45 @@ class AddDeviceNetTest(TestCase):
                 {},
                 {}
             ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
-                    option_name="model",
-                    option_value="bad model",
-                    allowed_values=["net", ]
-                ),
-            ]
+            [],
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_QDEVICE_MODEL,
+                option_name="model",
+                option_value="bad model",
+                allowed_values=["net", ]
+            ),
+        ])
+
+    def test_not_live_doesnt_care_about_node_names(self):
+        # it's not live, it doesn't distribute config to nodes, therefore it
+        # doesn't care about node names missing
+        (self.config
+            .env.set_corosync_conf_data(
+                open(rc("corosync-no-node-names.conf")).read()
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "bad model",
+                {},
+                {},
+                {}
+            ),
+            [],
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_QDEVICE_MODEL,
+                option_name="model",
+                option_value="bad model",
+                allowed_values=["net", ]
+            ),
+        ])
 
     def test_fail_if_device_already_set(self):
         corosync_conf = open(
@@ -776,6 +838,46 @@ class AddDeviceNetTest(TestCase):
             binary=True
         )
         self.env_assist.assert_reports(self.fixture_reports_success())
+
+    def test_some_node_names_missing(self):
+        self.config.corosync_conf.load(filename="corosync-some-node-names.conf")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": self.qnetd_host, "algorithm": "ffsplit"},
+                {},
+                {}
+            ),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
+
+    def test_all_node_names_missing(self):
+        self.config.corosync_conf.load(filename="corosync-no-node-names.conf")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.add_device(
+                self.env_assist.get_env(),
+                "net",
+                {"host": self.qnetd_host, "algorithm": "ffsplit"},
+                {},
+                {}
+            ),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
@@ -1234,6 +1336,9 @@ class AddDeviceNetTest(TestCase):
                 {"bad_option": "bad_value"},
                 {"mode": "bad-mode", "bad_heur": "abc", "exec_bad.name": ""}
             ),
+            [],
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
@@ -1394,6 +1499,9 @@ class AddDeviceNetTest(TestCase):
                 {},
                 {}
             ),
+            [],
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1998,7 +2106,20 @@ class RemoveDeviceNetTest(TestCase):
         return reports
 
     @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-    def test_if_not_live(self):
+    def test_not_live_success(self):
+        dummy_cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            # cluster consists of two nodes, two_node must be set
+            "two_node: 1"
+        )
+        (self.config
+            .env.set_corosync_conf_data(original_conf)
+            .env.push_corosync_conf(corosync_conf_text=expected_conf)
+        )
+
+        lib.remove_device(self.env_assist.get_env())
+
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    def test_not_live_error(self):
         (self.config
             .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
         )
@@ -2009,6 +2130,22 @@ class RemoveDeviceNetTest(TestCase):
             ],
             expected_in_processor=False
         )
+
+    def test_not_live_doesnt_care_about_node_names(self):
+        # it's not live, it doesn't distribute config to nodes, therefore it
+        # doesn't care about node names missing
+        dummy_cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
+            # cluster consists of two nodes, two_node must be set
+            "two_node: 1"
+        )
+        original_conf = re.sub(r"\s+name: .*\n", "\n", original_conf)
+        expected_conf = re.sub(r"\s+name: .*\n", "\n", expected_conf)
+        (self.config
+            .env.set_corosync_conf_data(original_conf)
+            .env.push_corosync_conf(corosync_conf_text=expected_conf)
+        )
+
+        lib.remove_device(self.env_assist.get_env())
 
     @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_fail_if_device_not_set(self):
@@ -2181,6 +2318,46 @@ class RemoveDeviceNetTest(TestCase):
             fixture.info(
                 report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                 node=cluster_nodes[2],
+            ),
+        ])
+
+    def test_some_node_names_missing(self):
+        dummy_nodes, original_conf, dummy_expected_conf = self.conf_2nodes(
+            # cluster consists of two nodes, two_node must be set
+            "two_node: 1"
+        )
+        original_conf = re.sub(r"\s+name: rh7-1\n", "\n", original_conf)
+
+        self.config.corosync_conf.load_content(original_conf)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(self.env_assist.get_env()),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
+
+    def test_all_node_names_missing(self):
+        dummy_nodes, original_conf, dummy_expected_conf = self.conf_2nodes(
+            # cluster consists of two nodes, two_node must be set
+            "two_node: 1"
+        )
+        original_conf = re.sub(r"\s+name: .*\n", "\n", original_conf)
+
+        self.config.corosync_conf.load_content(original_conf)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_device(self.env_assist.get_env()),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
             ),
         ])
 

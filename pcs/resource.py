@@ -65,11 +65,12 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
 
     env = utils.get_lib_env()
     cib = env.get_cib()
-    existing_nodes_names, existing_nodes_addrs = _get_nodes_to_validate_against(
-        env,
-        cib
+    existing_nodes_names, existing_nodes_addrs, report_list = (
+        _get_nodes_to_validate_against(env, cib)
     )
     env.report_processor.process_list(
+        report_list
+        +
         _validate_guest_change(
             cib,
             existing_nodes_names,

@@ -1,4 +1,5 @@
 from pcs.common import report_codes
+from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, sbd
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.communication import (
@@ -12,6 +13,7 @@ from pcs.lib.corosync import (
     qdevice_net,
     qdevice_client
 )
+from pcs.lib.node import get_existing_nodes_names
 
 
 def get_config(lib_env):
@@ -128,7 +130,9 @@ def add_device(
     cfg = lib_env.get_corosync_conf()
     if cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_already_defined())
-    lib_env.report_processor.process_list(
+
+    report_processor = SimpleReportProcessor(lib_env.report_processor)
+    report_processor.report_list(
         corosync_conf_validators.add_quorum_device(
             model,
             model_options,
@@ -139,6 +143,20 @@ def add_device(
             force_options=force_options
         )
     )
+
+    if lib_env.is_corosync_conf_live:
+        cluster_nodes_names, report_list = get_existing_nodes_names(
+            cfg,
+            # Pcs is unable to communicate with nodes missing names. It cannot
+            # send new corosync.conf to them. That might break the cluster.
+            # Hence we error out.
+            error_on_missing_name=True
+        )
+        report_processor.report_list(report_list)
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
     cfg.add_quorum_device(
         model,
         model_options,
@@ -156,7 +174,7 @@ def add_device(
     if lib_env.is_corosync_conf_live:
         target_factory = lib_env.get_node_target_factory()
         target_list = target_factory.get_target_list(
-            cfg.get_nodes_names(), skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
         )
         # Do model specific configuration.
         # If the model is not known to pcs and was forced, do not configure
@@ -259,8 +277,20 @@ def remove_device(lib_env, skip_offline_nodes=False):
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:
+        report_processor = SimpleReportProcessor(lib_env.report_processor)
+        # get nodes for communication
+        cluster_nodes_names, report_list = get_existing_nodes_names(
+            cfg,
+            # Pcs is unable to communicate with nodes missing names. It cannot
+            # send new corosync.conf to them. That might break the cluster.
+            # Hence we error out.
+            error_on_missing_name=True
+        )
+        report_processor.report_list(report_list)
+        if report_processor.has_errors:
+            raise LibraryError()
         target_list = lib_env.get_node_target_factory().get_target_list(
-            cfg.get_nodes_names(), skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):

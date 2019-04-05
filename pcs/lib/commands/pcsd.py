@@ -6,6 +6,7 @@ from pcs.lib import reports
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError
+from pcs.lib.node import get_existing_nodes_names
 
 def synchronize_ssl_certificate(env, skip_offline=False):
     """
@@ -22,7 +23,12 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     """
     report_processor = SimpleReportProcessor(env.report_processor)
     target_factory = env.get_node_target_factory()
-    cluster_nodes_names = env.get_corosync_conf().get_nodes_names()
+    cluster_nodes_names, report_list = get_existing_nodes_names(
+        env.get_corosync_conf()
+    )
+    if not cluster_nodes_names:
+        report_list.append(reports.corosync_config_no_nodes_defined())
+    report_processor.report_list(report_list)
 
     try:
         with open(settings.pcsd_cert_location, "r") as file:

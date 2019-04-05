@@ -3,6 +3,7 @@ from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
@@ -271,9 +272,18 @@ class LibraryEnvironment:
     ):
         corosync_conf_data = corosync_conf_facade.config.export()
         if self.is_corosync_conf_live:
+            node_name_list, report_list = get_existing_nodes_names(
+                corosync_conf_facade,
+                # Pcs is unable to communicate with nodes missing names. It
+                # cannot send new corosync.conf to them. That might break the
+                # cluster. Hence we error out.
+                error_on_missing_name=True
+            )
+            self.report_processor.process_list(report_list)
+
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    corosync_conf_facade.get_nodes_names(),
+                    node_name_list,
                     skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,

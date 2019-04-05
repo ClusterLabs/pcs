@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import json
+import re
 
 from functools import partial
 from textwrap import dedent
@@ -330,6 +331,85 @@ class SuccessMinimal(TestCase):
             +
             [fixture.warn(report_codes.COROSYNC_QUORUM_WILL_BE_LOST)]
         )
+
+class NodeNamesMissing(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.expected_reports = []
+        self.config.local.set_expected_reports_list(self.expected_reports)
+
+        staying_num = 2
+        removing_num = 1
+        self.existing_nodes = [
+            f"node{i}" for i in range(staying_num + removing_num)
+        ]
+        self.nodes_to_remove = self.existing_nodes[-removing_num:]
+        self.nodes_to_stay = self.existing_nodes[:-removing_num]
+        existing_corosync_nodes = [
+            node_fixture(node, i)
+            for i, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(self.existing_nodes)
+        self.original_conf = corosync_conf_fixture(
+            existing_corosync_nodes,
+            _get_two_node(len(self.existing_nodes)),
+        )
+        self.expected_conf = corosync_conf_fixture(
+            existing_corosync_nodes[:-removing_num],
+            _get_two_node(staying_num)
+        )
+
+    def test_some_node_names_missing(self):
+        original_conf = re.sub(r"\s+name: node0\n", "\n", self.original_conf)
+        # make sure the name was removed
+        self.assertNotEqual(original_conf, self.original_conf)
+
+        (self.config
+            .corosync_conf.load_content(original_conf)
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove
+            ),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
+
+    def test_all_node_names_missing(self):
+        original_conf = re.sub(r"\s+name: .*\n", "\n", self.original_conf)
+        # make sure the names were removed
+        self.assertNotEqual(original_conf, self.original_conf)
+
+        (self.config
+            .corosync_conf.load_content(original_conf)
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove
+            ),
+            []
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+            fixture.error(
+                report_codes.NODE_NOT_FOUND,
+                node="node2",
+                searched_types=[]
+            ),
+        ])
 
 
 class SuccessAtbRequired(TestCase):

@@ -248,6 +248,7 @@ class DeviceAddTest(TestBase):
             [
                 "Error: required quorum device model option 'algorithm' is missing",
                 "Error: required quorum device model option 'host' is missing",
+                "Error: Errors have occurred, therefore pcs is unable to continue",
             ]
         )
 
@@ -262,6 +263,7 @@ Error: '-1' is not a valid timeout value, use a positive integer, use --force to
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
 Error: 'bad' is not a valid mode value, use off, on, sync, use --force to override
 Error: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME, use --force to override
+Error: Errors have occurred, therefore pcs is unable to continue
 """
         )
 
@@ -298,7 +300,10 @@ Warning: invalid heuristics option 'e', allowed options are: interval, mode, syn
     def test_bad_model(self):
         self.assert_pcs_fail(
             "quorum device add model invalid x=y",
-            "Error: 'invalid' is not a valid model value, use net, use --force to override\n"
+            [
+                "Error: 'invalid' is not a valid model value, use net, use --force to override",
+                "Error: Errors have occurred, therefore pcs is unable to continue",
+            ]
         )
         self.assert_pcs_success(
             "quorum device add model invalid x=y --force",

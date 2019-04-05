@@ -53,6 +53,85 @@ class SynchronizeSslCertificates(TestCase):
             ]
         )
 
+    def test_some_node_names_missing(self):
+        nodes = ["rh7-2"]
+        (self.config
+            .corosync_conf.load(
+                filename="corosync-some-node-names.conf",
+                instead="corosync_conf.load"
+            )
+            .fs.open(
+                settings.pcsd_cert_location,
+                mock.mock_open(read_data=self.pcsd_ssl_cert)(),
+                name="fs.open.pcsd_ssl_cert"
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                mock.mock_open(read_data=self.pcsd_ssl_key)(),
+                name="fs.open.pcsd_ssl_key"
+            )
+            .http.host.send_pcsd_cert(
+                cert=self.pcsd_ssl_cert,
+                key=self.pcsd_ssl_key,
+                node_labels=nodes
+            )
+        )
+
+        pcsd.synchronize_ssl_certificate(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    node_name_list=nodes
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=False,
+                ),
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
+                ) for node in nodes
+            ]
+        )
+
+    def test_all_node_names_missing(self):
+        (self.config
+            .corosync_conf.load(
+                filename="corosync-no-node-names.conf",
+                instead="corosync_conf.load"
+            )
+            .fs.open(
+                settings.pcsd_cert_location,
+                mock.mock_open(read_data=self.pcsd_ssl_cert)(),
+                name="fs.open.pcsd_ssl_cert"
+            )
+            .fs.open(
+                settings.pcsd_key_location,
+                mock.mock_open(read_data=self.pcsd_ssl_key)(),
+                name="fs.open.pcsd_ssl_key"
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: pcsd.synchronize_ssl_certificate(self.env_assist.get_env()),
+            []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=False,
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
+            ]
+        )
+
     def test_fail_communication(self):
         error = "an error"
         (self.config

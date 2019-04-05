@@ -40,6 +40,61 @@ class DisableSbd(TestCase):
             ]
         )
 
+    def test_some_node_names_missing(self):
+        self.corosync_conf_name = "corosync-some-node-names.conf"
+        self.node_list = ["rh7-2"]
+
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.config.http.host.check_auth(node_labels=self.node_list)
+        self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
+            node_labels=self.node_list[:1]
+        )
+        self.config.http.sbd.disable_sbd(node_labels=self.node_list)
+
+        disable_sbd(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=False,
+                ),
+                fixture.info(report_codes.SBD_DISABLING_STARTED)
+            ]
+            +
+            [
+                fixture.info(
+                    report_codes.SERVICE_DISABLE_SUCCESS,
+                    service="sbd",
+                    node=node,
+                    instance=None
+                ) for node in self.node_list
+            ]
+            +
+            [
+                fixture.warn(
+                    report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
+                )
+            ]
+        )
+
+    def test_all_node_names_missing(self):
+        self.config.corosync_conf.load(filename="corosync-no-node-names.conf")
+        self.env_assist.assert_raise_library_error(
+            lambda: disable_sbd(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
+            ]
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False,
+            ),
+        ])
+
     def test_node_offline(self):
         err_msg = "Failed connect to rh7-3:2224; No route to host"
         self.config.corosync_conf.load(filename=self.corosync_conf_name)

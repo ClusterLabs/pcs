@@ -111,3 +111,56 @@ class GetClusterSbdConfig(TestCase):
                 reason="",
             ),
         ])
+
+    def test_some_node_names_missing(self):
+        (self.config
+            .env.set_known_nodes(["rh7-2"])
+            .corosync_conf.load(filename="corosync-some-node-names.conf")
+            .http.add_communication(
+                "get_sbd_config",
+                [
+                    dict(
+                        label="rh7-2",
+                        output="OPTION=value",
+                        response_code=200,
+                    ),
+                ],
+                action="remote/get_sbd_config",
+            )
+        )
+
+        result = get_cluster_sbd_config(self.env_assist.get_env())
+        self.assertEqual(
+            result,
+            [
+                {
+                    "node": "rh7-2",
+                    "config": {"OPTION": "value"}
+                },
+            ]
+        )
+
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False,
+            ),
+        ])
+
+    def test_all_node_names_missing(self):
+        self.config.corosync_conf.load(filename="corosync-no-node-names.conf")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: get_cluster_sbd_config(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
+            ]
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=False,
+            ),
+        ])

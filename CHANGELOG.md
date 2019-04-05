@@ -51,6 +51,8 @@
 - Pcsd SSL certificates are no longer synced across cluster nodes when creating
   new cluster or adding new node to an existing cluster. To enable the syncing,
   set `PCSD_SSL_CERT_SYNC_ENABLED` to `true` in pcsd config. ([rhbz#1673822])
+- Pcs now reports missing node names in corosync.conf instead of failing
+  silently
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling

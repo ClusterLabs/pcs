@@ -25,6 +25,7 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as Severities
 )
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.validate import (
     names_in,
     run_collection_of_option_validators,
@@ -146,11 +147,6 @@ def enable_sbd(
     allow_invalid_option_values -- if True, invalid values of some options will
         be treated as warning instead of errors
     """
-    corosync_conf = lib_env.get_corosync_conf()
-    node_list = corosync_conf.get_nodes_names()
-    target_list = lib_env.get_node_target_factory().get_target_list(
-        node_list, skip_non_existing=ignore_offline_nodes,
-    )
     using_devices = not (
         default_device_list is None and node_device_dict is None
     )
@@ -162,6 +158,15 @@ def enable_sbd(
         default_watchdog = settings.sbd_watchdog_default
     sbd_options = {opt.upper(): val for opt, val in sbd_options.items()}
 
+    corosync_conf = lib_env.get_corosync_conf()
+
+    node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
+    if not node_list:
+        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+    target_list = lib_env.get_node_target_factory().get_target_list(
+        node_list, skip_non_existing=ignore_offline_nodes,
+    )
+
     full_watchdog_dict = _get_full_target_dict(
         target_list, watchdog_dict, default_watchdog
     )
@@ -170,6 +175,8 @@ def enable_sbd(
     )
 
     lib_env.report_processor.process_list(
+        get_nodes_report_list
+        +
         [
             reports.node_not_found(node)
             for node in (
@@ -214,7 +221,7 @@ def enable_sbd(
         )
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    # enable ATB if neede
+    # enable ATB if needed
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.process(
@@ -261,12 +268,19 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     lib_env -- LibraryEnvironment
     ignore_offline_nodes -- if True, omit offline nodes
     """
+    node_list, get_nodes_report_list = get_existing_nodes_names(
+        lib_env.get_corosync_conf()
+    )
+    if not node_list:
+        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+    lib_env.report_processor.process_list(get_nodes_report_list)
+
     com_cmd = GetOnlineTargets(
         lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
     )
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            lib_env.get_corosync_conf().get_nodes_names(),
+            node_list,
             skip_non_existing=ignore_offline_nodes,
         )
     )
@@ -299,10 +313,17 @@ def get_cluster_sbd_status(lib_env):
 
     lib_env -- LibraryEnvironment
     """
+    node_list, get_nodes_report_list = get_existing_nodes_names(
+        lib_env.get_corosync_conf()
+    )
+    if not node_list:
+        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+    lib_env.report_processor.process_list(get_nodes_report_list)
+
     com_cmd = GetSbdStatus(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            lib_env.get_corosync_conf().get_nodes_names(),
+            node_list,
             skip_non_existing=True
         )
     )
@@ -325,10 +346,17 @@ def get_cluster_sbd_config(lib_env):
 
     lib_env -- LibraryEnvironment
     """
+    node_list, get_nodes_report_list = get_existing_nodes_names(
+        lib_env.get_corosync_conf()
+    )
+    if not node_list:
+        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+    lib_env.report_processor.process_list(get_nodes_report_list)
+
     com_cmd = GetSbdConfig(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            lib_env.get_corosync_conf().get_nodes_names(),
+            node_list,
             skip_non_existing=True
         )
     )

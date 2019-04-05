@@ -120,6 +120,8 @@ class ConfigFacade:
                 cluster_name = attrs[1]
         return cluster_name
 
+    # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
+
     def get_nodes(self):
         """
         Get all defined nodes
@@ -142,19 +144,6 @@ class ConfigFacade:
                     ],
                     node_data.get("nodeid")
                 ))
-        return result
-
-    def get_nodes_names(self):
-        """
-        Get names of all defined nodes
-        """
-        result = []
-        for nodelist in self.config.get_sections("nodelist"):
-            for node_section in nodelist.get_sections("node"):
-                names = node_section.get_attributes("name")
-                if names:
-                    # get the value ([1]) of the last ([-1]) name attribute
-                    result.append(names[-1][1])
         return result
 
     def _get_used_nodeid_list(self):
