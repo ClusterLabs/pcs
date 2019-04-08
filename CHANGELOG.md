@@ -7,6 +7,7 @@
   cluster during creating new cluster and adding a node to an existing cluster
   by setting `PCSD_SSL_CERT_SYNC_ENABLED` to `false` in pcsd config file
   ([rhbz#1665898])
+- Length of DH key for SSL key exchange can be set in pcsd config file
 
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])

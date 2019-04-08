@@ -153,6 +153,15 @@ else
   end
 end
 
+dh_key_bits_default = 1024
+dh_key_bits = dh_key_bits_default
+if ENV['PCSD_SSL_DH_KEX_BITS']
+  dh_key_bits = Integer(ENV['PCSD_SSL_DH_KEX_BITS']) rescue dh_key_bits_default
+end
+$logger.info "Generating #{dh_key_bits}bits long DH key..."
+dh_key = OpenSSL::PKey::DH.generate(dh_key_bits)
+$logger.info "DH key created"
+
 default_bind = true
 # see https://github.com/ClusterLabs/pcs/issues/51
 primary_addr = if RUBY_VERSION >= '2.1' then '*' else '::' end
@@ -176,6 +185,7 @@ webrick_options = {
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(key),
   :SSLCertName        => [[ "CN", server_name ]],
   :SSLOptions         => get_ssl_options(),
+  :SSLTmpDhCallback   => lambda {|ctx, is_export, keylen| dh_key},
 }
 
 server = ::Rack::Handler::WEBrick
