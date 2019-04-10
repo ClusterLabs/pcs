@@ -53,6 +53,8 @@
   set `PCSD_SSL_CERT_SYNC_ENABLED` to `true` in pcsd config. ([rhbz#1673822])
 - Pcs now reports missing node names in corosync.conf instead of failing
   silently
+- Fixed an issue where some pcs commands could not connect to cluster nodes
+  over IPv6
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
