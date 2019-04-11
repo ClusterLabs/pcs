@@ -22,7 +22,7 @@ before_install:
 
 script:
   # python test suite
-  - docker run $DIST $SRC_PATH/pcs/test/suite.py -v --vanilla $PYTHON_TEST_ARGS
+  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla $PYTHON_TEST_ARGS
   # python linter
   - docker run $DIST $SRC_PATH/run_pylint.sh
   # ruby test suite
