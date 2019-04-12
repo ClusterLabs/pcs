@@ -111,9 +111,18 @@ def start_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
+        # this is the most reliable way to start a service even if it specifies
+        # StopWhenUnneeded=yes
+        # (it's expected the caller of this does require it up at all costs)
         stdout, stderr, retval = runner.run([
-            _systemctl, "start", _get_service_name(service, instance)
+            _systemctl, "enable --runtime --now",
+            _get_service_name(service, instance)
         ])
+        if retval != 0:
+            # systemctl possibly doesn't understand --runtime or --now yet
+            stdout, stderr, retval = runner.run([
+                _systemctl, "start", _get_service_name(service, instance)
+            ])
     else:
         stdout, stderr, retval = runner.run([_service, service, "start"])
     if retval != 0:

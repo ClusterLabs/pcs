@@ -2064,9 +2064,17 @@ def start_service(service):
     Commandline options: no options
     """
     if is_systemctl():
+        # this is the most reliable way to start a service even if it specifies
+        # StopWhenUnneeded=yes
+        # (it's expected the caller of this does require it up at all costs)
         stdout, stderr, retval = cmd_runner().run([
-            settings.systemctl_binary, "start", service
+            settings.systemctl_binary, "enable --runtime --now", service
         ])
+        if retval != 0:
+            # systemctl possibly doesn't understand --runtime or --now yet
+            stdout, stderr, retval = cmd_runner().run([
+                settings.systemctl_binary, "start", service
+            ])
     else:
         stdout, stderr, retval = cmd_runner().run([
             settings.service_binary, service, "start"
