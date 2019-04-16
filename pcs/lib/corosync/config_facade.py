@@ -174,14 +174,14 @@ class ConfigFacade:
             if attr_name in constants.NODE_OPTIONS
         }
 
-    def _get_used_linkid_list(self):
+    def get_used_linknumber_list(self):
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)
                 if not node_data:
                     continue
                 return [
-                    i for i in range(constants.LINKS_MAX)
+                    str(i) for i in range(constants.LINKS_MAX)
                     if node_data.get(f"ring{i}_addr")
                 ]
 
@@ -211,7 +211,7 @@ class ConfigFacade:
                 self._create_node_section(
                     next(node_id_generator),
                     node_options,
-                    self._get_used_linkid_list()
+                    self.get_used_linknumber_list()
                 )
             )
         self.__update_two_node()
@@ -261,9 +261,9 @@ class ConfigFacade:
             links.append(link)
 
         for link in sorted(links, key=lambda item: item["linknumber"]):
-            self.add_link(link)
+            self._add_link_options(link)
 
-    def add_link(self, options):
+    def _add_link_options(self, options):
         """
         Add a new link
 
@@ -292,6 +292,43 @@ class ConfigFacade:
         self.__set_section_options([new_link_section], options_to_set)
         totem_section.add_section(new_link_section)
         self.__remove_empty_sections(self.config)
+
+    def remove_links(self, link_list):
+        """
+        Remove links from nodelist and relevant interface sections from totem
+
+        iterable link_list -- list of linknumbers (strings) to be removed
+        """
+        # Do not break when the interface / address is found to be sure to
+        # remove all of them (config format allows to have more interface
+        # sections / addresses for one link).
+        for totem_section in self.config.get_sections("totem"):
+            for interface_section in totem_section.get_sections("interface"):
+                interface_number_list = interface_section.get_attributes(
+                    "linknumber"
+                )
+                if interface_number_list:
+                    # get the value of the last attribute
+                    interface_number = interface_number_list[-1][1]
+                else:
+                    # if no linknumber is set, corosync treats it as 0
+                    interface_number = "0"
+                if interface_number in link_list:
+                    totem_section.del_section(interface_section)
+        for link_number in link_list:
+            for nodelist_section in self.config.get_sections("nodelist"):
+                for node_section in nodelist_section.get_sections("node"):
+                    node_section.del_attributes_by_name(
+                        f"ring{link_number}_addr"
+                    )
+        self.__remove_empty_sections(self.config)
+
+    def get_transport(self):
+        transport = None
+        for totem_section in self.config.get_sections("totem"):
+            for transport_attr in totem_section.get_attributes("transport"):
+                transport = transport_attr[1]
+        return transport if transport else constants.TRANSPORT_DEFAULT
 
     def set_transport_udp_options(self, options):
         """

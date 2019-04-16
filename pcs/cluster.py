@@ -1602,3 +1602,19 @@ def remove_nodes_from_cib(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("No nodes specified")
     lib.cluster.remove_nodes_from_cib(argv)
+
+def link_remove(lib, argv, modifiers):
+    """
+    Options:
+      * --skip-offline - skip unreachable nodes
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported("--request-timeout", "--skip-offline")
+    if not argv:
+        raise CmdLineInputError()
+
+    force_flags = []
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    lib.cluster.remove_links(argv, force_flags=force_flags)

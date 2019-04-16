@@ -14,6 +14,7 @@ from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.lib.corosync import constants
 
 # pylint: disable=no-self-use
 
@@ -48,42 +49,84 @@ class FromStringTest(TestCase):
             )
         )
 
-
-class GetClusterNameTest(TestCase):
-    def test_no_name(self):
-        config = ""
+class GetSimpleValueMixin():
+    def assert_value(self, value, config):
         facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual("", facade.get_cluster_name())
+        self.assertEqual(value, self.getter(facade))
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
+
+
+class GetClusterNameTest(GetSimpleValueMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_cluster_name()
+
+    def test_no_name(self):
+        self.assert_value(
+            "",
+            ""
+        )
 
     def test_empty_name(self):
-        config = "totem {\n cluster_name:\n}\n"
-        facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual("", facade.get_cluster_name())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_value(
+            "",
+            "totem {\n cluster_name:\n}\n"
+        )
 
     def test_one_name(self):
-        config = "totem {\n cluster_name: test\n}\n"
-        facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual("test", facade.get_cluster_name())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_value(
+            "test",
+            "totem {\n cluster_name: test\n}\n"
+        )
 
     def test_more_names(self):
-        config = "totem {\n cluster_name: test\n cluster_name: TEST\n}\n"
-        facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual("TEST", facade.get_cluster_name())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_value(
+            "TEST",
+            "totem {\n cluster_name: test\n cluster_name: TEST\n}\n"
+        )
 
     def test_more_sections(self):
-        config = "totem{\ncluster_name:test\n}\ntotem{\ncluster_name:TEST\n}\n"
-        facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual("TEST", facade.get_cluster_name())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_value(
+            "TEST",
+            "totem{\n cluster_name: test\n}\ntotem{\n cluster_name: TEST\n}\n"
+        )
+
+
+class GetTransport(GetSimpleValueMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_transport()
+
+    def test_no_name(self):
+        self.assert_value(
+            constants.TRANSPORT_DEFAULT,
+            ""
+        )
+
+    def test_empty_name(self):
+        self.assert_value(
+            constants.TRANSPORT_DEFAULT,
+            "totem {\n transport:\n}\n"
+        )
+
+    def test_one_name(self):
+        self.assert_value(
+            "udp",
+            "totem {\n transport: udp\n}\n"
+        )
+
+    def test_more_names(self):
+        self.assert_value(
+            "udpu",
+            "totem {\n transport: udp\n transport: udpu\n}\n"
+        )
+
+    def test_more_sections(self):
+        self.assert_value(
+            "udpu",
+            "totem{\n transport: udp\n}\ntotem{\n transport: udpu\n}\n"
+        )
 
 
 class GetNodesTest(TestCase):
@@ -671,6 +714,437 @@ class RemoveNodes(TestCase):
         }
         """)
         ac(expected_config, facade.config.export())
+
+
+class RemoveLinks(TestCase):
+    def assert_remove(self, links, before, after):
+        facade = lib.ConfigFacade.from_string(before)
+        facade.remove_links(links)
+        ac(after, facade.config.export())
+
+    def test_nonexistent_links(self):
+        config = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 2
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring2_addr: node2-addr2
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["1"], config, config)
+
+    def test_link_without_options(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["1"], before, after)
+
+    def test_link_with_options(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["0"], before, after)
+
+    def test_link_without_addrs(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["0"], before, after)
+
+    def test_more_links(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring2_addr: node2-addr2
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["0", "2"], before, after)
+
+    def test_more_occurences(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 2
+                    knet_transport: sctp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_ping_interval: 100
+                }
+            }
+
+            totem {
+                interface {
+                    linknumber: 1
+                    knet_link_priority: 3
+                }
+
+                interface {
+                    linknumber: 2
+                    knet_link_priority: 5
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    ring1_addr: node1-addr1a
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring2_addr: node2-addr2
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+
+            nodelist {
+                node {
+                    ring1_addr: node2-addr1b
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            totem {
+                interface {
+                    linknumber: 2
+                    knet_transport: sctp
+                }
+            }
+
+            totem {
+                interface {
+                    linknumber: 2
+                    knet_link_priority: 5
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring2_addr: node2-addr2
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+
+            nodelist {
+                node {
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["1"], before, after)
+
+    def test_link_with_options_nonumbered(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            totem {
+                interface {
+                    linknumber: 1
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["0"], before, after)
+
+    def test_more_linknumbers(self):
+        before = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                    linknumber: 1
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = outdent("""\
+            totem {
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                    linknumber: 1
+                }
+            }
+
+            nodelist {
+                node {
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self.assert_remove(["0"], before, after)
 
 
 class GetQuorumOptionsTest(TestCase):

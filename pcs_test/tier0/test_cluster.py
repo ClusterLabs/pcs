@@ -705,3 +705,81 @@ class NodeAdd(unittest.TestCase):
                 force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
             )
         )
+
+class RemoveLink(unittest.TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.cluster = mock.Mock(spec_set=["remove_links"])
+        self.lib.cluster = self.cluster
+        self._default_kwargs = dict(
+            force_flags=[],
+        )
+
+    def assert_called_with(self, link_list, **kwargs):
+        default_kwargs = dict(self._default_kwargs)
+        default_kwargs.update(kwargs)
+        self.cluster.remove_links.assert_called_once_with(
+            link_list, **default_kwargs
+        )
+
+    def call_cmd(self, argv, modifiers=None):
+        cluster.link_remove(self.lib, argv, dict_to_modifiers(modifiers or {}))
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([])
+        self.assertIsNone(cm.exception.message)
+
+    def test_one_link(self):
+        self.call_cmd(["1"])
+        self.assert_called_with(["1"])
+
+    def test_more_links(self):
+        self.call_cmd(["1", "2"])
+        self.assert_called_with(["1", "2"])
+
+    def test_skip_offline(self):
+        self.call_cmd(["1"], {"skip-offline": True})
+        self.assert_called_with(
+            ["1"],
+            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+        )
+
+    def test_request_timeout(self):
+        self.call_cmd(["1"], {"request-timeout": "10"})
+        self.assert_called_with(
+            ["1"],
+            force_flags=[]
+        )
+
+    def test_corosync_conf(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["1"], {"corosync_conf": "/tmp/corosync.conf"})
+        self.assertEqual(
+            (
+                "Specified options '--corosync_conf' are not supported "
+                "in this command"
+            ),
+            cm.exception.message
+        )
+
+    def test_all_modifiers(self):
+        self.call_cmd(
+            ["1"],
+            {
+                "skip-offline": True,
+                "request-timeout": "10",
+            }
+        )
+        self.assert_called_with(
+            ["1"],
+            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+        )
+
+    def test_unsupported_modifier(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["1"], {"start": True})
+        self.assertEqual(
+            "Specified options '--start' are not supported in this command",
+            cm.exception.message
+        )

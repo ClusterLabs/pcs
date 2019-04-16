@@ -900,6 +900,50 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(**info)
     ,
 
+    codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT: lambda info:
+        (
+            "Cluster is using {actual_transport} transport which does not "
+            "support {_action} links"
+        ).format(
+            _action=("adding" if info["add_or_not_remove"] else "removing"),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED: lambda info:
+        "Cannot {_action} links, no links to {_action} specified".format(
+            _action=("add" if info["add_or_not_remove"] else "remove"),
+        )
+    ,
+
+    codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS: lambda info:
+        (
+            "Cannot {_action} {links_change_count} link{_s_change}, there "
+            "would be {links_new_count} link{_s_new} defined which is "
+            "{_more_less} than allowed number of {links_limit_count} "
+            "link{_s_limit}"
+        ).format(
+            _action=("add" if info["add_or_not_remove"] else "remove"),
+            _more_less=("more" if info["add_or_not_remove"] else "less"),
+            _s_change=("" if info["links_change_count"] == 1 else "s"),
+            _s_new=("" if info["links_new_count"] == 1 else "s"),
+            _s_limit=("" if info["links_limit_count"] == 1 else "s"),
+            **info
+        )
+    ,
+
+    codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE: lambda info:
+        (
+            "Cannot remove non-existent link{_s} {_to_remove}, existing links: "
+            "{_existing}"
+        ).format(
+            _s=("s" if len(info["link_list"]) > 1 else ""),
+            _to_remove=format_list(info["link_list"]),
+            _existing=format_list(info["existing_link_list"]),
+            **info
+        )
+    ,
+
     codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE:
         corosync_link_does_not_exist_cannot_update
     ,

@@ -370,6 +370,12 @@ Shutdown specified guest node and remove it from the cluster. The node\-identifi
 node clear <node name>
 Remove specified node from various cluster caches. Use this if a removed node is still considered by the cluster to be a member of the cluster.
 .TP
+link delete <linknumber> [<linknumber>]...
+Remove specified corosync links.
+.TP
+link remove <linknumber> [<linknumber>]...
+Remove specified corosync links.
+.TP
 uidgid
 List the current configured uids and gids of users allowed to connect to corosync.
 .TP

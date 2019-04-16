@@ -2364,6 +2364,111 @@ class CorosyncTooManyLinksOptions(NameBuildTest):
             reports.corosync_too_many_links_options(7, 3),
         )
 
+class CorosyncCannotAddRemoveLinksBadTransport(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT
+    def test_add(self):
+        self.assert_message_from_report(
+            (
+                "Cluster is using udp transport which does not support "
+                "adding links"
+            ),
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                "udp",
+                ["knet1", "knet2"],
+                add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            (
+                "Cluster is using udpu transport which does not support "
+                "removing links"
+            ),
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                "udpu",
+                ["knet"],
+                add_or_not_remove=False
+            )
+        )
+
+class CorosyncCannotAddRemoveLinksNoLinksSpecified(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED
+    def test_add(self):
+        self.assert_message_from_report(
+            "Cannot add links, no links to add specified",
+            reports.corosync_cannot_add_remove_links_no_links_specified(
+                add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            "Cannot remove links, no links to remove specified",
+            reports.corosync_cannot_add_remove_links_no_links_specified(
+                add_or_not_remove=False
+            )
+        )
+
+class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS
+    def test_add(self):
+        self.assert_message_from_report(
+            (
+                "Cannot add 1 link, there would be 1 link defined which is "
+                "more than allowed number of 1 link"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                1, 1, 1, add_or_not_remove=True
+            )
+        )
+
+    def test_add_s(self):
+        self.assert_message_from_report(
+            (
+                "Cannot add 2 links, there would be 4 links defined which is "
+                "more than allowed number of 3 links"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                2, 4, 3, add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove 1 link, there would be 1 link defined which is "
+                "less than allowed number of 1 link"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                1, 1, 1, add_or_not_remove=False
+            )
+        )
+
+    def test_remove_s(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove 3 links, there would be 0 links defined which "
+                "is less than allowed number of 2 links"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                3, 0, 2, add_or_not_remove=False
+            )
+        )
+
+class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
+    code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove non-existent links '0', '1', 'abc', existing "
+                "links: '2', '3', '5'"
+            ),
+            reports.corosync_link_does_not_exist_cannot_remove(
+                ["1", "0", "abc"],
+                ["3", "2", "5"]
+            )
+        )
 
 class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
     code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE

@@ -538,6 +538,8 @@ def create_link_list_knet(link_list, max_allowed_link_count):
                 if int(options["linknumber"]) >= max_allowed_link_count:
                     # first link is link0, hence >=
                     report_items.append(
+                        # Links are defined by node addresses. Therefore we
+                        # update link options here, we do not create links.
                         reports.corosync_link_does_not_exist_cannot_update(
                             options["linknumber"],
                             link_count=max_allowed_link_count
@@ -567,6 +569,69 @@ def create_link_list_knet(link_list, max_allowed_link_count):
         _check_link_options_count(len(link_list), max_allowed_link_count)
     )
     return report_items
+
+def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
+    """
+    Validate removing links
+
+    iterable linknumbers_to_remove -- links to be removed (linknumbers strings)
+    iterable linknumbers_existing -- all existing linknumbers (strings)
+    string transport -- corosync transport used in the cluster
+    """
+    report_items = []
+
+    if transport not in constants.TRANSPORTS_KNET:
+        report_items.append(
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                transport,
+                constants.TRANSPORTS_KNET,
+                add_or_not_remove=False,
+            )
+        )
+        return report_items
+
+    to_remove_duplicates = {
+        link
+        for link, count in Counter(linknumbers_to_remove).items()
+        if count > 1
+    }
+    if to_remove_duplicates:
+        report_items.append(
+            reports.corosync_link_number_duplication(to_remove_duplicates)
+        )
+
+    to_remove = frozenset(linknumbers_to_remove)
+    existing = frozenset(linknumbers_existing)
+    left = existing - to_remove
+    nonexistent = to_remove - existing
+
+    if not to_remove:
+        report_items.append(
+            reports.corosync_cannot_add_remove_links_no_links_specified(
+                add_or_not_remove=False,
+            )
+        )
+    if len(left) < constants.LINKS_KNET_MIN:
+        report_items.append(
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                # only existing links can be removed, do not count nonexistent
+                # ones
+                len(to_remove & existing),
+                len(left),
+                constants.LINKS_KNET_MIN,
+                add_or_not_remove=False,
+            )
+        )
+    if nonexistent:
+        report_items.append(
+            reports.corosync_link_does_not_exist_cannot_remove(
+                nonexistent,
+                existing
+            )
+        )
+
+    return report_items
+
 
 def create_transport_udp(generic_options, compression_options, crypto_options):
     """

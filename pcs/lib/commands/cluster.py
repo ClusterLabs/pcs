@@ -1359,3 +1359,39 @@ def remove_nodes_from_cib(env, node_list):
                     reason=join_multilines([stderr, stdout])
                 )
             )
+
+
+def remove_links(env, linknumber_list, force_flags=None):
+    """
+    Remove corosync links from a cluster
+
+    env LibraryEnvironment
+    iterable linknumber_list -- linknumbers (as strings) of links to be removed
+    force_flags list -- list of flags codes
+    """
+    # TODO library interface should make sure linknumber_list is an iterable of
+    # strings. The layer in which the check should be done does not exist yet.
+    _ensure_live_env(env) # raises if env is not live
+
+    force_flags = force_flags or set()
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    corosync_conf = env.get_corosync_conf()
+
+    # validations
+
+    report_processor.report_list(config_validators.remove_links(
+        linknumber_list,
+        corosync_conf.get_used_linknumber_list(),
+        corosync_conf.get_transport()
+    ))
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # validations done
+
+    corosync_conf.remove_links(linknumber_list)
+
+    env.push_corosync_conf(corosync_conf, skip_offline)

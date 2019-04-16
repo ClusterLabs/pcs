@@ -871,6 +871,12 @@ Commands:
         removed node is still considered by the cluster to be a member of the
         cluster.
 
+    link delete <linknumber> [<linknumber>]...
+        Remove specified corosync links.
+
+    link remove <linknumber> [<linknumber>]...
+        Remove specified corosync links.
+
     uidgid
         List the current configured uids and gids of users allowed to connect
         to corosync.
