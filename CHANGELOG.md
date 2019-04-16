@@ -55,6 +55,10 @@
   silently
 - Fixed an issue where some pcs commands could not connect to cluster nodes
   over IPv6
+- Fixed cluster setup problem in web UI when full domain names are used
+  ([rhbz#1687965])
+- Fixed inability to setup cluster in web UI when knet links are not specified
+  ([rhbz#1687562])
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
@@ -88,6 +92,8 @@
 [rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
+[rhbz#1687562]: https://bugzilla.redhat.com/show_bug.cgi?id=1687562
+[rhbz#1687965]: https://bugzilla.redhat.com/show_bug.cgi?id=1687965
 
 
 ## [0.10.1] - 2018-11-23
