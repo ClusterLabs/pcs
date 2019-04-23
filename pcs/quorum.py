@@ -264,7 +264,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
-    if modifiers.get("--force"):
+    if not modifiers.get("--force"):
         answer = utils.get_terminal_input(
             (
                 "WARNING: If node(s) {nodes} are not powered off or they do"
